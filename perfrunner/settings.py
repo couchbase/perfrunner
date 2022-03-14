@@ -1653,10 +1653,12 @@ class ClientSettings:
 
     LIBCOUCHBASE = None
     PYTHON_CLIENT = None
+    TABLEAU_CONNECTOR = None
 
     def __init__(self, options: dict):
         self.libcouchbase = options.get('libcouchbase', self.LIBCOUCHBASE)
         self.python_client = options.get('python_client', self.PYTHON_CLIENT)
+        self.tableau_connector = options.get('tableau_connector', self.TABLEAU_CONNECTOR)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1852,6 +1854,30 @@ class AutoscalingSettings:
 
     def __str__(self) -> str:
         return str(self.__dict__)
+
+
+class TableauSettings:
+
+    HOST = 'localhost'
+    API_VERSION = '3.14'
+    CREDENTIALS = {
+        'username': 'admin',
+        'password': 'password'
+    }
+    DATASOURCE = None
+    CONNECTOR_VENDOR = None
+
+    def __init__(self, options: dict):
+        self.host = options.get('host', self.HOST)
+        self.api_version = options.get('api_version', self.API_VERSION)
+        self.datasource = options.get('datasource', self.DATASOURCE)
+        self.connector_vendor = options.get('connector_vendor', self.CONNECTOR_VENDOR)
+        credentials = options.get('credentials')
+        if credentials:
+            uname, password = credentials.split(':')
+            self.credentials = {'username': uname, 'password': password}
+        else:
+            self.credentials = self.CREDENTIALS
 
 
 class TestConfig(Config):
@@ -2214,6 +2240,11 @@ class TestConfig(Config):
     def autoscaling_setting(self) -> AutoscalingSettings:
         options = self._get_options_as_dict('autoscaling')
         return AutoscalingSettings(options)
+
+    @property
+    def tableau_settings(self) -> TableauSettings:
+        options = self._get_options_as_dict('tableau')
+        return TableauSettings(options)
 
 
 class TargetSettings:

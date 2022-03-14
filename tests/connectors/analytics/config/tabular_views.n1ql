@@ -1,0 +1,34 @@
+CREATE OR REPLACE ANALYTICS VIEW bench.ch2.customer_view(
+    cbalance DOUBLE, ccity STRING, ccredit STRING, ccreditlim BIGINT,
+    cdid BIGINT, cdata STRING, cdeliverycnt BIGINT, cdiscount DOUBLE,
+    cfirst STRING, cid BIGINT, clast STRING, cmiddle STRING,
+    cpaymentcnt BIGINT, cphone STRING, csince STRING, cstate STRING,
+    cstreet1 STRING, cstreet2 STRING, cwid BIGINT, cytdpayment BIGINT,
+    czip STRING
+)
+DEFAULT NULL
+PRIMARY KEY (cwid, cdid, cid) NOT ENFORCED
+AS
+SELECT
+    c_balance AS cbalance, c_city AS ccity, c_credit AS ccredit,
+    c_credit_lim AS ccreditlim, c_d_id AS cdid, c_data AS cdata,
+    c_delivery_cnt AS cdeliverycnt, c_discount AS cdiscount,
+    c_first AS cfirst, c_id AS cid, c_last AS clast, c_middle AS cmiddle,
+    c_payment_cnt AS cpaymentcnt, c_phone AS cphone, c_since AS csince,
+    c_state AS cstate, c_street_1 AS cstreet1, c_street_2 AS cstreet2,
+    c_w_id AS cwid, c_ytd_payment AS cytdpayment, c_zip as czip
+FROM bench.ch2.customer;
+
+CREATE OR REPLACE ANALYTICS VIEW bench.ch2.orders_view(
+    oalllocal BIGINT, ocid BIGINT, odid BIGINT, oentryd DATE, oid BIGINT,
+    oolcnt BIGINT, owid BIGINT
+)
+DEFAULT NULL
+PRIMARY KEY (owid, oid, odid) NOT ENFORCED
+FOREIGN KEY (owid, odid, ocid) REFERENCES bench.ch2.customer_view NOT ENFORCED
+AS
+SELECT
+    o_all_local AS oalllocal, o_c_id AS ocid, o_d_id AS odid,
+    date_format_str(o_entry_d, "1111-11-11") AS oentryd, o_id AS oid,
+    o_ol_cnt AS oolcnt, o_w_id AS owid
+FROM bench.ch2.orders;

@@ -8,6 +8,7 @@ import requests
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.tableau import TableauTerminalHelper
 from perfrunner.settings import SHOWFAST_HOST, ClusterSpec, TestConfig
 
 JSON = Dict[str, Any]
@@ -74,6 +75,11 @@ class ShowFastReporter(Reporter):
            self.test_config.restore_settings.show_tls_version:
             build_str = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + build_str
             logger.info('build: {}'.format(self.build))
+
+        if self.test_config.tableau_settings.connector_vendor:
+            tableau_helper = TableauTerminalHelper(self.test_config)
+            connector_version = tableau_helper.get_connector_version()
+            build_str = connector_version + ' : ' + build_str
 
         return {
             'build': build_str,

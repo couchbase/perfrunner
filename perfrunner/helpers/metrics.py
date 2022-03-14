@@ -1320,6 +1320,14 @@ class MetricHelper:
 
         return query_time, self._snapshots, metric_info
 
+    def custom_elapsed_time(self, time_elapsed: float, op: str) -> Metric:
+        metric_id = '{}_{}_time'.format(self.test_config.name, op)
+        title = 'Time elapsed (sec), {}, {}'.format(op.replace('_', ' ').title(), self._title)
+
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+
+        return round(time_elapsed, 1), self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

@@ -1,0 +1,367 @@
+<?xml version='1.0' encoding='utf-8' ?>
+
+<!-- build 20214.22.0213.1102                               -->
+<datasource formatted-name='federated.1cmxldl1w902co182tb8v09iarp2' inline='true' source-platform='win' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <document-format-change-manifest>
+    <_.fcp.ObjectModelEncapsulateLegacy.true...ObjectModelEncapsulateLegacy />
+    <_.fcp.ObjectModelTableType.true...ObjectModelTableType />
+    <_.fcp.SchemaViewerObjectModel.true...SchemaViewerObjectModel />
+  </document-format-change-manifest>
+  <connection class='federated'>
+    <named-connections>
+      <named-connection caption='{server}' name='couchbase-analytics.1i4qn471n4thof1f5q7hl02y3o56'>
+        <connection authentication='auth-user-pass' class='couchbase-analytics' dbname='bench/ch2' one-time-sql='' server='{server}' sslmode='' username='Administrator' v-cb-connectTimeout='5s' v-cb-scanConsistency='notBounded' v-cb-scanWait='' v-cb-sslCertPath='' v-cb-sslKeystorePath='' v-cb-sslMode='' />
+      </named-connection>
+    </named-connections>
+    <_.fcp.ObjectModelEncapsulateLegacy.false...relation connection='couchbase-analytics.1i4qn471n4thof1f5q7hl02y3o56' name='customer_view' table='[customer_view]' type='table' />
+    <_.fcp.ObjectModelEncapsulateLegacy.true...relation connection='couchbase-analytics.1i4qn471n4thof1f5q7hl02y3o56' name='customer_view' table='[customer_view]' type='table' />
+    <metadata-records>
+      <metadata-record class='column'>
+        <remote-name>cbalance</remote-name>
+        <remote-type>5</remote-type>
+        <local-name>[cbalance]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cbalance</remote-alias>
+        <ordinal>1</ordinal>
+        <local-type>real</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>true</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>ccity</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[ccity]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>ccity</remote-alias>
+        <ordinal>2</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>ccredit</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[ccredit]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>ccredit</remote-alias>
+        <ordinal>3</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>ccreditlim</remote-name>
+        <remote-type>20</remote-type>
+        <local-name>[ccreditlim]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>ccreditlim</remote-alias>
+        <ordinal>4</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>true</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cdid</remote-name>
+        <remote-type>20</remote-type>
+        <local-name>[cdid]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cdid</remote-alias>
+        <ordinal>5</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>false</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cdata</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[cdata]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cdata</remote-alias>
+        <ordinal>6</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cdeliverycnt</remote-name>
+        <remote-type>20</remote-type>
+        <local-name>[cdeliverycnt]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cdeliverycnt</remote-alias>
+        <ordinal>7</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>true</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cdiscount</remote-name>
+        <remote-type>5</remote-type>
+        <local-name>[cdiscount]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cdiscount</remote-alias>
+        <ordinal>8</ordinal>
+        <local-type>real</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>true</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cfirst</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[cfirst]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cfirst</remote-alias>
+        <ordinal>9</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cid</remote-name>
+        <remote-type>20</remote-type>
+        <local-name>[cid]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cid</remote-alias>
+        <ordinal>10</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>false</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>clast</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[clast]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>clast</remote-alias>
+        <ordinal>11</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cmiddle</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[cmiddle]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cmiddle</remote-alias>
+        <ordinal>12</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cpaymentcnt</remote-name>
+        <remote-type>20</remote-type>
+        <local-name>[cpaymentcnt]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cpaymentcnt</remote-alias>
+        <ordinal>13</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>true</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cphone</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[cphone]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cphone</remote-alias>
+        <ordinal>14</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>csince</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[csince]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>csince</remote-alias>
+        <ordinal>15</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cstate</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[cstate]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cstate</remote-alias>
+        <ordinal>16</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cstreet1</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[cstreet1]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cstreet1</remote-alias>
+        <ordinal>17</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cstreet2</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[cstreet2]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cstreet2</remote-alias>
+        <ordinal>18</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cwid</remote-name>
+        <remote-type>20</remote-type>
+        <local-name>[cwid]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cwid</remote-alias>
+        <ordinal>19</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>false</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>cytdpayment</remote-name>
+        <remote-type>20</remote-type>
+        <local-name>[cytdpayment]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>cytdpayment</remote-alias>
+        <ordinal>20</ordinal>
+        <local-type>integer</local-type>
+        <aggregation>Sum</aggregation>
+        <precision>2</precision>
+        <contains-null>true</contains-null>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+      <metadata-record class='column'>
+        <remote-name>czip</remote-name>
+        <remote-type>129</remote-type>
+        <local-name>[czip]</local-name>
+        <parent-name>[customer_view]</parent-name>
+        <remote-alias>czip</remote-alias>
+        <ordinal>21</ordinal>
+        <local-type>string</local-type>
+        <aggregation>Count</aggregation>
+        <width>32767</width>
+        <contains-null>true</contains-null>
+        <attributes>
+          <attribute datatype='string' name='TypeIsVarchar'>&quot;true&quot;</attribute>
+        </attributes>
+        <_.fcp.ObjectModelEncapsulateLegacy.true...object-id>[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]</_.fcp.ObjectModelEncapsulateLegacy.true...object-id>
+      </metadata-record>
+    </metadata-records>
+  </connection>
+  <aliases enabled='yes' />
+  <_.fcp.ObjectModelTableType.true...column caption='customer_view' datatype='table' name='[__tableau_internal_object_id__].[customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7]' role='measure' type='quantitative' />
+  <column caption='Cbalance' datatype='real' name='[cbalance]' role='measure' type='quantitative' />
+  <column caption='Ccity' datatype='string' name='[ccity]' role='dimension' type='nominal' />
+  <column caption='Ccredit' datatype='string' name='[ccredit]' role='dimension' type='nominal' />
+  <column caption='Ccreditlim' datatype='integer' name='[ccreditlim]' role='measure' type='quantitative' />
+  <column caption='Cdata' datatype='string' name='[cdata]' role='dimension' type='nominal' />
+  <column caption='Cdeliverycnt' datatype='integer' name='[cdeliverycnt]' role='measure' type='quantitative' />
+  <column caption='Cdid' datatype='integer' name='[cdid]' role='measure' type='quantitative' />
+  <column caption='Cdiscount' datatype='real' name='[cdiscount]' role='measure' type='quantitative' />
+  <column caption='Cfirst' datatype='string' name='[cfirst]' role='dimension' type='nominal' />
+  <column caption='Cid' datatype='integer' name='[cid]' role='measure' type='quantitative' />
+  <column caption='Clast' datatype='string' name='[clast]' role='dimension' type='nominal' />
+  <column caption='Cmiddle' datatype='string' name='[cmiddle]' role='dimension' type='nominal' />
+  <column caption='Cpaymentcnt' datatype='integer' name='[cpaymentcnt]' role='measure' type='quantitative' />
+  <column caption='Cphone' datatype='string' name='[cphone]' role='dimension' type='nominal' />
+  <column caption='Csince' datatype='string' name='[csince]' role='dimension' type='nominal' />
+  <column caption='Cstate' datatype='string' name='[cstate]' role='dimension' type='nominal' />
+  <column caption='Cstreet1' datatype='string' name='[cstreet1]' role='dimension' type='nominal' />
+  <column caption='Cstreet2' datatype='string' name='[cstreet2]' role='dimension' type='nominal' />
+  <column caption='Cwid' datatype='integer' name='[cwid]' role='measure' type='quantitative' />
+  <column caption='Cytdpayment' datatype='integer' name='[cytdpayment]' role='measure' type='quantitative' />
+  <column caption='Czip' datatype='string' name='[czip]' role='dimension' type='nominal' />
+  <layout _.fcp.SchemaViewerObjectModel.false...dim-percentage='0.5' _.fcp.SchemaViewerObjectModel.false...measure-percentage='0.4' dim-ordering='alphabetic' measure-ordering='alphabetic' show-structure='true' />
+  <semantic-values>
+    <semantic-value key='[Country].[Name]' value='&quot;United Kingdom&quot;' />
+  </semantic-values>
+  <date-options start-of-week='monday' />
+  <_.fcp.ObjectModelEncapsulateLegacy.true...object-graph>
+    <objects>
+      <object caption='customer_view' id='customer_view_5A1E5230FCBE4DAB9CB1A730D6106FE7'>
+        <properties context=''>
+          <relation connection='couchbase-analytics.1i4qn471n4thof1f5q7hl02y3o56' name='customer_view' table='[customer_view]' type='table' />
+        </properties>
+      </object>
+    </objects>
+  </_.fcp.ObjectModelEncapsulateLegacy.true...object-graph>
+</datasource>

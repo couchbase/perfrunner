@@ -1,0 +1,45 @@
+[test_case]
+test = perfrunner.tests.connectors.TabularViewExtractionControlTest
+
+[showfast]
+title = REST API (control), 1Q x 2A, CH2 dataset, 100 warehouses
+component = sdk
+category = tableau
+sub_category = Control
+orderby = b
+
+[cluster]
+mem_quota = 25600
+index_mem_quota = 12800
+analytics_mem_quota = 51200
+initial_nodes = 3
+num_buckets = 1
+bucket_name = bench
+
+[collection]
+config = collections/1bucket_1scope_11collections_analytics_ch2.json
+
+[analytics]
+num_io_devices = 4
+
+[bucket]
+eviction_policy = fullEviction
+replica_index = 0
+replica_number = 0
+
+[compaction]
+db_percentage = 100
+
+[bucket_extras]
+num_writer_threads = 64
+num_reader_threads = 32
+max_num_shards = 64
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+backup_storage = /data3/backup/ch2_w100
+backup_repo = ch2
+threads = 8
+map_data = bench.ch2.customer=bench.ch2.customer,bench.ch2.district=bench.ch2.district,bench.ch2.history=bench.ch2.history,bench.ch2.item=bench.ch2.item,bench.ch2.neworder=bench.ch2.neworder,bench.ch2.orders=bench.ch2.orders,bench.ch2.stock=bench.ch2.stock,bench.ch2.warehouse=bench.ch2.warehouse,bench.ch2.supplier=bench.ch2.supplier,bench.ch2.nation=bench.ch2.nation,bench.ch2.region=bench.ch2.region,bench._default._default=bench._default._default

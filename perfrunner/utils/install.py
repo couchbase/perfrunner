@@ -411,7 +411,7 @@ class CouchbaseInstaller:
                     if os_arch == 'arm':
                         os_release = 'amzn2.aarch64'
                     elif os_arch == 'al2':
-                        os_release == 'amzn2.x86_64'
+                        os_release = 'amzn2.x86_64'
                     else:
                         os_release = self.remote.detect_centos_release()
                 else:

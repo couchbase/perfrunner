@@ -152,6 +152,27 @@ class BigFunTest(PerfTest):
                     format(dataset, result['results'][0]['$1']))
         return result['results'][0]['$1']
 
+    def restore_remote_s3(self):
+        self.remote.extract_cb(filename='couchbase.rpm',
+                               worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            archive=self.test_config.restore_settings.backup_storage,
+                            repo=self.test_config.restore_settings.backup_repo,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            map_data=self.test_config.restore_settings.map_data)
+        self.wait_for_persistence()
+
     def run(self):
         self.restore_local()
         self.wait_for_persistence()
@@ -171,6 +192,19 @@ class BigFunSyncTest(BigFunTest):
 
     def run(self):
         super().run()
+
+        if self.analytics_link != "Local":
+            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node)
+
+        sync_time = self.sync()
+
+        self.report_kpi(sync_time)
+
+
+class BigFunSyncAWSTest(BigFunSyncTest):
+
+    def run(self):
+        self.restore_remote_s3()
 
         if self.analytics_link != "Local":
             local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node)
@@ -294,6 +328,23 @@ class BigFunQueryTest(BigFunTest):
     def run(self):
         random.seed(8095)
         super().run()
+
+        self.sync()
+
+        logger.info('Running warmup phase')
+        self.warmup()
+
+        logger.info('Running access phase')
+        results = self.access()
+
+        self.report_kpi(results)
+
+
+class BigFunQueryAWSTest(BigFunQueryTest):
+
+    def run(self):
+        random.seed(8095)
+        self.restore_remote_s3()
 
         self.sync()
 

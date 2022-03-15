@@ -521,7 +521,7 @@ class AWSDeployer(Deployer):
                                 ami = 'ami-0f249abfe3dd01b30'
                                 block_device = '/dev/xvda'
                             elif self.os_arch == 'al2':
-                                ami = 'ami-09416c5c736392e2c'
+                                ami = 'ami-060e286353d227c32'
                                 block_device = '/dev/xvda'
                             else:
                                 ami = 'ami-005bce54f0c4e2248'

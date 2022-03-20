@@ -38,7 +38,9 @@ indexer.settings.gc_percent = 200
 indexer.settings.max_cpu_percent = 4800
 
 [access]
-updates = 100
+creates = 10
+updates = 80
+deletes = 10
 ops = 300000000
 items = 20000000
 throughput = 100000

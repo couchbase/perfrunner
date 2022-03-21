@@ -102,6 +102,9 @@ class EventingTest(PerfTest):
         if self.test_config.access_settings.ssl_mode == 'n2n' or \
                 self.test_config.load_settings.ssl_mode == 'n2n':
             self.download_certificate()
+            if self.cluster_spec.cloud_infrastructure:
+                self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE,
+                                                  self.worker_manager.WORKER_HOME)
 
     @timeit
     def deploy_and_bootstrap(self, func, name, wait_for_bootstrap):

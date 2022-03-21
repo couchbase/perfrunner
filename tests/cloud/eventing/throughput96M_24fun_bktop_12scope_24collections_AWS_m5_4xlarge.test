@@ -1,0 +1,59 @@
+[test_case]
+test = perfrunner.tests.eventing.FunctionsPillowfightThroughputTest
+
+[showfast]
+title = Functions executed/sec, 6 buckets x 16M x 1KB, 3KV + 2Eventing node, 24 functions-BucketOp, s=12, c=24
+component = cloud
+category = eventing
+
+[stats]
+server_processes = eventing-produc
+
+[cluster]
+mem_quota = 50000
+eventing_mem_quota = 24576
+initial_nodes = 5
+num_buckets = 6
+eventing_bucket_mem_quota = 10000
+eventing_metadata_bucket_mem_quota = 1000
+eventing_buckets = 6
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+failover_min = 10
+
+[collection]
+config = collections/6buckets_12scopes_24collections_eventing.json
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 16000000
+size = 1024
+workers = 128
+doc_gen = json
+
+[eventing]
+cpp_worker_thread_count = 2
+worker_count = 1
+config_file = tests/eventing/config/functions24_6buckets_12s_24c.json
+
+[access]
+updates = 100
+items = 16000000
+workers = 128
+time = 1200
+batch_size = 1
+iterations = -1
+ssl_mode = n2n
+min_tls_version = tlsv1.2
+
+[clients]
+libcouchbase = 3.2.0
+python_client = 3.2.0

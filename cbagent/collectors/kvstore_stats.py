@@ -100,7 +100,8 @@ class KVStoreStats(Collector):
         "ActiveIndexBlocksSize",
         "NBlocksCached",
         "CheckpointOverheadPeriod",
-        "CheckpointOverheadRatio"
+        "CheckpointOverheadRatio",
+        "NBlocksDropped"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

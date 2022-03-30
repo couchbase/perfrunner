@@ -844,7 +844,7 @@ class RemoteLinux(Remote):
                 worker_home: str, archive: str = '', repo: str = 'default',
                 obj_staging_dir: str = None, obj_region: str = None,
                 use_tls: bool = False, map_data: str = None):
-        logger.info('Restore from {}'.format(archive))
+        logger.info('Restore from {}'.format(archive or cluster_spec.backup))
 
         self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home,
                                  archive, repo, obj_staging_dir, obj_region,

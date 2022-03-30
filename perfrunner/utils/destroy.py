@@ -35,6 +35,7 @@ class AWSDestroyer(Destroyer):
     def __init__(self, infra_spec, options):
         super().__init__(infra_spec, options)
         self.ec2client = boto3.client('ec2')
+        self.s3 = boto3.resource('s3')
         self.cloudformation_client = boto3.client('cloudformation')
         self.eksclient = boto3.client('eks')
         self.iamclient = boto3.client('iam')
@@ -218,6 +219,19 @@ class AWSDestroyer(Destroyer):
                 WaiterConfig={'Delay': 10, 'MaxAttempts': 600}
             )
 
+    def delete_s3bucket(self):
+        bucket_name = self.infra_spec.backup
+        if bucket_name and bucket_name.startswith('s3'):
+            logger.info('delete S3 bucket: {}'.format(bucket_name))
+            bucket_name = bucket_name.split("/")[-1]
+            try:
+                s3_bucket = self.s3.Bucket(bucket_name)
+                s3_bucket.objects.all().delete()
+                s3_bucket.delete()
+                logger.info('S3 bucket Deleted')
+            except Exception as ex:
+                logger.info(ex)
+
     def destroy(self):
         logger.info("Deleting deployed infrastructure: {}"
                     .format(self.generated_cloud_config_path))
@@ -238,6 +252,7 @@ class AWSDestroyer(Destroyer):
         self.delete_internet_gateway()
         self.delete_subnets()
         self.delete_vpc()
+        self.delete_s3bucket()
 
         logger.info("Destroy complete")
 

@@ -48,6 +48,7 @@ class AWSDeployer(Deployer):
         self.vpc_int = 0
         self.ec2client = boto3.client('ec2')
         self.ec2 = boto3.resource('ec2')
+        self.s3 = boto3.resource('s3', region_name=self.region)
         self.cloudformation_client = boto3.client('cloudformation')
         self.eksclient = boto3.client('eks')
         self.iamclient = boto3.client('iam')
@@ -57,6 +58,7 @@ class AWSDeployer(Deployer):
         self.ebs_csi_iam_policy_path = "cloud/infrastructure/aws/eks/ebs-csi-iam-policy.json"
         self.cloud_ini = "cloud/infrastructure/cloud.ini"
         self.os_arch = self.infra_spec.infrastructure_settings.get('os_arch', 'x86_64')
+        self.deployment_id = uuid4().hex
 
     def gen_desired_infrastructure_config(self):
         desired_infra = {'k8s': {}, 'ec2': {}}
@@ -512,7 +514,7 @@ class AWSDeployer(Deployer):
                     block_device = '/dev/sda1'
                     if "workers" in node_role:  # perf client ami
                         if self.region == 'us-east-1':
-                            ami = 'ami-045e0aa97a8f1242f'
+                            ami = 'ami-04fe7d9b8322397e6'
                         else:
                             ami = 'ami-0045ddecdcfa4a45c'
                     elif "couchbase" in node_role:  # perf server ami
@@ -612,6 +614,21 @@ class AWSDeployer(Deployer):
                     ec2_dict[ec2_id]["private_ip"] = instance.private_ip_address
                 self.deployed_infra['vpc']['ec2'][ec2_group_name] = ec2_dict
                 self.write_infra_file()
+
+    def create_s3bucket(self):
+        bucket_name = self.infra_spec.backup
+        if bucket_name and bucket_name.startswith('s3'):
+            bucket_name = "{}-{}".format(bucket_name.split("/")[-1], self.deployment_id)
+            logger.info('Creating S3 bucket: {}'.format(bucket_name))
+            if self.region == 'us-east-1':
+                self.s3.create_bucket(Bucket=bucket_name)
+            else:
+                self.s3.create_bucket(Bucket=bucket_name,
+                                      CreateBucketConfiguration={
+                                          'LocationConstraint': self.region})
+
+            self.deployed_infra['storage_bucket'] = bucket_name
+            self.write_infra_file()
 
     def open_security_groups(self):
         logger.info("Opening security groups...")
@@ -723,6 +740,7 @@ class AWSDeployer(Deployer):
             clusters = self.infra_spec.infrastructure_clusters
             clients = self.infra_spec.infrastructure_clients
             utilities = self.infra_spec.infrastructure_utilities
+            backup = self.infra_spec.backup
             node_group_ips = {}
             for node_group_name, ec2_dict in self.deployed_infra['vpc']['ec2'].items():
                 ips = []
@@ -811,6 +829,14 @@ class AWSDeployer(Deployer):
                         s = s.replace(replace_pair[0], replace_pair[1])
                     f.write(s)
 
+            # Replace backup storage bucket name in infra spec (if exists)
+            with open(self.cluster_path) as f:
+                s = f.read()
+            with open(self.cluster_path, 'w') as f:
+                if storage_bucket := self.deployed_infra.get('storage_bucket', None):
+                    s = s.replace(backup, 's3://{}'.format(storage_bucket))
+                f.write(s)
+
     def deploy(self):
         logger.info("Deploying infrastructure...")
         self.create_vpc()
@@ -827,6 +853,7 @@ class AWSDeployer(Deployer):
         self.create_eks_clusters()
         self.create_eks_node_groups()
         self.create_ec2s()
+        self.create_s3bucket()
         self.open_security_groups()
         self.update_infrastructure_spec()
         if self.deployed_infra['vpc'].get('eks_clusters', None) is not None:

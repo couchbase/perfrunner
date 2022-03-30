@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.tools.AWSRestoreTest
+
+[showfast]
+title = 3 nodes, 1 bucket x 100M x 1KB, Idle, AWS, m5.4xlarge
+component = cloud
+category = tools
+
+[stats]
+client_processes = cbbackupmgr
+
+[cluster]
+mem_quota = 56320
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 100000000
+size = 1024
+workers = 40
+
+[backup]
+threads = 16
+storage_type = rift
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh

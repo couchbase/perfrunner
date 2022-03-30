@@ -1563,12 +1563,15 @@ class EventingSettings:
 class MagmaSettings:
     COLLECT_PER_SERVER_STATS = 0
     STORAGE_QUOTA_PERCENTAGE = 0
+    MAGMA_MIN_MEMORY_QUOTA = 0
 
     def __init__(self, options: dict):
         self.collect_per_server_stats = int(options.get("collect_per_server_stats",
                                                         self.COLLECT_PER_SERVER_STATS))
         self.storage_quota_percentage = int(options.get("storage_quota_percentage",
                                                         self.STORAGE_QUOTA_PERCENTAGE))
+        self.magma_min_memory_quota = int(options.get("magma_min_memory_quota",
+                                                      self.MAGMA_MIN_MEMORY_QUOTA))
 
 
 class AnalyticsSettings:

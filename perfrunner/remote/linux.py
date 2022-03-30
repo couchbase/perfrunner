@@ -951,6 +951,13 @@ class RemoteLinux(Remote):
             "localhost:8091/pools/default/buckets/{} -d 'storageQuotaPercentage={}'"
             .format(bucket, storage_quota_percentage), pty=False)
 
+    @master_server
+    def set_magma_min_memory_quota(self, magma_min_memory_quota: int):
+        logger.info('Set Magma min memory quota to {}'.format(magma_min_memory_quota))
+        run("curl -s -u Administrator:password "
+            "localhost:8091/internalSettings -d 'magmaMinMemoryQuota={}'"
+            .format(magma_min_memory_quota), pty=False)
+
     @all_servers
     def create_data_backup(self, backup_directory: str):
         logger.info('Creating backup file: {}'.format(backup_directory))

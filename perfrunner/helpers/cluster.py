@@ -946,3 +946,8 @@ class ClusterManager:
                                                          autoscaling_settings.target_value)
         else:
             return
+
+    def set_magma_min_quota(self):
+        if self.test_config.magma_settings.magma_min_memory_quota:
+            magma_min_quota = self.test_config.magma_settings.magma_min_memory_quota
+            self.remote.set_magma_min_memory_quota(magma_min_quota)

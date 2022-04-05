@@ -74,6 +74,8 @@
     ],
     "GSI": [
         {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO.test"},
-        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_nonOSO.test"}
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_nonOSO.test"},
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_nonOSO_100RR.test"},
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO_100RR.test"}
     ]
 }

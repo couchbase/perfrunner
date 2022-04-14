@@ -970,8 +970,8 @@ class DefaultMonitor(DefaultRestHelper):
                 end_time = time.time()
                 time_taken = end_time - start_time
                 return time_taken
-            if time.time() - start_time > 1200:
-                raise Exception("timeout of 1200 seconds exceeded")
+            if time.time() - start_time > 1800:
+                raise Exception("timeout of 1800 seconds exceeded")
 
     def get_import_count(self, host: str):
         stats = self.get_sg_stats(host=host)

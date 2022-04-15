@@ -1313,7 +1313,7 @@ class DeltaSync(SGPerfTest):
         local.cleanup_cblite_db()
 
     def post_deltastats(self):
-        sg_server = self.cluster_spec.sgw_servers[[0]]
+        sg_server = self.cluster_spec.sgw_servers[0]
         stats = self.monitor.deltasync_stats(host=sg_server)
         logger.info('Sync-gateway Stats:{}'.format(stats))
 

@@ -1229,9 +1229,10 @@ def get_sg_logs_new(host: str, ssh_user: str, ssh_pass: str):
 
 
 def get_sg_console(host: str, ssh_user: str, ssh_pass: str):
-    local('sshpass -p {} scp {}@{}:/var/tmp/sg_console* ./'.format(ssh_pass,
-                                                                   ssh_user,
-                                                                   host))
+    with settings(warn_only=True):
+        local('sshpass -p {} scp {}@{}:/var/tmp/sg_console* ./'.format(ssh_pass,
+                                                                       ssh_user,
+                                                                       host))
 
 
 def get_troublemaker_logs(host: str, ssh_user: str, ssh_pass: str):

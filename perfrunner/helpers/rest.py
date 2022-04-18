@@ -1458,7 +1458,7 @@ class DefaultRestHelper(RestBase):
         return self.get(url=api).json()
 
     def get_sgversion(self, host: str) -> str:
-        logger.info('Getting SG  Server version')
+        logger.info('Getting SG Server version')
 
         api = 'http://{}:4985'.format(host)
         r = self.get(url=api).json()

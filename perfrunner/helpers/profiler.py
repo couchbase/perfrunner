@@ -188,7 +188,7 @@ class Profiler:
     def schedule(self):
         for service in self.test_config.profiling_settings.services:
             logger.info('Scheduling profiling of "{}" services'.format(service))
-            if self.test_config.profiling_settings.services in ["sg_cpu", "sg_heap"]:
+            if service == 'syncgateway':
                 initial_nodes = int(self.test_config.syncgateway_settings.nodes)
                 logger.info("number of syncgateway nodes :{}".format(initial_nodes))
                 for _server in range(initial_nodes):

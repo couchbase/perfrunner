@@ -12,16 +12,16 @@ BINARY_PATH = "/SG_Tools_1"
 
 
 def get_hosts(cluster, workload_settings):
-    return ','.join(cluster.servers[:int(workload_settings.syncgateway_settings.nodes)])
+    return cluster.sgw_servers
 
 
 def get_host(cluster, workload_settings):
-    return cluster.servers[0]
+    return cluster.sgw_servers[0]
 
 
 def build_multihost_url(cluster, workload_settings):
     url_string = ''
-    for server in cluster.servers[:int(workload_settings.syncgateway_settings.nodes)]:
+    for server in cluster.sgw_servers:
         url = 'http://sg-user-0:password@{}:4984/db'.format(server) + ','
         url_string = url_string + url
     return url_string[:-1]

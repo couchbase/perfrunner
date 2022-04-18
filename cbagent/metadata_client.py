@@ -78,7 +78,6 @@ class MetadataClient(RestClient):
         return self.get(url, params)
 
     def add_cluster(self):
-        logger.info("add_cluster: {}".format(self.settings.cluster))
         if self.settings.cluster in self.get_clusters():
             return
 

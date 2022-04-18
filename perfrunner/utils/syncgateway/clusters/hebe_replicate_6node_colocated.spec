@@ -9,8 +9,9 @@ hebe_c2 =
     172.23.100.206:kv,index,n1ql
 
 [sync_gateways]
-sync_gateways =
+sync_gateways1 =
     172.23.100.193
+sync_gateways2 =
     172.23.100.207
 
 [clients]

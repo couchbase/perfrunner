@@ -1,9 +1,12 @@
 [clusters]
 hebe_1 =
-    172.23.100.193:kv,index,n1ql
     172.23.100.190:kv,index,n1ql
     172.23.100.191:kv,index,n1ql
     172.23.100.192:kv,index,n1ql
+
+[sync_gateways]
+sync_gateways =
+    172.23.100.193
 
 [clients]
 hosts =

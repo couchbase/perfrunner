@@ -671,7 +671,7 @@ class SGReplicateThroughputTest1(SGPerfTest):
         return time_elapsed, items_in_range
 
     def run(self):
-        masters = self.cluster_spec.masters
+        masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.remote.remove_sglogs()
@@ -712,7 +712,7 @@ class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
             self.rest.start_sg_replication(sg2_master, data)
 
     def run(self):
-        masters = self.cluster_spec.masters
+        masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.remote.remove_sglogs()
@@ -770,7 +770,7 @@ class SGReplicateThroughputTest2(SGPerfTest):
         return time_elapsed, items_in_range
 
     def run(self):
-        masters = self.cluster_spec.masters
+        masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.remote.remove_sglogs()
@@ -812,7 +812,7 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
             self.rest.start_sg_replication2(sg2_master, data)
 
     def run(self):
-        masters = self.cluster_spec.masters
+        masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.remote.remove_sglogs()
@@ -864,7 +864,7 @@ class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
         return time_elapsed, items_in_range
 
     def run(self):
-        masters = self.cluster_spec.masters
+        masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.start_replication(sg1_master, sg2_master)
@@ -919,7 +919,7 @@ class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
         return time_elapsed, items_in_range
 
     def run(self):
-        masters = self.cluster_spec.masters
+        masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.start_replication(sg1_master, sg2_master)
@@ -957,7 +957,7 @@ class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
         return time_elapsed, items_in_range
 
     def run(self):
-        masters = self.cluster_spec.masters
+        masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.start_replication(sg1_master, sg2_master)
@@ -1069,9 +1069,7 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
         replication_ids = []
         for node in range(int(self.sg_settings.nodes)):
             sg1 = self.cluster_spec.sgw_servers[node]
-            logger.info("sg1 stats: {}".format(self.rest.get_sgreplicate_stats(sg1, 2)))
-            nodes_per_cluster = int(self.sg_settings.nodes) + \
-                int(self.test_config.cluster.initial_nodes[0])
+            nodes_per_cluster = int(self.sg_settings.nodes)
             sg2 = self.cluster_spec.sgw_servers[node+nodes_per_cluster]
             replication_id = self.start_replication(sg1, sg2, node)
             sg1_nodes.append(sg1)

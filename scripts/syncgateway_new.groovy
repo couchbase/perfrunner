@@ -23,7 +23,8 @@ def buildTestsImport(tests) {
             string(name: 'test_type', value: test['test_type']),
             string(name: 'cluster', value: test['cluster']),
             string(name: 'load_config', value: test['load_config']),
-            string(name: 'test_config', value: test['test_config'])
+            string(name: 'test_config', value: test['test_config']),
+            string(name: 'sg_config', value: test['sg_config'])
         ]
     }
 }

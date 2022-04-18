@@ -1213,6 +1213,7 @@ def ch2_run_task(cluster_spec: ClusterSpec, warehouses: int, aclients: int = 0,
 
     with lcd('ch2/ch2driver/pytpcc/'):
         logger.info('Running: {}'.format(cmd))
+        local(cmd)
 
 
 def get_sg_logs(host: str, ssh_user: str, ssh_pass: str):

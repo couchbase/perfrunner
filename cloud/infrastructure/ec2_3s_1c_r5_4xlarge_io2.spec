@@ -25,9 +25,9 @@ storage_class = gp2
 [ec2_node_group_1]
 instance_type = r5.4xlarge
 instance_capacity = 3
-volume_size = 10000
+volume_size = 8000
 volume_type = io2
-iops = 100000
+iops = 64000
 
 [ec2_node_group_2]
 instance_type = c5.24xlarge
@@ -51,4 +51,4 @@ aws_key_name = korry
 OS = CentOS 7
 CPU = r5.4xlarge (16 vCPU)
 Memory = 128 GB
-Disk = EBS 10TB (io2)
+Disk = EBS 8TB (io2)

@@ -57,8 +57,8 @@ class AWSDeployer(Deployer):
         self.eks_node_role_path = "cloud/infrastructure/aws/eks/eks_node_role.yaml"
         self.generated_kube_config_dir = "cloud/infrastructure/generated/kube_configs"
         self.ebs_csi_iam_policy_path = "cloud/infrastructure/aws/eks/ebs-csi-iam-policy.json"
-        self.cloud_ini = "cloud/infrastructure/cloud.ini"
-        self.os_arch = self.infra_spec.infrastructure_settings.get('os_arch', 'x86_64')
+        self.cloud_ini = self.settings.get('cloud_ini', 'cloud/infrastructure/cloud.ini')
+        self.os_arch = self.settings.get('os_arch', 'x86_64')
         self.deployment_id = uuid4().hex
 
     def gen_desired_infrastructure_config(self):

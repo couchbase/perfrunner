@@ -189,7 +189,6 @@ class SGPerfTest(PerfTest):
             server = self.cluster_spec.servers[0]
         try:
             local.get_sg_logs_new(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
-            local.get_sg_console(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
         except Exception as ex:
             print(str(ex))
         if self.settings.syncgateway_settings.troublemaker:
@@ -204,6 +203,17 @@ class SGPerfTest(PerfTest):
                                                         ssh_pass=ssh_pass)
                 except Exception as ex:
                     print(str(ex))
+
+    def get_sg_console(self):
+        ssh_user, ssh_pass = self.cluster_spec.ssh_credentials
+        if self.cluster_spec.sgw_servers:
+            server = self.cluster_spec.sgw_servers[0]
+        else:
+            server = self.cluster_spec.servers[0]
+        try:
+            local.get_sg_console(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
+        except Exception as ex:
+            print(str(ex))
 
     def channel_list(self, number_of_channels: int):
         channels = []
@@ -247,6 +257,9 @@ class SGPerfTest(PerfTest):
         if self.settings.syncgateway_settings.collect_sgw_logs:
             self.compress_sg_logs()
             self.get_sg_logs()
+
+        if(self.settings.syncgateway_settings.collect_sgw_console):
+            self.get_sg_console()
 
 
 class SGRead(SGPerfTest):
@@ -1367,8 +1380,13 @@ class DeltaSync(SGPerfTest):
             self.db_cleanup()
         else:
             self.db_cleanup()
-        self.compress_sg_logs()
-        self.get_sg_logs()
+
+        if self.settings.syncgateway_settings.collect_sgw_logs:
+            self.compress_sg_logs()
+            self.get_sg_logs()
+
+        if(self.settings.syncgateway_settings.collect_sgw_console):
+            self.get_sg_console()
 
 
 class DeltaSyncParallel(DeltaSync):
@@ -1501,8 +1519,13 @@ class DeltaSyncParallel(DeltaSync):
             self.db_cleanup()
         else:
             self.db_cleanup()
-        self.compress_sg_logs()
-        self.get_sg_logs()
+
+        if self.settings.syncgateway_settings.collect_sgw_logs:
+            self.compress_sg_logs()
+            self.get_sg_logs()
+
+        if(self.settings.syncgateway_settings.collect_sgw_console):
+            self.get_sg_console()
 
 
 class EndToEndTest(SGPerfTest):
@@ -1712,8 +1735,13 @@ class EndToEndSingleCBLPushTest(EndToEndSingleCBLTest):
 
         self.report_kpi(sgw_load_tp, sgw_access_tp)
         local.cleanup_cblite_db_coninuous()
-        self.compress_sg_logs()
-        self.get_sg_logs()
+
+        if self.settings.syncgateway_settings.collect_sgw_logs:
+            self.compress_sg_logs()
+            self.get_sg_logs()
+
+        if(self.settings.syncgateway_settings.collect_sgw_console):
+            self.get_sg_console()
 
 
 class EndToEndSingleCBLPullTest(EndToEndSingleCBLTest):
@@ -1755,8 +1783,13 @@ class EndToEndSingleCBLPullTest(EndToEndSingleCBLTest):
 
         self.report_kpi(sgw_load_tp, sgw_access_tp)
         local.cleanup_cblite_db_coninuous()
-        self.compress_sg_logs()
-        self.get_sg_logs()
+
+        if self.settings.syncgateway_settings.collect_sgw_logs:
+            self.compress_sg_logs()
+            self.get_sg_logs()
+
+        if(self.settings.syncgateway_settings.collect_sgw_console):
+            self.get_sg_console()
 
 
 class EndToEndSingleCBLBidiTest(EndToEndSingleCBLTest):

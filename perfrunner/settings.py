@@ -2028,6 +2028,7 @@ class SyncgatewaySettings:
     CBL_VERBOSE_LOGGING = 0
     TROUBLEMAKER = None
     COLLECT_SGW_LOGS = 0
+    COLLECT_SGW_CONSOLE = 0
     DATA_INTEGRITY = 'false'
     REPLICATION_AUTH = 1
 
@@ -2119,6 +2120,7 @@ class SyncgatewaySettings:
         self.cbl_verbose_logging = int(options.get('cbl_verbose_logging', self.CBL_VERBOSE_LOGGING))
         self.troublemaker = options.get('troublemaker', self.TROUBLEMAKER)
         self.collect_sgw_logs = int(options.get('collect_sgw_logs', self.COLLECT_SGW_LOGS))
+        self.collect_sgw_console = int(options.get('collect_sgw_console', self.COLLECT_SGW_CONSOLE))
         self.data_integrity = options.get('data_integrity', self.DATA_INTEGRITY)
         self.replication_auth = int(options.get('replication_auth', self.REPLICATION_AUTH))
 

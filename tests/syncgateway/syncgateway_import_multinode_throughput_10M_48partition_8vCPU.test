@@ -2,10 +2,11 @@
 test = perfrunner.tests.syncgateway.SGImportThroughputTest
 
 [showfast]
-title = Avg Throughput (items/sec), 3 node (multinode import), 48 import_partitions, 10M docs, 1K docsize, 8vCPU
+title = Avg Throughput (items/sec), 3 node (multinode import), 48 import_partitions, 10M docs, 1K docsize, 8 vCPU
 component = syncgateway
 category = import
 sub_category = Throughput
+orderby = a11
 
 [cluster]
 mem_quota = 25000

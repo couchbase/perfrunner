@@ -1,5 +1,5 @@
 ---
-- hosts: servers
+- hosts: couchbase_servers
   gather_facts: no
   vars:
     data_dir: /data

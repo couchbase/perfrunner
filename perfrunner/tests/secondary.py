@@ -1172,7 +1172,7 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.observe_latency(percentile=90)
+            *self.metrics.secondary_scan_latency(percentile=90)
         )
 
     def run(self):

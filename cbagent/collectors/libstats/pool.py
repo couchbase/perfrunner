@@ -117,7 +117,7 @@ class Pool:
             self._cur_clients += 1
 
     def _make_client(self):
-        if self.collections:
+        if self.collections or cb_version[0] == '3':
             client = CollectionsWrapper(
                 self.host, self.bucket, self.username,
                 self.password, self.quiet, self.port

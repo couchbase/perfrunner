@@ -28,12 +28,12 @@ output "utility_instance_ips" {
     }
 }
 
-output "sync_gateway_instance_ips" {
+output "syncgateway_instance_ips" {
     value = {
-        for k, v in azurerm_virtual_machine.perf-sync_gateway-vm: k => {
+        for k, v in azurerm_virtual_machine.perf-syncgateway-vm: k => {
             node_group = v.tags["node_group"]
-            public_ip  = azurerm_public_ip.perf-public-sync_gateway[k].ip_address
-            private_ip = azurerm_network_interface.perf-sync_gateway-ni[k].private_ip_address
+            public_ip  = azurerm_public_ip.perf-public-syncgateway[k].ip_address
+            private_ip = azurerm_network_interface.perf-syncgateway-ni[k].private_ip_address
         }
     }
 }

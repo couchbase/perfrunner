@@ -90,19 +90,19 @@ class Terraform:
             },
             'clients': 'perf-client-sgw-cblite',  # ami-01b36cb3330d38ac5
             'utilities': 'perf-broker-us-east',  # ami-0d9e5ee360aa02d94
-            'sync_gateways': 'perf-server-2022-03-us-east',  # ami-005bce54f0c4e2248
+            'syncgateways': 'perf-server-2022-03-us-east',  # ami-005bce54f0c4e2248
         },
         'gcp': {
             'clusters': 'perftest-server-disk-image-1',
             'clients': 'perf-client-cblite-disk-image-3',
             'utilities': 'perftest-broker-disk-image',
-            'sync_gateways': 'perftest-server-disk-image-1'
+            'syncgateways': 'perftest-server-disk-image-1'
         },
         'azure': {
             'clusters': '{}/perf-server-image-def'.format(AZURE_IMAGE_URL_PREFIX),
             'clients': '{}/perf-client-image-def'.format(AZURE_IMAGE_URL_PREFIX),
             'utilities': '{}/perf-broker-image-def'.format(AZURE_IMAGE_URL_PREFIX),
-            'sync_gateways': '{}/perf-server-image-def'.format(AZURE_IMAGE_URL_PREFIX)
+            'syncgateways': '{}/perf-server-image-def'.format(AZURE_IMAGE_URL_PREFIX)
         }
     }
 
@@ -121,7 +121,7 @@ class Terraform:
             ],
             'clients': self.infra_spec.clients,
             'utilities': self.infra_spec.utilities,
-            'sync_gateways': self.infra_spec.sgw_servers
+            'syncgateways': self.infra_spec.sgw_servers
         }
 
         self.cloud_storage = bool(
@@ -156,14 +156,14 @@ class Terraform:
             'clusters': {},
             'clients': {},
             'utilities': {},
-            'sync_gateways': {}
+            'syncgateways': {}
         }
 
         cloud_provider = self.backend if self.provider == 'capella' else self.provider
 
         for role, nodes in self.node_list.items():
             # If this is a capella test, skip cluster nodes
-            if self.provider == 'capella' and role == 'clusters':
+            if self.provider == 'capella' and (role == 'clusters' or role == 'syncgateways'):
                 continue
 
             i = 0
@@ -178,7 +178,7 @@ class Terraform:
                     'clusters': 'cluster',
                     'clients': 'client',
                     'utilities': 'utility',
-                    'sync_gateways': 'sgw'
+                    'syncgateways': 'sgw'
                 }[role]))
 
                 # If image name isn't provided as cli param, use hardcoded defaults
@@ -222,7 +222,7 @@ class Terraform:
             '<CLUSTER_NODES>': tfvar_nodes['clusters'],
             '<CLIENT_NODES>': tfvar_nodes['clients'],
             '<UTILITY_NODES>': tfvar_nodes['utilities'],
-            '<SYNC_GATEWAY_NODES>': tfvar_nodes['sync_gateways'],
+            '<SYNCGATEWAY_NODES>': tfvar_nodes['syncgateways'],
             '<CLOUD_STORAGE>': self.cloud_storage,
             '<GLOBAL_TAG>': self.options.tag if self.options.tag else ""
         }
@@ -267,24 +267,24 @@ class Terraform:
 
     # Update spec file with deployed infrastructure.
     def update_spec(self, output):
-        sections = ['clusters', 'clients', 'utilities', 'sync_gateways']
+        sections = ['clusters', 'clients', 'utilities', 'syncgateways']
         cluster_dicts = [
             self.infra_spec.infrastructure_clusters,
             self.infra_spec.infrastructure_clients,
             self.infra_spec.infrastructure_utilities,
-            self.infra_spec.infrastructure_sync_gateways
+            self.infra_spec.infrastructure_syncgateways
         ]
         output_keys = [
             'cluster_instance_ips',
             'client_instance_ips',
             'utility_instance_ips',
-            'sync_gateway_instance_ips'
+            'syncgateway_instance_ips'
         ]
         private_sections = [
             'cluster_private_ips',
             'client_private_ips',
             'utility_private_ips',
-            'sync_gateway_private_ips'
+            'syncgateway_private_ips'
         ]
 
         for section, cluster_dict, output_key, private_section in zip(sections,
@@ -292,7 +292,8 @@ class Terraform:
                                                                       output_keys,
                                                                       private_sections):
             if (section not in self.infra_spec.config.sections()) or \
-               (self.provider == 'capella' and section == 'clusters'):
+               (self.provider == 'capella' and (section == 'clusters' or
+                                                section == 'syncgateways')):
                 continue
 
             for cluster, nodes in cluster_dict.items():
@@ -1375,6 +1376,297 @@ class EKSTerraform(Terraform):
     pass
 
 
+class AppServicesTerraform(Terraform):
+    def __init__(self, options):
+        super().__init__(options)
+
+        self.test_config = None
+        if options.test_config:
+            test_config = TestConfig()
+            test_config.parse(options.test_config, override=options.override)
+            self.test_config = test_config
+
+        self.backend = self.infra_spec.infrastructure_settings['backend']
+
+        if public_api_url := self.options.capella_public_api_url:
+            env = public_api_url.removeprefix('https://')\
+                                .removesuffix('.nonprod-project-avengers.com')\
+                                .split('.', 1)[1]
+            self.infra_spec.config.set('infrastructure', 'cbc_env', env)
+
+        if tenant := self.options.capella_tenant:
+            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
+
+        if project := self.options.capella_project:
+            self.infra_spec.config.set('infrastructure', 'cbc_project', project)
+
+        self.infra_spec.update_spec_file()
+
+        self.tenant_id = self.infra_spec.infrastructure_settings['cbc_tenant']
+        self.project_id = self.infra_spec.infrastructure_settings['cbc_project']
+        self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
+        self.cluster_id = self.cluster_ids[0]
+
+        logger.info("The tenant id is: {}".format(self.tenant_id))
+        logger.info("The project id is: {}".format(self.project_id))
+        logger.info("The cluster id is: {}".format(self.cluster_id))
+
+        self.api_client = CapellaAPIDedicated(
+            'https://cloudapi.{}.nonprod-project-avengers.com'.format(
+                self.infra_spec.infrastructure_settings['cbc_env']
+            ),
+            os.getenv('CBC_SECRET_KEY'),
+            os.getenv('CBC_ACCESS_KEY'),
+            os.getenv('CBC_USER'),
+            os.getenv('CBC_PWD')
+        )
+
+        self.capella_timeout = max(0, self.options.capella_timeout)
+
+    def deploy(self):
+        # Configure terraform
+        logger.info("Started deploying the AS")
+        # Deploy capella cluster
+        # Create sgw backend(app services)
+        logger.info("Deploying sgw backend")
+        sgw_cluster_id = self.deploy_cluster_internal_api()
+
+        # Create sgw database(app endpoint)
+        logger.info("Deploying sgw database")
+        sgw_db_id, sgw_db_name = self.deploy_sgw_db(sgw_cluster_id)
+
+        # Set sync function
+        logger.info("Setting sync function")
+        sync_function = "function (doc) { channel(doc.channels); }"
+        self.api_client.update_sync_function_sgw(self.tenant_id, self.project_id,
+                                                 self.cluster_id, sgw_cluster_id,
+                                                 sgw_db_name, sync_function)
+
+        # Resume sgw database
+        logger.info("Resuming sgw database")
+        self.api_client.resume_sgw_database(self.tenant_id, self.project_id,
+                                            self.cluster_id, sgw_cluster_id,
+                                            sgw_db_name)
+
+        # Allow my IP
+        logger.info("Whitelisting own IP on sgw backend")
+        self.api_client.allow_my_ip_sgw(self.tenant_id, self.project_id,
+                                        self.cluster_id, sgw_cluster_id)
+
+        # Add allowed IPs
+        logger.info("Whitelisting IPs")
+        client_ips = self.infra_spec.clients
+        logger.info("The client list is: {}".format(client_ips))
+        if self.infra_spec.capella_backend == 'aws':
+            client_ips = [
+                dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
+            ]
+        logger.info("The client list is: {}".format(client_ips))
+        for client_ip in client_ips:
+            self.api_client.add_allowed_ip_sgw(self.tenant_id, self.project_id,
+                                               sgw_cluster_id, self.cluster_id,
+                                               client_ip)
+
+        # Add app roles
+        logger.info("Adding app roles")
+        app_role = {"name": "moderator", "admin_channels": []}
+        self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
+                                         self.cluster_id, sgw_cluster_id,
+                                         sgw_db_name, app_role)
+        app_role = {"name": "admin", "admin_channels": []}
+        self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
+                                         self.cluster_id, sgw_cluster_id,
+                                         sgw_db_name, app_role)
+
+        # Add user
+        logger.info("Adding user")
+        user = {"email": "", "password": "Password123!", "name": "guest",
+                "disabled": False, "admin_channels": ["*"], "admin_roles": []}
+        self.api_client.add_user_sgw(self.tenant_id, self.project_id,
+                                     self.cluster_id, sgw_cluster_id,
+                                     sgw_db_name, user)
+
+        # Add admin user
+        logger.info("Adding admin user")
+        admin_user = {"name": "Administrator", "password": "Password123!"}
+        self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
+                                           self.cluster_id, sgw_cluster_id,
+                                           sgw_db_name, admin_user)
+
+        # Update cluster spec file
+        self.update_spec(sgw_cluster_id, sgw_db_name)
+
+    def destroy(self):
+        # Destroy capella cluster
+        sgw_cluster_id = self.infra_spec.infrastructure_settings['app_services_cluster']
+        self.destroy_cluster_internal_api(sgw_cluster_id)
+
+    def update_spec(self, sgw_cluster_id, sgw_db_name):
+        # Get sgw public and private ips
+        resp = self.api_client.get_sgw_links(self.tenant_id, self.project_id,
+                                             self.cluster_id, sgw_cluster_id,
+                                             sgw_db_name)
+
+        logger.info("The connect response is: {}".format(resp))
+        adminurl = resp.json().get('data').get('adminURL').split(':')[1].split('//')[1]
+        logger.info("The admin url is: {}".format(adminurl))
+        self.infra_spec.config.add_section('sgw_schemas')
+        for option, value in self.infra_spec.infrastructure_syncgateways.items():
+            self.infra_spec.config.set('sgw_schemas', option, value)
+
+        sgw_option = self.infra_spec.config.options('syncgateways')[0]
+        sgw_list = []
+        for i in range(0, self.test_config.syncgateway_settings.nodes):
+            sgw_list.append(adminurl)
+        logger.info("the sgw list is: {}".format(sgw_list))
+        self.infra_spec.config.set('syncgateways', sgw_option, '\n' + '\n'.join(sgw_list))
+        self.infra_spec.update_spec_file()
+
+    @staticmethod
+    def capella_sgw_group_sizes(self, node_schemas):
+        sgw_groups = {}
+        for node in node_schemas:
+            _, cluster, node_group, _ = node.split('.')
+            if cluster not in sgw_groups:
+                sgw_groups[cluster] = [node_group]
+            else:
+                sgw_groups[cluster].append(node_group)
+
+        sgw_group_sizes = {
+            cluster: Counter(node_groups) for cluster, node_groups in sgw_groups.items()
+        }
+
+        return sgw_group_sizes
+
+    def construct_capella_sgw_groups(self, infra_spec, node_schemas):
+        sgw_groups = AppServicesTerraform.capella_sgw_group_sizes(node_schemas)
+
+        for sgw_groups in sgw_groups.items():
+
+            for (node_group) in sgw_groups.items():
+                node_group_config = infra_spec.infrastructure_section(node_group)
+
+                return node_group_config['instance_type']
+
+    def deploy_cluster_internal_api(self):
+        """Sample config.
+
+        {
+            "clusterId": "71eff4a9-bc4a-442f-8196-3339f9128c08",
+            "name": "my-sync-gateway-backend",
+            "description": "sgw backend that drives my amazing app",
+            "desired_capacity": 2
+            "compute": {"type":"c5.large"}
+        }
+        """
+        config = {
+            "clusterId": self.cluster_id,
+            "name": "perf-sgw-{}".format(self.uuid),
+            "description": "",
+            "desired_capacity": self.test_config.syncgateway_settings.nodes,
+            "compute": {"type": self.test_config.syncgateway_settings.instance}
+        }
+
+        logger.info("The payload is: {}".format(config))
+
+        if self.options.capella_cb_version and self.options.capella_sgw_ami:
+            config['overRide'] = {
+                'token': os.getenv('CBC_OVERRIDE_TOKEN'),
+                'server': self.options.capella_cb_version,
+                'image': self.options.capella_sgw_ami
+            }
+            logger.info('Deploying with custom AMI: {}'.format(self.options.capella_sgw_ami))
+
+        resp = self.api_client.create_sgw_backend(self.tenant_id, config)
+        raise_for_status(resp)
+        sgw_cluster_id = resp.json().get('id')
+        logger.info('Initialised app services deployment {}'.format(sgw_cluster_id))
+        logger.info('Saving app services ID to spec file.')
+
+        self.infra_spec.config.set('infrastructure', 'app_services_cluster', sgw_cluster_id)
+        self.infra_spec.update_spec_file()
+
+        timeout_mins = self.capella_timeout
+        interval_secs = 30
+        pending_sgw_cluster = sgw_cluster_id
+        t0 = time()
+        while pending_sgw_cluster and (time() - t0) < timeout_mins * 60:
+            sleep(interval_secs)
+
+            status = self.api_client.get_sgw_info(self.tenant_id, self.project_id,
+                                                  self.cluster_id, sgw_cluster_id).json() \
+                                                                                  .get('data') \
+                                                                                  .get('status') \
+                                                                                  .get('state')
+            logger.info('Cluster state for {}: {}'.format(pending_sgw_cluster, status))
+            if status == "deploymentFailed":
+                logger.error('Deployment failed for cluster {}. DataDog link for debugging: {}'
+                             .format(pending_sgw_cluster,
+                                     format_datadog_link(cluster_id=pending_sgw_cluster)))
+                exit(1)
+
+            if status == "healthy":
+                break
+
+        return sgw_cluster_id
+
+    def deploy_sgw_db(self, sgw_cluster_id):
+        """Sample config.
+
+        {
+            "name": "sgw-1",
+            "sync": "",
+            "bucket": "bucket-1",
+            "delta_sync": false,
+            "import_filter": ""
+        }
+        """
+        sgw_db_name = "db-1"
+        config = {
+            "name": "db-1",
+            "sync": "",
+            "bucket": "bucket-1",
+            "delta_sync": False,
+            "import_filter": ""
+        }
+        logger.info(config)
+
+        resp = self.api_client.create_sgw_database(self.tenant_id, self.project_id,
+                                                   self.cluster_id, sgw_cluster_id, config)
+        raise_for_status(resp)
+        sgw_db_id = resp.json().get('id')
+        logger.info('Initialised sgw database deployment {}'.format(sgw_db_id))
+        logger.info('Saving sgw db ID to spec file.')
+
+        sleep(10)
+
+        return sgw_db_id, sgw_db_name
+
+    def destroy_cluster_internal_api(self, sgw_cluster_id):
+        logger.info('Deleting Capella App Services cluster...')
+        resp = self.api_client.delete_sgw_backend(self.tenant_id, self.project_id,
+                                                  self.cluster_id, sgw_cluster_id)
+
+        timeout_mins = self.capella_timeout
+        interval_secs = 30
+        pending_sgw_cluster = sgw_cluster_id
+        t0 = time()
+        while pending_sgw_cluster and (time() - t0) < timeout_mins * 60:
+            sleep(interval_secs)
+            try:
+                status = self.api_client.get_sgw_info(self.tenant_id, self.project_id,
+                                                      self.cluster_id, sgw_cluster_id)
+                status = status.json().get('data').get('status').get('state')
+                logger.info('Cluster state for {}: {}'.format(pending_sgw_cluster, status))
+            except Exception as e:
+                logger.info("The exception is: {}".format(e))
+                sleep(30)
+                break
+
+        raise_for_status(resp)
+        logger.info('Capella App Services cluster successfully queued for deletion.')
+
+
 # CLI args.
 def get_args():
     parser = ArgumentParser()
@@ -1451,6 +1743,8 @@ def get_args():
                         help='cb version to use for Capella deployment')
     parser.add_argument('--capella-ami',
                         help='custom AMI to use for Capella deployment')
+    parser.add_argument('--capella-sgw-ami',
+                        help='custom AMI to use for App Services Capella Deployment')
     parser.add_argument('--dapi-ami',
                         help='AMI to use for Data API deployment (serverless)')
     parser.add_argument('--dapi-override-count',
@@ -1509,6 +1803,8 @@ def destroy():
         deployer = Terraform(args)
     elif infra_spec.serverless_infrastructure:
         deployer = ServerlessTerraform(args)
+    elif infra_spec.app_services == 'true':
+        deployer = AppServicesTerraform(args)
     else:
         deployer = CapellaTerraform(args)
 
@@ -1523,6 +1819,8 @@ def main():
         deployer = Terraform(args)
     elif infra_spec.serverless_infrastructure:
         deployer = ServerlessTerraform(args)
+    elif infra_spec.app_services == 'true':
+        deployer = AppServicesTerraform(args)
     else:
         deployer = CapellaTerraform(args)
 

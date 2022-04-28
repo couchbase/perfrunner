@@ -48,25 +48,26 @@ class SGImportLatency(Collector):
         self.interval = self.MAX_SAMPLING_INTERVAL
         self.cluster = settings.cluster
         self.clients = []
-        self.cb_host = self.cluster_spec.servers[int(self.test_config.nodes)]
-        self.sg_host = next(self.cluster_spec.masters)
+        self.cb_host = self.cluster_spec.servers[0]
+        self.sg_host = next(cluster_spec.sgw_masters)
         src_client = new_client(host=self.cb_host,
                                 bucket='bucket-1',
                                 password='password',
                                 timeout=self.TIMEOUT)
         self.clients.append(('bucket-1', src_client))
+        self.sg_db = 'db-1'
         self.new_docs = SGImportLatencyDocument(1024)
 
     def check_longpoll_changefeed(self, host: str, key: str, last_sequence: str):
         logger.info("checking longpoll changefeed")
-        sg_db = 'db'
-        api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
+        if self.cluster_spec.capella_infrastructure:
+            api = 'https://{}:4985/{}/_changes'.format(host, self.sg_db)
+        else:
+            api = 'http://{}:4985/{}/_changes'.format(host, self.sg_db)
         last_sequence_str = "{}".format(last_sequence)
-        data = {'filter': 'sync_gateway/bychannel',
-                'feed': 'longpoll',
-                "channels": "123",
+        data = {'feed': 'longpoll',
                 "since": last_sequence_str,
-                "heartbeat": 3600000}
+                "heartbeat": 360}
         logger.info("longpoll data: {}, url: {}".format(data, api))
         try:
             logger.info("longpoll posting")
@@ -82,12 +83,12 @@ class SGImportLatency(Collector):
         if response.status_code == 200:
             for record in response.json()['results']:
                 if record['id'] == key:
-                    record_found = 1
-                    break
+                    record_found += 1
             logger.info("longpoll records found: {}".format(record_found))
-            if record_found != 1:
+            if record_found == 0:
                 self.check_longpoll_changefeed(host=host, key=key, last_sequence=last_sequence)
         logger.info("checked longpoll changefeed")
+        logger.info("the number of records found is: {}".format(record_found))
         return t1
 
     def insert_doc(self, src_client, key: str, doc):
@@ -98,11 +99,11 @@ class SGImportLatency(Collector):
 
     def get_lastsequence(self, host: str):
         logger.info("getting last sequence")
-        sg_db = 'db'
-        api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
-        data = {'filter': 'sync_gateway/bychannel',
-                'feed': 'normal',
-                "channels": "123",
+        if self.cluster_spec.capella_infrastructure:
+            api = 'https://{}:4985/{}/_changes'.format(host, self.sg_db)
+        else:
+            api = 'http://{}:4985/{}/_changes'.format(host, self.sg_db)
+        data = {'feed': 'normal',
                 "since": "0"
                 }
         response = requests.post(url=api, data=json.dumps(data))
@@ -123,14 +124,11 @@ class SGImportLatency(Collector):
                                   key=key,
                                   last_sequence=last_sequence)
         future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
-        logger.info("waiting on t0")
         t0 = future2.result()
-        logger.info("t0: {}".format(t0))
-        logger.info("waiting on t1")
         t1 = future1.result()
-        logger.info("t1; {}".format(t1))
-        logger.info('import latency t1, t0', t1, t0, (t1 - t0) * 1000)
-        return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
+        logger.info('import latency t1: {}, t0: {}, diff: {}'.format(t1, t0,
+                                                                     (t1 - t0)))
+        return {'sgimport_latency': (t1 - t0)}
 
     def sample(self):
         for bucket, src_client in self.clients:

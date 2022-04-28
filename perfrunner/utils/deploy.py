@@ -29,7 +29,7 @@ class Deployer:
         self.settings = self.infra_spec.infrastructure_settings
         self.clusters = self.infra_spec.infrastructure_clusters
         self.clients = self.infra_spec.infrastructure_clients
-        self.sync_gateways = self.infra_spec.infrastructure_sync_gateways
+        self.syncgateways = self.infra_spec.infrastructure_syncgateways
         self.utilities = self.infra_spec.infrastructure_utilities
         self.infra_config = self.infra_spec.infrastructure_config()
         self.generated_cloud_config_path = self.infra_spec.generated_cloud_config_path
@@ -540,8 +540,8 @@ class AWSDeployer(Deployer):
                                 tags.append({'Key': 'NodeRoles', 'Value': k})
                                 break
                     if not node_role:
-                        for k, v in self.sync_gateways.items():
-                            if 'sync_gateways' in k and resource_path in v:
+                        for k, v in self.syncgateways.items():
+                            if 'syncgateways' in k and resource_path in v:
                                 node_role = k
                                 tags.append({'Key': 'NodeRoles', 'Value': k})
                                 break
@@ -575,7 +575,7 @@ class AWSDeployer(Deployer):
                         else:
                             logger.info("Server AMI: " + str(ami))
                             ami = 'ami-83b400fb'
-                    elif "sync_gateway" in node_role:  # perf server ami
+                    elif "syncgateway" in node_role:  # perf server ami
                         if self.region == 'us-east-1':
                             ami = 'ami-005bce54f0c4e2248'
                         else:
@@ -820,7 +820,7 @@ class AWSDeployer(Deployer):
                 self.deployed_infra = json.load(f)
             clusters = self.infra_spec.infrastructure_clusters
             clients = self.infra_spec.infrastructure_clients
-            sgws = self.infra_spec.infrastructure_sync_gateways
+            sgws = self.infra_spec.infrastructure_syncgateways
             utilities = self.infra_spec.infrastructure_utilities
             backup = self.infra_spec.backup
             node_group_ips = {}
@@ -915,7 +915,7 @@ class AWSDeployer(Deployer):
                     s = f.read()
                 with open(self.cluster_path, 'w') as f:
                     for replace_pair in address_replace_list:
-                        s = s.replace(replace_pair[0], replace_pair[1])
+                        s = s.replace(replace_pair[0], replace_pair[1], 1)
                     f.write(s)
 
             for cluster, hosts in utilities.items():
@@ -1137,15 +1137,63 @@ class GCPDeployer(Deployer):
                 "network": network,
                 "direction": "INGRESS",
                 "target_tags": [
-                    "server"
+                    "server",
                 ],
                 "allowed": [
                     compute.Allowed(
                         I_p_protocol="tcp",
                         ports=[
+                            "4984",
+                            "4985",
+                            "4988",
+                            "8000",
                             "8091-8096",
+                            "9998-9999",
                             "18091-18096",
                             "11210"
+                        ]
+                    )
+                ],
+                "source_ranges": [
+                    "0.0.0.0/0"
+                ]
+            },
+            {
+                # Allow connections from any IP address to the sgw ports
+                "name": "{}-allow-sgw".format(vpc_name),
+                "network": network,
+                "direction": "INGRESS",
+                "target_tags": [
+                    "sgws"
+                ],
+                "allowed": [
+                    compute.Allowed(
+                        I_p_protocol="tcp",
+                        ports=[
+                            "4984",
+                            "4985",
+                            "4988",
+                        ]
+                    )
+                ],
+                "source_ranges": [
+                    "0.0.0.0/0"
+                ]
+            },
+            {
+                # Allow connections from any IP address to the memcached and cblite ports
+                "name": "{}-allow-client".format(vpc_name),
+                "network": network,
+                "direction": "INGRESS",
+                "target_tags": [
+                    "client"
+                ],
+                "allowed": [
+                    compute.Allowed(
+                        I_p_protocol="tcp",
+                        ports=[
+                            "4980-5500",
+                            "7990-8010"
                         ]
                     )
                 ],
@@ -1243,7 +1291,8 @@ class GCPDeployer(Deployer):
                                     )
                                     instance_conf['labels']['node_roles'] = k
                                     instance_conf['tags'] = ['server'] + services.split(',')
-                                    instance_conf['boot_disk_image'] = 'perftest-server-disk-image'
+                                    instance_conf['boot_disk_image'] = \
+                                        'perftest-server-disk-image-1'
                                     instances.append(instance_conf)
 
                     # Find all the clients in the current node group,
@@ -1259,7 +1308,8 @@ class GCPDeployer(Deployer):
                                     )
                                     instance_conf['labels']['node_roles'] = k
                                     instance_conf['tags'] = ['client']
-                                    instance_conf['boot_disk_image'] = 'perftest-client-disk-image'
+                                    instance_conf['boot_disk_image'] = \
+                                        'perf-client-cblite-disk-image-3'
                                     instances.append(instance_conf)
 
                     # Find all the brokers in the current node group,
@@ -1275,7 +1325,25 @@ class GCPDeployer(Deployer):
                                     )
                                     instance_conf['labels']['node_roles'] = k
                                     instance_conf['tags'] = ['broker']
-                                    instance_conf['boot_disk_image'] = 'perftest-broker-disk-image'
+                                    instance_conf['boot_disk_image'] = \
+                                        'perftest-broker-disk-image'
+                                    instances.append(instance_conf)
+
+                    # Find all the sync gateways in the current node group,
+                    # and add them to the instance list
+                    for k, v in self.syncgateways.items():
+                        if 'syncgateways' in k:
+                            i = 0
+                            for host in v.split():
+                                if resource_path in host:
+                                    instance_conf = deepcopy(instance_template)
+                                    instance_conf['name'] = "perf-{}-{}-{}".format(
+                                        k, (i := i+1), self.deployment_id
+                                    )
+                                    instance_conf['labels']['node_roles'] = k
+                                    instance_conf['tags'] = ['sgws']
+                                    instance_conf['boot_disk_image'] = \
+                                        'perftest-server-disk-image-1'
                                     instances.append(instance_conf)
 
                     if num_nodes != len(instances):
@@ -1443,6 +1511,7 @@ class GCPDeployer(Deployer):
         clusters = self.infra_spec.infrastructure_clusters
         clients = self.infra_spec.infrastructure_clients
         utilities = self.infra_spec.infrastructure_utilities
+        sgws = self.infra_spec.infrastructure_syncgateways
         backup = self.infra_spec.backup
 
         # Build up dictionary of node identifiers and their public and private IP addresses
@@ -1457,7 +1526,7 @@ class GCPDeployer(Deployer):
                 }
             node_group_ips[node_group_name] = ips
 
-        internal_ip_section = "\n[private_ips]\n"
+        internal_ip_section = "\n[cluster_private_ips]\n"
 
         # Iterate through server clusters and replace node identifiers with IPs in the infra spec
         server_list = ""
@@ -1482,7 +1551,7 @@ class GCPDeployer(Deployer):
                 s = f.read()
             with open(self.cluster_path, 'w') as f:
                 for replace_pair in public_address_replace_list:
-                    s = s.replace(replace_pair[0], replace_pair[1])
+                    s = s.replace(replace_pair[0], replace_pair[1], 1)
                 f.write(s)
 
         # Append the internal IP section to the infra spec
@@ -1513,7 +1582,7 @@ class GCPDeployer(Deployer):
                 s = f.read()
             with open(self.cluster_path, 'w') as f:
                 for replace_pair in address_replace_list:
-                    s = s.replace(replace_pair[0], replace_pair[1])
+                    s = s.replace(replace_pair[0], replace_pair[1], 1)
                 f.write(s)
 
         # Add all of the clients to the cloud.ini file
@@ -1521,6 +1590,33 @@ class GCPDeployer(Deployer):
             s = f.read()
         with open(self.cloud_ini, 'w') as f:
             s = s.replace("worker_list", worker_list)
+            f.write(s)
+
+        # Iterate through sgw clusters and replace node identifiers with IPs in the infra spec
+        sgw_list = ""
+        for cluster, hosts in sgws.items():
+            address_replace_list = []
+            for host in hosts.split():
+                node_group, node_num = host.split(".")[2:4]
+                public_ip = node_group_ips[node_group][node_num]['public']
+                address_replace_list.append((host, public_ip))
+                sgw_list += "{}\n".format(public_ip)
+            sgw_list = sgw_list.rstrip()
+
+            logger.info("sgw: {}, hosts: {}".format(cluster, str(address_replace_list)))
+
+            with open(self.cluster_path) as f:
+                s = f.read()
+            with open(self.cluster_path, 'w') as f:
+                for replace_pair in address_replace_list:
+                    s = s.replace(replace_pair[0], replace_pair[1], 1)
+                f.write(s)
+
+        # Add all of the clients to the cloud.ini file
+        with open(self.cloud_ini) as f:
+            s = f.read()
+        with open(self.cloud_ini, 'w') as f:
+            s = s.replace("sgw_list", sgw_list)
             f.write(s)
 
         # Iterate through broker clusters and replace node identifiers with IPs in the infra spec
@@ -1538,7 +1634,7 @@ class GCPDeployer(Deployer):
                 s = f.read()
             with open(self.cluster_path, 'w') as f:
                 for replace_pair in address_replace_list:
-                    s = s.replace(replace_pair[0], replace_pair[1])
+                    s = s.replace(replace_pair[0], replace_pair[1], 1)
                 f.write(s)
 
         # Replace backup storage bucket name in infra spec (if exists)

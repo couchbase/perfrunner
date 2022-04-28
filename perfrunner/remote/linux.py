@@ -18,7 +18,6 @@ from perfrunner.remote.context import (
     master_client,
     master_server,
     servers_by_role,
-    syncgateway_master_server,
     syncgateway_servers,
 )
 from perfrunner.settings import ClusterSpec
@@ -564,7 +563,7 @@ class RemoteLinux(Remote):
     @syncgateway_servers
     def enable_cpu(self):
         logger.info('Enabling all CPU cores')
-        for i in range(self.num_vcpu):
+        for i in range(1, self.num_vcpu):
             run('echo 1 > /sys/devices/system/cpu/cpu{}/online'.format(i))
 
     @servers_by_role(roles=['index'])
@@ -1131,7 +1130,7 @@ class RemoteLinux(Remote):
         cmd = 'tar cvzf /home/sync_gateway/syncgateway_logs.tar.gz /home/sync_gateway/logs'
         run(cmd, warn_only=True)
 
-    @syncgateway_master_server
+    @syncgateway_servers
     def compress_sg_logs_new(self):
         logger.info('Compressing Syncgateway log folders')
         run('rm -rf /tmp/sglogs_temp', warn_only=True)
@@ -1143,9 +1142,10 @@ class RemoteLinux(Remote):
 
     @syncgateway_servers
     def remove_sglogs(self):
-        logger.info('removing old sglogs')
-        cmd = 'rm -rf /var/tmp/sglogs/*'
-        run(cmd)
+        if not self.cluster_spec.capella_infrastructure:
+            logger.info('removing old sglogs')
+            cmd = 'rm -rf /var/tmp/sglogs/*'
+            run(cmd)
 
     @all_clients
     def download_blockholepuller(self):

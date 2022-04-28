@@ -812,7 +812,7 @@ def run_cmd(path, command, parameters, output_file):
         local(cmd)
 
 
-def restart_memcached(mem_limit: int = 10000, port: int = 8000, mem_host: str = 'localhost'):
+def restart_memcached(mem_host: str = 'localhost', mem_limit: int = 10000, port: int = 8000):
     cmd1 = 'systemctl stop memcached'
     logger.info('Running: {}'.format(cmd1))
     with settings(warn_only=True):
@@ -1379,16 +1379,17 @@ def get_sg_logs(host: str, ssh_user: str, ssh_pass: str):
 
 
 def get_sg_logs_new(host: str, ssh_user: str, ssh_pass: str):
-    local('sshpass -p {} scp {}@{}:/var/tmp/sglogs/syncgateway_logs.tar.gz ./'.format(ssh_pass,
-                                                                                      ssh_user,
-                                                                                      host))
+    local('sshpass -p {0} scp {1}@{2}:/var/tmp/sglogs/syncgateway_logs.tar.gz '
+          './{2}_syncgateway_logs.tar.gz'.format(ssh_pass,
+                                                 ssh_user,
+                                                 host))
 
 
 def get_sg_console(host: str, ssh_user: str, ssh_pass: str):
     with settings(warn_only=True):
-        local('sshpass -p {} scp {}@{}:/var/tmp/sg_console* ./'.format(ssh_pass,
-                                                                       ssh_user,
-                                                                       host))
+        local('sshpass -p {0} scp {1}@{2}:/var/tmp/sg_console* ./{2}_sg_console*'.format(ssh_pass,
+                                                                                         ssh_user,
+                                                                                         host))
 
 
 def get_troublemaker_logs(host: str, ssh_user: str, ssh_pass: str):
@@ -1409,7 +1410,7 @@ def rename_troublemaker_logs(from_host: str):
 
 
 def run_blackholepuller(host, clients, timeout, stderr_file_name, log_file_name):
-    local('./blackholePuller -url http://sg-user-0:password@{}:4984/db -clients {}'
+    local('./blackholePuller -url http://sg-user-0:password@{}:4984/db-1 -clients {}'
           ' -timeout {}s 2>{}.log 1>{}.json'.format(host, clients,
                                                     timeout,
                                                     stderr_file_name,
@@ -1427,7 +1428,7 @@ def run_blackholepuller_adv(url_str, clients, timeout, stderr_file_name, log_fil
 def run_newdocpusher(host, changebatchset, clients, timeout, stderr_file_name,
                      log_file_name, doc_id_prefix, doc_size):
 
-    local('./newDocPusher -url http://sg-user-0:password@{}:4984/db -changesBatchSize {} '
+    local('./newDocPusher -url http://sg-user-0:password@{}:4984/db-1 -changesBatchSize {} '
           '-clients {} -docSize {} -docIDPrefix {}'
           ' -timeout {}s 2>{}.log 1>{}.json'.format(host, changebatchset, clients,
                                                     doc_size, doc_id_prefix,
@@ -1465,19 +1466,29 @@ def remove_sg_newdocpusher_logs():
     local('rm -rf *newdocpush*')
 
 
-def replicate_push(cblite_db: str, sgw_ip: str):
-    cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-          'push --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
-          'ws://{1}:4984/db'.format(cblite_db, sgw_ip)
+def replicate_push(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
+    if cluster_spec.capella_infrastructure:
+        cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+              'push --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
+              'wss://{1}:4984/db-1'.format(cblite_db, sgw_ip)
+    else:
+        cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+              'push --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
+              'ws://{1}:4984/db-1'.format(cblite_db, sgw_ip)
     logger.info('Running: {}'.format(cmd))
     with quiet():
         return local(cmd, capture=True)
 
 
-def replicate_pull(cblite_db: str, sgw_ip: str):
-    cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-          'pull --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
-          'ws://{1}:4984/db'.format(cblite_db, sgw_ip)
+def replicate_pull(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
+    if cluster_spec.capella_infrastructure:
+        cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+              'pull --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
+              'wss://{1}:4984/db-1'.format(cblite_db, sgw_ip)
+    else:
+        cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+              'pull --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
+              'ws://{1}:4984/db-1'.format(cblite_db, sgw_ip)
     logger.info('Running: {}'.format(cmd))
     with quiet():
         return local(cmd, capture=True)
@@ -1514,19 +1525,29 @@ def build_cblite():
         local('/usr/bin/make -j 5')
 
 
-def replicate_push_continuous(cblite_db: str, sgw_ip: str):
-    cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-          'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-          'ws://{1}:4984/db &>/dev/null &'.format(cblite_db, sgw_ip)
+def replicate_push_continuous(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
+    if cluster_spec.capella_infrastructure:
+        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+              'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
+              'wss://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
+    else:
+        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+              'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
+              'ws://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
     logger.info('Running: {}'.format(cmd))
     with quiet():
         local(cmd)
 
 
-def replicate_pull_continuous(cblite_db: str, sgw_ip: str):
-    cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-          'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-          'ws://{1}:4984/db &>/dev/null &'.format(cblite_db, sgw_ip)
+def replicate_pull_continuous(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
+    if cluster_spec.capella_infrastructure:
+        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+              'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
+              'wss://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
+    else:
+        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+              'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
+              'ws://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
     logger.info('Running: {}'.format(cmd))
     with quiet():
         local(cmd)

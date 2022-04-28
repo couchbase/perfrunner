@@ -6,15 +6,18 @@ hebe =
     172.23.100.193:n1ql
     172.23.100.207:index
 
-[sync_gateways]
-sync_gateways =
+[syncgateways]
+syncgateways =
     172.23.100.204
     172.23.100.205
     172.23.100.206
 
 [clients]
 hosts =
-    172.23.100.194
+    172.23.97.250
+    172.23.97.251
+    172.23.97.252
+    172.23.97.253
 credentials = root:couchbase
 
 [storage]

@@ -39,7 +39,7 @@ variable "utility_nodes" {
   }))
 }
 
-variable "sync_gateway_nodes" {
+variable "syncgateway_nodes" {
   type = map(object({
     node_group    = string
     image         = string
@@ -124,10 +124,10 @@ resource "azurerm_public_ip" "perf-public-utility" {
 }
 
 # Create public utility ip(s).
-resource "azurerm_public_ip" "perf-public-sync_gateway" {
-  for_each = var.sync_gateway_nodes
+resource "azurerm_public_ip" "perf-public-syncgateway" {
+  for_each = var.syncgateway_nodes
 
-  name                = "perf-sync_gateway-public-ip-${each.key}-${var.uuid}"
+  name                = "perf-syncgateway-public-ip-${each.key}-${var.uuid}"
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
@@ -205,19 +205,19 @@ resource "azurerm_network_interface" "perf-utility-ni" {
 }
 
 # Create network interface, map public ips.
-resource "azurerm_network_interface" "perf-sync_gateway-ni" {
-  for_each = var.sync_gateway_nodes
+resource "azurerm_network_interface" "perf-syncgateway-ni" {
+  for_each = var.syncgateway_nodes
 
-  name                          = "perf-sync_gateway-ni${each.key}-${var.uuid}"
+  name                          = "perf-syncgateway-ni${each.key}-${var.uuid}"
   location                      = "East US"
   resource_group_name           = "perf-resources-eastus"
   enable_accelerated_networking = true
 
   ip_configuration {
-    name                          = "perf-sync_gateway-private-ip-${each.key}-${var.uuid}"
+    name                          = "perf-syncgateway-private-ip-${each.key}-${var.uuid}"
     subnet_id                     = azurerm_subnet.perf-sn.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.perf-public-sync_gateway[each.key].id
+    public_ip_address_id          = azurerm_public_ip.perf-public-syncgateway[each.key].id
   }
 
   tags = {
@@ -281,10 +281,10 @@ resource "azurerm_managed_disk" "perf-utility-disk" {
 }
 
 # Config and create sync gateway disk(s).
-resource "azurerm_managed_disk" "perf-sync_gateway-disk" {
-  for_each = var.sync_gateway_nodes
+resource "azurerm_managed_disk" "perf-syncgateway-disk" {
+  for_each = var.syncgateway_nodes
 
-  name                 = "perf-sync_gateway-disk-${each.key}-${var.uuid}"
+  name                 = "perf-syncgateway-disk-${each.key}-${var.uuid}"
   location             = "East US"
   resource_group_name  = "perf-resources-eastus"
   storage_account_type = each.value.storage_class
@@ -429,13 +429,13 @@ resource "azurerm_virtual_machine" "perf-utility-vm" {
 }
 
 # Create sync gateway VM(s).
-resource "azurerm_virtual_machine" "perf-sync_gateway-vm" {
-  for_each = var.sync_gateway_nodes
+resource "azurerm_virtual_machine" "perf-syncgateway-vm" {
+  for_each = var.syncgateway_nodes
 
-  name                  = "perf-sync_gateway-vm-${each.key}-${var.uuid}"
+  name                  = "perf-syncgateway-vm-${each.key}-${var.uuid}"
   location              = "East US"
   resource_group_name   = "perf-resources-eastus"
-  network_interface_ids = [azurerm_network_interface.perf-sync_gateway-ni[each.key].id]
+  network_interface_ids = [azurerm_network_interface.perf-syncgateway-ni[each.key].id]
   vm_size               = each.value.instance_type
 
   storage_image_reference {
@@ -443,18 +443,18 @@ resource "azurerm_virtual_machine" "perf-sync_gateway-vm" {
   }
 
   storage_os_disk {
-    name                 = "perf-sync_gateway-os-disk-${each.key}-${var.uuid}"
+    name                 = "perf-syncgateway-os-disk-${each.key}-${var.uuid}"
     caching              = "ReadWrite"
     managed_disk_type    = "Premium_LRS"
     create_option        = "FromImage"
   }
 
   storage_data_disk {
-    name            = azurerm_managed_disk.perf-sync_gateway-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-sync_gateway-disk[each.key].id
+    name            = azurerm_managed_disk.perf-syncgateway-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-syncgateway-disk[each.key].id
     create_option   = "Attach"
     lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-sync_gateway-disk[each.key].disk_size_gb
+    disk_size_gb    = azurerm_managed_disk.perf-syncgateway-disk[each.key].disk_size_gb
     caching         = "ReadWrite"
   }
 
@@ -462,7 +462,7 @@ resource "azurerm_virtual_machine" "perf-sync_gateway-vm" {
   delete_data_disks_on_termination = true
 
   tags = {
-    role       = "sync_gateway"
+    role       = "syncgateway"
     node_group = each.value.node_group
     deployment = var.global_tag != "" ? var.global_tag : null
   }

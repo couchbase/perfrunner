@@ -88,6 +88,10 @@ class ClusterSpec(Config):
         return self.config.get('infrastructure', 'backend', fallback='')
 
     @property
+    def app_services(self):
+        return self.config.get('infrastructure', 'app_services', fallback='')
+
+    @property
     def kubernetes_infrastructure(self):
         if self.cloud_infrastructure and not self.capella_infrastructure:
             return self.infrastructure_settings.get("type", "kubernetes") == "kubernetes"
@@ -124,9 +128,9 @@ class ClusterSpec(Config):
         return {k: v for k, v in self.config.items('clients')}
 
     @property
-    def infrastructure_sync_gateways(self):
-        if 'sync_gateways' in self.config.sections():
-            return {k: v for k, v in self.config.items('sync_gateways')}
+    def infrastructure_syncgateways(self):
+        if self.config.has_section('syncgateways'):
+            return {k: v for k, v in self.config.items('syncgateways')}
         else:
             return {}
 
@@ -181,7 +185,7 @@ class ClusterSpec(Config):
 
     @property
     def sgw_clusters(self) -> Iterator:
-        for cluster_name, servers in self.config.items('sync_gateways'):
+        for cluster_name, servers in self.config.items('syncgateways'):
             hosts = [s.split(':')[0] for s in servers.split()]
             yield cluster_name, hosts
 
@@ -192,7 +196,7 @@ class ClusterSpec(Config):
 
     @property
     def sgw_masters(self) -> Iterator[str]:
-        if 'sync_gateways' in self.config.sections():
+        if self.config.has_section('syncgateways'):
             for _, servers in self.sgw_clusters:
                 yield servers[0]
         else:
@@ -221,7 +225,7 @@ class ClusterSpec(Config):
     @property
     def sgw_servers(self) -> List[str]:
         servers = []
-        if 'sync_gateways' in self.config.sections():
+        if self.config.has_section('syncgateways'):
             for _, cluster_servers in self.sgw_clusters:
                 for server in cluster_servers:
                     servers.append(server)
@@ -240,8 +244,8 @@ class ClusterSpec(Config):
         return self.config.has_section('utility_private_ips')
 
     @property
-    def using_private_sync_gateway_ips(self) -> bool:
-        return self.config.has_section('sync_gateway_private_ips')
+    def using_private_syncgateway_ips(self) -> bool:
+        return self.config.has_section('syncgateway_private_ips')
 
     @property
     def clusters_private(self) -> Iterator:
@@ -262,9 +266,9 @@ class ClusterSpec(Config):
                 yield cluster_name, private_ips.split()
 
     @property
-    def sync_gateways_private(self) -> Iterator:
-        if self.using_private_sync_gateway_ips:
-            for cluster_name, private_ips in self.config.items('sync_gateway_private_ips'):
+    def syncgateways_private(self) -> Iterator:
+        if self.using_private_syncgateway_ips:
+            for cluster_name, private_ips in self.config.items('syncgateway_private_ips'):
                 yield cluster_name, private_ips.split()
 
     @property
@@ -318,6 +322,17 @@ class ClusterSpec(Config):
     @property
     def dapi_instance_ids(self) -> List[str]:
         return self.instance_ids_per_nebula_cluster.get('dapi', [])
+
+    @property
+    def sgw_instance_ids_per_cluster(self):
+        return {k: v.split() for k, v in self.config.items('sgw_instance_ids')}
+
+    @property
+    def sgw_instance_ids(self) -> List[str]:
+        iids = []
+        for sgw_iids in self.sgw_instance_ids_per_cluster.values():
+            iids += sgw_iids
+        return iids
 
     @property
     def server_instance_ids_by_role(self, role: str) -> List[str]:
@@ -396,6 +411,26 @@ class ClusterSpec(Config):
                 return clients
         else:
             return self.config.get('clients', 'hosts').split()
+
+    @property
+    def syncgateways(self) -> List[str]:
+        if self.cloud_infrastructure:
+            if self.kubernetes_infrastructure:
+                client_map = self.infrastructure_clients
+                clients = []
+                for k, v in client_map.items():
+                    if "workers" in k:
+                        clients += ["{}.{}".format(k, host) for host in v.split()]
+                return clients
+            else:
+                client_map = self.infrastructure_clients
+                clients = []
+                for k, v in client_map.items():
+                    if "workers" in k:
+                        clients += [host for host in v.split()]
+                return clients
+        else:
+            return self.config.get('syncgateways', 'hosts').split()
 
     @property
     def brokers(self) -> List[str]:
@@ -537,6 +572,26 @@ class ClusterSpec(Config):
             self.config.set('nebula_instance_ids', 'dapi', '\n' + '\n'.join(dapi_iids))
 
         self.update_spec_file()
+
+    def set_sgw_instance_ids(self) -> None:
+        if not self.config.has_section('sgw_instance_ids'):
+            self.config.add_section('sgw_instance_ids')
+
+        if self.capella_backend == 'aws':
+            region = os.environ.get('AWS_REGION', 'us-east-1')
+            sgids = local(
+                (
+                    "env/bin/aws ec2 describe-instances --region {} "
+                    "--filters \"Name=tag-key,Values=couchbase-cloud-syncgateway-id\" "
+                    "\"Name=tag:couchbase-app-services,Values={}\" "
+                    "--query \"Reservations[].Instances[].InstanceId\" "
+                    "--output text"
+                ).format(region, self.infrastructure_settings['cbc_cluster']),
+                capture=True
+            ).strip().split()
+            logger.info("Found Instance IDs for sgw: {}".format(', '.join(sgids)))
+            self.config.set('sgw_instance_ids', 'sync_gateways', '\n', + '\n'.join(sgids))
+            self.update_spec_file()
 
     @property
     def direct_nebula(self) -> dict:
@@ -1074,7 +1129,7 @@ class PhaseSettings:
 
     CONNSTR_PARAMS = "{'ipv6': 'allow', 'enable_tracing': 'false'}"
 
-    YCSB_CLIENT = 'couchbase2'
+    YCSB_CLIENT = 'couchbase3'
 
     DURABILITY = None
 
@@ -2519,6 +2574,7 @@ class TableauSettings:
 class SyncgatewaySettings:
     REPO = 'https://github.com/couchbaselabs/YCSB.git'
     BRANCH = 'syncgateway-weekly'
+    YCSB_COMMAND = 'syncgateway'
     WORKLOAD = 'workloads/syncgateway_blank'
     USERS = 100
     CHANNELS = 1
@@ -2528,12 +2584,16 @@ class SyncgatewaySettings:
     NODES = 4
     CHANNELS_PER_DOC = 1
     DOCUMENTS = 1000000
+    DOCUMENTSPULL = 500000
+    DOCUMENTSPUSH = 500000
     ROUNDTRIP_WRITE = "false"
     READ_MODE = 'documents'          # |documents|changes
     FEED_READING_MODE = 'withdocs'   # |withdocs|idsonly
     FEED_MODE = 'longpoll'           # |longpoll|normal
     INSERT_MODE = 'byuser'           # |byuser|bykey
     AUTH = "true"
+    PULLPROPORTION = 0.5
+    PUSHPROPORTION = 0.5
     READPROPORTION = 1
     UPDATEPROPORTION = 0
     INSERTPROPORTION = 0
@@ -2553,6 +2613,7 @@ class SyncgatewaySettings:
     REPLICATOR2 = "false"
     BASIC_AUTH = "false"
     IMPORT_NODES = 1
+    SSL_MODE_SGW = 'none'
     ROUNDTRIP_WRITE_LOAD = "false"
     SG_REPLICATION_TYPE = "push"
     SG_CONFLICT_RESOLUTION = "default"
@@ -2592,18 +2653,23 @@ class SyncgatewaySettings:
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
         self.branch = options.get('ycsb_branch', self.BRANCH)
-        self.workload = options.get('workload', self.WORKLOAD)
+        self.ycsb_command = options.get('ycsb_command', self.YCSB_COMMAND)
+        self.workload = options.get('workload_path', self.WORKLOAD)
         self.users = options.get('users', self.USERS)
         self.channels = options.get('channels', self.CHANNELS)
         self.channels_per_user = options.get('channels_per_user', self.CHANNLES_PER_USER)
         self.channels_per_doc = options.get('channels_per_doc', self.CHANNELS_PER_DOC)
         self.documents = options.get('documents', self.DOCUMENTS)
-        self.documents_workset = options.get("documents_workset", self.DOCUMENTS)
+        self.documents_workset = options.get("documents_workset", self.documents)
+        self.documentspull = options.get('documentspull', self.DOCUMENTSPULL)
+        self.documentspush = options.get('documentspush', self.DOCUMENTSPUSH)
         self.roundtrip_write = options.get('roundtrip_write', self.ROUNDTRIP_WRITE)
         self.read_mode = options.get('read_mode', self.READ_MODE)
         self.feed_mode = options.get('feed_mode', self.FEED_MODE)
         self.feed_reading_mode = options.get('feed_reading_mode', self.FEED_READING_MODE)
         self.auth = options.get('auth', self.AUTH)
+        self.pullproportion = options.get('pullproportion', self.PULLPROPORTION)
+        self.pushproportion = options.get('pushproportion', self.PUSHPROPORTION)
         self.readproportion = options.get('readproportion', self.READPROPORTION)
         self.updateproportion = options.get('updateproportion', self.UPDATEPROPORTION)
         self.insertproportion = options.get('insertproportion', self.INSERTPROPORTION)
@@ -2612,6 +2678,7 @@ class SyncgatewaySettings:
         self.log_title = options.get('log_title', self.LOG_TITE)
         self.instances_per_client = options.get('instances_per_client', 1)
         self.load_instances_per_client = options.get('load_instances_per_client', 1)
+        self.instance = options.get('instance', '')
         self.threads_per_instance = 1
         self.load_threads = options.get('load_threads', self.LOAD_THREADS)
         self.threads = options.get('threads', self.THREADS)
@@ -2634,6 +2701,7 @@ class SyncgatewaySettings:
         self.basic_auth = options.get('basic_auth', self.BASIC_AUTH)
 
         self.import_nodes = int(options.get('import_nodes', self.IMPORT_NODES))
+        self.ssl_mode_sgw = (options.get('ssl_mode_sgw', self.SSL_MODE_SGW))
 
         self.roundtrip_write_load = options.get('roundtrip_write_load', self.ROUNDTRIP_WRITE_LOAD)
         self.sg_replication_type = options.get('sg_replication_type', self.SG_REPLICATION_TYPE)

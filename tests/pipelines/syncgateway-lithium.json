@@ -299,7 +299,7 @@
           "test_type":  "",
           "load_config": ""},
 
-          {"job": "hebe_sg_multiimport",
+        {"job": "hebe_sg_multiimport",
           "cluster": "hebe_import_5node_n1ql.spec",
           "test_config": "syncgateway_import_multinode_throughput_10M_16vCPU.test",
           "sg_config": "3.0/hebe_channel_xattr_import.config",

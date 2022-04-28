@@ -28,9 +28,9 @@ output "utility_instance_ips" {
     }
 }
 
-output "sync_gateway_instance_ips" {
+output "syncgateway_instance_ips" {
     value = {
-        for k, v in google_compute_instance.sync_gateway_instance: k => {
+        for k, v in google_compute_instance.syncgateway_instance: k => {
             node_group = "${join("_", slice(split("-", split("/", v.id)[5]), 1, 5))}.${split("-", split("/", v.id)[5])[5]}"
             public_ip  = v.network_interface.0.access_config.0.nat_ip
             private_ip = v.network_interface.0.network_ip

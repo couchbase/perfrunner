@@ -25,9 +25,9 @@ output "utility_instance_ips" {
     }
 }
 
-output "sync_gateway_instance_ips" {
+output "syncgateway_instance_ips" {
     value = {
-        for k, v in aws_instance.sync_gateway_instance: k => {
+        for k, v in aws_instance.syncgateway_instance: k => {
             node_group = v.tags_all["node_group"]
             public_ip  = v.public_dns
         }

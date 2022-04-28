@@ -260,7 +260,6 @@ class DefaultRestHelper(RestBase):
             api = 'https://{}:19102/settings?internal=ok'.format(host)
         else:
             api = 'http://{}:9102/settings?internal=ok'.format(host)
-
         return self.get(url=api).json()
 
     def get_gsi_stats(self, host: str) -> dict:
@@ -1641,25 +1640,37 @@ class DefaultRestHelper(RestBase):
         return self.get(url=api).json()
 
     def get_sgversion(self, host: str) -> str:
-        logger.info('Getting SG Server version')
-
-        api = 'http://{}:4985'.format(host)
+        logger.info('Getting SG Server version on server: {}'.format(host))
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:4985'.format(host)
+        else:
+            api = 'http://{}:4985'.format(host)
         r = self.get(url=api).json()
         return r['version'] \
             .replace('Couchbase Sync Gateway/', '') \
             .replace(') EE', '').replace('(', '-').split(';')[0]
 
     def get_sg_stats(self, host: str) -> dict:
-        api = 'http://{}:4985/_expvar'.format(host)
+        if self.cluster_spec.capella_infrastructure:
+            api = 'https://{}:4988/metrics'.format(host)
+        elif self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:4985/_expvar'.format(host)
+        else:
+            api = 'http://{}:4985/_expvar'.format(host)
         response = self.get(url=api)
-        # logger.info("The sgw stats are: {}".format(response.json()))
+        if self.cluster_spec.capella_infrastructure:
+            return response.text
         return response.json()
 
     def start_sg_replication(self, host, payload):
         logger.info('Start sg replication.')
         logger.info('Payload: {}'.format(payload))
 
-        api = 'http://{}:4985/_replicate'.format(host)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:4985/_replicate'.format(host)
+        else:
+            api = 'http://{}:4985/_replicate'.format(host)
         logger.info('api: {}'.format(api))
         self.post(url=api, data=json.dumps(payload))
 
@@ -1667,21 +1678,45 @@ class DefaultRestHelper(RestBase):
         logger.info('Start sg replication.')
         logger.info('Payload: {}'.format(payload))
 
-        api = 'http://{}:4985/db/_replication/'.format(host)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:4985/db-1/_replication/'.format(host)
+        else:
+            api = 'http://{}:4985/db-1/_replication/'.format(host)
         logger.info('api: {}'.format(api))
         self.post(url=api, data=json.dumps(payload))
 
     def get_sgreplicate_stats(self, host: str, version: int) -> dict:
         if version == 1:
-            api = 'http://{}:4985/_active_tasks'.format(host)
+            if self.cluster_spec.capella_infrastructure or \
+               self.test_config.cluster.enable_n2n_encryption:
+                api = 'https://{}:4985/_active_tasks'.format(host)
+            else:
+                api = 'http://{}:4985/_active_tasks'.format(host)
         elif version == 2:
-            api = 'http://{}:4985/db/_replicationStatus'.format(host)
+            if self.cluster_spec.capella_infrastructure or \
+               self.test_config.cluster.enable_n2n_encryption:
+                api = 'https://{}:4985/db-1/_replicationStatus'.format(host)
+            else:
+                api = 'http://{}:4985/db-1/_replicationStatus'.format(host)
         response = self.get(url=api)
         return response.json()
 
     def get_expvar_stats(self, host: str) -> dict:
-        api = 'http://{}:4985/_expvar'.format(host)
-        return self.get(url=api).json()
+        try:
+            if self.cluster_spec.capella_infrastructure:
+                api = 'https://{}:4988/metrics'.format(host)
+            elif self.test_config.cluster.enable_n2n_encryption:
+                api = 'https://{}:4985/_expvar'.format(host)
+            else:
+                api = 'http://{}:4985/_expvar'.format(host)
+            response = self.get(url=api)
+        except Exception as ex:
+            logger.info("Expvar request failed: {}".format(ex))
+            raise ex
+        if self.cluster_spec.capella_infrastructure:
+            return response
+        return response.json()
 
     def start_cblite_replication_push(
             self,
@@ -1693,10 +1728,15 @@ class DefaultRestHelper(RestBase):
             user="guest",
             password="guest"):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            ws_prefix = "wss://"
+        else:
+            ws_prefix = "ws://"
         if user and password:
             data = {
                 "source": "{}".format(cblite_db),
-                "target": "ws://{}:{}/db".format(sgw_host, sgw_port),
+                "target": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
                 "continuous": 1,
                 "user": user,
                 "password": password,
@@ -1705,7 +1745,7 @@ class DefaultRestHelper(RestBase):
         else:
             data = {
                 "source": "{}".format(cblite_db),
-                "target": "ws://{}:{}/db".format(sgw_host, sgw_port),
+                "target": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
                 "continuous": 1,
                 "bidi": 0
             }
@@ -1721,12 +1761,18 @@ class DefaultRestHelper(RestBase):
             cblite_port,
             cblite_db,
             sgw_host,
+            sgw_port=4984,
             user="guest",
             password="guest"):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            ws_prefix = "wss://"
+        else:
+            ws_prefix = "ws://"
         if user and password:
             data = {
-                "source": "ws://{}:4984/db".format(sgw_host),
+                "source": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
                 "target": "{}".format(cblite_db),
                 "continuous": 1,
                 "user": user,
@@ -1735,12 +1781,16 @@ class DefaultRestHelper(RestBase):
             }
         else:
             data = {
-                "source": "ws://{}:4984/db".format(sgw_host),
+                "source": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
                 "target": "{}".format(cblite_db),
                 "continuous": 1,
                 "bidi": 0
             }
+        logger.info("The sgw host is: {}".format(sgw_host))
+        logger.info("The url is: {}".format(api))
+        logger.info("The json data is: {}".format(data))
         self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
+        logger.info("Successfully posted")
 
     def start_cblite_replication_bidi(
             self,
@@ -1748,13 +1798,19 @@ class DefaultRestHelper(RestBase):
             cblite_port,
             cblite_db,
             sgw_host,
+            sgw_port=4984,
             user="guest",
             password="guest"):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            ws_prefix = "wss://"
+        else:
+            ws_prefix = "ws://"
         if user and password:
             data = {
                 "source": "{}".format(cblite_db),
-                "target": "ws://{}:4984/db".format(sgw_host),
+                "target": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
                 "continuous": 1,
                 "user": user,
                 "password": password,
@@ -1763,11 +1819,15 @@ class DefaultRestHelper(RestBase):
         else:
             data = {
                 "source": "{}".format(cblite_db),
-                "target": "ws://{}:4984/db".format(sgw_host),
+                "target": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
                 "continuous": 1,
                 "bidi": 1
             }
+        logger.info("The sgw host is: {}".format(sgw_host))
+        logger.info("The url is: {}".format(api))
+        logger.info("The json data is: {}".format(data))
         self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
+        logger.info("Successfully posted the current sgw")
 
     def get_cblite_info(self, cblite_host, cblite_port, cblite_db):
         api = 'http://{}:{}/{}'.format(cblite_host, cblite_port, cblite_db)
@@ -2211,6 +2271,22 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
                                                       bucket)
             if resp.json()['status'] == 'complete':
                 break
+
+    def get_sgversion(self, host: str) -> str:
+        logger.info('Getting SG Server version on server: {}'.format(host))
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        build = \
+            self.dedicated_client.get_sgw_info(self.tenant_id,
+                                               self.project_id,
+                                               cluster_id,
+                                               sgw_cluster_id).json() \
+                                                              .get('data') \
+                                                              .get('config') \
+                                                              .get('version') \
+                                                              .get('sync_gateway_version')
+        return build
 
 
 class ServerlessRestHelper(CapellaRestBase):

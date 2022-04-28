@@ -5,8 +5,8 @@ hebe =
     172.23.100.192:kv,n1ql
     172.23.100.193:index,n1ql
 
-[sync_gateways]
-sync_gateways =
+[syncgateways]
+syncgateways =
     172.23.100.204
     172.23.100.205
     172.23.100.206

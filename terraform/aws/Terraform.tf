@@ -38,7 +38,7 @@ variable "utility_nodes" {
   }))
 }
 
-variable "sync_gateway_nodes" {
+variable "syncgateway_nodes" {
   type = map(object({
     node_group        = string
     image             = string
@@ -70,7 +70,7 @@ data "aws_ec2_instance_type_offerings" "available" {
         [for k, v in var.cluster_nodes : v.instance_type],
         [for k, v in var.client_nodes : v.instance_type],
         [for k, v in var.utility_nodes : v.instance_type],
-        [for k, v in var.sync_gateway_nodes : v.instance_type],
+        [for k, v in var.syncgateway_nodes : v.instance_type],
       )
     )
   }
@@ -111,8 +111,8 @@ data "aws_ami" "utility_ami" {
   }
 }
 
-data "aws_ami" "sync_gateway_ami" {
-  for_each = var.sync_gateway_nodes
+data "aws_ami" "syncgateway_ami" {
+  for_each = var.syncgateway_nodes
 
   owners = ["self"]
 
@@ -229,7 +229,7 @@ resource "aws_security_group_rule" "enable_memcached_secure" {
 resource "aws_security_group_rule" "enable_sgw" {
   type              = "ingress"
   from_port         = 4984
-  to_port           = 4985
+  to_port           = 5025
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_vpc.main.default_security_group_id
@@ -352,12 +352,12 @@ resource "aws_instance" "utility_instance" {
   }
 }
 
-resource "aws_instance" "sync_gateway_instance" {
-  for_each = var.sync_gateway_nodes
+resource "aws_instance" "syncgateway_instance" {
+  for_each = var.syncgateway_nodes
 
   availability_zone = one(random_shuffle.az.result)
   subnet_id         = aws_subnet.public.id
-  ami               = data.aws_ami.sync_gateway_ami[each.key].id
+  ami               = data.aws_ami.syncgateway_ami[each.key].id
   instance_type     = each.value.instance_type
   ebs_block_device {
     device_name = "/dev/sdb"
@@ -368,7 +368,7 @@ resource "aws_instance" "sync_gateway_instance" {
   }
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "SyncGatewayNode${each.key}"
-    role       = "sync_gateway"
+    role       = "syncgateway"
     node_group = each.value.node_group
   }
 }

@@ -14,7 +14,7 @@ class CbAgentSettings:
 
         if hasattr(test, 'ALL_HOSTNAMES'):
             hostnames = test.cluster_spec.servers
-            if test.cluster_spec.infrastructure_sync_gateways:
+            if test.cluster_spec.infrastructure_syncgateways:
                 hostnames += test.cluster_spec.sgw_servers
         else:
             hostnames = None

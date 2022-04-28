@@ -1,5 +1,5 @@
 ---
-- hosts: sync_gateways
+- hosts: syncgateways
   any_errors_fatal: true
   become: yes
 
@@ -17,7 +17,7 @@
   # Delete sync_gateway and sg_accel uses
   - include: tasks/clean-users.yml
 
-  # Check no sync_gateways or accels running
+  # Check no syncgateways or accels running
   - name: ALL | verify no sg_accel or sgs are running on 4985
     wait_for: port=4985 delay=1 state=stopped
 

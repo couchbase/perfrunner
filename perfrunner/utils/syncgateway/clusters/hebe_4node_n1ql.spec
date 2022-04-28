@@ -7,8 +7,8 @@ hebe =
     172.23.100.205:n1ql
     172.23.100.206:index
 
-[sync_gateways]
-sync_gateways =
+[syncgateways]
+syncgateways =
     172.23.100.204
     172.23.100.207
 

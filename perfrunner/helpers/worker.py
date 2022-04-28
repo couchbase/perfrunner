@@ -434,81 +434,87 @@ class RemoteWorkerManager:
     def run_sg_tasks(self,
                      task: Callable,
                      task_settings: PhaseSettings,
+                     target_iterator: Iterable[TargetSettings],
                      timer: int = None,
                      distribute: bool = False,
                      phase: str = ""):
         self.async_results = []
         self.reset_workers()
-        if distribute:
-            total_threads = int(task_settings.syncgateway_settings.threads)
-            total_clients = int(task_settings.syncgateway_settings.clients)
-            instances_per_client = int(task_settings.syncgateway_settings.instances_per_client)
-            total_instances = total_clients * instances_per_client
-            threads_per_instance = int(total_threads/total_instances) or 1
-            worker_id = 0
+        for target in target_iterator:
+            if distribute:
+                total_threads = int(task_settings.syncgateway_settings.threads)
+                total_clients = int(task_settings.syncgateway_settings.clients)
+                instances_per_client = int(task_settings.syncgateway_settings.instances_per_client)
+                total_instances = total_clients * instances_per_client
+                threads_per_instance = int(total_threads/total_instances) or 1
+                worker_id = 0
 
-            group_tasks = []
+                group_tasks = []
 
-            for instance in range(instances_per_client):
-                for client in self.cluster_spec.workers[:total_clients]:
-                    worker_id += 1
-                    logger.info('Running the \'{}\' by worker #{} on client {}'
-                                .format(phase, worker_id, client))
-                    task_settings.syncgateway_settings.threads_per_instance = \
-                        str(threads_per_instance)
+                for instance in range(instances_per_client):
+                    for client in self.cluster_spec.workers[:total_clients]:
+                        worker_id += 1
+                        logger.info('Running the \'{}\' by worker #{} on client {}'
+                                    .format(phase, worker_id, client))
+                        task_settings.syncgateway_settings.threads_per_instance = \
+                            str(threads_per_instance)
 
-                    group_tasks.append(
-                        task.s(task_settings, timer, worker_id, self.cluster_spec).set(
-                            queue=client
-                        ).set(
-                            expires=timer
-                        ))
-                    # async_result = task.apply_async(
-                    #    args=(task_settings, timer, worker_id, self.cluster_spec),
-                    #    queue=client,
-                    #    expires=timer,
-                    # )
-                    # self.async_results.append(async_result)
+                        group_tasks.append(
+                            task.s(task_settings, target, timer, worker_id, self.cluster_spec).set(
+                                queue=client
+                            ).set(
+                                expires=timer
+                            ))
 
-            g = group(group_tasks)
-            self.async_results.append(g())
-        else:
-            client = self.cluster_spec.workers[0]
-            logger.info('Running single-instance task \'{}\' on client {}'
-                        .format(phase, client))
-            async_result = task.apply_async(
-                args=(task_settings, timer, 0, self.cluster_spec),
-                queue=client,
-                expires=timer,
-            )
-            self.async_results.append(async_result)
+                g = group(group_tasks)
+                self.async_results.append(g())
+                time.sleep(15)
+            else:
+                client = self.cluster_spec.workers[0]
+                logger.info('Running single-instance task \'{}\' on client {}'
+                            .format(phase, client))
+                task_settings.syncgateway_settings.threads_per_instance = \
+                    task_settings.syncgateway_settings.threads
+                async_result = task.apply_async(
+                    args=(task_settings, target, timer, 0, self.cluster_spec),
+                    queue=client,
+                    expires=timer,
+                )
+                self.async_results.append(async_result)
+                time.sleep(15)
+                if task is syncgateway_task_start_memcached:
+                    break
 
     def run_sg_bp_tasks(self,
                         task: Callable,
                         task_settings: PhaseSettings,
+                        target_iterator: Iterable[TargetSettings],
                         timer: int = None,
                         distribute: bool = False,
                         phase: str = ""):
         self.async_results = []
         self.reset_workers()
-        if distribute:
-            worker_id = 0
-            total_clients = int(task_settings.syncgateway_settings.clients)
-            for client in self.cluster_spec.workers[:total_clients]:
-                worker_id += 1
-                logger.info('Running the \'{}\' by worker #{} on'
-                            ' client {}'.format(phase, worker_id, client))
+        for target in target_iterator:
+            if distribute:
+                worker_id = 0
+                total_clients = int(task_settings.syncgateway_settings.clients)
+                for client in self.cluster_spec.workers[:total_clients]:
+                    worker_id += 1
+                    logger.info('Running the \'{}\' by worker #{} on'
+                                ' client {}'.format(phase, worker_id, client))
+                    async_result = task.apply_async(
+                        args=(task_settings, target, timer, worker_id, self.cluster_spec),
+                        queue=client, expires=timer,)
+                    self.async_results.append(async_result)
+                time.sleep(15)
+            else:
+                client = self.cluster_spec.workers[0]
+                logger.info('Running sigle-instance task \'{}\' on client {}'.format(phase, client))
                 async_result = task.apply_async(
-                    args=(task_settings, timer, worker_id, self.cluster_spec),
-                    queue=client, expires=timer,)
+                    args=(task_settings, target, timer, 0, self.cluster_spec),
+                    queue=client, expires=timer)
                 self.async_results.append(async_result)
-        else:
-            client = self.cluster_spec.workers[0]
-            logger.info('Running sigle-instance task \'{}\' on client {}'.format(phase, client))
-            async_result = task.apply_async(
-                args=(task_settings, timer, 0, self.cluster_spec),
-                queue=client, expires=timer)
-            self.async_results.append(async_result)
+                time.sleep(15)
 
 
 class LocalWorkerManager(RemoteWorkerManager):
@@ -574,39 +580,45 @@ class LocalWorkerManager(RemoteWorkerManager):
     def run_sg_tasks(self,
                      task: Callable,
                      task_settings: PhaseSettings,
+                     target_iterator: Iterable[TargetSettings],
                      timer: int = None,
                      distribute: bool = False,
                      phase: str = ""):
         self.async_results = []
         self.reset_workers()
-        if distribute:
-            total_threads = int(task_settings.syncgateway_settings.threads)
-            total_clients = int(task_settings.syncgateway_settings.clients)
-            instances_per_client = int(task_settings.syncgateway_settings.instances_per_client)
-            total_instances = total_clients * instances_per_client
-            threads_per_instance = int(total_threads/total_instances) or 1
-            worker_id = 0
-            for instance in range(instances_per_client):
-                for _ in range(0, total_clients):
-                    client = self.next_worker()
-                    worker_id += 1
-                    logger.info('Running the \'{}\' by worker #{} on client {}'
-                                .format(phase, worker_id, client))
-                    task_settings.syncgateway_settings.threads_per_instance = \
-                        str(threads_per_instance)
-                    async_result = task.apply_async(
-                        args=(task_settings, timer, worker_id, self.cluster_spec),
-                        queue=client,
-                        expires=timer,
-                    )
-                    self.async_results.append(async_result)
-        else:
-            client = self.next_worker()
-            logger.info('Running single-instance task \'{}\' on client {}'
-                        .format(phase, client))
-            async_result = task.apply_async(
-                args=(task_settings, timer, 0, self.cluster_spec),
-                queue=client,
-                expires=timer,
-            )
-            self.async_results.append(async_result)
+        for target in target_iterator:
+            if distribute:
+                total_threads = int(task_settings.syncgateway_settings.threads)
+                total_clients = int(task_settings.syncgateway_settings.clients)
+                instances_per_client = int(task_settings.syncgateway_settings.instances_per_client)
+                total_instances = total_clients * instances_per_client
+                threads_per_instance = int(total_threads/total_instances) or 1
+                worker_id = 0
+                for instance in range(instances_per_client):
+                    for _ in range(0, total_clients):
+                        client = self.next_worker()
+                        worker_id += 1
+                        logger.info('Running the \'{}\' by worker #{} on client {}'
+                                    .format(phase, worker_id, client))
+                        task_settings.syncgateway_settings.threads_per_instance = \
+                            str(threads_per_instance)
+                        async_result = task.apply_async(
+                            args=(task_settings, timer, worker_id, self.cluster_spec),
+                            queue=client,
+                            expires=timer,
+                        )
+                        self.async_results.append(async_result)
+                time.sleep(15)
+            else:
+                client = self.next_worker()
+                logger.info('Running single-instance task \'{}\' on client {}'
+                            .format(phase, client))
+                task_settings.syncgateway_settings.threads_per_instance = \
+                    task_settings.syncgateway_settings.threads
+                async_result = task.apply_async(
+                    args=(task_settings, timer, 0, self.cluster_spec),
+                    queue=client,
+                    expires=timer,
+                )
+                self.async_results.append(async_result)
+                time.sleep(15)

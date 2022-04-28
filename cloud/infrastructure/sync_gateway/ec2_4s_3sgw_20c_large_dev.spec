@@ -9,8 +9,8 @@ couchbase1 =
         ec2.ec2_cluster_1.ec2_node_group_1.3:kv,index,n1ql
         ec2.ec2_cluster_1.ec2_node_group_1.4:kv,index,n1ql
 
-[sync_gateways]
-sync_gateways1 =
+[syncgateways]
+syncgateways1 =
         ec2.ec2_cluster_1.ec2_node_group_2.1
         ec2.ec2_cluster_1.ec2_node_group_2.2
         ec2.ec2_cluster_1.ec2_node_group_2.3

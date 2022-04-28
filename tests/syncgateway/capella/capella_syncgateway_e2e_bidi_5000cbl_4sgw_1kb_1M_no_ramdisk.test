@@ -1,0 +1,74 @@
+[test_case]
+test = perfrunner.tests.syncgateway.EndToEndMultiCBLBidiTest
+
+[showfast]
+title = 4 nodes, 5000 cbl, 1M docs, 10 fields, 1.5Kb docSize, no ramdisk
+component = syncgatewaycloud
+category = e2e
+sub_category = {provider}
+orderby = b21
+
+[cluster]
+mem_quota = 12800
+index_mem_quota = 12800
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 500000
+workers = 160
+workload_instances = 1
+ssl_mode = capella
+
+[access]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 500000
+ops = 5000000
+workers = 160
+time = 1200
+workload_instances = 1
+kv_endpoints = 16
+ssl_mode = capella
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 4
+load_threads = 5000
+threads = 5000
+clients = 10
+instances_per_client = 500
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+users = 100
+channels = 100
+channels_per_user = 1
+channels_per_doc = 1
+documents = 1000000
+roundtrip_write = false
+feed_reading_mode = idsonly
+insert_mode = bykey
+auth = false
+instance = Standard_F8s_v2
+grant_access = false
+starchannel = false
+pullproportion = 0.5
+pushproportion = 0.5
+readproportion = 0
+updateproportion = 1
+insertproportion = 0
+requestdistribution = sequential
+replication_type = E2E_BIDI
+writeallfields = false
+updatefieldcount = 1
+fieldlength = 100
+ramdisk_size = 0
+cbl_throughput = 10000
+ssl_mode_sgw = capella

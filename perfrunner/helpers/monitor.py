@@ -982,19 +982,40 @@ class DefaultMonitor(DefaultRestHelper):
         time_taken = self._wait_for_sg_import_complete(host, expected_docs, start_time)
         return time_taken, items_in_range
 
+    def get_import_count(self, host: str):
+        stats = self.get_sg_stats(host=host)
+        import_count = 0
+        if not self.cluster_spec.capella_infrastructure:
+            if 'syncGateway_import' in stats.keys():
+                import_count = int(stats['syncGateway_import']['import_count'])
+            else:
+                for count in range(1, self.test_config.cluster.num_buckets + 1):
+                    db = 'db-{}'.format(count)
+                    if 'shared_bucket_import' in (db_stats :=
+                                                  stats['syncgateway']['per_db'][db]):
+                        import_count += int(db_stats['shared_bucket_import']['import_count'])
+        else:
+            stat = stats.find("sgw_shared_bucket_import_import_count")
+            stat_list = []
+            while stat != -1:
+                stat_list.append(stat)
+                stat = stats.find("sgw_shared_bucket_import_import_count", stat + 1)
+            last = stats.find("# HELP", stat_list[-1] + 1)
+            stat_list.append(last)
+            for i in range(2, len(stat_list) - 1):
+                str = stats[stat_list[i]:stat_list[i+1]]
+                a = str.find("}")
+                import_count += int(float(str[a+2:]))
+            import_count /= 2
+        return import_count
+
     def _wait_for_sg_import_start(self, host: str):
         logger.info('Checking if import process started')
 
         import_docs = 0
         while True:
             time.sleep(self.POLLING_INTERVAL)
-            stats = self.get_sg_stats(host=host)
-            if 'syncGateway_import' in stats.keys():
-                import_docs = int(stats['syncGateway_import']['import_count'])
-            elif 'shared_bucket_import' in stats['syncgateway']['per_db']['db'].keys():
-                import_docs = \
-                    int(stats['syncgateway']['per_db']['db']['shared_bucket_import'
-                                                             '']['import_count'])
+            import_docs = self.get_import_count(host)
             if import_docs >= 1:
                 logger.info('importing docs has started')
                 return import_docs, time.time()
@@ -1007,14 +1028,8 @@ class DefaultMonitor(DefaultRestHelper):
         imports = 0
 
         while True:
-            time.sleep(self.POLLING_INTERVAL)
-            stats = self.get_sg_stats(host=host)
-            if 'syncGateway_import' in stats.keys():
-                imports = int(stats['syncGateway_import']['import_count'])
-            elif 'shared_bucket_import' in stats['syncgateway']['per_db']['db'].keys():
-                imports = \
-                    int(stats['syncgateway']['per_db']['db']['shared_bucket_import'
-                                                             '']['import_count'])
+            time.sleep(self.POLLING_INTERVAL * 4)
+            imports = self.get_import_count(host)
             logger.info('Docs imported: {}'.format(imports))
             if imports >= expected_docs:
                 end_time = time.time()
@@ -1022,17 +1037,6 @@ class DefaultMonitor(DefaultRestHelper):
                 return time_taken
             if time.time() - start_time > 1800:
                 raise Exception("timeout of 1800 seconds exceeded")
-
-    def get_import_count(self, host: str):
-        stats = self.get_sg_stats(host=host)
-        import_count = 0
-        if 'syncGateway_import' in stats.keys():
-            import_count = int(stats['syncGateway_import']['import_count'])
-        elif 'shared_bucket_import' in stats['syncgateway']['per_db']['db'].keys():
-            import_count = \
-                int(stats['syncgateway']['per_db']['db']['shared_bucket_import'
-                                                         '']['import_count'])
-        return import_count
 
     def monitor_sgreplicate(self, host, expected_docs, replicate_id, version):
         logger.info('Monitoring SGReplicate items:')
@@ -1137,11 +1141,17 @@ class DefaultMonitor(DefaultRestHelper):
             logger.info('Docs replicated: {}'.format(replicate_docs))
             if replicate_id == 'sgr2_conflict_resolution':
                 sg_stats = self.get_sg_stats(host=host)
-                sgr_stats = sg_stats['syncgateway']['per_db']['db']['replications'][replicate_id]
-                local_count = int(sgr_stats['sgr_conflict_resolved_local_count'])
-                remote_count = int(sgr_stats['sgr_conflict_resolved_remote_count'])
-                merge_count = int(sgr_stats['sgr_conflict_resolved_merge_count'])
-                num_docs_pushed = int(sgr_stats['sgr_num_docs_pushed'])
+                local_count = 0
+                remote_count = 0
+                merge_count = 0
+                num_docs_pushed = 0
+                for count in range(1, self.test_config.cluster.num_buckets + 1):
+                    db = 'db-{}'.format(count)
+                    sgr_stats = sg_stats['syncgateway']['per_db'][db]['replications'][replicate_id]
+                    local_count += int(sgr_stats['sgr_conflict_resolved_local_count'])
+                    remote_count += int(sgr_stats['sgr_conflict_resolved_remote_count'])
+                    merge_count += int(sgr_stats['sgr_conflict_resolved_merge_count'])
+                    num_docs_pushed += int(sgr_stats['sgr_num_docs_pushed'])
                 if ((local_count + remote_count + merge_count) == int(expected_docs/2)) \
                         and (local_count == num_docs_pushed):
                     end_time = time.time()
@@ -1154,11 +1164,13 @@ class DefaultMonitor(DefaultRestHelper):
                     return time_taken, replicate_docs
 
             time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > 1800:
+                raise Exception("timeout of 1800 seconds exceeded")
 
-    def deltasync_stats(self, host: str):
+    def deltasync_stats(self, host: str, db: str):
         stats = self.get_expvar_stats(host)
-        if 'delta_sync' in stats['syncgateway']['per_db']['db'].keys():
-            return stats['syncgateway']['per_db']['db']
+        if 'delta_sync' in stats['syncgateway']['per_db'][db].keys():
+            return stats['syncgateway']['per_db'][db]
         else:
             logger.info('Delta Sync Disabled')
             return stats['syncgateway']['per_db']
@@ -1167,24 +1179,74 @@ class DefaultMonitor(DefaultRestHelper):
         stats = self.get_expvar_stats(host)
         bytes_transeferred = 0
         if self.test_config.syncgateway_settings.replication_type == 'PUSH':
-            bytes_transeferred = float(
-                stats['syncgateway']['per_db']['db']['database']['doc_writes_bytes_blip'])
-        if self.test_config.syncgateway_settings.replication_type == 'PULL':
-            bytes_transeferred = float(
-                stats['syncgateway']['per_db']['db']['database']['doc_reads_bytes_blip'])
-        return bytes_transeferred
+            replication_type = 'doc_writes_bytes_blip'
+        else:
+            replication_type = 'doc_reads_bytes_blip'
+        for count in range(1, self.test_config.cluster.num_buckets + 1):
+            db = 'db-{}'.format(count)
+            bytes_transeferred += float(
+                    stats['syncgateway']['per_db'][db]['database'][replication_type])
+            return bytes_transeferred
+
+    def get_sgw_push_count(self, host):
+        sgw_stats = self.get_sg_stats(host)
+        push_count = 0
+        if not self.cluster_spec.capella_infrastructure:
+            for count in range(1, self.test_config.cluster.num_buckets + 1):
+                db = 'db-{}'.format(count)
+                push_count += \
+                    int(sgw_stats['syncgateway']['per_db'][db]
+                                 ['cbl_replication_push']['doc_push_count'])
+        else:
+            stat = sgw_stats.find("sgw_replication_push_doc_push_count")
+            stat_list = []
+            while stat != -1:
+                stat_list.append(stat)
+                stat = sgw_stats.find("sgw_replication_push_doc_push_count", stat + 1)
+            last = sgw_stats.find("# HELP", stat_list[-1] + 1)
+            stat_list.append(last)
+            for i in range(2, len(stat_list) - 1):
+                str = sgw_stats[stat_list[i]:stat_list[i+1]]
+                a = str.find("}")
+                push_count += int(float(str[a+2:]))
+            push_count /= 2
+        return push_count
+
+    def get_sgw_pull_count(self, host):
+        pull_count = 0
+        sgw_stats = self.get_sg_stats(host)
+        if not self.cluster_spec.capella_infrastructure:
+            for count in range(1, self.test_config.cluster.num_buckets + 1):
+                db = 'db-{}'.format(count)
+                pull_count += \
+                    int(sgw_stats['syncgateway']['per_db'][db]
+                                 ['cbl_replication_pull']['rev_send_count'])
+        else:
+            stat = sgw_stats.find("sgw_shared_bucket_import_import_count")
+            stat_list = []
+            while stat != -1:
+                stat_list.append(stat)
+                stat = sgw_stats.find("sgw_shared_bucket_import_import_count", stat + 1)
+            last = sgw_stats.find("# HELP", stat_list[-1] + 1)
+            stat_list.append(last)
+            for i in range(2, len(stat_list) - 1):
+                str = sgw_stats[stat_list[i]:stat_list[i+1]]
+                a = str.find("}")
+                pull_count += int(float(str[a+2:]))
+            pull_count /= 2
+        return pull_count
 
     def wait_sgw_push_start(self, hosts, initial_docs):
         retries = 0
-        max_retries = 120
+        max_retries = 900
         while True:
             push_count = 0
             start_time = time.time()
             for host in hosts:
-                sgw_stats = self.get_sg_stats(host)
-                push_count += \
-                    int(sgw_stats['syncgateway']['per_db']['db']
-                                 ['cbl_replication_push']['doc_push_count'])
+                push_count += self.get_sgw_push_count(host)
+                if self.cluster_spec.capella_infrastructure:
+                    break
+
             if push_count > initial_docs:
                 return start_time, push_count
             retries += 1
@@ -1197,15 +1259,15 @@ class DefaultMonitor(DefaultRestHelper):
 
     def wait_sgw_pull_start(self, hosts, initial_docs):
         retries = 0
-        max_retries = 120
+        max_retries = 900
         while True:
             pull_count = 0
             start_time = time.time()
             for host in hosts:
-                sgw_stats = self.get_sg_stats(host)
-                pull_count += \
-                    int(sgw_stats['syncgateway']['per_db']['db']
-                                 ['cbl_replication_pull']['rev_send_count'])
+                pull_count += self.get_sgw_pull_count(host)
+                if self.cluster_spec.capella_infrastructure:
+                    break
+
             if pull_count > initial_docs:
                 return start_time, pull_count
             retries += 1
@@ -1218,16 +1280,16 @@ class DefaultMonitor(DefaultRestHelper):
 
     def wait_sgw_push_docs(self, hosts, target_docs):
         retries = 0
-        max_retries = 120
+        max_retries = 360
         last_push_count = 0
         while True:
             push_count = 0
             finished_time = time.time()
             for host in hosts:
-                sgw_stats = self.get_sg_stats(host)
-                push_count += \
-                    int(sgw_stats['syncgateway']['per_db']['db']
-                                 ['cbl_replication_push']['doc_push_count'])
+                push_count += self.get_sgw_push_count(host)
+                if self.cluster_spec.capella_infrastructure:
+                    break
+
             if push_count >= target_docs:
                 return finished_time, push_count
             logger.info("push count: {}".format(push_count))
@@ -1242,16 +1304,16 @@ class DefaultMonitor(DefaultRestHelper):
 
     def wait_sgw_pull_docs(self, hosts, target_docs):
         retries = 0
-        max_retries = 120
+        max_retries = 360
         last_pull_count = 0
         while True:
             pull_count = 0
             finished_time = time.time()
             for host in hosts:
-                sgw_stats = self.get_sg_stats(host)
-                pull_count += \
-                    int(sgw_stats['syncgateway']['per_db']['db']
-                                 ['cbl_replication_pull']['rev_send_count'])
+                pull_count += self.get_sgw_pull_count(host)
+                if self.cluster_spec.capella_infrastructure:
+                    break
+
             if pull_count >= target_docs:
                 return finished_time, pull_count
             logger.info("pull count: {}".format(pull_count))
@@ -1276,10 +1338,10 @@ class DefaultMonitor(DefaultRestHelper):
                 maybe_finished_time = time.time()
             push_count = 0
             for host in hosts:
-                sgw_stats = self.get_sg_stats(host)
-                push_count += \
-                    int(sgw_stats['syncgateway']['per_db']['db']
-                                 ['cbl_replication_push']['doc_push_count'])
+                push_count += self.get_sgw_push_count(host)
+                if self.cluster_spec.capella_infrastructure:
+                    break
+
             logger.info('push count: {}'.format(push_count))
             if push_count == last_push_count:
                 logger.info('push maybe completed')

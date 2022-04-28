@@ -6,7 +6,7 @@ import re
 import shutil
 from multiprocessing import Pool
 from time import sleep, time
-from typing import Callable
+from typing import Callable, Iterable
 
 from decorator import decorator
 
@@ -30,8 +30,6 @@ from perfrunner.helpers.worker import (
     syncgateway_delta_sync_task_run_test,
     syncgateway_e2e_cbl_task_load_docs,
     syncgateway_e2e_cbl_task_run_test,
-    syncgateway_e2e_multi_cb_task_load_docs,
-    syncgateway_e2e_multi_cb_task_run_test,
     syncgateway_e2e_multi_cbl_task_load_docs,
     syncgateway_e2e_multi_cbl_task_run_test,
     syncgateway_new_docpush_task,
@@ -81,6 +79,9 @@ class SGPerfTest(PerfTest):
         self.dynamic_infra = False
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+        self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
+        self.capella_infra = self.cluster_spec.capella_infrastructure
+        self.cloud_infra = self.cluster_spec.cloud_infrastructure
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.rest = RestHelper(cluster_spec, test_config)
@@ -98,6 +99,7 @@ class SGPerfTest(PerfTest):
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.sg_settings = self.test_config.syncgateway_settings
+        self.collections = self.test_config.collection
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
@@ -134,86 +136,85 @@ class SGPerfTest(PerfTest):
                      phase: str,
                      task: Callable,
                      settings: PhaseSettings,
+                     target_iterator: Iterable = None,
                      timer: int = None,
                      distribute: bool = False,
                      wait: bool = True) -> None:
+        if target_iterator is None:
+            target_iterator = self.target_iterator
         logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
-        self.worker_manager.run_sg_tasks(task, settings, timer, distribute, phase)
+        self.worker_manager.run_sg_tasks(task, settings, target_iterator, timer, distribute, phase)
         if wait:
             self.worker_manager.wait_for_workers()
 
     def start_memcached(self):
         self.run_sg_phase("start memcached", syncgateway_task_start_memcached,
-                          self.settings, self.settings.time, False)
+                          self.settings, None, self.settings.time, False)
 
     def load_users(self):
         self.run_sg_phase("load users", syncgateway_task_load_users,
-                          self.settings, self.settings.time, False)
+                          self.settings, None, self.settings.time, False)
 
     def init_users(self):
         if self.test_config.syncgateway_settings.auth == 'true':
             self.run_sg_phase("init users", syncgateway_task_init_users,
-                              self.settings, self.settings.time, False)
+                              self.settings, None, self.settings.time, False)
 
     def grant_access(self):
         if self.test_config.syncgateway_settings.grant_access == 'true':
             self.run_sg_phase("grant access to  users", syncgateway_task_grant_access,
-                              self.settings, self.settings.time, False)
+                              self.settings, None, self.settings.time, False)
 
     def load_docs(self):
         self.run_sg_phase("load docs", syncgateway_task_load_docs,
-                          self.settings, self.settings.time, False)
+                          self.settings, None, self.settings.time, False)
 
     @with_stats
     @with_profiles
     def run_test(self):
         self.run_sg_phase("run test", syncgateway_task_run_test,
-                          self.settings, self.settings.time, True)
+                          self.settings, None, self.settings.time, True)
 
     def compress_sg_logs(self):
         try:
             self.remote.compress_sg_logs_new()
             return
         except Exception as ex:
-            print(str(ex))
+            logger.warn(ex)
         try:
             self.remote.compress_sg_logs()
         except Exception as ex:
-            print(str(ex))
+            logger.warn(ex)
 
     def get_sg_logs(self):
         ssh_user, ssh_pass = self.cluster_spec.ssh_credentials
-        if self.cluster_spec.sgw_servers:
-            server = self.cluster_spec.sgw_servers[0]
-        else:
-            server = self.cluster_spec.servers[0]
-        try:
-            local.get_sg_logs_new(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
-        except Exception as ex:
-            print(str(ex))
+        for node in range(int(self.sg_settings.nodes)):
+            server = self.cluster_spec.sgw_servers[node]
+            try:
+                local.get_sg_logs_new(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
+            except Exception as ex:
+                logger.warn(ex)
         if self.settings.syncgateway_settings.troublemaker:
             for server in self.cluster_spec.sgw_servers:
                 try:
                     local.get_troublemaker_logs(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
                     local.rename_troublemaker_logs(from_host=server)
                 except Exception as ex:
-                    print(str(ex))
+                    logger.warn(ex)
                 try:
                     local.get_default_troublemaker_logs(host=server, ssh_user=ssh_user,
                                                         ssh_pass=ssh_pass)
                 except Exception as ex:
-                    print(str(ex))
+                    logger.warn(ex)
 
     def get_sg_console(self):
         ssh_user, ssh_pass = self.cluster_spec.ssh_credentials
-        if self.cluster_spec.sgw_servers:
-            server = self.cluster_spec.sgw_servers[0]
-        else:
-            server = self.cluster_spec.servers[0]
-        try:
-            local.get_sg_console(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
-        except Exception as ex:
-            print(str(ex))
+        for node in range(int(self.sg_settings.nodes)):
+            server = self.cluster_spec.sgw_servers[node]
+            try:
+                local.get_sg_console(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
+            except Exception as ex:
+                logger.warn(ex)
 
     def channel_list(self, number_of_channels: int):
         channels = []
@@ -238,7 +239,7 @@ class SGPerfTest(PerfTest):
             self.remote.kill_cblite()
         if self.settings.syncgateway_settings.collect_cbl_logs:
             self.collect_cblite_logs()
-        if self.settings.syncgateway_settings.ramdisk_size:
+        if self.settings.syncgateway_settings.ramdisk_size != 0:
             self.remote.destroy_cblite_ramdisk()
         if self.settings.syncgateway_settings.troublemaker:
             self.remote.kill_troublemaker()
@@ -272,6 +273,20 @@ class SGRead(SGPerfTest):
 
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), GET doc by id")
+        )
+
+
+class SGReadLatency(SGPerfTest):
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_latency('[READ], 95thPercentileLatency(us)',
+                                     'Latency (ms), GET doc by id, 95 percentile')
         )
 
 
@@ -360,6 +375,20 @@ class SGWrite(SGPerfTest):
         )
 
 
+class SGWriteLatency(SGPerfTest):
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            self.metrics.sg_latency('[INSERT], 95thPercentileLatency(us)',
+                                    'Latency (ms), POST doc, 95 percentile')
+        )
+
+
 class SGMixQueryThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
@@ -426,17 +455,6 @@ class SGImportLoad(PerfTest):
 
 class SGImportThroughputTest(SGPerfTest):
 
-    def download_ycsb(self):
-        if self.worker_manager.is_remote:
-            self.remote.init_ycsb(
-                    repo=self.test_config.ycsb_settings.repo,
-                    branch=self.test_config.ycsb_settings.branch,
-                    worker_home=self.worker_manager.WORKER_HOME,
-                    sdk_version=self.test_config.ycsb_settings.sdk_version)
-        else:
-            local.clone_git_repo(repo=self.test_config.ycsb_settings.repo,
-                                 branch=self.test_config.ycsb_settings.branch)
-
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=ycsb_data_load_task)
 
@@ -451,6 +469,7 @@ class SGImportThroughputTest(SGPerfTest):
 
     def _report_kpi(self, time_elapsed_load, items_in_range_load, time_elapsed_access,
                     items_in_range_access):
+        self.collect_execution_logs()
         self.reporter.post(
             *self.metrics.sgimport_items_per_sec(time_elapsed=time_elapsed_load,
                                                  items_in_range=items_in_range_load,
@@ -466,7 +485,7 @@ class SGImportThroughputTest(SGPerfTest):
     @with_profiles
     def monitor_sg_import(self, phase):
         host = self.cluster_spec.sgw_servers[0]
-        expected_docs = self.test_config.load_settings.items
+        expected_docs = self.test_config.load_settings.items * self.test_config.cluster.num_buckets
         if phase == 'access':
             expected_docs = expected_docs * 2
         logger.info("expected docs :{}".format(expected_docs))
@@ -486,12 +505,14 @@ class SGImportThroughputTest(SGPerfTest):
             server = self.cluster_spec.sgw_servers[i]
             import_count = self.monitor.get_import_count(host=server)
             total_initial_docs += import_count
+            if self.capella_infra:
+                break
         return total_initial_docs
 
     @with_stats
     @with_profiles
     def monitor_sg_import_multinode(self, phase: str):
-        expected_docs = self.test_config.load_settings.items
+        expected_docs = self.test_config.load_settings.items * self.test_config.cluster.num_buckets
         if phase == 'access':
             expected_docs = expected_docs * 2
         logger.info("expected docs :{}".format(expected_docs))
@@ -507,6 +528,7 @@ class SGImportThroughputTest(SGPerfTest):
         start_time = time()
 
         while importing:
+            sleep(2)
             total_count = 0
             for i in range(self.test_config.syncgateway_settings.import_nodes):
                 server = self.cluster_spec.sgw_servers[i]
@@ -529,25 +551,29 @@ class SGImportThroughputTest(SGPerfTest):
 
         self.download_ycsb()
 
+        t0 = time()
+
         self.load()
 
-        if self.test_config.syncgateway_settings.import_nodes > 1:
-            time_elapsed_load, items_in_range_load = \
-                self.monitor_sg_import_multinode(phase='load')
-        else:
+        if self.test_config.syncgateway_settings.import_nodes == 1 or self.capella_infra:
             time_elapsed_load, items_in_range_load = \
                 self.monitor_sg_import(phase='load')
+        else:
+            time_elapsed_load, items_in_range_load = \
+                self.monitor_sg_import_multinode(phase='load')
 
-        # self.report_kpi(time_elapsed, items_in_range)
+        if items_in_range_load == 0:
+            time_elapsed_load = time() - t0
+            items_in_range_load = self.test_config.load_settings.items
 
         self.access_bg()
 
-        if self.test_config.syncgateway_settings.import_nodes > 1:
-            time_elapsed_access, items_in_range_access = \
-                self.monitor_sg_import_multinode(phase='access')
-        else:
+        if self.test_config.syncgateway_settings.import_nodes == 1 or self.capella_infra:
             time_elapsed_access, items_in_range_access = \
                 self.monitor_sg_import(phase='access')
+        else:
+            time_elapsed_access, items_in_range_access = \
+                self.monitor_sg_import_multinode(phase='access')
 
         self.report_kpi(time_elapsed_load, items_in_range_load,
                         time_elapsed_access, items_in_range_access)
@@ -570,6 +596,7 @@ class SGImportLatencyTest(SGPerfTest):
                   'sgimport_latency': True}
 
     def _report_kpi(self, *args):
+        self.collect_execution_logs()
         self.reporter.post(
             *self.metrics.sgimport_latency()
         )
@@ -664,8 +691,13 @@ class SGReplicateThroughputTest1(SGPerfTest):
         )
 
     def start_replication(self, sg1_master, sg2_master):
-        sg1 = 'http://{}:4985/db'.format(sg1_master)
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -716,8 +748,13 @@ class SGReplicateThroughputTest1(SGPerfTest):
 class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master):
-        sg1 = 'http://{}:4985/db'.format(sg1_master)
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -763,8 +800,13 @@ class SGReplicateThroughputTest2(SGPerfTest):
         )
 
     def start_replication(self, sg1_master, sg2_master):
-        sg1 = 'http://{}:4985/db'.format(sg1_master)
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -815,8 +857,13 @@ class SGReplicateThroughputTest2(SGPerfTest):
 class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        sg1 = 'http://{}:4985/db'.format(sg1_master)
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -857,7 +904,11 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
 class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -912,8 +963,13 @@ class SGReplicateLoad(SGPerfTest):
 class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master):
-        sg1 = 'http://{}:4985/db'.format(sg1_master)
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -957,7 +1013,11 @@ class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
 class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -995,8 +1055,13 @@ class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
 class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master, channel):
-        sg1 = 'http://{}:4985/db'.format(sg1_master)
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = [("channel-" + str(channel + 1))]
         replication_id = "sgr1_" + self.sg_settings.sg_replication_type + str(channel+1)
@@ -1055,8 +1120,13 @@ class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
 class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master, channel):
-        sg1 = 'http://{}:4985/db'.format(sg1_master)
-        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        if self.cluster_spec.capella_infrastructure or \
+           self.test_config.cluster.enable_n2n_encryption:
+            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+        else:
+            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
+            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
 
         channels = [("channel-" + str(channel+1))]
         replication_id = "sgr2_" + self.sg_settings.sg_replication_type + str(channel+1)
@@ -1144,16 +1214,20 @@ class SGReplicateMultiCluster(SGPerfTest):
     def run_sg_bp_phase(self,
                         phase: str,
                         task: Callable, settings: PhaseSettings,
+                        target_iterator: Iterable = None,
                         timer: int = None,
                         distribute: bool = False) -> None:
-        self.worker_manager.run_sg_bp_tasks(task, settings, timer, distribute, phase)
+        if target_iterator is None:
+            target_iterator = self.target_iterator
+        self.worker_manager.run_sg_bp_tasks(task, settings, target_iterator,
+                                            timer, distribute, phase)
         self.worker_manager.wait_for_workers()
 
     @with_stats
     @with_profiles
     def run_bp_test(self):
         self.run_sg_bp_phase(" blackholepuller test", syncgateway_bh_puller_task,
-                             self.settings, self.settings.time, True)
+                             self.settings, None, self.settings.time, True)
 
     def _report_kpi(self):
         self.collect_execution_logs()
@@ -1214,16 +1288,20 @@ class SGReplicateMultiClusterPush(SGPerfTest):
     def run_sg_docpush_phase(self,
                              phase: str,
                              task: Callable, settings: PhaseSettings,
+                             target_iterator: Iterable = None,
                              timer: int = None,
                              distribute: bool = False) -> None:
-        self.worker_manager.run_sg_bp_tasks(task, settings, timer, distribute, phase)
+        if target_iterator is None:
+            target_iterator = self.target_iterator
+        self.worker_manager.run_sg_bp_tasks(task, settings, target_iterator,
+                                            timer, distribute, phase)
         self.worker_manager.wait_for_workers()
 
     @with_stats
     @with_profiles
     def run_bp_test(self):
         self.run_sg_docpush_phase(" newDocpusher test", syncgateway_new_docpush_task,
-                                  self.settings, self.settings.time, True)
+                                  self.settings, None, self.settings.time, True)
 
     def _report_kpi(self):
         self.collect_execution_logs()
@@ -1260,16 +1338,19 @@ class DeltaSync(SGPerfTest):
             "load docs",
             syncgateway_delta_sync_task_load_docs,
             self.settings,
+            None,
             self.settings.time,
             distribute=False
         )
 
     @with_stats
+    @with_profiles
     def run_test(self):
         self.run_sg_phase(
             "run test",
             syncgateway_delta_sync_task_run_test,
             self.settings,
+            None,
             self.settings.time,
             distribute=True
         )
@@ -1283,9 +1364,9 @@ class DeltaSync(SGPerfTest):
         replication_type = self.test_config.syncgateway_settings.replication_type
         sgw_ip = list(self.cluster_spec.sgw_masters)[0]
         if replication_type == 'PUSH':
-            ret_str = local.replicate_push(cblite_db, sgw_ip)
+            ret_str = local.replicate_push(self.cluster_spec, cblite_db, sgw_ip)
         elif replication_type == 'PULL':
-            ret_str = local.replicate_pull(cblite_db, sgw_ip)
+            ret_str = local.replicate_pull(self.cluster_spec, cblite_db, sgw_ip)
         else:
             raise Exception("incorrect replication type: {}".format(replication_type))
 
@@ -1339,8 +1420,10 @@ class DeltaSync(SGPerfTest):
 
     def post_deltastats(self):
         sg_server = self.cluster_spec.sgw_servers[0]
-        stats = self.monitor.deltasync_stats(host=sg_server)
-        logger.info('Sync-gateway Stats:{}'.format(stats))
+        for count in range(1, self.test_config.cluster.num_buckets + 1):
+            db = 'db-{}'.format(count)
+            stats = self.monitor.deltasync_stats(host=sg_server, db=db)
+            logger.info('Sync-gateway Stats for {} are:{}'.format(db, stats))
 
     def calc_bandwidth_usage(self, synced_bytes: float, time_taken: float):
         # in Mb
@@ -1433,9 +1516,9 @@ class DeltaSyncParallel(DeltaSync):
         replication_type = self.test_config.syncgateway_settings.replication_type
         sgw_ip = list(self.cluster_spec.sgw_masters)[0]
         if replication_type == 'PUSH':
-            ret_str = local.replicate_push(cblite_db, sgw_ip)
+            ret_str = local.replicate_push(self.cluster_spec, cblite_db, sgw_ip)
         elif replication_type == 'PULL':
-            ret_str = local.replicate_pull(cblite_db, sgw_ip)
+            ret_str = local.replicate_pull(self.cluster_spec, cblite_db, sgw_ip)
         else:
             raise Exception("incorrect replication type: {}".format(replication_type))
 
@@ -1548,9 +1631,9 @@ class EndToEndTest(SGPerfTest):
         replication_type = self.test_config.syncgateway_settings.replication_type
         sgw_ip = list(self.cluster_spec.sgw_masters)[0]
         if replication_type == 'E2E_PUSH':
-            local.replicate_push_continuous(db, sgw_ip)
+            local.replicate_push_continuous(self.cluster_spec, db, sgw_ip)
         elif replication_type == 'E2E_PULL':
-            local.replicate_pull_continuous(db, sgw_ip)
+            local.replicate_pull_continuous(self.cluster_spec, db, sgw_ip)
         else:
             raise Exception(
                 "replication type must be either E2E_PUSH or E2E_PULL: {}".format(replication_type)
@@ -1572,6 +1655,7 @@ class EndToEndTest(SGPerfTest):
     def wait_for_docs_pulled(self, initial_docs, target_docs):
         sgw_servers = self.settings.syncgateway_settings.nodes
         sg_servers = self.cluster_spec.sgw_servers[0:sgw_servers]
+        logger.info("Initial docs: {}, Target docs: {}".format(initial_docs, target_docs))
         sgw_t0, start_pull_count = self.monitor.wait_sgw_pull_start(sg_servers, initial_docs)
         logger.info("waiting for pull complete...")
         sgw_t1, end_pull_count = self.monitor.wait_sgw_pull_docs(sg_servers,
@@ -1583,10 +1667,52 @@ class EndToEndTest(SGPerfTest):
         return sgw_time, observed_pulled
 
     def post_delta_stats(self):
-        sg_server = self.cluster_spec.sgw_servers[0]
-        stats = self.monitor.deltasync_stats(host=sg_server)
-        logger.info('Sync-gateway Stats: {}'.format(pretty_dict(stats)))
-        return stats
+        sgw_servers = self.settings.syncgateway_settings.nodes
+        sg_servers = self.cluster_spec.sgw_servers[0:sgw_servers]
+        pull_count = 0
+        push_count = 0
+        for host in sg_servers:
+            logger.info("The host is: {}".format(host))
+            sgw_stats = self.rest.get_sg_stats(host)
+            if not self.cluster_spec.capella_infrastructure:
+                logger.info('Sync-gateway Stats for host {}: {}'.format(host,
+                            pretty_dict(sgw_stats['syncgateway']['per_db'])))
+                for count in range(1, self.test_config.cluster.num_buckets + 1):
+                    db = 'db-{}'.format(count)
+                    pull_count += \
+                        int(sgw_stats['syncgateway']['per_db'][db]
+                                     ['cbl_replication_pull']['rev_send_count'])
+                    push_count += \
+                        int(sgw_stats['syncgateway']['per_db'][db]
+                                     ['cbl_replication_push']['doc_push_count'])
+            else:
+                stat = sgw_stats.find("sgw_shared_bucket_import_import_count")
+                stat_list = []
+                while stat != -1:
+                    stat_list.append(stat)
+                    stat = sgw_stats.find("sgw_shared_bucket_import_import_count", stat + 1)
+                last = sgw_stats.find("# HELP", stat_list[-1] + 1)
+                stat_list.append(last)
+                for i in range(2, len(stat_list) - 1):
+                    str = sgw_stats[stat_list[i]:stat_list[i+1]]
+                    a = str.find("}")
+                    pull_count += int(float(str[a+2:]))
+                pull_count /= 2
+
+                stat = sgw_stats.find("sgw_replication_push_doc_push_count")
+                stat_list = []
+                while stat != -1:
+                    stat_list.append(stat)
+                    stat = sgw_stats.find("sgw_replication_push_doc_push_count", stat + 1)
+                last = sgw_stats.find("# HELP", stat_list[-1] + 1)
+                stat_list.append(last)
+                for i in range(2, len(stat_list) - 1):
+                    str = sgw_stats[stat_list[i]:stat_list[i+1]]
+                    a = str.find("}")
+                    push_count += int(float(str[a+2:]))
+                push_count /= 2
+                break
+        return dict(pull_count=pull_count, push_count=push_count)
 
     def print_ycsb_logs(self):
         for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
@@ -1605,6 +1731,14 @@ class EndToEndTest(SGPerfTest):
             )
         )
         self.reporter.post(
+            *self.metrics.sgw_e2e_throughput_per_cblite(
+                throughput=sgw_load_tp / float(self.settings.syncgateway_settings.threads),
+                field_length=field_length,
+                operation="INSERT",
+                replication=self.test_config.syncgateway_settings.replication_type
+            )
+        )
+        self.reporter.post(
             *self.metrics.sgw_e2e_throughput(
                 throughput=sgw_access_tp,
                 field_length=field_length,
@@ -1612,8 +1746,17 @@ class EndToEndTest(SGPerfTest):
                 replication=self.test_config.syncgateway_settings.replication_type
             )
         )
+        self.reporter.post(
+            *self.metrics.sgw_e2e_throughput_per_cblite(
+                throughput=sgw_access_tp / float(self.settings.syncgateway_settings.threads),
+                field_length=field_length,
+                operation="UPDATE",
+                replication=self.test_config.syncgateway_settings.replication_type
+            )
+        )
 
     @with_stats
+    @with_profiles
     def e2e_cbl_load_bg(self, pre_load_writes, load_docs):
         settings = copy.deepcopy(self.settings)
         settings.syncgateway_settings.clients = \
@@ -1626,6 +1769,7 @@ class EndToEndTest(SGPerfTest):
             phase="load phase",
             task=syncgateway_e2e_cbl_task_load_docs,
             settings=self.settings,
+            target_iterator=None,
             timer=self.settings.time,
             distribute=True,
             wait=False
@@ -1638,11 +1782,13 @@ class EndToEndTest(SGPerfTest):
         return sgw_load_time, observed_pushed
 
     @with_stats
+    @with_profiles
     def e2e_cbl_update_bg(self, post_load_writes, load_docs):
         self.run_sg_phase(
             phase="access phase",
             task=syncgateway_e2e_cbl_task_run_test,
             settings=self.settings,
+            target_iterator=None,
             timer=self.settings.time,
             distribute=True,
             wait=False
@@ -1656,6 +1802,7 @@ class EndToEndTest(SGPerfTest):
         return sgw_access_time, observed_pushed
 
     @with_stats
+    @with_profiles
     def e2e_cb_load_bg(self, pre_load_writes, load_docs):
         cb_target_iterator = CBTargetIterator(self.cluster_spec,
                                               self.test_config,
@@ -1669,6 +1816,7 @@ class EndToEndTest(SGPerfTest):
         return sgw_load_time
 
     @with_stats
+    @with_profiles
     def e2e_cb_update_bg(self, post_load_writes, load_docs):
         cb_target_iterator = CBTargetIterator(self.cluster_spec,
                                               self.test_config,
@@ -1696,8 +1844,8 @@ class EndToEndSingleCBLTest(EndToEndTest):
     def run(self):
         try:
             local.kill_cblite()
-        except Exception as e:
-            print(str(e))
+        except Exception as ex:
+            logger.warn(ex)
         self.download_ycsb()
         local.clone_cblite()
         local.build_cblite()
@@ -1725,20 +1873,20 @@ class EndToEndSingleCBLPushTest(EndToEndSingleCBLTest):
     def run_push(self):
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
-        pre_load_writes = int(pre_load_stats['db']['database']['num_doc_writes'])
+        pre_load_writes = pre_load_stats['push_count']
         logger.info("initial writes: {}".format(pre_load_writes))
 
         sgw_load_time, observed_pushed_load = self.e2e_cbl_load_bg(pre_load_writes, load_docs)
 
         post_load_stats = self.post_delta_stats()
-        post_load_writes = int(post_load_stats['db']['database']['num_doc_writes'])
+        post_load_writes = post_load_stats['push_count']
         logger.info("post load writes: {}".format(post_load_writes))
 
         sgw_access_time, observed_pushed_access = self.e2e_cbl_update_bg(post_load_writes,
                                                                          load_docs)
 
         post_access_stats = self.post_delta_stats()
-        post_access_writes = int(post_access_stats['db']['database']['num_doc_writes'])
+        post_access_writes = post_access_stats['push_count']
         logger.info("post access writes: {}".format(post_access_writes))
 
         sgw_load_tp = observed_pushed_load / sgw_load_time
@@ -1773,19 +1921,19 @@ class EndToEndSingleCBLPullTest(EndToEndSingleCBLTest):
     def run_pull(self):
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
-        pre_load_writes = int(pre_load_stats['db']['database']['num_doc_writes'])
+        pre_load_writes = pre_load_stats['pull_count']
         logger.info("initial writes: {}".format(pre_load_writes))
 
         sgw_load_time = self.e2e_cb_load_bg(pre_load_writes, load_docs)
 
         post_load_stats = self.post_delta_stats()
-        post_load_writes = int(post_load_stats['db']['database']['num_doc_writes'])
+        post_load_writes = post_load_stats['pull_count']
         logger.info("post load writes: {}".format(post_load_writes))
 
         sgw_access_time = self.e2e_cb_update_bg(post_load_writes)
 
         post_access_stats = self.post_delta_stats()
-        post_access_writes = int(post_access_stats['db']['database']['num_doc_writes'])
+        post_access_writes = post_access_stats['pull_count']
         logger.info("post access writes: {}".format(post_access_writes))
 
         docs_accessed = post_access_writes - post_load_writes
@@ -1849,6 +1997,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             queue.put((None, None, "pull"))
 
     @with_stats
+    @with_profiles
     def push_load(self, pre_load_writes, load_docs):
         # settings = copy.deepcopy(self.settings)
         queue = multiprocessing.Queue()
@@ -1861,11 +2010,12 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 phase="load phase",
                 task=syncgateway_e2e_multi_cbl_task_load_docs,
                 settings=self.settings,
+                target_iterator=None,
                 timer=self.settings.time,
                 distribute=True,
-                wait=True
+                wait=False
             )
-            ret = queue.get(timeout=600)
+            ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
@@ -1882,10 +2032,10 @@ class EndToEndMultiCBLTest(EndToEndTest):
             else:
                 self.get_cblite_info()
                 self.collect_execution_logs()
-                # self.print_ycsb_logs()
                 raise Exception("failed to load docs")
 
     @with_stats
+    @with_profiles
     def push_update(self, post_load_writes, load_docs):
         queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self.push_monitor, args=(queue, post_load_writes,
@@ -1897,11 +2047,12 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 phase="access phase",
                 task=syncgateway_e2e_multi_cbl_task_run_test,
                 settings=self.settings,
+                target_iterator=None,
                 timer=self.settings.time,
                 distribute=True,
-                wait=True
+                wait=False
             )
-            ret = queue.get(timeout=600)
+            ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
@@ -1918,10 +2069,10 @@ class EndToEndMultiCBLTest(EndToEndTest):
             else:
                 self.get_cblite_info()
                 self.collect_execution_logs()
-                # self.print_ycsb_logs()
                 raise Exception("failed to update docs")
 
     @with_stats
+    @with_profiles
     def pull_load(self, pre_load_writes, load_docs):
         # settings = copy.deepcopy(self.settings)
         queue = multiprocessing.Queue()
@@ -1930,15 +2081,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
         p.daemon = True
         p.start()
         try:
-            self.run_sg_phase(
-                phase="load phase",
-                task=syncgateway_e2e_multi_cb_task_load_docs,
-                settings=self.settings,
-                timer=self.settings.time,
-                distribute=True,
-                wait=True
-            )
-            ret = queue.get(timeout=600)
+            PerfTest.load(self, task=ycsb_data_load_task)
+            ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
@@ -1955,10 +2099,10 @@ class EndToEndMultiCBLTest(EndToEndTest):
             else:
                 self.get_cblite_info()
                 self.collect_execution_logs()
-                # self.print_ycsb_logs()
                 raise Exception("failed to load docs")
 
     @with_stats
+    @with_profiles
     def pull_update(self, post_load_writes, load_docs):
         queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self.pull_monitor, args=(queue, post_load_writes,
@@ -1966,15 +2110,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
         p.daemon = True
         p.start()
         try:
-            self.run_sg_phase(
-                phase="access phase",
-                task=syncgateway_e2e_multi_cb_task_run_test,
-                settings=self.settings,
-                timer=self.settings.time,
-                distribute=True,
-                wait=True
-            )
-            ret = queue.get(timeout=600)
+            PerfTest.access(self, task=ycsb_task)
+            ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
@@ -1991,42 +2128,46 @@ class EndToEndMultiCBLTest(EndToEndTest):
             else:
                 self.get_cblite_info()
                 self.collect_execution_logs()
-                # self.print_ycsb_logs()
                 raise Exception("failed to update docs")
 
     @with_stats
+    @with_profiles
     def bidi_load(self, pre_load_writes, pre_load_reads, load_docs):
         settings = copy.deepcopy(self.settings)
         settings.syncgateway_settings.documents = load_docs // 2
         queue = multiprocessing.Queue()
-        p = multiprocessing.Process(target=self.push_monitor, args=(queue, pre_load_writes,
-                                                                    load_docs // 2))
+        p = multiprocessing.Process(target=self.push_monitor, args=(queue,
+                                    pre_load_writes,
+                                    int(load_docs
+                                        * float(settings.syncgateway_settings.pushproportion))))
         p.daemon = True
         p.start()
-        q = multiprocessing.Process(target=self.pull_monitor, args=(queue, pre_load_reads,
-                                                                    load_docs // 2))
+        q = multiprocessing.Process(target=self.pull_monitor, args=(queue,
+                                    pre_load_reads,
+                                    int(load_docs
+                                        * float(settings.syncgateway_settings.pullproportion))))
         q.daemon = True
         q.start()
         try:
+            settings.syncgateway_settings.documents = \
+                int(load_docs *
+                    float(settings.syncgateway_settings.pushproportion))
             self.run_sg_phase(
                 phase="load phase",
                 task=syncgateway_e2e_multi_cbl_task_load_docs,
                 settings=settings,
                 timer=self.settings.time,
+                target_iterator=None,
                 distribute=True,
                 wait=False
             )
-            self.run_sg_phase(
-                phase="load phase",
-                task=syncgateway_e2e_multi_cb_task_load_docs,
-                settings=settings,
-                timer=self.settings.time,
-                distribute=True,
-                wait=True
-            )
 
-            ret1 = queue.get(timeout=600)
-            ret2 = queue.get(timeout=600)
+            settings.syncgateway_settings.documents = \
+                int(load_docs *
+                    float(settings.syncgateway_settings.pullproportion))
+            PerfTest.load(self, task=ycsb_data_load_task)
+            ret1 = queue.get(timeout=900)
+            ret2 = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
@@ -2059,42 +2200,47 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 ))
                 self.get_cblite_info()
                 self.collect_execution_logs()
-                # self.print_ycsb_logs()
                 raise Exception("failed to load docs")
 
     @with_stats
+    @with_profiles
     def bidi_update(self, post_load_writes, post_load_reads, load_docs):
         settings = copy.deepcopy(self.settings)
         settings.syncgateway_settings.documents = load_docs // 2
         queue = multiprocessing.Queue()
-        p = multiprocessing.Process(target=self.push_monitor, args=(queue, post_load_writes,
-                                                                    load_docs // 2))
+        p = multiprocessing.Process(target=self.push_monitor, args=(queue,
+                                    post_load_writes,
+                                    int(load_docs
+                                        * float(settings.syncgateway_settings.pushproportion))))
         p.daemon = True
         p.start()
-        q = multiprocessing.Process(target=self.pull_monitor, args=(queue, post_load_reads,
-                                                                    load_docs // 2))
+        q = multiprocessing.Process(target=self.pull_monitor, args=(queue,
+                                    post_load_reads,
+                                    int(load_docs
+                                        * float(settings.syncgateway_settings.pullproportion))))
         q.daemon = True
         q.start()
         try:
+
+            settings.syncgateway_settings.documents = \
+                int(load_docs *
+                    float(settings.syncgateway_settings.pushproportion))
             self.run_sg_phase(
                 phase="access phase",
                 task=syncgateway_e2e_multi_cbl_task_run_test,
                 settings=settings,
                 timer=self.settings.time,
+                target_iterator=None,
                 distribute=True,
                 wait=False
             )
-            self.run_sg_phase(
-                phase="access phase",
-                task=syncgateway_e2e_multi_cb_task_run_test,
-                settings=settings,
-                timer=self.settings.time,
-                distribute=True,
-                wait=True
-            )
 
-            ret1 = queue.get(timeout=600)
-            ret2 = queue.get(timeout=600)
+            settings.syncgateway_settings.documents = \
+                int(load_docs *
+                    float(settings.syncgateway_settings.pullproportion))
+            PerfTest.access(self, task=ycsb_task)
+            ret1 = queue.get(timeout=900)
+            ret2 = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
@@ -2127,7 +2273,6 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 ))
                 self.get_cblite_info()
                 self.collect_execution_logs()
-                # self.print_ycsb_logs()
                 raise Exception("failed to update docs")
 
     def start_multi_cblitedb_continuous(self):
@@ -2141,12 +2286,19 @@ class EndToEndMultiCBLTest(EndToEndTest):
 
     def start_multi_continuous_replication(self):
         replication_type = self.test_config.syncgateway_settings.replication_type
-        sgw_ip = list(self.cluster_spec.sgw_masters)[0]
+        current_sgw = 0
+        cblites_on_current_sgw = 0
+        sgw_ip = self.cluster_spec.sgw_servers[current_sgw]
 
         logger.info("The sgw_ip is: {}".format(sgw_ip))
         total_users = int(self.settings.syncgateway_settings.users)
         user_id = 0
         logger.info("The number of users is: {}".format(total_users))
+        instances_per_sgw = int(self.settings.syncgateway_settings.threads) \
+            / int(self.settings.syncgateway_settings.nodes)
+        if self.capella_infra:
+            instances_per_sgw = int(self.settings.syncgateway_settings.threads)
+        logger.info("Instances per sgw: {}".format(instances_per_sgw))
         for instance_id in range(int(self.settings.syncgateway_settings.instances_per_client)):
             for client in self.cluster_spec.workers[:int(
                                                     self.settings.syncgateway_settings.clients)]:
@@ -2155,21 +2307,42 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 user_id += 1
                 if self.settings.syncgateway_settings.replication_auth:
                     username = "sg-user-{}".format(user_num)
-                    password = "password" if total_users > 1 else "guest"
+                    password = "Password123!" if total_users > 1 else "guest"
                 else:
                     username = None
                     password = None
-                port = 4985+instance_id
+                port = 4985 + instance_id
+                cblites_on_current_sgw += 1
+                logger.info("Cblites on current sgw: {}".format(cblites_on_current_sgw))
+                if cblites_on_current_sgw > instances_per_sgw and \
+                        current_sgw < int(self.settings.syncgateway_settings.nodes) - 1:
+                    cblites_on_current_sgw = 0
+                    current_sgw += 1
+                    sgw_ip = self.cluster_spec.sgw_servers[current_sgw]
                 if replication_type == 'E2E_PUSH':
                     sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
-                    self.rest.start_cblite_replication_push(
-                        client, port, db_name, sgw_ip, sgw_port, username, password)
+                    if self.capella_infra and self.cluster_spec.capella_backend == 'aws':
+                        self.remote.start_cblite_replication_aws_bidi(
+                            client, sgw_ip, sgw_port, db_name, username, password)
+                    else:
+                        self.rest.start_cblite_replication_push(
+                            client, port, db_name, sgw_ip, sgw_port, username, password)
                 elif replication_type == 'E2E_PULL':
-                    self.rest.start_cblite_replication_pull(
-                        client, port, db_name, sgw_ip, username, password)
+                    sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
+                    if self.capella_infra and self.cluster_spec.capella_backend == 'aws':
+                        self.remote.start_cblite_replication_aws_bidi(
+                            client, sgw_ip, sgw_port, db_name, username, password)
+                    else:
+                        self.rest.start_cblite_replication_pull(
+                            client, port, db_name, sgw_ip, sgw_port, username, password)
                 elif replication_type == 'E2E_BIDI':
-                    self.rest.start_cblite_replication_bidi(
-                        client, port, db_name, sgw_ip, username, password)
+                    sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
+                    if self.capella_infra and self.cluster_spec.capella_backend == 'aws':
+                        self.remote.start_cblite_replication_aws_bidi(
+                            client, sgw_ip, sgw_port, db_name, username, password)
+                    else:
+                        self.rest.start_cblite_replication_bidi(
+                            client, port, db_name, sgw_ip, sgw_port, username, password)
                 else:
                     raise Exception(
                         "replication type must be either E2E_PUSH or E2E_PULL: {}".
@@ -2181,10 +2354,11 @@ class EndToEndMultiCBLTest(EndToEndTest):
             self.remote.create_cblite_directory()
         except Exception as ex:
             logger.info("{}".format(ex))
-        try:
-            self.remote.create_cblite_ramdisk(self.settings.syncgateway_settings.ramdisk_size)
-        except Exception as ex:
-            logger.info("{}".format(ex))
+        if self.settings.syncgateway_settings.ramdisk_size != 0:
+            try:
+                self.remote.create_cblite_ramdisk(self.settings.syncgateway_settings.ramdisk_size)
+            except Exception as ex:
+                logger.info("{}".format(ex))
         try:
             self.remote.clone_cblite()
         except Exception as ex:
@@ -2203,13 +2377,13 @@ class EndToEndMultiCBLTest(EndToEndTest):
     def run(self):
         try:
             self.remote.kill_cblite()
-        except Exception as e:
-            print(str(e))
+        except Exception as ex:
+            logger.warn(ex)
         self.remote.modify_tcp_settings()
         self.download_ycsb()
         self.remote.build_syncgateway_ycsb(
-            worker_home=self.worker_manager.WORKER_HOME,
-            ycsb_instances=int(self.test_config.syncgateway_settings.instances_per_client))
+           worker_home=self.worker_manager.WORKER_HOME,
+           ycsb_instances=int(self.test_config.syncgateway_settings.instances_per_client))
         self.setup_cblite()
         self.start_memcached()
         self.load_users()
@@ -2244,29 +2418,25 @@ class EndToEndMultiCBLPushTest(EndToEndMultiCBLTest):
         logger.info("Loading Docs")
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
-        pre_load_writes = \
-            int(pre_load_stats['db']['cbl_replication_push']['doc_push_count'])
+        pre_load_writes = pre_load_stats['push_count']
         logger.info("initial pushed: {}".format(pre_load_writes))
 
         sgw_load_time, observed_pushed_load = self.push_load(pre_load_writes, load_docs)
 
         post_load_stats = self.post_delta_stats()
-        post_load_writes = \
-            int(post_load_stats['db']['cbl_replication_push']['doc_push_count'])
+        post_load_writes = post_load_stats['push_count']
         logger.info("post load pushed: {}".format(post_load_writes))
 
         sgw_access_time, observed_pushed_access = self.push_update(post_load_writes, load_docs)
 
         post_access_stats = self.post_delta_stats()
-        post_access_writes = \
-            int(post_access_stats['db']['cbl_replication_push']['doc_push_count'])
+        post_access_writes = post_access_stats['push_count']
         logger.info("post access pushed: {}".format(post_access_writes))
 
         sgw_load_tp = observed_pushed_load / sgw_load_time
         sgw_access_tp = observed_pushed_access / sgw_access_time
 
         self.collect_execution_logs()
-        # self.print_ycsb_logs()
         self.report_kpi(sgw_load_tp, sgw_access_tp)
 
 
@@ -2276,29 +2446,25 @@ class EndToEndMultiCBLPullTest(EndToEndMultiCBLTest):
         logger.info("Loading Docs")
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
-        pre_load_reads = \
-            int(pre_load_stats['db']['cbl_replication_pull']['rev_send_count'])
+        pre_load_reads = pre_load_stats['pull_count']
         logger.info("initial pulled: {}".format(pre_load_reads))
 
         sgw_load_time, observed_pulled_load = self.pull_load(pre_load_reads, load_docs)
 
         post_load_stats = self.post_delta_stats()
-        post_load_reads = \
-            int(post_load_stats['db']['cbl_replication_pull']['rev_send_count'])
+        post_load_reads = post_load_stats['pull_count']
         logger.info("post load pulled: {}".format(post_load_reads))
 
         sgw_access_time, observed_pulled_access = self.pull_update(post_load_reads, load_docs)
 
         post_access_stats = self.post_delta_stats()
-        post_access_reads = \
-            int(post_access_stats['db']['cbl_replication_pull']['rev_send_count'])
+        post_access_reads = post_access_stats['pull_count']
         logger.info("post access pulled: {}".format(post_access_reads))
 
         sgw_load_tp = observed_pulled_load / sgw_load_time
         sgw_access_tp = observed_pulled_access / sgw_access_time
 
         self.collect_execution_logs()
-        # self.print_ycsb_logs()
         self.report_kpi(sgw_load_tp, sgw_access_tp)
 
 
@@ -2314,39 +2480,41 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
                 replication=self.test_config.syncgateway_settings.replication_type
             )
         )
+        self.reporter.post(
+            *self.metrics.sgw_e2e_throughput_per_cblite(
+                throughput=sgw_load_tp / float(self.settings.syncgateway_settings.threads),
+                field_length=field_length,
+                operation=operation,
+                replication=self.test_config.syncgateway_settings.replication_type
+            )
+        )
 
     def run_bidi(self):
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
 
-        pre_load_writes = \
-            int(pre_load_stats['db']['cbl_replication_push']['doc_push_count'])
+        pre_load_writes = pre_load_stats['push_count']
         logger.info("initial pushed: {}".format(pre_load_writes))
 
-        pre_load_reads = \
-            int(pre_load_stats['db']['cbl_replication_pull']['rev_send_count'])
+        pre_load_reads = pre_load_stats['pull_count']
         logger.info("initial pulled: {}".format(pre_load_reads))
 
         sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, sgw_pull_load_docs = \
             self.bidi_load(pre_load_writes, pre_load_reads, load_docs)
 
         post_load_stats = self.post_delta_stats()
-        post_load_writes = \
-            int(post_load_stats['db']['cbl_replication_push']['doc_push_count'])
+        post_load_writes = post_load_stats['push_count']
         logger.info("post load pushed: {}".format(post_load_writes))
-        post_load_reads = \
-            int(post_load_stats['db']['cbl_replication_pull']['rev_send_count'])
+        post_load_reads = post_load_stats['pull_count']
         logger.info("post load pulled: {}".format(post_load_reads))
 
         sgw_push_access_time, sgw_push_access_docs, sgw_pull_access_time, sgw_pull_access_docs = \
             self.bidi_update(post_load_writes, post_load_reads, load_docs)
 
         post_access_stats = self.post_delta_stats()
-        post_access_writes = \
-            int(post_access_stats['db']['cbl_replication_push']['doc_push_count'])
+        post_access_writes = post_access_stats['push_count']
         logger.info("post access pushed: {}".format(post_access_writes))
-        post_access_reads = \
-            int(post_access_stats['db']['cbl_replication_pull']['rev_send_count'])
+        post_access_reads = post_access_stats['pull_count']
         logger.info("post access pulled: {}".format(post_access_reads))
 
         sgw_push_load_tp = sgw_push_load_docs / sgw_push_load_time
@@ -2355,7 +2523,6 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
         sgw_pull_access_tp = sgw_pull_access_docs / sgw_pull_access_time
 
         self.collect_execution_logs()
-        # self.print_ycsb_logs()
         self.report_kpi(sgw_push_load_tp, "PUSH_INSERT")
         self.report_kpi(sgw_pull_load_tp, "PULL_INSERT")
         self.report_kpi(sgw_push_access_tp, "PUSH_UPDATE")

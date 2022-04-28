@@ -320,7 +320,7 @@ class Remote:
         logger.info('Cloning cblite')
         with cd('/tmp/couchbase-mobile-tools/'):
             run('git clone https://github.com/couchbaselabs/couchbase-mobile-tools .')
-            run('git checkout ab1424897a4c81837b8593da33c027daf470f484')
+            run('git checkout 8434d06aaffd4dc5b2667d2a0a535266c3d941f1')
 
     def build_cblite(self):
         logger.info('Building cblite: updating submodule...')
@@ -357,7 +357,9 @@ class Remote:
     @all_clients_batch
     def cblite_checkout_version(self):
         with cd('/tmp/couchbase-mobile-tools/vendor/couchbase-lite-core'):
-            run('git checkout 96e4174ea69f9ce9146a31461e04b73af8d7c4df', quiet=True)
+            run('git checkout 6fb3bfc417b100fbc65b6c762f4c2d78b9b6ed6c', quiet=True)
+            run('git cherry-pick e36048607c97ce9c267b38772f034db786b37a25', quiet=True)
+            run('git cherry-pick 57e92f4c517ba5c2e76d3333aad928fa46655e8b', quiet=True)
 
     @all_clients_batch
     def cblite_make_build_dir(self):
@@ -382,12 +384,63 @@ class Remote:
         with settings(host_string=worker):
             run(cmd, pty=False)
 
+    def start_cblite_replication_aws_pull(self,
+                                          worker,
+                                          sgw_host,
+                                          sgw_port,
+                                          cblite_db,
+                                          user,
+                                          password):
+        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite pull --replicate'\
+              ' --continuous --user {0}:{1} wss://{2}:{3}/db-1'\
+              ' /tmp/couchbase-mobile-tools/{4}.cblite2 &>pull_{0}.log &'\
+              .format(user, password, sgw_host, sgw_port, cblite_db)
+        logger.info(cmd)
+        with settings(host_string=worker):
+            run(cmd, pty=False)
+
+    def start_cblite_replication_aws_push(self,
+                                          worker,
+                                          sgw_host,
+                                          sgw_port,
+                                          cblite_db,
+                                          user,
+                                          password):
+        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite push --replicate'\
+              ' --continuous --user {0}:{1} /tmp/couchbase-mobile-tools/{2}.cblite2'\
+              '  wss://{3}:{4}/db-1 &>push_{0}.log &'\
+              .format(user, password, cblite_db, sgw_host, sgw_port)
+        logger.info(cmd)
+        with settings(host_string=worker):
+            run(cmd, pty=False)
+
+    def start_cblite_replication_aws_bidi(self,
+                                          worker,
+                                          sgw_host,
+                                          sgw_port,
+                                          cblite_db,
+                                          user,
+                                          password):
+        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite cp --replicate --bidi'\
+              ' --continuous --user {0}:{1} wss://{2}:{3}/db-1'\
+              ' /tmp/couchbase-mobile-tools/{4}.cblite2 &>bidi_{0}.log &'\
+              .format(user, password, sgw_host, sgw_port, cblite_db)
+        logger.info(cmd)
+        with settings(host_string=worker):
+            run(cmd, pty=False)
+
     @all_clients
     def kill_cblite(self):
         logger.info("cleaning up cblite db continuous")
         cmd = "killall -9 cblite"
         with settings(quiet=True, warn_only=True):
             run(cmd)
+
+    @all_clients
+    def modify_fd_limits(self):
+        logger.info("modifying fd limits")
+        with settings(quiet=True, warn_only=True):
+            run("sed -i 's/LimitNOFILE=70000/LimitNOFILE=1000000/")
 
     @all_clients
     def modify_tcp_settings(self):
@@ -401,7 +454,7 @@ class Remote:
     def replicate_push_continuous(self, worker: str, db_name: str, sgw_ip: str):
         cmd = '/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
               'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-              'ws://{1}:4984/db &>push_{0}.log &'.format(db_name, sgw_ip)
+              'ws://{1}:4984/db-1 &>push_{0}.log &'.format(db_name, sgw_ip)
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)
@@ -409,7 +462,7 @@ class Remote:
     def replicate_pull_continuous(self, worker: str, db_name: str, sgw_ip: str):
         cmd = '/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
               'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-              'ws://{1}:4984/db &>pull_{0}.log &'.format(db_name, sgw_ip)
+              'ws://{1}:4984/db-1 &>pull_{0}.log &'.format(db_name, sgw_ip)
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)

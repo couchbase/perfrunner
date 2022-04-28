@@ -1640,6 +1640,16 @@ class MetricHelper:
         metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
         return round(throughput), self._snapshots, metric_info
 
+    def sgw_e2e_throughput_per_cblite(self, throughput: int, field_length: str,
+                                      operation: str, replication: str) -> Metric:
+        title = 'SGW {} {} Throughput (docs/sec) per cblite {}'.format(
+            replication.lower(), operation, self._title)
+        metric_id = '{}_{}_{}_{}'.format(
+            self.test_config.name, "throughput_per_cblite", operation, replication.lower())
+        order_by = '000002' + field_length
+        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        return round(throughput), self._snapshots, metric_info
+
     def cb_e2e_throughput(self, throughput: int, field_length: str,
                           operation: str, replication: str) -> Metric:
         title = 'CB {} {} Throughput (docs/sec) {}'.format(

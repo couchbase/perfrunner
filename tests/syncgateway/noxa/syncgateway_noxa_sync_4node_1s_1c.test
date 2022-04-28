@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGSync
+
+[showfast]
+title = , 4 nodes, 1M docs, 10K users, 1K channels, 100 channels per user, 20 writes/sec, s=1 c=1
+component = syncgateway
+category = sync
+sub_category = non-xattr
+
+[cluster]
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 4
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[access]
+time = 600
+workers = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 4
+threads = 400
+clients = 4
+instances_per_client = 5
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = syncgateway-weekly
+users = 10000
+channels = 1000
+channels_per_user = 100
+channels_per_doc = 1
+documents = 1000000
+roundtrip_write = true
+read_mode = changes
+feed_reading_mode = withdocs
+feed_mode = longpoll
+insert_mode = byuser
+auth = true
+readproportion=0.999
+updateproportion=0
+insertproportion=0.001
+requestdistribution = zipfian
+log_title = sync_gateway_4node_sync
+roundtrip_write_load = true

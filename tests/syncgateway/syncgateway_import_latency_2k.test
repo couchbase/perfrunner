@@ -15,7 +15,7 @@ num_buckets = 1
 
 [load]
 workload_path = workloads/workloada
-items = 7200000
+items = 1200000
 workers = 10
 target = 2000
 
@@ -23,10 +23,13 @@ target = 2000
 workload_path = workloads/workloada
 items = 1000
 workers = 1
-time = 7200
+time = 600
 boost = 12
 ops = 0
 target = 4000
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
 nodes = 3
@@ -35,7 +38,7 @@ clients = 1
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
-ycsb_branch = syncgateway-weekly
+ycsb_branch = tmp-sqw-weekly-updated-c3
 users = 1000
 channels = 1
 channels_per_user = 1

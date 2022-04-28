@@ -6,7 +6,7 @@ client_nodes = <CLIENT_NODES>
 
 utility_nodes = <UTILITY_NODES>
 
-sync_gateway_nodes = <SYNC_GATEWAY_NODES>
+syncgateway_nodes = <SYNCGATEWAY_NODES>
 
 cloud_storage = <CLOUD_STORAGE>
 

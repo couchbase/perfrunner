@@ -4,8 +4,8 @@ hebe_c1 =
 hebe_c2 =
     172.23.100.204:kv,index,n1ql
 
-[sync_gateways]
-sync_gateways =
+[syncgateways]
+syncgateways =
     172.23.100.191
     172.23.100.192
     172.23.100.193

@@ -43,7 +43,7 @@ variable "utility_nodes" {
   }))
 }
 
-variable "sync_gateway_nodes" {
+variable "syncgateway_nodes" {
   type = map(object({
     node_group    = string
     image         = string
@@ -283,13 +283,13 @@ resource "google_compute_disk" "utility-disk" {
     provisioned_iops = each.value.iops > 0 ? each.value.iops : null
 }
 
-resource "google_compute_instance" "sync_gateway_instance" {
-    for_each = var.sync_gateway_nodes
+resource "google_compute_instance" "syncgateway_instance" {
+    for_each = var.syncgateway_nodes
 
-    name         = "sync_gateway-${replace(replace(each.value.node_group, ".", "-"), "_", "-")}-vm-${var.uuid}"
+    name         = "syncgateway-${replace(replace(each.value.node_group, ".", "-"), "_", "-")}-vm-${var.uuid}"
     machine_type = "${each.value.instance_type}"
 
-    tags = ["sync_gateway"]
+    tags = ["syncgateway"]
 
     labels = {
       role       = "cluster"
@@ -306,7 +306,7 @@ resource "google_compute_instance" "sync_gateway_instance" {
     }
 
     attached_disk {
-        source = google_compute_disk.sync_gateway-disk[each.key].id
+        source = google_compute_disk.syncgateway-disk[each.key].id
     }
 
     network_interface {
@@ -322,10 +322,10 @@ resource "google_compute_instance" "sync_gateway_instance" {
     }
 }
 
-resource "google_compute_disk" "sync_gateway-disk" {
-    for_each = var.sync_gateway_nodes
+resource "google_compute_disk" "syncgateway-disk" {
+    for_each = var.syncgateway_nodes
 
-    name             = "sync_gateway-data-disk-${each.key}-${var.uuid}"
+    name             = "syncgateway-data-disk-${each.key}-${var.uuid}"
     type             = lower(each.value.storage_class)
     size             = each.value.volume_size
     provisioned_iops = each.value.iops > 0 ? each.value.iops : null

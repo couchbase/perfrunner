@@ -28,6 +28,9 @@ boost = 12
 ops = 0
 target = 4000
 
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
 [syncgateway]
 nodes = 3
 threads = 10

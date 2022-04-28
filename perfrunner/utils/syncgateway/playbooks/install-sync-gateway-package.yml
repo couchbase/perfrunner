@@ -1,6 +1,6 @@
 ---
 # Remove sync_gateway
-- hosts: sync_gateways:sg_accels
+- hosts: syncgateways:sg_accels
   become: yes
 
   tasks:
@@ -8,13 +8,13 @@
   - include: tasks/remove-sg-accel.yml
   - include: tasks/clean-users.yml
 
-  # Check no sync_gateways or accels running
+  # Check no syncgateways or accels running
   - name: SYNC GATEWAY | verify no service on 4985
     wait_for: port=4985 delay=1 state=stopped
 
 
 # Create sync_gateway user
-- hosts: sync_gateways
+- hosts: syncgateways
   any_errors_fatal: true
   become: yes
   tasks:
@@ -29,7 +29,7 @@
 
 
 # Download sync_gateway package
-- hosts: sync_gateways
+- hosts: syncgateways
   any_errors_fatal: true
 
   vars:
@@ -64,14 +64,14 @@
     get_url: url={{ couchbase_sg_accel_package_url }} dest=/tmp/{{ couchbase_sg_accel_package }}
 
 # Deploy non writer sync_gateway configs
-- hosts: sync_gateways
+- hosts: syncgateways
   any_errors_fatal: true
   become: yes
   vars:
     sync_gateway_config_filepath:
     couchbase_server_primary_node: "{{ hostvars[groups.couchbase_servers[0]].ansible_host }}"
     # hack until mobile-testkit/issues/406 allows any sync gateway to be referenced
-    sync_gateway_node: "{{ hostvars[groups.sync_gateways[0]].ansible_host }}"
+    sync_gateway_node: "{{ hostvars[groups.syncgateways[0]].ansible_host }}"
     is_index_writer: "false"
   tasks:
   - include: tasks/deploy-sync-gateway-config.yml
@@ -83,13 +83,13 @@
     sync_gateway_config_filepath:
     couchbase_server_primary_node: "{{ hostvars[groups.couchbase_servers[0]].ansible_host }}"
     # hack until mobile-testkit/issues/406 allows any sync gateway to be referenced
-    sync_gateway_node: "{{ hostvars[groups.sync_gateways[0]].ansible_host }}"
+    sync_gateway_node: "{{ hostvars[groups.syncgateways[0]].ansible_host }}"
     is_index_writer: "true"
   tasks:
   - include: tasks/deploy-sg-accel-config.yml
 
 # Install and launch sync_gateway service
-- hosts: sync_gateways
+- hosts: syncgateways
   any_errors_fatal: true
   become: yes
   tasks:

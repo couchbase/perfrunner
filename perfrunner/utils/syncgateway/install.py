@@ -43,6 +43,8 @@ def main():
     parser.read(_cluster_full_path)
     confdict = {section: dict(parser.items(section)) for section in parser.sections()}
     server_ip = confdict.get('servers', confdict.get('couchbase_servers', None))
+    if server_ip is None:
+        server_ip = confdict.get('servers', confdict.get('clusters', None))
 
     with open(_config_full_path, 'r') as file:
         filedata = file.read()

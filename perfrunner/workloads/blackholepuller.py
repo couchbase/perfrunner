@@ -5,7 +5,7 @@ from perfrunner.helpers.local import (
     run_newdocpusher,
     run_newdocpusher_adv,
 )
-from perfrunner.settings import ClusterSpec, PhaseSettings
+from perfrunner.settings import ClusterSpec, PhaseSettings, TargetSettings
 
 BINARY_NAME = "/BlackHolePuller"
 BINARY_PATH = "/SG_Tools_1"
@@ -22,12 +22,12 @@ def get_host(cluster, workload_settings):
 def build_multihost_url(cluster, workload_settings):
     url_string = ''
     for server in cluster.sgw_servers:
-        url = 'http://sg-user-0:password@{}:4984/db'.format(server) + ','
+        url = 'http://sg-user-0:password@{}:4984/db-1'.format(server) + ','
         url_string = url_string + url
     return url_string[:-1]
 
 
-def blackholepuller_runtest(workload_settings: PhaseSettings,
+def blackholepuller_runtest(workload_settings: PhaseSettings, target: TargetSettings,
                             timer: int, worker_id: int, cluster: ClusterSpec):
 
     sgs = workload_settings.syncgateway_settings
@@ -52,7 +52,7 @@ def blackholepuller_runtest(workload_settings: PhaseSettings,
                             log_file_name=log_file_name)
 
 
-def newdocpusher_runtest(workload_settings: PhaseSettings,
+def newdocpusher_runtest(workload_settings: PhaseSettings, target: TargetSettings,
                          timer: int, worker_id: int, cluster: ClusterSpec):
 
     sgs = workload_settings.syncgateway_settings

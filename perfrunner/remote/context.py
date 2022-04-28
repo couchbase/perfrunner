@@ -30,10 +30,18 @@ def syncgateway_master_server(task: Callable, *args, **kwargs):
     """Execute the decorated function on master node."""
     self = args[0]
     if self.cluster_spec.sgw_servers:
-        with settings(host_string=self.cluster_spec.sgw_servers[0]):
+        if self.cluster_spec.capella_infrastructure and self.cluster_spec.capella_backend == 'aws':
+            hosts = self.cluster_spec.sgw_instance_ids
+        else:
+            hosts = self.cluster_spec.sgw_servers
+        with settings(host_string=hosts[0]):
             return task(*args, **kwargs)
     else:
-        with settings(host_string=self.cluster_spec.servers[0]):
+        if self.cluster_spec.capella_infrastructure and self.cluster_spec.capella_backend == 'aws':
+            hosts = self.cluster_spec.instance_ids
+        else:
+            hosts = self.cluster_spec.servers
+        with settings(host_string=hosts[0]):
             return task(*args, **kwargs)
 
 

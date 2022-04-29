@@ -1,18 +1,18 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGRead
+test = perfrunner.tests.syncgateway.SGWrite
 
 [showfast]
-title = +rev, 1 node, cache hit 0.5%%, replicator2, basicAuth
+title = , 4 nodes, 1M docs, 1K users, 100 channels, 10 channels per doc, roundTripWrite false, replicator2, basicAuth, maxclients
 component = syncgateway
-category = read
+category = write
 sub_category = xattr
-orderby = a21
 
 [cluster]
 mem_quota = 25000
 index_mem_quota = 25000
 initial_nodes = 4
 num_buckets = 1
+
 
 [access]
 time = 600
@@ -22,7 +22,7 @@ workers = 0
 indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
-nodes = 1
+nodes = 4
 threads = 800
 clients = 4
 instances_per_client = 5
@@ -30,20 +30,18 @@ workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
 users = 1000
-channels = 1
-channels_per_user = 1
-channels_per_doc = 1
+channels = 100
+channels_per_user = 10
+channels_per_doc = 10
 documents = 1000000
 roundtrip_write = false
-read_mode = documents_with_revs
 feed_reading_mode = idsonly
-feed_mode = normal
-insert_mode = bykey
+insert_mode = byuser
 auth = true
-readproportion=1
+readproportion=0
 updateproportion=0
-insertproportion=0
+insertproportion=1
 requestdistribution = zipfian
-log_title = sync_gateway_1node_reads
+log_title = sync_gateway_4node_writes
 replicator2 = true
 basic_auth = true

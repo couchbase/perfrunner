@@ -3,9 +3,17 @@ import re
 from itertools import cycle
 from typing import List, Tuple
 
-from couchbase.cluster import QueryOptions, QueryScanConsistency
-from couchbase_core.views.params import ViewQuery
+import pkg_resources
 from numpy import random
+
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+if sdk_major_version == 3:
+    from couchbase.cluster import QueryOptions, QueryScanConsistency
+    from couchbase_core.views.params import ViewQuery
+elif sdk_major_version == 4:
+    from couchbase.n1ql import QueryScanConsistency
+    from couchbase.options import QueryOptions
+    from couchbase.views import ViewQuery
 
 
 class ViewQueryGen3:

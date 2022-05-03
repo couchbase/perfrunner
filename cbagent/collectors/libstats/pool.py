@@ -4,8 +4,8 @@ from time import time
 
 import pkg_resources
 
-cb_version = pkg_resources.get_distribution("couchbase").version
-if cb_version[0] == '3':
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+if sdk_major_version == 3:
     from datetime import timedelta
 
     from couchbase.cluster import (
@@ -14,6 +14,12 @@ if cb_version[0] == '3':
         ClusterTimeoutOptions,
     )
     from couchbase_core.cluster import PasswordAuthenticator
+elif sdk_major_version == 4:
+    from datetime import timedelta
+
+    from couchbase.auth import PasswordAuthenticator
+    from couchbase.cluster import Cluster
+    from couchbase.options import ClusterOptions, ClusterTimeoutOptions
 else:
     from couchbase.bucket import Bucket
 
@@ -117,7 +123,7 @@ class Pool:
             self._cur_clients += 1
 
     def _make_client(self):
-        if self.collections or cb_version[0] == '3':
+        if self.collections or sdk_major_version >= 3:
             client = CollectionsWrapper(
                 self.host, self.bucket, self.username,
                 self.password, self.quiet, self.port

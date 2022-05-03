@@ -5,23 +5,23 @@ import pkg_resources
 
 from logger import logger
 
-cb_version = pkg_resources.get_distribution("couchbase").version
-if cb_version[0] == '2':
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+if sdk_major_version == 2:
     from couchbase import experimental
     from twisted.internet import reactor
     from txcouchbase.connection import Connection
     experimental.enable()
-elif cb_version[0] == '3':
+elif sdk_major_version == 3:
     from couchbase.cluster import ClusterOptions
     from couchbase_core.cluster import PasswordAuthenticator
     from twisted.internet import reactor
     from txcouchbase.cluster import TxCluster
-elif cb_version[0] == '4':
-    import txcouchbase
-    import txcouchbase.cluster
+elif sdk_major_version == 4:
+    import txcouchbase  # noqa: F401
     from couchbase.auth import PasswordAuthenticator
     from couchbase.options import ClusterOptions
     from twisted.internet import reactor
+    from txcouchbase.cluster import TxCluster
 
 
 class SmallIterator:
@@ -139,25 +139,16 @@ class WorkloadGen:
         self.kv_iterator = self.kv_cls(self.num_items)
         self.field_iterator = self.field_cls(self.num_items)
 
-        cb_version = pkg_resources.get_distribution("couchbase").version
-        if cb_version[0] == '2':
+        sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+        if sdk_major_version == 2:
             self.cb = Connection(bucket=bucket, host=host, password=password)
-        elif cb_version[0] == '3':
+        elif sdk_major_version >= 3:
             connection_string = 'couchbase://{host}?password={password}'
             connection_string = connection_string.format(host=host,
                                                          password=password)
             pass_auth = PasswordAuthenticator(bucket, password)
             self.cluster = TxCluster(connection_string=connection_string,
                                      options=ClusterOptions(pass_auth))
-            self.bucket = self.cluster.bucket(bucket)
-            self.collection = self.bucket.scope("scope-1").collection("collection-1")
-        elif cb_version[0] == '4':
-            connection_string = 'couchbase://{host}?password={password}'
-            connection_string = connection_string.format(host=host,
-                                                         password=password)
-            pass_auth = PasswordAuthenticator(bucket, password)
-            self.cluster = txcouchbase.cluster.TxCluster(connection_string,
-                                                         ClusterOptions(pass_auth))
             self.bucket = self.cluster.bucket(bucket)
             self.collection = self.bucket.scope("scope-1").collection("collection-1")
 
@@ -210,7 +201,7 @@ class WorkloadGen:
 
     def _on_get(self, rv, f, key=None):
         if self.use_collection:
-            if cb_version[0] == '4':
+            if sdk_major_version == 4:
                 v = rv.content_as[lambda x: x]
             else:
                 v = rv.content

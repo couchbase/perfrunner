@@ -7,15 +7,15 @@ from pathlib import Path
 from threading import Timer
 from typing import Callable, List, Tuple, Union
 
+import pkg_resources
 import twisted
 from decorator import decorator
 from numpy import random
 from psutil import cpu_count
-from twisted.internet import reactor
 
 from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
-from spring.cbgen3 import CBAsyncGen3, CBGen3, DAPIGen
+from spring.dapigen import DAPIGen
 from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
@@ -83,8 +83,24 @@ from spring.docgen import (
     YuboDoc,
     ZipfKey,
 )
-from spring.querygen3 import N1QLQueryGen3, ViewQueryGen3, ViewQueryGenByType3
+from spring.querygen3 import N1QLQueryGen3 as N1QLQueryGen
+from spring.querygen3 import ViewQueryGen3 as ViewQueryGen
+from spring.querygen3 import ViewQueryGenByType3 as ViewQueryGenByType
 from spring.reservoir import Reservoir
+
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+if sdk_major_version == 3:
+    from twisted.internet import reactor
+
+    from spring.cbgen3 import CBAsyncGen3 as CBAsyncGen
+    from spring.cbgen3 import CBGen3 as CBGen
+elif sdk_major_version == 4:
+    # need to import txcouchbase before importing reactor from twisted
+    import txcouchbase  # noqa: F401
+    from twisted.internet import reactor
+
+    from spring.cbgen4 import CBAsyncGen4 as CBAsyncGen
+    from spring.cbgen4 import CBGen4 as CBGen
 
 
 def err(*args, **kwargs):
@@ -113,7 +129,7 @@ def set_cpu_afinity(sid):
 
 
 Sequence = List[Tuple[str, Callable, Tuple]]
-Client = Union[CBAsyncGen3, CBGen3, DAPIGen]
+Client = Union[CBAsyncGen, CBGen, DAPIGen]
 
 
 class Worker:
@@ -392,7 +408,7 @@ class Worker:
                                                          ws.size_variation_max)
 
     def init_db(self):
-        workload_client = CBGen3
+        workload_client = CBGen
         params = {
             'bucket': self.ts.bucket,
             'host': self.ts.node,
@@ -649,7 +665,7 @@ class AsyncKVWorker(KVWorker):
                   'username': self.ts.username, 'password': self.ts.password,
                   'ssl_mode': self.ws.ssl_mode}
 
-        self.cbs = [CBAsyncGen3(**params) for _ in range(self.NUM_CONNECTIONS)]
+        self.cbs = [CBAsyncGen(**params) for _ in range(self.NUM_CONNECTIONS)]
         self.counter = list(range(self.NUM_CONNECTIONS))
 
     def restart(self, _, cb, i):
@@ -916,7 +932,7 @@ class AuxillaryWorker:
         }
 
         try:
-            self.cb = CBGen3(**params)
+            self.cb = CBGen(**params)
         except Exception as e:
             raise SystemExit(e)
 
@@ -1058,8 +1074,8 @@ class N1QLWorker(Worker):
 
     def __init__(self, workload_settings, target_settings, shutdown_event=None, workload_id=0):
         super().__init__(workload_settings, target_settings, shutdown_event, workload_id)
-        self.new_queries = N1QLQueryGen3(workload_settings.n1ql_queries,
-                                         workload_settings.n1ql_query_weight)
+        self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries,
+                                        workload_settings.n1ql_query_weight)
         self.reservoir = Reservoir(num_workers=self.ws.n1ql_workers)
         self.gen_duration = 0.0
         self.batch_duration = 0.0
@@ -1344,11 +1360,11 @@ class ViewWorker(Worker):
         self.batch_duration = 0.0
         self.reservoir = Reservoir(num_workers=self.ws.query_workers)
         if workload_settings.index_type is None:
-            self.new_queries = ViewQueryGen3(workload_settings.ddocs,
-                                             workload_settings.query_params)
+            self.new_queries = ViewQueryGen(workload_settings.ddocs,
+                                            workload_settings.query_params)
         else:
-            self.new_queries = ViewQueryGenByType3(workload_settings.index_type,
-                                                   workload_settings.query_params)
+            self.new_queries = ViewQueryGenByType(workload_settings.index_type,
+                                                  workload_settings.query_params)
 
     def do_batch(self):
         if self.target_time:

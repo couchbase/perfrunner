@@ -10,11 +10,11 @@ from requests import HTTPError
 
 from logger import logger
 
-cb_version = pkg_resources.get_distribution("couchbase").version
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
 
-if cb_version[0] == '2':
+if sdk_major_version == 2:
     from couchbase.exceptions import CouchbaseError, TemporaryFailError
-elif cb_version[0] == '3':
+elif sdk_major_version >= 3:
     from couchbase.exceptions import CouchbaseException as CouchbaseError
     from couchbase.exceptions import \
         TemporaryFailException as TemporaryFailError

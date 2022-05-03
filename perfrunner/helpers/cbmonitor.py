@@ -82,9 +82,9 @@ def with_stats(method: Callable, *args, **kwargs) -> Union[float, None]:
 
 @decorator
 def with_cloudwatch(method, *args, **kwargs):
-    cb_version = pkg_resources.get_distribution("couchbase").version
+    sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
 
-    if cb_version[0] == '3':
+    if sdk_major_version >= 3:
         from perfrunner.helpers.cloudwatch import Cloudwatch
         t0 = time.time()
         method(*args, **kwargs)

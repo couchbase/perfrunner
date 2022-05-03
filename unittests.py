@@ -1,10 +1,10 @@
 import glob
 import json
-import pkg_resources
 from collections import defaultdict, namedtuple
 from multiprocessing import Value
 from unittest import TestCase
 
+import pkg_resources
 import snappy
 
 from perfrunner.settings import ClusterSpec, TestConfig
@@ -12,10 +12,10 @@ from perfrunner.workloads.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
 from spring import docgen
 
-cb_version = pkg_resources.get_distribution("couchbase").version
-if cb_version[0] == '2':
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+if sdk_major_version == 2:
     from spring.querygen import N1QLQueryGen
-elif cb_version[0] == '3':
+elif sdk_major_version >= 3:
     from spring.querygen3 import N1QLQueryGen3 as N1QLQueryGen
 
 
@@ -609,13 +609,13 @@ class QueryTest(TestCase):
             'args': '["{key}"]',
         }]
 
-        if cb_version[0] == '2':
+        if sdk_major_version == 2:
             qg = N1QLQueryGen(queries=queries)
-        elif cb_version[0] == '3':
+        elif sdk_major_version >= 3:
             qg = N1QLQueryGen(queries=queries, query_weight=[1])
 
         for key in 'n1ql-0123456789', 'n1ql-9876543210':
-            if cb_version[0] == '3':
+            if sdk_major_version >= 3:
                 stmt, queryopts = qg.next(key, doc={})
                 self.assertEqual(queryopts['adhoc'], False)
                 self.assertEqual(str(queryopts['scan_consistency']),
@@ -634,13 +634,13 @@ class QueryTest(TestCase):
             'scan_consistency': 'request_plus',
         }]
 
-        if cb_version[0] == '2':
+        if sdk_major_version == 2:
             qg = N1QLQueryGen(queries=queries)
-        elif cb_version[0] == '3':
+        elif sdk_major_version >= 3:
             qg = N1QLQueryGen(queries=queries, query_weight=[1])
 
         for doc in {'email': 'a@a.com'}, {'email': 'b@b.com'}:
-            if cb_version[0] == '3':
+            if sdk_major_version >= 3:
                 stmt, queryopts = qg.next(key='n1ql-0123456789', doc=doc)
                 self.assertEqual(str(queryopts['scan_consistency']),
                                  'QueryScanConsistency.REQUEST_PLUS')
@@ -655,8 +655,8 @@ class QueryTest(TestCase):
 class BigFunTest(TestCase):
 
     def test_unique_statements(self):
-        QUERIES = 'perfrunner/workloads/bigfun/queries_with_index.json'
-        for query in new_queries(QUERIES):
+        queries = 'perfrunner/workloads/bigfun/queries_with_index.json'
+        for query in new_queries(queries):
             statements = set()
             for i in range(10):
                 self.assertNotIn(query.statement, statements)

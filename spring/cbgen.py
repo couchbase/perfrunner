@@ -4,8 +4,8 @@ import pkg_resources
 
 from spring.cbgen_helpers import backoff, quiet, time_all, timeit
 
-cb_version = pkg_resources.get_distribution("couchbase").version
-if cb_version[0] == '2':
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+if sdk_major_version == 2:
     from couchbase import experimental, subdocument
     from couchbase.bucket import Bucket
     from couchbase.n1ql import N1QLQuery

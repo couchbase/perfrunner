@@ -99,18 +99,25 @@ import pkg_resources
 
 from logger import logger
 
-cb_version = pkg_resources.get_distribution("couchbase").version
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
 
-if cb_version[0] == '2':
+if sdk_major_version == 2:
     from couchbase import FMT_BYTES
     from couchbase.cluster import Cluster, PasswordAuthenticator
     from couchbase.exceptions import TemporaryFailError, TimeoutError
-elif cb_version[0] == '3':
+elif sdk_major_version == 3:
     from couchbase.cluster import Cluster, PasswordAuthenticator
     from couchbase.exceptions import \
         TemporaryFailException as TemporaryFailError
     from couchbase.exceptions import TimeoutException as TimeoutError
     from couchbase_core._libcouchbase import FMT_BYTES
+elif sdk_major_version == 4:
+    from couchbase.auth import PasswordAuthenticator
+    from couchbase.cluster import Cluster
+    from couchbase.exceptions import \
+        TemporaryFailException as TemporaryFailError
+    from couchbase.exceptions import TimeoutException as TimeoutError
+    from couchbase.pycbc_core import FMT_BYTES
 
 
 # TCMalloc size classes

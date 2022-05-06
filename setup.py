@@ -26,6 +26,7 @@ setup(
             'verify_logs = perfrunner.utils.verify_logs:main',
             'weekly = perfrunner.utils.weekly:main',
             'sg_install = perfrunner.utils.syncgateway.install:main',
+            'terraform = perfrunner.utils.terraform:main',
         ],
     },
     ext_modules=[

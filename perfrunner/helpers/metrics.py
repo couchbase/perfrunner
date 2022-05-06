@@ -1344,7 +1344,7 @@ class MetricHelper:
 
     def sgimport_items_per_sec(self, time_elapsed: float, items_in_range: int,
                                operation: str) -> Metric:
-        title = 'Average throughput (docs/sec) {} {}'.format(operation, self._title)
+        title = 'Average throughput (docs/sec) {}, {}'.format(operation, self._title)
         metric_id = '{}_{}_{}'.format(
             self.test_config.name, "throughput", operation)
         metric_info = self._metric_info(title=title, metric_id=metric_id)

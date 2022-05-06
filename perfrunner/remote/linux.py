@@ -305,7 +305,6 @@ class RemoteLinux(Remote):
         run('systemctl set-environment COUCHBASE_NUM_VBUCKETS={}'
             .format(num_vbuckets))
         run('systemctl restart couchbase-server', pty=False)
-        run('systemctl unset-environment COUCHBASE_NUM_VBUCKETS')
 
     @master_server
     def enable_nonlocal_diag_eval(self):

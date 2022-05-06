@@ -1,0 +1,502 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b1_myindex1-1": "name",
+                "b1_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b1_myindex2-1": "name",
+                "b1_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b1_myindex3-1": "name",
+                "b1_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b1_myindex4-1": "name",
+                "b1_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b1_myindex5-1": "name",
+                "b1_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-10": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b10_myindex1-1": "name",
+                "b10_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b10_myindex2-1": "name",
+                "b10_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b10_myindex3-1": "name",
+                "b10_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b10_myindex4-1": "name",
+                "b10_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b10_myindex5-1": "name",
+                "b10_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-11": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b11_myindex1-1": "name",
+                "b11_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b11_myindex2-1": "name",
+                "b11_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b11_myindex3-1": "name",
+                "b11_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b11_myindex4-1": "name",
+                "b11_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b11_myindex5-1": "name",
+                "b11_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-12": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b12_myindex1-1": "name",
+                "b12_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b12_myindex2-1": "name",
+                "b12_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b12_myindex3-1": "name",
+                "b12_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b12_myindex4-1": "name",
+                "b12_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b12_myindex5-1": "name",
+                "b12_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-13": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b13_myindex1-1": "name",
+                "b13_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b13_myindex2-1": "name",
+                "b13_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b13_myindex3-1": "name",
+                "b13_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b13_myindex4-1": "name",
+                "b13_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b13_myindex5-1": "name",
+                "b13_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-14": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b14_myindex1-1": "name",
+                "b14_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b14_myindex2-1": "name",
+                "b14_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b14_myindex3-1": "name",
+                "b14_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b14_myindex4-1": "name",
+                "b14_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b14_myindex5-1": "name",
+                "b14_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-15": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b15_myindex1-1": "name",
+                "b15_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b15_myindex2-1": "name",
+                "b15_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b15_myindex3-1": "name",
+                "b15_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b15_myindex4-1": "name",
+                "b15_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b15_myindex5-1": "name",
+                "b15_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-16": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b16_myindex1-1": "name",
+                "b16_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b16_myindex2-1": "name",
+                "b16_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b16_myindex3-1": "name",
+                "b16_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b16_myindex4-1": "name",
+                "b16_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b16_myindex5-1": "name",
+                "b16_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-17": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b17_myindex1-1": "name",
+                "b17_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b17_myindex2-1": "name",
+                "b17_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b17_myindex3-1": "name",
+                "b17_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b17_myindex4-1": "name",
+                "b17_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b17_myindex5-1": "name",
+                "b17_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-18": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b18_myindex1-1": "name",
+                "b18_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b18_myindex2-1": "name",
+                "b18_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b18_myindex3-1": "name",
+                "b18_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b18_myindex4-1": "name",
+                "b18_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b18_myindex5-1": "name",
+                "b18_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-19": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b19_myindex1-1": "name",
+                "b19_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b19_myindex2-1": "name",
+                "b19_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b19_myindex3-1": "name",
+                "b19_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b19_myindex4-1": "name",
+                "b19_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b19_myindex5-1": "name",
+                "b19_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-2": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b2_myindex1-1": "name",
+                "b2_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b2_myindex2-1": "name",
+                "b2_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b2_myindex3-1": "name",
+                "b2_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b2_myindex4-1": "name",
+                "b2_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b2_myindex5-1": "name",
+                "b2_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-20": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b20_myindex1-1": "name",
+                "b20_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b20_myindex2-1": "name",
+                "b20_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b20_myindex3-1": "name",
+                "b20_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b20_myindex4-1": "name",
+                "b20_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b20_myindex5-1": "name",
+                "b20_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-3": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b3_myindex1-1": "name",
+                "b3_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b3_myindex2-1": "name",
+                "b3_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b3_myindex3-1": "name",
+                "b3_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b3_myindex4-1": "name",
+                "b3_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b3_myindex5-1": "name",
+                "b3_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-4": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b4_myindex1-1": "name",
+                "b4_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b4_myindex2-1": "name",
+                "b4_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b4_myindex3-1": "name",
+                "b4_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b4_myindex4-1": "name",
+                "b4_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b4_myindex5-1": "name",
+                "b4_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-5": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b5_myindex1-1": "name",
+                "b5_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b5_myindex2-1": "name",
+                "b5_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b5_myindex3-1": "name",
+                "b5_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b5_myindex4-1": "name",
+                "b5_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b5_myindex5-1": "name",
+                "b5_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-6": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b6_myindex1-1": "name",
+                "b6_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b6_myindex2-1": "name",
+                "b6_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b6_myindex3-1": "name",
+                "b6_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b6_myindex4-1": "name",
+                "b6_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b6_myindex5-1": "name",
+                "b6_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-7": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b7_myindex1-1": "name",
+                "b7_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b7_myindex2-1": "name",
+                "b7_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b7_myindex3-1": "name",
+                "b7_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b7_myindex4-1": "name",
+                "b7_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b7_myindex5-1": "name",
+                "b7_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-8": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b8_myindex1-1": "name",
+                "b8_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b8_myindex2-1": "name",
+                "b8_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b8_myindex3-1": "name",
+                "b8_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b8_myindex4-1": "name",
+                "b8_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b8_myindex5-1": "name",
+                "b8_myindex5-2": "email"
+            }
+        }
+    },
+    "bucket-9": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "b9_myindex1-1": "name",
+                "b9_myindex1-2": "email"
+            },
+            "collection-2": {
+                "b9_myindex2-1": "name",
+                "b9_myindex2-2": "email"
+            },
+            "collection-3": {
+                "b9_myindex3-1": "name",
+                "b9_myindex3-2": "email"
+            },
+            "collection-4": {
+                "b9_myindex4-1": "name",
+                "b9_myindex4-2": "email"
+            },
+            "collection-5": {
+                "b9_myindex5-1": "name",
+                "b9_myindex5-2": "email"
+            }
+        }
+    }
+}

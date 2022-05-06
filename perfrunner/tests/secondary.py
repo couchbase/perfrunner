@@ -264,12 +264,11 @@ class SecondaryIndexTest(PerfTest):
                                                  self.worker_manager.WORKER_HOME,
                                                  run_in_background, is_ssl=is_ssl))
 
-        if status != "Log Level = error":
+        logger.info("scan status {}".format(status))
+        if "Log Level = error" not in status:
             raise Exception('Scan workload could not be applied: ' + str(status))
         else:
             logger.info('Scan workload applied')
-
-        logger.info('Scan workload applied')
 
     def calc_avg_rr(self, storage_stats):
         total_num_rec_allocs, total_num_rec_frees, total_num_rec_swapout, total_num_rec_swapin =\
@@ -331,7 +330,7 @@ class SecondaryIndexTest(PerfTest):
                 avg_rr = self.calc_avg_rr_compression(storage_stats.json())
                 logger.info("Average RR over all Indexes with compression  : {}".format(avg_rr))
 
-    def print_index_disk_usage(self, text=""):
+    def print_index_disk_usage(self, text="", heap_profile=True):
         self.print_average_rr()
         if self.test_config.gsi_settings.disable_perindex_stats:
             return
@@ -345,11 +344,11 @@ class SecondaryIndexTest(PerfTest):
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
         logger.info("Index storage stats:\n{}".format(storage_stats.text))
-
-        heap_profile = get_indexer_heap_profile(self.index_nodes[0],
-                                                self.rest.rest_username,
-                                                self.rest.rest_password)
-        logger.info("Indexer heap profile:\n{}".format(heap_profile))
+        if heap_profile:
+            heap_profile = get_indexer_heap_profile(self.index_nodes[0],
+                                                    self.rest.rest_username,
+                                                    self.rest.rest_password)
+            logger.info("Indexer heap profile:\n{}".format(heap_profile))
 
         if self.storage == 'plasma':
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
@@ -440,7 +439,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
             expected_docs = \
                 (self.test_config.load_settings.items + self.test_config.access_settings.items) \
-                // num_access_collections
+                * self.test_config.cluster.num_buckets // num_access_collections
 
             self.access()
             self.monitor.wait_for_secindex_incr_build_collections(
@@ -1862,3 +1861,164 @@ class InitialOSOIndexTest(InitialandIncrementalSecondaryIndexTest):
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Initial')
         self.print_index_disk_usage()
+
+
+class InitialScanThroughputLatencyCloudTest(SecondaryIndexingThroughputTest):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+
+    def remove_resultfile(self):
+        rmfile = "rm -f {}".format("result.json")
+        status = subprocess.call(rmfile, shell=True)
+        if status != 0:
+            raise Exception('existing scan result file could not be removed')
+        else:
+            logger.info('Existing scan result file removed')
+
+    def calculate_scan_latencies(self):
+
+        scan_latencies = []
+        percentile_latencies = []
+
+        with open(self.SECONDARY_STATS_FILE, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                nth_lat_str = row[-1]
+                nth_lat_val = nth_lat_str.split(":")[-1]
+                val = nth_lat_val.strip()
+                scan_latencies.append(float(val))
+
+        for percentile in range(100):
+            percentile_latencies.append(numpy.percentile(scan_latencies, percentile))
+
+        return percentile_latencies
+
+    def _report_kpi(self,
+                    percentile_latencies,
+                    scan_thr: float = 0,
+                    time_elapsed: float = 0):
+
+        if time_elapsed != 0:
+            if self.report_initial_build_time:
+                title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
+                self.reporter.post(
+                    *self.metrics.get_indexing_meta(value=time_elapsed,
+                                                    index_type="Initial",
+                                                    unit="min",
+                                                    name=title)
+                )
+        else:
+            title = "Secondary Scan Throughput (scanps) {}" \
+                .format(str(self.test_config.showfast.title).strip())
+            self.reporter.post(
+                *self.metrics.scan_throughput(scan_thr,
+                                              metric_id_append_str="thr",
+                                              title=title)
+            )
+            title = str(self.test_config.showfast.title).strip()
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                           percentile=90,
+                                                           title=title))
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                           percentile=95,
+                                                           title=title))
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        time_elapsed = self.build_secondaryindex()
+        self.print_index_disk_usage(heap_profile=False)
+        self.report_kpi(0, 0, time_elapsed)
+        self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        percentile_latencies = self.calculate_scan_latencies()
+        self.print_index_disk_usage(heap_profile=False)
+        self.report_kpi(percentile_latencies, scan_thr)
+
+
+class ThroughputLatencyMutationScanCloudTest(SecondaryIndexingThroughputTest):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+
+    def remove_resultfile(self):
+        rmfile = "rm -f {}".format("result.json")
+        status = subprocess.call(rmfile, shell=True)
+        if status != 0:
+            raise Exception('existing scan result file could not be removed')
+        else:
+            logger.info('Existing scan result file removed')
+
+    def calculate_scan_latencies(self):
+
+        scan_latencies = []
+        percentile_latencies = []
+
+        with open(self.SECONDARY_STATS_FILE, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                nth_lat_str = row[-1]
+                nth_lat_val = nth_lat_str.split(":")[-1]
+                val = nth_lat_val.strip()
+                scan_latencies.append(float(val))
+
+        for percentile in range(100):
+            percentile_latencies.append(numpy.percentile(scan_latencies, percentile))
+
+        return percentile_latencies
+
+    def _report_kpi(self,
+                    percentile_latencies,
+                    scan_thr: float = 0,
+                    time_elapsed: float = 0):
+
+        if time_elapsed != 0:
+            if self.report_initial_build_time:
+                title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
+                self.reporter.post(
+                    *self.metrics.get_indexing_meta(value=time_elapsed,
+                                                    index_type="Initial",
+                                                    unit="min",
+                                                    name=title)
+                )
+        else:
+            title = "Secondary Scan Throughput (scanps) {}" \
+                .format(str(self.test_config.showfast.title).strip())
+            self.reporter.post(
+                *self.metrics.scan_throughput(scan_thr,
+                                              metric_id_append_str="thr",
+                                              title=title)
+            )
+            title = str(self.test_config.showfast.title).strip()
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                           percentile=90,
+                                                           title=title))
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                           percentile=95,
+                                                           title=title))
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        time_elapsed = self.build_secondaryindex()
+        self.print_index_disk_usage(heap_profile=False)
+        self.report_kpi(0, 0, time_elapsed)
+        self.access_bg()
+        self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        percentile_latencies = self.calculate_scan_latencies()
+        self.print_index_disk_usage(heap_profile=False)
+        self.report_kpi(percentile_latencies, scan_thr)

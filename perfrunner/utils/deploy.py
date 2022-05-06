@@ -527,7 +527,7 @@ class AWSDeployer(Deployer):
                     block_device = '/dev/sda1'
                     if "workers" in node_role:  # perf client ami
                         if self.region == 'us-east-1':
-                            ami = 'ami-01b36cb3330d38ac5'
+                            ami = 'ami-045e0aa97a8f1242f'
                             logger.info("Client AMI: " + str(ami))
                         else:
                             ami = 'ami-0045ddecdcfa4a45c'
@@ -563,7 +563,23 @@ class AWSDeployer(Deployer):
                         raise Exception("ec2 group must include one of: client, server, broker")
                     volume_type = node_group_spec.get('volume_type', 'gp2')
                     iops = node_group_spec.get('iops', 0)
-                    if int(iops):
+                    thoughput = node_group_spec.get('volume_throughput', 0)
+                    data_volume = node_group_spec.get('data_volume_size', 0)
+                    data_volume_type = node_group_spec.get('data_volume_type', 'gp2')
+                    data_iops = node_group_spec.get('data_volume_iops', 3000)
+                    data_throughput = node_group_spec.get('data_volume_throughput', 125)
+                    if int(thoughput) and int(iops):
+                        if int(iops):
+                            block_device_mappings = [
+                                {'DeviceName': block_device,
+                                 'Ebs':
+                                     {'DeleteOnTermination': True,
+                                      'VolumeSize': int(node_group_spec['volume_size']),
+                                      'VolumeType': volume_type,
+                                      'Encrypted': False,
+                                      'Throughput': int(thoughput),
+                                      'Iops': int(iops)}}]
+                    elif int(iops):
                         block_device_mappings = [
                             {'DeviceName': block_device,
                              'Ebs':
@@ -580,6 +596,16 @@ class AWSDeployer(Deployer):
                                   'VolumeSize': int(node_group_spec['volume_size']),
                                   'VolumeType': volume_type,
                                   'Encrypted': False}}]
+                    if data_volume:
+                        block_device_mappings.append(
+                            {'DeviceName': '/dev/sdb',
+                             'Ebs':
+                                 {'DeleteOnTermination': True,
+                                  'VolumeSize': int(node_group_spec['data_volume_size']),
+                                  'VolumeType': data_volume_type,
+                                  'Throughput': int(data_throughput),
+                                  'Iops': int(data_iops),
+                                  'Encrypted': False}})
                     if node_group_spec['instance_type'][0] == "t":
                         response = self.ec2.create_instances(
                             BlockDeviceMappings=block_device_mappings,

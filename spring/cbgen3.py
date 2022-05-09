@@ -21,14 +21,13 @@ class CBAsyncGen3:
     TIMEOUT = 120  # seconds
 
     def __init__(self, **kwargs):
-        connection_string = 'couchbase://{host}?password={password}'
-        connection_string = connection_string.format(host=kwargs['host'],
-                                                     password=kwargs['password'])
+        connection_string = 'couchbase://{host}'
+        connection_string = connection_string.format(host=kwargs['host'])
         pass_auth = PasswordAuthenticator(kwargs['username'], kwargs['password'])
-        if kwargs["ssl_mode"] == 'n2n':
+        if kwargs["ssl_mode"] == 'n2n' or kwargs["ssl_mode"] == 'capella':
             connection_string = connection_string.replace('couchbase',
                                                           'couchbases')
-            connection_string += '&certpath=root.pem'
+            connection_string += '?certpath=root.pem'
         timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
         options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
         self.cluster = TxCluster(connection_string=connection_string, options=options)
@@ -109,16 +108,15 @@ class CBGen3(CBAsyncGen3):
     N1QL_TIMEOUT = 600
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
-        connection_string = 'couchbase://{host}?password={password}&{params}'
+        connection_string = 'couchbase://{host}?{params}'
         connstr_params = parse.urlencode(kwargs["connstr_params"])
 
-        if ssl_mode == 'data' or ssl_mode == 'n2n':
+        if ssl_mode == 'data' or ssl_mode == 'n2n' or ssl_mode == 'capella':
             connection_string = connection_string.replace('couchbase',
                                                           'couchbases')
             connection_string += '&certpath=root.pem'
 
         connection_string = connection_string.format(host=kwargs['host'],
-                                                     password=kwargs['password'],
                                                      params=connstr_params)
 
         pass_auth = PasswordAuthenticator(kwargs['username'], kwargs['password'])

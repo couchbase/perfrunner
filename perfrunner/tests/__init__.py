@@ -254,12 +254,13 @@ class PerfTest:
                 )
 
     def compact_bucket(self, wait: bool = True):
-        for target in self.target_iterator:
-            self.rest.trigger_bucket_compaction(target.node, target.bucket)
-
-        if wait:
+        if not self.cluster_spec.capella_infrastructure:
             for target in self.target_iterator:
-                self.monitor.monitor_task(target.node, 'bucket_compaction')
+                self.rest.trigger_bucket_compaction(target.node, target.bucket)
+
+            if wait:
+                for target in self.target_iterator:
+                    self.monitor.monitor_task(target.node, 'bucket_compaction')
 
     def wait_for_persistence(self):
         for target in self.target_iterator:

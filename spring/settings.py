@@ -63,4 +63,5 @@ class TargetSettings:
         self.node = '{}:{}'.format(params.hostname, params.port)
         self.bucket = params.path[1:]
         self.password = params.password or ''
+        self.username = params.username or ''
         self.prefix = prefix

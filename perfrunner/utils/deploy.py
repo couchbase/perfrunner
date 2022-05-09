@@ -554,8 +554,8 @@ class AWSDeployer(Deployer):
                             ami = 'ami-0c7ae1c909fa076e9'
                     else:
                         raise Exception("ec2 group must include one of: client, server, broker")
-                    volume_type = self.os_arch = node_group_spec.get('volume_type', 'gp2')
-                    iops = self.os_arch = node_group_spec.get('iops', 0)
+                    volume_type = node_group_spec.get('volume_type', 'gp2')
+                    iops = node_group_spec.get('iops', 0)
                     if int(iops):
                         block_device_mappings = [
                             {'DeviceName': block_device,

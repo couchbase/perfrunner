@@ -83,6 +83,12 @@ class ClusterSpec(Config):
         return False
 
     @property
+    def capella_infrastructure(self):
+        if self.cloud_infrastructure:
+            return self.infrastructure_settings.get("type", "ec2") == "capella"
+        return False
+
+    @property
     def generated_cloud_config_path(self):
         if self.cloud_infrastructure:
             return "cloud/infrastructure/generated/infrastructure_config.json"
@@ -2502,17 +2508,19 @@ class TestConfig(Config):
 
 class TargetSettings:
 
-    def __init__(self, host: str, bucket: str, password: str, prefix: str, cloud: dict = None):
+    def __init__(self, host: str, bucket: str, username: str, password: str,
+                 prefix: str, cloud: dict = None):
         self.password = password
         self.node = host
         self.bucket = bucket
         self.prefix = prefix
         self.cloud = cloud
+        self.username = username
 
     @property
     def connection_string(self) -> str:
         return 'couchbase://{username}:{password}@{host}/{bucket}'.format(
-            username=self.bucket,  # Backward compatibility
+            username=self.username,
             password=self.password,
             host=self.node,
             bucket=self.bucket,
@@ -2530,14 +2538,23 @@ class TargetIterator(Iterable):
         self.prefix = prefix
 
     def __iter__(self) -> Iterator[TargetSettings]:
-        password = self.test_config.bucket.password
+        username = self.cluster_spec.rest_credentials[0]
+        if self.test_config.client_settings.python_client:
+            if self.test_config.client_settings.python_client.split('.')[0] == "2":
+                password = self.test_config.bucket.password
+            else:
+                password = self.cluster_spec.rest_credentials[1]
+        else:
+            password = self.cluster_spec.rest_credentials[1]
         prefix = self.prefix
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 if self.prefix is None:
                     prefix = target_hash(master)
                 if self.cluster_spec.dynamic_infrastructure:
-                    yield TargetSettings(master, bucket, password, prefix,
-                                         {'cluster_svc': 'cb-example-perf'})
+                    yield TargetSettings(host=master, bucket=bucket, username=username,
+                                         password=password, prefix=prefix,
+                                         cloud={'cluster_svc': 'cb-example-perf'})
                 else:
-                    yield TargetSettings(master, bucket, password, prefix)
+                    yield TargetSettings(host=master, bucket=bucket, username=username,
+                                         password=password, prefix=prefix)

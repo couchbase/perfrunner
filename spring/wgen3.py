@@ -349,7 +349,7 @@ class Worker:
             'bucket': self.ts.bucket,
             'host': self.ts.node,
             'port': 8091,
-            'username': self.ts.bucket,
+            'username': self.ts.username,
             'password': self.ts.password,
             'ssl_mode': self.ws.ssl_mode,
             'n1ql_timeout': self.ws.n1ql_timeout,
@@ -583,7 +583,7 @@ class AsyncKVWorker(KVWorker):
 
     def init_db(self):
         params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,
-                  'username': self.ts.bucket, 'password': self.ts.password,
+                  'username': self.ts.username, 'password': self.ts.password,
                   'ssl_mode': self.ws.ssl_mode}
 
         self.cbs = [CBAsyncGen3(**params) for _ in range(self.NUM_CONNECTIONS)]
@@ -795,7 +795,7 @@ class AuxillaryWorker:
             'bucket': self.ts.bucket,
             'host': self.ts.node,
             'port': 8091,
-            'username': self.ts.bucket,
+            'username': self.ts.username,
             'password': self.ts.password,
             'ssl_mode': self.ws.ssl_mode,
             'n1ql_timeout': self.ws.n1ql_timeout,

@@ -299,7 +299,7 @@ class Worker:
             'bucket': self.ts.bucket,
             'host': self.ts.node,
             'port': 8091,
-            'username': self.ts.bucket,
+            'username': self.ts.username,
             'password': self.ts.password,
             'ssl_mode': self.ws.ssl_mode,
             'n1ql_timeout': self.ws.n1ql_timeout,
@@ -508,7 +508,7 @@ class SubDocWorker(KVWorker):
         params = {'bucket': self.ts.bucket,
                   'host': self.ts.node,
                   'port': 8091,
-                  'username': self.ts.bucket,
+                  'username': self.ts.username,
                   'password': self.ts.password,
                   'connstr_params': self.ws.connstr_params}
 
@@ -563,7 +563,7 @@ class AsyncKVWorker(KVWorker):
 
     def init_db(self):
         params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,
-                  'username': self.ts.bucket, 'password': self.ts.password}
+                  'username': self.ts.username, 'password': self.ts.password}
 
         self.cbs = [CBAsyncGen(**params) for _ in range(self.NUM_CONNECTIONS)]
         self.counter = list(range(self.NUM_CONNECTIONS))

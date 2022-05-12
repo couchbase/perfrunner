@@ -420,6 +420,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
 def run_cbc_pillowfight(host: str,
                         bucket: str,
                         password: str,
+                        username: str,
                         num_items: int,
                         num_threads: int,
                         num_cycles: int,
@@ -467,6 +468,8 @@ def run_cbc_pillowfight(host: str,
 
     if ssl_mode == 'data' or ssl_mode == 'n2n':
         cmd += '--spec "couchbases://{host}/{bucket}?{params}" --certpath root.pem '
+    elif ssl_mode == 'capella':
+        cmd += '--spec "couchbases://{host}/{bucket}?ssl=no_verify&{params}" -u {username} '
     else:
         cmd += '--spec "couchbase://{host}/{bucket}?{params}" '
 
@@ -494,6 +497,7 @@ def run_cbc_pillowfight(host: str,
     cmd = cmd.format(host=host,
                      bucket=bucket,
                      password=password,
+                     username=username,
                      params=params,
                      num_items=num_items,
                      num_threads=num_threads,

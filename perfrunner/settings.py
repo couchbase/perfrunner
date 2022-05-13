@@ -2509,7 +2509,7 @@ class TestConfig(Config):
 class TargetSettings:
 
     def __init__(self, host: str, bucket: str, username: str, password: str,
-                 prefix: str, cloud: dict = None):
+                 prefix: str = None, cloud: dict = None):
         self.password = password
         self.node = host
         self.bucket = bucket

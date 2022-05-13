@@ -102,19 +102,33 @@ class XdcrTest(PerfTest):
 class SrcTargetIterator(TargetIterator):
 
     def __iter__(self):
-        password = self.test_config.bucket.password
+        username = self.cluster_spec.rest_credentials[0]
+        if self.test_config.client_settings.python_client:
+            if self.test_config.client_settings.python_client.split('.')[0] == "2":
+                password = self.test_config.bucket.password
+            else:
+                password = self.cluster_spec.rest_credentials[1]
+        else:
+            password = self.cluster_spec.rest_credentials[1]
         prefix = self.prefix
         src_master = next(self.cluster_spec.masters)
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(src_master, bucket)
-            yield TargetSettings(src_master, bucket, password, prefix)
+            yield TargetSettings(src_master, bucket, username, password, prefix)
 
 
 class DestTargetIterator(TargetIterator):
 
     def __iter__(self):
-        password = self.test_config.bucket.password
+        username = self.cluster_spec.rest_credentials[0]
+        if self.test_config.client_settings.python_client:
+            if self.test_config.client_settings.python_client.split('.')[0] == "2":
+                password = self.test_config.bucket.password
+            else:
+                password = self.cluster_spec.rest_credentials[1]
+        else:
+            password = self.cluster_spec.rest_credentials[1]
         prefix = self.prefix
         masters = self.cluster_spec.masters
         src_master = next(masters)
@@ -122,7 +136,7 @@ class DestTargetIterator(TargetIterator):
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(src_master, bucket)
-            yield TargetSettings(dest_master, bucket, password, prefix)
+            yield TargetSettings(dest_master, bucket, username, password, prefix)
 
 
 class UniDirXdcrTest(XdcrTest):

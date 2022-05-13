@@ -376,19 +376,33 @@ class SGMixQueryThroughput(SGPerfTest):
 class SGTargetIterator(TargetIterator):
 
     def __iter__(self):
-        password = self.test_config.bucket.password
+        username = self.cluster_spec.rest_credentials[0]
+        if self.test_config.client_settings.python_client:
+            if self.test_config.client_settings.python_client.split('.')[0] == "2":
+                password = self.test_config.bucket.password
+            else:
+                password = self.cluster_spec.rest_credentials[1]
+        else:
+            password = self.cluster_spec.rest_credentials[1]
         prefix = self.prefix
         src_master = next(self.cluster_spec.masters)
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(src_master, bucket)
-            yield TargetSettings(src_master, bucket, password, prefix)
+            yield TargetSettings(src_master, bucket, username, password, prefix)
 
 
 class CBTargetIterator(TargetIterator):
 
     def __iter__(self):
-        password = self.test_config.bucket.password
+        username = self.cluster_spec.rest_credentials[0]
+        if self.test_config.client_settings.python_client:
+            if self.test_config.client_settings.python_client.split('.')[0] == "2":
+                password = self.test_config.bucket.password
+            else:
+                password = self.cluster_spec.rest_credentials[1]
+        else:
+            password = self.cluster_spec.rest_credentials[1]
         prefix = self.prefix
         # masters = self.cluster_spec.masters
         cb_master = self.cluster_spec.servers[0]
@@ -397,7 +411,7 @@ class CBTargetIterator(TargetIterator):
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(cb_master, bucket)
-            yield TargetSettings(cb_master, bucket, password, prefix)
+            yield TargetSettings(cb_master, bucket, username, password, prefix)
 
 
 class SGImportLoad(PerfTest):

@@ -18,27 +18,41 @@ from perfrunner.tests import PerfTest, TargetIterator
 class EventingTargetIterator(TargetIterator):
 
     def __iter__(self):
-        password = self.test_config.bucket.password
+        username = self.cluster_spec.rest_credentials[0]
+        if self.test_config.client_settings.python_client:
+            if self.test_config.client_settings.python_client.split('.')[0] == "2":
+                password = self.test_config.bucket.password
+            else:
+                password = self.cluster_spec.rest_credentials[1]
+        else:
+            password = self.cluster_spec.rest_credentials[1]
         prefix = self.prefix
         src_master = next(self.cluster_spec.masters)
         for bucket in self.test_config.buckets:
             if self.prefix == "None":
-                yield TargetSettings(src_master, bucket, password, None)
+                yield TargetSettings(src_master, bucket, username, password, None)
             else:
-                yield TargetSettings(src_master, bucket, password, prefix)
+                yield TargetSettings(src_master, bucket, username, password, prefix)
 
 
 class EventingDestBktTargetIterator(TargetIterator):
 
     def __iter__(self):
-        password = self.test_config.bucket.password
+        username = self.cluster_spec.rest_credentials[0]
+        if self.test_config.client_settings.python_client:
+            if self.test_config.client_settings.python_client.split('.')[0] == "2":
+                password = self.test_config.bucket.password
+            else:
+                password = self.cluster_spec.rest_credentials[1]
+        else:
+            password = self.cluster_spec.rest_credentials[1]
         prefix = self.prefix
         src_master = next(self.cluster_spec.masters)
         for bucket in self.test_config.eventing_buckets:
             if self.prefix == "None":
-                yield TargetSettings(src_master, bucket, password, None)
+                yield TargetSettings(src_master, bucket, username, password, None)
             else:
-                yield TargetSettings(src_master, bucket, password, prefix)
+                yield TargetSettings(src_master, bucket, username, password, prefix)
 
 
 class EventingTest(PerfTest):

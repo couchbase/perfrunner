@@ -20,7 +20,7 @@ class ClusterManager:
         self.rest = RestHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
-        self.memcached = MemcachedHelper(test_config)
+        self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.master_node = next(self.cluster_spec.masters)
         if self.dynamic_infra:
             self.initial_nodes = None

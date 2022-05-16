@@ -3,7 +3,7 @@ import time
 
 from mc_bin_client.mc_bin_client import MemcachedClient
 
-from perfrunner.settings import TestConfig
+from perfrunner.settings import ClusterSpec, TestConfig
 
 SOCKET_RETRY_INTERVAL = 2
 MAX_RETRY = 600
@@ -11,8 +11,8 @@ MAX_RETRY = 600
 
 class MemcachedHelper:
 
-    def __init__(self, test_config: TestConfig):
-        self.password = test_config.bucket.password
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+        self.username, self.password = cluster_spec.rest_credentials
         if test_config.cluster.ipv6:
             self.family = socket.AF_INET6
         else:
@@ -25,7 +25,8 @@ class MemcachedHelper:
                 mc = MemcachedClient(host=host, port=port, family=self.family)
                 mc.enable_xerror()
                 mc.hello("mc")
-                mc.sasl_auth_plain(user=bucket, password=self.password)
+                mc.sasl_auth_plain(user=self.username, password=self.password)
+                mc.bucket_select(bucket)
                 return mc.stats(stats)
             except Exception:
                 if retries < MAX_RETRY:

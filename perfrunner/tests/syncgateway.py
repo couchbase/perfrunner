@@ -81,7 +81,7 @@ class SGPerfTest(PerfTest):
         self.dynamic_infra = False
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.memcached = MemcachedHelper(test_config)
+        self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.rest = RestHelper(cluster_spec, test_config)
         self.master_node = next(self.cluster_spec.masters)

@@ -144,13 +144,16 @@ def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
 
 
 def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
-                            obj_staging_dir: str = None):
+                            obj_staging_dir: str = None, obj_access_key_id: str = None):
     logger.info('Running cbbackumgr cbcollect-logs on localhost ')
 
-    flags = ['--archive {}'.format(cluster_spec.backup),
-             '--output-dir .',
-             '--obj-region {}'.format(obj_region) if obj_region else None,
-             '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None]
+    flags = [
+        '--archive {}'.format(cluster_spec.backup),
+        '--output-dir .',
+        '--obj-region {}'.format(obj_region) if obj_region else None,
+        '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
+        '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None
+    ]
 
     cmd = './opt/couchbase/bin/cbbackupmgr collect-logs {}'.format(
           ' '.join(filter(None, flags)))

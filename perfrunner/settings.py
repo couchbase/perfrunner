@@ -189,6 +189,10 @@ class ClusterSpec(Config):
         return servers
 
     @property
+    def using_private_ips(self) -> bool:
+        return self.config.has_section('private_ips')
+
+    @property
     def clusters_private(self) -> Iterator:
         if self.config.has_section('private_ips'):
             for cluster_name, private_ips in self.config.items('private_ips'):
@@ -1553,6 +1557,7 @@ class BackupSettings:
     SHARDS = None
     OBJ_STAGING_DIR = None
     OBJ_REGION = None
+    OBJ_ACCESS_KEY_ID = None
     AWS_CREDENTIAL_PATH = None
     INCLUDE_DATA = None
     BACKUP_DIRECTORY = None
@@ -1565,6 +1570,7 @@ class BackupSettings:
         self.shards = options.get('shards', self.SHARDS)
         self.obj_staging_dir = options.get('obj_staging_dir', self.OBJ_STAGING_DIR)
         self.obj_region = options.get('obj_region', self.OBJ_REGION)
+        self.obj_access_key_id = options.get('obj_access_key_id', self.OBJ_ACCESS_KEY_ID)
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
         self.include_data = options.get('include_data', self.INCLUDE_DATA)
         self.backup_directory = options.get('backup_directory', self.BACKUP_DIRECTORY)

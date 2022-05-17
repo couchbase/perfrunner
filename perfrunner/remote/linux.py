@@ -774,14 +774,15 @@ class RemoteLinux(Remote):
     def backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,
                compression: bool = False, storage_type: str = None, sink_type: str = None,
                shards: int = None, obj_staging_dir: str = None, obj_region: str = None,
-               use_tls: bool = False):
+               obj_access_key_id: str = None, use_tls: bool = False):
         logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
-        self.cbbackupmgr_config(cluster_spec, worker_home, obj_staging_dir, obj_region)
+        self.cbbackupmgr_config(cluster_spec, worker_home, obj_staging_dir, obj_region,
+                                obj_access_key_id)
 
         self.cbbackupmgr_backup(master_node, cluster_spec, threads, compression, storage_type,
                                 sink_type, shards, worker_home, obj_staging_dir, obj_region,
-                                use_tls)
+                                obj_access_key_id, use_tls)
 
     @master_client
     def cleanup(self, backup_dir: str):
@@ -808,12 +809,16 @@ class RemoteLinux(Remote):
 
     @master_client
     def cbbackupmgr_config(self, cluster_spec: ClusterSpec, worker_home: str,
-                           obj_staging_dir: str = None, obj_region: str = None):
+                           obj_staging_dir: str = None, obj_region: str = None,
+                           obj_access_key_id: str = None):
         with cd(worker_home), cd('perfrunner'):
-            flags = ['--archive {}'.format(cluster_spec.backup),
-                     '--repo default',
-                     '--obj-region {}'.format(obj_region) if obj_region else None,
-                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None]
+            flags = [
+                '--archive {}'.format(cluster_spec.backup),
+                '--repo default',
+                '--obj-region {}'.format(obj_region) if obj_region else None,
+                '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
+                '--obj-access-key-id {}'.format(obj_access_key_id)if obj_access_key_id else None
+            ]
 
             cmd = './opt/couchbase/bin/cbbackupmgr config {}'.format(
                 ' '.join(filter(None, flags)))
@@ -825,22 +830,25 @@ class RemoteLinux(Remote):
     def cbbackupmgr_backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
                            compression: bool, storage_type: str, sink_type: str, shards: int,
                            worker_home: str, obj_staging_dir: str = None, obj_region: str = None,
-                           use_tls: bool = False):
+                           obj_access_key_id: str = None, use_tls: bool = False):
         with cd(worker_home), cd('perfrunner'):
-            flags = ['--archive {}'.format(cluster_spec.backup),
-                     '--repo default',
-                     '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
-                     '--cacert root.pem' if use_tls else None,
-                     '--username {}'.format(cluster_spec.rest_credentials[0]),
-                     '--password {}'.format(cluster_spec.rest_credentials[1]),
-                     '--threads {}'.format(threads) if threads else None,
-                     '--storage {}'.format(storage_type) if storage_type else None,
-                     '--sink {}'.format(sink_type) if sink_type else None,
-                     '--value-compression compressed' if compression else None,
-                     '--shards {}'.format(shards) if shards else None,
-                     '--obj-region {}'.format(obj_region) if obj_region else None,
-                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-                     '--no-progress-bar']
+            flags = [
+                '--archive {}'.format(cluster_spec.backup),
+                '--repo default',
+                '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
+                '--cacert root.pem' if use_tls else None,
+                '--username {}'.format(cluster_spec.rest_credentials[0]),
+                '--password {}'.format(cluster_spec.rest_credentials[1]),
+                '--threads {}'.format(threads) if threads else None,
+                '--storage {}'.format(storage_type) if storage_type else None,
+                '--sink {}'.format(sink_type) if sink_type else None,
+                '--value-compression compressed' if compression else None,
+                '--shards {}'.format(shards) if shards else None,
+                '--obj-region {}'.format(obj_region) if obj_region else None,
+                '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
+                '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
+                '--no-progress-bar'
+            ]
 
             cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(
                 ' '.join(filter(None, flags)))
@@ -854,34 +862,37 @@ class RemoteLinux(Remote):
         run('sync && echo 3 > /proc/sys/vm/drop_caches')
 
     @master_client
-    def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
-                worker_home: str, archive: str = '', repo: str = 'default',
-                obj_staging_dir: str = None, obj_region: str = None,
-                use_tls: bool = False, map_data: str = None):
+    def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,
+                archive: str = '', repo: str = 'default', obj_staging_dir: str = None,
+                obj_region: str = None, obj_access_key_id: str = None, use_tls: bool = False,
+                map_data: str = None):
         logger.info('Restore from {}'.format(archive or cluster_spec.backup))
 
         self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home,
-                                 archive, repo, obj_staging_dir, obj_region,
+                                 archive, repo, obj_staging_dir, obj_region, obj_access_key_id,
                                  use_tls, map_data)
 
     @master_client
     def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec,
                             threads: int, worker_home: str, archive: str = '',
                             repo: str = 'default', obj_staging_dir: str = None,
-                            obj_region: str = None, use_tls: bool = False,
-                            map_data: str = None):
+                            obj_region: str = None, obj_access_key_id: str = None,
+                            use_tls: bool = False, map_data: str = None):
         with cd(worker_home), cd('perfrunner'):
-            flags = ['--archive {}'.format(archive or cluster_spec.backup),
-                     '--repo {}'.format(repo),
-                     '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
-                     '--cacert root.pem' if use_tls else None,
-                     '--username {}'.format(cluster_spec.rest_credentials[0]),
-                     '--password {}'.format(cluster_spec.rest_credentials[1]),
-                     '--threads {}'.format(threads) if threads else None,
-                     '--obj-region {}'.format(obj_region) if obj_region else None,
-                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-                     '--map-data {}'.format(map_data) if map_data else None,
-                     '--no-progress-bar']
+            flags = [
+                '--archive {}'.format(archive or cluster_spec.backup),
+                '--repo {}'.format(repo),
+                '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
+                '--cacert root.pem' if use_tls else None,
+                '--username {}'.format(cluster_spec.rest_credentials[0]),
+                '--password {}'.format(cluster_spec.rest_credentials[1]),
+                '--threads {}'.format(threads) if threads else None,
+                '--obj-region {}'.format(obj_region) if obj_region else None,
+                '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
+                '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
+                '--map-data {}'.format(map_data) if map_data else None,
+                '--no-progress-bar'
+            ]
 
             cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
                 ' '.join(filter(None, flags)))

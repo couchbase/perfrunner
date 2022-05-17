@@ -1,5 +1,6 @@
 import os
 
+from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.settings import LoadSettings, TargetIterator
@@ -590,6 +591,7 @@ class CloudBackupRestoreTest(BackupRestoreTest):
             shards=self.test_config.backup_settings.shards,
             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
             obj_region=self.test_config.backup_settings.obj_region,
+            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
             use_tls=self.test_config.backup_settings.use_tls
         )
 
@@ -602,6 +604,7 @@ class CloudBackupRestoreTest(BackupRestoreTest):
                             worker_home=self.worker_manager.WORKER_HOME,
                             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
                             obj_region=self.test_config.backup_settings.obj_region,
+                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
                             use_tls=self.test_config.restore_settings.use_tls)
 
     def collectlogs(self):
@@ -610,7 +613,8 @@ class CloudBackupRestoreTest(BackupRestoreTest):
         local.cbbackupmgr_collectlogs(
             cluster_spec=self.cluster_spec,
             obj_staging_dir=staging_dir,
-            obj_region=self.test_config.backup_settings.obj_region
+            obj_region=self.test_config.backup_settings.obj_region,
+            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id
         )
 
     def setup_run(self):
@@ -654,8 +658,14 @@ class CloudBackupTest(CloudBackupRestoreTest):
     def run(self):
         self.setup_run()
 
+        master_node = None
+        if self.cluster_spec.using_private_ips:
+            master_node = next(self.cluster_spec.clusters_private)[1][0]
+
         try:
-            time_elapsed = self.backup()
+            time_elapsed = self.backup(master_node=master_node)
+        except Exception as e:
+            logger.error(e)
         finally:
             self.extract_tools()
             self.collectlogs()
@@ -664,42 +674,24 @@ class CloudBackupTest(CloudBackupRestoreTest):
 
 
 class AWSBackupTest(CloudBackupTest):
-    @with_stats
-    @timeit
-    def backup(self):
+
+    def backup(self, master_node=None):
         credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
         self.remote.create_aws_credential(credential)
-        self.remote.backup(
-            master_node=self.master_node,
-            cluster_spec=self.cluster_spec,
-            threads=self.test_config.backup_settings.threads,
-            worker_home=self.worker_manager.WORKER_HOME,
-            compression=self.test_config.backup_settings.compression,
-            storage_type=self.test_config.backup_settings.storage_type,
-            sink_type=self.test_config.backup_settings.sink_type,
-            shards=self.test_config.backup_settings.shards,
-            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-            obj_region=self.test_config.backup_settings.obj_region,
-            use_tls=self.test_config.backup_settings.use_tls
-        )
+        return super().backup(master_node=master_node)
 
 
 class GCPBackupTest(CloudBackupTest):
     ALL_HOSTNAMES = True
 
-    def run(self):
-        self.setup_run()
 
-        internal_ips = dict(self.cluster_spec.clusters_private)
-        master_node = list(internal_ips.values())[0][0]
+class AzureBackupTest(CloudBackupTest):
+    ALL_HOSTNAMES = True
 
-        try:
-            time_elapsed = self.backup(master_node=master_node)
-        finally:
-            self.extract_tools()
-            self.collectlogs()
-
-        self.report_kpi(time_elapsed)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        storage_acc = self.cluster_spec.infrastructure_section('storage')['storage_acc']
+        self.test_config.config.set('backup', 'obj_access_key_id', storage_acc)
 
 
 class CloudRestoreTest(CloudBackupRestoreTest):
@@ -729,10 +721,16 @@ class CloudRestoreTest(CloudBackupRestoreTest):
     def run(self):
         self.setup_run()
 
+        master_node = None
+        if self.cluster_spec.using_private_ips:
+            master_node = next(self.cluster_spec.clusters_private)[1][0]
+
         try:
-            self.backup()
+            self.backup(master_node=master_node)
             self.flush_buckets()
-            time_elapsed = self.restore()
+            time_elapsed = self.restore(master_node=master_node)
+        except Exception as e:
+            logger.error(e)
         finally:
             self.extract_tools()
             self.collectlogs()
@@ -742,27 +740,20 @@ class CloudRestoreTest(CloudBackupRestoreTest):
 
 class AWSRestoreTest(CloudRestoreTest):
 
-    def backup(self):
+    def backup(self, master_node=None):
         credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
         self.remote.create_aws_credential(credential)
-        super().backup()
+        super().backup(master_node=master_node)
 
 
 class GCPRestoreTest(CloudRestoreTest):
     ALL_HOSTNAMES = True
 
-    def run(self):
-        self.setup_run()
 
-        internal_ips = dict(self.cluster_spec.clusters_private)
-        master_node = list(internal_ips.values())[0][0]
+class AzureRestoreTest(CloudRestoreTest):
+    ALL_HOSTNAMES = True
 
-        try:
-            self.backup(master_node=master_node)
-            self.flush_buckets()
-            time_elapsed = self.restore(master_node=master_node)
-        finally:
-            self.extract_tools()
-            self.collectlogs()
-
-        self.report_kpi(time_elapsed)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        storage_acc = self.cluster_spec.infrastructure_section('storage')['storage_acc']
+        self.test_config.config.set('backup', 'obj_access_key_id', storage_acc)

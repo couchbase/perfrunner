@@ -1,0 +1,42 @@
+---
+- hosts: couchbase_servers
+  gather_facts: no
+  vars:
+    data_dir: /data
+  tasks:
+  - name: wait for clients to become reachable
+    wait_for_connection:
+      sleep: 10
+      timeout: 300
+
+  - name: gather facts
+    setup:
+
+  - name: find disk to set up
+    shell: lsblk -o NAME,TYPE,FSTYPE -dsnp | awk '$2 == "disk" && $3 == "" {print $1}' | head -n 1
+    register: get_data_disk
+  
+  - set_fact:
+      data_disk: "{{ get_data_disk.stdout }}"
+
+  - name: re-creating filesystem
+    filesystem:
+      fstype: "xfs"
+      dev: "{{ data_disk }}"
+      force: yes
+
+  - name: mounting data parition
+    mount:
+      name: "{{ data_dir }}"
+      state: mounted
+      src: "{{ data_disk }}"
+      fstype: "xfs"
+
+  - name: creating new "couchbase" group
+    group: name=couchbase
+
+  - name: creating new "couchbase" user
+    user: name=couchbase group=couchbase
+
+  - name: ensuring ownership of "{{ data_dir }}" directory
+    file: path={{ data_dir }} owner=couchbase group=couchbase

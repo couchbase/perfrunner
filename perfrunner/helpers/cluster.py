@@ -398,8 +398,8 @@ class ClusterManager:
                 password=self.test_config.bucket.password,
                 replica_number=self.test_config.bucket.replica_number,
                 replica_index=self.test_config.bucket.replica_index,
-                eviction_policy=self.test_config.bucket.EVICTION_POLICY,
-                bucket_type=self.test_config.bucket.BUCKET_TYPE,
+                eviction_policy=self.test_config.bucket.eviction_policy,
+                bucket_type=self.test_config.bucket.bucket_type,
                 backend_storage=self.test_config.bucket.backend_storage,
             )
 

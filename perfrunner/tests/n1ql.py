@@ -77,8 +77,8 @@ class N1QLTest(PerfTest):
         for i, query in enumerate(self.test_config.access_settings.n1ql_queries):
             if self.test_config.collection.collection_map:
                 query_statement = query['statement']
-                for bucket in self.test_config.buckets:
-                    if bucket in query_statement:
+                if "TARGET_BUCKET" in query_statement:
+                    for bucket in self.test_config.buckets:
                         bucket_replaced = False
                         bucket_scopes = self.test_config.collection.collection_map[bucket]
                         for scope in bucket_scopes.keys():
@@ -86,7 +86,7 @@ class N1QLTest(PerfTest):
                                 if bucket_scopes[scope][collection]["access"] == 1:
                                     query_target = "default:`{}`.`{}`.`{}`"\
                                         .format(bucket, scope, collection)
-                                    replace_target = "`{}`".format(bucket)
+                                    replace_target = "`TARGET_BUCKET`"
                                     query_statement = query_statement.\
                                         replace(replace_target, query_target)
                                     bucket_replaced = True
@@ -96,6 +96,26 @@ class N1QLTest(PerfTest):
                         if not bucket_replaced:
                             raise Exception('No access target for bucket: {}'
                                             .format(bucket))
+                else:
+                    for bucket in self.test_config.buckets:
+                        if bucket in query_statement:
+                            bucket_replaced = False
+                            bucket_scopes = self.test_config.collection.collection_map[bucket]
+                            for scope in bucket_scopes.keys():
+                                for collection in bucket_scopes[scope].keys():
+                                    if bucket_scopes[scope][collection]["access"] == 1:
+                                        query_target = "default:`{}`.`{}`.`{}`"\
+                                            .format(bucket, scope, collection)
+                                        replace_target = "`{}`".format(bucket)
+                                        query_statement = query_statement.\
+                                            replace(replace_target, query_target)
+                                        bucket_replaced = True
+                                        break
+                                if bucket_replaced:
+                                    break
+                            if not bucket_replaced:
+                                raise Exception('No access target for bucket: {}'
+                                                .format(bucket))
                 logger.info("Grabbing plan for query: {}".format(query_statement))
                 plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement)
             else:

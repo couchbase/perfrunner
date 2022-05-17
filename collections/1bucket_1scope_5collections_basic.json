@@ -1,0 +1,32 @@
+{
+    "bucket-1": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-1": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-2": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-3": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-4": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-5": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    }
+}

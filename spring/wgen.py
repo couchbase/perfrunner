@@ -60,6 +60,7 @@ from spring.docgen import (
     ProfileDocument,
     RefDocument,
     ReverseLookupDocument,
+    ReverseLookupKeySizeDocument,
     ReverseRangeLookupDocument,
     SequentialKey,
     SequentialPlasmaDocument,
@@ -189,6 +190,10 @@ class Worker:
         elif self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(self.ws.size,
                                               self.ts.prefix)
+        elif self.ws.doc_gen == 'reverse_lookup_key_size':
+            self.docs = ReverseLookupKeySizeDocument(self.ws.size,
+                                                     self.ts.prefix,
+                                                     self.ws.item_size)
         elif self.ws.doc_gen == 'reverse_range_lookup':
             self.docs = ReverseRangeLookupDocument(self.ws.size,
                                                    self.ts.prefix,

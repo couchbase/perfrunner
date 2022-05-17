@@ -250,16 +250,23 @@ class N1QLQueryGen3:
     def next(self, key: str, doc: dict, replace_targets: dict = None) -> Tuple[str, QueryOptions]:
         statement, args, scan_consistency, ad_hoc = next(self.queries)
         if replace_targets:
-            for bucket in replace_targets.keys():
-                bucket_substring = "`{}`".format(bucket)
-                for i in range(statement.count(bucket_substring)):
-                    where = [m.start() for m in re.finditer(bucket_substring, statement)][i]
-                    before = statement[:where]
-                    after = statement[where:]
-                    scope, collection = replace_targets[bucket][i].split(":")
-                    replace_target = "default:`{}`.`{}`.`{}`".format(bucket, scope, collection)
-                    after = after.replace(bucket_substring, replace_target)
-                    statement = before + after
+            if "TARGET_BUCKET" in statement:
+                for bucket in replace_targets.keys():
+                    scope, collection, target = replace_targets[bucket][0].split(":")
+                    if target == 'True':
+                        replace_target = "default:`{}`.`{}`.`{}`".format(bucket, scope, collection)
+                        statement = statement.replace("`TARGET_BUCKET`", replace_target)
+            else:
+                for bucket in replace_targets.keys():
+                    bucket_substring = "`{}`".format(bucket)
+                    for i in range(statement.count(bucket_substring)):
+                        where = [m.start() for m in re.finditer(bucket_substring, statement)][i]
+                        before = statement[:where]
+                        after = statement[where:]
+                        scope, collection, target = replace_targets[bucket][i].split(":")
+                        replace_target = "default:`{}`.`{}`.`{}`".format(bucket, scope, collection)
+                        after = after.replace(bucket_substring, replace_target)
+                        statement = before + after
         if 'key' in args:
             args = [key]
         else:

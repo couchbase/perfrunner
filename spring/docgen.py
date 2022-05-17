@@ -772,6 +772,33 @@ class ReverseLookupDocument(NestedDocument):
         }
 
 
+class ReverseLookupKeySizeDocument(ReverseLookupDocument):
+
+    def __init__(self, avg_size: int, prefix: str, item_size: int):
+        super().__init__(avg_size, prefix)
+        self.item_size = item_size
+
+    def build_email(self, alphabet: str) -> str:
+        num_repeat = int(math.ceil(self.item_size / 6 / 2))
+        if self.is_random:
+            name = random.randint(1, 9)
+            domain = random.randint(12, 18)
+            return '%s@%s.com' % (alphabet[name:name + 6] * num_repeat,
+                                  alphabet[domain:domain + 6] * num_repeat)
+        else:
+            return '%s@%s.com' % (alphabet[12:18] * num_repeat, alphabet[18:24] * num_repeat)
+
+    def build_capped(self, alphabet: str, seq_id: int, num_unique: int) -> str:
+        if self.is_random:
+            num_repeat = int(math.ceil(self.item_size / 6))
+            offset = random.randint(1, 9)
+            return '%s' % alphabet[offset:offset + 6] * num_repeat
+
+        num_repeat = int(math.ceil((self.item_size - 8) / len(self.prefix)))
+        index = seq_id // num_unique
+        return '%s_%d_%d' % (self.prefix * num_repeat, num_unique, index)
+
+
 class ReverseRangeLookupDocument(ReverseLookupDocument):
 
     OVERHEAD = 480

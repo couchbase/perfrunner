@@ -61,6 +61,7 @@ from spring.docgen import (
     ProfileDocument,
     RefDocument,
     ReverseLookupDocument,
+    ReverseLookupKeySizeDocument,
     ReverseRangeLookupDocument,
     SequentialKey,
     SequentialPlasmaDocument,
@@ -237,6 +238,10 @@ class Worker:
         elif self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(ws.size,
                                               self.ts.prefix)
+        elif self.ws.doc_gen == 'reverse_lookup_key_size':
+            self.docs = ReverseLookupKeySizeDocument(self.ws.size,
+                                                     self.ts.prefix,
+                                                     self.ws.item_size)
         elif self.ws.doc_gen == 'reverse_range_lookup':
             self.docs = ReverseRangeLookupDocument(ws.size,
                                                    self.ts.prefix,
@@ -1062,7 +1067,7 @@ class N1QLWorker(Worker):
         elif self.ws.n1ql_op == 'update':
             self.do_batch_update()
 
-    def init_access_targets(self):
+    def init_n1ql_access_targets(self):
         self.bucket_targets = dict()
         self.access_targets = dict()
         self.replacement_targets = dict()
@@ -1090,7 +1095,11 @@ class N1QLWorker(Worker):
 
             # find max number of times a bucket is used in all queries
             for query in self.ws.n1ql_queries:
-                max_target_count = max(query['statement'].count(bucket), max_target_count)
+                if 'TARGET_BUCKET' in query['statement']:
+                    max_target_count = max(query['statement'].count('TARGET_BUCKET'),
+                                           max_target_count)
+                else:
+                    max_target_count = max(query['statement'].count(bucket), max_target_count)
             worker_access_targets = []
 
             # need to replace
@@ -1108,7 +1117,7 @@ class N1QLWorker(Worker):
                 target_indexes.sort()
                 if bucket != self.ts.bucket:
                     target_indexes = list(random.choice(target_indexes, 1))
-                worker_access_targets.append([worker_targets[i] for i in target_indexes])
+                worker_access_targets.append([worker_targets[index] for index in target_indexes])
             self.access_targets[bucket] = worker_access_targets
 
         # create replacement targets
@@ -1144,12 +1153,13 @@ class N1QLWorker(Worker):
                     if j == random_instance:
                         random_target = random.choice(bucket_instances[j])
                         target = random_target
-                        target_replacements.append(random_target)
+                        target_replacements.append(random_target + ':True')
                     else:
-                        target_replacements.append(bucket_instances[j][0])
+                        target_replacements.append(bucket_instances[j][0] + ':True')
                 self.replacement_targets[bucket] = target_replacements
             else:
-                self.replacement_targets[bucket] = [instance[0] for instance in bucket_instances]
+                self.replacement_targets[bucket] = [instance[0] + ':False' for
+                                                    instance in bucket_instances]
         if not target:
             raise Exception("No target")
 
@@ -1161,9 +1171,9 @@ class N1QLWorker(Worker):
             if j == random_instance:
                 random_target = random.choice(self.bucket_instances[j])
                 target = random_target
-                target_replacements.append(random_target)
+                target_replacements.append(random_target + ':True')
             else:
-                target_replacements.append(self.bucket_instances[j][0])
+                target_replacements.append(self.bucket_instances[j][0] + ':True')
         if not target:
             raise Exception("No target")
         self.replacement_targets[self.ts.bucket] = target_replacements
@@ -1177,6 +1187,7 @@ class N1QLWorker(Worker):
         self.shared_dict = shared_dict
         self.current_hot_load_start = current_hot_load_start
         self.timer_elapse = timer_elapse
+        self.init_n1ql_access_targets()
         self.bucket_instances = self.access_targets[self.ts.bucket]
         self.num_bucket_instances = len(self.bucket_instances)
         self.num_worker_targets = len(self.bucket_targets[self.ts.bucket])

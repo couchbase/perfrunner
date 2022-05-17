@@ -1,0 +1,602 @@
+{
+    "bucket-1": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-1": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-2": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-3": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-4": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-5": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-10": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-46": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-47": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-48": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-49": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-50": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-11": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-51": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-52": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-53": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-54": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-55": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-12": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-56": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-57": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-58": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-59": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-60": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-13": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-61": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-62": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-63": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-64": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-65": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-14": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-66": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-67": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-68": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-69": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-70": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-15": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-71": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-72": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-73": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-74": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-75": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-16": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-76": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-77": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-78": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-79": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-80": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-17": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-81": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-82": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-83": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-84": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-85": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-18": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-86": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-87": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-88": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-89": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-90": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-19": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-91": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-92": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-93": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-94": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-95": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-2": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-10": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-6": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-7": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-8": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-9": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-20": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-100": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-96": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-97": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-98": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-99": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-3": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-11": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-12": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-13": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-14": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-15": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-4": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-16": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-17": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-18": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-19": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-20": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-5": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-21": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-22": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-23": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-24": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-25": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-6": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-26": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-27": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-28": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-29": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-30": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-7": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-31": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-32": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-33": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-34": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-35": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-8": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-36": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-37": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-38": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-39": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-40": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "bucket-9": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-41": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-42": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-43": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-44": {
+                "access": 1,
+                "load": 1
+            },
+            "collection-45": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    }
+}

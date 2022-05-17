@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
+title = Q3, Range Scan, Plasma, not_bounded, 20 buckets x 1M, b=20 s=1 c=5 i=2
+component = n1ql
+category = Q1_Q3
+sub_category = Plasma
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 13824
+initial_nodes = 6
+num_buckets = 20
+
+[compaction]
+db_percentage = 100
+
+[collection]
+config = collections/20buckets_1scope_5collections_basic.json
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 1000000
+size = 1024
+workers = 4
+doc_gen = reverse_lookup_key_size
+item_size = 80
+
+[index]
+fields = capped_small,capped_small
+indexes_per_collection = 2
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 0
+items = 1000000
+workers = 0
+time = 1200
+n1ql_queries = range-scan
+n1ql_workers = 10
+workload_instances = 1
+item_size = 80
+
+[n1ql-range-scan]
+statement = SELECT name AS _name, street AS _street FROM `TARGET_BUCKET` WHERE capped_small=$1;
+scan_consistency = not_bounded
+args = ["{capped_small}"]

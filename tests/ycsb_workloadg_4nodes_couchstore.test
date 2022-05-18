@@ -5,6 +5,7 @@ test = perfrunner.tests.magma.YCSBThroughputHIDDTest
 title = Avg Throughput (ops/sec), Workload G, 4 nodes, 1 bucket x 100M x 6KB, Uniform distribution, Couchstore
 component = hidd
 category = ycsb
+sub_category = Throughput
 
 [cluster]
 mem_quota = 102400
@@ -41,7 +42,7 @@ time = 1800
 boost = 12
 workers = 320
 kv_endpoints = 64
-workload_instances = 6
+workload_instances = 2
 field_length = 6000
 field_count = 1
 requestdistribution = uniform

@@ -151,12 +151,12 @@ class Terraform:
                   self.infra_spec.cloud_provider + " && "
                                                    "terraform apply --auto-approve && "
                                                    "terraform output > "
-                                                   "" + self.worker_home + "/terraform/ip.py")
+                                                   "" + self.worker_home + "/terraform/out.py")
         os.system('cd ' + self.worker_home)
 
     # Update spec file with ip values.
     def update_spec(self):
-        import perfrunner.terraform.out as ip
+        import terraform.out as ip
         cluster_ips, client_ips, utility_ips = "", "", ""
         service_counter = 0
         for val in ip.cluster_public_ip:

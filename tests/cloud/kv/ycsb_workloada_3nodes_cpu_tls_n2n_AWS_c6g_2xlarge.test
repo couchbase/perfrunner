@@ -1,0 +1,46 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, TLS, AWS/Capella, ARM, c6g.2xlarge
+component = cloud
+category = kv
+orderby = aa1
+sub_category = AWS
+
+[cluster]
+mem_quota = 12288
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+failover_min = 10
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 9000000
+workers = 100
+
+[access]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 9000000
+ops = 1000000000
+time = 1800
+boost = 12
+workers = 400
+workload_instances = 2
+kv_endpoints = 16
+ssl_mode = data
+show_tls_version = true
+min_tls_version = tlsv1.2
+
+[ycsb]
+branch = couchbase3
+
+[stats]
+client_processes = java

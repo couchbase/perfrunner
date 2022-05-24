@@ -2,8 +2,21 @@
 - hosts: couchbase_servers
   vars:
     data_dir: /data
-    disk: /dev/nvme0n1
+    disk: /dev/nvme1n1
   tasks:
+  - name: re-creating filesystem
+    filesystem:
+      fstype: "xfs"
+      dev: "{{ disk }}"
+      force: yes
+
+  - name: mounting data parition
+    mount:
+      name: "{{ data_dir }}"
+      state: mounted
+      src: "{{ disk }}"
+      fstype: "xfs"
+
   - name: creating new "couchbase" group
     group: name=couchbase
 

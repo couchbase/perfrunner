@@ -528,19 +528,24 @@ class AWSDeployer(Deployer):
                     if "workers" in node_role:  # perf client ami
                         if self.region == 'us-east-1':
                             ami = 'ami-01b36cb3330d38ac5'
+                            logger.info("Client AMI: " + str(ami))
                         else:
                             ami = 'ami-0045ddecdcfa4a45c'
+                            logger.info("Client AMI: " + str(ami))
                     elif "couchbase" in node_role:  # perf server ami
                         if self.region == 'us-east-1':
                             if self.os_arch == 'arm':
                                 ami = 'ami-0f249abfe3dd01b30'
+                                logger.info("Server AMI: " + str(ami))
                                 block_device = '/dev/xvda'
                             elif self.os_arch == 'al2':
                                 ami = 'ami-060e286353d227c32'
+                                logger.info("Server AMI: " + str(ami))
                                 block_device = '/dev/xvda'
                             else:
                                 ami = 'ami-005bce54f0c4e2248'
                         else:
+                            logger.info("Server AMI: " + str(ami))
                             ami = 'ami-83b400fb'
                     elif "sync_gateway" in node_role:  # perf server ami
                         if self.region == 'us-east-1':
@@ -550,8 +555,10 @@ class AWSDeployer(Deployer):
                     elif "utilities" in node_role:  # perf broker ami
                         if self.region == 'us-east-1':
                             ami = 'ami-0d9e5ee360aa02d94'
+                            logger.info("Broker AMI: " + str(ami))
                         else:
                             ami = 'ami-0c7ae1c909fa076e9'
+                            logger.info("Broker AMI: " + str(ami))
                     else:
                         raise Exception("ec2 group must include one of: client, server, broker")
                     volume_type = node_group_spec.get('volume_type', 'gp2')

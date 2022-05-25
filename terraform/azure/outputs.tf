@@ -22,4 +22,6 @@ output "utilities_private_ip" {
 
   value = "${azurerm_network_interface.perf-utility-ni.*.private_ip_address}"
 }
-
+output "acc_name" {
+  value       = azurerm_storage_account.perf-storage-acc.*.name
+}

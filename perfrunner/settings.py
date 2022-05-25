@@ -77,6 +77,10 @@ class ClusterSpec(Config):
         return self.config.get('infrastructure', 'provider', fallback='')
 
     @property
+    def capella_backend(self):
+        return self.config.get('infrastructure', 'backend', fallback='')
+
+    @property
     def kubernetes_infrastructure(self):
         if self.cloud_infrastructure:
             return self.infrastructure_settings.get("type", "kubernetes") == "kubernetes"

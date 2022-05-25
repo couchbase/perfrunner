@@ -13,10 +13,6 @@ class Terraform:
     #    multiple instance types in one role,
     #    capacity retry for AWS.
 
-    worker_home = os.getcwd()
-
-    services = []
-
     def __init__(self, infra_spec, options):
         self.worker_home = os.getcwd()
         self.services = []
@@ -27,22 +23,27 @@ class Terraform:
         self.parser = configparser.ConfigParser()
         self.parser.read(self.options.cluster)
         self.node_config = self.node_config_generate()
+        if self.infra_spec.cloud_provider == 'capella':
+            self.backend_path = "terraform/capella/" + \
+                            self.infra_spec.capella_backend + "/"
         self.run()
 
     def run(self):
         self.initialize_terraform()
         self.is_backup()
         self.inject_nodes_terraform()
-        self.terraform_apply_and_output()
+        self.terraform_apply_and_output("terraform/" + self.infra_spec.cloud_provider + "/")
+        if self.infra_spec.cloud_provider == "capella":
+            self.terraform_apply_and_output(self.backend_path, ">>")
         self.update_spec()
         if self.infra_spec.cloud_provider in ['azure', 'gcp']:
             self.append_pips()
+            self.append_storage_acc()
         if self.infra_spec.infrastructure_settings.get('backup', 'false') == "true":
             self.append_backup_url()
-        self.destroy()
 
     # Runs terraform destroy on deployed infrastructure.
-    def destroy(self):
+    def destroy_infra(self):
         os.system('cd terraform/' + self.infra_spec.cloud_provider +
                   " && terraform destroy --auto-approve")
         os.system('cd ' + self.worker_home)
@@ -55,31 +56,37 @@ class Terraform:
     # Checks if backup storage is required, populates storage resource if so.
     def is_backup(self):
         if self.infra_spec.infrastructure_settings.get('backup', 'false') == "true":
-            self.find_and_replace("BACKUP", "\"1\"")
+            self.find_and_replace("BACKUP", "\"1\"", "terraform/" +
+                                  self.infra_spec.cloud_provider + "/")
             self.backup_url = "az://{}".format("content" + self.suffix)
         else:
-            self.find_and_replace("BACKUP", "\"0\"")
+            self.find_and_replace("BACKUP", "\"0\"", "terraform/" +
+                                  self.infra_spec.cloud_provider + "/")
 
     # Find and replace in respective tf.
-    def find_and_replace(self, placeholder, value):
-        with open("terraform/" + self.infra_spec.cloud_provider + '/Terraform.tf', 'r') as file:
+    def find_and_replace(self, placeholder, value, path_to_tf):
+        with open(path_to_tf + '/Terraform.tf', 'r') as file:
             data = file.read()
         data = data.replace(placeholder, value)
-        with open("terraform/" + self.infra_spec.cloud_provider + '/Terraform.tf', 'w') as file:
+        with open(path_to_tf + '/Terraform.tf', 'w') as file:
             file.write(data)
 
     # Creates entries for cluster parameters, replaces corresponding placeholder in tf file.
     def populate_tf(self, key):
         placeholder = self.node_config[key]['role'].upper()
+        if self.infra_spec.cloud_provider == 'capella' and placeholder in ['CLIENTS', 'UTILITIES']:
+            path_to_tf = self.backend_path
+        else:
+            path_to_tf = "terraform/" + self.infra_spec.cloud_provider + "/"
         instance = '\"' + self.node_config[key]['instance'] + '\"'
         capacity = '\"' + self.node_config[key]['capacity'] + '\"'
         disk = '\"' + self.node_config[key]['disk'] + '\"'
         d_type = '\"' + self.node_config[key]['d_type'] + '\"'
-        self.find_and_replace("SUFFIX", self.suffix)
-        self.find_and_replace("STORAGE_TYPE", d_type)
-        self.find_and_replace(placeholder + "_INSTANCE", instance)
-        self.find_and_replace(placeholder + "_CAPACITY", capacity)
-        self.find_and_replace(placeholder + "_DISK", disk)
+        self.find_and_replace("SUFFIX", self.suffix, path_to_tf)
+        self.find_and_replace("STORAGE_TYPE", d_type, path_to_tf)
+        self.find_and_replace(placeholder + "_INSTANCE", instance, path_to_tf)
+        self.find_and_replace(placeholder + "_CAPACITY", capacity, path_to_tf)
+        self.find_and_replace(placeholder + "_DISK", disk, path_to_tf)
 
     # Appends node group resources to terraform file.
     def inject_nodes_terraform(self):
@@ -146,27 +153,27 @@ class Terraform:
         return node_groups
 
     # Apply Terraform plan, pipe ip output to dns.py.
-    def terraform_apply_and_output(self):
-        os.system("cd terraform/" +
-                  self.infra_spec.cloud_provider + " && "
-                                                   "terraform apply --auto-approve && "
-                                                   "terraform output > "
-                                                   "" + self.worker_home + "/terraform/out.py")
+    def terraform_apply_and_output(self, directory, mode='>'):
+        os.system("cd " +
+                  directory + " && "
+                              "terraform apply --auto-approve && "
+                              "terraform output " + mode + self.worker_home +
+                  "/terraform/" + "out.py")
         os.system('cd ' + self.worker_home)
 
     # Update spec file with ip values.
     def update_spec(self):
-        import terraform.out as ip
+        import terraform.out as output
         cluster_ips, client_ips, utility_ips = "", "", ""
         service_counter = 0
-        for val in ip.cluster_public_ip:
+        for val in output.cluster_public_ip:
             cluster_ips += "\n" + val + ":" + self.services[service_counter]
             service_counter += 1
         self.parser.set('clusters', 'couchbase1', cluster_ips)
-        for val in ip.clients_public_ip:
+        for val in output.clients_public_ip:
             client_ips += "\n" + val
         self.parser.set('clients', 'workers1', client_ips)
-        for val in ip.utilities_public_ip:
+        for val in output.utilities_public_ip:
             utility_ips += "\n" + val
         self.parser.set('utilities', 'brokers1', utility_ips)
         with open(self.options.cluster, 'w') as spec:
@@ -174,15 +181,15 @@ class Terraform:
         with open('cloud/infrastructure/cloud.ini') as f:
             s = f.read()
         with open('cloud/infrastructure/cloud.ini', 'w') as f:
-            s = s.replace("server_list", "\n".join(ip.cluster_public_ip))
-            s = s.replace("worker_list", "\n".join(ip.clients_public_ip))
+            s = s.replace("server_list", "\n".join(output.cluster_public_ip))
+            s = s.replace("worker_list", "\n".join(output.clients_public_ip))
             f.write(s)
 
     # Append private ips to spec.
     def append_pips(self):
-        import terraform.ip as ip
+        import terraform.out as output
         pips = ""
-        for val in ip.cluster_private_ip:
+        for val in output.cluster_private_ip:
             pips += "\n" + val
         self.parser.add_section('private_ips')
         self.parser.set('private_ips',
@@ -191,6 +198,16 @@ class Terraform:
         with open(self.options.cluster, 'w') as spec:
             self.parser.write(spec)
 
+    # Append storage account for backup tests.
+    def append_storage_acc(self):
+        import terraform.out as output
+        self.parser.set('storage',
+                        'storage_acc',
+                        output.acc_name[0])
+        with open(self.options.cluster, 'w') as spec:
+            self.parser.write(spec)
+
+    # Append backup container url to spec.
     def append_backup_url(self):
         self.parser.set('storage', 'backup', self.backup_url)
         with open(self.options.cluster, 'w') as spec:
@@ -228,6 +245,16 @@ def get_args():
                        help='Global tag for launched instances.')
 
     return parse.parse_args()
+
+
+def destroy():
+    args = get_args()
+    infra_spec = ClusterSpec()
+    infra_spec.parse(fname=args.cluster)
+    worker_home = os.getcwd()
+    os.system('cd terraform/' + infra_spec.cloud_provider +
+              " && terraform destroy --auto-approve")
+    os.system('cd ' + worker_home)
 
 
 def main():

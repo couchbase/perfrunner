@@ -27,6 +27,7 @@ setup(
             'weekly = perfrunner.utils.weekly:main',
             'sg_install = perfrunner.utils.syncgateway.install:main',
             'terraform = perfrunner.utils.terraform:main',
+            'terraform_destroy = perfrunner.utils.terraform:destroy',
         ],
     },
     ext_modules=[

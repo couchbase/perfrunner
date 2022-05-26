@@ -575,6 +575,29 @@ class LargeItemGroupedDocumentKeySize(GroupedDocument):
         }
 
 
+class SingleFieldLargeDoc(GroupedDocument):
+    def __init__(self, avg_size: int, groups: int, item_size: int):
+        super().__init__(avg_size, groups)
+        self.item_size = item_size
+
+    @staticmethod
+    def build_item(alphabet: str, size: int = 64, prefix: str = ""):
+        length = size - len(prefix)
+        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
+        body = num_slices * alphabet
+        num = random.randint(1, length)
+        if prefix:
+            return prefix + "-" + body[num:length] + body[0:num]
+        return body[num:length] + body[0:num]
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+
+        return {
+            'name': self.build_item(alphabet=alphabet, size=self.item_size)
+        }
+
+
 class EventingCounterDocument(Document):
 
     def next(self, key: Key) -> dict:

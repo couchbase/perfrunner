@@ -63,6 +63,7 @@ from spring.docgen import (
     ReverseRangeLookupDocument,
     SequentialKey,
     SequentialPlasmaDocument,
+    SingleFieldLargeDoc,
     SmallPlasmaDocument,
     SmallPlasmaGroupedDocument,
     String,
@@ -175,6 +176,10 @@ class Worker:
             self.docs = LargeItemGroupedDocumentKeySize(self.ws.size,
                                                         self.ws.doc_groups,
                                                         self.ws.item_size)
+        elif self.ws.doc_gen == 'single_field_large_doc':
+            self.docs = SingleFieldLargeDoc(self.ws.size,
+                                            self.ws.doc_groups,
+                                            self.ws.item_size)
         elif self.ws.doc_gen == 'small_plasma_grouped':
             self.docs = SmallPlasmaGroupedDocument(self.ws.size, self.ws.doc_groups)
         elif self.ws.doc_gen == 'string':

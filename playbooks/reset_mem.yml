@@ -1,5 +1,5 @@
 ---
-- hosts: kv:index:analytics
+- hosts: kv:index:analytics:eventing:fts
   vars:
     grub_cfg: /boot/grub2/grub.cfg
     grub_cfg2: /boot/efi/EFI/centos/grub.cfg

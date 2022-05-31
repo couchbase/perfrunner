@@ -304,7 +304,8 @@ class FTSTest(JTSTest):
             for host in self.fts_nodes:
                 stats = self.rest.get_fts_stats(host)
                 size += stats[metric]
-        return size
+        size_final = int(size / (1024 ** 2))
+        return size_final
 
     @with_stats
     def build_indexes(self):

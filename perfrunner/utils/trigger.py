@@ -22,7 +22,8 @@ RELEASES = {
     'mad-hatter': '6.5.0',
     'cheshire-cat': '7.0.0',
     'neo': '7.1.0',
-    'morpheus': '7.2.0'
+    'elixir': '7.2.0',
+    'morpheus': '8.0.0'
 }
 
 

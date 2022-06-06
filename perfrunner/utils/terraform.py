@@ -38,9 +38,14 @@ class Terraform:
         self.update_spec()
         if self.infra_spec.cloud_provider in ['azure', 'gcp']:
             self.append_pips()
-            self.append_storage_acc()
+            if self.infra_spec.cloud_provider in ['azure']:
+                self.append_storage_acc()
         if self.infra_spec.infrastructure_settings.get('backup', 'false') == "true":
             self.append_backup_url()
+
+    #
+    def backend_client_and_utility(self):
+        pass
 
     # Runs terraform destroy on deployed infrastructure.
     def destroy_infra(self):

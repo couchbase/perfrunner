@@ -150,8 +150,9 @@ class EventingTest(PerfTest):
             if "source_scope" not in func_settings["depcfg"]:
                 func_settings["function_scope"] = {"bucket": source_bucket, "scope": "_default"}
             else:
-                func_settings["function_scope"] = {"bucket": source_bucket, "scope":
-                                                   func_settings["depcfg"]["source_scope"]}
+                if "function_scope" not in func_settings:
+                    func_settings["function_scope"] = {"bucket": source_bucket, "scope":
+                                                       func_settings["depcfg"]["source_scope"]}
             with open(code_file, 'r') as myfile:
                 code = myfile.read()
                 if self.timer_timeout:
@@ -827,5 +828,29 @@ class FunctionsLatencyTestDestBucket(FunctionsLatencyTest):
         self.load_dest_bucket()
 
         time_elapsed = self.load_access_and_wait()
+
+        self.report_kpi(time_elapsed)
+
+
+class FunctionsThroughputAccessPhaseTest(EventingTest):
+    @with_stats
+    @with_profiles
+    @timeit
+    def access_and_wait(self):
+        self.access_bg()
+        self.sleep()
+
+    def _report_kpi(self, time_elapsed):
+        events_successfully_processed = self.get_on_update_success()
+        self.reporter.post(
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=None,
+                                              events_processed=events_successfully_processed)
+        )
+
+    def run(self):
+        self.load()
+        self.set_functions()
+        time_elapsed = self.access_and_wait()
 
         self.report_kpi(time_elapsed)

@@ -2,7 +2,7 @@
 test = perfrunner.tests.eventing.TimerThroughputTest
 
 [showfast]
-title = Timers executed/sec, 1 bucket x 100M x 1KB, 4KV + 1Eventing node, single timer, no context-NOOP, magma
+title = Timers executed/sec, 1 bucket(magma) x 100M x 1KB, 4KV + 1Eventing node, single timer, no context-NOOP , multi source, s=10, c=10
 component = eventing
 category = thr
 sub_category = Timer
@@ -25,6 +25,9 @@ replica_number=0
 backend_storage = magma
 eviction_policy = fullEviction
 
+[collection]
+config = collections/1bucket_10scope_10collection_eventing.json
+
 [compaction]
 db_percentage = 100
 view_percentage = 100
@@ -35,7 +38,8 @@ size = 1024
 workers = 160
 
 [eventing]
-functions = perf-test1:tests/eventing/code/timer_noop.js
+functions = perf-test1:tests/eventing/code/timer_noop_uniqueId.js
+config_file = tests/eventing/config/function_sample_all_collection.json
 worker_count = 24
 cpp_worker_thread_count = 2
 timer_timeout = 3000

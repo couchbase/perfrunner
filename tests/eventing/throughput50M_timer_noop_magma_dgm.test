@@ -1,0 +1,53 @@
+[test_case]
+test = perfrunner.tests.eventing.TimerThroughputTest
+
+[showfast]
+title = Timers executed/sec, 1 bucket x 50M x 1KB, 4KV + 1Eventing node, single timer, no context-NOOP, magma 10%%RR
+component = eventing
+category = thr
+sub_category = Timer
+
+[stats]
+server_processes = eventing-produc
+
+[cluster]
+mem_quota = 55000
+eventing_mem_quota = 24576
+initial_nodes = 5
+num_buckets = 1
+eventing_bucket_mem_quota = 8000
+eventing_metadata_bucket_mem_quota = 1024
+eventing_buckets = 1
+online_cores = 12
+
+[bucket]
+replica_number=0
+backend_storage = magma
+eviction_policy = fullEviction
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 50000000
+size = 1024
+workers = 160
+
+[eventing]
+functions = perf-test1:tests/eventing/code/timer_noop.js
+worker_count = 24
+cpp_worker_thread_count = 2
+timer_timeout = 3000
+timer_fuzz = 500
+
+[access]
+time = 600
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0
+
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+num_reader_threads = disk_io_optimized

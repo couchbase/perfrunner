@@ -6,8 +6,7 @@
         {"job": "secondary-plasma",     "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_plasma.test"},
         {"job": "secondary-plasma",     "cluster": "nyx.spec", "test_config": "plasma/secondary_80M_large_key_plasma.test"},
         {"job": "secondary-plasma",     "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_varying_key_plasma.test"},
-        {"job": "secondary-plasma",     "cluster": "nyx.spec", "test_config": "plasma/secondary_500M_plasma.test"},
-        {"job": "secondary-plasma",     "cluster": "nyx.spec", "test_config": "plasma/secondary_1B_plasma.test"}
+        {"job": "secondary-plasma",     "cluster": "nyx.spec", "test_config": "plasma/secondary_500M_plasma.test"}
     ],
     "GSI-DGM": [
         {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_250M_20res_20kops.test"},

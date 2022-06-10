@@ -27,13 +27,7 @@
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_100_20.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_100_20_no_access.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20_no_access.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_10res_80_20.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_10res_80_20_no_access.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_10res_100_20.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_10res_100_20_no_access.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_20res_80_20.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_20res_80_20_no_access.test"}
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20_no_access.test"}
     ],
     "Magma1": [
         {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_1B_1indexer_compressed_plasma.test"},
@@ -74,8 +68,6 @@
     ],
     "GSI": [
         {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO.test"},
-        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_nonOSO.test"},
-        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_nonOSO_100RR.test"},
         {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO_100RR.test"}
     ]
 }

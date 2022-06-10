@@ -3,8 +3,6 @@
     "Eventing": [],
     "FTS": [],
     "GSI": [
-        {"job": "secondary-moi", "cluster": "nyx.spec",       "test_config": "moi/secondary_100M_moi.test"},
-        {"job": "secondary-moi", "cluster": "nyx.spec",       "test_config": "moi/secondary_1B_moi.test"}
     ],
     "GSI-DGM": [],
     "KV": [

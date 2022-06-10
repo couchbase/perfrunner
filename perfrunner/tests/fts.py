@@ -304,8 +304,7 @@ class FTSTest(JTSTest):
             for host in self.fts_nodes:
                 stats = self.rest.get_fts_stats(host)
                 size += stats[metric]
-        size_final = int(size / (1024 ** 2))
-        return size_final
+        return size
 
     @with_stats
     def build_indexes(self):
@@ -350,7 +349,8 @@ class FTSThroughputTest(FTSTest):
         self.create_fts_index_definitions()
         self.create_fts_indexes()
         index_size = self.calculate_index_size()
-        logger.info("The index size is {} MB".format(index_size))
+        size_final = int(index_size / (1024 ** 2))
+        logger.info("The index size is {} MB".format(size_final))
         self.download_jts()
         self.wait_for_index_persistence()
         self.warmup()
@@ -371,7 +371,8 @@ class FTSLatencyTest(FTSTest):
         self.create_fts_index_definitions()
         self.create_fts_indexes()
         index_size = self.calculate_index_size()
-        logger.info("The index size is {} MB".format(index_size))
+        size_final = int(index_size / (1024 ** 2))
+        logger.info("The index size is {} MB".format(size_final))
         self.download_jts()
         self.wait_for_index_persistence()
         self.warmup()

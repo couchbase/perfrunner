@@ -102,7 +102,8 @@ class KVStoreStats(Collector):
         "CheckpointOverheadPeriod",
         "CheckpointOverheadRatio",
         "NBlocksDropped",
-        "BlockCacheBlockSize"
+        "BlockCacheBlockSize",
+        "NMemoryOptimisedCommitBatches"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

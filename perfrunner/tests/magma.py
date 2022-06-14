@@ -466,6 +466,18 @@ class KVTest(PerfTest):
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
+    def rebalance_after_copy(self):
+        for (_, servers), initial_nodes \
+                in zip(self.cluster_spec.clusters, self.test_config.cluster.initial_nodes):
+            master = servers[0]
+            known_nodes = servers[:initial_nodes]
+            ejected_nodes = []
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            self.monitor.monitor_rebalance(master)
+
+        for master in self.cluster_spec.masters:
+            self.monitor.monitor_node_health(master)
+
     def copy_data_from_backup(self):
         self.remote.stop_server()
         time.sleep(30)
@@ -474,6 +486,7 @@ class KVTest(PerfTest):
         self.remote.start_server()
         time.sleep(30)
         self.warmup_after_copy()
+        self.rebalance_after_copy()
 
     @with_console_stats
     @with_stats
@@ -1293,6 +1306,18 @@ class InitialandIncrementalSecondaryIndexHiDDTest(InitialandIncrementalSecondary
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
+    def rebalance_after_copy(self):
+        for (_, servers), initial_nodes \
+                in zip(self.cluster_spec.clusters, self.test_config.cluster.initial_nodes):
+            master = servers[0]
+            known_nodes = servers[:initial_nodes]
+            ejected_nodes = []
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            self.monitor.monitor_rebalance(master)
+
+        for master in self.cluster_spec.masters:
+            self.monitor.monitor_node_health(master)
+
     def copy_data_from_backup(self):
         self.remote.stop_server()
         time.sleep(30)
@@ -1301,6 +1326,7 @@ class InitialandIncrementalSecondaryIndexHiDDTest(InitialandIncrementalSecondary
         self.remote.start_server()
         time.sleep(30)
         self.warmup_after_copy()
+        self.rebalance_after_copy()
 
     def run(self):
         if self.test_config.load_settings.use_backup:
@@ -1361,6 +1387,18 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
+    def rebalance_after_copy(self):
+        for (_, servers), initial_nodes \
+                in zip(self.cluster_spec.clusters, self.test_config.cluster.initial_nodes):
+            master = servers[0]
+            known_nodes = servers[:initial_nodes]
+            ejected_nodes = []
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            self.monitor.monitor_rebalance(master)
+
+        for master in self.cluster_spec.masters:
+            self.monitor.monitor_node_health(master)
+
     def copy_data_from_backup(self):
         self.remote.stop_server()
         time.sleep(30)
@@ -1369,6 +1407,7 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
         self.remote.start_server()
         time.sleep(30)
         self.warmup_after_copy()
+        self.rebalance_after_copy()
 
     def run(self):
         self.remove_statsfile()
@@ -1453,6 +1492,18 @@ class N1QLThroughputHiDDTest(N1QLThroughputTest):
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
+    def rebalance_after_copy(self):
+        for (_, servers), initial_nodes \
+                in zip(self.cluster_spec.clusters, self.test_config.cluster.initial_nodes):
+            master = servers[0]
+            known_nodes = servers[:initial_nodes]
+            ejected_nodes = []
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            self.monitor.monitor_rebalance(master)
+
+        for master in self.cluster_spec.masters:
+            self.monitor.monitor_node_health(master)
+
     def copy_data_from_backup(self):
         self.remote.stop_server()
         time.sleep(30)
@@ -1461,6 +1512,7 @@ class N1QLThroughputHiDDTest(N1QLThroughputTest):
         self.remote.start_server()
         time.sleep(30)
         self.warmup_after_copy()
+        self.rebalance_after_copy()
 
     def run(self):
         if self.test_config.load_settings.use_backup:

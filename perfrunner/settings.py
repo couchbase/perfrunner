@@ -2559,6 +2559,10 @@ class TargetIterator(Iterable):
         prefix = self.prefix
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
+                if "perfrunner.tests.views" in self.test_config.test_case.test_module:
+                    username = bucket
+                    password = self.test_config.bucket.password
+
                 if self.prefix is None:
                     prefix = target_hash(master)
                 if self.cluster_spec.dynamic_infrastructure:

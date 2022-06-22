@@ -5,6 +5,7 @@ test = perfrunner.tests.eventing.FunctionsPillowfightThroughputTest
 title = Functions executed/sec, 6 buckets x 16M x 1KB, 3KV + 2Eventing node, 24 functions-BucketOp, s=12, c=24
 component = cloud
 category = eventing
+sub_category = AWS
 
 [stats]
 server_processes = eventing-produc

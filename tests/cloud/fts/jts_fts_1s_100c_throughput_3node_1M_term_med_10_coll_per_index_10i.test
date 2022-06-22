@@ -5,6 +5,7 @@ test = perfrunner.tests.fts.FTSThroughputLoadTest
 title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=100 i=10, 10 collections per index
 component = cloud
 category = search
+sub_category = AWS
 
 [cluster]
 mem_quota = 8192

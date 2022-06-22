@@ -5,6 +5,7 @@ test = perfrunner.tests.analytics.BigFunQueryAWSTest
 title = 2 nodes, BigFUN 20M users (320M docs), AWS/Capella
 component = cloud
 category = analytics
+sub_category = AWS
 
 [stats]
 server_processes = java

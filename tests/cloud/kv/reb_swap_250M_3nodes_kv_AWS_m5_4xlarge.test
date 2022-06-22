@@ -5,6 +5,7 @@ test = perfrunner.tests.rebalance.RebalanceKVTest
 title = Rebalance-swap (min), 3 -> 3, 250M x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, N2N, TLS,  AWS/Capella, m5.4xlarge
 component = cloud
 category = kv
+sub_category = AWS
 
 [cluster]
 mem_quota = 40960

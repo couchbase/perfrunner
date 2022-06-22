@@ -5,6 +5,7 @@ test = perfrunner.tests.eventing.FunctionsPhaseChangeTimeTest
 title = 1 bucket x 100M x 1KB, 3KV + 2Eventing node, single function-bucket-op
 component = cloud
 category = eventing
+sub_category = AWS
 
 [stats]
 server_processes = eventing-produc

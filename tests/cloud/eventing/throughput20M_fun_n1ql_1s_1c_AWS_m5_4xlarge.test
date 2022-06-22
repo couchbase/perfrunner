@@ -5,6 +5,7 @@ test = perfrunner.tests.eventing.FunctionsThroughputTest
 title = Functions executed/sec, 1 bucket x 20M x 1KB, 3KV + 2Eventing node, single function-N1QL, s=1, c=1
 component = cloud
 category = eventing
+sub_category = AWS
 
 [stats]
 server_processes = eventing-produc

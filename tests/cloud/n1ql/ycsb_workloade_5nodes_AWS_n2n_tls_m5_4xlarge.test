@@ -5,6 +5,7 @@ test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 title = Avg Throughput (queries/sec), Workload E, 5 nodes, AWS/Capella, m5.4xlarge
 component = cloud
 category = n1ql
+sub_category = AWS
 orderby = c_large
 
 [cluster]

@@ -5,6 +5,7 @@ test = perfrunner.tests.ycsb.YCSBLatencyTest
 title = Latency(ms), Workload A, 3 nodes, 15K ops/sec, N2N, TLS, AWS/Capella, m5.xlarge
 component = cloud
 category = kv
+sub_category = AWS
 orderby = bb1
 
 [cluster]

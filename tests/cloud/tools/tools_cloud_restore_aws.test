@@ -5,6 +5,7 @@ test = perfrunner.tests.tools.AWSRestoreTest
 title = 3 nodes, 1 bucket x 100M x 1KB, Idle, AWS, m5.4xlarge
 component = cloud
 category = tools
+sub_category = AWS
 
 [stats]
 client_processes = cbbackupmgr

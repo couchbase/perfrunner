@@ -5,6 +5,7 @@ test = perfrunner.tests.operator.AutoscalingTest
 title = Autoscaling, Config A, KV 3->4, vbucket residency < 100%
 component = cloud
 category = autoscaling
+sub_category = AWS
 
 [cluster]
 mem_quota = 30720

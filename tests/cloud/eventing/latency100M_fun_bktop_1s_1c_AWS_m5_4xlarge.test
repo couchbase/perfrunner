@@ -5,6 +5,7 @@ test = perfrunner.tests.eventing.FunctionsLatencyTest
 title = 80th percentile latency(ms), 1 bucket x 100M x 1KB, 3KV + 2Eventing node, single function-BucketOp, s=1, c=1
 component = cloud
 category = eventing
+sub_category = AWS
 
 [stats]
 server_processes = eventing-produc

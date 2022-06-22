@@ -5,6 +5,7 @@ test = perfrunner.tests.analytics.CH2CloudTest
 title = CH2 Queries, 4Q x 4A, c=11, transaction only, AWS
 component = cloud
 category = analytics
+sub_category = AWS
 
 [stats]
 server_processes = java

@@ -594,7 +594,8 @@ class SingleFieldLargeDoc(GroupedDocument):
         alphabet = self.build_alphabet(key.string)
 
         return {
-            'name': self.build_item(alphabet=alphabet, size=self.item_size)
+            'name': self.build_item(alphabet=alphabet, size=self.item_size),
+            'email': self.build_item(alphabet=alphabet, size=self.item_size)
         }
 
 

@@ -22,8 +22,9 @@ class BigFunTest(PerfTest):
         super().__init__(*args, **kwargs)
 
         self.num_items = 0
-        self.config_file = self.test_config.analytics_settings.analytics_config_file
-        self.analytics_link = self.test_config.analytics_settings.analytics_link
+        self.analytics_settings = self.test_config.analytics_settings
+        self.config_file = self.analytics_settings.analytics_config_file
+        self.analytics_link = self.analytics_settings.analytics_link
         if self.analytics_link == "Local":
             self.data_node = self.master_node
             self.analytics_node = self.analytics_nodes[0]
@@ -125,19 +126,19 @@ class BigFunTest(PerfTest):
             self.monitor.monitor_data_synced(self.data_node, bucket, self.analytics_node)
 
     def set_analytics_logging_level(self):
-        log_level = self.test_config.analytics_settings.log_level
+        log_level = self.analytics_settings.log_level
         self.rest.set_analytics_logging_level(self.analytics_node, log_level)
         self.rest.restart_analytics_cluster(self.analytics_node)
         if not self.rest.validate_analytics_logging_level(self.analytics_node, log_level):
             logger.error('Failed to set logging level {}'.format(log_level))
 
     def set_buffer_cache_page_size(self):
-        page_size = self.test_config.analytics_settings.storage_buffer_cache_pagesize
+        page_size = self.analytics_settings.storage_buffer_cache_pagesize
         self.rest.set_analytics_page_size(self.analytics_node, page_size)
         self.rest.restart_analytics_cluster(self.analytics_node)
 
     def set_storage_compression_block(self):
-        storage_compression_block = self.test_config.analytics_settings.storage_compression_block
+        storage_compression_block = self.analytics_settings.storage_compression_block
         self.rest.set_analytics_storage_compression_block(self.analytics_node,
                                                           storage_compression_block)
         self.rest.restart_analytics_cluster(self.analytics_node)
@@ -194,7 +195,9 @@ class BigFunSyncTest(BigFunTest):
         super().run()
 
         if self.analytics_link != "Local":
-            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node)
+            rest_username, rest_password = self.cluster_spec.rest_credentials
+            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
+                                     rest_username, rest_password)
 
         sync_time = self.sync()
 
@@ -207,7 +210,9 @@ class BigFunSyncAWSTest(BigFunSyncTest):
         self.restore_remote_s3()
 
         if self.analytics_link != "Local":
-            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node)
+            rest_username, rest_password = self.cluster_spec.rest_credentials
+            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
+                                     rest_username, rest_password)
 
         sync_time = self.sync()
 
@@ -235,7 +240,7 @@ class BigFunDropDatasetTest(BigFunTest):
         super().run()
         super().sync()
 
-        drop_dataset = self.test_config.analytics_settings.drop_dataset
+        drop_dataset = self.analytics_settings.drop_dataset
         num_items = self.get_dataset_items(drop_dataset)
 
         drop_time = self.drop_dataset(drop_dataset)
@@ -289,7 +294,7 @@ class BigFunQueryTest(BigFunTest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.QUERIES = self.test_config.analytics_settings.queries
+        self.QUERIES = self.analytics_settings.queries
 
     def warmup(self, nodes: list = []) -> List[Tuple[Query, int]]:
         if len(nodes) == 0:
@@ -371,6 +376,47 @@ class BigFunQueryNoIndexTest(BigFunQueryTest):
 
     def create_index_collections(self):
         pass
+
+
+class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
+
+    def set_up_s3_link(self):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        external_dataset_type = self.analytics_settings.external_dataset_type
+        external_dataset_region = self.analytics_settings.external_dataset_region
+        access_key_id, secret_access_key =\
+            local.get_aws_credential(self.analytics_settings.aws_credential_path)
+        local.set_up_s3_link(rest_username, rest_password, self.analytics_node,
+                             external_dataset_type, external_dataset_region,
+                             access_key_id, secret_access_key)
+
+    def create_external_datasets(self):
+        logger.info('Creating external datasets')
+        with open(self.config_file, "r") as jsonFile:
+            analytics_config = json.load(jsonFile)
+        dataset_list = analytics_config["Analytics"]
+        external_bucket = self.analytics_settings.external_bucket
+        file_format = self.analytics_settings.external_file_format
+        for dataset in dataset_list:
+            statement = "CREATE EXTERNAL DATASET `{}` ON `{}` AT `external_link` " \
+                        "Using '{}' WITH {{ 'format': '{}', 'include': '*.{}' }};"\
+                .format(dataset["Dataset"], external_bucket, dataset["Collection"],
+                        file_format, file_format)
+            logger.info("statement: {}".format(statement))
+            self.rest.exec_analytics_statement(self.analytics_node, statement)
+
+    def run(self):
+        random.seed(8095)
+        self.set_up_s3_link()
+        self.create_external_datasets()
+
+        logger.info('Running warmup phase')
+        self.warmup()
+
+        logger.info('Running access phase')
+        results = self.access()
+
+        self.report_kpi(results)
 
 
 class BigFunQueryFailoverTest(BigFunQueryTest):
@@ -488,7 +534,9 @@ class BigFunConnectTest(BigFunTest):
         super().run()
 
         if self.analytics_link != "Local":
-            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node)
+            rest_username, rest_password = self.cluster_spec.rest_credentials
+            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
+                                     rest_username, rest_password)
 
         self.sync()
 

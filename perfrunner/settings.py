@@ -1680,6 +1680,11 @@ class AnalyticsSettings:
     ANALYTICS_CONFIG_FILE = ""
     DROP_DATASET = ""
     ANALYTICS_LINK = "Local"
+    EXTERNAL_DATASET_TYPE = "s3"
+    EXTERNAL_DATASET_REGION = "us-east-1"
+    EXTERNAL_BUCKET = None
+    EXTERNAL_FILE_FORMAT = 'json'
+    AWS_CREDENTIAL_PATH = None
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.get('num_io_devices',
@@ -1696,6 +1701,13 @@ class AnalyticsSettings:
                                                  self.ANALYTICS_CONFIG_FILE)
         self.drop_dataset = options.get("drop_dataset", self.DROP_DATASET)
         self.analytics_link = options.get("analytics_link", self.ANALYTICS_LINK)
+        self.external_dataset_type = options.get("external_dataset_type",
+                                                 self.EXTERNAL_DATASET_TYPE)
+        self.external_dataset_region = options.get("external_dataset_region",
+                                                   self.EXTERNAL_DATASET_REGION)
+        self.external_bucket = options.get("external_bucket", self.EXTERNAL_BUCKET)
+        self.external_file_format = options.get("external_file_format", self.EXTERNAL_FILE_FORMAT)
+        self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
 
 
 class AuditSettings:

@@ -1036,6 +1036,25 @@ def read_aws_credential(credential_path: str):
     return credential
 
 
+def get_aws_credential(credential_path: str):
+    logger.info("Reading AWS credential")
+    with open('{}/aws_credential'.format(credential_path)) as f:
+        lines = f.read().splitlines()
+    aws_access_key_id = ''
+    aws_secret_access_key = ''
+    for line in lines:
+        if "aws_access_key_id" in line:
+            aws_access_key_id = line.replace(" ", "").split("=")[-1]
+        if 'aws_secret_access_key' in line:
+            aws_secret_access_key = line.replace(" ", "").split("=")[-1]
+    cmd = 'rm {}/aws_credential'.format(credential_path)
+    local(cmd)
+    if aws_access_key_id and aws_secret_access_key:
+        return aws_access_key_id, aws_secret_access_key
+    else:
+        raise Exception('cannot get aws credential')
+
+
 def cbepctl(master_node: str, cluster_spec: ClusterSpec, bucket: str,
             option: str, value: int):
     flags = ['{}:11209'.format(master_node),
@@ -1051,17 +1070,18 @@ def cbepctl(master_node: str, cluster_spec: ClusterSpec, bucket: str,
     local(cmd)
 
 
-def create_remote_link(analytics_link, data_node, analytics_node):
-    logger.info('Create analytics remote ink')
-    cmd = "curl -v -u Administrator:password " \
+def create_remote_link(analytics_link, data_node, analytics_node, username, password):
+    logger.info('Create analytics remote link')
+    cmd = "curl -v -u {}:{} " \
           "-X POST http://{}:8095/analytics/link " \
           "-d dataverse=Default " \
           "-d name={} " \
           "-d type=couchbase " \
           "-d hostname={}:8091 " \
-          "-d username=Administrator " \
-          "-d password=password " \
-          "-d encryption=none ".format(analytics_node, analytics_link, data_node)
+          "-d username={} " \
+          "-d password={} " \
+          "-d encryption=none ".format(username, password, analytics_node, analytics_link,
+                                       data_node, username, password)
     local(cmd)
 
 
@@ -1439,3 +1459,20 @@ def kill_cblite():
     cmd = "ps auxww | grep 'cblite' | awk '{print $2}' | xargs kill -9"
     with settings(warn_only=True):
         local(cmd)
+
+
+def set_up_s3_link(username, password, analytics_node, external_dataset_type,
+                   external_dataset_region, access_key, secret_access_key):
+    logger.info('Create analytics external link')
+    cmd = "curl -v -u {}:{} " \
+          "-X POST http://{}:8095/analytics/link " \
+          "-d dataverse=Default " \
+          "-d name=external_link " \
+          "-d type={} " \
+          "-d region={} " \
+          "-d accessKeyId={} " \
+          "--data-urlencode secretAccessKey={}".format(username, password, analytics_node,
+                                                       external_dataset_type,
+                                                       external_dataset_region,
+                                                       access_key, secret_access_key)
+    local(cmd)

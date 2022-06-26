@@ -1,6 +1,7 @@
 [infrastructure]
 provider = gcp
 type = gce
+cloud_storage = 1
 
 [clusters]
 couchbase1 =

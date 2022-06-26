@@ -2,6 +2,7 @@
 provider = aws
 type = ec2
 os_arch = al2
+cloud_storage = 1
 
 [clusters]
 couchbase1 =

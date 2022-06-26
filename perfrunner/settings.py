@@ -29,6 +29,7 @@ class Config:
     def __init__(self):
         self.config = ConfigParser()
         self.name = ''
+        self.fname = ''
 
     def parse(self, fname: str, override=None):
         logger.info('Reading configuration file: {}'.format(fname))
@@ -37,6 +38,7 @@ class Config:
         self.config.optionxform = str
         self.config.read(fname)
 
+        self.fname = fname
         basename = os.path.basename(fname)
         self.name = os.path.splitext(basename)[0]
 
@@ -50,6 +52,10 @@ class Config:
             if not self.config.has_section(section):
                 self.config.add_section(section)
             self.config.set(section, option, value)
+
+    def update_spec_file(self):
+        with open(self.fname, 'w') as f:
+            self.config.write(f)
 
     @safe
     def _get_options_as_dict(self, section: str) -> dict:
@@ -182,21 +188,22 @@ class ClusterSpec(Config):
 
     @property
     def servers(self) -> List[str]:
-        servers = []
-        for _, cluster_servers in self.clusters:
-            for server in cluster_servers:
-                servers.append(server)
+        servers = [node for _, cluster_servers in self.clusters for node in cluster_servers]
         return servers
 
     @property
-    def using_private_ips(self) -> bool:
-        return self.config.has_section('private_ips')
+    def clients(self) -> List[str]:
+        clients = []
+        for client_servers in self.infrastructure_clients.values():
+            clients += client_servers.strip().split('\n')
+        return clients
 
     @property
-    def clusters_private(self) -> Iterator:
-        if self.config.has_section('private_ips'):
-            for cluster_name, private_ips in self.config.items('private_ips'):
-                yield cluster_name, private_ips.split()
+    def utilities(self) -> List[str]:
+        utilities = []
+        for utility_servers in self.infrastructure_utilities.values():
+            utilities += utility_servers.strip().split('\n')
+        return utilities
 
     @property
     def sgw_servers(self) -> List[str]:
@@ -206,6 +213,46 @@ class ClusterSpec(Config):
                 for server in cluster_servers:
                     servers.append(server)
         return servers
+
+    @property
+    def using_private_cluster_ips(self) -> bool:
+        return self.config.has_section('cluster_private_ips')
+
+    @property
+    def using_private_client_ips(self) -> bool:
+        return self.config.has_section('client_private_ips')
+
+    @property
+    def using_private_utility_ips(self) -> bool:
+        return self.config.has_section('utility_private_ips')
+
+    @property
+    def using_private_sync_gateway_ips(self) -> bool:
+        return self.config.has_section('sync_gateway_private_ips')
+
+    @property
+    def clusters_private(self) -> Iterator:
+        if self.using_private_cluster_ips:
+            for cluster_name, private_ips in self.config.items('cluster_private_ips'):
+                yield cluster_name, private_ips.split()
+
+    @property
+    def clients_private(self) -> Iterator:
+        if self.using_private_client_ips:
+            for cluster_name, private_ips in self.config.items('client_private_ips'):
+                yield cluster_name, private_ips.split()
+
+    @property
+    def utilities_private(self) -> Iterator:
+        if self.using_private_utility_ips:
+            for cluster_name, private_ips in self.config.items('utility_private_ips'):
+                yield cluster_name, private_ips.split()
+
+    @property
+    def sync_gateways_private(self) -> Iterator:
+        if self.using_private_sync_gateway_ips:
+            for cluster_name, private_ips in self.config.items('sync_gateway_private_ips'):
+                yield cluster_name, private_ips.split()
 
     def servers_by_role(self, role: str) -> List[str]:
         has_service = []
@@ -273,26 +320,6 @@ class ClusterSpec(Config):
                 return clients
         else:
             return self.config.get('clients', 'hosts').split()
-
-    @property
-    def sync_gateways(self) -> List[str]:
-        if self.cloud_infrastructure:
-            if self.kubernetes_infrastructure:
-                client_map = self.infrastructure_clients
-                clients = []
-                for k, v in client_map.items():
-                    if "workers" in k:
-                        clients += ["{}.{}".format(k, host) for host in v.split()]
-                return clients
-            else:
-                client_map = self.infrastructure_clients
-                clients = []
-                for k, v in client_map.items():
-                    if "workers" in k:
-                        clients += [host for host in v.split()]
-                return clients
-        else:
-            return self.config.get('sync_gateways', 'hosts').split()
 
     @property
     def brokers(self) -> List[str]:

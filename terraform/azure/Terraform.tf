@@ -1,22 +1,66 @@
-terraform {
-
-   required_version = ">=0.12"
-
-   required_providers {
-     azurerm = {
-       source = "hashicorp/azurerm"
-       version = "~>2.0"
-     }
-   }
- }
-
  provider "azurerm" {
    features {}
  }
 
+variable "uuid" {
+  type = string
+}
+
+variable "cluster_nodes" {
+  type = map(object({
+    node_group    = string
+    image         = string
+    instance_type = string
+    storage_class = string
+    volume_size   = number
+    disk_tier     = string
+  }))
+}
+
+variable "client_nodes" {
+  type = map(object({
+    node_group    = string
+    image         = string
+    instance_type = string
+    storage_class = string
+    volume_size   = number
+    disk_tier     = string
+  }))
+}
+
+variable "utility_nodes" {
+  type = map(object({
+    node_group    = string
+    image         = string
+    instance_type = string
+    storage_class = string
+    volume_size   = number
+    disk_tier     = string
+  }))
+}
+
+variable "sync_gateway_nodes" {
+  type = map(object({
+    node_group    = string
+    image         = string
+    instance_type = string
+    storage_class = string
+    volume_size   = number
+    disk_tier     = string
+  }))
+}
+
+variable "cloud_storage" {
+  type = bool
+}
+
+variable "global_tag" {
+  type = string
+}
+
 # Create virtual network.
  resource "azurerm_virtual_network" "perf-vn" {
-   name                = "perf-vn-SUFFIX"
+   name                = "perf-vn-${var.uuid}"
    address_space       = ["10.0.0.0/16"]
    location            = "East US"
    resource_group_name = "perf-resources-eastus"
@@ -24,7 +68,7 @@ terraform {
 
 # Create subnet.
  resource "azurerm_subnet" "perf-sn" {
-   name                 = "perf-sn-SUFFIX"
+   name                 = "perf-sn-${var.uuid}"
    resource_group_name  = "perf-resources-eastus"
    virtual_network_name = azurerm_virtual_network.perf-vn.name
    address_prefixes     = ["10.0.2.0/24"]
@@ -32,8 +76,9 @@ terraform {
 
 # Create public cluster ip(s).
 resource "azurerm_public_ip" "perf-public-cluster" {
-  count               = CLUSTER_CAPACITY
-  name                = "cluster-pip-${count.index}-SUFFIX"
+  for_each = var.cluster_nodes
+
+  name                = "perf-cluster-public-ip-${each.key}-${var.uuid}"
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
@@ -41,8 +86,9 @@ resource "azurerm_public_ip" "perf-public-cluster" {
 
 # Create public client ip(s).
 resource "azurerm_public_ip" "perf-public-client" {
-  count               = CLIENTS_CAPACITY
-  name                = "client-pip-${count.index}-SUFFIX"
+  for_each = var.client_nodes
+
+  name                = "perf-client-public-ip-${each.key}-${var.uuid}"
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
@@ -50,8 +96,19 @@ resource "azurerm_public_ip" "perf-public-client" {
 
 # Create public utility ip(s).
 resource "azurerm_public_ip" "perf-public-utility" {
-  count               = UTILITIES_CAPACITY
-  name                = "utility-pip-${count.index}-SUFFIX"
+  for_each = var.utility_nodes
+
+  name                = "perf-utility-public-ip-${each.key}-${var.uuid}"
+  location            = "East US"
+  resource_group_name = "perf-resources-eastus"
+  allocation_method   = "Static"
+}
+
+# Create public utility ip(s).
+resource "azurerm_public_ip" "perf-public-sync_gateway" {
+  for_each = var.sync_gateway_nodes
+
+  name                = "perf-sync_gateway-public-ip-${each.key}-${var.uuid}"
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
@@ -59,218 +116,297 @@ resource "azurerm_public_ip" "perf-public-utility" {
 
 # Create network interface, map public ips.
 resource "azurerm_network_interface" "perf-cluster-ni" {
-  name                          = "perf-cluster-ni${count.index}-SUFFIX"
+  for_each = var.cluster_nodes
+
+  name                          = "perf-cluster-ni${each.key}-${var.uuid}"
   location                      = "East US"
   resource_group_name           = "perf-resources-eastus"
-  count                         = CLUSTER_CAPACITY
   enable_accelerated_networking = true
 
   ip_configuration {
-    name                          = "perf-pip-cluster-${count.index}-SUFFIX"
+    name                          = "perf-cluster-private-ip-${each.key}-${var.uuid}"
     subnet_id                     = azurerm_subnet.perf-sn.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.perf-public-cluster[count.index].id
+    public_ip_address_id          = azurerm_public_ip.perf-public-cluster[each.key].id
   }
 }
 
 # Create network interface, map public ips.
 resource "azurerm_network_interface" "perf-client-ni" {
-  name                          = "perf-client-ni${count.index}-SUFFIX"
+  for_each = var.client_nodes
+
+  name                          = "perf-client-ni${each.key}-${var.uuid}"
   location                      = "East US"
   resource_group_name           = "perf-resources-eastus"
-  count                         = CLIENTS_CAPACITY
   enable_accelerated_networking = true
 
   ip_configuration {
-    name                          = "perf-pip-client-${count.index}-SUFFIX"
+    name                          = "perf-client-private-ip-${each.key}-${var.uuid}"
     subnet_id                     = azurerm_subnet.perf-sn.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.perf-public-client[count.index].id
+    public_ip_address_id          = azurerm_public_ip.perf-public-client[each.key].id
   }
 }
 
 # Create network interface, map public ips.
 resource "azurerm_network_interface" "perf-utility-ni" {
-  name                          = "perf-utility-ni${count.index}-SUFFIX"
+  for_each = var.utility_nodes
+
+  name                          = "perf-utility-ni${each.key}-${var.uuid}"
   location                      = "East US"
   resource_group_name           = "perf-resources-eastus"
-  count                         = UTILITIES_CAPACITY
   enable_accelerated_networking = true
 
   ip_configuration {
-    name                          = "perf-pip-utility-${count.index}-SUFFIX"
+    name                          = "perf-utility-private-ip-${each.key}-${var.uuid}"
     subnet_id                     = azurerm_subnet.perf-sn.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.perf-public-utility[count.index].id
+    public_ip_address_id          = azurerm_public_ip.perf-public-utility[each.key].id
+  }
+}
+
+# Create network interface, map public ips.
+resource "azurerm_network_interface" "perf-sync_gateway-ni" {
+  for_each = var.sync_gateway_nodes
+
+  name                          = "perf-sync_gateway-ni${each.key}-${var.uuid}"
+  location                      = "East US"
+  resource_group_name           = "perf-resources-eastus"
+  enable_accelerated_networking = true
+
+  ip_configuration {
+    name                          = "perf-sync_gateway-private-ip-${each.key}-${var.uuid}"
+    subnet_id                     = azurerm_subnet.perf-sn.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.perf-public-sync_gateway[each.key].id
   }
 }
 
 # Config and create cluster disk(s).
- resource "azurerm_managed_disk" "perf-cluster-disk" {
-   count                = CLUSTER_CAPACITY
-   name                 = "perf-cluster-disk-${count.index}-SUFFIX"
-   location             = "East US"
-   resource_group_name  = "perf-resources-eastus"
-   storage_account_type = STORAGE_TYPE
-   create_option        = "Empty"
-   disk_size_gb         = CLUSTER_DISK
- }
+resource "azurerm_managed_disk" "perf-cluster-disk" {
+  for_each = var.cluster_nodes
+
+  name                 = "perf-cluster-disk-${each.key}-${var.uuid}"
+  location             = "East US"
+  resource_group_name  = "perf-resources-eastus"
+  storage_account_type = each.value.storage_class
+  create_option        = "Empty"
+  disk_size_gb         = each.value.volume_size
+  tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+}
 
 # Config and create client disk(s).
- resource "azurerm_managed_disk" "perf-client-disk" {
-   count                = CLIENTS_CAPACITY
-   name                 = "perf-client-disk-${count.index}-SUFFIX"
-   location             = "East US"
-   resource_group_name  = "perf-resources-eastus"
-   storage_account_type = STORAGE_TYPE
-   create_option        = "Empty"
-   disk_size_gb         = CLIENTS_DISK
- }
+resource "azurerm_managed_disk" "perf-client-disk" {
+  for_each = var.client_nodes
+
+  name                 = "perf-client-disk-${each.key}-${var.uuid}"
+  location             = "East US"
+  resource_group_name  = "perf-resources-eastus"
+  storage_account_type = each.value.storage_class
+  create_option        = "Empty"
+  disk_size_gb         = each.value.volume_size
+  tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+}
 
 # Config and create utility disk(s).
- resource "azurerm_managed_disk" "perf-utility-disk" {
-   count                = UTILITIES_CAPACITY
-   name                 = "perf-utility-disk-${count.index}-SUFFIX"
-   location             = "East US"
-   resource_group_name  = "perf-resources-eastus"
-   storage_account_type = STORAGE_TYPE
-   create_option        = "Empty"
-   disk_size_gb         = UTILITIES_DISK
- }
+resource "azurerm_managed_disk" "perf-utility-disk" {
+  for_each = var.utility_nodes
+
+  name                 = "perf-utility-disk-${each.key}-${var.uuid}"
+  location             = "East US"
+  resource_group_name  = "perf-resources-eastus"
+  storage_account_type = each.value.storage_class
+  create_option        = "Empty"
+  disk_size_gb         = each.value.volume_size
+  tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+}
+
+# Config and create sync gateway disk(s).
+resource "azurerm_managed_disk" "perf-sync_gateway-disk" {
+  for_each = var.sync_gateway_nodes
+
+  name                 = "perf-sync_gateway-disk-${each.key}-${var.uuid}"
+  location             = "East US"
+  resource_group_name  = "perf-resources-eastus"
+  storage_account_type = each.value.storage_class
+  create_option        = "Empty"
+  disk_size_gb         = each.value.volume_size
+  tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+}
 
 # Create cluster VMs.
- resource "azurerm_virtual_machine" "perf-cluster-vm" {
-   count                 = CLUSTER_CAPACITY
-   name                  = "perf-cluster-vm-${count.index}-SUFFIX"
-   location              = "East US"
-   resource_group_name   = "perf-resources-eastus"
-   network_interface_ids = [element(azurerm_network_interface.perf-cluster-ni.*.id, count.index)]
-   vm_size               = CLUSTER_INSTANCE
+resource "azurerm_virtual_machine" "perf-cluster-vm" {
+  for_each = var.cluster_nodes
 
-   # Uncomment this line to delete the OS disk automatically when deleting the VM
-   delete_os_disk_on_termination = true
+  name                  = "perf-cluster-vm-${each.key}-${var.uuid}"
+  location              = "East US"
+  resource_group_name   = "perf-resources-eastus"
+  network_interface_ids = [azurerm_network_interface.perf-cluster-ni[each.key].id]
+  vm_size               = each.value.instance_type
 
-   # Uncomment this line to delete the data disks automatically when deleting the VM
-   delete_data_disks_on_termination = true
+  storage_image_reference {
+    id = each.value.image
+  }
 
-   identity {
+  identity {
     type = "UserAssigned"
     identity_ids = ["/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/perfrunner-mi"]
+  }
+
+  storage_os_disk {
+    name                 = "perf-cluster-os-disk-${each.key}-${var.uuid}"
+    caching              = "ReadWrite"
+    managed_disk_type    = "Premium_LRS"
+    create_option        = "FromImage"
+  }
+
+  storage_data_disk {
+    name            = azurerm_managed_disk.perf-cluster-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-cluster-disk[each.key].id
+    create_option   = "Attach"
+    lun             = 1
+    disk_size_gb    = azurerm_managed_disk.perf-cluster-disk[each.key].disk_size_gb
+    caching         = "ReadWrite"
+  }
+
+  delete_os_disk_on_termination    = true
+  delete_data_disks_on_termination = true
+
+  tags = {
+    role       = "cluster"
+    node_group = each.value.node_group
+    perfrunner = var.global_tag != "" ? var.global_tag : null
+  }
 }
-
-   storage_image_reference {
-     id = "/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.Compute/galleries/perf_vm_images/images/perf-server-image-def"
-   }
-
-   storage_os_disk {
-     name              = "perf-cluster-os-disk-${count.index}-SUFFIX"
-     caching           = "ReadWrite"
-     create_option     = "FromImage"
-     managed_disk_type = STORAGE_TYPE
-   }
-
-   storage_data_disk {
-     name            = element(azurerm_managed_disk.perf-cluster-disk.*.name, count.index)
-     managed_disk_id = element(azurerm_managed_disk.perf-cluster-disk.*.id, count.index)
-     create_option   = "Attach"
-     lun             = 1
-     disk_size_gb    = element(azurerm_managed_disk.perf-cluster-disk.*.disk_size_gb, count.index)
-   }
-
-   tags = {
-     type = "clustervm"
-     environment = "staging"
-   }
- }
 
 # Create client VM(s).
- resource "azurerm_virtual_machine" "perf-client-vm" {
-   count                 = CLIENTS_CAPACITY
-   name                  = "perf-client-vm-${count.index}-SUFFIX"
-   location              = "East US"
-   resource_group_name   = "perf-resources-eastus"
-   network_interface_ids = [element(azurerm_network_interface.perf-client-ni.*.id, count.index)]
-   vm_size               = CLIENTS_INSTANCE
+resource "azurerm_virtual_machine" "perf-client-vm" {
+  for_each = var.client_nodes
 
-   # Uncomment this line to delete the OS disk automatically when deleting the VM
-   delete_os_disk_on_termination = true
+  name                  = "perf-client-vm-${each.key}-${var.uuid}"
+  location              = "East US"
+  resource_group_name   = "perf-resources-eastus"
+  network_interface_ids = [azurerm_network_interface.perf-client-ni[each.key].id]
+  vm_size               = each.value.instance_type
 
-   # Uncomment this line to delete the data disks automatically when deleting the VM
-   delete_data_disks_on_termination = true
+  storage_image_reference {
+    id = each.value.image
+  }
 
-   identity {
+  identity {
     type = "UserAssigned"
     identity_ids = ["/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/perfrunner-mi"]
+  }
+
+  storage_os_disk {
+    name                 = "perf-client-os-disk-${each.key}-${var.uuid}"
+    caching              = "ReadWrite"
+    managed_disk_type    = "Premium_LRS"
+    create_option        = "FromImage"
+  }
+
+  storage_data_disk {
+    name            = azurerm_managed_disk.perf-client-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-client-disk[each.key].id
+    create_option   = "Attach"
+    lun             = 1
+    disk_size_gb    = azurerm_managed_disk.perf-client-disk[each.key].disk_size_gb
+    caching         = "ReadWrite"
+  }
+
+  delete_os_disk_on_termination    = true
+  delete_data_disks_on_termination = true
+
+  tags = {
+    role       = "client"
+    node_group = each.value.node_group
+    perfrunner = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
-   storage_image_reference {
-     id = "/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.Compute/galleries/perf_vm_images/images/perf-client-image-def/versions/1.0.0"
-   }
-
-   storage_os_disk {
-     name              = "perf-client-os-disk-${count.index}-SUFFIX"
-     caching           = "ReadWrite"
-     create_option     = "FromImage"
-     managed_disk_type = STORAGE_TYPE
-   }
-
-   storage_data_disk {
-     name            = element(azurerm_managed_disk.perf-client-disk.*.name, count.index)
-     managed_disk_id = element(azurerm_managed_disk.perf-client-disk.*.id, count.index)
-     create_option   = "Attach"
-     lun             = 1
-     disk_size_gb    = element(azurerm_managed_disk.perf-client-disk.*.disk_size_gb, count.index)
-   }
-
-   tags = {
-     type = "clustervm"
-     environment = "staging"
-   }
- }
-
 # Create utility VM(s).
- resource "azurerm_virtual_machine" "perf-utility-vm" {
-   count                 = UTILITIES_CAPACITY
-   name                  = "perf-utility-vm-${count.index}-SUFFIX"
-   location              = "East US"
-   resource_group_name   = "perf-resources-eastus"
-   network_interface_ids = [element(azurerm_network_interface.perf-utility-ni.*.id, count.index)]
-   vm_size               = UTILITIES_INSTANCE
+resource "azurerm_virtual_machine" "perf-utility-vm" {
+  for_each = var.utility_nodes
 
-   # Uncomment this line to delete the OS disk automatically when deleting the VM
-   delete_os_disk_on_termination = true
+  name                  = "perf-utility-vm-${each.key}-${var.uuid}"
+  location              = "East US"
+  resource_group_name   = "perf-resources-eastus"
+  network_interface_ids = [azurerm_network_interface.perf-utility-ni[each.key].id]
+  vm_size               = each.value.instance_type
 
-   # Uncomment this line to delete the data disks automatically when deleting the VM
-   delete_data_disks_on_termination = true
+  storage_image_reference {
+    id = each.value.image
+  }
 
-   storage_image_reference {
-     id = "/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.Compute/galleries/perf_vm_images/images/perf-broker-image-def/versions/1.0.0"
-   }
+  storage_os_disk {
+    name                 = "perf-utility-os-disk-${each.key}-${var.uuid}"
+    caching              = "ReadWrite"
+    managed_disk_type    = "Premium_LRS"
+    create_option        = "FromImage"
+  }
 
-   storage_os_disk {
-     name              = "perf-utility-os-disk-${count.index}-SUFFIX"
-     caching           = "ReadWrite"
-     create_option     = "FromImage"
-     managed_disk_type = STORAGE_TYPE
-   }
+  storage_data_disk {
+    name            = azurerm_managed_disk.perf-utility-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-utility-disk[each.key].id
+    create_option   = "Attach"
+    lun             = 1
+    disk_size_gb    = azurerm_managed_disk.perf-utility-disk[each.key].disk_size_gb
+    caching         = "ReadWrite"
+  }
 
-   storage_data_disk {
-     name            = element(azurerm_managed_disk.perf-utility-disk.*.name, count.index)
-     managed_disk_id = element(azurerm_managed_disk.perf-utility-disk.*.id, count.index)
-     create_option   = "Attach"
-     lun             = 1
-     disk_size_gb    = element(azurerm_managed_disk.perf-utility-disk.*.disk_size_gb, count.index)
-   }
+  delete_os_disk_on_termination    = true
+  delete_data_disks_on_termination = true
 
-   tags = {
-     type = "clustervm"
-     environment = "staging"
-   }
- }
+  tags = {
+    role       = "utility"
+    node_group = each.value.node_group
+    perfrunner = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+# Create sync gateway VM(s).
+resource "azurerm_virtual_machine" "perf-sync_gateway-vm" {
+  for_each = var.sync_gateway_nodes
+
+  name                  = "perf-sync_gateway-vm-${each.key}-${var.uuid}"
+  location              = "East US"
+  resource_group_name   = "perf-resources-eastus"
+  network_interface_ids = [azurerm_network_interface.perf-sync_gateway-ni[each.key].id]
+  vm_size               = each.value.instance_type
+
+  storage_image_reference {
+    id = each.value.image
+  }
+
+  storage_os_disk {
+    name                 = "perf-sync_gateway-os-disk-${each.key}-${var.uuid}"
+    caching              = "ReadWrite"
+    managed_disk_type    = "Premium_LRS"
+    create_option        = "FromImage"
+  }
+
+  storage_data_disk {
+    name            = azurerm_managed_disk.perf-sync_gateway-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-sync_gateway-disk[each.key].id
+    create_option   = "Attach"
+    lun             = 1
+    disk_size_gb    = azurerm_managed_disk.perf-sync_gateway-disk[each.key].disk_size_gb
+    caching         = "ReadWrite"
+  }
+
+  delete_os_disk_on_termination    = true
+  delete_data_disks_on_termination = true
+
+  tags = {
+    role       = "sync_gateway"
+    node_group = each.value.node_group
+    perfrunner = var.global_tag != "" ? var.global_tag : null
+  }
+}
 
 resource "azurerm_storage_account" "perf-storage-acc" {
-  count                    = BACKUP
-  name                     = "perfstorageaccSUFFIX"
+  count                    = var.cloud_storage ? 1 : 0
+  name                     = "perfstorageacc${var.uuid}"
   resource_group_name      = "perf-resources-eastus"
   location                 = "East US"
   account_tier             = "Standard"
@@ -279,10 +415,8 @@ resource "azurerm_storage_account" "perf-storage-acc" {
 }
 
 resource "azurerm_storage_container" "perf-storage-container" {
-  count                 = BACKUP
-  name                  = "contentSUFFIX"
+  count                 = var.cloud_storage ? 1 : 0
+  name                  = "content${var.uuid}"
   storage_account_name  = element(azurerm_storage_account.perf-storage-acc.*.name, count.index)
   container_access_type = "private"
 }
-
-

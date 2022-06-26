@@ -63,7 +63,7 @@ class ClusterManager:
     def rename(self):
         if self.dynamic_infra:
             return
-        elif self.cluster_spec.using_private_ips:
+        elif self.cluster_spec.using_private_cluster_ips:
             clusters_private = dict(self.cluster_spec.clusters_private)
             for cluster_name, public_ips in self.cluster_spec.clusters:
                 private_ips = clusters_private.get(cluster_name, [])
@@ -253,7 +253,7 @@ class ClusterManager:
             if initial_nodes < 2:  # Single-node cluster
                 continue
 
-            if using_private_ips := self.cluster_spec.using_private_ips:
+            if using_private_ips := self.cluster_spec.using_private_cluster_ips:
                 private_ips = dict(self.cluster_spec.clusters_private)[cluster]
 
             master = servers[0]

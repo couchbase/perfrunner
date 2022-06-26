@@ -1,20 +1,134 @@
-provider "aws" {
-  region = "us-east-1"
+variable "cloud_region" {
+  type = string
 }
 
-#VPC
+variable "cluster_nodes" {
+  type = map(object({
+    node_group      = string
+    image           = string
+    instance_type   = string
+    storage_class   = string
+    volume_size     = number
+    iops            = number
+    disk_throughput = number
+  }))
+}
+
+variable "client_nodes" {
+  type = map(object({
+    node_group      = string
+    image           = string
+    instance_type   = string
+    storage_class   = string
+    volume_size     = number
+    iops            = number
+    disk_throughput = number
+  }))
+}
+
+variable "utility_nodes" {
+  type = map(object({
+    node_group      = string
+    image           = string
+    instance_type   = string
+    storage_class   = string
+    volume_size     = number
+    iops            = number
+    disk_throughput = number
+  }))
+}
+
+variable "sync_gateway_nodes" {
+  type = map(object({
+    node_group      = string
+    image           = string
+    instance_type   = string
+    storage_class   = string
+    volume_size     = number
+    iops            = number
+    disk_throughput = number
+  }))
+}
+
+variable "cloud_storage" {
+  type = bool
+}
+
+variable "global_tag" {
+  type = string
+}
+
+provider "aws" {
+  region = var.cloud_region
+}
+
 resource "aws_vpc" "main"{
-  cidr_block = "10.0.0.0/18"
+  cidr_block = "10.1.0.0/18"
   enable_dns_hostnames = true
   tags = {
     Name = "TerraVPC"
   }
 }
 
+resource "aws_security_group_rule" "enable_ssh" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
+resource "aws_security_group_rule" "enable_rabbitmq" {
+  type              = "ingress"
+  from_port         = 5672
+  to_port           = 5672
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
+# ["8091-8096","18091-18096","11210","11207"]
+resource "aws_security_group_rule" "enable_couchbase_default" {
+  type              = "ingress"
+  from_port         = 8091
+  to_port           = 8096
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
+resource "aws_security_group_rule" "enable_couchbase_secure" {
+  type              = "ingress"
+  from_port         = 18091
+  to_port           = 18096
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
+resource "aws_security_group_rule" "enable_memcached" {
+  type              = "ingress"
+  from_port         = 11210
+  to_port           = 11210
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
+resource "aws_security_group_rule" "enable_memcached_secure" {
+  type              = "ingress"
+  from_port         = 11207
+  to_port           = 11207
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
 #Public subnet
 resource "aws_subnet" "public" {
   vpc_id = aws_vpc.main.id
-  cidr_block = "10.0.0.0/24"
+  cidr_block = "10.1.0.0/24"
   map_public_ip_on_launch = true
   tags = {
     Name = "Public Subnet"
@@ -61,26 +175,80 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-#Create cluster VMs.
-resource "aws_instance" "cluster" {
-            subnet_id = aws_subnet.public.id
-            ami = "ami-060e286353d227c32"
-            instance_type = CLUSTER_INSTANCE
-            count = CLUSTER_CAPACITY
+resource "aws_instance" "cluster_instance" {
+  for_each = var.cluster_nodes
+
+  subnet_id = aws_subnet.public.id
+  ami = each.value.image
+  instance_type = each.value.instance_type
+  ebs_block_device {
+    device_name = "/dev/sdb"
+    volume_size = each.value.volume_size
+    volume_type = lower(each.value.storage_class)
+  }
+  tags = {
+    role       = "cluster"
+    node_group = each.value.node_group
+    perfrunner = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
-#Create client VM(s).
-resource "aws_instance" "clients" {
-            subnet_id = aws_subnet.public.id
-            ami = "ami-01b36cb3330d38ac5"
-            instance_type = CLIENTS_INSTANCE
-            count = CLIENTS_CAPACITY
+resource "aws_instance" "client_instance" {
+  for_each = var.client_nodes
+
+  subnet_id = aws_subnet.public.id
+  ami = each.value.image
+  instance_type = each.value.instance_type
+  ebs_block_device {
+    device_name = "/dev/sdb"
+    volume_size = each.value.volume_size
+    volume_type = lower(each.value.storage_class)
+  }
+  tags = {
+    role       = "client"
+    node_group = each.value.node_group
+    perfrunner = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
-#Create utility VM(s).
-resource "aws_instance" "utilities" {
-            subnet_id = aws_subnet.public.id
-            ami = "ami-0d9e5ee360aa02d94"
-            instance_type = UTILITIES_INSTANCE
-            count = UTILITIES_CAPACITY
+resource "aws_instance" "utility_instance" {
+  for_each = var.utility_nodes
+
+  subnet_id = aws_subnet.public.id
+  ami = each.value.image
+  instance_type = each.value.instance_type
+  ebs_block_device {
+    device_name = "/dev/sdb"
+    volume_size = each.value.volume_size
+    volume_type = lower(each.value.storage_class)
+  }
+  tags = {
+    role       = "utility"
+    node_group = each.value.node_group
+    perfrunner = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+resource "aws_instance" "sync_gateway_instance" {
+  for_each = var.sync_gateway_nodes
+
+  subnet_id = aws_subnet.public.id
+  ami = each.value.image
+  instance_type = each.value.instance_type
+  ebs_block_device {
+    device_name = "/dev/sdb"
+    volume_size = each.value.volume_size
+    volume_type = lower(each.value.storage_class)
+  }
+  tags = {
+    role       = "sync_gateway"
+    node_group = each.value.node_group
+    perfrunner = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+resource "aws_s3_bucket" "perf-storage-bucket" {
+  count = var.cloud_storage ? 1 : 0
+  bucket = "perftest-bucket-${substr(uuid(), 0, 6)}"
+  force_destroy = true
 }

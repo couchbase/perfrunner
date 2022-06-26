@@ -659,7 +659,7 @@ class CloudBackupTest(CloudBackupRestoreTest):
         self.setup_run()
 
         master_node = None
-        if self.cluster_spec.using_private_ips:
+        if self.cluster_spec.using_private_cluster_ips:
             master_node = next(self.cluster_spec.clusters_private)[1][0]
 
         try:
@@ -722,7 +722,7 @@ class CloudRestoreTest(CloudBackupRestoreTest):
         self.setup_run()
 
         master_node = None
-        if self.cluster_spec.using_private_ips:
+        if self.cluster_spec.using_private_cluster_ips:
             master_node = next(self.cluster_spec.clusters_private)[1][0]
 
         try:

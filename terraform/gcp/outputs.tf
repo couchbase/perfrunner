@@ -1,23 +1,45 @@
-output "cluster_public_ip" {
-  value = "${google_compute_instance.perf-cluster-vm.*.network_interface.0.access_config.0.nat_ip}"
+output "cluster_instance_ips" {
+    value = {
+        for k, v in google_compute_instance.cluster_instance: k => {
+            node_group = "${join("_", slice(split("-", split("/", v.id)[5]), 1, 5))}.${split("-", split("/", v.id)[5])[5]}"
+            public_ip  = v.network_interface.0.access_config.0.nat_ip
+            private_ip = v.network_interface.0.network_ip
+        }
+    }
 }
 
-output "clients_public_ip" {
-  value = "${google_compute_instance.perf-client-vm.*.network_interface.0.access_config.0.nat_ip}"
+output "client_instance_ips" {
+    value = {
+        for k, v in google_compute_instance.client_instance: k => {
+            node_group = "${join("_", slice(split("-", split("/", v.id)[5]), 1, 5))}.${split("-", split("/", v.id)[5])[5]}"
+            public_ip  = v.network_interface.0.access_config.0.nat_ip
+            private_ip = v.network_interface.0.network_ip
+        }
+    }
 }
 
-output "utilities_public_ip" {
-  value = "${google_compute_instance.perf-utility-vm.*.network_interface.0.access_config.0.nat_ip}"
+output "utility_instance_ips" {
+    value = {
+        for k, v in google_compute_instance.utility_instance: k => {
+            node_group = "${join("_", slice(split("-", split("/", v.id)[5]), 1, 5))}.${split("-", split("/", v.id)[5])[5]}"
+            public_ip  = v.network_interface.0.access_config.0.nat_ip
+            private_ip = v.network_interface.0.network_ip
+        }
+    }
 }
 
-output "cluster_private_ip" {
-  value = "${google_compute_instance.perf-cluster-vm.*.network_interface.0.network_ip}"
+output "sync_gateway_instance_ips" {
+    value = {
+        for k, v in google_compute_instance.sync_gateway_instance: k => {
+            node_group = "${join("_", slice(split("-", split("/", v.id)[5]), 1, 5))}.${split("-", split("/", v.id)[5])[5]}"
+            public_ip  = v.network_interface.0.access_config.0.nat_ip
+            private_ip = v.network_interface.0.network_ip
+        }
+    }
 }
 
-output "clients_private_ip" {
-  value = "${google_compute_instance.perf-client-vm.*.network_interface.0.network_ip}"
-}
-
-output "utilities_private_ip" {
-  value = "${google_compute_instance.perf-utility-vm.*.network_interface.0.network_ip}"
+output "cloud_storage" {
+    value = {
+        storage_bucket = length(google_storage_bucket.perf-storage-bucket) != 0 ? one(google_storage_bucket.perf-storage-bucket).url : null
+    }
 }

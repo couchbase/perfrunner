@@ -1,23 +1,86 @@
+variable "cloud_region" {
+  type = string
+}
+
+variable "cloud_zone" {
+  type = string
+}
+
+variable "uuid" {
+  type = string
+}
+
+variable "cluster_nodes" {
+  type = map(object({
+    node_group    = string
+    image         = string
+    instance_type = string
+    storage_class = string
+    volume_size   = number
+    iops          = number
+  }))
+}
+
+variable "client_nodes" {
+  type = map(object({
+    node_group    = string
+    image         = string
+    instance_type = string
+    storage_class = string
+    volume_size   = number
+    iops          = number
+  }))
+}
+
+variable "utility_nodes" {
+  type = map(object({
+    node_group    = string
+    image         = string
+    instance_type = string
+    storage_class = string
+    volume_size   = number
+    iops          = number
+  }))
+}
+
+variable "sync_gateway_nodes" {
+  type = map(object({
+    node_group    = string
+    image         = string
+    instance_type = string
+    storage_class = string
+    volume_size   = number
+    iops          = number
+  }))
+}
+
+variable "cloud_storage" {
+  type = bool
+}
+
+variable "global_tag" {
+  type = string
+}
+
 provider "google" {
   project = "couchbase-qe"
-  region  = "us-east1"
-  zone    = "us-east1-c"
+  region  = var.cloud_region
+  zone    = var.cloud_zone
 }
 
 resource "google_compute_network" "perf-vn" {
-  name                    = "perf-vn-SUFFIX"
+  name                    = "perf-vn-${var.uuid}"
   auto_create_subnetworks = "false"
 }
 
 resource "google_compute_subnetwork" "perf-sn" {
-  name          = "perf-sn-SUFFIX"
-  ip_cidr_range = "10.0.0.0/16"
-  region        = "us-east1"
+  name          = "perf-sn-${var.uuid}"
+  ip_cidr_range = "10.1.0.0/20"
   network       = google_compute_network.perf-vn.id
 }
 
 resource "google_compute_firewall" "allow-custom" {
-  name    = "allow-custom"
+  name    = "allow-custom-${var.uuid}"
   network = google_compute_network.perf-vn.name
 
   direction = "INGRESS"
@@ -30,7 +93,7 @@ resource "google_compute_firewall" "allow-custom" {
 }
 
 resource "google_compute_firewall" "allow-ssh" {
-  name    = "allow-ssh"
+  name    = "allow-ssh-${var.uuid}"
   network = google_compute_network.perf-vn.name
 
   direction = "INGRESS"
@@ -44,7 +107,7 @@ resource "google_compute_firewall" "allow-ssh" {
 }
 
 resource "google_compute_firewall" "allow-broker" {
-  name    = "allow-broker"
+  name    = "allow-broker-${var.uuid}"
   network = google_compute_network.perf-vn.name
 
   direction = "INGRESS"
@@ -58,12 +121,12 @@ resource "google_compute_firewall" "allow-broker" {
 }
 
 resource "google_compute_firewall" "allow-couchbase" {
-  name    = "allow-couchbase"
+  name    = "allow-couchbase-${var.uuid}"
   network = google_compute_network.perf-vn.name
 
   direction = "INGRESS"
 
-  target_tags = ["server"]
+  target_tags = ["cluster"]
 
   allow {
     protocol = "tcp"
@@ -73,117 +136,205 @@ resource "google_compute_firewall" "allow-couchbase" {
   source_ranges = ["0.0.0.0/0"]
 }
 
-resource "google_compute_disk" "perf-cluster-disk" {
-  count = CLUSTER_CAPACITY
-  name  = "perf-cluster-disk${count.index}-SUFFIX"
-  type  = STORAGE_TYPE
-  size  = CLUSTER_DISK
-  zone  = "us-east1-c"
+resource "google_compute_instance" "cluster_instance" {
+    for_each = var.cluster_nodes
+
+    name         = "cluster-${replace(replace(each.value.node_group, ".", "-"), "_", "-")}-vm-${var.uuid}"
+    machine_type = "${each.value.instance_type}"
+
+    tags = ["cluster"]
+
+    labels = {
+      role       = "cluster"
+      node_group = replace(each.value.node_group, ".", "-")
+      perfrunner = var.global_tag != "" ? var.global_tag : null
+    }
+
+    boot_disk {
+        initialize_params {
+            size = "50"
+            type = "pd-balanced"
+            image = each.value.image
+        }
+    }
+
+    attached_disk {
+        source = google_compute_disk.cluster-disk[each.key].id
+    }
+
+    network_interface {
+        subnetwork = google_compute_subnetwork.perf-sn.id
+        access_config {
+            network_tier = "PREMIUM"
+        }
+    }
+
+    service_account {
+        email  = "perftest-tools@couchbase-qe.iam.gserviceaccount.com"
+        scopes = ["cloud-platform"]
+    }
 }
 
-resource "google_compute_disk" "perf-client-disk" {
-  count = CLIENTS_CAPACITY
-  name  = "perf-client-disk${count.index}-SUFFIX"
-  type  = STORAGE_TYPE
-  size  = CLIENTS_DISK
-  zone  = "us-east1-c"
+resource "google_compute_disk" "cluster-disk" {
+    for_each = var.cluster_nodes
+
+    name             = "cluster-data-disk-${each.key}-${var.uuid}"
+    type             = lower(each.value.storage_class)
+    size             = each.value.volume_size
+    provisioned_iops = each.value.iops > 0 ? each.value.iops : null
 }
 
-resource "google_compute_instance" "perf-cluster-vm" {
-  count        = CLUSTER_CAPACITY
-  name         = "perf-cluster-vm${count.index}-SUFFIX"
-  machine_type = CLUSTER_INSTANCE
+resource "google_compute_instance" "client_instance" {
+    for_each = var.client_nodes
 
-  tags = ["server"]
+    name         = "client-${replace(replace(each.value.node_group, ".", "-"), "_", "-")}-vm-${var.uuid}"
+    machine_type = "${each.value.instance_type}"
 
-  boot_disk {
-    initialize_params {
-      size = "50"
-      type = "pd-balanced"
-      image = "perftest-server-disk-image"
+    tags = ["client"]
+
+    labels = {
+      role       = "cluster"
+      node_group = replace(each.value.node_group, ".", "-")
+      perfrunner = var.global_tag != "" ? var.global_tag : null
     }
-  }
 
-  attached_disk {
-      source = element(google_compute_disk.perf-cluster-disk.*.id, count.index)
-  }
-
-  network_interface {
-    subnetwork = google_compute_subnetwork.perf-sn.id
-    access_config {
-      network_tier = "PREMIUM"
+    boot_disk {
+        initialize_params {
+            size = "50"
+            type = "pd-balanced"
+            image = each.value.image
+        }
     }
-  }
 
-  service_account {
-    email  = "perftest-tools@couchbase-qe.iam.gserviceaccount.com"
-    scopes = ["cloud-platform"]
-  }
+    attached_disk {
+        source = google_compute_disk.client-disk[each.key].id
+    }
+
+    network_interface {
+        subnetwork = google_compute_subnetwork.perf-sn.id
+        access_config {
+            network_tier = "PREMIUM"
+        }
+    }
+
+    service_account {
+        email  = "perftest-tools@couchbase-qe.iam.gserviceaccount.com"
+        scopes = ["cloud-platform"]
+    }
 }
 
-resource "google_compute_instance" "perf-client-vm" {
-  count        = CLIENTS_CAPACITY
-  name         = "perf-client-vm${count.index}-SUFFIX"
-  machine_type = CLIENTS_INSTANCE
-  tags = ["client"]
+resource "google_compute_disk" "client-disk" {
+    for_each = var.client_nodes
 
-  boot_disk {
-    initialize_params {
-      size = "50"
-      type = "pd-balanced"
-      image = "perftest-client-disk-image-1"
-    }
-  }
-
-   attached_disk {
-      source = element(google_compute_disk.perf-client-disk.*.id, count.index)
-  }
-
-  network_interface {
-    subnetwork = google_compute_subnetwork.perf-sn.id
-    access_config {
-      network_tier = "PREMIUM"
-    }
-  }
-
-  service_account {
-    email  = "perftest-tools@couchbase-qe.iam.gserviceaccount.com"
-    scopes = ["cloud-platform"]
-  }
+    name             = "client-data-disk-${each.key}-${var.uuid}"
+    type             = lower(each.value.storage_class)
+    size             = each.value.volume_size
+    provisioned_iops = each.value.iops > 0 ? each.value.iops : null
 }
 
-resource "google_compute_instance" "perf-utility-vm" {
-  count        = UTILITIES_CAPACITY
-  name         = "perf-utility-vm${count.index}-SUFFIX"
-  machine_type = UTILITIES_INSTANCE
+resource "google_compute_instance" "utility_instance" {
+    for_each = var.utility_nodes
 
-  tags = ["utility"]
+    name         = "utility-${replace(replace(each.value.node_group, ".", "-"), "_", "-")}-vm-${var.uuid}"
+    machine_type = "${each.value.instance_type}"
 
-  boot_disk {
-    initialize_params {
-      size = "50"
-      type = "pd-balanced"
-      image = "perftest-broker-disk-image"
+    tags = ["utility"]
+
+    labels = {
+      role       = "cluster"
+      node_group = replace(each.value.node_group, ".", "-")
+      perfrunner = var.global_tag != "" ? var.global_tag : null
     }
-  }
 
-  network_interface {
-    subnetwork = google_compute_subnetwork.perf-sn.id
-    access_config {
-      network_tier = "PREMIUM"
+    boot_disk {
+        initialize_params {
+            size = "50"
+            type = "pd-balanced"
+            image = each.value.image
+        }
     }
-  }
 
-  service_account {
-    email  = "perftest-tools@couchbase-qe.iam.gserviceaccount.com"
-    scopes = ["cloud-platform"]
-  }
+    dynamic "attached_disk"{
+        for_each = lookup(google_compute_disk.utility-disk, each.key, null) != null ? [google_compute_disk.utility-disk[each.key]] : []
+        content {
+            source = attached_disk.value["id"]
+        }
+    }
+
+    network_interface {
+        subnetwork = google_compute_subnetwork.perf-sn.id
+        access_config {
+            network_tier = "PREMIUM"
+        }
+    }
+
+    service_account {
+        email  = "perftest-tools@couchbase-qe.iam.gserviceaccount.com"
+        scopes = ["cloud-platform"]
+    }
+}
+
+resource "google_compute_disk" "utility-disk" {
+    for_each = {for k, v in var.utility_nodes: k => v if v.volume_size > 0}
+
+    name             = "utility-data-disk-${each.key}-${var.uuid}"
+    type             = lower(each.value.storage_class)
+    size             = each.value.volume_size
+    provisioned_iops = each.value.iops > 0 ? each.value.iops : null
+}
+
+resource "google_compute_instance" "sync_gateway_instance" {
+    for_each = var.sync_gateway_nodes
+
+    name         = "sync_gateway-${replace(replace(each.value.node_group, ".", "-"), "_", "-")}-vm-${var.uuid}"
+    machine_type = "${each.value.instance_type}"
+
+    tags = ["sync_gateway"]
+
+    labels = {
+      role       = "cluster"
+      node_group = replace(each.value.node_group, ".", "-")
+      perfrunner = var.global_tag != "" ? var.global_tag : null
+    }
+
+    boot_disk {
+        initialize_params {
+            size = "50"
+            type = "pd-balanced"
+            image = each.value.image
+        }
+    }
+
+    attached_disk {
+        source = google_compute_disk.sync_gateway-disk[each.key].id
+    }
+
+    network_interface {
+        subnetwork = google_compute_subnetwork.perf-sn.id
+        access_config {
+            network_tier = "PREMIUM"
+        }
+    }
+
+    service_account {
+        email  = "perftest-tools@couchbase-qe.iam.gserviceaccount.com"
+        scopes = ["cloud-platform"]
+    }
+}
+
+resource "google_compute_disk" "sync_gateway-disk" {
+    for_each = var.sync_gateway_nodes
+
+    name             = "sync_gateway-data-disk-${each.key}-${var.uuid}"
+    type             = lower(each.value.storage_class)
+    size             = each.value.volume_size
+    provisioned_iops = each.value.iops > 0 ? each.value.iops : null
 }
 
 resource "google_storage_bucket" "perf-storage-bucket" {
-  count         = BACKUP
-  name          = "perf-storage-bucket-SUFFIX"
-  location      = "US"
-  force_destroy = true
-  uniform_bucket_level_access = true
+    count                       = var.cloud_storage ? 1 : 0
+    name                        = "perftest-bucket-${var.uuid}"
+    location                    = upper(var.cloud_region)
+    uniform_bucket_level_access = true
+    force_destroy               = true
 }

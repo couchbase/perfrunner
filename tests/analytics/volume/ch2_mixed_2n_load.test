@@ -1,0 +1,57 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2Test
+
+[showfast]
+title = CH2 Queries, 2Q x 2A, c=11, mixed workload
+component = analytics
+category = ch2
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 25600
+index_mem_quota = 12800
+analytics_mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+bucket_name = bench
+
+[collection]
+config = collections/1bucket_1scope_11collections_analytics_ch2.json
+
+[analytics]
+num_io_devices = 4
+
+[bucket]
+eviction_policy = fullEviction
+replica_index = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket_extras]
+num_writer_threads = 64
+num_reader_threads = 32
+max_num_shards = 64
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+backup_storage = /data3/backup/ch2_w1000/
+backup_repo = ch2
+threads = 8
+map_data = bench.ch2.customer=bench.ch2.customer,bench.ch2.district=bench.ch2.district,bench.ch2.history=bench.ch2.history,bench.ch2.item=bench.ch2.item,bench.ch2.neworder=bench.ch2.neworder,bench.ch2.orders=bench.ch2.orders,bench.ch2.stock=bench.ch2.stock,bench.ch2.warehouse=bench.ch2.warehouse,bench.ch2.supplier=bench.ch2.supplier,bench.ch2.nation=bench.ch2.nation,bench.ch2.region=bench.ch2.region,bench._default._default=bench._default._default
+
+[ch2]
+use_backup = false
+load_tclients = 48
+warehouses = 1000
+aclients = 1
+tclients = 64
+iterations = 2
+warmup_iterations = 1
+duration = 0
+warmup_duration = 0
+workload = ch2_mixed

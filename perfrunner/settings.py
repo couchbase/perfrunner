@@ -1848,6 +1848,9 @@ class CH2:
     DURATION = 0
     WORKLOAD = 'ch2_mixed'
     ANALYTICS_STATEMENTS = ''
+    USE_BACKUP = 'true'
+    LOAD_TCLIENTS = 0
+    LOAD_MODE = 'datasvc-bulkload'
 
     def __init__(self, options: dict):
         self.repo = options.get('repo', self.REPO)
@@ -1855,11 +1858,14 @@ class CH2:
         self.warehouses = int(options.get('warehouses', self.WAREHOUSES))
         self.aclients = int(options.get('aclients', self.ACLIENTS))
         self.tclients = int(options.get('tclients', self.TCLIENTS))
+        self.load_tclients = int(options.get('load_tclients', self.LOAD_TCLIENTS))
+        self.load_mode = options.get('load_mode', self.LOAD_MODE)
         self.iterations = int(options.get('iterations', self.ITERATIONS))
         self.warmup_iterations = int(options.get('warmup_iterations', self.WARMUP_ITERATIONS))
         self.warmup_duration = int(options.get('warmup_duration', self.WARMUP_DURATION))
         self.duration = int(options.get('duration', self.DURATION))
         self.workload = options.get('workload', self.WORKLOAD)
+        self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
         self.raw_analytics_statements = options.get('analytics_statements',
                                                     self.ANALYTICS_STATEMENTS)
         if self.raw_analytics_statements:

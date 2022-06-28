@@ -1036,6 +1036,27 @@ class RemoteLinux(Remote):
             logger.info('Running: {}'.format(cmd))
             run(cmd)
 
+    @master_client
+    def ch2_load_task(self, cluster_spec: ClusterSpec, worker_home: str, warehouses: int,
+                      load_tclients: int, data_url: str, multi_data_url: str, load_mode: str):
+
+        flags = ['--warehouses {}'.format(warehouses),
+                 '--tclients {}'.format(load_tclients),
+                 'nestcollections',
+                 '--data-url {}'.format(data_url),
+                 '--multi-data-url {}'.format(multi_data_url),
+                 '--userid {}'.format(cluster_spec.rest_credentials[0]),
+                 '--password {}'.format(cluster_spec.rest_credentials[1]),
+                 '--no-execute',
+                 '--{} > ../../../ch2_load.log'.format(load_mode)]
+
+        cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(
+            ' '.join(filter(None, flags)))
+
+        with cd(worker_home), cd('perfrunner'), cd('ch2/ch2driver/pytpcc/'):
+            logger.info('Running: {}'.format(cmd))
+            run(cmd)
+
     @master_server
     def compress_sg_logs(self):
         logger.info('Compressing Syncgateway log folders')

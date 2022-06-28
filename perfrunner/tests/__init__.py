@@ -80,6 +80,10 @@ class PerfTest:
             logger.interrupt(failure)
 
     @property
+    def data_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.master_node, 'kv')
+
+    @property
     def query_nodes(self) -> List[str]:
         return self.rest.get_active_nodes_by_role(self.master_node, 'n1ql')
 

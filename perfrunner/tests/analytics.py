@@ -920,6 +920,20 @@ class CH2Test(PerfTest):
             log_file=self.test_config.ch2_settings.workload
         )
 
+    def load_ch2(self):
+        data_url = self.data_nodes[0]
+        multi_data_url = ",".join(self.data_nodes)
+
+        logger.info("load CH2 docs")
+        local.ch2_load_task(
+            cluster_spec=self.cluster_spec,
+            warehouses=self.test_config.ch2_settings.warehouses,
+            load_tclients=self.test_config.ch2_settings.load_tclients,
+            data_url=data_url,
+            multi_data_url=multi_data_url,
+            load_mode=self.test_config.ch2_settings.load_mode
+        )
+
     def restart(self):
         self.remote.stop_server()
         self.remote.drop_caches()
@@ -929,14 +943,18 @@ class CH2Test(PerfTest):
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
     def run(self):
-        self.restore_local()
+        local.clone_git_repo(repo=self.test_config.ch2_settings.repo,
+                             branch=self.test_config.ch2_settings.branch)
+
+        if self.test_config.ch2_settings.use_backup:
+            self.restore_local()
+        else:
+            self.load_ch2()
+
         self.wait_for_persistence()
         self.restart()
         self.sync()
         self.create_indexes()
-
-        local.clone_git_repo(repo=self.test_config.ch2_settings.repo,
-                             branch=self.test_config.ch2_settings.branch)
 
         self.run_ch2()
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
@@ -987,20 +1005,38 @@ class CH2CloudTest(CH2Test):
             log_file=self.test_config.ch2_settings.workload
         )
 
-    def run(self):
-        self.remote.extract_cb(filename='couchbase.rpm',
-                               worker_home=self.worker_manager.WORKER_HOME)
-        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+    def load_ch2(self):
+        data_url = self.data_nodes[0]
+        multi_data_url = ",".join(self.data_nodes)
 
-        self.restore()
+        logger.info("load CH2 docs")
+        self.remote.ch2_load_task(
+            cluster_spec=self.cluster_spec,
+            worker_home=self.worker_manager.WORKER_HOME,
+            warehouses=self.test_config.ch2_settings.warehouses,
+            load_tclients=self.test_config.ch2_settings.load_tclients,
+            data_url=data_url,
+            multi_data_url=multi_data_url,
+            load_mode=self.test_config.ch2_settings.load_mode
+        )
+
+    def run(self):
+        self.remote.init_ch2(repo=self.test_config.ch2_settings.repo,
+                             branch=self.test_config.ch2_settings.branch,
+                             worker_home=self.worker_manager.WORKER_HOME)
+
+        if self.test_config.ch2_settings.use_backup:
+            self.remote.extract_cb(filename='couchbase.rpm',
+                                   worker_home=self.worker_manager.WORKER_HOME)
+            self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+            self.restore()
+        else:
+            self.load_ch2()
+
         self.wait_for_persistence()
         self.restart()
         self.sync()
         self.create_indexes()
-
-        self.remote.init_ch2(repo=self.test_config.ch2_settings.repo,
-                             branch=self.test_config.ch2_settings.branch,
-                             worker_home=self.worker_manager.WORKER_HOME)
 
         self.run_ch2()
         self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,

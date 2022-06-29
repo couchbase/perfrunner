@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-PATH := ${GOPATH}/bin:$(PATH)
+PATH := ${GOPATH}/bin:$(PATH):/usr/local/go/bin/
 
 ENV := env
 PYTHON := python3.9

@@ -971,6 +971,11 @@ class CH2Test(PerfTest):
     def load_ch2(self):
         data_url = self.data_nodes[0]
         multi_data_url = ",".join(self.data_nodes)
+        query_url = self.query_nodes[0] + ":8093"
+        query_nodes_port = []
+        for node in self.query_nodes:
+            query_nodes_port.append(node + ":8093")
+        multi_query_url = ",".join(query_nodes_port)
 
         logger.info("load CH2 docs")
         local.ch2_load_task(
@@ -979,6 +984,8 @@ class CH2Test(PerfTest):
             load_tclients=self.test_config.ch2_settings.load_tclients,
             data_url=data_url,
             multi_data_url=multi_data_url,
+            query_url=query_url,
+            multi_query_url=multi_query_url,
             load_mode=self.test_config.ch2_settings.load_mode
         )
 
@@ -1056,6 +1063,11 @@ class CH2CloudTest(CH2Test):
     def load_ch2(self):
         data_url = self.data_nodes[0]
         multi_data_url = ",".join(self.data_nodes)
+        query_url = self.query_nodes[0] + ":8093"
+        query_nodes_port = []
+        for node in self.query_nodes:
+            query_nodes_port.append(node + ":8093")
+        multi_query_url = ",".join(query_nodes_port)
 
         logger.info("load CH2 docs")
         self.remote.ch2_load_task(
@@ -1065,6 +1077,8 @@ class CH2CloudTest(CH2Test):
             load_tclients=self.test_config.ch2_settings.load_tclients,
             data_url=data_url,
             multi_data_url=multi_data_url,
+            query_url=query_url,
+            multi_query_url=multi_query_url,
             load_mode=self.test_config.ch2_settings.load_mode
         )
 

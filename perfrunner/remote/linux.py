@@ -1038,17 +1038,25 @@ class RemoteLinux(Remote):
 
     @master_client
     def ch2_load_task(self, cluster_spec: ClusterSpec, worker_home: str, warehouses: int,
-                      load_tclients: int, data_url: str, multi_data_url: str, load_mode: str):
+                      load_tclients: int, data_url: str, multi_data_url: str, query_url: str,
+                      multi_query_url: str, load_mode: str):
+        if load_mode == "qrysvc-load":
+            qrysvc_mode = True
+        else:
+            qrysvc_mode = False
 
         flags = ['--warehouses {}'.format(warehouses),
                  '--tclients {}'.format(load_tclients),
                  'nestcollections',
-                 '--data-url {}'.format(data_url),
-                 '--multi-data-url {}'.format(multi_data_url),
+                 '--data-url {}'.format(data_url) if not qrysvc_mode else None,
+                 '--multi-data-url {}'.format(multi_data_url) if not qrysvc_mode else None,
+                 '--query-url {}'.format(query_url) if qrysvc_mode else None,
+                 '--multi-query-url {}'.format(multi_query_url) if qrysvc_mode else None,
                  '--userid {}'.format(cluster_spec.rest_credentials[0]),
                  '--password {}'.format(cluster_spec.rest_credentials[1]),
                  '--no-execute',
-                 '--{} > ../../../ch2_load.log'.format(load_mode)]
+                 '--{} > ../../../ch2_load.log'.format(load_mode) if not qrysvc_mode else None,
+                 '--{} > /dev/null 2>&1'.format(load_mode) if qrysvc_mode else None]
 
         cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(
             ' '.join(filter(None, flags)))

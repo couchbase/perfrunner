@@ -43,6 +43,12 @@ STATEMENTS = {
             'GROUP BY META(u).id '
             'ORDER BY count '
             'LIMIT 10;',
+    'BF16': 'SELECT u.id AS id, COUNT(*) AS count '
+            'FROM `GleambookUsers-{}` u, `GleambookMessages-{}` m '
+            'WHERE u.id = m.author_id '
+            'AND u.user_since >= "{}" AND u.user_since < "{}" '
+            'AND m.send_time >= "{}" AND m.send_time < "{}" '
+            'GROUP BY u.id;',
     'WF01': 'set `compiler.windowmemory` "4MB"; '
             'SELECT subqry.id, subqry.wf FROM '
             '(SELECT u.id AS id, ROW_NUMBER() '
@@ -80,6 +86,7 @@ DESCRIPTIONS = {
     'BF11': 'Full sort',
     'BF14': 'Select join with grouping aggregation ({} matches)',
     'BF15': 'Select join with Top-K ({} matches)',
+    'BF16': 'Select join with grouping aggregation ({} matches)',
     'WF01': 'Minimal streaming window function',
     'WF02': 'Minimal window function with materialized partition in memory',
     'WF03': 'Minimal window function with materialized partition spilling to disk',
@@ -160,6 +167,10 @@ def bf15params(num_matches: float, num_set: int) -> List[str]:
     return bf14params(num_matches, num_set)
 
 
+def bf16params(num_matches: float, num_set: int) -> List[str]:
+    return bf14params(num_matches, num_set)
+
+
 def wf01params(num_set: int) -> List[str]:
     return bf10params(num_set)
 
@@ -189,6 +200,7 @@ def new_params(qid: str, num_matches: float, num_set: int) -> List[str]:
         'BF11': bf11params(num_set),
         'BF14': bf14params(num_matches, num_set),
         'BF15': bf15params(num_matches, num_set),
+        'BF16': bf16params(num_matches, num_set),
         'WF01': wf01params(num_set),
         'WF02': wf02params(num_set),
         'WF03': wf03params(num_set),

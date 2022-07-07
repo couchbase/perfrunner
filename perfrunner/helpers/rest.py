@@ -5,6 +5,7 @@ from typing import Callable, Dict, Iterator, List
 
 import requests
 from decorator import decorator
+from fabric.api import local
 from requests.exceptions import ConnectionError
 
 from logger import logger
@@ -990,6 +991,20 @@ class DefaultRestHelper(RestBase):
             'statement': statement
         }
         return self.post(url=api, data=data)
+
+    def exec_analytics_statement_curl(self, analytics_node: str,
+                                      statement: str) -> requests.Response:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:{}/analytics/service'.format(analytics_node, ANALYTICS_PORT_SSH)
+        else:
+            api = 'http://{}:{}/analytics/service'.format(analytics_node, ANALYTICS_PORT)
+        data = {
+            'statement': statement
+        }
+        data_json = json.dumps(data)
+        cmd = "curl -v -u {}:{} -H \"Content-Type: application/json\" -d '{}' {}".\
+            format(self.rest_username, self.rest_password, data_json, api)
+        return local(cmd, capture=True)
 
     def exec_analytics_query(self, analytics_node: str,
                              statement: str) -> requests.Response:

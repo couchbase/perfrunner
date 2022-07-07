@@ -1,3 +1,4 @@
+import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import cycle
@@ -20,9 +21,9 @@ def store_metrics(statement: str, metrics: dict):
 
 def run_query(rest: RestHelper, node: str, query: Query) -> float:
     t0 = time.time()
-    response = rest.exec_analytics_statement(node, query.statement)
+    response = rest.exec_analytics_statement_curl(node, query.statement)
     latency = time.time() - t0  # Latency in seconds
-    store_metrics(query.statement, response.json()['metrics'])
+    store_metrics(query.statement, json.loads(response)['metrics'])
     return latency
 
 

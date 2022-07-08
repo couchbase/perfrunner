@@ -91,7 +91,6 @@ def main():
     cm.wait_until_healthy()
     cm.wait_until_warmed_up()
     cm.disable_ui_http()
-    cm.enable_lvm_cache()
 
     if cm.test_config.collection.config:
         cm.create_collections()

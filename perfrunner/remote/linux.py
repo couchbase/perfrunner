@@ -726,15 +726,6 @@ class RemoteLinux(Remote):
         run("/opt/couchbase/bin/couchbase-cli setting-security --set --disable-http-ui 1 --cluster "
             "{}:8091 -u Administrator -p password".format(host))
 
-    @all_servers
-    def lvm_cache(self):
-        run('pvresize /dev/sdf && lvremove VG_CB/LV_data_cache_pool && '
-            'lvextend --resizefs --extents +100%FREE /dev/VG_CB/LV_data_ebs /dev/sdf '
-            '&& lvcreate --type cache-pool --extents 100%PVS -n '
-            'LV_data_cache_pool VG_CB /dev/nvme1n1'
-            ' && lvconvert --yes --type cache --cachepool LV_data_cache_pool '
-            'VG_CB/LV_data_ebs')
-
     @master_server
     def run_magma_benchmark(self, cmd: str, stats_file: str):
         logger.info('Running magma benchmark cmd: {}'.format(cmd))

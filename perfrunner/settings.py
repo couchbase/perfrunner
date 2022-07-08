@@ -413,6 +413,7 @@ class ClusterSettings:
     ENABLE_N2N_ENCRYPTION = None
     BUCKET_NAME = 'bucket-1'
     DISABLE_UI_HTTP = None
+    LVM_CACHE = None
 
     IPv6 = 0
 
@@ -454,6 +455,7 @@ class ClusterSettings:
         self.enable_n2n_encryption = options.get('enable_n2n_encryption',
                                                  self.ENABLE_N2N_ENCRYPTION)
         self.ui_http = options.get('ui_http', self.DISABLE_UI_HTTP)
+        self.lvm_cache = options.get('lvm_cache', self.LVM_CACHE)
 
         kernel_mem_limit_services = options.get('kernel_mem_limit_services')
         if kernel_mem_limit_services:

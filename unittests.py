@@ -662,7 +662,7 @@ class PipelineTest(TestCase):
     def test_stages(self):
         stages = {'Analytics', 'Eventing', 'FTS', 'GSI', 'GSI-DGM', 'KV', 'KV-DGM',
                   'N1QL', 'Rebalance', 'Rebalance-Large-Scale', 'Rebalance-Hestia',
-                  'Tools', 'Views', 'XDCR', 'YCSB','N1QL-Windows', 'N1QL-Arke',
+                  'Tools', 'Views', 'XDCR', 'YCSB', 'YCSB-Hebe', 'N1QL-Windows', 'N1QL-Arke',
                   'KV-Windows', 'XDCR-Windows', 'KV-Athena', 'KV-Hercules', 'Rebalance-C1',
                   'Rebalance-C2', 'Rebalance-Large-Scale-C1', 'Rebalance-Large-Scale-C2',
                   'XDCR-C1', 'XDCR-C2'}

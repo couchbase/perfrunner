@@ -195,5 +195,6 @@
     "XDCR-Windows":[
         {"job": "zeus",  "cluster": "zeus_2x2.spec",  "test_config": "xdcr_init_2x2_unidir_25M.test"}
     ],
-    "YCSB": []
+    "YCSB": [],
+    "YCSB-Hebe": []
 }

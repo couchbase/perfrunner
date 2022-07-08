@@ -263,6 +263,12 @@ pipeline {
                         buildComponent('YCSB', testCases)
                     }
                 }
+                stage('YCSB-Hebe') {
+                    when { expression { return params.YCSB } }
+                    steps {
+                        buildComponent('YCSB-Hebe', testCases)
+                    }
+                }
                 stage('Magma-Legacy') {
                     when { expression { return params.MagmaLegacy } }
                     steps {

@@ -14,7 +14,6 @@ hosts =
     172.23.100.131
     172.23.100.132
     172.23.100.133
-    172.23.100.134
 credentials = root:couchbase
 
 [storage]

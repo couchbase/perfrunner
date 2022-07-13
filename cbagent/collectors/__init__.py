@@ -12,6 +12,10 @@ from cbagent.collectors.fts_stats import ElasticStats, FTSCollector
 from cbagent.collectors.jts_stats import JTSCollector
 from cbagent.collectors.kvstore_stats import KVStoreStats
 from cbagent.collectors.latency import KVLatency, Latency, QueryLatency
+from cbagent.collectors.metrics_rest_api import (
+    MetricsRestApiMetering,
+    MetricsRestApiProcesses,
+)
 from cbagent.collectors.n1ql_stats import N1QLStats
 from cbagent.collectors.ns_server import (
     NSServer,

@@ -27,6 +27,8 @@ from cbagent.collectors import (
     KVLatency,
     KVStoreStats,
     Memory,
+    MetricsRestApiMetering,
+    MetricsRestApiProcesses,
     N1QLStats,
     Net,
     NSServer,
@@ -183,6 +185,7 @@ class CbAgent:
                        kvstore=False,
                        latency=False,
                        memory=True,
+                       metering=False,
                        n1ql_latency=False,
                        n1ql_stats=False,
                        net=True,
@@ -240,6 +243,8 @@ class CbAgent:
             self.add_collector(CBStatsMemory, self.test)
         if cbstats_all:
             self.add_collector(CBStatsAll, self.test)
+        if metering:
+            self.add_collector(MetricsRestApiMetering)
 
         if not self.test.dynamic_infra:
             if not self.test.capella_infra:
@@ -260,6 +265,8 @@ class CbAgent:
                         self.add_collector(VMSTAT)
                 else:
                     self.add_collector(TypePerf)
+            else:
+                self.add_collector(MetricsRestApiProcesses)
 
             if durability:
                 self.add_durability_collector()

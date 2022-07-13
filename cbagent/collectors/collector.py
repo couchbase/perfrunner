@@ -45,24 +45,27 @@ class Collector:
 
     def get_http(self, path, server=None, port=8091, json=True):
         server = server or self.master_node
-        try:
-            if self.cloud_enabled and self.cloud['dynamic']:
-                server, port = self.session.translate_host_and_port(server, port)
-                url = "http://{}:{}{}".format(server, port, path)
-            else:
-                if self.n2n_enabled:
-                    port = int(str(1) + str(port))
-                    url = "https://{}:{}{}".format(server, port, path)
-                else:
-                    url = "http://{}:{}{}".format(server, port, path)
+        url_template = "http://{}:{}{}"
 
-            if self.cloud_enabled:
-                # session is a RestHelper which inherits from RestBase and so doesn't need
-                # auth and verify kwargs (they are included by RestBase)
-                r = self.session.get(url=url)
-            else:
-                # session is just a requests.Session() object and so we need to pass all kwargs
-                r = self.session.get(url=url, auth=self.auth, verify=False)
+        try:
+            if self.cloud.get('dynamic', False):
+                server, port = self.session.translate_host_and_port(server, port)
+            elif self.n2n_enabled:
+                port = int(str(1) + str(port))
+                url_template = url_template.replace('http', 'https')
+
+            url = url_template.format(server, port, path)
+            params = {'url': url}
+
+            if not self.cloud_enabled:
+                # When we are on cloud, self.session is a RestHelper so we shouldn't add auth
+                # because it will do it for us. When not on cloud, we need it.
+                params.update({
+                    'auth': self.auth,
+                    'verify': False
+                })
+
+            r = self.session.get(**params)
 
             if r.status_code in (200, 201, 202):
                 return json and r.json() or r.text
@@ -72,6 +75,35 @@ class Collector:
         except requests.ConnectionError:
             logger.warn("Connection error: {}".format(url))
             return self.refresh_nodes_and_retry(path, server, port, json)
+
+    def post_http(self, path, server=None, port=8091, json_out=True, json_data=None):
+        server = server or self.master_node
+        url_template = "http://{}:{}{}"
+        try:
+            if self.cloud.get('dynamic', False):
+                server, port = self.session.translate_host_and_port(server, port)
+            elif self.n2n_enabled:
+                port = int(str(1) + str(port))
+                url_template = url_template.replace('http', 'https')
+
+            url = url_template.format(server, port, path)
+            params = {'url': url, 'json': json_data}
+
+            if not self.cloud_enabled:
+                # When we are on cloud, self.session is a RestHelper so we shouldn't add auth
+                # because it will do it for us. When not on cloud, we need it.
+                params['auth'] = self.auth
+
+            r = self.session.post(**params)
+
+            if r.status_code in (200, 201, 202):
+                return json_out and r.json() or r.text
+            else:
+                logger.warn("Bad response: {}".format(url))
+                return self.refresh_nodes_and_retry(path, server, port)
+        except requests.ConnectionError:
+            logger.warn("Connection error: {}".format(url))
+            return self.refresh_nodes_and_retry(path, server, port, json_out)
 
     def refresh_nodes_and_retry(self, path, server=None, port=8091, json=True):
         time.sleep(self.interval)

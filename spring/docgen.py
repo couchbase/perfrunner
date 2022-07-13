@@ -40,6 +40,10 @@ def hex_digest(key: str) -> str:
     return '%032x' % spooky.hash128(key)
 
 
+def hex_digest_64(key: str) -> str:
+    return '%032x' % spooky.hash64(key)
+
+
 def decimal_fmtr(key: int, prefix: str) -> str:
     key = '%012d' % key
     if prefix:
@@ -596,6 +600,37 @@ class SingleFieldLargeDoc(GroupedDocument):
         return {
             'name': self.build_item(alphabet=alphabet, size=self.item_size),
             'email': self.build_item(alphabet=alphabet, size=self.item_size)
+        }
+
+
+class LargeDocRandom(GroupedDocument):
+    def __init__(self, avg_size: int, groups: int, item_size: int):
+        super().__init__(avg_size, groups)
+        self.item_size = item_size
+
+    @staticmethod
+    def build_alphabet_64(key: str) -> str:
+        return hex_digest_64(key) + hex_digest_64(key[::-1])
+
+    @staticmethod
+    def build_item(alphabet: str, size: int = 64, prefix: str = ""):
+        length = (size - len(prefix)) / 2
+        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
+        body = num_slices * alphabet
+        num = random.randint(1, int(length))
+        if prefix:
+            return prefix + "-" + body[num:length] + body[0:num]
+        return body[num:length] + body[0:num]
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        alphabet2 = self.build_alphabet_64(key.string)
+
+        return {
+            'name': self.build_item(alphabet=alphabet, size=self.item_size) +
+            self.build_item(alphabet=alphabet2, size=self.item_size),
+            'email': self.build_item(alphabet=alphabet, size=self.item_size) +
+            self.build_item(alphabet=alphabet2, size=self.item_size),
         }
 
 

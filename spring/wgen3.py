@@ -47,6 +47,7 @@ from spring.docgen import (
     KeyForCASUpdate,
     KeyForRemoval,
     KeyPlasmaDocument,
+    LargeDocRandom,
     LargeDocument,
     LargeGroupedDocument,
     LargeItemGroupedDocument,
@@ -229,6 +230,10 @@ class Worker:
             self.docs = SingleFieldLargeDoc(self.ws.size,
                                             self.ws.doc_groups,
                                             self.ws.item_size)
+        elif self.ws.doc_gen == 'large_doc_random':
+            self.docs = LargeDocRandom(self.ws.size,
+                                       self.ws.doc_groups,
+                                       self.ws.item_size)
         elif self.ws.doc_gen == 'small_plasma_grouped':
             self.docs = SmallPlasmaGroupedDocument(self.ws.size, self.ws.doc_groups)
         elif self.ws.doc_gen == 'string':

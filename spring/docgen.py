@@ -614,10 +614,10 @@ class LargeDocRandom(GroupedDocument):
 
     @staticmethod
     def build_item(alphabet: str, size: int = 64, prefix: str = ""):
-        length = (size - len(prefix)) / 2
+        length = size - len(prefix)
         num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
-        body = num_slices * alphabet
-        num = random.randint(1, int(length))
+        body = int(num_slices / 2) * alphabet     # generate size/2 length body
+        num = random.randint(1, length)
         if prefix:
             return prefix + "-" + body[num:length] + body[0:num]
         return body[num:length] + body[0:num]
@@ -625,12 +625,14 @@ class LargeDocRandom(GroupedDocument):
     def next(self, key: Key) -> dict:
         alphabet = self.build_alphabet(key.string)
         alphabet2 = self.build_alphabet_64(key.string)
+        name = self.build_item(alphabet=alphabet, size=self.item_size) + \
+            self.build_item(alphabet=alphabet2, size=self.item_size)
+        email = self.build_item(alphabet=alphabet, size=self.item_size) + \
+            self.build_item(alphabet=alphabet2, size=self.item_size)
 
         return {
-            'name': self.build_item(alphabet=alphabet, size=self.item_size) +
-            self.build_item(alphabet=alphabet2, size=self.item_size),
-            'email': self.build_item(alphabet=alphabet, size=self.item_size) +
-            self.build_item(alphabet=alphabet2, size=self.item_size),
+            'name': name,
+            'email': email
         }
 
 

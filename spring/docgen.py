@@ -609,30 +609,21 @@ class LargeDocRandom(GroupedDocument):
         self.item_size = item_size
 
     @staticmethod
-    def build_alphabet_64(key: str) -> str:
-        return hex_digest_64(key) + hex_digest_64(key[::-1])
-
-    @staticmethod
-    def build_item(alphabet: str, size: int = 64, prefix: str = ""):
+    def build_item(size: int = 32, prefix: str = ""):
         length = size - len(prefix)
-        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
-        body = int(num_slices / 2) * alphabet     # generate size/2 length body
-        num = random.randint(1, length)
+        body = ''
+        num_slices = int(math.ceil(length / 32))  # 32 bit hash
+        for _ in range(num_slices):
+            body = body + '%032x' % random.getrandbits(128)
         if prefix:
-            return prefix + "-" + body[num:length] + body[0:num]
-        return body[num:length] + body[0:num]
+            body = prefix + '-' + body
+        return body
 
     def next(self, key: Key) -> dict:
-        alphabet = self.build_alphabet(key.string)
-        alphabet2 = self.build_alphabet_64(key.string)
-        name = self.build_item(alphabet=alphabet, size=self.item_size) + \
-            self.build_item(alphabet=alphabet2, size=self.item_size)
-        email = self.build_item(alphabet=alphabet, size=self.item_size) + \
-            self.build_item(alphabet=alphabet2, size=self.item_size)
 
         return {
-            'name': name,
-            'email': email
+            'name': self.build_item(size=self.item_size),
+            'email': self.build_item(size=self.item_size)
         }
 
 

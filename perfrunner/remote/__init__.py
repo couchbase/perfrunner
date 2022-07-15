@@ -84,6 +84,14 @@ class Remote:
                 run('git checkout {}'.format(commit))
 
     @all_clients
+    def build_ycsb(self, worker_home: str, ycsb_client: str):
+        cmd = 'pyenv local system && bin/ycsb build {}'.format(ycsb_client)
+
+        logger.info('Running: {}'.format(cmd))
+        with cd(worker_home), cd('perfrunner'), cd('YCSB'):
+            run(cmd)
+
+    @all_clients
     def init_ycsb(self, repo: str, branch: str, worker_home: str, sdk_version: None):
         shutil.rmtree("YCSB", ignore_errors=True)
         self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)

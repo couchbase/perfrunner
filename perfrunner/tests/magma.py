@@ -893,6 +893,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
     def run_extra_access(self):
         self.reset_kv_stats()
         KVTest.save_stats(self)
+        self.build_ycsb(self.test_config.extra_access_settings.ycsb_client)
         logger.info("Starting first access phase")
         PerfTest.access(self, task=ycsb_task, settings=self.test_config.extra_access_settings)
         self.print_amplifications(doc_size=self.test_config.extra_access_settings.size)
@@ -918,6 +919,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         access_settings.time = 300
         access_settings.target = 0
         logger.info("Starting warmup access phase")
+        self.build_ycsb(access_settings.ycsb_client)
         PerfTest.access(self, task=ycsb_task, settings=access_settings)
         self.wait_for_persistence()
 
@@ -991,6 +993,7 @@ class YCSBThroughputLatencyHIDDPhaseTest(YCSBThroughputHIDDTest):
         KVTest.save_stats(self)
         loading_settings = self.test_config.load_settings
         loading_settings.insertstart = loading_settings.items * phase
+        self.build_ycsb(loading_settings.ycsb_client)
         PerfTest.load(self, task=ycsb_data_load_task, settings=loading_settings)
         self.wait_for_persistence()
         self.print_amplifications(doc_size=self.test_config.access_settings.size)
@@ -1001,6 +1004,7 @@ class YCSBThroughputLatencyHIDDPhaseTest(YCSBThroughputHIDDTest):
     def access(self, settings):
         self.reset_kv_stats()
         KVTest.save_stats(self)
+        self.build_ycsb(settings.ycsb_client)
         PerfTest.access(self, task=ycsb_task, settings=settings)
         self.print_amplifications(doc_size=self.test_config.access_settings.size)
         KVTest.print_kvstore_stats(self)

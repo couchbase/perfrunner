@@ -13,6 +13,8 @@ from perfrunner.tests.n1ql import N1QLTest
 
 class YCSBTest(PerfTest):
 
+    ALL_BUCKETS = True
+
     def download_ycsb(self):
         if self.worker_manager.is_remote:
             self.remote.init_ycsb(
@@ -24,6 +26,12 @@ class YCSBTest(PerfTest):
             local.clone_git_repo(repo=self.test_config.ycsb_settings.repo,
                                  branch=self.test_config.ycsb_settings.branch)
 
+    def build_ycsb(self, ycsb_client):
+        if self.worker_manager.is_remote:
+            self.remote.build_ycsb(self.worker_manager.WORKER_HOME, ycsb_client)
+        else:
+            local.build_ycsb(ycsb_client)
+
     def collect_export_files(self):
         if self.worker_manager.is_remote:
             shutil.rmtree("YCSB", ignore_errors=True)
@@ -31,15 +39,18 @@ class YCSBTest(PerfTest):
             self.remote.get_export_files(self.worker_manager.WORKER_HOME)
 
     def load(self, *args, **kwargs):
+        self.build_ycsb(self.test_config.load_settings.ycsb_client)
         PerfTest.load(self, task=ycsb_data_load_task)
 
     @with_stats
     @with_profiles
     def access(self, *args, **kwargs):
+        self.build_ycsb(self.test_config.access_settings.ycsb_client)
         PerfTest.access(self, task=ycsb_task)
         self.wait_for_persistence()
 
     def access_bg(self, *args, **kwargs):
+        self.build_ycsb(self.test_config.access_settings.ycsb_client)
         PerfTest.access_bg(self, task=ycsb_task)
 
     @with_stats

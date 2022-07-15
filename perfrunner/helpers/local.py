@@ -551,6 +551,14 @@ def run_kvgen(hostname: str, num_docs: int, prefix: str):
         local(cmd)
 
 
+def build_ycsb(ycsb_client: str):
+    cmd = 'pyenv local system && bin/ycsb build {}'.format(ycsb_client)
+
+    logger.info('Running: {}'.format(cmd))
+    with lcd('YCSB'):
+        local(cmd)
+
+
 def run_ycsb(host: str,
              bucket: str,
              password: str,
@@ -616,7 +624,7 @@ def run_ycsb(host: str,
           '-p couchbase.certKeystorePassword={ssl_keystore_password} ' \
           '-p couchbase.certificateFile=../{certificate_file} ' \
           '-p couchbase.password={password} ' \
-          '-p exportfile=ycsb_{action}_{instance}.log ' \
+          '-p exportfile=ycsb_{action}_{instance}_{bucket}.log ' \
           '-p couchbase.retryStrategy={retry_strategy} ' \
           '-p couchbase.retryLower={retry_lower} ' \
           '-p couchbase.retryUpper={retry_upper} ' \
@@ -745,7 +753,9 @@ def run_ycsb(host: str,
 
         cmd += ' -p scopesparam={scopesparam} '.format(scopesparam=scopes_param)
 
-    cmd += ' 2>ycsb_{action}_{instance}_stderr.log '.format(action=action, instance=instance)
+    cmd += ' 2>ycsb_{action}_{instance}_{bucket}_stderr.log '.format(action=action,
+                                                                     instance=instance,
+                                                                     bucket=bucket)
 
     logger.info('Running: {}'.format(cmd))
     with lcd('YCSB'):

@@ -609,22 +609,54 @@ class LargeDocRandom(GroupedDocument):
         self.item_size = item_size
 
     @staticmethod
-    def build_item(size: int = 32, prefix: str = ""):
+    def build_alphabet_rand() -> str:
+        return '%032x' % random.getrandbits(128) + '%032x' % random.getrandbits(128)
+
+    @staticmethod
+    def build_item(alphabet: str, size: int = 64, prefix: str = ""):
         length = size - len(prefix)
-        body = ''
-        num_slices = int(math.ceil(length / 32))  # 32 bit hash
-        for _ in range(num_slices):
-            body = body + '%032x' % random.getrandbits(128)
+        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
+        body = int(num_slices / 2) * alphabet     # generate size/2 length body
+        num = random.randint(1, length)
         if prefix:
-            body = prefix + '-' + body
-        return body
+            return prefix + "-" + body[num:length] + body[0:num]
+        return body[num:length] + body[0:num]
 
     def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        alphabet2 = self.build_alphabet_rand()
+        name = self.build_item(alphabet=alphabet, size=self.item_size) + \
+            self.build_item(alphabet=alphabet2, size=self.item_size)
+        email = self.build_item(alphabet=alphabet, size=self.item_size) + \
+            self.build_item(alphabet=alphabet2, size=self.item_size)
 
         return {
-            'name': self.build_item(size=self.item_size),
-            'email': self.build_item(size=self.item_size)
+            'name': name,
+            'email': email
         }
+
+# class LargeDocRandom(GroupedDocument):
+#     def __init__(self, avg_size: int, groups: int, item_size: int):
+#         super().__init__(avg_size, groups)
+#         self.item_size = item_size
+#
+#     @staticmethod
+#     def build_item(size: int = 32, prefix: str = ""):
+#         length = size - len(prefix)
+#         body = ''
+#         num_slices = int(math.ceil(length / 32))  # 32 bit hash
+#         for _ in range(num_slices):
+#             body = body + '%032x' % random.getrandbits(128)
+#         if prefix:
+#             body = prefix + '-' + body
+#         return body
+#
+#     def next(self, key: Key) -> dict:
+#
+#         return {
+#             'name': self.build_item(size=self.item_size),
+#             'email': self.build_item(size=self.item_size)
+#         }
 
 
 class EventingCounterDocument(Document):

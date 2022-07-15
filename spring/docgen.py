@@ -1,3 +1,4 @@
+import hashlib
 import math
 import random
 import time
@@ -320,6 +321,10 @@ class String:
         return hex_digest(key) + hex_digest(key[::-1])
 
     @staticmethod
+    def build_alphabet_md5(key: str) -> str:
+        return hashlib.md5(key.encode()).hexdigest() + hashlib.md5(key[::-1].encode()).hexdigest()
+
+    @staticmethod
     def build_string(alphabet: str, length: float) -> str:
         length_int = int(length)
         num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
@@ -624,7 +629,7 @@ class LargeDocRandom(GroupedDocument):
 
     def next(self, key: Key) -> dict:
         alphabet = self.build_alphabet(key.string)
-        alphabet2 = self.build_alphabet_rand()
+        alphabet2 = self.build_alphabet_md5(key.string)
         name = self.build_item(alphabet=alphabet, size=self.item_size) + \
             self.build_item(alphabet=alphabet2, size=self.item_size)
         email = self.build_item(alphabet=alphabet, size=self.item_size) + \

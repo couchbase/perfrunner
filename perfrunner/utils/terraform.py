@@ -25,23 +25,35 @@ class Terraform:
                              '/perf_vm_images/images'
 
     IMAGE_MAP = {
-        'aws': {
-            'clusters': 'ami-060e286353d227c32',
-            'clients': 'ami-01b36cb3330d38ac5',
-            'utilities': 'ami-0d9e5ee360aa02d94',
-            'sync_gateways': 'ami-005bce54f0c4e2248'
+        'x86_64': {
+            'aws': {
+                'clusters': 'ami-005bce54f0c4e2248',
+                'clients': 'ami-01b36cb3330d38ac5',
+                'utilities': 'ami-0d9e5ee360aa02d94',
+                'sync_gateways': 'ami-005bce54f0c4e2248'
+            },
+            'gcp': {
+                'clusters': 'perftest-server-disk-image-1',
+                'clients': 'perf-client-cblite-disk-image-3',
+                'utilities': 'perftest-broker-disk-image',
+                'sync_gateways': 'perftest-server-disk-image-1'
+            },
+            'azure': {
+                'clusters': '{}/perf-server-image-def'.format(AZURE_IMAGE_URL_PREFIX),
+                'clients': '{}/perf-client-image-def'.format(AZURE_IMAGE_URL_PREFIX),
+                'utilities': '{}/perf-broker-image-def'.format(AZURE_IMAGE_URL_PREFIX),
+                'sync_gateways': '{}/perf-server-image-def'.format(AZURE_IMAGE_URL_PREFIX)
+            }
         },
-        'gcp': {
-            'clusters': 'perftest-server-disk-image',
-            'clients': 'perftest-client-disk-image-2',
-            'utilities': 'perftest-broker-disk-image',
-            'sync_gateways': ''
+        'arm': {
+            'aws': {
+                'clusters': 'ami-0f249abfe3dd01b30'
+            }
         },
-        'azure': {
-            'clusters': '{}/perf-server-image-def'.format(AZURE_IMAGE_URL_PREFIX),
-            'clients': '{}/perf-client-image-def'.format(AZURE_IMAGE_URL_PREFIX),
-            'utilities': '{}/perf-broker-image-def'.format(AZURE_IMAGE_URL_PREFIX),
-            'sync_gateways': ''
+        'al2': {
+            'aws': {
+                'clusters': 'ami-060e286353d227c32'
+            }
         }
     }
 
@@ -53,6 +65,7 @@ class Terraform:
         self.provider = self.infra_spec.cloud_provider
         self.backend = None
         self.uuid = uuid4().hex[0:6] if self.provider != 'aws' else None
+        self.os_arch = self.infra_spec.infrastructure_settings('os_arch', 'x86_64')
         self.node_list = {
             'clusters': [
                 n for nodes in self.infra_spec.infrastructure_clusters.values()
@@ -109,7 +122,7 @@ class Terraform:
                 parameters = self.infra_spec.infrastructure_config()[node_group.split('.')[0]]
 
                 parameters['node_group'] = node_group
-                parameters['image'] = self.IMAGE_MAP[cloud_provider][role]
+                parameters['image'] = self.IMAGE_MAP[self.os_arch][cloud_provider][role]
                 parameters['volume_size'] = int(parameters.get('volume_size', 0))
 
                 storage_class = parameters.get('storage_class', parameters.get('volume_type', None))

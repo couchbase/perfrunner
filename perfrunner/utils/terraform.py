@@ -65,7 +65,7 @@ class Terraform:
         self.provider = self.infra_spec.cloud_provider
         self.backend = None
         self.uuid = uuid4().hex[0:6] if self.provider != 'aws' else None
-        self.os_arch = self.infra_spec.infrastructure_settings('os_arch', 'x86_64')
+        self.os_arch = self.infra_spec.infrastructure_settings.get('os_arch', 'x86_64')
         self.node_list = {
             'clusters': [
                 n for nodes in self.infra_spec.infrastructure_clusters.values()

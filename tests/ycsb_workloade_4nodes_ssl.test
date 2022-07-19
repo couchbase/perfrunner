@@ -37,7 +37,7 @@ items = 20000000
 ops = 1000000000
 time = 600
 workers = 120
-workload_instances = 6
+workload_instances = 10
 ssl_mode = data
 
 [ycsb]

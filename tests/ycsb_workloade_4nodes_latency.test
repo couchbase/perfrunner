@@ -36,11 +36,11 @@ statements =
 workload_path = workloads/workloade
 ycsb_client = couchbase3
 items = 20000000
-target = 1500
+target = 900
 ops = 0
 time = 1200
 workers = 60
-workload_instances = 6
+workload_instances = 10
 timeseries = 1
 kv_endpoints = 512
 

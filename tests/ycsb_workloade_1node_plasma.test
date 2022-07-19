@@ -39,7 +39,7 @@ items = 20000000
 ops = 1000000000
 time = 1200
 workers = 450
-workload_instances = 6
+workload_instances = 10
 kv_endpoints = 1024
 
 [ycsb]

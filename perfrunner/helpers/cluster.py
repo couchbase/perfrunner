@@ -499,17 +499,22 @@ class ClusterManager:
             self.remote.enable_nonlocal_diag_eval()
 
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
-              '[{{extra_config_string, "{}={}"}}]).'
+              '[{{extra_config_string, "{}"}}]).'
 
+        params = ''
         for option, value in self.test_config.bucket_extras.items():
             if re.search("^num_.*_threads$", option):
                 self.rest.set_num_threads(self.master_node, option, value)
             else:
-                logger.info('Changing {} to {}'.format(option, value))
-                for master in self.cluster_spec.masters:
-                    for bucket in self.test_config.buckets:
-                        diag_eval = cmd.format(bucket, option, value)
-                        self.rest.run_diag_eval(master, diag_eval)
+                params = params + option+"="+value+";"
+
+        if params:
+            for master in self.cluster_spec.masters:
+                for bucket in (self.test_config.buckets + self.test_config.eventing_buckets +
+                               self.test_config.eventing_metadata_bucket):
+                    logger.info('Changing {} to {}'.format(bucket, params))
+                    diag_eval = cmd.format(bucket, params[:len(params) - 1])
+                    self.rest.run_diag_eval(master, diag_eval)
 
         if self.test_config.bucket_extras:
             self.disable_auto_failover()

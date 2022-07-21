@@ -2,9 +2,10 @@
 test = perfrunner.tests.analytics.BigFunQueryNoIndexExternalTest
 
 [showfast]
-title = 4 nodes, BigFUN 20M users (320M docs), SSD, no indexes (ad hoc), s=1 c=3, External Storage
+title = 4 nodes, BigFUN 20M users (320M docs), SSD, no indexes (ad hoc), s=1 c=3, External Storage, json
 component = cloud
 category = analytics
+sub_category = AWS
 
 [stats]
 server_processes = java
@@ -26,6 +27,7 @@ external_dataset_type = s3
 external_dataset_region = us-east-1
 external_bucket = analytics-bigfun20m-json
 external_file_format = json
+external_file_include = json
 aws_credential_path = /root/.ssh/
 
 [bucket]

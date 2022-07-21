@@ -1713,6 +1713,7 @@ class AnalyticsSettings:
     EXTERNAL_DATASET_REGION = "us-east-1"
     EXTERNAL_BUCKET = None
     EXTERNAL_FILE_FORMAT = 'json'
+    EXTERNAL_FILE_INCLUDE = 'json'
     AWS_CREDENTIAL_PATH = None
 
     def __init__(self, options: dict):
@@ -1736,6 +1737,8 @@ class AnalyticsSettings:
                                                    self.EXTERNAL_DATASET_REGION)
         self.external_bucket = options.get("external_bucket", self.EXTERNAL_BUCKET)
         self.external_file_format = options.get("external_file_format", self.EXTERNAL_FILE_FORMAT)
+        self.external_file_include = options.get("external_file_include",
+                                                 self.EXTERNAL_FILE_INCLUDE)
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
 
 

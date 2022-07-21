@@ -397,11 +397,12 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
         dataset_list = analytics_config["Analytics"]
         external_bucket = self.analytics_settings.external_bucket
         file_format = self.analytics_settings.external_file_format
+        file_include = self.analytics_settings.external_file_include
         for dataset in dataset_list:
             statement = "CREATE EXTERNAL DATASET `{}` ON `{}` AT `external_link` " \
                         "Using '{}' WITH {{ 'format': '{}', 'include': '*.{}' }};"\
                 .format(dataset["Dataset"], external_bucket, dataset["Collection"],
-                        file_format, file_format)
+                        file_format, file_include)
             logger.info("statement: {}".format(statement))
             self.rest.exec_analytics_statement(self.analytics_node, statement)
 

@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunQueryNoIndexExternalTest
+
+[showfast]
+title = 4 nodes, BigFUN 20M users (320M docs), SSD, no indexes (ad hoc), s=1 c=3, External Storage, gz
+component = cloud
+category = analytics
+sub_category = AWS
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 1024
+analytics_mem_quota = 20480
+initial_nodes = 4
+num_buckets = 1
+enable_cpu_cores = false
+
+[collection]
+config = collections/1bucket_1scope_3collections_analytics.json
+
+[analytics]
+queries = perfrunner/workloads/bigfun/queries_without_index_external.json
+analytics_config_file = tests/analytics/config/3_datasets_collection_config.json
+external_dataset_type = s3
+external_dataset_region = us-east-1
+external_bucket = analytics-bigfun20m-gz
+external_file_format = json
+external_file_include = gz
+aws_credential_path = /root/.ssh/
+
+[bucket]
+eviction_policy = fullEviction
+
+[access]
+analytics_warmup_ops = 3
+analytics_warmup_workers = 1
+ops = 10
+workers = 1

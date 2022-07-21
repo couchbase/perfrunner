@@ -474,6 +474,10 @@ class CapellaTerraform(Terraform):
         resp.raise_for_status()
         cluster_id = resp.json().get('id')
         logger.info('Initialised cluster deployment for cluster {}'.format(cluster_id))
+        logger.info('Saving cluster ID to spec file.')
+
+        self.infra_spec.config.set('infrastructure', 'cbc_cluster', cluster_id)
+        self.infra_spec.update_spec_file()
 
         timeout_mins = 20
         interval_secs = 30
@@ -489,7 +493,7 @@ class CapellaTerraform(Terraform):
 
         if status != 'healthy':
             logger.error('Deployment timed out after 20 mins')
-            exit()
+            exit(1)
 
         return cluster_id
 

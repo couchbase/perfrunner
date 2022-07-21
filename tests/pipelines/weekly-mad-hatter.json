@@ -199,26 +199,28 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p2_tls.test"}
     ],
     "N1QL": [
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q2_20M_gsi_plasma_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q2_20M_gsi_plasma_ok.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q3_20M_between_gsi_plasma_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q3_20M_between_gsi_plasma_ok.test"},
-        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q2_20M_gsi_plasma_false.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_rebalance.test"},
         {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q2_20M_gsi_plasma_ok.test"},
+        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q3_20M_between_gsi_plasma_false.test"}
+    ],
+    "N1QL-QE24": [
+        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_empty.test"},
+        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_empty.test"},
+        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_QU2_20M_gsi_moi_ok.test"},
+        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_nested_QU2_20M_gsi_moi_ok.test"},
+        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_QU2_20M_gsi_moi_ok.test"},
+        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_QU3_20M_gsi_moi_ok.test"},
+        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q2_20M_gsi_plasma_false.test"},
+        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q3_20M_between_gsi_plasma_ok.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q2_20M_gsi_plasma_false.test"},
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_empty.test"},
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_QU2_20M_gsi_moi_ok.test"},
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_nested_QU2_20M_gsi_moi_ok.test"},
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_QU3_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_CU18_20M_1K_gsi_moi_ok.test"},
-        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_empty.test"},
-        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_nested_QU2_20M_gsi_moi_ok.test"},
-        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_QU2_20M_gsi_moi_ok.test"},
-        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_QU3_20M_gsi_moi_ok.test"},
-        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_empty.test"},
-        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_QU2_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_rebalance.test"},
-        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q3_20M_between_gsi_plasma_false.test"},
-        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q3_20M_between_gsi_plasma_ok.test"}
+        {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_CU18_20M_1K_gsi_moi_ok.test"}
     ],
     "YCSB": [],
     "N1QL-Arke": [
@@ -242,6 +244,7 @@
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF10_100M_plasma_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF10_100M_plasma_ok.test"}
     ],
+    "N1QL-Arke-QE24": [],
     "N1QL-Windows": [],
     "Rebalance": [
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_kv_disk_io_optimized.test"},

@@ -26,7 +26,9 @@
     ],
     "KV-Windows":[],
     "N1QL": [],
+    "N1QL-QE24": [],
     "N1QL-Arke": [],
+    "N1QL-Arke-QE24": [],
     "N1QL-Windows": [],
     "Rebalance": [],
     "Rebalance-C1": [
@@ -47,5 +49,7 @@
     "XDCR-C2": [],
     "XDCR-Windows": [],
     "YCSB": [],
-    "YCSB-Hebe": []
+    "YCSB-QE24": [],
+    "YCSB-Hebe": [],
+    "YCSB-Hebe-QE24": []
 }

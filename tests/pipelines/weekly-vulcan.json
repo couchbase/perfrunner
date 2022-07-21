@@ -87,9 +87,11 @@
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI6_20M_moi_false_part.test"},
 
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_xattr.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_audit.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok_xattr.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false_xattr.test"}
+    ],
+    "N1QL-QE24": [
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_audit.test"}
     ],
     "N1QL-Windows": [],
     "N1QL-Arke":[
@@ -98,7 +100,6 @@
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q9_10M_gsi_moi_false.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q9_10M_gsi_moi_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q11_10M_gsi_moi_false.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q11_10M_gsi_moi_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q22_10M_gsi_moi_false.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q22_10M_gsi_moi_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q23_10M_gsi_moi_false.test"},
@@ -108,38 +109,40 @@
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q25_10M_gsi_moi_false.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q25_10M_gsi_moi_ok.test"},
 
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/n1ql_lat_JOIN_Q26_100M_1K_100K_plasma_ok.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/n1ql_lat_JOIN_Q26_100M_10K_1M_plasma_ok.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q26_100M_1K_100K_plasma_ok.test"},
-
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_UNNEST_Q12_20M_gsi_moi_false.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_UNNEST_Q12_20M_gsi_moi_ok.test"},
 
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG1_100M_plasma_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG1_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG2_100M_plasma_ok.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG2_100M_plasma_ok_part.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG3_100M_plasma_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG3_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG4_100M_plasma_ok.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG4_100M_plasma_ok_part.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG5_100M_plasma_ok.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG5_100M_plasma_ok.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG6_100M_plasma_ok.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG6_100M_plasma_ok.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG7_100M_plasma_ok.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG7_100M_plasma_ok.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG8_100M_plasma_ok.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG8_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG9_100M_plasma_ok.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG9_100M_plasma_ok_part.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG9_100M_plasma_ok.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG10_100M_plasma_ok.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG10_100M_plasma_ok.test"},
 
         {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma.test"},
+        {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma_dgm.test"}
+    ],
+    "N1QL-Arke-QE24":[
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG2_100M_plasma_ok_part.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG4_100M_plasma_ok_part.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG5_100M_plasma_ok.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG6_100M_plasma_ok.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG7_100M_plasma_ok.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG8_100M_plasma_ok.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG9_100M_plasma_ok_part.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG10_100M_plasma_ok.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/n1ql_lat_JOIN_Q26_100M_10K_1M_plasma_ok.test"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/n1ql_lat_JOIN_Q26_100M_1K_100K_plasma_ok.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG5_100M_plasma_ok.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG6_100M_plasma_ok.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG7_100M_plasma_ok.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG8_100M_plasma_ok.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG9_100M_plasma_ok.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_AG10_100M_plasma_ok.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q11_10M_gsi_moi_ok.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_UNNEST_Q12_20M_gsi_moi_false.test"},
+        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q26_100M_1K_100K_plasma_ok.test"},
         {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma_part.test"},
-        {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma_dgm.test"},
         {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma_part_dgm.test"}
     ],
     "Rebalance": [],
@@ -173,9 +176,12 @@
     "XDCR-C2": [],
     "XDCR-Windows": [],
     "KV-Hercules": [
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_part.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_part.test"}
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_part.test"}
     ],
     "YCSB": [],
-    "YCSB-Hebe": []
+    "YCSB-QE24": [
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_part.test"}
+    ],
+    "YCSB-Hebe": [],
+    "YCSB-Hebe-QE24": []
 }

@@ -155,6 +155,12 @@ pipeline {
                         buildComponent('N1QL', testCases)
                     }
                 }
+                stage('N1QL-QE24') {
+                    when { expression { return params.N1QL_QE24 } }
+                    steps {
+                        buildComponent('N1QL-QE24', testCases)
+                    }
+                }
                 stage('N1QL-Windows') {
                     when { expression { return params.N1QL_Windows } }
                     steps {
@@ -167,10 +173,22 @@ pipeline {
                         buildComponent('N1QL-Arke', testCases)
                     }
                 }
+                stage('N1QL-Arke-QE24') {
+                    when { expression { return params.N1QL_QE24 } }
+                    steps {
+                        buildComponent('N1QL-Arke-QE24', testCases)
+                    }
+                }
                 stage('N1QL-PYTPCC') {
                     when { expression { return params.N1QL_PYTPCC } }
                     steps {
                         buildComponent('N1QL-PYTPCC', testCases)
+                    }
+                }
+                stage('N1QL-PYTPCC-QE24') {
+                    when { expression { return params.N1QL_QE24 } }
+                    steps {
+                        buildComponent('N1QL-PYTPCC-QE24', testCases)
                     }
                 }
                 stage('Tools') {
@@ -263,10 +281,22 @@ pipeline {
                         buildComponent('YCSB', testCases)
                     }
                 }
+                stage('YCSB-QE24') {
+                    when { expression { return params.N1QL_QE24 } }
+                    steps {
+                        buildComponent('YCSB-QE24', testCases)
+                    }
+                }
                 stage('YCSB-Hebe') {
                     when { expression { return params.YCSB } }
                     steps {
                         buildComponent('YCSB-Hebe', testCases)
+                    }
+                }
+                stage('YCSB-Hebe-QE24') {
+                    when { expression { return params.N1QL_QE24 } }
+                    steps {
+                        buildComponent('YCSB-Hebe-QE24', testCases)
                     }
                 }
                 stage('Magma-Legacy') {

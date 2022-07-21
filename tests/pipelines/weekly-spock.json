@@ -44,29 +44,31 @@
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_ok.test"},
 
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_plasma_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_plasma_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_plasma_ok.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_plasma_ok.test"},
 
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_plasma_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_plasma_ok.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_plasma_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_plasma_ok.test"},
 
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_plasma_ok.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_plasma_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_plasma_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_plasma_false.test"},
 
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_150M_gsi_plasma_dgm_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_150M_gsi_plasma_dgm_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_150M_gsi_plasma_dgm_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_150M_gsi_plasma_dgm_ok.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_150M_30Kops_450Qops_gsi_plasma_dgm_false.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_150M_30Kops_8KQops_gsi_plasma_dgm_ok.test"}
 
+    ],
+    "N1QL-QE24": [
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_150M_30Kops_450Qops_gsi_plasma_dgm_false.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_plasma_false.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_plasma_ok.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_plasma_false.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_plasma_ok.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_plasma_false.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_150M_gsi_plasma_dgm_ok.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_150M_gsi_plasma_dgm_false.test"}
     ],
     "N1QL-Windows": [
         {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_false.test"},
@@ -75,6 +77,7 @@
         {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_ok.test"}
     ],
     "N1QL-Arke": [],
+    "N1QL-Arke-QE24": [],
     "Rebalance": [],
     "Rebalance-C1": [],
     "Rebalance-C2": [],
@@ -106,15 +109,18 @@
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_plasma.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_plasma.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_ssl.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_x509.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency_plasma.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_latency.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_latency_plasma.test"}
     ],
-    "YCSB-Hebe": [
+    "YCSB-QE24": [
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_ssl.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_x509.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_plasma.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency_plasma.test"}
+    ],
+    "YCSB-Hebe": [],
+    "YCSB-Hebe-QE24": [
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadse_4nodecluster.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsg2_4nodecluster.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsg_4nodecluster.test"},

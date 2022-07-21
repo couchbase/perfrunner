@@ -660,12 +660,14 @@ class BigFunTest(TestCase):
 class PipelineTest(TestCase):
 
     def test_stages(self):
-        stages = {'Analytics', 'Eventing', 'FTS', 'GSI', 'GSI-DGM', 'KV', 'KV-DGM',
-                  'N1QL', 'Rebalance', 'Rebalance-Large-Scale', 'Rebalance-Hestia',
-                  'Tools', 'Views', 'XDCR', 'YCSB', 'YCSB-Hebe', 'N1QL-Windows', 'N1QL-Arke',
-                  'KV-Windows', 'XDCR-Windows', 'KV-Athena', 'KV-Hercules', 'Rebalance-C1',
-                  'Rebalance-C2', 'Rebalance-Large-Scale-C1', 'Rebalance-Large-Scale-C2',
-                  'XDCR-C1', 'XDCR-C2'}
+        stages = {'Analytics', 'Eventing', 'FTS', 'Tools', 'Views',
+                  'GSI', 'GSI-DGM',
+                  'N1QL', 'N1QL-QE24', 'N1QL-Windows', 'N1QL-Arke', 'N1QL-Arke-QE24',
+                  'YCSB', 'YCSB-QE24', 'YCSB-Hebe', 'YCSB-Hebe-QE24',
+                  'KV', 'KV-DGM', 'KV-Windows', 'KV-Athena', 'KV-Hercules',
+                  'Rebalance', 'Rebalance-C1', 'Rebalance-C2', 'Rebalance-Hestia',
+                  'Rebalance-Large-Scale', 'Rebalance-Large-Scale-C1', 'Rebalance-Large-Scale-C2',
+                  'XDCR', 'XDCR-C1', 'XDCR-C2', 'XDCR-Windows'}
         for pipeline in ('tests/pipelines/weekly-watson.json',
                          'tests/pipelines/weekly-spock.json',
                          'tests/pipelines/weekly-vulcan.json',

@@ -147,7 +147,7 @@ resource "google_compute_instance" "cluster_instance" {
     labels = {
       role       = "cluster"
       node_group = replace(each.value.node_group, ".", "-")
-      perfrunner = var.global_tag != "" ? var.global_tag : null
+      deployment = var.global_tag != "" ? var.global_tag : null
     }
 
     boot_disk {
@@ -195,7 +195,7 @@ resource "google_compute_instance" "client_instance" {
     labels = {
       role       = "cluster"
       node_group = replace(each.value.node_group, ".", "-")
-      perfrunner = var.global_tag != "" ? var.global_tag : null
+      deployment = var.global_tag != "" ? var.global_tag : null
     }
 
     boot_disk {
@@ -243,7 +243,7 @@ resource "google_compute_instance" "utility_instance" {
     labels = {
       role       = "cluster"
       node_group = replace(each.value.node_group, ".", "-")
-      perfrunner = var.global_tag != "" ? var.global_tag : null
+      deployment = var.global_tag != "" ? var.global_tag : null
     }
 
     boot_disk {
@@ -294,7 +294,7 @@ resource "google_compute_instance" "sync_gateway_instance" {
     labels = {
       role       = "cluster"
       node_group = replace(each.value.node_group, ".", "-")
-      perfrunner = var.global_tag != "" ? var.global_tag : null
+      deployment = var.global_tag != "" ? var.global_tag : null
     }
 
     boot_disk {
@@ -337,4 +337,7 @@ resource "google_storage_bucket" "perf-storage-bucket" {
     location                    = upper(var.cloud_region)
     uniform_bucket_level_access = true
     force_destroy               = true
+    labels = {
+      deployment = var.global_tag != "" ? var.global_tag : null
+    }
 }

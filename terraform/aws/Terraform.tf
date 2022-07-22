@@ -87,7 +87,7 @@ resource "aws_vpc" "main"{
   cidr_block           = "10.1.0.0/18"
   enable_dns_hostnames = true
   tags = {
-    Name = "TerraVPC"
+    Name = var.global_tag != "" ? var.global_tag : "TerraVPC"
   }
 }
 
@@ -153,7 +153,7 @@ resource "aws_subnet" "public" {
   cidr_block              = "10.1.0.0/24"
   map_public_ip_on_launch = true
   tags = {
-    Name = "Public Subnet"
+    Name = var.global_tag != "" ? var.global_tag : "Public Subnet"
   }
 }
 
@@ -161,7 +161,7 @@ resource "aws_subnet" "public" {
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "Terra IGW"
+    Name = var.global_tag != "" ? var.global_tag : "Terra IGW"
   }
 }
 
@@ -170,7 +170,7 @@ resource "aws_eip" "nat_eip" {
   vpc        = true
   depends_on = [aws_internet_gateway.igw]
   tags = {
-    Name = "Terra NAT Gateway EIP"
+    Name = var.global_tag != "" ? var.global_tag : "Terra NAT Gateway EIP"
   }
 }
 
@@ -179,7 +179,7 @@ resource "aws_nat_gateway" "nat"{
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.public.id
   tags = {
-    Name = "NAT GW"
+    Name = var.global_tag != "" ? var.global_tag : "NAT GW"
   }
 }
 
@@ -210,9 +210,9 @@ resource "aws_instance" "cluster_instance" {
     volume_type = lower(each.value.storage_class)
   }
   tags = {
+    Name       = var.global_tag != "" ? var.global_tag : "ClusterNode${each.key}"
     role       = "cluster"
     node_group = each.value.node_group
-    perfrunner = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -229,9 +229,9 @@ resource "aws_instance" "client_instance" {
     volume_type = lower(each.value.storage_class)
   }
   tags = {
+    Name       = var.global_tag != "" ? var.global_tag : "ClientNode${each.key}"
     role       = "client"
     node_group = each.value.node_group
-    perfrunner = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -248,9 +248,9 @@ resource "aws_instance" "utility_instance" {
     volume_type = lower(each.value.storage_class)
   }
   tags = {
+    Name       = var.global_tag != "" ? var.global_tag : "UtilityNode${each.key}"
     role       = "utility"
     node_group = each.value.node_group
-    perfrunner = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -267,9 +267,9 @@ resource "aws_instance" "sync_gateway_instance" {
     volume_type = lower(each.value.storage_class)
   }
   tags = {
+    Name       = var.global_tag != "" ? var.global_tag : "SyncGatewayNode${each.key}"
     role       = "sync_gateway"
     node_group = each.value.node_group
-    perfrunner = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -277,4 +277,7 @@ resource "aws_s3_bucket" "perf-storage-bucket" {
   count         = var.cloud_storage ? 1 : 0
   bucket        = "perftest-bucket-${substr(uuid(), 0, 6)}"
   force_destroy = true
+  tags = {
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }

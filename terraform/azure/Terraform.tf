@@ -275,7 +275,7 @@ resource "azurerm_virtual_machine" "perf-cluster-vm" {
   tags = {
     role       = "cluster"
     node_group = each.value.node_group
-    perfrunner = var.global_tag != "" ? var.global_tag : null
+    deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -320,7 +320,7 @@ resource "azurerm_virtual_machine" "perf-client-vm" {
   tags = {
     role       = "client"
     node_group = each.value.node_group
-    perfrunner = var.global_tag != "" ? var.global_tag : null
+    deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -360,7 +360,7 @@ resource "azurerm_virtual_machine" "perf-utility-vm" {
   tags = {
     role       = "utility"
     node_group = each.value.node_group
-    perfrunner = var.global_tag != "" ? var.global_tag : null
+    deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -400,7 +400,7 @@ resource "azurerm_virtual_machine" "perf-sync_gateway-vm" {
   tags = {
     role       = "sync_gateway"
     node_group = each.value.node_group
-    perfrunner = var.global_tag != "" ? var.global_tag : null
+    deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -412,6 +412,9 @@ resource "azurerm_storage_account" "perf-storage-acc" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
   access_tier              = "Cool"
+  tags = {
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 resource "azurerm_storage_container" "perf-storage-container" {

@@ -38,6 +38,13 @@ output "sync_gateway_instance_ips" {
     }
 }
 
+output "network" {
+    value = {
+        vpc_id =      azurerm_virtual_network.perf-vn.id
+        subnet_cidr = one(azurerm_subnet.perf-sn.address_prefixes)
+    }
+}
+
 output "cloud_storage" {
   value = {
     storage_account = length(azurerm_storage_account.perf-storage-acc) != 0 ? one(azurerm_storage_account.perf-storage-acc).name : null

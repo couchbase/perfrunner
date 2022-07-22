@@ -7,6 +7,7 @@ from time import sleep, time
 from uuid import uuid4
 
 from CapellaAPI import CapellaAPI
+from fabric.api import local
 
 from logger import logger
 from perfrunner.settings import ClusterSpec
@@ -81,17 +82,19 @@ class Terraform:
             self.region = self.options.region
 
     def deploy(self):
+        # Configure terraform
         self.populate_tfvars()
-        self.initialize_terraform()
+        self.terraform_init()
+
+        # Deploy resources
         self.terraform_apply(self.provider)
+
+        # Get info about deployed resources and update cluster spec file
         output = self.terraform_output(self.provider)
         self.update_spec(output)
 
     def destroy(self):
-        os.system('cd terraform/{} && '
-                  'terraform plan -destroy -out tfplan_destroy.out >> terraform.log && '
-                  'terraform apply -auto-approve tfplan_destroy.out'
-                  .format(self.infra_spec.cloud_provider))
+        self.terraform_destroy(self.provider)
 
     def create_tfvar_nodes(self):
         tfvar_nodes = {
@@ -173,24 +176,27 @@ class Terraform:
             tfvars.write(file_string)
 
     # Initializes terraform environment.
-    def initialize_terraform(self):
-        os.system('cd terraform/{} && terraform init >> terraform.log'.format(self.provider))
+    def terraform_init(self, provider):
+        local('cd terraform/{} && terraform init >> terraform.log'.format(provider))
 
     # Apply and output terraform deployment.
     def terraform_apply(self, provider):
-        os.system(
-            (
-                "cd terraform/{} && "
-                "terraform plan -out tfplan.out >> terraform.log && "
-                "terraform apply -auto-approve tfplan.out"
-            ).format(provider)
-        )
+        local('cd terraform/{} && '
+              'terraform plan -out tfplan.out >> terraform.log && '
+              'terraform apply -auto-approve tfplan.out'
+              .format(provider))
 
     def terraform_output(self, provider):
-        output = json.load(
-            os.popen("cd terraform/{} && terraform output -json".format(provider))
+        output = json.loads(
+            local('cd terraform/{} && terraform output -json'.format(provider), capture=True)
         )
         return output
+
+    def terraform_destroy(self, provider):
+        local('cd terraform/{} && '
+              'terraform plan -destroy -out tfplan_destroy.out >> terraform.log && '
+              'terraform apply -auto-approve tfplan_destroy.out'
+              .format(provider))
 
     # Update spec file with deployed infrastructure.
     def update_spec(self, output):
@@ -307,40 +313,44 @@ class CapellaTerraform(Terraform):
         )
 
     def deploy(self):
+        # Configure terraform
         self.populate_tfvars()
-        self.initialize_terraform()
+        self.terraform_init(self.backend)
+        self.terraform_init('capella')
+
+        # Deploy non-capella resources
         self.terraform_apply(self.backend)
         non_capella_output = self.terraform_output(self.backend)
+
+        # Deploy capella cluster
         if self.use_internal_api:
             cluster_id = self.deploy_cluster_internal_api()
         else:
             self.terraform_apply('capella')
             capella_output = self.terraform_output('capella')
             cluster_id = capella_output['cluster_id']['value']
+
+        # Update cluster spec file
         self.update_spec(non_capella_output, cluster_id)
 
-    def destroy(self):
-        os.system('cd terraform/{} && '
-                  'terraform plan -destroy -out tfplan_destroy.out >> terraform.log && '
-                  'terraform apply -auto-approve tfplan_destroy.out'
-                  .format(self.backend))
+        # Do VPC peering
+        network_info = non_capella_output['network']['value']
+        self.peer_vpc(network_info, cluster_id)
 
+    def destroy(self):
+        # Tear down VPC peering connection
+        self.destroy_peering_connection()
+
+        # Destroy non-capella resources
+        self.terraform_destroy(self.backend)
+
+        # Destroy capella cluster
         use_internal_api = self.infra_spec.infrastructure_settings.get('cbc_use_internal_api', 0)
         if int(use_internal_api):
             cluster_id = self.infra_spec.infrastructure_settings['cbc_cluster']
             self.destroy_cluster_internal_api(cluster_id)
         else:
-            os.system('cd terraform/capella && '
-                      'terraform plan -destroy -out tfplan_destroy.out >> terraform.log && '
-                      'terraform apply -auto-approve tfplan_destroy.out')
-
-    # Initializes terraform environment.
-    def initialize_terraform(self):
-        os.system(
-            'cd terraform/capella && terraform init >> terraform.log && '
-            'cd ../{} && terraform init >> terraform.log'
-            .format(self.backend)
-        )
+            self.terraform_destroy('capella')
 
     def populate_tfvars(self):
         super().populate_tfvars()
@@ -351,7 +361,7 @@ class CapellaTerraform(Terraform):
                 'project_id': self.project_id,
                 'provider': self.backend,
                 'region': self.region,
-                'cidr': self.available_cidr()
+                'cidr': self.get_available_cidr()
             },
             '<SERVER_GROUPS>': [
                 group for groups in self.create_tfvar_server_groups().values()
@@ -448,7 +458,7 @@ class CapellaTerraform(Terraform):
 
     def deploy_cluster_internal_api(self):
         config = {
-            "cidr": self.available_cidr(),
+            "cidr": self.get_available_cidr(),
             "name": "perf-cluster-{}".format(self.uuid),
             "description": "",
             "projectId": self.project_id,
@@ -529,9 +539,13 @@ class CapellaTerraform(Terraform):
 
         return tfvar_server_groups
 
-    def available_cidr(self):
+    def get_available_cidr(self):
         resp = self.api_client.get_deployment_options(self.tenant_id)
         return resp.json().get('suggestedCidr')
+
+    def get_deployed_cidr(self, cluster_id):
+        resp = self.api_client.get_cluster_info(cluster_id)
+        return resp.json().get('place', {}).get('CIDR')
 
     def get_hostnames(self, cluster_id):
         resp = self.api_client.get_nodes(tenant_id=self.tenant_id,
@@ -563,6 +577,180 @@ class CapellaTerraform(Terraform):
         if self.use_internal_api:
             self.infra_spec.config.set('infrastructure', 'cbc_use_internal_api', "1")
         self.infra_spec.update_spec_file()
+
+    def peer_vpc(self, network_info, cluster_id):
+        logger.info('Setting up VPC peering...')
+        if self.infra_spec.capella_backend == 'aws':
+            peering_connection = self._peer_vpc_aws(network_info, cluster_id)
+        elif self.infra_spec.capella_backend == 'gcp':
+            peering_connection, dns_managed_zone, client_vpc = self._peer_vpc_gcp(network_info,
+                                                                                  cluster_id)
+            self.infra_spec.config.set('infrastructure', 'dns_managed_zone', dns_managed_zone)
+            self.infra_spec.config.set('infrastructure', 'client_vpc', client_vpc)
+
+        if peering_connection:
+            self.infra_spec.config.set('infrastructure', 'peering_connection', peering_connection)
+            self.infra_spec.update_spec_file()
+        else:
+            exit(1)
+
+    def _peer_vpc_aws(self, network_info, cluster_id) -> str:
+        # Initiate VPC peering
+        logger.info('Initiating peering')
+
+        client_vpc = network_info['vpc_id']
+        cidr = network_info['subnet_cidr']
+        route_table = network_info['route_table_id']
+        cluster_cidr = self.get_deployed_cidr(cluster_id)
+
+        logger.info('Adding Capella private network (AWS): VPC ID = {}'.format(client_vpc))
+
+        account_id = local('AWS_PROFILE=default env/bin/aws sts get-caller-identity '
+                           '--query Account --output text',
+                           capture=True)
+
+        data = {
+            "name": "perftest-network",
+            "aws": {
+                "accountId": account_id,
+                "vpcId": client_vpc,
+                "region": self.region,
+                "cidr": cidr
+            },
+            "provider": "aws"
+        }
+
+        peering_connection_id = None
+
+        try:
+            resp = self.api_client.create_private_network(
+                self.tenant_id, self.project_id, cluster_id, data)
+            private_network_id = resp.json().get('id')
+
+            # Get AWS CLI commands that we need to run to complete the peering process
+            logger.info('Accepting peering request')
+            resp = self.api_client.get_private_network(
+                self.tenant_id, self.project_id, cluster_id, private_network_id)
+            aws_commands = resp.json().get('data').get('commands')
+            peering_connection_id = resp.json().get('data').get('aws').get('providerId')
+
+            # Finish peering process using AWS CLI
+            for command in aws_commands:
+                local("AWS_PROFILE=default env/bin/{}".format(command))
+
+            # Finally, set up route table in our client VPC
+            logger.info('Configuring route table in client VPC')
+            local(
+                (
+                    "AWS_PROFILE=default env/bin/aws --region {} ec2 create-route "
+                    "--route-table-id {} "
+                    "--destination-cidr-block {} "
+                    "--vpc-peering-connection-id {}"
+                ).format(self.region, route_table, cluster_cidr, peering_connection_id)
+            )
+        except Exception as e:
+            logger.error('Failed to complete VPC peering: {}'.format(e))
+
+        return peering_connection_id
+
+    def _peer_vpc_gcp(self, network_info, cluster_id) -> tuple[str, str]:
+        # Initiate VPC peering
+        logger.info('Initiating peering')
+
+        client_vpc = network_info['vpc_id']
+        cidr = network_info['subnet_cidr']
+        service_account = local("gcloud config get account", capture=True)
+
+        logger.info('Adding Capella private network (GCP): VPC name = {}'.format(client_vpc))
+
+        project_id = local('gcloud config get project', capture=True)
+
+        data = {
+            "name": "perftest-network",
+            "gcp": {
+                "projectId": project_id,
+                "networkName": client_vpc,
+                "cidr": cidr,
+                "serviceAccount": service_account
+            },
+            "provider": "gcp"
+        }
+
+        peering_connection_name = None
+        dns_managed_zone_name = None
+
+        try:
+            resp = self.api_client.create_private_network(
+                self.tenant_id, self.project_id, cluster_id, data)
+            private_network_id = resp.json().get('id')
+
+            # Get gcloud commands that we need to run to complete the peering process
+            logger.info('Accepting peering request')
+            resp = self.api_client.get_private_network(
+                self.tenant_id, self.project_id, cluster_id, private_network_id)
+            gcloud_commands = resp.json().get('data').get('commands')
+
+            # Finish peering process using gcloud
+            for command in gcloud_commands:
+                local(command)
+
+            peering_connection_name, capella_vpc_uri = local(
+                (
+                    'gcloud compute networks peerings list '
+                    '--network={} '
+                    '--format="value(peerings[].name,peerings[].network)"'
+                ).format(client_vpc),
+                capture=True
+            ).split()
+
+            dns_managed_zone_name = local(
+                (
+                    'gcloud dns managed-zones list '
+                    '--filter="(peeringConfig.targetNetwork.networkUrl = {})" '
+                    '--format="value(name)"'
+                ).format(capella_vpc_uri),
+                capture=True
+            )
+        except Exception as e:
+            logger.error('Failed to complete VPC peering: {}'.format(e))
+
+        return peering_connection_name, dns_managed_zone_name, client_vpc
+
+    def destroy_peering_connection(self):
+        logger.info("Destroying peering connection...")
+        if self.infra_spec.capella_backend == 'aws':
+            self._destroy_peering_connection_aws()
+        elif self.infra_spec.capella_backend == 'gcp':
+            self._destroy_peering_connection_gcp()
+
+    def _destroy_peering_connection_aws(self):
+        peering_connection = self.infra_spec.infrastructure_settings.get('peering_connection', None)
+
+        if not peering_connection:
+            logger.warn('No peering connection ID found in cluster spec; nothing to destroy.')
+            return
+
+        local(
+            (
+                "AWS_PROFILE=default env/bin/aws "
+                "--region {} ec2 delete-vpc-peering-connection "
+                "--vpc-peering-connection-id {}"
+            ).format(self.region, peering_connection)
+        )
+
+    def _destroy_peering_connection_gcp(self):
+        peering_connection = self.infra_spec.infrastructure_settings.get('peering_connection', None)
+
+        if not peering_connection:
+            logger.warn('No peering connection ID found in cluster spec; nothing to destroy.')
+            return
+
+        dns_managed_zone = self.infra_spec.infrastructure_settings['dns_managed_zone']
+        client_vpc = self.infra_spec.infrastructure_settings['client_vpc']
+
+        local('gcloud compute networks peerings delete {} --network={}'
+              .format(peering_connection, client_vpc))
+        local('gcloud dns managed-zones delete {}'.format(dns_managed_zone))
 
 
 class EKSTerraform(Terraform):

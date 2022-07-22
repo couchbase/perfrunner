@@ -38,6 +38,13 @@ output "sync_gateway_instance_ips" {
     }
 }
 
+output "network" {
+    value = {
+        vpc_id      = google_compute_network.perf-vn.name
+        subnet_cidr = google_compute_subnetwork.perf-sn.ip_cidr_range
+    }
+}
+
 output "cloud_storage" {
     value = {
         storage_bucket = length(google_storage_bucket.perf-storage-bucket) != 0 ? one(google_storage_bucket.perf-storage-bucket).url : null

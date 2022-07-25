@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.BigFunQueryNoIndexExternalTest
 
 [showfast]
-title = 4 nodes, BigFUN 20M users (320M docs), SSD, no indexes (ad hoc), s=1 c=3, External Storage, gz
+title = 4 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, External Storage, gz
 component = cloud
 category = analytics
 sub_category = AWS

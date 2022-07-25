@@ -406,6 +406,36 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
             logger.info("statement: {}".format(statement))
             self.rest.exec_analytics_statement(self.analytics_node, statement)
 
+    def warmup(self, nodes: list = []) -> List[Tuple[Query, int]]:
+        if len(nodes) == 0:
+            analytics_nodes = self.analytics_nodes
+        else:
+            analytics_nodes = nodes
+        logger.info("analytics_nodes = {}".format(analytics_nodes))
+        results = bigfun(self.rest,
+                         nodes=analytics_nodes,
+                         concurrency=self.test_config.access_settings.analytics_warmup_workers,
+                         num_requests=int(self.test_config.access_settings.analytics_warmup_ops),
+                         query_set=self.QUERIES,
+                         external_storage=True)
+
+        return [(query, latency) for query, latency in results]
+
+    @with_stats
+    def access(self, nodes: list = [], *args, **kwargs) -> List[Tuple[Query, int]]:
+        if len(nodes) == 0:
+            analytics_nodes = self.analytics_nodes
+        else:
+            analytics_nodes = nodes
+        logger.info("analytics_nodes = {}".format(analytics_nodes))
+        results = bigfun(self.rest,
+                         nodes=analytics_nodes,
+                         concurrency=int(self.test_config.access_settings.workers),
+                         num_requests=int(self.test_config.access_settings.ops),
+                         query_set=self.QUERIES,
+                         external_storage=True)
+        return [(query, latency) for query, latency in results]
+
     def run(self):
         random.seed(8095)
         self.set_up_s3_link()

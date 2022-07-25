@@ -84,7 +84,7 @@ class Terraform:
     def deploy(self):
         # Configure terraform
         self.populate_tfvars()
-        self.terraform_init()
+        self.terraform_init(self.provider)
 
         # Deploy resources
         self.terraform_apply(self.provider)

@@ -237,6 +237,109 @@ class N1QLThroughputTest(N1QLTest):
         )
 
 
+class N1QLElixirThroughputTest(N1QLThroughputTest):
+
+    def load(self):
+        PerfTest.load(self)
+
+    def access_bg(self, *args):
+        access_settings = self.test_config.access_settings
+        access_settings.n1ql_workers = 0
+        PerfTest.access_bg(self, settings=access_settings)
+
+    @with_stats
+    @with_profiles
+    def access(self, *args):
+        self.download_certificate()
+
+        access_settings = self.test_config.access_settings
+        access_settings.workers = 0
+        PerfTest.access(self, settings=access_settings)
+
+    def create_indexes(self):
+        logger.info('Creating and building indexes')
+        create_statements = []
+        build_statements = []
+        for statement in self.test_config.index_settings.statements:
+            index_name = statement.split()[2]
+            index_replicas = str(self.test_config.index_settings.replicas)
+            for bucket in self.test_config.buckets:
+                bucket_scopes = self.test_config.collection.collection_map[bucket]
+                for scope in bucket_scopes.keys():
+                    for collection in bucket_scopes[scope].keys():
+                        if bucket_scopes[scope][collection]["access"] == 1:
+                            index_target = "default:`{}`.`{}`.`{}`".\
+                                format(bucket, scope, collection)
+                            replace_target = "`TARGET_BUCKET`"
+                            create_statement = statement.replace(replace_target, index_target)
+                            create_statement = create_statement.replace('index_replicas',
+                                                                        index_replicas)
+                            build_statement = "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')".\
+                                format(bucket, scope, collection, index_name)
+                            create_statements.append(create_statement)
+                            build_statements.append(build_statement)
+
+        for statement in create_statements:
+            logger.info('Creating index: ' + statement)
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            cont = False
+            while not cont:
+                building = 0
+                index_status = self.rest.get_index_status(self.index_nodes[0])
+                index_list = index_status['status']
+                for index in index_list:
+                    if index['status'] != "Ready" and index['status'] != "Created":
+                        building += 1
+                if building < 10:
+                    cont = True
+                else:
+                    time.sleep(10)
+
+        for statement in build_statements:
+            logger.info('Building index: ' + statement)
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            cont = False
+            while not cont:
+                building = 0
+                index_status = self.rest.get_index_status(self.index_nodes[0])
+                index_list = index_status['status']
+                for index in index_list:
+                    if index['status'] != "Ready" and index['status'] != "Created":
+                        building += 1
+                if building < 10:
+                    cont = True
+                else:
+                    time.sleep(10)
+
+        logger.info('Index Create and Build Complete')
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
+
+
+class N1QLElixirLatencyTest(N1QLElixirThroughputTest):
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.query_latency(percentile=90)
+        )
+
+
 class N1QLThroughputRebalanceTest(N1QLThroughputTest):
 
     def _report_kpi(self, rebalance_time, total_requests):

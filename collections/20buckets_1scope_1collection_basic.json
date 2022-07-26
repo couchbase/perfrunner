@@ -1,0 +1,182 @@
+{
+  "bucket-1": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-2": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-3": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-4": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-5": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-6": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-7": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-8": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-9": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-10": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-11": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-12": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-13": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-14": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-15": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-16": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-17": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-18": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-19": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "bucket-20": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  }
+}

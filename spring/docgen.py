@@ -1,6 +1,7 @@
 import hashlib
 import math
 import random
+import sys
 import time
 from datetime import date, datetime, timedelta
 from typing import Iterator, List, Tuple
@@ -2238,3 +2239,69 @@ class LargeGroupedDocument(LargeDocument):
             'text': self.build_string(alphabet[:16], size),
             'lorem': LOREM[offset:offset + self.TEXT_LENGTH],
         }
+
+
+class UnifiedDocument(Document):
+
+    def __init__(self, avg_size: int, num_replies: int, item_size: int):
+        super().__init__(avg_size)
+        self.num_replies = num_replies
+        self.item_size = item_size
+
+    @staticmethod
+    def array_dic(batch_group_id: int, qualify_doc_id: int):
+        a1 = []
+        for i in range(3):
+            temp_dic = {"ac0": batch_group_id,
+                        "ac1": batch_group_id,
+                        "ac2": batch_group_id,
+                        "ac3": batch_group_id,
+                        "ac4": batch_group_id,
+                        "aid": qualify_doc_id,
+                        "apos": i}
+            a1.append(temp_dic)
+
+        return a1
+
+    @staticmethod
+    def group_id(batch_group_id: int):
+        return batch_group_id
+
+    @staticmethod
+    def doc_id(qualify_doc_id: int):
+        return qualify_doc_id
+
+    @staticmethod
+    def build_string(alphabet: str, length: int) -> str:
+        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
+        body = num_slices * alphabet
+        offset = random.randint(0, len(body) - length)
+        return body[offset:offset + length]
+
+    @staticmethod
+    def build_index_md5(key: str, item_size: int) -> str:
+        md5_string = hashlib.md5(key.encode()).hexdigest() + \
+                     hashlib.md5(key[::-1].encode()).hexdigest()
+        num_slices = int(math.ceil(item_size / len(md5_string)))
+        body = num_slices * md5_string
+        return body[:item_size]
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        current_item = int(key.string.split('-')[1])
+        qualify_doc_id = current_item % self.num_replies
+        batch_group_id = int(current_item / self.num_replies)
+        doc = {
+            "a1": self.array_dic(batch_group_id, qualify_doc_id),
+            "c0": self.group_id(batch_group_id),
+            "c1": self.group_id(batch_group_id),
+            "c2": self.group_id(batch_group_id),
+            "c3": self.group_id(batch_group_id),
+            "c4": self.group_id(batch_group_id),
+            "cid": self.doc_id(qualify_doc_id),
+            "id": self.doc_id(qualify_doc_id),
+            "index_field": self.build_index_md5(key.string, self.item_size),
+        }
+        current_size = sys.getsizeof(doc)
+        doc["comment"] = self.build_string(alphabet, self.avg_size - current_size)
+        return doc

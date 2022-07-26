@@ -71,6 +71,7 @@ from spring.docgen import (
     SmallPlasmaGroupedDocument,
     String,
     TpcDsDocument,
+    UnifiedDocument,
     UniformKey,
     VaryingItemSizePlasmaDocument,
     WorkingSetKey,
@@ -358,6 +359,10 @@ class Worker:
             self.docs = FTSDocument(self.ws.size)
         elif self.ws.doc_gen == 'fts_rebal_doc':
             self.docs = FTSRebalanceDocument(self.ws.size)
+        elif self.ws.doc_gen == 'unified':
+            self.docs = UnifiedDocument(self.ws.size,
+                                        self.ws.num_replies,
+                                        self.ws.item_size)
 
     def init_db(self):
         params = {

@@ -231,7 +231,8 @@ class N1QLQueryGen3:
 
     def __init__(self, queries: List[dict]):
         queries = [
-            (query['statement'], query['args'], query.get('scan_consistency'), query.get('ad_hoc'))
+            (query['statement'], query['args'], query.get('scan_consistency'), query.get('ad_hoc'),
+             query.get('total_batches'), query.get('qualified_batches'))
             for query in queries
         ]
         self.queries = cycle(queries)
@@ -248,7 +249,8 @@ class N1QLQueryGen3:
             return QueryScanConsistency.NOT_BOUNDED
 
     def next(self, key: str, doc: dict, replace_targets: dict = None) -> Tuple[str, QueryOptions]:
-        statement, args, scan_consistency, ad_hoc = next(self.queries)
+        statement, args, scan_consistency, ad_hoc, total_batches, qualified_batches = \
+            next(self.queries)
         if replace_targets:
             if "TARGET_BUCKET" in statement:
                 for bucket in replace_targets.keys():
@@ -269,6 +271,10 @@ class N1QLQueryGen3:
                         statement = before + after
         if 'key' in args:
             args = [key]
+        elif 'start_qualified_batches' in args:
+            start = random.randint(0, int(total_batches) - int(qualified_batches))
+            end = start + int(qualified_batches) - 1
+            args = [start, end]
         else:
             args = args.format(**doc)
             args = eval(args)

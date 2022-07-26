@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import random
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from itertools import chain, combinations, permutations
@@ -1565,6 +1566,9 @@ class AccessSettings(PhaseSettings):
             query = config.get_n1ql_query_definition(query_name)
             queries.append(query)
         self.n1ql_queries = queries
+        if len(self.n1ql_queries) > 1:
+            if 'total_batches' in self.n1ql_queries[0].keys():
+                random.shuffle(self.n1ql_queries)
 
 
 class ExtraAccessSettings(PhaseSettings):

@@ -93,7 +93,10 @@ class MetricHelper:
         query_id = query_id.split()[0]
         for prefix in 'CU', 'QU', 'QF', 'CF', 'CI', 'Q', 'UP', 'DL', 'AG', 'PI', 'BF', 'WF':
             query_id = query_id.replace(prefix, '')
-        return '{:05d}'.format(int(query_id))
+        if query_id.isnumeric():
+            return '{:05d}'.format(int(query_id))
+        else:
+            return query_id
 
     def avg_n1ql_throughput(self) -> Metric:
         metric_id = '{}_avg_query_requests'.format(self.test_config.name)
@@ -106,10 +109,10 @@ class MetricHelper:
 
     def _avg_n1ql_throughput(self) -> int:
         test_time = self.test_config.access_settings.time
-
-        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
-        vitals = self.test.rest.get_query_stats(query_node)
-        total_requests = vitals['requests.count']
+        total_requests = 0
+        for query_node in self.cluster_spec.servers_by_role('n1ql'):
+            vitals = self.test.rest.get_query_stats(query_node)
+            total_requests += vitals['requests.count']
 
         throughput = total_requests / test_time
         return round(throughput, throughput < 1 and 1 or 0)

@@ -46,6 +46,7 @@ def main():
         cm.configure_autoscaling()
     else:
         # Individual nodes
+        cm.serverless_mode()
         cm.disable_wan()
         cm.clear_login_history()
         cm.tune_memory_settings()
@@ -91,7 +92,6 @@ def main():
     cm.wait_until_healthy()
     cm.wait_until_warmed_up()
     cm.disable_ui_http()
-    cm.enable_lvm_cache()
 
     if cm.test_config.collection.config:
         cm.create_collections()

@@ -475,9 +475,9 @@ class ClusterManager:
         if self.test_config.cluster.ui_http == 'disabled':
             self.remote.ui_http_off(self.cluster_spec.servers[0])
 
-    def enable_lvm_cache(self):
-        if self.test_config.cluster.lvm_cache == 'enabled':
-            self.remote.lvm_cache()
+    def serverless_mode(self):
+        if self.test_config.cluster.serverless_mode == 'enabled':
+            self.remote.enable_serverless_mode()
 
     def restart_with_alternative_num_vbuckets(self):
         num_vbuckets = self.test_config.cluster.num_vbuckets

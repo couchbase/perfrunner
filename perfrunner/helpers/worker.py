@@ -6,7 +6,7 @@ from itertools import cycle
 from multiprocessing import set_start_method
 from typing import Callable
 
-from celery import Celery, group
+from celery import Celery, chain, group
 from kombu.serialization import registry
 from sqlalchemy import create_engine
 
@@ -253,6 +253,57 @@ def syncgateway_e2e_multi_cb_task_run_test(*args):
     syncgateway_e2e_multi_cb_run_test(*args)
 
 
+class WorkloadPhase:
+
+    def __init__(self,
+                 task: Callable,
+                 target_iterator: TargetIterator,
+                 base_settings: PhaseSettings,
+                 override_settings: dict = {},
+                 timer: int = None):
+        self.task = task
+        self.target_iterator = target_iterator
+        self.targets = list(target_iterator)
+        self.task_settings = base_settings
+        for option, value in override_settings.items():
+            if hasattr(self.task_settings, option):
+                setattr(self.task_settings, option, value)
+        self.task_settings.bucket_list = target_iterator.buckets
+        self.timer = timer
+        self.chained_phases = []
+
+    def task_sigs(self, workers):
+        sigs = [[] for _ in self.targets]
+        sig_workers = [next(workers) for _ in self.targets]
+
+        for phase in [self, *self.chained_phases]:
+            for i, target in enumerate(phase.targets):
+                for instance in range(phase.task_settings.workload_instances):
+                    sig = phase.task.si(
+                        phase.task_settings, target, phase.timer, instance
+                    ).set(queue=sig_workers[i], expires=phase.timer)
+                    sigs[i].append(sig)
+
+        if self.chained_phases:
+            sigs = [chain(*c) for c in sigs]
+        else:
+            sigs = [s[0] for s in sigs]
+
+        return sigs, sig_workers
+
+    def chain(self, other):
+        if len(other.targets) == len(self.targets) and \
+           self.task_settings.workload_instances == other.task_settings.workload_instances:
+            chained = WorkloadPhase(
+                self.task, self.target_iterator, self.task_settings, {}, self.timer
+            )
+            chained.chained_phases.append(other)
+            return chained
+        else:
+            raise Exception("Workload phases must have same number of targets "
+                            "and workload instances to be chained")
+
+
 class WorkerManager:
 
     def __new__(cls, *args, **kwargs):
@@ -360,24 +411,16 @@ class RemoteWorkerManager:
             time.sleep(self.PING_INTERVAL)
         logger.info('All remote Celery workers are ready')
 
-    def run_tasks(self,
-                  task: Callable,
-                  task_settings: PhaseSettings,
-                  target_iterator: TargetIterator,
-                  timer: int = None):
+    def run_tasks(self, phase):
         if self.test_config.test_case.reset_workers:
             self.reset_workers()
         self.async_results = []
-        for target in target_iterator:
-            for instance in range(task_settings.workload_instances):
-                worker = self.next_worker()
-                logger.info('Running the task on {}'.format(worker))
-                async_result = task.apply_async(
-                    args=(task_settings, target, timer, instance),
-                    queue=worker, expires=timer,
-                )
-                self.async_results.append(async_result)
-                time.sleep(5)
+        sigs, sig_workers = phase.task_sigs(self.workers)
+        for sig, worker in zip(sigs, sig_workers):
+            logger.info('Running task on {}'.format(worker))
+            async_result = sig.apply_async()
+            self.async_results.append(async_result)
+            time.sleep(5)
 
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')
@@ -489,6 +532,7 @@ class LocalWorkerManager(RemoteWorkerManager):
                  verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+        self.workers = cycle(['localhost'])
         self.terminate()
         self.tune_sqlite()
         self.start()
@@ -497,9 +541,6 @@ class LocalWorkerManager(RemoteWorkerManager):
     @property
     def is_remote(self) -> bool:
         return False
-
-    def next_worker(self) -> str:
-        return next(cycle(['localhost']))
 
     def tune_sqlite(self):
         for db in self.BROKER_DB, self.RESULTS_DB:

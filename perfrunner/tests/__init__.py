@@ -16,7 +16,7 @@ from perfrunner.helpers.profiler import Profiler
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.helpers.worker import WorkerManager, spring_task
+from perfrunner.helpers.worker import WorkerManager, WorkloadPhase, spring_task
 from perfrunner.settings import (
     ClusterSpec,
     PhaseSettings,
@@ -438,87 +438,198 @@ class PerfTest:
         time.sleep(access_settings.time)
 
     def run_phase(self,
-                  phase: str,
-                  task: Callable, settings: PhaseSettings,
-                  target_iterator: Iterable,
-                  timer: int = None,
+                  phase_name: str,
+                  phases: Iterable[WorkloadPhase],
                   wait: bool = True):
-        logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
-        self.worker_manager.run_tasks(task, settings, target_iterator, timer)
+        logger.info('Running {} phase'.format(phase_name))
+
+        if len(phases) > 1:
+            common_task_settings, diff_task_settings = PhaseSettings.compare_phase_settings(
+                [ph.task_settings for ph in phases]
+            )
+
+            # Print out all the settings which are the same for each task
+            logger.info('Settings common to each task: {}'
+                        .format(pretty_dict(common_task_settings)))
+
+            # For each task, print out the settings which are different
+            logger.info('Individual task settings: \n{}'.format(
+                '\n'.join(pretty_dict(d) for d in diff_task_settings)
+            ))
+        else:
+            logger.info('Task settings: {}'.format(pretty_dict(phases[0].task_settings)))
+
+        for phase in phases:
+            self.worker_manager.run_tasks(phase)
+
         if wait:
             self.worker_manager.wait_for_workers()
+
+    def generic_phase(self,
+                      phase_name: str,
+                      default_settings: PhaseSettings,
+                      default_mixed_settings: Iterable[PhaseSettings],
+                      task: Callable = spring_task,
+                      settings: PhaseSettings = None,
+                      target_iterator: Iterable = None,
+                      mixed_tasks: Iterable[Callable] = None,
+                      mixed_settings: Iterable[PhaseSettings] = None,
+                      mixed_target_iterators: Iterable[Iterable] = None,
+                      use_timers: bool = False,
+                      wait: bool = True) -> List[WorkloadPhase]:
+        if settings is None:
+            settings = default_settings
+
+        phases = []
+
+        if not settings.workload_mix and mixed_settings is None:
+            # Do non-mixed workload
+            if target_iterator is None:
+                target_iterator = self.target_iterator
+
+            timer = settings.time if use_timers else None
+
+            phases = [WorkloadPhase(task, target_iterator, settings, timer=timer)]
+        else:
+            # Do mixed workload
+            if mixed_settings is None:
+                mixed_settings = default_mixed_settings
+
+            if mixed_target_iterators is None:
+                mixed_target_iterators = [
+                    TargetIterator(self.cluster_spec, self.test_config,
+                                   buckets=task_settings.bucket_list)
+                    for task_settings in mixed_settings
+                ]
+
+            if mixed_tasks is None:
+                mixed_tasks = [task for _ in mixed_settings]
+
+            phases = [
+                WorkloadPhase(task, t_iter, task_settings,
+                              timer=task_settings.time if use_timers else None)
+                for task, t_iter, task_settings in zip(
+                    mixed_tasks, mixed_target_iterators, mixed_settings
+                )
+            ]
+
+        self.run_phase(phase_name, phases, wait)
 
     def load(self,
              task: Callable = spring_task,
              settings: PhaseSettings = None,
-             target_iterator: Iterable = None):
-        if settings is None:
-            settings = self.test_config.load_settings
-        if target_iterator is None:
-            target_iterator = self.target_iterator
-
-        self.run_phase('load phase',
-                       task, settings, target_iterator)
+             target_iterator: Iterable = None,
+             mixed_tasks: Iterable[Callable] = None,
+             mixed_settings: Iterable[PhaseSettings] = None,
+             mixed_target_iterators: Iterable[Iterable] = None):
+        self.generic_phase(
+            phase_name='load phase',
+            default_settings=self.test_config.load_settings,
+            default_mixed_settings=self.test_config.mixed_load_settings,
+            task=task,
+            settings=settings,
+            target_iterator=target_iterator,
+            mixed_tasks=mixed_tasks,
+            mixed_settings=mixed_settings,
+            mixed_target_iterators=mixed_target_iterators
+        )
 
     def load_bg(self,
                 task: Callable = spring_task,
                 settings: PhaseSettings = None,
-                target_iterator: Iterable = None):
-        if settings is None:
-            settings = self.test_config.load_settings
-        if target_iterator is None:
-            target_iterator = self.target_iterator
-
-        self.run_phase('load phase',
-                       task, settings, target_iterator, wait=False)
+                target_iterator: Iterable = None,
+                mixed_tasks: Iterable[Callable] = None,
+                mixed_settings: Iterable[PhaseSettings] = None,
+                mixed_target_iterators: Iterable[Iterable] = None):
+        self.generic_phase(
+            phase_name='load phase',
+            default_settings=self.test_config.load_settings,
+            default_mixed_settings=self.test_config.mixed_load_settings,
+            task=task,
+            settings=settings,
+            target_iterator=target_iterator,
+            mixed_tasks=mixed_tasks,
+            mixed_settings=mixed_settings,
+            mixed_target_iterators=mixed_target_iterators,
+            wait=False
+        )
 
     def hot_load(self,
                  task: Callable = spring_task,
                  settings: PhaseSettings = None,
-                 target_iterator: Iterable = None):
-        if settings is None:
-            settings = self.test_config.hot_load_settings
-        if target_iterator is None:
-            target_iterator = self.target_iterator
-
-        self.run_phase('hot load phase',
-                       task, settings, target_iterator)
+                 target_iterator: Iterable = None,
+                 mixed_tasks: Iterable[Callable] = None,
+                 mixed_settings: Iterable[PhaseSettings] = None,
+                 mixed_target_iterators: Iterable[Iterable] = None):
+        self.generic_phase(
+            phase_name='hot load phase',
+            default_settings=self.test_config.hot_load_settings,
+            default_mixed_settings=self.test_config.mixed_hot_load_settings,
+            task=task,
+            settings=settings,
+            target_iterator=target_iterator,
+            mixed_tasks=mixed_tasks,
+            mixed_settings=mixed_settings,
+            mixed_target_iterators=mixed_target_iterators
+        )
 
     def xattr_load(self,
                    task: Callable = spring_task,
-                   target_iterator: Iterable = None):
-        if target_iterator is None:
-            target_iterator = self.target_iterator
-        settings = self.test_config.xattr_load_settings
-
-        self.run_phase('xattr phase',
-                       task, settings, target_iterator)
+                   target_iterator: Iterable = None,
+                   mixed_tasks: Iterable[Callable] = None,
+                   mixed_target_iterators: Iterable[Iterable] = None):
+        self.generic_phase(
+            phase_name='xattr phase',
+            default_settings=self.test_config.xattr_load_settings,
+            default_mixed_settings=self.test_config.mixed_xattr_load_settings,
+            task=task,
+            settings=None,
+            target_iterator=target_iterator,
+            mixed_tasks=mixed_tasks,
+            mixed_settings=None,
+            mixed_target_iterators=mixed_target_iterators
+        )
 
     def access(self,
                task: Callable = spring_task,
                settings: PhaseSettings = None,
-               target_iterator: Iterable = None):
-        if settings is None:
-            settings = self.test_config.access_settings
-        if target_iterator is None:
-            target_iterator = self.target_iterator
-
-        self.run_phase('access phase',
-                       task, settings, target_iterator,
-                       timer=settings.time)
+               target_iterator: Iterable = None,
+               mixed_tasks: Iterable[Callable] = None,
+               mixed_settings: Iterable[PhaseSettings] = None,
+               mixed_target_iterators: Iterable[Iterable] = None):
+        self.generic_phase(
+            phase_name='access phase',
+            default_settings=self.test_config.access_settings,
+            default_mixed_settings=self.test_config.mixed_access_settings,
+            task=task,
+            settings=settings,
+            target_iterator=target_iterator,
+            mixed_tasks=mixed_tasks,
+            mixed_settings=mixed_settings,
+            mixed_target_iterators=mixed_target_iterators,
+            use_timers=True
+        )
 
     def access_bg(self,
                   task: Callable = spring_task,
                   settings: PhaseSettings = None,
-                  target_iterator: Iterable = None):
-        if settings is None:
-            settings = self.test_config.access_settings
-        if target_iterator is None:
-            target_iterator = self.target_iterator
-
-        self.run_phase('background access phase',
-                       task, settings, target_iterator,
-                       timer=settings.time, wait=False)
+                  target_iterator: Iterable = None,
+                  mixed_tasks: Iterable[Callable] = None,
+                  mixed_settings: Iterable[PhaseSettings] = None,
+                  mixed_target_iterators: Iterable[Iterable] = None):
+        self.generic_phase(
+            phase_name='background access phase',
+            default_settings=self.test_config.access_settings,
+            default_mixed_settings=self.test_config.mixed_access_settings,
+            task=task,
+            settings=settings,
+            target_iterator=target_iterator,
+            mixed_tasks=mixed_tasks,
+            mixed_settings=mixed_settings,
+            mixed_target_iterators=mixed_target_iterators,
+            use_timers=True,
+            wait=False
+        )
 
     def report_kpi(self, *args, **kwargs):
         if self.test_config.stats_settings.enabled:

@@ -933,6 +933,9 @@ class PhaseSettings:
 
     LATENCY_PERCENTILES = [99.9]
 
+    WORKLOAD_MIX = None
+    NUM_BUCKETS = 0
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -1174,14 +1177,84 @@ class PhaseSettings:
                                                   self.SPLIT_WORKLOAD_WORKERS)
         self.n1ql_shutdown_type = options.get('n1ql_shutdown_type', self.N1QL_SHUTDOWN_TYPE)
 
+        self.workload_mix = []
+        workload_mix = options.get('workload_mix', self.WORKLOAD_MIX)
+        if workload_mix:
+            self.workload_mix = workload_mix.split(',')
+        self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
+
     def __str__(self) -> str:
         return str(self.__dict__)
+
+    def configure_doc_settings(self, load_settings):
+        self.doc_gen = load_settings.doc_gen
+        self.array_size = load_settings.array_size
+        self.num_categories = load_settings.num_categories
+        self.num_replies = load_settings.num_replies
+        self.size = load_settings.size
+        self.key_fmtr = load_settings.key_fmtr
+
+    def configure_client_settings(self, client_settings):
+        if hasattr(client_settings, "pillowfight"):
+            self.custom_pillowfight = True
+
+    def configure_collection_settings(self, collection_settings):
+        if collection_settings.collection_map is not None:
+            self.collections = collection_settings.collection_map
+
+    def configure_user_settings(self, user_settings):
+        self.users = user_settings.num_users_per_bucket
+
+    def configure_java_dcp_settings(self, java_dcp_settings):
+        self.java_dcp_config = java_dcp_settings.config
+        self.java_dcp_clients = java_dcp_settings.clients
+        self.java_dcp_stream = java_dcp_settings.stream
+
+    def configure(self, test_config):
+        raise NotImplementedError()
+
+    @staticmethod
+    def compare_phase_settings(settings_list) -> Tuple[dict, list[dict]]:
+        options = [set(s.__dict__) for s in settings_list]
+        all_options = set.union(*options)
+        diff_options = all_options - set.intersection(*options)
+        for option in all_options:
+            values = []
+            for settings in settings_list:
+                if hasattr(settings, option):
+                    v = getattr(settings, option)
+                    if not values:
+                        values.append(v)
+                    else:
+                        if v != values[-1]:
+                            diff_options.add(option)
+                            break
+                else:
+                    diff_options.add(option)
+
+        common_settings = {
+            option: getattr(settings_list[0], option)
+            for option in all_options - diff_options
+        }
+
+        # For each task, print out the settings which are different
+        diff_settings = [
+            {option: getattr(settings, option, None) for option in diff_options}
+            for settings in settings_list
+        ]
+
+        return common_settings, diff_settings
 
 
 class LoadSettings(PhaseSettings):
 
     CREATES = 100
     SEQ_UPSERTS = True
+
+    def configure(self, test_config):
+        self.configure_client_settings(test_config.client_settings)
+        self.configure_collection_settings(test_config.collection)
+        self.bucket_list = test_config.buckets
 
 
 class JTSAccessSettings(PhaseSettings):
@@ -1264,15 +1337,27 @@ class JTSAccessSettings(PhaseSettings):
     def __str__(self) -> str:
         return str(self.__dict__)
 
+    def configure(self, test_config):
+        pass
+
 
 class HotLoadSettings(PhaseSettings):
 
     HOT_READS = True
 
+    def configure(self, test_config):
+        self.configure_doc_settings(test_config.load_settings)
+        self.configure_client_settings(test_config.client_settings)
+        self.configure_collection_settings(test_config.collection)
+        self.bucket_list = test_config.buckets
+
 
 class XattrLoadSettings(PhaseSettings):
 
     SEQ_UPSERTS = True
+
+    def configure(self, test_config):
+        self.bucket_list = test_config.buckets
 
 
 class RestoreSettings:
@@ -1653,10 +1738,43 @@ class AccessSettings(PhaseSettings):
             queries.append(query)
         self.n1ql_queries = queries
 
+    def configure(self, test_config):
+        self.configure_java_dcp_settings(test_config.java_dcp_settings)
+        self.configure_client_settings(test_config.client_settings)
+        self.configure_user_settings(test_config.users)
+        self.configure_collection_settings(test_config.collection)
+
+        load_settings = test_config.load_settings
+        self.configure_doc_settings(load_settings)
+        self.doc_groups = load_settings.doc_groups
+        self.range_distance = load_settings.range_distance
+
+        if self.split_workload is not None:
+            with open(self.split_workload) as f:
+                self.split_workload = json.load(f)
+
+        if hasattr(self, 'n1ql_queries'):
+            self.define_queries(test_config)
+
+        self.bucket_list = test_config.buckets
+
 
 class ExtraAccessSettings(PhaseSettings):
 
     OPS = float('inf')
+
+    def configure(self, test_config):
+        self.configure_java_dcp_settings(test_config.java_dcp_settings)
+        self.configure_client_settings(test_config.client_settings)
+        self.configure_user_settings(test_config.users)
+        self.configure_collection_settings(test_config.collection)
+
+        load_settings = test_config.load_settings
+        self.configure_doc_settings(load_settings)
+        self.doc_groups = load_settings.doc_groups
+        self.range_distance = load_settings.range_distance
+
+        self.bucket_list = test_config.buckets
 
 
 class BackupSettings:
@@ -2339,6 +2457,15 @@ class SyncgatewaySettings:
 
 class TestConfig(Config):
 
+    def _configure_phase_settings(method):  # noqa: N805
+        """Decorate phase settings properties to configure them."""
+        def wrapper(self):
+            phase_settings = method(self)
+            phase_settings.configure(self)
+            return phase_settings
+
+        return wrapper
+
     @property
     def test_case(self) -> TestCaseSettings:
         options = self._get_options_as_dict('test_case')
@@ -2416,53 +2543,49 @@ class TestConfig(Config):
         return ImportSettings(options)
 
     @property
+    @_configure_phase_settings
     def load_settings(self):
         load_options = self._get_options_as_dict('load')
         load_settings = LoadSettings(load_options)
-
-        client_options = self._get_options_as_dict('clients')
-        client_settings = ClientSettings(client_options)
-        if hasattr(client_settings, "pillowfight"):
-            load_settings.custom_pillowfight = True
-
-        collection_options = self._get_options_as_dict('collection')
-        collection_settings = CollectionSettings(collection_options)
-        if collection_settings.collection_map is not None:
-            load_settings.collections = collection_settings.collection_map
-        load_settings.bucket_list = self.buckets
         return load_settings
 
     @property
+    def mixed_load_settings(self) -> List[LoadSettings]:
+        base_settings = self.load_settings
+        mix = []
+        if base_settings.workload_mix:
+            mix = self._get_mixed_phase_settings('load', base_settings)
+        return mix
+
+    @property
+    @_configure_phase_settings
     def hot_load_settings(self) -> HotLoadSettings:
         options = self._get_options_as_dict('hot_load')
         hot_load = HotLoadSettings(options)
-
-        load = self.load_settings
-        hot_load.doc_gen = load.doc_gen
-        hot_load.array_size = load.array_size
-        hot_load.num_categories = load.num_categories
-        hot_load.num_replies = load.num_replies
-        hot_load.size = load.size
-        hot_load.key_fmtr = load.key_fmtr
-
-        client_options = self._get_options_as_dict('clients')
-        client_settings = ClientSettings(client_options)
-        if hasattr(client_settings, "pillowfight"):
-            hot_load.custom_pillowfight = True
-
-        collection_options = self._get_options_as_dict('collection')
-        collection_settings = CollectionSettings(collection_options)
-        if collection_settings.collection_map is not None:
-            hot_load.collections = collection_settings.collection_map
-        hot_load.bucket_list = self.buckets
         return hot_load
 
     @property
+    def mixed_hot_load_settings(self) -> List[HotLoadSettings]:
+        base_settings = self.hot_load_settings
+        mix = []
+        if base_settings.workload_mix:
+            mix = self._get_mixed_phase_settings('hot_load', base_settings)
+        return mix
+
+    @property
+    @_configure_phase_settings
     def xattr_load_settings(self) -> XattrLoadSettings:
         options = self._get_options_as_dict('xattr_load')
         xattr_settings = XattrLoadSettings(options)
-        xattr_settings.bucket_list = self.buckets
         return xattr_settings
+
+    @property
+    def mixed_xattr_load_settings(self) -> List[XattrLoadSettings]:
+        base_settings = self.xattr_load_settings
+        mix = []
+        if base_settings.workload_mix:
+            mix = self._get_mixed_phase_settings('xattr_load', base_settings)
+        return mix
 
     @property
     def xdcr_settings(self) -> XDCRSettings:
@@ -2514,86 +2637,34 @@ class TestConfig(Config):
         return ExportSettings(options)
 
     @property
+    @_configure_phase_settings
     def access_settings(self) -> AccessSettings:
         options = self._get_options_as_dict('access')
         access = AccessSettings(options)
-
-        java_dcp_options = self._get_options_as_dict('java_dcp')
-        java_dcp_settings = JavaDCPSettings(java_dcp_options)
-        access.java_dcp_config = java_dcp_settings.config
-        access.java_dcp_clients = java_dcp_settings.clients
-        access.java_dcp_stream = java_dcp_settings.stream
-
-        client_options = self._get_options_as_dict('clients')
-        client_settings = ClientSettings(client_options)
-        if hasattr(client_settings, "pillowfight"):
-            access.custom_pillowfight = True
-
-        user_options = self._get_options_as_dict('users')
-        user_settings = UserSettings(user_options)
-        access.users = user_settings.num_users_per_bucket
-
-        collection_options = self._get_options_as_dict('collection')
-        collection_settings = CollectionSettings(collection_options)
-        if collection_settings.collection_map is not None:
-            access.collections = collection_settings.collection_map
-
-        if access.split_workload is not None:
-            with open(access.split_workload) as f:
-                access.split_workload = json.load(f)
-
-        if hasattr(access, 'n1ql_queries'):
-            access.define_queries(self)
-
-        load_settings = self.load_settings
-        access.doc_gen = load_settings.doc_gen
-        access.doc_groups = load_settings.doc_groups
-        access.range_distance = load_settings.range_distance
-        access.array_size = load_settings.array_size
-        access.num_categories = load_settings.num_categories
-        access.num_replies = load_settings.num_replies
-        access.size = load_settings.size
-        access.key_fmtr = load_settings.key_fmtr
-        access.bucket_list = self.buckets
-
         return access
 
     @property
+    def mixed_access_settings(self) -> List[AccessSettings]:
+        base_settings = self.access_settings
+        mix = []
+        if base_settings.workload_mix:
+            mix = self._get_mixed_phase_settings('access', base_settings)
+        return mix
+
+    @property
+    @_configure_phase_settings
     def extra_access_settings(self) -> ExtraAccessSettings:
         options = self._get_options_as_dict('extra_access')
         extra_access = ExtraAccessSettings(options)
-
-        java_dcp_options = self._get_options_as_dict('java_dcp')
-        java_dcp_settings = JavaDCPSettings(java_dcp_options)
-        extra_access.java_dcp_config = java_dcp_settings.config
-        extra_access.java_dcp_clients = java_dcp_settings.clients
-        extra_access.java_dcp_stream = java_dcp_settings.stream
-
-        client_options = self._get_options_as_dict('clients')
-        client_settings = ClientSettings(client_options)
-        if hasattr(client_settings, "pillowfight"):
-            extra_access.custom_pillowfight = True
-
-        user_options = self._get_options_as_dict('users')
-        user_settings = UserSettings(user_options)
-        extra_access.users = user_settings.num_users_per_bucket
-
-        collection_options = self._get_options_as_dict('collection')
-        collection_settings = CollectionSettings(collection_options)
-        if collection_settings.collection_map is not None:
-            extra_access.collections = collection_settings.collection_map
-
-        load_settings = self.load_settings
-        extra_access.doc_gen = load_settings.doc_gen
-        extra_access.range_distance = load_settings.range_distance
-        extra_access.array_size = load_settings.array_size
-        extra_access.num_categories = load_settings.num_categories
-        extra_access.num_replies = load_settings.num_replies
-        extra_access.size = load_settings.size
-        extra_access.key_fmtr = load_settings.key_fmtr
-        extra_access.bucket_list = self.buckets
-
         return extra_access
+
+    @property
+    def mixed_extra_access_settings(self) -> List[ExtraAccessSettings]:
+        base_settings = self.extra_access_settings
+        mix = []
+        if base_settings.workload_mix:
+            mix = self._get_mixed_phase_settings('extra_access', base_settings)
+        return mix
 
     @property
     def rebalance_settings(self) -> RebalanceSettings:
@@ -2713,6 +2784,23 @@ class TestConfig(Config):
         options = self._get_options_as_dict('syncgateway')
         return SyncgatewaySettings(options)
 
+    def _get_mixed_phase_settings(self, base_section, base_settings):
+        settings_cls = type(base_settings)
+        mix = []
+
+        bucket_offset = 0
+        for section in base_settings.workload_mix:
+            phase_options = self._get_options_as_dict(base_section)
+            override_options = self._get_options_as_dict('{}-{}'.format(base_section, section))
+            phase_options.update(override_options)
+            phase = settings_cls(phase_options)
+            phase.configure(self)
+            phase.bucket_list = self.buckets[bucket_offset:bucket_offset + phase.num_buckets]
+            bucket_offset += phase.num_buckets
+            mix.append(phase)
+
+        return mix
+
 
 class TargetSettings:
 
@@ -2740,10 +2828,12 @@ class TargetIterator(Iterable):
     def __init__(self,
                  cluster_spec: ClusterSpec,
                  test_config: TestConfig,
-                 prefix: str = None):
+                 prefix: str = None,
+                 buckets: Iterable[str] = None):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.prefix = prefix
+        self.buckets = list(buckets) if buckets else self.test_config.buckets
 
     def __iter__(self) -> Iterator[TargetSettings]:
         username = self.cluster_spec.rest_credentials[0]
@@ -2756,7 +2846,7 @@ class TargetIterator(Iterable):
             password = self.cluster_spec.rest_credentials[1]
         prefix = self.prefix
         for master in self.cluster_spec.masters:
-            for bucket in self.test_config.buckets:
+            for bucket in self.buckets:
                 if "perfrunner.tests.views" in self.test_config.test_case.test_module:
                     username = bucket
                     password = self.test_config.bucket.password

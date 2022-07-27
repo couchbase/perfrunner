@@ -9,6 +9,7 @@ from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import (
+    WorkloadPhase,
     jts_run_task,
     jts_warmup_task,
     spring_task,
@@ -50,9 +51,7 @@ class JTSTest(PerfTest):
     def run_test(self):
         self.run_phase(
             'jts run phase',
-            jts_run_task,
-            self.access,
-            self.target_iterator
+            [WorkloadPhase(jts_run_task, self.target_iterator, self.access)]
         )
         self._download_logs()
 
@@ -60,9 +59,7 @@ class JTSTest(PerfTest):
         if int(self.access.warmup_query_workers) > 0:
             self.run_phase(
                 'jts warmup phase',
-                jts_warmup_task,
-                self.access,
-                self.target_iterator
+                [WorkloadPhase(jts_warmup_task, self.target_iterator, self.access)]
             )
 
     def _download_logs(self):
@@ -362,9 +359,7 @@ class FTSTest(JTSTest):
         settings.seq_upserts = False
         self.run_phase(
             'data spread',
-            spring_task,
-            settings,
-            self.target_iterator
+            [WorkloadPhase(spring_task, self.target_iterator, settings)]
         )
 
     def data_restore(self):

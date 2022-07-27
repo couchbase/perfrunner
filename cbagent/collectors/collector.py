@@ -33,6 +33,9 @@ class Collector:
         self.nodes = list(self.get_nodes())
         self.ssh_username = getattr(settings, 'ssh_username', None)
         self.ssh_password = getattr(settings, 'ssh_password', None)
+        self.remote_workers = settings.remote
+        if self.remote_workers:
+            self.remote_worker_home = settings.remote_worker_home
 
         self.store = PerfStore(settings.cbmonitor_host)
         self.mc = MetadataClient(settings)

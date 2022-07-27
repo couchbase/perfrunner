@@ -102,7 +102,8 @@ def new_cbagent_settings(test: PerfTest):
         'traced_processes': test.test_config.stats_settings.traced_processes,
         'bucket_password': test.test_config.bucket.password,
         'workers': test.cluster_spec.workers,
-        'cloud': {"enabled": False}
+        'cloud': {"enabled": False},
+        'remote': test.worker_manager.is_remote
     })()
 
     settings.ssh_username, settings.ssh_password = \
@@ -125,6 +126,9 @@ def new_cbagent_settings(test: PerfTest):
     settings.is_n2n = False
     if test.test_config.cluster.enable_n2n_encryption is not None:
         settings.is_n2n = True
+
+    if settings.remote:
+        settings.remote_worker_home = test.worker_manager.WORKER_HOME
 
     return settings
 

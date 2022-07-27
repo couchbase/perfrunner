@@ -41,6 +41,8 @@ class Remote:
         with cd(worker_home):
             run('git clone -q {}'.format(REPO))
             with cd('perfrunner'):
+                run('git fetch https://review.couchbase.org/perfrunner refs/changes/69/177969/4 && '
+                    'git cherry-pick FETCH_HEAD')
                 run('make')
 
     @all_clients

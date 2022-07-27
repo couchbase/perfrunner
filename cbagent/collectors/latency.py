@@ -4,6 +4,7 @@ import glob
 from typing import Iterator
 
 from aiohttp import ClientSession
+from fabric.api import cd, execute, get, parallel, run
 
 from cbagent.collectors.collector import Collector
 
@@ -37,8 +38,17 @@ class KVLatency(Latency):
     def collect(self):
         pass
 
-    def read_stats(self) -> Iterator:
-        for filename in glob.glob(self.PATTERN):
+    def get_remote_stat_files(self):
+        def task():
+            with cd(self.remote_worker_home), cd('perfrunner'):
+                r = run('stat {}'.format(self.PATTERN), quiet=True)
+                if not r.return_code:
+                    get(self.PATTERN, local_path='./')
+
+        execute(parallel(task), hosts=self.workers)
+
+    def read_stats(self, bucket: str) -> Iterator:
+        for filename in glob.glob(self.PATTERN + bucket):
             with open(filename) as fh:
                 reader = csv.reader(fh)
                 for line in reader:
@@ -46,7 +56,7 @@ class KVLatency(Latency):
 
     async def post_results(self, bucket: str):
         async with ClientSession() as self.store.async_session:
-            for line in self.read_stats():
+            for line in self.read_stats(bucket):
                 operation = line[0]
                 timestamp = line[1]
                 latency = line[2]
@@ -70,6 +80,8 @@ class KVLatency(Latency):
                                                   collector=self.COLLECTOR)
 
     def reconstruct(self):
+        if self.remote_workers:
+            self.get_remote_stat_files()
         loop = asyncio.get_event_loop()
         for bucket in self.get_buckets():
             loop.run_until_complete(self.post_results(bucket))

@@ -54,9 +54,10 @@ class MixedLatencyTest(ReadLatencyTest):
 
     def _report_kpi(self):
         for operation in ('get', 'set'):
-            self.reporter.post(
-                *self.metrics.kv_latency(operation=operation)
-            )
+            for percentile in self.test_config.access_settings.latency_percentiles:
+                self.reporter.post(
+                    *self.metrics.kv_latency(operation=operation, percentile=percentile)
+                )
 
     def run(self):
         self.load()

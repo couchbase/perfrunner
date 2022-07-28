@@ -1,6 +1,6 @@
 import time
 
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import with_cloudwatch, with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import RebalanceKVTest
 from perfrunner.tests.ycsb import YCSBN1QLTest
@@ -11,8 +11,6 @@ class CloudTest(PerfTest):
     def __init__(self, *args):
         super().__init__(*args)
         self.server_processes = ['beam.smp',
-                                 'cbq-engine',
-                                 'indexer',
                                  'memcached',
                                  'projector',
                                  'prometheus']
@@ -58,6 +56,7 @@ class CloudIdleDocsTest(CloudIdleTest):
                 *self.metrics.avg_server_process_cpu(process)
             )
 
+    @with_cloudwatch
     @with_stats
     def access(self, *args):
         time.sleep(self.test_config.access_settings.time)
@@ -67,6 +66,8 @@ class CloudIdleDocsTest(CloudIdleTest):
         self.wait_for_persistence()
         self.check_num_items()
         self.compact_bucket()
+        self.remote.restart()
+        time.sleep(200)
         self.access()
         self.report_kpi()
 

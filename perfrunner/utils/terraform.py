@@ -311,6 +311,7 @@ class CapellaTerraform(Terraform):
         self.use_internal_api = (
             (self.options.capella_cb_version and self.options.capella_ami) or self.backend == 'gcp'
         )
+        self.capella_timeout = max(0, self.options.capella_timeout)
 
     def deploy(self):
         # Configure terraform
@@ -487,9 +488,10 @@ class CapellaTerraform(Terraform):
         logger.info('Saving cluster ID to spec file.')
 
         self.infra_spec.config.set('infrastructure', 'cbc_cluster', cluster_id)
+        self.infra_spec.config.set('infrastructure', 'cbc_use_internal_api', "1")
         self.infra_spec.update_spec_file()
 
-        timeout_mins = 20
+        timeout_mins = self.capella_timeout
         interval_secs = 30
         status = None
         t0 = time()
@@ -502,7 +504,7 @@ class CapellaTerraform(Terraform):
                 break
 
         if status != 'healthy':
-            logger.error('Deployment timed out after 20 mins')
+            logger.error('Deployment timed out after {} mins'.format(timeout_mins))
             exit(1)
 
         return cluster_id
@@ -787,6 +789,10 @@ def get_args():
                        help='cb version to use for Capella deployment')
     parse.add_argument('--capella-ami',
                        help='custom AMI to use for Capella deployment')
+    parse.add_argument('--capella-timeout',
+                       type=int,
+                       default=20,
+                       help='Timeout (minutes) for Capella deployment when using internal API')
     parse.add_argument('-t', '--tag',
                        help='Global tag for launched instances.')
 

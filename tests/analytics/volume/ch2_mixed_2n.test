@@ -53,3 +53,6 @@ warmup_iterations = 1
 duration = 0
 warmup_duration = 0
 workload = ch2_mixed
+
+[clients]
+python_client = 4.0.2

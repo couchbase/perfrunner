@@ -54,7 +54,6 @@ class Terraform:
         self.options = options
         self.infra_spec = ClusterSpec()
         self.infra_spec.parse(self.options.cluster)
-        self.output = {}
         self.provider = self.infra_spec.cloud_provider
         self.backend = None
         self.uuid = uuid4().hex[0:6] if self.provider != 'aws' else None
@@ -298,16 +297,32 @@ class CapellaTerraform(Terraform):
     def __init__(self, options):
         super().__init__(options)
         self.backend = self.infra_spec.infrastructure_settings['backend']
-        self.cbc_env = self.infra_spec.infrastructure_settings['cbc_env']
+
+        if public_api_url := self.options.capella_public_api_url:
+            env = public_api_url.removeprefix('https://').split('.')[1]
+            self.infra_spec.config.set('infrastructure', 'cbc_env', env)
+
+        if tenant := self.options.capella_tenant:
+            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
+
+        if project := self.options.capella_project:
+            self.infra_spec.config.set('infrastructure', 'cbc_project', project)
+
+        self.infra_spec.update_spec_file()
+
         self.tenant_id = self.infra_spec.infrastructure_settings['cbc_tenant']
         self.project_id = self.infra_spec.infrastructure_settings['cbc_project']
+
         self.api_client = CapellaAPI(
-            'https://cloudapi.{}.nonprod-project-avengers.com'.format(self.cbc_env),
+            'https://cloudapi.{}.nonprod-project-avengers.com'.format(
+                self.infra_spec.infrastructure_settings['cbc_env']
+            ),
             os.getenv('CBC_SECRET_KEY'),
             os.getenv('CBC_ACCESS_KEY'),
             os.getenv('CBC_USER'),
             os.getenv('CBC_PWD')
         )
+
         self.use_internal_api = (
             (self.options.capella_cb_version and self.options.capella_ami) or self.backend == 'gcp'
         )
@@ -347,6 +362,7 @@ class CapellaTerraform(Terraform):
 
         # Destroy capella cluster
         use_internal_api = self.infra_spec.infrastructure_settings.get('cbc_use_internal_api', 0)
+
         if int(use_internal_api):
             cluster_id = self.infra_spec.infrastructure_settings['cbc_cluster']
             self.destroy_cluster_internal_api(cluster_id)
@@ -761,20 +777,34 @@ class EKSTerraform(Terraform):
 
 # CLI args.
 def get_args():
-    parse = ArgumentParser()
+    parser = ArgumentParser()
 
-    parse.add_argument('-c', '--cluster',
-                       required=True,
-                       help='the path to a infrastructure specification file')
-    parse.add_argument('--verbose',
-                       action='store_true',
-                       help='enable verbose logging')
-    parse.add_argument('-r', '--region',
-                       choices=['us-east-1', 'us-west-2'],
-                       default='us-east-1',
-                       help='the cloud region (AWS)')
-    parse.add_argument('-z', '--zone',
-                       choices=[
+    parser.add_argument('-c', '--cluster',
+                        required=True,
+                        help='the path to a infrastructure specification file')
+    parser.add_argument('--verbose',
+                        action='store_true',
+                        help='enable verbose logging')
+    parser.add_argument('-r', '--region',
+                        choices=[
+                            'us-east-1',
+                            'us-east-2',
+                            'us-west-2',
+                            'ca-central-1',
+                            'ap-northeast-1',
+                            'ap-northeast-2',
+                            'ap-southeast-1',
+                            'ap-south-1',
+                            'eu-west-1',
+                            'eu-west-2',
+                            'eu-west-3',
+                            'eu-central-1',
+                            'sa-east-1'
+                        ],
+                        default='us-east-1',
+                        help='the cloud region (AWS)')
+    parser.add_argument('-z', '--zone',
+                        choices=[
                            'us-central1-a',
                            'us-central1-b',
                            'us-central1-c'
@@ -782,21 +812,27 @@ def get_args():
                            'us-west1-a',
                            'us-west1-b',
                            'us-west1-c'
-                       ],
-                       default='us-west1-b',
-                       help='the cloud zone (GCP)')
-    parse.add_argument('--capella-cb-version',
-                       help='cb version to use for Capella deployment')
-    parse.add_argument('--capella-ami',
-                       help='custom AMI to use for Capella deployment')
-    parse.add_argument('--capella-timeout',
-                       type=int,
-                       default=20,
-                       help='Timeout (minutes) for Capella deployment when using internal API')
-    parse.add_argument('-t', '--tag',
-                       help='Global tag for launched instances.')
+                        ],
+                        default='us-west1-b',
+                        help='the cloud zone (GCP)')
+    parser.add_argument('--capella-public-api-url',
+                        help='public API URL for Capella environment')
+    parser.add_argument('--capella-tenant',
+                        help='tenant ID for Capella deployment')
+    parser.add_argument('--capella-project',
+                        help='project ID for Capella deployment')
+    parser.add_argument('--capella-cb-version',
+                        help='cb version to use for Capella deployment')
+    parser.add_argument('--capella-ami',
+                        help='custom AMI to use for Capella deployment')
+    parser.add_argument('--capella-timeout',
+                        type=int,
+                        default=20,
+                        help='Timeout (minutes) for Capella deployment when using internal API')
+    parser.add_argument('-t', '--tag',
+                        help='Global tag for launched instances.')
 
-    return parse.parse_args()
+    return parser.parse_args()
 
 
 def destroy():

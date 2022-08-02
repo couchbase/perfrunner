@@ -479,6 +479,11 @@ class ClusterManager:
         if self.test_config.cluster.serverless_mode == 'enabled':
             self.remote.enable_serverless_mode()
 
+    def serverless_throttle(self):
+        if self.test_config.cluster.serverless_throttle is not None:
+            self.rest.set_serverless_throttle(self.master_node,
+                                              self.test_config.cluster.serverless_throttle)
+
     def restart_with_alternative_num_vbuckets(self):
         num_vbuckets = self.test_config.cluster.num_vbuckets
         if num_vbuckets is not None:

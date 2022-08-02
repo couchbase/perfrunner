@@ -75,6 +75,7 @@ def main():
         cm.configure_auto_compaction()
         cm.enable_audit()
         cm.set_magma_min_quota()
+        cm.serverless_throttle()
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()

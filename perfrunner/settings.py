@@ -442,6 +442,7 @@ class ClusterSettings:
     BUCKET_NAME = 'bucket-1'
     DISABLE_UI_HTTP = None
     SERVERLESS_MODE = None
+    SERVERLESS_THROTTLE = None
 
     IPv6 = 0
 
@@ -484,6 +485,7 @@ class ClusterSettings:
                                                  self.ENABLE_N2N_ENCRYPTION)
         self.ui_http = options.get('ui_http', self.DISABLE_UI_HTTP)
         self.serverless_mode = options.get('serverless_mode', self.SERVERLESS_MODE)
+        self.serverless_throttle = options.get('serverless_throttle', self.SERVERLESS_THROTTLE)
 
         kernel_mem_limit_services = options.get('kernel_mem_limit_services')
         if kernel_mem_limit_services:

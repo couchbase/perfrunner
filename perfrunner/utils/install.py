@@ -66,15 +66,15 @@ class OperatorInstaller:
         self.operator_version = self.options.operator_version
         if "-" in self.operator_version:
             self.operator_release = self.operator_version.split("-")[0]
-            self.operator_tag = 'registry.gitlab.com/cb-vanilla/operator:{}'\
+            self.operator_tag = 'registry.gitlab.com/cb-vanilla/operator:{}' \
                 .format(self.operator_version)
             self.admission_controller_release = self.operator_version.split("-")[0]
             self.admission_controller_tag = \
-                'registry.gitlab.com/cb-vanilla/admission-controller:{}' \
-                .format(self.operator_version)
+                'registry.gitlab.com/cb-vanilla/' \
+                'admission-controller:{}'.format(self.operator_version)
         else:
             self.operator_release = self.operator_version
-            self.operator_tag = 'couchbase/operator:{}'\
+            self.operator_tag = 'couchbase/operator:{}' \
                 .format(self.operator_version)
             self.admission_controller_release = self.operator_version
             self.admission_controller_tag = 'couchbase/admission-controller:{}' \
@@ -83,22 +83,22 @@ class OperatorInstaller:
         self.couchbase_version = self.options.couchbase_version
         if "-" in self.couchbase_version:
             self.couchbase_release = self.couchbase_version.split("-")[0]
-            self.couchbase_tag = 'registry.gitlab.com/cb-vanilla/server:{}'\
+            self.couchbase_tag = 'registry.gitlab.com/cb-vanilla/server:{}' \
                 .format(self.couchbase_version)
         else:
             self.couchbase_release = self.couchbase_version
-            self.couchbase_tag = 'couchbase/server:{}'\
+            self.couchbase_tag = 'couchbase/server:{}' \
                 .format(self.couchbase_version)
 
         self.operator_backup_version = self.options.operator_backup_version
         if self.operator_backup_version:
             if "-" in self.operator_backup_version:
                 self.operator_backup_release = self.operator_backup_version.split("-")[0]
-                self.operator_backup_tag = 'registry.gitlab.com/cb-vanilla/operator-backup:{}'\
+                self.operator_backup_tag = 'registry.gitlab.com/cb-vanilla/operator-backup:{}' \
                     .format(self.operator_backup_version)
             else:
                 self.operator_backup_release = self.operator_backup_version
-                self.operator_backup_tag = 'couchbase/operator-backup/{}'\
+                self.operator_backup_tag = 'couchbase/operator-backup/{}' \
                     .format(self.operator_backup_version)
         else:
             self.operator_backup_tag = 'registry.gitlab.com/cb-vanilla/operator-backup:latest'
@@ -108,30 +108,30 @@ class OperatorInstaller:
         self.remote = RemoteHelper(cluster_spec)
 
         self.docker_config_path = os.path.expanduser("~") + "/.docker/config.json"
-        self.operator_base_path = "cloud/operator/{}/{}"\
+        self.operator_base_path = "cloud/operator/{}/{}" \
             .format(self.operator_release.split(".")[0],
                     self.operator_release.split(".")[1])
-        self.certificate_authority_path = "{}/ca.crt"\
+        self.certificate_authority_path = "{}/ca.crt" \
             .format(self.operator_base_path)
-        self.crd_path = "{}/crd.yaml"\
+        self.crd_path = "{}/crd.yaml" \
             .format(self.operator_base_path)
-        self.config_path = "{}/config.yaml"\
+        self.config_path = "{}/config.yaml" \
             .format(self.operator_base_path)
-        self.config_template_path = "{}/config_template.yaml"\
+        self.config_template_path = "{}/config_template.yaml" \
             .format(self.operator_base_path)
-        self.auth_path = "{}/auth_secret.yaml"\
+        self.auth_path = "{}/auth_secret.yaml" \
             .format(self.operator_base_path)
-        self.cb_cluster_path = "{}/couchbase-cluster.yaml"\
+        self.cb_cluster_path = "{}/couchbase-cluster.yaml" \
             .format(self.operator_base_path)
-        self.template_cb_cluster_path = "{}/couchbase-cluster_template.yaml"\
+        self.template_cb_cluster_path = "{}/couchbase-cluster_template.yaml" \
             .format(self.operator_base_path)
         self.worker_base_path = "cloud/worker"
-        self.worker_path = "{}/worker.yaml"\
+        self.worker_path = "{}/worker.yaml" \
             .format(self.worker_base_path)
         self.rmq_base_path = "cloud/broker/rabbitmq/0.48"
-        self.rmq_operator_path = "{}/cluster-operator.yaml"\
+        self.rmq_operator_path = "{}/cluster-operator.yaml" \
             .format(self.rmq_base_path)
-        self.rmq_cluster_path = "{}/rabbitmq.yaml"\
+        self.rmq_cluster_path = "{}/rabbitmq.yaml" \
             .format(self.rmq_base_path)
 
     def install(self):
@@ -242,7 +242,7 @@ class OperatorInstaller:
     def delete_operator_files(self):
         logger.info("deleting operator files")
         files = [self.cb_cluster_path, self.auth_path,
-                 self.config_path,  self.crd_path]
+                 self.config_path, self.crd_path]
         self.remote.delete_from_files(files)
 
     def delete_operator_secrets(self):
@@ -311,7 +311,6 @@ class KubernetesInstaller:
 
 
 class EKSInstaller(KubernetesInstaller):
-
     STORAGE_CLASSES = {
         'default': None,
         'gp2': 'cloud/infrastructure/aws/eks/ebs-gp2-sc.yaml'
@@ -450,7 +449,7 @@ class CouchbaseInstaller:
     def download_local(self, local_copy_url: str = None):
         """Download and save a copy of the specified package."""
         try:
-            if RemoteHelper.detect_server_os("127.0.0.1", self.cluster_spec).\
+            if RemoteHelper.detect_server_os("127.0.0.1", self.cluster_spec). \
                     upper() in ('UBUNTU', 'DEBIAN'):
                 os_release = detect_ubuntu_release()
                 if local_copy_url:
@@ -508,31 +507,38 @@ class CloudInstaller(CouchbaseInstaller):
         super().__init__(cluster_spec, options)
 
     def install_package(self):
+
+        def upload_couchbase(to_host, to_user, to_password, package):
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.WarningPolicy())
+            client.connect(to_host, username=to_user, password=to_password)
+            sftp = client.open_sftp()
+            sftp.put(package, "/tmp/{}".format(package))
+            sftp.close()
+
+        user, password = self.cluster_spec.ssh_credentials
+
         logger.info('Using this URL: {}'.format(self.url))
         self.remote.upload_iss_files(self.release)
         package_name = "couchbase.{}".format(self.remote.package)
         logger.info('Saving a local copy of {}'.format(self.url))
+        if 'aarch64' in self.url and self.options.remote_copy:
+            with open(package_name, 'wb') as fh:
+                resp = requests.get(self.url.replace('arm64', 'amd64'))
+                fh.write(resp.content)
+            for client in self.cluster_spec.workers:
+                upload_couchbase(client, user, password, package_name)
         with open(package_name, 'wb') as fh:
             resp = requests.get(self.url)
             fh.write(resp.content)
 
         logger.info('Uploading {} to servers'.format(package_name))
         uploads = []
-        user, password = self.cluster_spec.ssh_credentials
         hosts = self.cluster_spec.servers
-        if self.options.remote_copy:
-            hosts += self.cluster_spec.workers
+
         for host in hosts:
             logger.info('Uploading {} to {}'.format(package_name, host))
             args = (host, user, password, package_name)
-
-            def upload_couchbase(to_host, to_user, to_password, package):
-                client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.WarningPolicy())
-                client.connect(to_host, username=to_user, password=to_password)
-                sftp = client.open_sftp()
-                sftp.put(package, "/tmp/{}".format(package))
-                sftp.close()
 
             worker_process = Process(target=upload_couchbase, args=args)
             worker_process.daemon = True

@@ -522,9 +522,12 @@ class CloudInstaller(CouchbaseInstaller):
         self.remote.upload_iss_files(self.release)
         package_name = "couchbase.{}".format(self.remote.package)
         logger.info('Saving a local copy of {}'.format(self.url))
-        if 'aarch64' in self.url and self.options.remote_copy:
+        if self.options.remote_copy:
             with open(package_name, 'wb') as fh:
-                resp = requests.get(self.url.replace('arm64', 'amd64'))
+                if 'aarch64' in self.url:
+                    resp = requests.get(self.url.replace('arm64', 'amd64'))
+                else:
+                    resp = requests.get(self.url)
                 fh.write(resp.content)
             for client in self.cluster_spec.workers:
                 upload_couchbase(client, user, password, package_name)

@@ -1027,6 +1027,7 @@ class PhaseSettings:
 
     TIME = 3600 * 24
     USE_BACKUP = 'false'
+    RESET_THROTTLE_LIMIT = 'true'
 
     DOC_GEN = 'basic'
     POWER_ALPHA = 0
@@ -1200,6 +1201,8 @@ class PhaseSettings:
         # Common settings
         self.time = int(options.get('time', self.TIME))
         self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
+        self.reset_throttle_limit = maybe_atoi(options.get('reset_throttle_limit',
+                                                           self.RESET_THROTTLE_LIMIT))
 
         # KV settings
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)

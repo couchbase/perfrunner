@@ -100,7 +100,9 @@ class N1QLTest(PerfTest):
                                     break
                             if bucket_replaced:
                                 break
-                        if not bucket_replaced:
+                        if bucket_replaced:
+                            break
+                        else:
                             raise Exception('No access target for bucket: {}'
                                             .format(bucket))
                 else:
@@ -120,7 +122,9 @@ class N1QLTest(PerfTest):
                                         break
                                 if bucket_replaced:
                                     break
-                            if not bucket_replaced:
+                            if bucket_replaced:
+                                break
+                            else:
                                 raise Exception('No access target for bucket: {}'
                                                 .format(bucket))
                 logger.info("Grabbing plan for query: {}".format(query_statement))
@@ -255,6 +259,12 @@ class N1QLThroughputTest(N1QLTest):
 
 class N1QLElixirThroughputTest(N1QLThroughputTest):
 
+    ALL_BUCKETS = True
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.index_node = self.index_nodes[0]
+
     def load(self):
         PerfTest.load(self)
 
@@ -274,28 +284,59 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
 
     def create_indexes(self):
         logger.info('Creating and building indexes')
-        create_statements = []
-        build_statements = []
-        query_contexts = []
-        for statement in self.test_config.index_settings.statements:
-            index_name = statement.split()[2]
-            index_replicas = str(self.test_config.index_settings.replicas)
-            for bucket in self.test_config.buckets:
-                bucket_scopes = self.test_config.collection.collection_map[bucket]
-                for scope in bucket_scopes.keys():
-                    for collection in bucket_scopes[scope].keys():
-                        if bucket_scopes[scope][collection]["access"] == 1:
-                            query_context = "default:`{}`.`{}`".format(bucket, scope)
-                            index_target = "{}.`{}`".format(query_context, collection)
-                            replace_target = "`TARGET_BUCKET`"
+        index_replicas = str(self.test_config.index_settings.replicas)
+        bmap = {}
+        mlen = 0
+        for bucket in self.test_config.buckets:
+            create_statements = []
+            build_statements = []
+            query_contexts = []
+            build_query_contexts = []
+            bucket_scopes = self.test_config.collection.collection_map[bucket]
+            for scope in bucket_scopes.keys():
+                for collection in bucket_scopes[scope].keys():
+                    if bucket_scopes[scope][collection]["access"] == 1:
+                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                        index_target = "{}.`{}`".format(query_context, collection)
+                        replace_target = "`TARGET_BUCKET`"
+                        bindexes = ""
+                        for statement in self.test_config.index_settings.statements:
+                            index_name = statement.split()[2]
                             create_statement = statement.replace(replace_target, index_target)
                             create_statement = create_statement.replace('index_replicas',
                                                                         index_replicas)
-                            build_statement = "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')".\
-                                format(bucket, scope, collection, index_name)
                             query_contexts.append(query_context)
                             create_statements.append(create_statement)
-                            build_statements.append(build_statement)
+                            if bindexes != "":
+                                bindexes = bindexes + ", "
+                            bindexes += "`" + index_name + "`"
+                        build_statement = "BUILD INDEX ON default:`{}`.`{}`.`{}`({})".\
+                            format(bucket, scope, collection, bindexes)
+                        build_query_contexts.append(query_context)
+                        build_statements.append(build_statement)
+
+            bmap[bucket] = {
+                "cs": create_statements,
+                "csq": query_contexts,
+                "bs": build_statements,
+                "bsq": build_query_contexts
+            }
+
+            if mlen < len(create_statements):
+                mlen = len(create_statements)
+
+        create_statements = []
+        build_statements = []
+        query_contexts = []
+        build_query_contexts = []
+        for i in range(0, mlen):
+            for bucket in bmap.keys():
+                if i < len(bmap[bucket]["cs"]):
+                    create_statements.append(bmap[bucket]["cs"][i])
+                    query_contexts.append(bmap[bucket]["csq"][i])
+                if i < len(bmap[bucket]["bs"]):
+                    build_statements.append(bmap[bucket]["bs"][i])
+                    build_query_contexts.append(bmap[bucket]["bsq"][i])
 
         for statement, query_context in zip(create_statements, query_contexts):
             logger.info('Creating index: ' + statement)
@@ -303,7 +344,7 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
             cont = False
             while not cont:
                 building = 0
-                index_status = self.rest.get_index_status(self.index_nodes[0])
+                index_status = self.rest.get_index_status(self.index_node)
                 index_list = index_status['status']
                 for index in index_list:
                     if index['status'] != "Ready" and index['status'] != "Created":
@@ -313,13 +354,13 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
                 else:
                     time.sleep(10)
 
-        for statement, query_context in zip(build_statements, query_contexts):
+        for statement, query_context in zip(build_statements, build_query_contexts):
             logger.info('Building index: ' + statement)
             self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
             cont = False
             while not cont:
                 building = 0
-                index_status = self.rest.get_index_status(self.index_nodes[0])
+                index_status = self.rest.get_index_status(self.index_node)
                 index_list = index_status['status']
                 for index in index_list:
                     if index['status'] != "Ready" and index['status'] != "Created":
@@ -335,25 +376,17 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         count = 0
         for bucket in self.test_config.buckets:
-            udf = 'udflib' + str(count)
-            if self.test_config.cluster.enable_n2n_encryption:
-                local.create_javascript_udf(self.query_nodes[0], udf,
-                                            rest_username, rest_password, True)
-            else:
-                local.create_javascript_udf(self.query_nodes[0], udf,
-                                            rest_username, rest_password, False)
             bucket_scopes = self.test_config.collection.collection_map[bucket]
             statement = "CREATE OR REPLACE FUNCTION `TARGET_SCOPE`.udf(id) LANGUAGE " \
-                        "JAVASCRIPT AS 'udf' AT '{}';".format(udf)
+                        "JAVASCRIPT AS 'function udf(id) { return id}';"
             for scope in bucket_scopes.keys():
                 for collection in bucket_scopes[scope].keys():
                     if bucket_scopes[scope][collection]["access"] == 1:
-                        target_scope = "`{}`.`{}`".format(bucket, scope)
-                        query_context = "default:{}".format(target_scope)
+                        target_scope = "default:`{}`.`{}`".format(bucket, scope)
                         replace_target = "`TARGET_SCOPE`"
                         statement = statement.replace(replace_target, target_scope)
                         logger.info('Creating UDF FUNCTION: ' + statement)
-                        self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
+                        self.rest.exec_n1ql_statement(self.query_nodes[0], statement, target_scope)
                         break
             count += 1
 
@@ -372,7 +405,8 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
         if self.test_config.users.num_users_per_bucket > 0:
             self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
 
-        self.rest.reset_serverless_throttle(self.master_node)
+        if self.test_config.access_settings.reset_throttle_limit:
+            self.rest.reset_serverless_throttle(self.master_node)
 
         self.access_bg()
         self.access()
@@ -381,10 +415,12 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
 
 
 class N1QLElixirLatencyTest(N1QLElixirThroughputTest):
+
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.query_latency(percentile=90)
-        )
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            self.reporter.post(
+                *self.metrics.query_latency(percentile=percentile)
+            )
 
 
 class N1QLThroughputRebalanceTest(N1QLThroughputTest):

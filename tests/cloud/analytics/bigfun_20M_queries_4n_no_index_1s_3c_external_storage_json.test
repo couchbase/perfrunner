@@ -34,7 +34,5 @@ aws_credential_path = /root/.ssh/
 eviction_policy = fullEviction
 
 [access]
-analytics_warmup_ops = 3
-analytics_warmup_workers = 1
-ops = 10
+ops = 5
 workers = 1

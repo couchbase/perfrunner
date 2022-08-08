@@ -233,7 +233,7 @@ class N1QLThroughputTest(N1QLTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.avg_n1ql_throughput()
+            *self.metrics.avg_n1ql_throughput(self.master_node)
         )
 
 
@@ -829,7 +829,7 @@ class N1QLFunctionThroughputTest(N1QLFunctionTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.avg_n1ql_throughput()
+            *self.metrics.avg_n1ql_throughput(self.master_node)
         )
 
 
@@ -1066,7 +1066,7 @@ class N1QLThroughputShutdownTest(N1QLShutdownTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.avg_n1ql_throughput()
+            *self.metrics.avg_n1ql_throughput(self.master_node)
         )
 
 

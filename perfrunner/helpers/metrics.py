@@ -98,19 +98,19 @@ class MetricHelper:
         else:
             return query_id
 
-    def avg_n1ql_throughput(self) -> Metric:
+    def avg_n1ql_throughput(self, master_node: str) -> Metric:
         metric_id = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
 
         metric_info = self._metric_info(metric_id, title,
                                         order_by=self.query_id, chirality=1)
-        throughput = self._avg_n1ql_throughput()
+        throughput = self._avg_n1ql_throughput(master_node)
         return throughput, self._snapshots, metric_info
 
-    def _avg_n1ql_throughput(self) -> int:
+    def _avg_n1ql_throughput(self, master_node: str) -> int:
         test_time = self.test_config.access_settings.time
         total_requests = 0
-        for query_node in self.cluster_spec.servers_by_role('n1ql'):
+        for query_node in self.test.rest.get_active_nodes_by_role(master_node, 'n1ql'):
             vitals = self.test.rest.get_query_stats(query_node)
             total_requests += vitals['requests.count']
 

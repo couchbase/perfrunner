@@ -9,8 +9,8 @@ sub_category = AWS
 
 [cluster]
 mem_quota = 12288
-index_mem_quota = 12288
-initial_nodes = 9
+index_mem_quota = 24576
+initial_nodes = 7
 num_buckets = 20
 enable_cpu_cores = false
 

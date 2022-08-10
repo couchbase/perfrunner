@@ -28,6 +28,7 @@ class JTSTest(PerfTest):
         self.showfast = self.test_config.showfast
         self.fts_index_map = dict()
         self.fts_index_defs = dict()
+        self.fts_index_name_flag = False
 
     def download_jts(self):
         if self.worker_manager.is_remote:
@@ -127,6 +128,15 @@ class FTSTest(JTSTest):
         return coll_type_mapping
 
     def create_fts_index_definitions(self):
+        bucket_name = self.test_config.buckets[0]
+        result = self.rest.get_bucket_info(self.fts_nodes[0], bucket_name)
+        cb_version = result["nodes"][0]["version"].split("-")[0]
+        logger.info("This is the version {}".format(cb_version))
+        if cb_version >= "7.2.0":
+            self.fts_index_name_flag = True
+        if cb_version < "7.2.0":
+            self.fts_index_name_flag = False
+
         logger.info("Creating indexing definitions:")
         general_index_def = read_json(self.access.couchbase_index_configfile)
         collection_map = self.test_config.collection.collection_map
@@ -250,8 +260,17 @@ class FTSTest(JTSTest):
     def create_fts_indexes(self):
         total_time = 0
         for index_name in self.fts_index_defs.keys():
+            logger.info("this is the defs : {}".format(self.fts_index_defs))
             index_def = self.fts_index_defs[index_name]['index_def']
             logger.info('Index definition: {}'.format(pretty_dict(index_def)))
+            if self.fts_index_name_flag:
+                iname = copy.deepcopy(index_name)
+                fts_updated_name = "{}.{}.{}".format(
+                                              self.fts_index_map[index_name]["bucket"],
+                                              self.fts_index_map[index_name]["scope"],
+                                              iname)
+                self.fts_index_map[index_name]["full_index_name"] = fts_updated_name
+            logger.info('Index map: {}'.format(pretty_dict(self.fts_index_map)))
             t0 = time.time()
             self.rest.create_fts_index(self.fts_master_node, index_name, index_def)
             self.wait_for_index(index_name)
@@ -261,21 +280,39 @@ class FTSTest(JTSTest):
         return total_time
 
     def wait_for_index(self, index_name):
-        self.monitor.monitor_fts_indexing_queue(
-            self.fts_master_node,
-            index_name,
-            self.fts_index_map[index_name]["total_docs"]
-        )
+        if self.fts_index_name_flag is True:
+            self.monitor.monitor_fts_indexing_queue(
+                self.fts_master_node,
+                self.fts_index_map[index_name]["full_index_name"],
+                self.fts_index_map[index_name]["total_docs"]
+                )
+
+        if self.fts_index_name_flag is False:
+            self.monitor.monitor_fts_indexing_queue(
+                self.fts_master_node,
+                index_name,
+                self.fts_index_map[index_name]["total_docs"]
+                )
 
     def wait_for_index_persistence(self, fts_nodes=None):
         if fts_nodes is None:
             fts_nodes = self.fts_nodes
-        for index_name in self.fts_index_map.keys():
-            self.monitor.monitor_fts_index_persistence(
-                hosts=fts_nodes,
-                index=index_name,
-                bkt=self.fts_index_map[index_name]["bucket"]
-            )
+        logger.info("This is the list of hosts: {}".format(fts_nodes))
+        if self.fts_index_name_flag is True:
+            for index_name in self.fts_index_map.keys():
+                self.monitor.monitor_fts_index_persistence(
+                    hosts=fts_nodes,
+                    index=self.fts_index_map[index_name]["full_index_name"],
+                    bkt=self.fts_index_map[index_name]["bucket"]
+                    )
+
+        if self.fts_index_name_flag is False:
+            for index_name in self.fts_index_map.keys():
+                self.monitor.monitor_fts_index_persistence(
+                    hosts=fts_nodes,
+                    index=index_name,
+                    bkt=self.fts_index_map[index_name]["bucket"]
+                    )
 
     def add_extra_fts_parameters(self):
         logger.info("Adding extra parameter to the fts nodes")
@@ -296,11 +333,18 @@ class FTSTest(JTSTest):
     def calculate_index_size(self) -> int:
         size = 0
         for index_name, index_info in self.fts_index_map.items():
-            metric = '{}:{}:{}'.format(
-                index_info['bucket'],
-                index_name,
-                'num_bytes_used_disk'
-            )
+            if self.fts_index_name_flag is True:
+                metric = '{}:{}:{}'.format(
+                                   index_info['bucket'],
+                                   index_info['full_index_name'],
+                                   'num_bytes_used_disk'
+                                    )
+            if self.fts_index_name_flag is False:
+                metric = '{}:{}:{}'.format(
+                                   index_info['bucket'],
+                                   index_name,
+                                   'num_bytes_used_disk'
+                                )
             for host in self.fts_nodes:
                 stats = self.rest.get_fts_stats(host)
                 size += stats[metric]

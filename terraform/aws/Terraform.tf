@@ -119,6 +119,24 @@ resource "aws_security_group_rule" "enable_couchbase_default" {
   security_group_id = aws_vpc.main.default_security_group_id
 }
 
+resource "aws_security_group_rule" "enable_indexer" {
+  type              = "ingress"
+  from_port         = 9102
+  to_port           = 9102
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
+resource "aws_security_group_rule" "enable_cbas" {
+  type              = "ingress"
+  from_port         = 9110
+  to_port           = 9110
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
 resource "aws_security_group_rule" "enable_couchbase_secure" {
   type              = "ingress"
   from_port         = 18091
@@ -128,9 +146,27 @@ resource "aws_security_group_rule" "enable_couchbase_secure" {
   security_group_id = aws_vpc.main.default_security_group_id
 }
 
+resource "aws_security_group_rule" "enable_indexer_secure" {
+  type              = "ingress"
+  from_port         = 19102
+  to_port           = 19102
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
+resource "aws_security_group_rule" "enable_cbas_secure" {
+  type              = "ingress"
+  from_port         = 19110
+  to_port           = 19110
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
 resource "aws_security_group_rule" "enable_memcached" {
   type              = "ingress"
-  from_port         = 11210
+  from_port         = 11209
   to_port           = 11210
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
@@ -141,6 +177,15 @@ resource "aws_security_group_rule" "enable_memcached_secure" {
   type              = "ingress"
   from_port         = 11207
   to_port           = 11207
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_vpc.main.default_security_group_id
+}
+
+resource "aws_security_group_rule" "enable_sgw" {
+  type              = "ingress"
+  from_port         = 4984
+  to_port           = 4985
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_vpc.main.default_security_group_id

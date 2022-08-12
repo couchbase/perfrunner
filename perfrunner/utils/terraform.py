@@ -136,7 +136,8 @@ class Terraform:
                 if cloud_provider in ('aws', 'gcp'):
                     parameters['iops'] = int(parameters.get('iops', 0))
                     if cloud_provider == 'aws':
-                        parameters['disk_throughput'] = int(parameters.get('disk_throughput', 0))
+                        parameters['volume_throughput'] = int(parameters.get('volume_throughput',
+                                                                             0))
 
                 del parameters['instance_capacity']
 

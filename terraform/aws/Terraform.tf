@@ -4,49 +4,49 @@ variable "cloud_region" {
 
 variable "cluster_nodes" {
   type = map(object({
-    node_group      = string
-    image           = string
-    instance_type   = string
-    storage_class   = string
-    volume_size     = number
-    iops            = number
-    disk_throughput = number
+    node_group        = string
+    image             = string
+    instance_type     = string
+    storage_class     = string
+    volume_size       = number
+    iops              = number
+    volume_throughput = number
   }))
 }
 
 variable "client_nodes" {
   type = map(object({
-    node_group      = string
-    image           = string
-    instance_type   = string
-    storage_class   = string
-    volume_size     = number
-    iops            = number
-    disk_throughput = number
+    node_group        = string
+    image             = string
+    instance_type     = string
+    storage_class     = string
+    volume_size       = number
+    iops              = number
+    volume_throughput = number
   }))
 }
 
 variable "utility_nodes" {
   type = map(object({
-    node_group      = string
-    image           = string
-    instance_type   = string
-    storage_class   = string
-    volume_size     = number
-    iops            = number
-    disk_throughput = number
+    node_group        = string
+    image             = string
+    instance_type     = string
+    storage_class     = string
+    volume_size       = number
+    iops              = number
+    volume_throughput = number
   }))
 }
 
 variable "sync_gateway_nodes" {
   type = map(object({
-    node_group      = string
-    image           = string
-    instance_type   = string
-    storage_class   = string
-    volume_size     = number
-    iops            = number
-    disk_throughput = number
+    node_group        = string
+    image             = string
+    instance_type     = string
+    storage_class     = string
+    volume_size       = number
+    iops              = number
+    volume_throughput = number
   }))
 }
 
@@ -253,6 +253,8 @@ resource "aws_instance" "cluster_instance" {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size
     volume_type = lower(each.value.storage_class)
+    throughput  = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+    iops        = each.value.iops > 0 ? each.value.iops : null
   }
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "ClusterNode${each.key}"
@@ -272,6 +274,8 @@ resource "aws_instance" "client_instance" {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size
     volume_type = lower(each.value.storage_class)
+    throughput  = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+    iops        = each.value.iops > 0 ? each.value.iops : null
   }
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "ClientNode${each.key}"
@@ -291,6 +295,8 @@ resource "aws_instance" "utility_instance" {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size
     volume_type = lower(each.value.storage_class)
+    throughput  = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+    iops        = each.value.iops > 0 ? each.value.iops : null
   }
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "UtilityNode${each.key}"
@@ -310,6 +316,8 @@ resource "aws_instance" "sync_gateway_instance" {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size
     volume_type = lower(each.value.storage_class)
+    throughput  = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+    iops        = each.value.iops > 0 ? each.value.iops : null
   }
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "SyncGatewayNode${each.key}"

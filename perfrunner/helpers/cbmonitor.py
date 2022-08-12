@@ -53,6 +53,7 @@ from cbagent.collectors import (
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
 from logger import logger
+from perfrunner.helpers.cloudwatch import Cloudwatch
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.settings import CBMONITOR_HOST
 from perfrunner.tests import PerfTest
@@ -69,6 +70,14 @@ def timeit(method: Callable, *args, **kwargs) -> float:
 def with_stats(method: Callable, *args, **kwargs) -> Union[float, None]:
     with CbAgent(test=args[0], phase=method.__name__):
         return method(*args, **kwargs)
+
+
+@decorator
+def with_cloudwatch(method, *args, **kwargs):
+    t0 = time.time()
+    method(*args, **kwargs)
+    t1 = time.time()
+    Cloudwatch(args[0].cluster_spec.servers, t0, t1, method.__name__)
 
 
 def new_cbagent_settings(test: PerfTest):

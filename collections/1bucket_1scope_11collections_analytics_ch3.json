@@ -1,0 +1,56 @@
+{
+  "bench": {
+    "_default": {
+      "_default": {
+        "access": 1,
+        "load": 1
+      }
+    },
+    "ch3": {
+      "stock": {
+        "load": 1,
+        "access": 1
+      },
+      "orders": {
+        "load": 1,
+        "access": 1
+      },
+      "warehouse": {
+        "load": 1,
+        "access": 1
+      },
+      "district": {
+        "load": 1,
+        "access": 1
+      },
+      "region": {
+        "load": 1,
+        "access": 1
+      },
+      "customer": {
+        "load": 1,
+        "access": 1
+      },
+      "item": {
+        "load": 1,
+        "access": 1
+      },
+      "nation": {
+        "load": 1,
+        "access": 1
+      },
+      "supplier": {
+        "load": 1,
+        "access": 1
+      },
+      "history": {
+        "load": 1,
+        "access": 1
+      },
+      "neworder": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  }
+}

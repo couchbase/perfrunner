@@ -1323,6 +1323,57 @@ class MetricHelper:
 
         return query_time, self._snapshots, metric_info
 
+    def ch3_metric(self, duration: float, logfile: str):
+        filename = logfile + '.log'
+        test_duration = duration
+        with open(filename) as fh:
+            for line in fh.readlines():
+                if 'NEW_ORDER' in line and 'success' in line:
+                    elements = line.split()
+                    total_time = float(elements[2].split('.')[0])
+                    rate = int(elements[1])
+                if 'AVERAGE TIME PER ANALYTICS QUERY SET' in line:
+                    test_duration = float(line.split()[-1])
+                if 'AVERAGE TIME PER FTS QUERY SET' in line:
+                    fts_duration = float(line.split()[-1])
+                if 'AVERAGE TIME PER FTS CLIENT' in line:
+                    fts_client = float(line.split()[-1])
+                if 'FTS QUERIES PER HOUR' in line:
+                    fts_qph = float(line.split()[-1])
+        return total_time, rate, test_duration, fts_duration, fts_client, fts_qph
+
+    def ch3_fts_query_time(self, query_time: float, tclients: int) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "fts_query_time")
+        title = 'Average time per fts query set (sec), {}, {} tclients'.format(self._title,
+                                                                               tclients)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        chirality=-1)
+
+        return query_time, self._snapshots, metric_info
+
+    def ch3_fts_client_time(self, client_time: float, tclients: int) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "fts_client_time")
+        title = 'Average time per fts client (sec), {}, {} tclients'.format(self._title,
+                                                                            tclients)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        chirality=-1)
+
+        return client_time, self._snapshots, metric_info
+
+    def ch3_fts_qph(self, qph: float, tclients: int) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "fts_qph")
+        title = 'FTS queries per hour (Qph), {}, {} tclients'.format(self._title, tclients)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        chirality=1)
+
+        return qph, self._snapshots, metric_info
+
     def custom_elapsed_time(self, time_elapsed: float, op: str) -> Metric:
         metric_id = '{}_{}_time'.format(self.test_config.name, op)
         title = 'Time elapsed (sec), {}, {}'.format(op.replace('_', ' ').title(), self._title)

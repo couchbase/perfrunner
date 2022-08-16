@@ -1118,3 +1118,276 @@ class CH2CloudTest(CH2Test):
                                     logfile=self.test_config.ch2_settings.workload)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
+
+
+class CH3Test(PerfTest):
+
+    CH3_DATASETS = [
+        "customer",
+        "district",
+        "history",
+        "item",
+        "neworder",
+        "orders",
+        "stock",
+        "warehouse",
+        "supplier",
+        "nation",
+        "region",
+    ]
+
+    CH3_INDEXES = [("cu_w_id_d_id_last",
+                    "customer(c_w_id, c_d_id, c_last)",
+                    "customer"),
+                   ("di_id_w_id",
+                    "district(d_id, d_w_id)",
+                    "district"),
+                   ("no_o_id_d_id_w_id",
+                    "neworder(no_o_id, no_d_id, no_w_id)",
+                    "neworder"),
+                   ("or_id_d_id_w_id_c_id",
+                    "orders(o_id, o_d_id, o_w_id, o_c_id)",
+                    "orders"),
+                   ("or_w_id_d_id_c_id",
+                    "orders(o_w_id, o_d_id, o_c_id)",
+                    "orders"),
+                   ("wh_id",
+                    "warehouse(w_id)",
+                    "warehouse")]
+
+    CH3_FTS_INDEXES = [
+        "customerFTSI",
+        "itemFTSI",
+        "ordersFTSI",
+        "mutiCollectionFTSI",
+        "nonAnalyticFTSI",
+        "ngramFTSI",
+    ]
+
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'secondary_stats': True,
+        'ns_server_system': True,
+        'analytics': True,
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.num_items = 0
+        self.analytics_link = self.test_config.analytics_settings.analytics_link
+        self.data_node = self.master_node
+        self.analytics_node = self.analytics_nodes[0]
+        self.fts_node = self.fts_nodes[0]
+        self.analytics_statements = self.test_config.ch3_settings.analytics_statements
+
+    def _report_kpi(self):
+        measure_time = self.test_config.ch3_settings.duration - \
+                       self.test_config.ch3_settings.warmup_duration
+        total_time, rate, test_duration, fts_duration, fts_client, fts_qph = \
+            self.metrics.ch3_metric(duration=measure_time,
+                                    logfile=self.test_config.ch3_settings.workload)
+
+        tpm = round(rate*60/test_duration, 2)
+        response_time = round(total_time/1000/rate, 2)
+        fts_query_time = round(fts_duration/1000, 2)
+        fts_client_time = round(fts_client/1000, 2)
+
+        self.reporter.post(
+            *self.metrics.ch2_tmp(tpm, self.test_config.ch3_settings.tclients)
+        )
+
+        self.reporter.post(
+            *self.metrics.ch2_response_time(response_time, self.test_config.ch3_settings.tclients)
+        )
+
+        if self.test_config.ch3_settings.workload == 'ch3_mixed':
+            self.reporter.post(
+                *self.metrics.ch2_analytics_query_time(test_duration,
+                                                       self.test_config.ch3_settings.tclients)
+            )
+
+            self.reporter.post(
+                *self.metrics.ch3_fts_query_time(fts_query_time,
+                                                 self.test_config.ch3_settings.tclients)
+            )
+
+            self.reporter.post(
+                *self.metrics.ch3_fts_client_time(fts_client_time,
+                                                  self.test_config.ch3_settings.tclients)
+            )
+
+            self.reporter.post(
+                *self.metrics.ch3_fts_qph(fts_qph, self.test_config.ch3_settings.tclients)
+            )
+
+    def create_datasets(self):
+        logger.info('Creating datasets')
+        for dataset in self.CH3_DATASETS:
+            statement = "CREATE DATASET `{}` ON bench.ch3.{};" \
+                .format(dataset, dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def create_analytics_indexes(self):
+        if self.analytics_statements:
+            logger.info('Creating analytics indexes')
+            for statement in self.analytics_statements:
+                logger.info('Running: {}'.format(statement))
+                self.rest.exec_analytics_statement(self.analytics_node,
+                                                   statement)
+
+    def create_indexes(self):
+        logger.info('Creating indexes')
+        for index in self.CH3_INDEXES:
+            statement = "CREATE INDEX {} ON bench.ch3.{} using gsi;".format(index[0], index[1])
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def drop_indexes(self):
+        logger.info('Dropping indexes')
+        for index in self.CH3_INDEXES:
+            statement = "DROP INDEX {} ON bench.ch3.{} using gsi;".format(index[0], index[2])
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def disconnect_link(self):
+        logger.info('DISCONNECT LINK {}'.format(self.analytics_link))
+        statement = "DISCONNECT LINK {}".format(self.analytics_link)
+        self.rest.exec_analytics_statement(self.analytics_node,
+                                           statement)
+
+    def connect_link(self):
+        logger.info('Connecting Link {}'.format(self.analytics_link))
+        statement = "CONNECT link {}".format(self.analytics_link)
+        self.rest.exec_analytics_statement(self.analytics_node,
+                                           statement)
+
+    def create_primary_indexes(self):
+        logger.info('Creating primary indexes')
+        for dataset in self.CH3_DATASETS:
+            statement = "CREATE PRIMARY INDEX ON {};".format(dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def drop_primary_indexes(self):
+        logger.info('Dropping primary indexes')
+        for dataset in self.CH3_DATASETS:
+            statement = "DROP INDEX {}.primary_idx_{};".format(dataset, dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def sync(self):
+        self.disconnect_link()
+        self.create_datasets()
+        self.create_analytics_indexes()
+        self.connect_link()
+        for bucket in self.test_config.buckets:
+            self.num_items += self.monitor.monitor_data_synced(self.data_node,
+                                                               bucket,
+                                                               self.analytics_node)
+
+    @with_stats
+    def run_ch3(self):
+        query_url = self.query_nodes[0] + ":8093"
+        analytics_url = self.analytics_nodes[0] + ":8095"
+        fts_url = self.fts_nodes[0] + ":8094"
+        query_nodes_port = []
+        for node in self.query_nodes:
+            query_nodes_port.append(node + ":8093")
+        multi_query_url = ",".join(query_nodes_port)
+
+        logger.info("running {}".format(self.test_config.ch3_settings.workload))
+        local.ch3_run_task(
+            cluster_spec=self.cluster_spec,
+            warehouses=self.test_config.ch3_settings.warehouses,
+            aclients=self.test_config.ch3_settings.aclients,
+            tclients=self.test_config.ch3_settings.tclients,
+            fclients=self.test_config.ch3_settings.fclients,
+            duration=self.test_config.ch3_settings.duration,
+            iterations=self.test_config.ch3_settings.iterations,
+            warmup_iterations=self.test_config.ch3_settings.warmup_iterations,
+            warmup_duration=self.test_config.ch3_settings.warmup_duration,
+            query_url=query_url,
+            multi_query_url=multi_query_url,
+            analytics_url=analytics_url,
+            fts_url=fts_url,
+            log_file=self.test_config.ch3_settings.workload
+        )
+
+    def create_fts_indexes(self):
+        local.ch3_create_fts_index(
+            cluster_spec=self.cluster_spec,
+            fts_node=self.fts_node
+        )
+
+    def wait_for_fts_index_persistence(self):
+        for index_name in self.CH3_FTS_INDEXES:
+            self.monitor.monitor_fts_index_persistence(
+                hosts=self.fts_nodes,
+                index=index_name,
+                bkt=self.test_config.buckets[0]
+            )
+
+    def load_ch3(self):
+        data_url = self.data_nodes[0]
+        multi_data_url = ",".join(self.data_nodes)
+        query_url = self.query_nodes[0] + ":8093"
+        query_nodes_port = []
+        for node in self.query_nodes:
+            query_nodes_port.append(node + ":8093")
+        multi_query_url = ",".join(query_nodes_port)
+
+        logger.info("load CH3 docs")
+        local.ch3_load_task(
+            cluster_spec=self.cluster_spec,
+            warehouses=self.test_config.ch3_settings.warehouses,
+            load_tclients=self.test_config.ch3_settings.load_tclients,
+            data_url=data_url,
+            multi_data_url=multi_data_url,
+            query_url=query_url,
+            multi_query_url=multi_query_url,
+            load_mode=self.test_config.ch3_settings.load_mode
+        )
+
+    def restart(self):
+        self.remote.stop_server()
+        self.remote.drop_caches()
+        self.remote.start_server()
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
+    def run(self):
+        local.clone_git_repo(repo=self.test_config.ch3_settings.repo,
+                             branch=self.test_config.ch3_settings.branch)
+
+        if self.test_config.ch3_settings.use_backup:
+            self.restore_local()
+        else:
+            self.load_ch3()
+
+        self.wait_for_persistence()
+        self.restart()
+        self.sync()
+        self.create_indexes()
+        self.wait_for_indexing()
+        self.create_fts_indexes()
+        self.wait_for_fts_index_persistence()
+
+        self.run_ch3()
+        if self.test_config.ch3_settings.workload != 'ch3_analytics':
+            self.report_kpi()

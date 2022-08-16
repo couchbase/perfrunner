@@ -1278,7 +1278,7 @@ def ch2_load_task(cluster_spec: ClusterSpec, warehouses: int, load_tclients: int
              '--multi-query-url {}'.format(multi_query_url) if qrysvc_mode else None,
              '--userid {}'.format(cluster_spec.rest_credentials[0]),
              '--password {}'.format(cluster_spec.rest_credentials[1]),
-             '--no-execute --debug',
+             '--no-execute',
              '--{} > ../../../ch2_load.log'.format(load_mode) if not qrysvc_mode else None,
              '--{} > /dev/null 2>&1'.format(load_mode) if qrysvc_mode else None]
 
@@ -1286,6 +1286,78 @@ def ch2_load_task(cluster_spec: ClusterSpec, warehouses: int, load_tclients: int
         ' '.join(filter(None, flags)))
 
     with lcd('ch2/ch2driver/pytpcc/'):
+        logger.info('Running: {}'.format(cmd))
+        local(cmd)
+
+
+def ch3_load_task(cluster_spec: ClusterSpec, warehouses: int, load_tclients: int,
+                  data_url: str, multi_data_url: str, query_url: str,
+                  multi_query_url: str, load_mode: str):
+    if load_mode == "qrysvc-load":
+        qrysvc_mode = True
+    else:
+        qrysvc_mode = False
+
+    flags = ['--warehouses {}'.format(warehouses),
+             '--tclients {}'.format(load_tclients),
+             'nestcollections',
+             '--data-url {}'.format(data_url) if not qrysvc_mode else None,
+             '--multi-data-url {}'.format(multi_data_url) if not qrysvc_mode else None,
+             '--query-url {}'.format(query_url) if qrysvc_mode else None,
+             '--multi-query-url {}'.format(multi_query_url) if qrysvc_mode else None,
+             '--userid {}'.format(cluster_spec.rest_credentials[0]),
+             '--password {}'.format(cluster_spec.rest_credentials[1]),
+             '--no-execute',
+             '--{} > ../../../ch3_load.log'.format(load_mode) if not qrysvc_mode else None,
+             '--{} > /dev/null 2>&1'.format(load_mode) if qrysvc_mode else None]
+
+    cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(
+        ' '.join(filter(None, flags)))
+
+    with lcd('ch3/ch3driver/pytpcc/'):
+        logger.info('Running: {}'.format(cmd))
+        local(cmd)
+
+
+def ch3_create_fts_index(cluster_spec: ClusterSpec, fts_node: str):
+
+    cmd = 'sh -x ./cbcrftsindexcollection.sh {} {}:{}'.format(fts_node,
+                                                              cluster_spec.rest_credentials[0],
+                                                              cluster_spec.rest_credentials[1])
+
+    with lcd('ch3/ch3driver/pytpcc/util'):
+        logger.info('Running: {}'.format(cmd))
+        local(cmd)
+
+
+def ch3_run_task(cluster_spec: ClusterSpec, warehouses: int, aclients: int = 0,
+                 tclients: int = 0, fclients: int = 0, duration: int = 0,
+                 iterations: int = 0, warmup_iterations: int = 0, warmup_duration: int = 0,
+                 query_url: str = None, multi_query_url: str = None,
+                 analytics_url: str = None, fts_url: str = None, log_file: str = 'ch3_mixed'):
+
+    flags = ['--warehouses {}'.format(warehouses),
+             '--aclients {}'.format(aclients) if aclients else None,
+             '--tclients {}'.format(tclients) if tclients else None,
+             '--fclients {}'.format(fclients) if fclients else None,
+             '--duration {}'.format(duration) if duration else None,
+             '--warmup-duration {}'.format(warmup_duration) if warmup_duration else None,
+             '--query-iterations {}'.format(iterations) if iterations else None,
+             '--warmup-query-iterations {}'.format(warmup_iterations)
+             if warmup_iterations else None,
+             'nestcollections',
+             '--query-url {}'.format(query_url) if tclients else None,
+             '--multi-query-url {}'.format(multi_query_url) if tclients else None,
+             '--analytics-url {}'.format(analytics_url) if aclients else None,
+             '--fts-url {}'.format(fts_url) if fclients else None,
+             '--userid {}'.format(cluster_spec.rest_credentials[0]),
+             '--password {}'.format(cluster_spec.rest_credentials[1]),
+             '--no-load > ../../../{}.log'.format(log_file)]
+
+    cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(
+        ' '.join(filter(None, flags)))
+
+    with lcd('ch3/ch3driver/pytpcc/'):
         logger.info('Running: {}'.format(cmd))
         local(cmd)
 

@@ -1929,6 +1929,50 @@ class CH2:
         return str(self.__dict__)
 
 
+class CH3:
+
+    REPO = 'https://github.com/couchbaselabs/ch3.git'
+    BRANCH = 'main'
+    WAREHOUSES = 1000
+    ACLIENTS = 0
+    TCLIENTS = 0
+    FCLIENTS = 0
+    ITERATIONS = 1
+    WARMUP_ITERATIONS = 0
+    WARMUP_DURATION = 0
+    DURATION = 0
+    WORKLOAD = 'ch3_mixed'
+    ANALYTICS_STATEMENTS = ''
+    USE_BACKUP = 'true'
+    LOAD_TCLIENTS = 0
+    LOAD_MODE = 'datasvc-bulkload'
+
+    def __init__(self, options: dict):
+        self.repo = options.get('repo', self.REPO)
+        self.branch = options.get('branch', self.BRANCH)
+        self.warehouses = int(options.get('warehouses', self.WAREHOUSES))
+        self.aclients = int(options.get('aclients', self.ACLIENTS))
+        self.tclients = int(options.get('tclients', self.TCLIENTS))
+        self.fclients = int(options.get('fclients', self.FCLIENTS))
+        self.load_tclients = int(options.get('load_tclients', self.LOAD_TCLIENTS))
+        self.load_mode = options.get('load_mode', self.LOAD_MODE)
+        self.iterations = int(options.get('iterations', self.ITERATIONS))
+        self.warmup_iterations = int(options.get('warmup_iterations', self.WARMUP_ITERATIONS))
+        self.warmup_duration = int(options.get('warmup_duration', self.WARMUP_DURATION))
+        self.duration = int(options.get('duration', self.DURATION))
+        self.workload = options.get('workload', self.WORKLOAD)
+        self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
+        self.raw_analytics_statements = options.get('analytics_statements',
+                                                    self.ANALYTICS_STATEMENTS)
+        if self.raw_analytics_statements:
+            self.analytics_statements = self.raw_analytics_statements.strip().split('\n')
+        else:
+            self.analytics_statements = ''
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class PYTPCCSettings:
 
     WAREHOUSE = 1
@@ -2552,6 +2596,11 @@ class TestConfig(Config):
     def ch2_settings(self) -> CH2:
         options = self._get_options_as_dict('ch2')
         return CH2(options)
+
+    @property
+    def ch3_settings(self) -> CH3:
+        options = self._get_options_as_dict('ch3')
+        return CH3(options)
 
     @property
     def pytpcc_settings(self) -> PYTPCCSettings:

@@ -1601,9 +1601,9 @@ class DailyMetricHelper(MetricHelper):
             s2m(rebalance_time), \
             self._snapshots
 
-    def avg_n1ql_throughput(self) -> DailyMetric:
+    def avg_n1ql_throughput(self, master_node: str) -> DailyMetric:
         return 'Avg Query Throughput (queries/sec)', \
-            self._avg_n1ql_throughput(), \
+            self._avg_n1ql_throughput(master_node), \
             self._snapshots
 
     def max_ops(self) -> DailyMetric:

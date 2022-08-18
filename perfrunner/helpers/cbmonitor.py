@@ -112,7 +112,9 @@ def new_cbagent_settings(test: PerfTest):
         test.cluster_spec.rest_credentials
 
     if test.dynamic_infra:
-        settings.cloud = {"enabled": True, "cloud_rest": test.rest}
+        settings.cloud = {"enabled": True, "dynamic": True, "cloud_rest": test.rest}
+    elif test.cluster_spec.cloud_infrastructure:
+        settings.cloud.update({'enabled': True, 'dynamic': False, 'cloud_rest': test.rest})
 
     if test.test_config.collection.collection_map:
         settings.collections = test.test_config.collection.collection_map
@@ -240,33 +242,35 @@ class CbAgent:
             self.add_collector(CBStatsAll, self.test)
 
         if not self.test.dynamic_infra:
-            if self.test.remote.os != 'Cygwin':
-                self.add_collector(PS)
-                self.add_collector(Sysdig)
-                if memory:
-                    self.add_collector(Memory)
-                if net:
-                    self.add_collector(Net)
-                if disk:
-                    self.add_io_collector(Disk)
-                if iostat:
-                    self.add_io_collector(IO)
-                if page_cache:
-                    self.add_io_collector(PageCache)
-                if vmstat:
-                    self.add_collector(VMSTAT)
-            else:
-                self.add_collector(TypePerf)
+            if not self.test.capella_infra:
+                if self.test.remote.os != 'Cygwin':
+                    self.add_collector(PS)
+                    self.add_collector(Sysdig)
+                    if memory:
+                        self.add_collector(Memory)
+                    if net:
+                        self.add_collector(Net)
+                    if disk:
+                        self.add_io_collector(Disk)
+                    if iostat:
+                        self.add_io_collector(IO)
+                    if page_cache:
+                        self.add_io_collector(PageCache)
+                    if vmstat:
+                        self.add_collector(VMSTAT)
+                else:
+                    self.add_collector(TypePerf)
 
             if durability:
                 self.add_durability_collector()
             if index_latency:
                 self.add_collector(ObserveIndexLatency)
             if eventing_stats:
-                self.add_collector(EventingStats, self.test)
-                self.add_collector(EventingPerNodeStats, self.test)
-                self.add_collector(EventingConsumerStats, self.test)
-                self.add_collector(EventingPerHandlerStats, self.test)
+                if not self.test.capella_infra:
+                    self.add_collector(EventingStats, self.test)
+                    self.add_collector(EventingPerNodeStats, self.test)
+                    self.add_collector(EventingPerHandlerStats, self.test)
+                    self.add_collector(EventingConsumerStats, self.test)
             if fts_stats:
                 self.add_collector(FTSCollector, self.test)
             if elastic_stats:

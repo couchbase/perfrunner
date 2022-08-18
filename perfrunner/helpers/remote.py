@@ -20,11 +20,16 @@ class RemoteHelper:
         state.output.running = verbose
         state.output.stdout = verbose
 
+        if cluster_spec.capella_infrastructure:
+            state.env.use_ssh_config = True
+
         if cluster_spec.cloud_infrastructure:
             if cluster_spec.infrastructure_settings.get('os_arch', 'x86_64') == 'arm':
                 os = 'arm'
             elif cluster_spec.infrastructure_settings.get('os_arch', 'x86_64') == 'al2':
                 os = 'al2'
+            elif cluster_spec.capella_infrastructure:
+                os = 'linux'
             else:
                 os = cls.detect_server_os(cluster_spec.servers[0], cluster_spec)
         else:

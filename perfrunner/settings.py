@@ -7,6 +7,7 @@ from itertools import chain, combinations, permutations
 from typing import Dict, Iterable, Iterator, List, Tuple
 
 from decorator import decorator
+from fabric.api import local
 
 from logger import logger
 from perfrunner.helpers.misc import maybe_atoi, target_hash
@@ -88,14 +89,14 @@ class ClusterSpec(Config):
 
     @property
     def kubernetes_infrastructure(self):
-        if self.cloud_infrastructure:
+        if self.cloud_infrastructure and not self.capella_infrastructure:
             return self.infrastructure_settings.get("type", "kubernetes") == "kubernetes"
         return False
 
     @property
     def capella_infrastructure(self):
         if self.cloud_infrastructure:
-            return self.infrastructure_settings.get("type", "ec2") == "capella"
+            return self.infrastructure_settings.get("provider", "aws") == "capella"
         return False
 
     @property
@@ -254,6 +255,27 @@ class ClusterSpec(Config):
             for cluster_name, private_ips in self.config.items('sync_gateway_private_ips'):
                 yield cluster_name, private_ips.split()
 
+    @property
+    def instance_ids_per_cluster(self):
+        return {k: v.split() for k, v in self.config.items('instance_ids')}
+
+    @property
+    def instance_ids(self) -> List[str]:
+        iids = []
+        for cluster_iids in self.instance_ids_per_cluster.values():
+            iids += cluster_iids
+        return iids
+
+    @property
+    def server_instance_ids_by_role(self, role: str) -> List[str]:
+        has_service = []
+        for cluster_name, servers in self.config.items('clusters'):
+            for i, server in enumerate(servers.split()):
+                _, roles = server.split(':')
+                if role in roles:
+                    has_service.append(self.instance_ids_per_cluster[cluster_name][i])
+        return has_service
+
     def servers_by_role(self, role: str) -> List[str]:
         has_service = []
         for _, servers in self.config.items('clusters'):
@@ -388,6 +410,30 @@ class ClusterSpec(Config):
                 if len(group):
                     server_grp_map[host] = group[0]
         return server_grp_map
+
+    def set_capella_instance_ids(self) -> None:
+        if not self.config.has_section('instance_ids'):
+            self.config.add_section('instance_ids')
+
+        if self.capella_backend == 'aws':
+            region = os.environ.get('AWS_REGION', 'us-east-1')
+
+            for cluster_name, hosts in self.clusters:
+                iids = []
+                for host in hosts:
+                    iid = local(
+                        (
+                            "env/bin/aws ec2 describe-instances --region {} "
+                            "--filter \"Name=ip-address,Values=$(dig +short {})\" "
+                            "--query \"Reservations[].Instances[].InstanceId\" "
+                            "--output text"
+                        ).format(region, host),
+                        capture=True
+                    )
+                    logger.info('Instance ID for {}: {}'.format(host, iid.strip()))
+                    iids.append(iid.strip())
+                self.config.set('instance_ids', cluster_name, '\n' + '\n'.join(iids))
+            self.update_spec_file()
 
 
 class TestCaseSettings:
@@ -591,21 +637,25 @@ class BucketSettings:
     FAILOVER_MIN = 5
     FAILOVER_MAX = 30
     BACKEND_STORAGE = None
+    CONFLICT_RESOLUTION_TYPE = 'seqno'
+    FLUSH = True
+    MIN_DURABILITY = 'none'
+    DOC_TTL_UNIT = None
+    DOC_TTL_VALUE = 0
 
     def __init__(self, options: dict):
         self.password = options.get('password', self.PASSWORD)
-        self.replica_number = int(
-            options.get('replica_number', self.REPLICA_NUMBER)
-        )
-        self.replica_index = int(
-            options.get('replica_index', self.REPLICA_INDEX)
-        )
-        self.eviction_policy = options.get('eviction_policy',
-                                           self.EVICTION_POLICY)
-        self.bucket_type = options.get('bucket_type',
-                                       self.BUCKET_TYPE)
 
-        self.conflict_resolution_type = options.get('conflict_resolution_type')
+        self.replica_number = int(options.get('replica_number', self.REPLICA_NUMBER))
+
+        self.replica_index = int(options.get('replica_index', self.REPLICA_INDEX))
+
+        self.eviction_policy = options.get('eviction_policy', self.EVICTION_POLICY)
+
+        self.bucket_type = options.get('bucket_type', self.BUCKET_TYPE)
+
+        self.conflict_resolution_type = options.get('conflict_resolution_type',
+                                                    self.CONFLICT_RESOLUTION_TYPE)
 
         self.compression_mode = options.get('compression_mode')
 
@@ -619,6 +669,14 @@ class BucketSettings:
         self.failover_max = int(options.get('failover_max', self.FAILOVER_MAX))
 
         self.backend_storage = options.get('backend_storage', self.BACKEND_STORAGE)
+
+        self.flush = bool(options.get('flush', self.FLUSH))
+
+        self.min_durability = options.get('min_durability', self.MIN_DURABILITY)
+
+        self.doc_ttl_unit = options.get('doc_ttl_unit', self.DOC_TTL_UNIT)
+
+        self.doc_ttl_value = options.get('doc_ttl_value', self.DOC_TTL_VALUE)
 
 
 class CollectionSettings:
@@ -1217,6 +1275,7 @@ class RestoreSettings:
     USE_TLS = False
     SHOW_TLS_VERSION = False
     MIN_TLS_VERSION = None
+    CLOUD = None
 
     def __init__(self, options):
         self.docs_per_collections = int(options.get('docs_per_collection',
@@ -1229,6 +1288,15 @@ class RestoreSettings:
         self.use_tls = int(options.get('use_tls', self.USE_TLS))
         self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
         self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
+
+        self.cloud = self.CLOUD
+        if self.backup_storage:
+            if self.backup_storage.startswith('s3://'):
+                self.cloud = 'aws'
+            elif self.backup_storage.startswith('gs://'):
+                self.cloud = 'gcp'
+            elif self.backup_storage.startswith('az://'):
+                self.cloud = 'azure'
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1598,6 +1666,7 @@ class BackupSettings:
     AWS_CREDENTIAL_PATH = None
     INCLUDE_DATA = None
     BACKUP_DIRECTORY = None
+    CLOUD = None
 
     def __init__(self, options: dict):
         self.compression = int(options.get('compression', self.COMPRESSION))
@@ -1614,6 +1683,15 @@ class BackupSettings:
         self.use_tls = int(options.get('use_tls', self.USE_TLS))
         self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
         self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
+
+        self.cloud = self.CLOUD
+        if self.backup_directory:
+            if self.backup_directory.startswith('s3://'):
+                self.cloud = 'aws'
+            elif self.backup_directory.startswith('gs://'):
+                self.cloud = 'gcp'
+            elif self.backup_directory.startswith('az://'):
+                self.cloud = 'azure'
 
 
 class ExportSettings:

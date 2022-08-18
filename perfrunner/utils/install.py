@@ -540,23 +540,24 @@ class CloudInstaller(CouchbaseInstaller):
             resp = requests.get(self.url)
             fh.write(resp.content)
 
-        logger.info('Uploading {} to servers'.format(package_name))
-        uploads = []
-        hosts = self.cluster_spec.servers
+        if not self.cluster_spec.capella_infrastructure:
+            logger.info('Uploading {} to servers'.format(package_name))
+            uploads = []
+            hosts = self.cluster_spec.servers
 
-        for host in hosts:
-            logger.info('Uploading {} to {}'.format(package_name, host))
-            args = (host, user, password, package_name)
+            for host in hosts:
+                logger.info('Uploading {} to {}'.format(package_name, host))
+                args = (host, user, password, package_name)
 
-            worker_process = Process(target=upload_couchbase, args=args)
-            worker_process.daemon = True
-            worker_process.start()
-            uploads.append(worker_process)
+                worker_process = Process(target=upload_couchbase, args=args)
+                worker_process.daemon = True
+                worker_process.start()
+                uploads.append(worker_process)
 
-        for process in uploads:
-            process.join()
+            for process in uploads:
+                process.join()
 
-        self.remote.install_uploaded_couchbase(package_name)
+            self.remote.install_uploaded_couchbase(package_name)
 
 
 def get_args():

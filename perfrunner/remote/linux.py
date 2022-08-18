@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import Dict, List
 from urllib.parse import urlparse
 
-from fabric.api import cd, get, put, quiet, run, settings
+from fabric.api import cd, get, local, put, quiet, run, settings
 from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
@@ -366,7 +366,8 @@ class RemoteLinux(Remote):
     @all_servers
     def detect_core_dumps(self):
         # Based on kernel.core_pattern = /data/core-%e-%p
-        r = run('ls /data/core*', quiet=True)
+        target_dir = '/data' if not self.cluster_spec.capella_infrastructure else '/var/cb/data'
+        r = run('ls {}/core*'.format(target_dir), quiet=True)
         if not r.return_code:
             return r.split()
         else:
@@ -643,7 +644,6 @@ class RemoteLinux(Remote):
         logger.info('Generating SSL keystore')
         remote_keystore = "{}/perfrunner/{}".format(worker_home, keystore_file)
         remote_root_cert = "{}/perfrunner/{}".format(worker_home, root_certificate)
-        put(root_certificate, remote_root_cert)
 
         with quiet():
             run("keytool -delete -keystore {} -alias couchbase -storepass storepass"
@@ -884,6 +884,8 @@ class RemoteLinux(Remote):
                             repo: str = 'default', obj_staging_dir: str = None,
                             obj_region: str = None, obj_access_key_id: str = None,
                             use_tls: bool = False, map_data: str = None):
+        restore_to_capella = cluster_spec.capella_infrastructure
+
         with cd(worker_home), cd('perfrunner'):
             flags = [
                 '--archive {}'.format(archive or cluster_spec.backup),
@@ -897,6 +899,8 @@ class RemoteLinux(Remote):
                 '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
                 '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
                 '--map-data {}'.format(map_data) if map_data else None,
+                '--disable-analytics --disable-cluster-analytics' if restore_to_capella else None,
+                '--purge',
                 '--no-progress-bar'
             ]
 
@@ -1111,3 +1115,26 @@ class RemoteLinux(Remote):
         cmd = './newDocPusher -url http://demo:password@localhost:4984/db1 ' \
               '-clients {} -timeout {}s > {}'.format(clients, timeout, result_path)
         run(cmd)
+
+    def capella_init_ssh(self):
+        if self.cluster_spec.capella_backend == 'aws':
+            for iid in self.cluster_spec.instance_ids:
+                logger.info('Uploading SSH key to {}'.format(iid))
+                local(
+                    (
+                        'env/bin/aws ssm send-command '
+                        '--region $AWS_REGION '
+                        '--instance-ids "{}" '
+                        '--document-name \'AWS-RunShellScript\' '
+                        '--parameters commands="\\"\n'
+                        'mkdir -p ~root/.ssh\n'
+                        'cd ~root/.ssh || exit 1\n'
+                        'grep -q \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub)\' authorized_keys '
+                        '|| echo \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub) ssm-session\' >> '
+                        'authorized_keys\n'
+                        '\\""'
+                    ).format(iid),
+                    capture=True
+                )
+                logger.info('Testing SSH to {}'.format(iid))
+                local('ssh root@{} echo'.format(iid))

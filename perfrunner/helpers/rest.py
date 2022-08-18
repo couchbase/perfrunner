@@ -1,9 +1,11 @@
 import json
+import os
 import time
 from collections import namedtuple
 from typing import Callable, Dict, Iterator, List
 
 import requests
+from capella.dedicated.CapellaAPI import CapellaAPI
 from decorator import decorator
 from fabric.api import local
 from requests.exceptions import ConnectionError
@@ -28,12 +30,13 @@ def retry(method: Callable, *args, **kwargs):
     for _ in range(MAX_RETRY):
         try:
             r = method(*args, **kwargs)
+            r.raise_for_status()
+            return r
         except ConnectionError:
             time.sleep(RETRY_DELAY * 2)
             continue
-        if r.status_code in range(200, 203):
-            return r
-        else:
+        except requests.exceptions.HTTPError as e:
+            logger.warn(e)
             logger.warn(r.text)
             logger.warn('Retrying {}'.format(r.url))
             time.sleep(RETRY_DELAY)
@@ -50,6 +53,8 @@ class RestHelper:
                 ):
         if cluster_spec.dynamic_infrastructure:
             return KubernetesRestHelper(cluster_spec, test_config)
+        elif cluster_spec.capella_infrastructure:
+            return CapellaRestHelper(cluster_spec, test_config)
         else:
             return DefaultRestHelper(cluster_spec, test_config)
 
@@ -1045,7 +1050,10 @@ class DefaultRestHelper(RestBase):
         return self.get(url=api).json()
 
     def get_ingestion_v2(self, analytics_node: str) -> dict:
-        api = 'http://{}:8095/analytics/status/ingestion/v2'.format(analytics_node)
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18095/analytics/status/ingestion/v2'.format(analytics_node)
+        else:
+            api = 'http://{}:8095/analytics/status/ingestion/v2'.format(analytics_node)
         return self.get(url=api).json()
 
     def set_analytics_logging_level(self, analytics_node: str, log_level: str):
@@ -1132,8 +1140,12 @@ class DefaultRestHelper(RestBase):
         return self.get(url=api).json()
 
     def get_cbas_incoming_records_count_v2(self, host: str) -> dict:
-        api = 'http://{}:8091/pools/default/stats/range/cbas_incoming_records_count?' \
-              'nodesAggregation=sum'.format(host)
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/stats/range/cbas_incoming_records_count?' \
+                  'nodesAggregation=sum'.format(host)
+        else:
+            api = 'http://{}:8091/pools/default/stats/range/cbas_incoming_records_count?' \
+                  'nodesAggregation=sum'.format(host)
         return self.get(url=api).json()
 
     def deploy_function(self, node: str, func: dict, name: str):
@@ -1375,8 +1387,12 @@ class DefaultRestHelper(RestBase):
 
     def create_scope(self, host, bucket, scope):
         logger.info("Creating scope {}:{}".format(bucket, scope))
-        api = 'http://{}:8091/pools/default/buckets/{}/scopes' \
-            .format(host, bucket)
+        if self.test_config.cluster.enable_n2n_encryption:
+            protocol, port = 'https', 18091
+        else:
+            protocol, port = 'http', 8091
+        api = '{}://{}:{}/pools/default/buckets/{}/scopes' \
+            .format(protocol, host, port, bucket)
         data = {
             'name': scope
         }
@@ -1384,8 +1400,12 @@ class DefaultRestHelper(RestBase):
 
     def create_collection(self, host, bucket, scope, collection):
         logger.info("Creating collection {}:{}.{}".format(bucket, scope, collection))
-        api = 'http://{}:8091/pools/default/buckets/{}/scopes/{}/collections' \
-            .format(host, bucket, scope)
+        if self.test_config.cluster.enable_n2n_encryption:
+            protocol, port = 'https', 18091
+        else:
+            protocol, port = 'http', 8091
+        api = '{}://{}:{}/pools/default/buckets/{}/scopes/{}/collections' \
+            .format(protocol, host, port, bucket, scope)
         data = {
             'name': collection
         }
@@ -1393,14 +1413,22 @@ class DefaultRestHelper(RestBase):
 
     def delete_collection(self, host, bucket, scope, collection):
         logger.info("Dropping collection {}:{}.{}".format(bucket, scope, collection))
-        api = 'http://{}:8091/pools/default/buckets/{}/scopes/{}/collections/{}' \
-            .format(host, bucket, scope, collection)
+        if self.test_config.cluster.enable_n2n_encryption:
+            protocol, port = 'https', 18091
+        else:
+            protocol, port = 'http', 8091
+        api = '{}://{}:{}/pools/default/buckets/{}/scopes/{}/collections/{}' \
+            .format(protocol, host, port, bucket, scope, collection)
         self.delete(url=api)
 
     def set_collection_map(self, host, bucket, collection_map):
         logger.info("Setting collection map on {} via bulk api".format(bucket))
-        api = 'http://{}:8091/pools/default/buckets/{}/scopes' \
-            .format(host, bucket)
+        if self.test_config.cluster.enable_n2n_encryption:
+            protocol, port = 'https', 18091
+        else:
+            protocol, port = 'http', 8091
+        api = '{}://{}:{}/pools/default/buckets/{}/scopes' \
+            .format(protocol, host, port, bucket)
         self.put(url=api, data=json.dumps(collection_map))
 
     def create_server_group(self, host, server_group):
@@ -1688,3 +1716,102 @@ class KubernetesRestHelper(RestBase):
         host, port = self.translate_host_and_port(host, '8091')
         api = 'http://{}:{}/pools/default/buckets/{}/controller/doFlush'.format(host, port, bucket)
         self.post(url=api)
+
+
+class CapellaRestHelper(DefaultRestHelper):
+
+    def __init__(self, cluster_spec, test_config):
+        DefaultRestHelper.__init__(self, cluster_spec=cluster_spec, test_config=test_config)
+        self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
+            self.cluster_spec.infrastructure_settings['cbc_env']
+        )
+        self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
+        self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
+        self.cluster_id = self.cluster_spec.infrastructure_settings['cbc_cluster']
+        self.api_client = CapellaAPI(
+            self.base_url, self._secret_key, self._access_key, self._cbc_user, self._cbc_pwd
+        )
+
+    @property
+    def _access_key(self):
+        return os.environ.get('CBC_ACCESS_KEY', None)
+
+    @property
+    def _secret_key(self):
+        return os.environ.get('CBC_SECRET_KEY', None)
+
+    @property
+    def _cbc_user(self):
+        return os.environ.get('CBC_USER', None)
+
+    @property
+    def _cbc_pwd(self):
+        return os.environ.get('CBC_PWD', None)
+
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
+        return self.cluster_spec.servers_by_role(role)
+
+    @retry
+    def create_db_user(self, username: str, password: str):
+        logger.info('Adding DB credential')
+        resp = self.api_client.create_db_user(
+            self.tenant_id, self.project_id, self.cluster_id, username, password)
+        return resp
+
+    @retry
+    def create_bucket(self, name: str,
+                      ram_quota: int,
+                      replica_number: int = 1,
+                      conflict_resolution_type: str = "seqno",
+                      flush: bool = True,
+                      durability: str = "none",
+                      backend_storage: str = "couchstore",
+                      ttl_value: int = 0,
+                      ttl_unit: str = None):
+        logger.info('Adding new bucket: {}'.format(name))
+
+        data = {
+            'name': name,
+            'bucketConflictResolution': conflict_resolution_type,
+            'memoryAllocationInMb': ram_quota,
+            'flush': flush,
+            'replicas': replica_number,
+            'durabilityLevel': durability,
+            'storageBackend': backend_storage,
+            'timeToLive': {
+                'unit': ttl_unit,
+                'value': ttl_value
+            }
+        }
+
+        logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
+
+        resp = self.api_client.create_bucket(self.tenant_id, self.project_id, self.cluster_id, data)
+        return resp
+
+    @retry
+    def allow_my_ip(self):
+        logger.info('Whitelisting own IP')
+        resp = self.api_client.allow_my_ip(self.tenant_id, self.project_id, self.cluster_id)
+        return resp
+
+    @retry
+    def add_allowed_ips(self, ips: list[str]):
+        logger.info('Whitelisting IPs: {}'.format(ips))
+        resp = self.api_client.add_allowed_ips(
+            self.tenant_id, self.project_id, self.cluster_id, ips)
+        return resp
+
+    @retry
+    def flush_bucket(self, host: str, bucket: str):
+        logger.info('Flushing bucket: {}'.format(bucket))
+        resp = self.api_client.flush_bucket(
+            self.tenant_id, self.project_id, self.cluster_id, bucket)
+        return resp
+
+    @retry
+    def delete_bucket(self, host: str, bucket: str):
+        logger.info('Deleting bucket: {}'.format(bucket))
+        resp = self.api_client.delete_bucket(
+            self.tenant_id, self.project_id, self.cluster_id, bucket)
+        return resp

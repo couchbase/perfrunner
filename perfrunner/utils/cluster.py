@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from multiprocessing import set_start_method
 
 from perfrunner.helpers.cluster import ClusterManager
+from perfrunner.helpers.rest import CapellaRestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
 
 set_start_method("fork")
@@ -34,9 +35,25 @@ def main():
     test_config = TestConfig()
     test_config.parse(args.test_config_fname, override=args.override)
 
+    # If on Capella, we need to do two things before anything else:
+    # 1. Create some DB credentials
+    # 2. Whitelist the local IP
+    if cluster_spec.capella_infrastructure:
+        rest = CapellaRestHelper(cluster_spec, test_config)
+        rest.allow_my_ip()
+        rest.create_db_user(*cluster_spec.rest_credentials)
+
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
-    if cluster_spec.dynamic_infrastructure:
+    if cluster_spec.capella_infrastructure:
+        cm.create_buckets()
+        cm.create_eventing_buckets()
+        cm.create_eventing_metadata_bucket()
+        if cm.test_config.collection.config:
+            cm.create_collections()
+        cm.allow_client_ips()
+        return
+    elif cluster_spec.dynamic_infrastructure:
         cm.set_mem_quotas()
         cm.set_services()
         cm.tune_memory_settings()

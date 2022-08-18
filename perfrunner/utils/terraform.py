@@ -6,7 +6,7 @@ from collections import Counter
 from time import sleep, time
 from uuid import uuid4
 
-from CapellaAPI import CapellaAPI
+from capella.dedicated.CapellaAPI import CapellaAPI
 from fabric.api import local
 
 from logger import logger
@@ -349,8 +349,9 @@ class CapellaTerraform(Terraform):
         self.update_spec(non_capella_output, cluster_id)
 
         # Do VPC peering
-        network_info = non_capella_output['network']['value']
-        self.peer_vpc(network_info, cluster_id)
+        if self.options.vpc_peering:
+            network_info = non_capella_output['network']['value']
+            self.peer_vpc(network_info, cluster_id)
 
     def destroy(self):
         # Tear down VPC peering connection
@@ -642,14 +643,14 @@ class CapellaTerraform(Terraform):
         try:
             resp = self.api_client.create_private_network(
                 self.tenant_id, self.project_id, cluster_id, data)
-            private_network_id = resp.json().get('id')
+            private_network_id = resp.json()['id']
 
             # Get AWS CLI commands that we need to run to complete the peering process
             logger.info('Accepting peering request')
             resp = self.api_client.get_private_network(
                 self.tenant_id, self.project_id, cluster_id, private_network_id)
-            aws_commands = resp.json().get('data').get('commands')
-            peering_connection_id = resp.json().get('data').get('aws').get('providerId')
+            aws_commands = resp.json()['data']['commands']
+            peering_connection_id = resp.json()['data']['aws']['providerId']
 
             # Finish peering process using AWS CLI
             for command in aws_commands:
@@ -699,13 +700,13 @@ class CapellaTerraform(Terraform):
         try:
             resp = self.api_client.create_private_network(
                 self.tenant_id, self.project_id, cluster_id, data)
-            private_network_id = resp.json().get('id')
+            private_network_id = resp.json()['id']
 
             # Get gcloud commands that we need to run to complete the peering process
             logger.info('Accepting peering request')
             resp = self.api_client.get_private_network(
                 self.tenant_id, self.project_id, cluster_id, private_network_id)
-            gcloud_commands = resp.json().get('data').get('commands')
+            gcloud_commands = resp.json()['data']['commands']
 
             # Finish peering process using gcloud
             for command in gcloud_commands:
@@ -824,6 +825,9 @@ def get_args():
                         help='cb version to use for Capella deployment')
     parser.add_argument('--capella-ami',
                         help='custom AMI to use for Capella deployment')
+    parser.add_argument('--vpc-peering',
+                        action='store_true',
+                        help='enable VPC peering for Capella deployment')
     parser.add_argument('--capella-timeout',
                         type=int,
                         default=20,

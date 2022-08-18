@@ -46,6 +46,8 @@ class ShowFastReporter(Reporter):
         cluster = self.cluster_spec.name
         component = self.test_config.showfast.component
         sub_category = self.test_config.showfast.sub_category
+        if self.cluster_spec.capella_infrastructure:
+            sub_category = sub_category.format(provider=self.cluster_spec.capella_backend.upper())
         metric.update({
             'cluster': cluster,
             'component': component,
@@ -75,11 +77,12 @@ class ShowFastReporter(Reporter):
 
             build_str = self.sdk_version + ' : ' + build_str
 
-        if self.test_config.access_settings.show_tls_version or \
-           self.test_config.backup_settings.show_tls_version or \
-           self.test_config.restore_settings.show_tls_version:
-            build_str = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + build_str
-            logger.info('build: {}'.format(self.build))
+        if not self.cluster_spec.capella_infrastructure:
+            if self.test_config.access_settings.show_tls_version or \
+               self.test_config.backup_settings.show_tls_version or \
+               self.test_config.restore_settings.show_tls_version:
+                build_str = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + build_str
+                logger.info('build: {}'.format(self.build))
 
         if self.test_config.tableau_settings.connector_vendor:
             tableau_helper = TableauTerminalHelper(self.test_config)

@@ -17,6 +17,7 @@ class ClusterManager:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
+        self.capella_infra = self.cluster_spec.capella_infrastructure
         self.rest = RestHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
@@ -34,21 +35,21 @@ class ClusterManager:
             return version >= min_release
 
     def set_data_path(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         for server in self.cluster_spec.servers:
             self.remote.change_owner(server, self.cluster_spec.data_path)
             self.rest.set_data_path(server, self.cluster_spec.data_path)
 
     def set_index_path(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         for server in self.cluster_spec.servers:
             self.remote.change_owner(server, self.cluster_spec.index_path)
             self.rest.set_index_path(server, self.cluster_spec.index_path)
 
     def set_analytics_path(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         paths = []
         for path in self.cluster_spec.analytics_paths:
@@ -61,7 +62,7 @@ class ClusterManager:
             self.rest.set_analytics_paths(server, paths)
 
     def rename(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         elif self.cluster_spec.using_private_cluster_ips:
             clusters_private = dict(self.cluster_spec.clusters_private)
@@ -74,14 +75,16 @@ class ClusterManager:
                 self.rest.rename(server)
 
     def set_auth(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         else:
             for server in self.cluster_spec.servers:
                 self.rest.set_auth(server)
 
     def set_mem_quotas(self):
-        if self.dynamic_infra:
+        if self.capella_infra:
+            return
+        elif self.dynamic_infra:
             cluster = self.remote.get_cluster()
             cluster['spec']['cluster']['dataServiceMemoryQuota'] = \
                 '{}Mi'.format(self.test_config.cluster.mem_quota)
@@ -115,7 +118,7 @@ class ClusterManager:
 
     def set_query_settings(self):
         logger.info('Setting query settings')
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         query_nodes = self.cluster_spec.servers_by_role('n1ql')
         if query_nodes:
@@ -127,6 +130,8 @@ class ClusterManager:
             logger.info('Query settings: {}'.format(settings))
 
     def set_index_settings(self):
+        if self.capella_infra:
+            return
         logger.info('Setting index settings')
         index_nodes = self.cluster_spec.servers_by_role('index')
         if index_nodes:
@@ -160,7 +165,9 @@ class ClusterManager:
             logger.info("Analytics replica setting: {}".format(check_replica))
 
     def set_services(self):
-        if self.dynamic_infra:
+        if self.capella_infra:
+            return
+        elif self.dynamic_infra:
             cluster = self.remote.get_cluster()
             server_types = dict()
             server_roles = self.cluster_spec.roles
@@ -244,7 +251,7 @@ class ClusterManager:
                 self.rest.set_services(master, roles)
 
     def add_nodes(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
 
         for (cluster, servers), initial_nodes in zip(self.cluster_spec.clusters,
@@ -263,7 +270,7 @@ class ClusterManager:
                 self.rest.add_node(master, new_host, roles)
 
     def rebalance(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         for (_, servers), initial_nodes \
                 in zip(self.cluster_spec.clusters, self.initial_nodes):
@@ -275,7 +282,7 @@ class ClusterManager:
         self.wait_until_healthy()
 
     def increase_bucket_limit(self, num_buckets: int):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         for master in self.cluster_spec.masters:
             self.rest.increase_bucket_limit(master, num_buckets)
@@ -308,19 +315,31 @@ class ClusterManager:
         else:
             for master in self.cluster_spec.masters:
                 for bucket_name in self.test_config.buckets:
-                    self.rest.create_bucket(
-                        host=master,
-                        name=bucket_name,
-                        ram_quota=per_bucket_quota,
-                        password=self.test_config.bucket.password,
-                        replica_number=self.test_config.bucket.replica_number,
-                        replica_index=self.test_config.bucket.replica_index,
-                        eviction_policy=self.test_config.bucket.eviction_policy,
-                        bucket_type=self.test_config.bucket.bucket_type,
-                        backend_storage=self.test_config.bucket.backend_storage,
-                        conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
-                        compression_mode=self.test_config.bucket.compression_mode,
-                    )
+                    bucket_params = {
+                        'name': bucket_name,
+                        'ram_quota': per_bucket_quota,
+                        'replica_number': self.test_config.bucket.replica_number,
+                        'conflict_resolution_type':
+                            self.test_config.bucket.conflict_resolution_type,
+                        'backend_storage': self.test_config.bucket.backend_storage
+                    }
+                    if self.capella_infra:
+                        bucket_params.update({
+                            'flush': self.test_config.bucket.flush,
+                            'durability': self.test_config.bucket.min_durability,
+                            'ttl_value': 0,
+                            'ttl_unit': None
+                        })
+                    else:
+                        bucket_params.update({
+                            'host': master,
+                            'password': self.test_config.bucket.password,
+                            'replica_index': self.test_config.bucket.replica_index,
+                            'eviction_policy': self.test_config.bucket.eviction_policy,
+                            'bucket_type': self.test_config.bucket.bucket_type,
+                            'compression_mode': self.test_config.bucket.compression_mode
+                        })
+                    self.rest.create_bucket(**bucket_params)
 
     def create_collections(self):
         if self.dynamic_infra:
@@ -370,18 +389,30 @@ class ClusterManager:
 
         for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.eventing_buckets:
-                self.rest.create_bucket(
-                    host=master,
-                    name=bucket_name,
-                    ram_quota=per_bucket_quota,
-                    password=self.test_config.bucket.password,
-                    replica_number=self.test_config.bucket.replica_number,
-                    replica_index=self.test_config.bucket.replica_index,
-                    eviction_policy=self.test_config.bucket.eviction_policy,
-                    bucket_type=self.test_config.bucket.bucket_type,
-                    backend_storage=self.test_config.bucket.backend_storage,
-                    conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
-                )
+                bucket_params = {
+                    'name': bucket_name,
+                    'ram_quota': per_bucket_quota,
+                    'replica_number': self.test_config.bucket.replica_number,
+                    'conflict_resolution_type': self.test_config.bucket.conflict_resolution_type,
+                    'backend_storage': self.test_config.bucket.backend_storage
+                }
+                if self.capella_infra:
+                    bucket_params.update({
+                        'flush': self.test_config.bucket.flush,
+                        'durability': self.test_config.bucket.min_durability,
+                        'ttl_value': 0,
+                        'ttl_unit': None
+                    })
+                else:
+                    bucket_params.update({
+                        'host': master,
+                        'password': self.test_config.bucket.password,
+                        'replica_index': self.test_config.bucket.replica_index,
+                        'eviction_policy': self.test_config.bucket.eviction_policy,
+                        'bucket_type': self.test_config.bucket.bucket_type,
+                        'compression_mode': self.test_config.bucket.compression_mode
+                    })
+                self.rest.create_bucket(**bucket_params)
 
     def create_eventing_metadata_bucket(self):
         if not self.test_config.cluster.eventing_metadata_bucket_mem_quota:
@@ -389,21 +420,36 @@ class ClusterManager:
         if self.dynamic_infra:
             return
         for master in self.cluster_spec.masters:
-            self.rest.create_bucket(
-                host=master,
-                name=self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME,
-                ram_quota=self.test_config.cluster.eventing_metadata_bucket_mem_quota,
-                password=self.test_config.bucket.password,
-                replica_number=self.test_config.bucket.replica_number,
-                replica_index=self.test_config.bucket.replica_index,
-                eviction_policy=self.test_config.bucket.eviction_policy,
-                bucket_type=self.test_config.bucket.bucket_type,
-                backend_storage=self.test_config.bucket.backend_storage,
-            )
+            bucket_params = {
+                'name': self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME,
+                'ram_quota': self.test_config.cluster.eventing_metadata_bucket_mem_quota,
+                'replica_number': self.test_config.bucket.replica_number,
+                'conflict_resolution_type': self.test_config.bucket.conflict_resolution_type,
+                'backend_storage': self.test_config.bucket.backend_storage
+            }
+            if self.capella_infra:
+                bucket_params.update({
+                    'flush': self.test_config.bucket.flush,
+                    'durability': self.test_config.bucket.min_durability,
+                    'ttl_value': 0,
+                    'ttl_unit': None
+                })
+            else:
+                bucket_params.update({
+                    'host': master,
+                    'password': self.test_config.bucket.password,
+                    'replica_index': self.test_config.bucket.replica_index,
+                    'eviction_policy': self.test_config.bucket.eviction_policy,
+                    'bucket_type': self.test_config.bucket.bucket_type,
+                    'compression_mode': self.test_config.bucket.compression_mode
+                })
+            self.rest.create_bucket(**bucket_params)
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction
-        if self.dynamic_infra:
+        if self.capella_infra:
+            return
+        elif self.dynamic_infra:
             cluster = self.remote.get_cluster()
             db = int(compaction_settings.db_percentage)
             view = int(compaction_settings.view_percentage)
@@ -437,8 +483,8 @@ class ClusterManager:
         internal_settings = self.test_config.internal_settings
         for master in self.cluster_spec.masters:
             for parameter, value in internal_settings.items():
-                if self.dynamic_infra:
-                    raise Exception('not supported for dynamic infrastructure yet')
+                if self.dynamic_infra or self.capella_infra:
+                    raise Exception('not supported for dynamic or capella infrastructure yet')
                 else:
                     self.rest.set_internal_settings(
                         master,
@@ -446,7 +492,7 @@ class ClusterManager:
 
     def configure_xdcr_settings(self):
         xdcr_cluster_settings = self.test_config.xdcr_cluster_settings
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         for master in self.cluster_spec.masters:
             for parameter, value in xdcr_cluster_settings.items():
@@ -455,7 +501,7 @@ class ClusterManager:
                     {parameter: maybe_atoi(value)})
 
     def tweak_memory(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         self.remote.reset_swap()
         self.remote.drop_caches()
@@ -463,7 +509,7 @@ class ClusterManager:
         self.remote.disable_thp()
 
     def enable_n2n_encryption(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         if self.test_config.cluster.enable_n2n_encryption:
             for master in self.cluster_spec.masters:
@@ -472,6 +518,8 @@ class ClusterManager:
                     self.test_config.cluster.enable_n2n_encryption)
 
     def disable_ui_http(self):
+        if self.capella_infra:
+            return
         if self.test_config.cluster.ui_http == 'disabled':
             self.remote.ui_http_off(self.cluster_spec.servers[0])
 
@@ -485,6 +533,8 @@ class ClusterManager:
                                               self.test_config.cluster.serverless_throttle)
 
     def restart_with_alternative_num_vbuckets(self):
+        if self.capella_infra:
+            return
         num_vbuckets = self.test_config.cluster.num_vbuckets
         if num_vbuckets is not None:
             if self.dynamic_infra:
@@ -498,7 +548,7 @@ class ClusterManager:
         Tune bucket settings (e.g., max_num_shards or max_num_auxio) using
         "/diag/eval" and restart the entire cluster.
         """
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         if self.test_config.bucket_extras:
             self.remote.enable_nonlocal_diag_eval()
@@ -533,7 +583,7 @@ class ClusterManager:
                 self.remote.set_magma_quota(bucket, magma_quota)
 
     def tune_logging(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         self.remote.tune_log_rotation()
         self.remote.restart()
@@ -542,6 +592,8 @@ class ClusterManager:
         enabled = self.test_config.bucket.autofailover_enabled
         failover_min = self.test_config.bucket.failover_min
         failover_max = self.test_config.bucket.failover_max
+        if self.capella_infra:
+            return
         if self.dynamic_infra:
             cluster = self.remote.get_cluster()
             cluster['spec']['cluster']['autoFailoverMaxCount'] = 1
@@ -560,6 +612,8 @@ class ClusterManager:
         enabled = 'false'
         failover_min = self.test_config.bucket.failover_min
         failover_max = self.test_config.bucket.failover_max
+        if self.capella_infra:
+            return
         if self.dynamic_infra:
             cluster = self.remote.get_cluster()
             cluster['spec']['cluster']['autoFailoverMaxCount'] = 1
@@ -773,6 +827,8 @@ class ClusterManager:
                     )
 
     def throttle_cpu(self):
+        if self.capella_infra:
+            return
         if self.dynamic_infra:
             if self.test_config.cluster.online_cores:
                 cluster = self.remote.get_cluster()
@@ -802,6 +858,8 @@ class ClusterManager:
                 self.remote.disable_cpu_sgw(self.test_config.cluster.sgw_online_cores)
 
     def tune_memory_settings(self):
+        if self.capella_infra:
+            return
         kernel_memory = self.test_config.cluster.kernel_mem_limit
         kv_kernel_memory = self.test_config.cluster.kv_kernel_mem_limit
         if kernel_memory or kv_kernel_memory:
@@ -849,7 +907,7 @@ class ClusterManager:
                 self.monitor.wait_for_servers()
 
     def reset_memory_settings(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         for service in self.test_config.cluster.kernel_mem_limit_services:
             for server in self.cluster_spec.servers_by_role(service):
@@ -857,22 +915,22 @@ class ClusterManager:
         self.monitor.wait_for_servers()
 
     def flush_iptables(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         self.remote.flush_iptables()
 
     def clear_login_history(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         self.remote.clear_wtmp()
 
     def disable_wan(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         self.remote.disable_wan()
 
     def enable_ipv6(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         if self.test_config.cluster.ipv6:
             version, build_number = self.build.split('-')
@@ -885,7 +943,7 @@ class ClusterManager:
             self.remote.enable_ipv6()
 
     def set_x509_certificates(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         if self.test_config.access_settings.ssl_mode == "auth":
             self.remote.allow_non_local_ca_upload()
@@ -896,7 +954,7 @@ class ClusterManager:
                 self.rest.enable_certificate_auth(self.cluster_spec.servers[i])
 
     def set_cipher_suite(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         if self.test_config.access_settings.cipher_list:
             check_cipher_suit = self.rest.get_cipher_suite(self.master_node)
@@ -907,7 +965,7 @@ class ClusterManager:
             logger.info('new cipher suit: {}'.format(check_cipher_suit))
 
     def set_min_tls_version(self):
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
         if self.test_config.access_settings.min_tls_version or \
            self.test_config.backup_settings.min_tls_version or \
@@ -972,3 +1030,15 @@ class ClusterManager:
         if self.test_config.magma_settings.magma_min_memory_quota:
             magma_min_quota = self.test_config.magma_settings.magma_min_memory_quota
             self.remote.set_magma_min_memory_quota(magma_min_quota)
+
+    def allow_client_ips(self):
+        if not self.capella_infra:
+            return
+
+        if self.cluster_spec.infrastructure_settings.get('peering_connection', None) is None:
+            client_ips = self.cluster_spec.clients
+            if self.cluster_spec.capella_backend == 'aws':
+                client_ips = [
+                    dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
+                ]
+            self.rest.add_allowed_ips(client_ips)

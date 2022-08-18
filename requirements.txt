@@ -44,4 +44,4 @@ typing-extensions==3.7.4.3
 
 git+https://github.com/couchbaselabs/mc_bin_client.git@magma#egg=mc_bin_client
 git+https://github.com/mattrobenolt/jinja2-cli.git#egg=jinja2-cli
-git+https://github.com/couchbaselabs/CapellaRESTAPIs.git@4a90ace34ebf964b3baf014346c46ca9f74aafa2
+git+https://github.com/couchbaselabs/CapellaRESTAPIs.git@master

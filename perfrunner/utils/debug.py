@@ -79,9 +79,14 @@ def main():
 
     remote.collect_info()
 
-    for hostname in cluster_spec.servers:
-        for fname in glob.glob('{}/*.zip'.format(hostname)):
-            shutil.move(fname, '{}.zip'.format(hostname))
+    if cluster_spec.capella_infrastructure:
+        for hostname, iid in zip(cluster_spec.servers, cluster_spec.instance_ids):
+            for fname in glob.glob('{}/*.zip'.format(iid)):
+                shutil.move(fname, '{}.zip'.format(hostname))
+    else:
+        for hostname in cluster_spec.servers:
+            for fname in glob.glob('{}/*.zip'.format(hostname)):
+                shutil.move(fname, '{}.zip'.format(hostname))
 
     if cluster_spec.backup is not None:
         logs = os.path.join(cluster_spec.backup, 'logs')

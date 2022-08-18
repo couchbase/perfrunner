@@ -48,7 +48,10 @@ class MetricHelper:
 
     @property
     def _title(self) -> str:
-        return self.test_config.showfast.title
+        title = self.test_config.showfast.title
+        if self.cluster_spec.capella_infrastructure:
+            return title.format(provider=self.cluster_spec.capella_backend.upper())
+        return title
 
     @property
     def _order_by(self) -> str:

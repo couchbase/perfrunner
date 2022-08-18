@@ -9,7 +9,10 @@ def all_servers(task, *args, **kwargs):
     """Execute the decorated function on all remote server nodes."""
     helper = args[0]
 
-    hosts = helper.cluster_spec.servers
+    if helper.cluster_spec.capella_infrastructure and helper.cluster_spec.capella_backend == 'aws':
+        hosts = helper.cluster_spec.instance_ids
+    else:
+        hosts = helper.cluster_spec.servers
 
     return execute(parallel(task), *args, hosts=hosts, **kwargs)
 
@@ -18,7 +21,13 @@ def all_servers(task, *args, **kwargs):
 def master_server(task: Callable, *args, **kwargs):
     """Execute the decorated function on master node."""
     self = args[0]
-    with settings(host_string=self.cluster_spec.servers[0]):
+
+    if self.cluster_spec.capella_infrastructure and self.cluster_spec.capella_backend == 'aws':
+        hosts = self.cluster_spec.instance_ids
+    else:
+        hosts = self.cluster_spec.servers
+
+    with settings(host_string=hosts[0]):
         return task(*args, **kwargs)
 
 

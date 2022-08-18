@@ -46,17 +46,24 @@ class Collector:
     def get_http(self, path, server=None, port=8091, json=True):
         server = server or self.master_node
         try:
-            if self.cloud_enabled:
+            if self.cloud_enabled and self.cloud['dynamic']:
                 server, port = self.session.translate_host_and_port(server, port)
                 url = "http://{}:{}{}".format(server, port, path)
-                r = self.session.get(url=url)
             else:
                 if self.n2n_enabled:
                     port = int(str(1) + str(port))
                     url = "https://{}:{}{}".format(server, port, path)
                 else:
                     url = "http://{}:{}{}".format(server, port, path)
+
+            if self.cloud_enabled:
+                # session is a RestHelper which inherits from RestBase and so doesn't need
+                # auth and verify kwargs (they are included by RestBase)
+                r = self.session.get(url=url)
+            else:
+                # session is just a requests.Session() object and so we need to pass all kwargs
                 r = self.session.get(url=url, auth=self.auth, verify=False)
+
             if r.status_code in (200, 201, 202):
                 return json and r.json() or r.text
             else:

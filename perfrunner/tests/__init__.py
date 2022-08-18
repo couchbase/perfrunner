@@ -43,6 +43,7 @@ class PerfTest:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
+        self.capella_infra = self.cluster_spec.capella_infrastructure
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.cluster = ClusterManager(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
@@ -59,10 +60,32 @@ class PerfTest:
         self.cbmonitor_clusters = []
 
         if self.test_config.test_case.use_workers:
-            self.worker_manager = WorkerManager(cluster_spec, test_config,
-                                                verbose)
-        if self.test_config.cluster.enable_n2n_encryption:
+            self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
+
+        need_certificate = (
+            self.test_config.cluster.enable_n2n_encryption or
+            self.test_config.load_settings.ssl_mode in ('data', 'n2n') or
+            self.test_config.access_settings.ssl_mode in ('data', 'n2n')
+        )
+        if need_certificate:
             self.download_certificate()
+            if self.worker_manager.is_remote or self.cluster_spec.cloud_infrastructure:
+                self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE,
+                                                  self.worker_manager.WORKER_HOME)
+
+        self.capella_ssh = True
+        if self.cluster_spec.capella_infrastructure:
+            tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
+
+            # Disable SSH if we aren't on AWS or if we are in capella-dev tenant, as this tenant
+            # has a higher level of security and we don't have permissions to do many things there
+            if self.cluster_spec.capella_backend != 'aws' or \
+               tenant_id == '1a3c4544-772e-449e-9996-1203e7020b96':
+                self.capella_ssh = False
+
+            if self.capella_ssh:
+                self.cluster_spec.set_capella_instance_ids()
+                self.remote.capella_init_ssh()
 
     def __enter__(self):
         return self
@@ -147,7 +170,7 @@ class PerfTest:
             fh.write(cert)
 
     def check_rebalance(self) -> str:
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             pass
         else:
             for master in self.cluster_spec.masters:
@@ -155,7 +178,7 @@ class PerfTest:
                     return 'The cluster is not balanced'
 
     def check_failover(self) -> Optional[str]:
-        if self.dynamic_infra:
+        if self.dynamic_infra or self.capella_infra:
             return
 
         if hasattr(self, 'rebalance_settings'):
@@ -169,6 +192,8 @@ class PerfTest:
                 return 'Failover happened {} time(s)'.format(num_failovers)
 
     def check_core_dumps(self) -> str:
+        if self.capella_infra and not self.capella_ssh:
+            return ''
         dumps_per_host = self.remote.detect_core_dumps()
         core_dumps = {
             host: dumps for host, dumps in dumps_per_host.items() if dumps

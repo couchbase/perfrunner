@@ -13,7 +13,7 @@ def buildTests(tests) {
 }
 
 def buildComponent(component, testCases) {
-    for ( release in ['neo', 'cheshire-cat', 'mad-hatter', 'alice', 'vulcan', 'spock', 'watson'] ) {
+    for ( release in ['elixir', 'neo', 'cheshire-cat', 'mad-hatter', 'alice', 'vulcan', 'spock', 'watson'] ) {
         if ( testCases.containsKey(release) ) {
             buildTests(testCases[release][component])
         }
@@ -46,6 +46,9 @@ pipeline {
                     }
                     if ( params.neo_test_suite != '' ) {
                         testCases['neo']  = readJSON file: params.neo_test_suite
+                    }
+                    if ( params.elixir_test_suite != '' ) {
+                        testCases['elixir']  = readJSON file: params.elixir_test_suite
                     }
                 }
             }
@@ -243,6 +246,30 @@ pipeline {
                     when { expression { return params.Rebalance_Windows } }
                     steps {
                         buildComponent('Rebalance-Windows', testCases)
+                    }
+                }
+                stage('Rebalance-C1-OnDemand') {
+                    when { expression { return params.Rebalance_OnDemand } }
+                    steps {
+                        buildComponent('Rebalance-C1-OnDemand', testCases)
+                    }
+                }
+                stage('Rebalance-C2-OnDemand') {
+                    when { expression { return params.Rebalance_OnDemand } }
+                    steps {
+                        buildComponent('Rebalance-C2-OnDemand', testCases)
+                    }
+                }
+                stage('Rebalance-OnDemand') {
+                    when { expression { return params.Rebalance_OnDemand } }
+                    steps {
+                        buildComponent('Rebalance-OnDemand', testCases)
+                    }
+                }
+                stage('Rebalance-Hestia-OnDemand') {
+                    when { expression { return params.Rebalance_OnDemand } }
+                    steps {
+                        buildComponent('Rebalance-Hestia-OnDemand', testCases)
                     }
                 }
                 stage('Views') {

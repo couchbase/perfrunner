@@ -1,0 +1,18 @@
+{
+    "Rebalance-C1-OnDemand": [
+        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "reb_in_1B_4nodes_kv.test"}
+    ],
+    "Rebalance-C2-OnDemand": [
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "reb_swap_1B_4nodes_kv.test"},
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "reb_out_1B_4nodes_kv.test"}
+    ],
+    "Rebalance-OnDemand": [
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_kv_disk_io_optimized.test"},
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_kv.test"}
+    ],
+    "Rebalance-Hestia-OnDemand": [
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_in_100M_dgm_kv.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_out_100M_dgm_kv.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_swap_100M_dgm_kv.test"}
+    ]
+}

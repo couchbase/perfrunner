@@ -236,13 +236,11 @@ class Terraform:
                 for _, info in output[output_key]['value'].items():
                     node_group = info['node_group']
                     for i, node in enumerate(node_list):
-                        node_split = node.split(':')
-                        hostname = node_split[0]
-                        services = node_split[1] if len(node_split) > 1 else None
+                        hostname, *extras = node.split(':', maxsplit=1)
                         if hostname.split('.', 2)[-1] == node_group:
                             public_ip = info['public_ip']
-                            if services:
-                                public_ip += ':{}'.format(services)
+                            if extras:
+                                public_ip += ':{}'.format(*extras)
                             public_ips[i] = public_ip
                             if 'private_ip' in info:
                                 private_ips[i] = info['private_ip']

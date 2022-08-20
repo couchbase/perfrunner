@@ -103,7 +103,7 @@ def new_cbagent_settings(test: PerfTest):
         'bucket_password': test.test_config.bucket.password,
         'workers': test.cluster_spec.workers,
         'cloud': {"enabled": False},
-        'remote': test.worker_manager.is_remote
+        'remote': test.worker_manager.is_remote if test.test_config.test_case.use_workers else False
     })()
 
     settings.ssh_username, settings.ssh_password = \

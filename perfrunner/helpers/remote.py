@@ -39,7 +39,7 @@ class RemoteHelper:
         state.env.user, state.env.password = cluster_spec.ssh_credentials
         logger.info('Detecting OS on server {}'.format(server))
         with settings(host_string=server):
-            os = run('python -c "import platform; print platform.dist()[0]"')
+            os = run('python -c "import distro; print(distro.name())"')
         if os:
             return os
         else:

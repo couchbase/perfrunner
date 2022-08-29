@@ -12,6 +12,7 @@ iris =
 hosts =
     172.23.100.44
     172.23.100.104
+    172.23.100.105
 credentials = root:couchbase
 
 [storage]

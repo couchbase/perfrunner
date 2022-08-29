@@ -449,18 +449,17 @@ class CouchbaseInstaller:
     def download_local(self, local_copy_url: str = None):
         """Download and save a copy of the specified package."""
         try:
-            if RemoteHelper.detect_server_os("127.0.0.1", self.cluster_spec). \
+            if local_copy_url:
+                url = local_copy_url
+            elif RemoteHelper.detect_server_os("127.0.0.1", self.cluster_spec).\
                     upper() in ('UBUNTU', 'DEBIAN'):
                 os_release = detect_ubuntu_release()
-                if local_copy_url:
-                    url = local_copy_url
-                else:
-                    url = self.find_package(edition=self.options.edition,
-                                            package="deb", os_release=os_release)
-                logger.info('Saving a local copy of {}'.format(url))
-                with open('couchbase.deb', 'wb') as fh:
-                    resp = requests.get(url)
-                    fh.write(resp.content)
+                url = self.find_package(edition=self.options.edition,
+                                        package="deb", os_release=os_release)
+            logger.info('Saving a local copy of {}'.format(url))
+            with open('couchbase.deb', 'wb') as fh:
+                resp = requests.get(url)
+                fh.write(resp.content)
         except (Exception, BaseException):
             logger.info("Saving local copy for ubuntu failed, package may not present")
 

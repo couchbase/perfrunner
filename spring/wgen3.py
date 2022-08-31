@@ -967,7 +967,8 @@ class N1QLWorker(Worker):
 
     def __init__(self, workload_settings, target_settings, shutdown_event=None):
         super().__init__(workload_settings, target_settings, shutdown_event)
-        self.new_queries = N1QLQueryGen3(workload_settings.n1ql_queries)
+        self.new_queries = N1QLQueryGen3(workload_settings.n1ql_queries,
+                                         workload_settings.n1ql_query_weight)
         self.reservoir = Reservoir(num_workers=self.ws.n1ql_workers)
         self.gen_duration = 0.0
         self.batch_duration = 0.0

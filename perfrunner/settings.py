@@ -1,7 +1,6 @@
 import csv
 import json
 import os
-import random
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from itertools import chain, combinations, permutations
@@ -771,6 +770,7 @@ class PhaseSettings:
     N1QL_OP = 'read'
     N1QL_BATCH_SIZE = 100
     N1QL_TIMEOUT = 0
+    N1QL_QUERY_WEIGHT = ""
 
     ARRAY_SIZE = 10
     NUM_CATEGORIES = 10 ** 6
@@ -960,6 +960,11 @@ class PhaseSettings:
 
         if 'n1ql_queries' in options:
             self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
+            n1ql_query_weight = options.get('n1ql_query_weight', self.N1QL_QUERY_WEIGHT).strip()
+            if len(n1ql_query_weight):
+                self.n1ql_query_weight = [int(w) for w in n1ql_query_weight.split(',')]
+            else:
+                self.n1ql_query_weight = [1] * len(self.n1ql_queries)
 
         # 2i settings
         self.item_size = int(options.get('item_size', self.ITEM_SIZE))
@@ -1568,9 +1573,6 @@ class AccessSettings(PhaseSettings):
             query = config.get_n1ql_query_definition(query_name)
             queries.append(query)
         self.n1ql_queries = queries
-        if len(self.n1ql_queries) > 1:
-            if 'total_batches' in self.n1ql_queries[0].keys():
-                random.shuffle(self.n1ql_queries)
 
 
 class ExtraAccessSettings(PhaseSettings):

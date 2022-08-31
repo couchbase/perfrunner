@@ -229,13 +229,17 @@ class ViewQueryGenByType3:
 
 class N1QLQueryGen3:
 
-    def __init__(self, queries: List[dict]):
-        queries = [
-            (query['statement'], query['args'], query.get('scan_consistency'), query.get('ad_hoc'),
-             query.get('total_batches'), query.get('qualified_batches'))
-            for query in queries
-        ]
-        self.queries = cycle(queries)
+    def __init__(self, queries: List[dict], query_weight: List[int]):
+        n1ql_queries = []
+        for (query, weight) in zip(queries, query_weight):
+            for i in range(weight):
+                n1ql_queries.append((query['statement'], query['args'],
+                                     query.get('scan_consistency'), query.get('ad_hoc'),
+                                     query.get('total_batches'),
+                                     query.get('qualified_batches')))
+        if 'total_batches' in queries[0].keys():
+            random.shuffle(n1ql_queries)
+        self.queries = cycle(n1ql_queries)
 
     def generate_query(self):
         return

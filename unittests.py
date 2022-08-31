@@ -609,7 +609,10 @@ class QueryTest(TestCase):
             'args': '["{key}"]',
         }]
 
-        qg = N1QLQueryGen(queries=queries)
+        if cb_version[0] == '2':
+            qg = N1QLQueryGen(queries=queries)
+        elif cb_version[0] == '3':
+            qg = N1QLQueryGen(queries=queries, query_weight=[1])
 
         for key in 'n1ql-0123456789', 'n1ql-9876543210':
             if cb_version[0] == '3':
@@ -631,7 +634,10 @@ class QueryTest(TestCase):
             'scan_consistency': 'request_plus',
         }]
 
-        qg = N1QLQueryGen(queries=queries)
+        if cb_version[0] == '2':
+            qg = N1QLQueryGen(queries=queries)
+        elif cb_version[0] == '3':
+            qg = N1QLQueryGen(queries=queries, query_weight=[1])
 
         for doc in {'email': 'a@a.com'}, {'email': 'b@b.com'}:
             if cb_version[0] == '3':

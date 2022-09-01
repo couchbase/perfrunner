@@ -813,7 +813,7 @@ def run_cmd(path, command, parameters, output_file):
 
 
 def restart_memcached(mem_limit: int = 10000, port: int = 8000, mem_host: str = 'localhost'):
-    cmd1 = 'killall -9 memcached'
+    cmd1 = 'systemctl stop memcached'
     logger.info('Running: {}'.format(cmd1))
     with settings(warn_only=True):
         local(cmd1, capture=True)

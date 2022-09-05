@@ -82,7 +82,7 @@ class XdcrLag(Latency):
     def sample(self):
         for bucket, src_client, dst_client in self.clients:
             lags = self.measure(src_client, dst_client)
-            self.store.append(lags,
-                              cluster=self.cluster,
-                              bucket=bucket,
-                              collector=self.COLLECTOR)
+            self.append_to_store(lags,
+                                 cluster=self.cluster,
+                                 bucket=bucket,
+                                 collector=self.COLLECTOR)

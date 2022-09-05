@@ -153,3 +153,18 @@ def inject_num_workers(num_workers, worker_template_path, worker_path):
         replace = '{}'.format(str(num_workers))
         for line in file:
             print(line.replace(search, replace), end='')
+
+
+def is_null(element) -> bool:
+    if (isinstance(element, int) or isinstance(element, float)) and element == 0:
+        return False
+    elif isinstance(element, bool):
+        return False
+    else:
+        return False if element else True
+
+
+def remove_nulls(d: dict) -> dict:
+    if not isinstance(d, dict):
+        return d
+    return {k: new_v for k, v in d.items() if not is_null(new_v := remove_nulls(v))}

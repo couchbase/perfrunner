@@ -73,8 +73,10 @@ class MetadataClient(RestClient):
         url = self.base_url + "/get_metrics/"
         params = {"cluster": self.settings.cluster}
         for extra_param in "bucket", "index", "server":
-            if eval(extra_param) is not None:
-                params[extra_param] = eval(extra_param)
+            if (value := eval(extra_param)) is not None:
+                if extra_param == "bucket" and value in self.settings.serverless_db_names:
+                    value = self.settings.serverless_db_names[value]
+                params[extra_param] = value
         return self.get(url, params)
 
     def add_cluster(self):
@@ -96,6 +98,9 @@ class MetadataClient(RestClient):
         self.post(url, data)
 
     def add_bucket(self, name: str):
+        if name in self.settings.serverless_db_names:
+            name = self.settings.serverless_db_names[name]
+
         if name in self.get_buckets():
             return
 
@@ -116,8 +121,10 @@ class MetadataClient(RestClient):
         url = self.base_url + "/add_metric/"
         data = {"name": name, "cluster": self.settings.cluster}
         for extra_param in "bucket", "index", "server", "collector":
-            if eval(extra_param) is not None:
-                data[extra_param] = eval(extra_param)
+            if (value := eval(extra_param)) is not None:
+                if extra_param == "bucket" and value in self.settings.serverless_db_names:
+                    value = self.settings.serverless_db_names[value]
+                data[extra_param] = value
         self.post(url, data)
 
     def add_snapshot(self, name: str):

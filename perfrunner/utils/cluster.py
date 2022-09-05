@@ -38,20 +38,28 @@ def main():
     # If on Capella, we need to do two things before anything else:
     # 1. Create some DB credentials
     # 2. Whitelist the local IP
-    if cluster_spec.capella_infrastructure:
+    if cluster_spec.capella_infrastructure and not cluster_spec.serverless_infrastructure:
         rest = CapellaRestHelper(cluster_spec, test_config)
         rest.allow_my_ip()
         rest.create_db_user(*cluster_spec.rest_credentials)
 
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
-    if cluster_spec.capella_infrastructure:
+    if cluster_spec.serverless_infrastructure:
+        cm.allow_ips_for_serverless_dbs()
+        cm.provision_serverless_db_keys()
+        cm.bypass_nebula_for_clients()
+        if cm.test_config.collection.collection_map:
+            cm.create_collections()
+        cm.serverless_throttle()
+        return
+    elif cluster_spec.capella_infrastructure:
         cm.create_buckets()
         cm.create_eventing_buckets()
         cm.create_eventing_metadata_bucket()
-        if cm.test_config.collection.config:
+        if cm.test_config.collection.collection_map:
             cm.create_collections()
-        cm.allow_client_ips()
+        cm.capella_allow_client_ips()
         return
     elif cluster_spec.dynamic_infrastructure:
         cm.set_mem_quotas()
@@ -111,7 +119,7 @@ def main():
     cm.wait_until_warmed_up()
     cm.disable_ui_http()
 
-    if cm.test_config.collection.config:
+    if cm.test_config.collection.collection_map:
         cm.create_collections()
 
     cm.tweak_memory()

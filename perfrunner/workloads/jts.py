@@ -40,9 +40,18 @@ def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
         settings.fts_index_map[full_index_name] = settings.fts_index_map.pop(index_name)
         index_name = full_index_name
 
+    host = target.node
+    if target.cloud:
+        if settings.nebula_mode == 'nebula':
+            host = target.cloud['nebula_uri']
+        elif settings.nebula_mode == 'dapi':
+            host = target.cloud['dapi_uri']
+        else:
+            host = target.cloud.get('cluster_svc', host)
+
     params = CMD.format(
         couchbase_index_name=index_name,
-        couchbase_cluster_ip=target.node,
+        couchbase_cluster_ip=host,
         couchbase_bucket=target.bucket,
         couchbase_user=target.bucket,
         couchbase_password=target.password,
@@ -90,9 +99,19 @@ def jts_warmup(workload_settings: PhaseSettings, target: TargetSettings,
         full_index_name = settings.fts_index_map[index_name]["full_index_name"]
         settings.fts_index_map[full_index_name] = settings.fts_index_map.pop(index_name)
         index_name = full_index_name
+
+    host = target.node
+    if target.cloud:
+        if settings.nebula_mode == 'nebula':
+            host = target.cloud['nebula_uri']
+        elif settings.nebula_mode == 'dapi':
+            host = target.cloud['dapi_uri']
+        else:
+            host = target.cloud.get('cluster_svc', host)
+
     params = CMD.format(
         couchbase_index_name=index_name,
-        couchbase_cluster_ip=target.node,
+        couchbase_cluster_ip=host,
         couchbase_bucket=target.bucket,
         couchbase_user=target.bucket,
         couchbase_password=target.password,

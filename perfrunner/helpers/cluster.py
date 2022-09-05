@@ -1031,7 +1031,7 @@ class ClusterManager:
             magma_min_quota = self.test_config.magma_settings.magma_min_memory_quota
             self.remote.set_magma_min_memory_quota(magma_min_quota)
 
-    def allow_client_ips(self):
+    def capella_allow_client_ips(self):
         if not self.capella_infra:
             return
 
@@ -1042,3 +1042,31 @@ class ClusterManager:
                     dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
                 ]
             self.rest.add_allowed_ips(client_ips)
+
+    def allow_ips_for_serverless_dbs(self):
+        for db_id in self.test_config.buckets:
+            self.rest.allow_my_ip(db_id)
+            client_ips = self.cluster_spec.clients
+            if self.cluster_spec.capella_backend == 'aws':
+                client_ips = [
+                    dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
+                ]
+            self.rest.add_allowed_ips(db_id, client_ips)
+
+    def bypass_nebula_for_clients(self):
+        client_ips = self.cluster_spec.clients
+        if self.cluster_spec.capella_backend == 'aws':
+            client_ips = [
+                dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
+            ]
+        for ip in client_ips:
+            self.rest.bypass_nebula(ip)
+
+    def provision_serverless_db_keys(self):
+        dbs = self.test_config.serverless_db.db_map
+        for db_id in dbs.keys():
+            resp = self.rest.get_db_api_key(db_id)
+            dbs[db_id]['access'] = resp.json()['access']
+            dbs[db_id]['secret'] = resp.json()['secret']
+
+        self.test_config.serverless_db.update_db_map(dbs)

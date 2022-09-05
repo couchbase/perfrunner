@@ -214,9 +214,9 @@ class KVStoreStats(Collector):
 
                     if stats:
                         self.update_metric_metadata(stats.keys(), server=node, bucket=bucket)
-                        self.store.append(stats, cluster=self.cluster,
-                                          bucket=bucket, server=node,
-                                          collector=self.COLLECTOR)
+                        self.append_to_store(stats, cluster=self.cluster,
+                                             bucket=bucket, server=node,
+                                             collector=self.COLLECTOR)
 
         for bucket in self.get_buckets():
             stats = {}
@@ -239,9 +239,9 @@ class KVStoreStats(Collector):
 
             if stats:
                 self.update_metric_metadata(stats.keys(), bucket=bucket)
-                self.store.append(stats, cluster=self.cluster,
-                                  bucket=bucket,
-                                  collector=self.COLLECTOR)
+                self.append_to_store(stats, cluster=self.cluster,
+                                     bucket=bucket,
+                                     collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()

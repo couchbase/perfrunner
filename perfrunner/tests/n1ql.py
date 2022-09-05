@@ -1,3 +1,4 @@
+import re
 import time
 
 from logger import logger
@@ -84,8 +85,8 @@ class N1QLTest(PerfTest):
                         for scope in bucket_scopes.keys():
                             for collection in bucket_scopes[scope].keys():
                                 if bucket_scopes[scope][collection]["access"] == 1:
-                                    query_target = "default:`{}`.`{}`.`{}`"\
-                                        .format(bucket, scope, collection)
+                                    query_context = "default:`{}`.`{}`".format(bucket, scope)
+                                    query_target = "{}.`{}`".format(query_context, collection)
                                     replace_target = "`TARGET_BUCKET`"
                                     query_statement = query_statement.\
                                         replace(replace_target, query_target)
@@ -110,8 +111,8 @@ class N1QLTest(PerfTest):
                             for scope in bucket_scopes.keys():
                                 for collection in bucket_scopes[scope].keys():
                                     if bucket_scopes[scope][collection]["access"] == 1:
-                                        query_target = "default:`{}`.`{}`.`{}`"\
-                                            .format(bucket, scope, collection)
+                                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                                        query_target = "{}.`{}`".format(query_context, collection)
                                         replace_target = "`{}`".format(bucket)
                                         query_statement = query_statement.\
                                             replace(replace_target, query_target)
@@ -123,9 +124,13 @@ class N1QLTest(PerfTest):
                                 raise Exception('No access target for bucket: {}'
                                                 .format(bucket))
                 logger.info("Grabbing plan for query: {}".format(query_statement))
-                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement)
+                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
+                                                        query_context)
             else:
-                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query['statement'])
+                bucket = re.search(r' FROM ([^\s]+)', query['statement']).group(1)
+                query_context = 'default:{}.`_default`'.format(bucket)
+                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query['statement'],
+                                                        query_context)
             with open('query_plan_{}.json'.format(i), 'w') as fh:
                 fh.write(pretty_dict(plan))
 
@@ -265,6 +270,7 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
         logger.info('Creating and building indexes')
         create_statements = []
         build_statements = []
+        query_contexts = []
         for statement in self.test_config.index_settings.statements:
             index_name = statement.split()[2]
             index_replicas = str(self.test_config.index_settings.replicas)
@@ -273,20 +279,21 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
                 for scope in bucket_scopes.keys():
                     for collection in bucket_scopes[scope].keys():
                         if bucket_scopes[scope][collection]["access"] == 1:
-                            index_target = "default:`{}`.`{}`.`{}`".\
-                                format(bucket, scope, collection)
+                            query_context = "default:`{}`.`{}`".format(bucket, scope)
+                            index_target = "{}.`{}`".format(query_context, collection)
                             replace_target = "`TARGET_BUCKET`"
                             create_statement = statement.replace(replace_target, index_target)
                             create_statement = create_statement.replace('index_replicas',
                                                                         index_replicas)
                             build_statement = "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')".\
                                 format(bucket, scope, collection, index_name)
+                            query_contexts.append(query_context)
                             create_statements.append(create_statement)
                             build_statements.append(build_statement)
 
-        for statement in create_statements:
+        for statement, query_context in zip(create_statements, query_contexts):
             logger.info('Creating index: ' + statement)
-            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
             cont = False
             while not cont:
                 building = 0
@@ -300,9 +307,9 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
                 else:
                     time.sleep(10)
 
-        for statement in build_statements:
+        for statement, query_context in zip(build_statements, query_contexts):
             logger.info('Building index: ' + statement)
-            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
             cont = False
             while not cont:
                 building = 0

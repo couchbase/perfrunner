@@ -24,7 +24,12 @@ def ycsb_data_load(workload_settings: PhaseSettings,
 
     host = target.node
     if target.cloud:
-        host = target.cloud['cluster_svc']
+        if workload_settings.nebula_mode == 'nebula':
+            host = target.cloud['nebula_uri']
+        elif workload_settings.nebula_mode == 'dapi':
+            host = target.cloud['dapi_uri']
+        else:
+            host = target.cloud.get('cluster_svc', host)
 
     run_ycsb(host=host,
              bucket=target.bucket,
@@ -94,7 +99,12 @@ def ycsb_workload(workload_settings: PhaseSettings,
 
     host = target.node
     if target.cloud:
-        host = target.cloud['cluster_svc']
+        if workload_settings.nebula_mode == 'nebula':
+            host = target.cloud['nebula_uri']
+        elif workload_settings.nebula_mode == 'dapi':
+            host = target.cloud['dapi_uri']
+        else:
+            host = target.cloud.get('cluster_svc', host)
 
     run_ycsb(host=host,
              bucket=target.bucket,

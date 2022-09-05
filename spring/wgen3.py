@@ -13,6 +13,7 @@ from psutil import cpu_count
 from twisted.internet import reactor
 
 from logger import logger
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.sync import SyncHotWorkload
 from spring.cbgen3 import CBAsyncGen3, CBGen3
 from spring.docgen import (
@@ -376,7 +377,15 @@ class Worker:
             'connstr_params': self.ws.connstr_params
         }
         if self.ts.cloud:
-            params['host'] = self.ts.cloud['cluster_svc']
+            if self.ws.nebula_mode == 'nebula':
+                params['host'] = self.ts.cloud['nebula_uri']
+            elif self.ws.nebula_mode == 'dapi':
+                params['host'] = self.ts.cloud['dapi_uri']
+            else:
+                params['host'] = self.ts.cloud.get('cluster_svc', params['host'])
+
+        logger.info('Connection settings: {}'.format(pretty_dict(params)))
+
         try:
             self.cb = CBGen3(**params)
         except Exception as e:
@@ -554,6 +563,7 @@ class KVWorker(Worker):
 
     def run(self, sid, locks, curr_ops, shared_dict,
             current_hot_load_start=None, timer_elapse=None):
+        logger.info('Running KVWorker')
         self.sid = sid
         self.locks = locks
         self.gen_lock = locks[0]
@@ -703,13 +713,16 @@ class AsyncKVWorker(KVWorker):
 class HotReadsWorker(Worker):
 
     def run(self, sid, *args):
+        logger.info("running HotReadsWorker")
         set_cpu_afinity(sid)
         ws = copy.deepcopy(self.ws)
+        period = 1 / ws.throughput
         ws.items = ws.items // self.num_load_targets
         self.cb.connect_collections(self.load_targets)
         for target in self.load_targets:
             for key in HotKey(sid, ws, self.ts.prefix):
                 self.cb.read(target, key.string)
+                time.sleep(period)
 
 
 class SeqUpsertsWorker(Worker):
@@ -717,12 +730,14 @@ class SeqUpsertsWorker(Worker):
     def run(self, sid, *args):
         logger.info("running SeqUpsertsWorker")
         ws = copy.deepcopy(self.ws)
+        period = 1 / ws.throughput
         self.cb.connect_collections(self.load_targets)
         for target in self.load_targets:
             ws.items = self.load_map[target]
             for key in SequentialKey(sid, ws, self.ts.prefix):
                 doc = self.docs.next(key)
                 self.cb.update(target, key.string, doc)
+                time.sleep(period)
 
 
 class FTSDataSpreadWorker(Worker):
@@ -975,6 +990,7 @@ class N1QLWorker(Worker):
         self.delta = 0.0
         self.op_delay = 0.0
         self.first = True
+        self.use_query_context = self.ts.cloud.get('serverless', False)
 
     def do_batch_create(self, *args, **kwargs):
         if self.target_time:
@@ -992,7 +1008,8 @@ class N1QLWorker(Worker):
             target_curr_items += 1
             key = self.new_keys.next(curr_items=target_curr_items)
             doc = self.docs.next(key)
-            query, options = self.new_queries.next(key.string, doc, self.replacement_targets)
+            query, options = self.new_queries.next(key.string, doc, self.replacement_targets,
+                                                   self.use_query_context)
             latency = self.cb.n1ql_query(query, options)
             if not self.first:
                 self.reservoir.update(operation='query', value=latency)
@@ -1022,7 +1039,8 @@ class N1QLWorker(Worker):
             key = self.keys_for_cas_update.next(sid=random_slice,
                                                 curr_items=target_curr_items)
             doc = self.docs.next(key)
-            query, options = self.new_queries.next(key.string, doc, self.replacement_targets)
+            query, options = self.new_queries.next(key.string, doc, self.replacement_targets,
+                                                   self.use_query_context)
             latency = self.cb.n1ql_query(query, options)
             if not self.first:
                 self.reservoir.update(operation='query', value=latency)
@@ -1053,7 +1071,8 @@ class N1QLWorker(Worker):
             key = self.existing_keys.next(curr_items=target_curr_items,
                                           curr_deletes=0)
             doc = self.docs.next(key)
-            query, options = self.new_queries.next(key.string, doc, self.replacement_targets)
+            query, options = self.new_queries.next(key.string, doc, self.replacement_targets,
+                                                   self.use_query_context)
             latency = self.cb.n1ql_query(query, options)
             if not self.first:
                 self.reservoir.update(operation='query', value=latency)
@@ -1192,6 +1211,7 @@ class N1QLWorker(Worker):
 
     def run(self, sid, locks, curr_ops, shared_dict,
             current_hot_load_start=None, timer_elapse=None):
+        logger.info('Running N1QLWorker')
         self.sid = sid
         self.locks = locks
         self.lock = locks[0]

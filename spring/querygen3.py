@@ -252,15 +252,18 @@ class N1QLQueryGen3:
         else:
             return QueryScanConsistency.NOT_BOUNDED
 
-    def next(self, key: str, doc: dict, replace_targets: dict = None) -> Tuple[str, QueryOptions]:
+    def next(self, key: str, doc: dict, replace_targets: dict = None,
+             use_query_context: bool = False) -> Tuple[str, QueryOptions]:
         statement, args, scan_consistency, ad_hoc, total_batches, qualified_batches = \
             next(self.queries)
+        query_context = None
         if replace_targets:
             if "TARGET_BUCKET" in statement:
                 for bucket in replace_targets.keys():
                     scope, collection, target = replace_targets[bucket][0].split(":")
                     if target == 'True':
-                        replace_target = "default:`{}`.`{}`.`{}`".format(bucket, scope, collection)
+                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                        replace_target = "{}.`{}`".format(query_context, collection)
                         statement = statement.replace("`TARGET_BUCKET`", replace_target)
                         replace_target = "`{}`.`{}`".format(bucket, scope)
                         statement = statement.replace("`TARGET_SCOPE`", replace_target)
@@ -272,7 +275,8 @@ class N1QLQueryGen3:
                         before = statement[:where]
                         after = statement[where:]
                         scope, collection, target = replace_targets[bucket][i].split(":")
-                        replace_target = "default:`{}`.`{}`.`{}`".format(bucket, scope, collection)
+                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                        replace_target = "{}.`{}`".format(query_context, collection)
                         after = after.replace(bucket_substring, replace_target)
                         statement = before + after
         if 'key' in args:
@@ -285,8 +289,15 @@ class N1QLQueryGen3:
             args = args.format(**doc)
             args = eval(args)
 
-        query_opts = QueryOptions(adhoc=bool(ad_hoc),
-                                  scan_consistency=self.scan_consistency(scan_consistency),
-                                  positional_parameters=args)
+        params = {
+            'adhoc': bool(ad_hoc),
+            'scan_consistency': self.scan_consistency(scan_consistency),
+            'positional_parameters': args
+        }
+
+        if use_query_context:
+            params['query_context'] = query_context
+
+        query_opts = QueryOptions(**params)
 
         return statement, query_opts

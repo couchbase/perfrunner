@@ -111,10 +111,13 @@ class CBGen3(CBAsyncGen3):
         connection_string = 'couchbase://{host}?{params}'
         connstr_params = parse.urlencode(kwargs["connstr_params"])
 
-        if ssl_mode == 'data' or ssl_mode == 'n2n' or ssl_mode == 'capella':
+        if ssl_mode in ['data', 'n2n', 'capella', 'nebula', 'dapi']:
             connection_string = connection_string.replace('couchbase',
                                                           'couchbases')
-            connection_string += '&certpath=root.pem'
+            if ssl_mode in ['nebula', 'dapi']:
+                connection_string += '&ssl=no_verify'
+            else:
+                connection_string += '&certpath=root.pem'
 
         connection_string = connection_string.format(host=kwargs['host'],
                                                      params=connstr_params)

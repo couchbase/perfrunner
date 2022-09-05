@@ -25,6 +25,7 @@ class Collector:
         self.master_node = settings.master_node
         self.auth = (settings.rest_username, settings.rest_password)
         self.buckets = settings.buckets
+        self.serverless_db_names = settings.serverless_db_names
         self.indexes = settings.indexes
         self.collections = settings.collections
         self.hostnames = settings.hostnames
@@ -167,7 +168,20 @@ class Collector:
             for index in self.indexes:
                 yield index, self.buckets[0], None, None
 
+    def append_to_store(self, *args, **kwargs):
+        if 'bucket' in kwargs and (bucket := kwargs['bucket']) in self.serverless_db_names:
+            kwargs['bucket'] = self.serverless_db_names[bucket]
+        self.store.append(*args, **kwargs)
+
+    async def append_to_store_async(self, *args, **kwargs):
+        if 'bucket' in kwargs and (bucket := kwargs['bucket']) in self.serverless_db_names:
+            kwargs['bucket'] = self.serverless_db_names[bucket]
+        return await self.store.append_async(*args, **kwargs)
+
     def _update_metric_metadata(self, metrics, bucket=None, index=None, server=None):
+        if bucket and bucket in self.serverless_db_names:
+            bucket = self.serverless_db_names[bucket]
+
         for metric in metrics:
             metric = metric.replace('/', '_')
             metric_hash = hash((metric, bucket, index, server))

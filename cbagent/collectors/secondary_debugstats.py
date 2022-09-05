@@ -72,8 +72,8 @@ class SecondaryDebugStatsBucket(SecondaryDebugStats):
             stats = self._get_secondary_debugstats(bucket=bucket)
             if stats:
                 self.update_metric_metadata(self.METRICS, bucket=bucket)
-                self.store.append(stats, cluster=self.cluster, bucket=bucket,
-                                  collector=self.COLLECTOR)
+                self.append_to_store(stats, cluster=self.cluster, bucket=bucket,
+                                     collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()

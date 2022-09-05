@@ -63,21 +63,22 @@ class KVLatency(Latency):
                 data = {
                     'latency_' + operation: float(latency) * 1000,  # Latency in ms
                 }
-                await self.store.append_async(data=data,
-                                              timestamp=int(timestamp),
-                                              cluster=self.cluster,
-                                              bucket=bucket,
-                                              collector=self.COLLECTOR)
+                await self.append_to_store_async(data=data,
+                                                 timestamp=int(timestamp),
+                                                 cluster=self.cluster,
+                                                 bucket=bucket,
+                                                 collector=self.COLLECTOR)
+
                 if len(line) == 4:
                     total_latency = line[3]
                     data = {
                         'latency_total_' + operation: float(total_latency) * 1000,  # Latency in ms
                     }
-                    await self.store.append_async(data=data,
-                                                  timestamp=int(timestamp),
-                                                  cluster=self.cluster,
-                                                  bucket=bucket,
-                                                  collector=self.COLLECTOR)
+                    await self.append_to_store_async(data=data,
+                                                     timestamp=int(timestamp),
+                                                     cluster=self.cluster,
+                                                     bucket=bucket,
+                                                     collector=self.COLLECTOR)
 
     def reconstruct(self):
         if self.remote_workers:

@@ -7,11 +7,13 @@ from time import sleep, time
 from uuid import uuid4
 
 import requests
-from capella.dedicated.CapellaAPI import CapellaAPI
+from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
+from capella.serverless.CapellaAPI import CapellaAPI as CapellaAPIServerless
 from fabric.api import local
 
 from logger import logger
-from perfrunner.settings import ClusterSpec
+from perfrunner.helpers.misc import maybe_atoi, pretty_dict, remove_nulls
+from perfrunner.settings import ClusterSpec, TestConfig
 
 
 def raise_for_status(resp: requests.Response):
@@ -334,7 +336,7 @@ class CapellaTerraform(Terraform):
         self.tenant_id = self.infra_spec.infrastructure_settings['cbc_tenant']
         self.project_id = self.infra_spec.infrastructure_settings['cbc_project']
 
-        self.api_client = CapellaAPI(
+        self.api_client = CapellaAPIDedicated(
             'https://cloudapi.{}.nonprod-project-avengers.com'.format(
                 self.infra_spec.infrastructure_settings['cbc_env']
             ),
@@ -802,6 +804,337 @@ class CapellaTerraform(Terraform):
         local('gcloud dns managed-zones delete {}'.format(dns_managed_zone))
 
 
+class ServerlessTerraform(CapellaTerraform):
+
+    NEBULA_OVERRIDE_ARGS = ['override_count', 'min_count', 'max_count', 'instance_type']
+
+    def __init__(self, options):
+        Terraform.__init__(self, options)
+        if not options.test_config:
+            logger.error('Test config required if deploying serverless infrastructure.')
+            exit(1)
+
+        test_config = TestConfig()
+        test_config.parse(options.test_config)
+        self.test_config = test_config
+
+        for prefix, section in {'dapi': 'data_api', 'nebula': 'direct_nebula'}.items():
+            for arg in self.NEBULA_OVERRIDE_ARGS:
+                if (value := getattr(options, prefix + '_' + arg)) is not None:
+                    self.infra_spec.config.set(section, arg, str(value))
+
+        self.infra_spec.update_spec_file()
+
+        self.backend = self.infra_spec.infrastructure_settings['backend']
+
+        if public_api_url := self.options.capella_public_api_url:
+            env = public_api_url.removeprefix('https://')\
+                                .removesuffix('.nonprod-project-avengers.com')\
+                                .split('.', 1)[1]
+            self.infra_spec.config.set('infrastructure', 'cbc_env', env)
+            self.infra_spec.update_spec_file()
+        else:
+            public_api_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
+                self.infra_spec.infrastructure_settings['cbc_env']
+            )
+
+        self.serverless_client = CapellaAPIServerless(
+            public_api_url,
+            os.getenv('CBC_USER'),
+            os.getenv('CBC_PWD'),
+            os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
+        )
+
+        self.dedicated_client = CapellaAPIDedicated(
+            public_api_url,
+            None,  # Don't need access key and secret key for creating a project or getting tenant
+            None,  # IDs (which are the only things we need it for)
+            os.getenv('CBC_USER'),
+            os.getenv('CBC_PWD')
+        )
+
+        self.tenant_id = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
+        self.project_id = self.infra_spec.infrastructure_settings.get('cbc_project', None)
+        self.dp_id = self.infra_spec.infrastructure_settings.get('cbc_cluster', None)
+
+        if self.tenant_id is None:
+            self.tenant_id = self.get_tenant_id()
+
+    def get_tenant_id(self):
+        logger.info('Getting tenant ID...')
+        resp = self.dedicated_client.list_accessible_tenants()
+        raise_for_status(resp)
+        tenant_id = resp.json()[0]['id']
+        self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant_id)
+        self.infra_spec.update_spec_file()
+        logger.info('Found tenant ID: {}'.format(tenant_id))
+        return tenant_id
+
+    def deploy(self):
+        # Configure terraform
+        Terraform.populate_tfvars(self)
+        self.terraform_init(self.backend)
+
+        # Deploy non-capella resources
+        self.terraform_apply(self.backend)
+        non_capella_output = self.terraform_output(self.backend)
+        Terraform.update_spec(self, non_capella_output)
+
+        # Deploy serverless dataplane + databases
+        self.deploy_serverless_dataplane()
+        self.create_project()
+        self.create_serverless_dbs()
+        self.update_spec()
+
+    def destroy(self):
+        # Destroy non-capella resources
+        self.terraform_destroy(self.backend)
+
+        # Destroy capella cluster
+        if self.dp_id:
+            self.destroy_serverless_databases()
+            self.destroy_serverless_dataplane()
+        else:
+            logger.warn('No serverless dataplane ID found. Not destroying serverless dataplane.')
+
+        if self.tenant_id and self.project_id:
+            self.destroy_project()
+        else:
+            logger.warn('No tenant ID or project ID found. Not destroying project.')
+
+    def deploy_serverless_dataplane(self):
+        nebula_config = self.infra_spec.direct_nebula
+        dapi_config = self.infra_spec.data_api
+
+        config = remove_nulls({
+            "provider": "aws",
+            "region": self.region,
+            'overRide': {
+                'couchbase': {
+                    'image': self.options.capella_ami,
+                    'version': self.options.capella_cb_version,
+                    'specs': (
+                        specs[0] if (specs := self.template_capella_server_internal_api())
+                        else None
+                    )
+                },
+                'nebula': {
+                    'image': self.options.nebula_ami,
+                    'compute': {
+                        'type': nebula_config.get('instance_type', None),
+                        'count': {
+                            'min': maybe_atoi(nebula_config.get('min_count', '')),
+                            'max': maybe_atoi(nebula_config.get('max_count', '')),
+                            'overRide': maybe_atoi(nebula_config.get('override_count', ''))
+                        }
+                    }
+                },
+                'dataApi': {
+                    'image': self.options.dapi_ami,
+                    'compute': {
+                        'type': dapi_config.get('instance_type', None),
+                        'count': {
+                            'min': maybe_atoi(dapi_config.get('min_count', '')),
+                            'max': maybe_atoi(dapi_config.get('max_count', '')),
+                            'overRide': maybe_atoi(dapi_config.get('override_count', ''))
+                        }
+                    }
+                }
+            }
+        })
+
+        logger.info(pretty_dict(config))
+
+        resp = self.serverless_client.create_serverless_dataplane(config)
+        raise_for_status(resp)
+        dp_id = resp.json().get('dataplaneId')
+        logger.info('Initialised deployment for serverless dataplane {}'.format(dp_id))
+        logger.info('Saving cluster ID to spec file.')
+
+        self.dp_id = dp_id
+        self.infra_spec.config.set('infrastructure', 'cbc_cluster', dp_id)
+        self.infra_spec.update_spec_file()
+
+        timeout_mins = self.options.capella_timeout
+        interval_secs = 30
+        status = None
+        t0 = time()
+        while (time() - t0) < timeout_mins * 60 and status != 'ready':
+            resp = self.serverless_client.get_dataplane_deployment_status(dp_id)
+            raise_for_status(resp)
+            status = resp.json()['status']['state']
+
+            logger.info('Dataplane state: {}'.format(status))
+            if status != 'ready':
+                sleep(interval_secs)
+
+        if status != 'ready':
+            logger.error('Deployment timed out after {} mins'.format(timeout_mins))
+            exit(1)
+
+    def _create_db(self, name, width=1, weight=30):
+        logger.info('Adding new serverless DB: {}'.format(name))
+
+        data = {
+            'name': name,
+            'tenantId': self.tenant_id,
+            'projectId': self.project_id,
+            'provider': self.backend,
+            'region': self.region,
+            'overRide': {
+                'width': width,
+                'weight': weight,
+                'dataplaneId': self.dp_id
+            },
+            'dontImportSampleData': True
+        }
+
+        logger.info('DB configuration: {}'.format(pretty_dict(data)))
+
+        resp = self.serverless_client.create_serverless_database_overRide(data)
+        raise_for_status(resp)
+        return resp.json()
+
+    def _get_db_info(self, db_id):
+        resp = self.serverless_client.get_database_debug_info(db_id)
+        raise_for_status(resp)
+        return resp.json()
+
+    def create_serverless_dbs(self):
+        dbs = {}
+
+        if not (init_db_map := self.test_config.serverless_db.init_db_map):
+            init_db_map = {
+                'bucket-{}'.format(i+1): {'width': 1, 'weight': 30}
+                for i in range(self.test_config.cluster.num_buckets)
+            }
+
+        for db_name, params in init_db_map.items():
+            resp = self._create_db(db_name, params['width'], params['weight'])
+            db_id = resp['databaseId']
+            logger.info('Database ID for {}: {}'.format(db_name, db_id))
+            dbs[db_id] = {
+                'name': db_name,
+                'width': params['width'],
+                'weight': params['weight'],
+                'nebula_uri': None,
+                'dapi_uri': None,
+                'access': None,
+                'secret': None
+            }
+            self.test_config.serverless_db.update_db_map(dbs)
+
+        timeout_mins = 20
+        interval_secs = 10
+        t0 = time()
+        db_ids = list(dbs.keys())
+        while db_ids and time() - t0 < timeout_mins * 60:
+            for db_id in db_ids:
+                db_info = self._get_db_info(db_id)['database']
+                db_state = db_info['status']['state']
+                logger.info('{} state: {}'.format(db_id, db_state))
+                if db_state == 'ready':
+                    logger.info('Serverless DB deployed: {}'.format(db_id))
+                    db_ids.remove(db_id)
+                    dbs[db_id]['nebula_uri'] = db_info['connect']['sdk']
+                    dbs[db_id]['dapi_uri'] = db_info['connect']['dataApi']
+
+            if db_ids:
+                sleep(interval_secs)
+
+        self.test_config.serverless_db.update_db_map(dbs)
+
+        if db_ids:
+            logger.error('Serverless DB deployment timed out after {} mins'.format(timeout_mins))
+            exit(1)
+        else:
+            logger.info('All serverless DBs deployed')
+
+    def update_spec(self):
+        db_id = self.test_config.buckets[0]
+        resp = self.serverless_client.get_database_debug_info(db_id)
+        raise_for_status(resp)
+        dp_info = resp.json()
+
+        logger.info('Dataplane config: {}'.format(pretty_dict(dp_info['dataplane'])))
+
+        resp = self.serverless_client.get_access_to_serverless_dataplane_nodes(self.dp_id)
+        raise_for_status(resp)
+        dp_creds = resp.json()
+
+        hostname = dp_info['dataplane']['couchbase']['nodes'][0]['hostname']
+        auth = (
+            dp_creds['couchbaseCreds']['username'],
+            dp_creds['couchbaseCreds']['password']
+        )
+
+        default_pool = self.get_default_pool(hostname, auth)
+        self.infra_spec.config.set('credentials', 'rest', ':'.join(auth))
+
+        nodes = []
+        for node in default_pool['nodes']:
+            hostname = node['hostname'].removesuffix(':8091')
+            services = sorted(node['services'], key=lambda s: s != 'kv')
+            services_str = ','.join(services)
+            group = node['serverGroup'].removeprefix('group:')
+            nodes.append((hostname, services_str, group))
+
+        nodes = sorted(nodes, key=lambda n: n[2])
+        nodes = [':'.join(n) for n in sorted(nodes, key=lambda n: '' if 'kv' in n[1] else n[1])]
+        node_string = '\n'.join(nodes)
+
+        self.infra_spec.config.set('clusters', 'serverless', node_string)
+        self.infra_spec.config.set('credentials', 'rest', ':'.join(auth))
+
+        self.infra_spec.update_spec_file()
+
+    def get_default_pool(self, hostname, auth):
+        session = requests.Session()
+        resp = session.get('https://{}:18091/pools/default'.format(hostname),
+                           auth=auth, verify=False)
+        raise_for_status(resp)
+        return resp.json()
+
+    def create_project(self):
+        logger.info('Creating project for serverless DBs')
+        resp = self.dedicated_client.create_project(
+            self.tenant_id,
+            self.options.tag or 'perf-{}'.format(uuid4().hex[:6])
+        )
+        raise_for_status(resp)
+        project_id = resp.json()['id']
+        self.project_id = project_id
+        self.infra_spec.config.set('infrastructure', 'cbc_project', project_id)
+        self.infra_spec.update_spec_file()
+        logger.info('Project created: {}'.format(project_id))
+
+    def _destroy_db(self, db_id):
+        logger.info('Destroying serverless DB {}'.format(db_id))
+        resp = self.serverless_client.delete_database(self.tenant_id, self.project_id, db_id)
+        raise_for_status(resp)
+        logger.info('Serverless DB destroyed: {}'.format(db_id))
+
+    def destroy_serverless_databases(self):
+        logger.info('Deleting all serverless databases...')
+        for db_id in self.test_config.serverless_db.db_map:
+            self._destroy_db(db_id)
+        logger.info('All serverless databases destroyed.')
+
+    def destroy_serverless_dataplane(self):
+        logger.info('Deleting serverless dataplane...')
+        while (resp := self.serverless_client.delete_dataplane(self.dp_id)).status_code == 422:
+            logger.info("Waiting for databases to be fully deleted...")
+            sleep(5)
+        raise_for_status(resp)
+        logger.info('Serverless dataplane successfully queued for deletion.')
+
+    def destroy_project(self):
+        logger.info('Deleting project...')
+        resp = self.dedicated_client.delete_project(self.tenant_id, self.project_id)
+        raise_for_status(resp)
+        logger.info('Project successfully queued for deletion.')
+
+
 class EKSTerraform(Terraform):
     pass
 
@@ -813,6 +1146,9 @@ def get_args():
     parser.add_argument('-c', '--cluster',
                         required=True,
                         help='the path to a infrastructure specification file')
+    parser.add_argument('--test-config',
+                        required=False,
+                        help='the path to the test configuration file')
     parser.add_argument('--verbose',
                         action='store_true',
                         help='enable verbose logging')
@@ -864,6 +1200,32 @@ def get_args():
                         help='cb version to use for Capella deployment')
     parser.add_argument('--capella-ami',
                         help='custom AMI to use for Capella deployment')
+    parser.add_argument('--dapi-ami',
+                        help='AMI to use for Data API deployment (serverless)')
+    parser.add_argument('--dapi-override-count',
+                        type=int,
+                        help='number of DAPI nodes to deploy')
+    parser.add_argument('--dapi-min-count',
+                        type=int,
+                        help='minimum number of DAPI nodes in autoscaling group')
+    parser.add_argument('--dapi-max-count',
+                        type=int,
+                        help='maximum number of DAPI nodes in autoscaling group')
+    parser.add_argument('--dapi-instance-type',
+                        help='instance type to use for DAPI nodes')
+    parser.add_argument('--nebula-ami',
+                        help='AMI to use for Direct Nebula deployment (serverless)')
+    parser.add_argument('--nebula-override-count',
+                        type=int,
+                        help='number of Direct Nebula nodes to deploy')
+    parser.add_argument('--nebula-min-count',
+                        type=int,
+                        help='minimum number of Direct Nebula nodes in autoscaling group')
+    parser.add_argument('--nebula-max-count',
+                        type=int,
+                        help='maximum number of Direct Nebula nodes in autoscaling group')
+    parser.add_argument('--nebula-instance-type',
+                        help='instance type to use for Direct Nebula nodes')
     parser.add_argument('--vpc-peering',
                         action='store_true',
                         help='enable VPC peering for Capella deployment')
@@ -883,6 +1245,8 @@ def destroy():
     infra_spec.parse(fname=args.cluster)
     if infra_spec.cloud_provider != 'capella':
         deployer = Terraform(args)
+    elif infra_spec.serverless_infrastructure:
+        deployer = ServerlessTerraform(args)
     else:
         deployer = CapellaTerraform(args)
 
@@ -895,6 +1259,8 @@ def main():
     infra_spec.parse(fname=args.cluster)
     if infra_spec.cloud_provider != 'capella':
         deployer = Terraform(args)
+    elif infra_spec.serverless_infrastructure:
+        deployer = ServerlessTerraform(args)
     else:
         deployer = CapellaTerraform(args)
 

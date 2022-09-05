@@ -139,4 +139,5 @@ class MetricsRestApiMetering(MetricsRestApiBase):
 
     def sample(self):
         for bucket, stats in self.get_stats().items():
+            bucket = self.serverless_db_names.get(bucket, bucket)
             self.add_stats(bucket, stats)

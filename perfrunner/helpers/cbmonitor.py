@@ -120,6 +120,7 @@ def new_cbagent_settings(test: PerfTest):
         'bucket_password': test.test_config.bucket.password,
         'workers': test.cluster_spec.workers,
         'cloud': {"enabled": False},
+        'serverless_db_names': {},
         'remote': test.worker_manager.is_remote if test.test_config.test_case.use_workers else False
     })()
 
@@ -133,6 +134,11 @@ def new_cbagent_settings(test: PerfTest):
     elif test.cluster_spec.cloud_infrastructure:
         settings.cloud.update({'enabled': True, 'dynamic': False, 'cloud_rest': test.rest})
         settings.hostnames = test.cluster_spec.servers
+        if test.cluster_spec.serverless_infrastructure:
+            settings.cloud.update({'serverless': True})
+            settings.serverless_db_names = {
+                k: v['name'] for k, v in test.test_config.serverless_db.db_map.items()
+            }
 
     if test.test_config.collection.collection_map:
         settings.collections = test.test_config.collection.collection_map

@@ -100,6 +100,11 @@ class ClusterSpec(Config):
         return False
 
     @property
+    def serverless_infrastructure(self):
+        return self.capella_infrastructure and \
+            self.infrastructure_settings.get('capella_arch', 'dedicated') == 'serverless'
+
+    @property
     def generated_cloud_config_path(self):
         if self.cloud_infrastructure:
             return "cloud/infrastructure/generated/infrastructure_config.json"
@@ -368,7 +373,10 @@ class ClusterSpec(Config):
 
     @property
     def client_credentials(self) -> List[str]:
-        return self.config.get('clients', 'credentials').split(':')
+        if self.config.has_option('clients', 'credentials'):
+            return self.config.get('clients', 'credentials').split(':')
+        else:
+            return self.ssh_credentials
 
     @property
     def data_path(self) -> str:
@@ -446,6 +454,14 @@ class ClusterSpec(Config):
                 self.config.set('instance_ids', cluster_name, '\n' + '\n'.join(iids))
             self.update_spec_file()
 
+    @property
+    def direct_nebula(self) -> dict:
+        return self._get_options_as_dict('direct_nebula')
+
+    @property
+    def data_api(self) -> dict:
+        return self._get_options_as_dict('data_api')
+
 
 class TestCaseSettings:
 
@@ -478,6 +494,7 @@ class ClusterSettings:
 
     NUM_BUCKETS = 1
 
+    MEM_QUOTA = 0
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 0
     ANALYTICS_MEM_QUOTA = 0
@@ -502,7 +519,7 @@ class ClusterSettings:
     IPv6 = 0
 
     def __init__(self, options: dict):
-        self.mem_quota = int(options.get('mem_quota'))
+        self.mem_quota = int(options.get('mem_quota', self.MEM_QUOTA))
         self.index_mem_quota = int(options.get('index_mem_quota',
                                                self.INDEX_MEM_QUOTA))
         self.fts_index_mem_quota = int(options.get('fts_index_mem_quota',
@@ -706,14 +723,70 @@ class CollectionSettings:
     CONFIG = None
     COLLECTION_MAP = None
     USE_BULK_API = 1
+    SCOPES_PER_BUCKET = 0
+    COLLECTIONS_PER_SCOPE = 0
 
-    def __init__(self, options: dict):
+    def __init__(self, options: dict, buckets: Iterable[str] = None):
         self.config = options.get('config', self.CONFIG)
         self.collection_map = self.COLLECTION_MAP
         self.use_bulk_api = int(options.get('use_bulk_api', self.USE_BULK_API))
+        self.scopes_per_bucket = int(options.get('scopes_per_bucket', self.SCOPES_PER_BUCKET))
+        self.collections_per_scope = int(options.get('collections_per_scope',
+                                                     self.COLLECTIONS_PER_SCOPE))
         if self.config is not None:
             with open(self.config) as f:
                 self.collection_map = json.load(f)
+        elif self.scopes_per_bucket > 0 and buckets:
+            self.collection_map = self.create_uniform_collection_map(buckets)
+
+    def create_uniform_collection_map(self, buckets: Iterable[str]):
+        coll_map = {
+            bucket: {
+                'scope-{}'.format(i + 1): {
+                    'collection-{}'.format(j + 1): {
+                        'access': 1,
+                        'load': 1
+                    }
+                    for j in range(self.collections_per_scope)
+                }
+                for i in range(self.scopes_per_bucket)
+            }
+            for bucket in buckets
+        }
+
+        for bucket_scopes in coll_map.values():
+            bucket_scopes['_default'] = {}
+
+        return coll_map
+
+
+class ServerlessDBSettings:
+
+    INIT_CONFIG = None
+    CONFIG = 'cloud/serverless_db/generated/db_config.json'
+    INIT_DB_MAP = {}
+    DB_MAP = {}
+
+    def __init__(self, options: dict):
+        self.init_config = options.get('init_config', self.INIT_CONFIG)
+        self.config = options.get('config', self.CONFIG)
+        self.init_db_map = self.INIT_DB_MAP
+        self.db_map = self.DB_MAP
+
+        if self.init_config is not None:
+            with open(self.init_config) as f:
+                self.init_db_map = json.load(f)
+
+        if self.config is not None:
+            with open(self.config) as f:
+                try:
+                    self.db_map = json.load(f)
+                except json.JSONDecodeError:
+                    self.db_map = {}
+
+    def update_db_map(self, db_map):
+        with open(self.config, 'w') as f:
+            json.dump(db_map, f, indent=4)
 
 
 class UserSettings:
@@ -946,6 +1019,7 @@ class PhaseSettings:
 
     WORKLOAD_MIX = None
     NUM_BUCKETS = 0
+    NEBULA_MODE = 'none'  # options: none, nebula, dapi
 
     def __init__(self, options: dict):
         # Common settings
@@ -1193,6 +1267,7 @@ class PhaseSettings:
         if workload_mix:
             self.workload_mix = workload_mix.split(',')
         self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
+        self.nebula_mode = options.get('nebula_mode', self.NEBULA_MODE)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -2503,7 +2578,19 @@ class TestConfig(Config):
     @property
     def collection(self) -> CollectionSettings:
         options = self._get_options_as_dict('collection')
-        return CollectionSettings(options)
+        settings = CollectionSettings(options, self.buckets)
+        if settings.config is not None and (db_map := self.serverless_db.db_map):
+            coll_map = settings.collection_map
+            new_coll_map = {}
+            for db_id in db_map:
+                new_coll_map[db_id] = coll_map[db_map[db_id]['name']]
+            settings.collection_map = new_coll_map
+        return settings
+
+    @property
+    def serverless_db(self) -> ServerlessDBSettings:
+        options = self._get_options_as_dict('serverless_db')
+        return ServerlessDBSettings(options)
 
     @property
     def users(self) -> UserSettings:
@@ -2522,7 +2609,9 @@ class TestConfig(Config):
 
     @property
     def buckets(self) -> List[str]:
-        if self.cluster.num_buckets == 1 and self.cluster.bucket_name != 'bucket-1':
+        if self.serverless_db.db_map:
+            return list(self.serverless_db.db_map.keys())
+        elif self.cluster.num_buckets == 1 and self.cluster.bucket_name != 'bucket-1':
             return [self.cluster.bucket_name]
         else:
             return [
@@ -2624,8 +2713,7 @@ class TestConfig(Config):
     @property
     def index_settings(self) -> IndexSettings:
         options = self._get_options_as_dict('index')
-        collection_options = self._get_options_as_dict('collection')
-        collection_settings = CollectionSettings(collection_options)
+        collection_settings = self.collection
         if collection_settings.collection_map is not None:
             options['collection_map'] = collection_settings.collection_map
         return IndexSettings(options)
@@ -2809,6 +2897,8 @@ class TestConfig(Config):
             phase_options.update(override_options)
             phase = settings_cls(phase_options)
             phase.configure(self)
+            if bucket_offset >= len(self.buckets):
+                break
             phase.bucket_list = self.buckets[bucket_offset:bucket_offset + phase.num_buckets]
             bucket_offset += phase.num_buckets
             mix.append(phase)
@@ -2858,19 +2948,36 @@ class TargetIterator(Iterable):
                 password = self.cluster_spec.rest_credentials[1]
         else:
             password = self.cluster_spec.rest_credentials[1]
-        prefix = self.prefix
-        for master in self.cluster_spec.masters:
-            for bucket in self.buckets:
-                if "perfrunner.tests.views" in self.test_config.test_case.test_module:
-                    username = bucket
-                    password = self.test_config.bucket.password
 
-                if self.prefix is None:
-                    prefix = target_hash(master)
-                if self.cluster_spec.dynamic_infrastructure:
-                    yield TargetSettings(host=master, bucket=bucket, username=username,
-                                         password=password, prefix=prefix,
-                                         cloud={'cluster_svc': 'cb-example-perf'})
-                else:
-                    yield TargetSettings(host=master, bucket=bucket, username=username,
-                                         password=password, prefix=prefix)
+        prefix = self.prefix
+
+        for master in self.cluster_spec.masters:
+            if self.prefix is None:
+                prefix = target_hash(master)
+
+            if self.cluster_spec.serverless_infrastructure:
+                for bucket in self.buckets:
+                    params = self.test_config.serverless_db.db_map[bucket]
+                    access = params['access']
+                    secret = params['secret']
+                    cloud = {
+                        'serverless': True,
+                        'nebula_uri': params['nebula_uri'],
+                        'dapi_uri': params['dapi_uri']
+                    }
+
+                    yield TargetSettings(host=master, bucket=bucket, username=access,
+                                         password=secret, prefix=prefix, cloud=cloud)
+            else:
+                for bucket in self.buckets:
+                    if "perfrunner.tests.views" in self.test_config.test_case.test_module:
+                        username = bucket
+                        password = self.test_config.bucket.password
+
+                    if self.cluster_spec.dynamic_infrastructure:
+                        yield TargetSettings(host=master, bucket=bucket, username=username,
+                                             password=password, prefix=prefix,
+                                             cloud={'cluster_svc': 'cb-example-perf'})
+                    else:
+                        yield TargetSettings(host=master, bucket=bucket, username=username,
+                                             password=password, prefix=prefix)

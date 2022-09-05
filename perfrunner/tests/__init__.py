@@ -1,5 +1,6 @@
 import copy
 import glob
+import re
 import shutil
 import time
 from multiprocessing import set_start_method
@@ -63,10 +64,11 @@ class PerfTest:
         if self.test_config.test_case.use_workers:
             self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
 
+        ssl_enabled_modes = ('data', 'n2n', 'capella', 'nebula', 'dapi')
         need_certificate = (
             self.test_config.cluster.enable_n2n_encryption or
-            self.test_config.load_settings.ssl_mode in ('data', 'n2n') or
-            self.test_config.access_settings.ssl_mode in ('data', 'n2n')
+            self.test_config.load_settings.ssl_mode in ssl_enabled_modes or
+            self.test_config.access_settings.ssl_mode in ssl_enabled_modes
         )
         if need_certificate:
             self.download_certificate()
@@ -359,6 +361,7 @@ class PerfTest:
         if not self.test_config.index_settings.couchbase_fts_index_name:
             create_statements = []
             build_statements = []
+            query_contexts = []
             for statement in self.test_config.index_settings.statements:
                 check_stmt = statement.replace(" ", "").upper()
                 if 'CREATEINDEX' in check_stmt \
@@ -367,9 +370,13 @@ class PerfTest:
                 elif 'BUILDINDEX' in check_stmt:
                     build_statements.append(statement)
 
-            for statement in create_statements:
+                if (match := re.search(r' ON (?:default:)?(.+?)\(', statement)):
+                    query_context = 'default:{}'.format(match.group(1))
+                    query_contexts.append(query_context)
+
+            for statement, query_context in zip(create_statements, query_contexts):
                 logger.info('Creating index: ' + statement)
-                self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+                self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
                 cont = False
                 while not cont:
                     building = 0
@@ -383,9 +390,9 @@ class PerfTest:
                     else:
                         time.sleep(10)
 
-            for statement in build_statements:
+            for statement, query_context in zip(build_statements, query_contexts):
                 logger.info('Building index: ' + statement)
-                self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+                self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
                 cont = False
                 while not cont:
                     building = 0
@@ -643,6 +650,19 @@ class PerfTest:
         pass
 
     def _measure_curr_ops(self) -> int:
+        if self.cluster_spec.serverless_infrastructure:
+            return self._measure_curr_ops_rest()
+        return self._measure_curr_ops_mc()
+
+    def _measure_curr_ops_rest(self) -> int:
+        ops = 0
+        samples = self.rest.get_kv_ops(self.master_node)
+        for data in samples['data']:
+            if data['metric']['op'] in ['get', 'set']:
+                ops += int(data['values'][-1][-1])
+        return ops
+
+    def _measure_curr_ops_mc(self) -> int:
         ops = 0
         for bucket in self.test_config.buckets:
             for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
@@ -652,6 +672,14 @@ class PerfTest:
                 for stat in 'cmd_get', 'cmd_set':
                     ops += int(stats[stat])
         return ops
+
+    def _measure_billable_units(self) -> int:
+        bus = 0
+        samples = self.rest.get_metering_stats(self.master_node)
+        for data in samples:
+            for metric in data['data']:
+                bus += int(metric['values'][-1][-1])
+        return bus
 
     def _measure_disk_ops(self):
         ret_stats = dict()

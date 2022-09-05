@@ -2,10 +2,12 @@ import json
 import os
 import time
 from collections import namedtuple
+from contextlib import contextmanager
 from typing import Callable, Dict, Iterator, List
 
 import requests
-from capella.dedicated.CapellaAPI import CapellaAPI
+from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
+from capella.serverless.CapellaAPI import CapellaAPI as CapellaAPIServerless
 from decorator import decorator
 from fabric.api import local
 from requests.exceptions import ConnectionError
@@ -53,6 +55,8 @@ class RestHelper:
                 ):
         if cluster_spec.dynamic_infrastructure:
             return KubernetesRestHelper(cluster_spec, test_config)
+        elif cluster_spec.serverless_infrastructure:
+            return ServerlessRestHelper(cluster_spec, test_config)
         elif cluster_spec.capella_infrastructure:
             return CapellaRestHelper(cluster_spec, test_config)
         else:
@@ -230,22 +234,34 @@ class DefaultRestHelper(RestBase):
                 logger.warn('Skipping unknown option: {}'.format(option))
 
     def set_planner_settings(self, host: str, settings: dict):
-        api = 'http://{}:9102/settings/planner'.format(host)
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:19102/settings/planner'.format(host)
+        else:
+            api = 'http://{}:9102/settings/planner'.format(host)
         logger.info('Changing host {} to {}'.format(host, settings))
         self.post(url=api, data=settings)
 
     def get_index_metadata(self, host: str) -> dict:
-        api = 'http://{}:9102/getLocalIndexMetadata'.format(host)
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:19102/getLocalIndexMetadata'.format(host)
+        else:
+            api = 'http://{}:9102/getLocalIndexMetadata'.format(host)
 
         return self.get(url=api).json()
 
     def get_index_settings(self, host: str) -> dict:
-        api = 'http://{}:9102/settings?internal=ok'.format(host)
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:19102/settings?internal=ok'.format(host)
+        else:
+            api = 'http://{}:9102/settings?internal=ok'.format(host)
 
         return self.get(url=api).json()
 
     def get_gsi_stats(self, host: str) -> dict:
-        api = 'http://{}:9102/stats'.format(host)
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:19102/stats'.format(host)
+        else:
+            api = 'http://{}:9102/stats'.format(host)
 
         return self.get(url=api).json()
 
@@ -459,6 +475,20 @@ class DefaultRestHelper(RestBase):
         else:
             api = 'http://{}:8091/pools/default/buckets/{}/stats'. \
                 format(host, bucket)
+
+        return self.get(url=api).json()
+
+    def get_scope_and_collection_items(self, host: str, bucket: str, scope: str,
+                                       coll: str = None) -> dict:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/stats/range/kv_collection_item_count?bucket={}&' \
+                  'scope={}&start=-1'.format(host, bucket, scope)
+        else:
+            api = 'http://{}:8091/pools/default/stats/range/kv_collection_item_count?bucket={}&' \
+                  'scope={}&start=-1'.format(host, bucket, scope)
+
+        if coll:
+            api += '&collection={}'.format(coll)
 
         return self.get(url=api).json()
 
@@ -791,7 +821,7 @@ class DefaultRestHelper(RestBase):
             api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
         return self.get(url=api).json()
 
-    def exec_n1ql_statement(self, host: str, statement: str) -> dict:
+    def exec_n1ql_statement(self, host: str, statement: str, query_context: str = None) -> dict:
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18093/query/service'.format(host)
         else:
@@ -799,7 +829,8 @@ class DefaultRestHelper(RestBase):
         data = {
             'statement': statement,
         }
-
+        if query_context:
+            data['query_context'] = query_context
         response = self.post(url=api, data=data)
         return response.json()
 
@@ -831,9 +862,9 @@ class DefaultRestHelper(RestBase):
             logger.info('Setting throttle limit: {}'.format(data))
             self.post(url=api, data=data)
 
-    def explain_n1ql_statement(self, host: str, statement: str):
+    def explain_n1ql_statement(self, host: str, statement: str, query_context: str = None):
         statement = 'EXPLAIN {}'.format(statement)
-        return self.exec_n1ql_statement(host, statement)
+        return self.exec_n1ql_statement(host, statement, query_context)
 
     def get_query_stats(self, host: str) -> dict:
         logger.info('Getting query engine stats')
@@ -1438,6 +1469,16 @@ class DefaultRestHelper(RestBase):
         }
         self.post(url=api, data=data)
 
+    def delete_scope(self, host, bucket, scope):
+        logger.info("Deleting scope {}:{}".format(bucket, scope))
+        if self.test_config.cluster.enable_n2n_encryption:
+            protocol, port = 'https', 18091
+        else:
+            protocol, port = 'http', 8091
+        api = '{}://{}:{}/pools/default/buckets/{}/scopes' \
+            .format(protocol, host, port, bucket)
+        self.delete(url=api)
+
     def create_collection(self, host, bucket, scope, collection):
         logger.info("Creating collection {}:{}.{}".format(bucket, scope, collection))
         if self.test_config.cluster.enable_n2n_encryption:
@@ -1679,6 +1720,36 @@ class DefaultRestHelper(RestBase):
         api = 'http://{}:{}/{}'.format(cblite_host, cblite_port, cblite_db)
         return self.cblite_get(url=api).json()
 
+    def get_kv_ops(self, host):
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/stats/range/kv_ops?start=-1'.format(host)
+        else:
+            api = 'http://{}:8091/pools/default/stats/range/kv_ops?start=-1'.format(host)
+
+        resp = self.get(url=api)
+        return resp.json()
+
+    def get_metering_stats(self, host, apply_functions=[]) -> dict:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/stats/range'.format(host)
+        else:
+            api = 'http://{}:8091/pools/default/stats/range'.format(host)
+
+        data = [
+            {
+                "metric": [
+                    {"label": "name", "value": metric}
+                ],
+                "applyFunctions": apply_functions,
+                "step": 1,
+                "start": -1
+            }
+            for metric in ['meter_ru_total', 'meter_wu_total', 'meter_cu_total']
+        ]
+
+        resp = self.post(url=api, json=data)
+        return resp.json()
+
 
 class KubernetesRestHelper(RestBase):
 
@@ -1692,7 +1763,7 @@ class KubernetesRestHelper(RestBase):
         trans_port = self.port_translation.get(trans_host).get(str(port))
         return trans_host, trans_port
 
-    def exec_n1ql_statement(self, host: str, statement: str) -> dict:
+    def exec_n1ql_statement(self, host: str, statement: str, query_context: str = None) -> dict:
         if self.test_config.cluster.enable_n2n_encryption:
             host, port = self.translate_host_and_port(host, '18093')
             api = 'https://{}:{}/query/service' \
@@ -1701,9 +1772,12 @@ class KubernetesRestHelper(RestBase):
             host, port = self.translate_host_and_port(host, '8093')
             api = 'http://{}:{}/query/service' \
                 .format(host, port)
+
         data = {
             'statement': statement,
         }
+        if query_context:
+            data['query_context'] = query_context
         response = self.post(url=api, data=data)
         return response.json()
 
@@ -1773,7 +1847,7 @@ class CapellaRestHelper(DefaultRestHelper):
         self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
         self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
         self.cluster_id = self.cluster_spec.infrastructure_settings['cbc_cluster']
-        self.api_client = CapellaAPI(
+        self.api_client = CapellaAPIDedicated(
             self.base_url, self._secret_key, self._access_key, self._cbc_user, self._cbc_pwd
         )
 
@@ -1860,3 +1934,156 @@ class CapellaRestHelper(DefaultRestHelper):
         resp = self.api_client.delete_bucket(
             self.tenant_id, self.project_id, self.cluster_id, bucket)
         return resp
+
+
+class ServerlessRestHelper(DefaultRestHelper):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+        self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
+            self.cluster_spec.infrastructure_settings['cbc_env']
+        )
+        self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
+        self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
+        self.dp_id = self.cluster_spec.infrastructure_settings['cbc_cluster']
+        self.dedicated_client = CapellaAPIDedicated(
+            self.base_url, None, None, self._cbc_user, self._cbc_pwd
+        )
+        self.serverless_client = CapellaAPIServerless(
+            self.base_url, self._cbc_user, self._cbc_pwd, self._cbc_token
+        )
+
+    @property
+    def _cbc_user(self):
+        return os.getenv('CBC_USER')
+
+    @property
+    def _cbc_pwd(self):
+        return os.getenv('CBC_PWD')
+
+    @property
+    def _cbc_token(self):
+        return os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
+
+    def get_db_info(self, db_id):
+        logger.info('Getting debug info for DB {}'.format(db_id))
+        resp = self.serverless_client.get_database_debug_info(db_id)
+        resp.raise_for_status()
+        return resp.json()
+
+    @retry
+    def allow_my_ip(self, db_id):
+        logger.info('Whitelisting own IP on DB {}'.format(db_id))
+        resp = self.serverless_client.allow_my_ip(self.tenant_id, self.project_id, db_id)
+        return resp
+
+    @retry
+    def add_allowed_ips(self, db_id, ips: list[str]):
+        logger.info('Whitelisting IPs on DB {}: {}'.format(db_id, ips))
+
+        data = {
+            "create": [
+                {"cidr": "{}/32".format(ip), "comment": ""} for ip in ips
+            ]
+        }
+
+        resp = self.serverless_client.add_ip_allowlists(self.tenant_id,
+                                                        db_id,
+                                                        self.project_id,
+                                                        data)
+        return resp
+
+    @retry
+    def bypass_nebula(self, client_ip):
+        logger.info('Bypassing Nebula for {}'.format(client_ip))
+
+        url = "{}/internal/support/serverless-dataplanes/{}/bypass"\
+              .format(self.base_url.replace('cloudapi', 'api'), self.dp_id)
+
+        cbc_api_request_headers = {
+           'Authorization': 'Bearer {}'.format(self._cbc_token),
+           'Content-Type': 'application/json'
+        }
+
+        body = {"allowCIDR": "{}/32".format(client_ip)}
+
+        resp = requests.post(url, headers=cbc_api_request_headers, data=json.dumps(body),
+                             verify=False)
+        resp.raise_for_status()
+        return resp
+
+    @retry
+    def get_db_api_key(self, db_id):
+        logger.info('Getting API key for serverless DB {}'.format(db_id))
+        resp = self.serverless_client.generate_keys(self.tenant_id, self.project_id, db_id)
+        return resp
+
+    @retry
+    def _update_db(self, db_id, width, weight):
+        data = {
+            'overRide': {
+                'width': width,
+                'weight': weight
+            }
+        }
+        resp = self.serverless_client.update_db(db_id, data)
+        return resp
+
+    def update_db(self, db_id, width=None, weight=None):
+        if not (weight or width):
+            return
+
+        self._update_db(db_id, width, weight)
+
+        db_map = self.test_config.serverless_db.db_map
+        db_map[db_id]['width'] = width
+        db_map[db_id]['weight'] = weight
+        self.test_config.serverless_db.update_db_map(db_map)
+
+    def _get_dataplane_node_configs(self):
+        resp = self.serverless_client.get_serverless_dataplane_node_configs(self.dp_id)
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_nebula_certificate(self):
+        dp_node_configs = self._get_dataplane_node_configs()
+        for node in dp_node_configs['state']:
+            if node['kind'] == 'nebula':
+                certs = node['config']['gateway']['certificate']
+                first_cert = certs['certificate']
+                intermediates = certs['intermediates']
+                return first_cert + intermediates
+
+    def get_dapi_certificate(self):
+        dp_node_configs = self._get_dataplane_node_configs()
+        for node in dp_node_configs['state']:
+            if node['kind'] == 'dataApi':
+                certs = node['config']['gateway']['certificate']
+                first_cert = certs['certificate']
+                intermediates = certs['intermediates']
+                return first_cert + intermediates
+
+    @contextmanager
+    def _bucket_creds(self, bucket: str):
+        access = self.test_config.serverless_db.db_map[bucket]['access']
+        secret = self.test_config.serverless_db.db_map[bucket]['secret']
+        self.auth = access, secret
+
+        try:
+            yield
+        finally:
+            self.auth = self.rest_username, self.rest_password
+
+    def exec_n1ql_statement(self, host: str, statement: str, query_context: str) -> dict:
+        api = 'https://{}:18091/_p/query/query/service'.format(host)
+
+        data = {
+            'statement': statement,
+            'query_context': query_context
+        }
+
+        bucket = query_context.removeprefix('default:').split('.')[0].strip('`')
+
+        with self._bucket_creds(bucket):
+            response = self.post(url=api, data=data)
+
+        return response.json()

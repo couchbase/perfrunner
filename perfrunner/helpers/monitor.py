@@ -322,34 +322,70 @@ class DefaultMonitor(DefaultRestHelper):
             return curr_items[-1]
         return 0
 
+    def _get_num_items_scope_and_collection(self, host: str, bucket: str, scope: str,
+                                            coll: str = None) -> int:
+        stats = self.get_scope_and_collection_items(host, bucket, scope, coll)
+        if stats:
+            return sum(int(d['values'][-1][1]) for d in stats['data'])
+        return 0
+
+    def _ignore_system_collection_items(self, host: str, bucket: str, curr_items: int) -> int:
+        sys_coll_items = self._get_num_items_scope_and_collection(host, bucket, '_system')
+        replica_sys_coll_items = sys_coll_items * (1 + self.test_config.bucket.replica_number)
+        logger.info('Ignoring items in _system collection: {} (active), {} (total)'
+                    .format(sys_coll_items, replica_sys_coll_items))
+        return curr_items - replica_sys_coll_items
+
     def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int = None):
         logger.info('Checking the number of items in {}'.format(bucket))
+
+        if (ignore_sys_coll := self.cluster_spec.serverless_infrastructure):
+            logger.info('Serverless infrastructure is being used. '
+                        'Ignoring documents in _system collection.')
+
         if not max_retry:
             max_retry = self.MAX_RETRY
+
         retries = 0
         while retries < max_retry:
             curr_items = self._get_num_items(host, bucket, total=True)
+            if ignore_sys_coll:
+                curr_items = self._ignore_system_collection_items(host, bucket, curr_items)
+
             if curr_items == num_items:
                 break
             else:
                 logger.info('{}(curr_items) != {}(num_items)'.format(curr_items, num_items))
+
             time.sleep(self.POLLING_INTERVAL)
             retries += 1
         else:
             actual_items = self._get_num_items(host, bucket, total=True)
+            if ignore_sys_coll:
+                actual_items = self._ignore_system_collection_items(host, bucket, actual_items)
+
             raise Exception('Mismatch in the number of items: {}'
                             .format(actual_items))
 
     def monitor_num_backfill_items(self, host: str, bucket: str, num_items: int):
         logger.info('Checking the number of items in {}'.format(bucket))
+
+        if (ignore_sys_coll := self.cluster_spec.serverless_infrastructure):
+            logger.info('Serverless infrastructure is being used. '
+                        'Ignoring documents in _system collection.')
+
         t0 = time.time()
         while True:
             curr_items = self._get_num_items(host, bucket, total=True)
+            if ignore_sys_coll:
+                curr_items = self._ignore_system_collection_items(host, bucket, curr_items)
+
             if curr_items == num_items:
                 t1 = time.time()
                 break
             else:
                 logger.info('{}(curr_items) != {}(num_items)'.format(curr_items, num_items))
+
             time.sleep(self.POLLING_INTERVAL)
         return t1-t0
 

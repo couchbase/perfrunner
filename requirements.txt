@@ -1,5 +1,5 @@
 ansible==2.9.2
-aiohttp==3.7.3
+aiohttp==3.7.4
 awscli==1.24.6
 billiard==3.6.4.0
 kombu==5.1.0

@@ -528,7 +528,7 @@ class ClusterManager:
             self.remote.enable_serverless_mode()
 
     def serverless_throttle(self):
-        if self.test_config.cluster.serverless_throttle is not None:
+        if not all(value == 0 for value in self.test_config.cluster.serverless_throttle.values()):
             self.rest.set_serverless_throttle(self.master_node,
                                               self.test_config.cluster.serverless_throttle)
 

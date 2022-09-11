@@ -36,7 +36,10 @@ def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
     settings = workload_settings
     index_name = "{}-0".format(settings.couchbase_index_name)
     if "full_index_name" in list(settings.fts_index_map[index_name].keys()):
-        index_name = settings.fts_index_map[index_name]["full_index_name"]
+        full_index_name = settings.fts_index_map[index_name]["full_index_name"]
+        settings.fts_index_map[full_index_name] = settings.fts_index_map.pop(index_name)
+        index_name = full_index_name
+
     params = CMD.format(
         couchbase_index_name=index_name,
         couchbase_cluster_ip=target.node,
@@ -84,7 +87,9 @@ def jts_warmup(workload_settings: PhaseSettings, target: TargetSettings,
     settings = workload_settings
     index_name = "{}-0".format(settings.couchbase_index_name)
     if "full_index_name" in list(settings.fts_index_map[index_name].keys()):
-        index_name = settings.fts_index_map[index_name]["full_index_name"]
+        full_index_name = settings.fts_index_map[index_name]["full_index_name"]
+        settings.fts_index_map[full_index_name] = settings.fts_index_map.pop(index_name)
+        index_name = full_index_name
     params = CMD.format(
         couchbase_index_name=index_name,
         couchbase_cluster_ip=target.node,

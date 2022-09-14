@@ -72,7 +72,8 @@ class RemoteLinux(Remote):
         if is_ssl:
             options = options + " -use_tls -cacert ./root.pem"
 
-        self.run_cbindex_command(options)
+        output = self.run_cbindex_command(options)
+        logger.info("Output of command {}".format(output))
 
     def create_index(self, index_nodes, bucket, indexes, storage, is_ssl):
         # Remember what bucket:index was created
@@ -148,7 +149,8 @@ class RemoteLinux(Remote):
         put("/tmp/batch.txt", "/tmp/batch.txt")
         if is_ssl:
             put("root.pem", "/root/root.pem")
-        self.run_cbindex_command(batch_options)
+        output = self.run_cbindex_command(batch_options)
+        logger.info("Output of command {}".format(output))
 
     @master_server
     def build_secondary_index(self, index_nodes, bucket, indexes, storage, is_ssl):

@@ -1133,7 +1133,15 @@ class InitialIncrementalScanTest(InitialandIncrementalDGMSecondaryIndexTest):
 
     def run(self):
         self.remove_statsfile()
-        super().run()
+        self.load_and_build_initial_index()
+
+        self.build_incrindex()
+        self.print_index_disk_usage()
+
+        time_elapsed = self.build_incrindex()
+        self.print_index_disk_usage()
+
+        self.report_kpi(time_elapsed, 'Incremental')
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()

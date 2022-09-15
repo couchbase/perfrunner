@@ -89,6 +89,12 @@ class N1QLTest(PerfTest):
                                     replace_target = "`TARGET_BUCKET`"
                                     query_statement = query_statement.\
                                         replace(replace_target, query_target)
+
+                                    target_scope = "`{}`.`{}`".format(bucket, scope)
+                                    replace_target = "`TARGET_SCOPE`"
+                                    query_statement = query_statement.\
+                                        replace(replace_target, target_scope)
+
                                     bucket_replaced = True
                                     break
                             if bucket_replaced:
@@ -313,6 +319,26 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
 
         logger.info('Index Create and Build Complete')
 
+    def create_udf(self):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        count = 0
+        for bucket in self.test_config.buckets:
+            udf = 'udflib' + str(count)
+            local.create_javascript_udf(self.query_nodes[0], udf, rest_username, rest_password)
+            bucket_scopes = self.test_config.collection.collection_map[bucket]
+            statement = "CREATE OR REPLACE FUNCTION `TARGET_SCOPE`.udf(id) LANGUAGE " \
+                        "JAVASCRIPT AS 'udf' AT '{}';".format(udf)
+            for scope in bucket_scopes.keys():
+                for collection in bucket_scopes[scope].keys():
+                    if bucket_scopes[scope][collection]["access"] == 1:
+                        target_scope = "`{}`.`{}`".format(bucket, scope)
+                        replace_target = "`TARGET_SCOPE`"
+                        statement = statement.replace(replace_target, target_scope)
+                        logger.info('Creating UDF FUNCTION: ' + statement)
+                        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+                        break
+            count += 1
+
     def run(self):
         self.enable_stats()
         self.load()
@@ -321,6 +347,7 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
 
         self.create_indexes()
         self.wait_for_indexing()
+        self.create_udf()
 
         self.store_plans()
 

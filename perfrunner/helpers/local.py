@@ -1569,3 +1569,12 @@ def set_up_s3_link(username, password, analytics_node, external_dataset_type,
                                                        external_dataset_region,
                                                        access_key, secret_access_key)
     local(cmd)
+
+
+def create_javascript_udf(node, udflib, user, password):
+    logger.info('Create Javascript UDF function')
+    cmd = "curl -v -X POST " \
+          "http://{}:8093/evaluator/v1/libraries/{} " \
+          "-u {}:{}".format(node, udflib, user, password)
+    cmd = cmd + " -d 'function udf(id) { return id}'"
+    local(cmd)

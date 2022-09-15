@@ -262,6 +262,8 @@ class N1QLQueryGen3:
                     if target == 'True':
                         replace_target = "default:`{}`.`{}`.`{}`".format(bucket, scope, collection)
                         statement = statement.replace("`TARGET_BUCKET`", replace_target)
+                        replace_target = "`{}`.`{}`".format(bucket, scope)
+                        statement = statement.replace("`TARGET_SCOPE`", replace_target)
             else:
                 for bucket in replace_targets.keys():
                     bucket_substring = "`{}`".format(bucket)

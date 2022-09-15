@@ -2033,6 +2033,7 @@ class CH3:
     WORKLOAD = 'ch3_mixed'
     ANALYTICS_STATEMENTS = ''
     USE_BACKUP = 'true'
+    DEBUG = 'false'
     LOAD_TCLIENTS = 0
     LOAD_MODE = 'datasvc-bulkload'
 
@@ -2051,6 +2052,7 @@ class CH3:
         self.duration = int(options.get('duration', self.DURATION))
         self.workload = options.get('workload', self.WORKLOAD)
         self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
+        self.debug = maybe_atoi(options.get('debug', self.DEBUG))
         self.raw_analytics_statements = options.get('analytics_statements',
                                                     self.ANALYTICS_STATEMENTS)
         if self.raw_analytics_statements:

@@ -1292,7 +1292,7 @@ def ch2_load_task(cluster_spec: ClusterSpec, warehouses: int, load_tclients: int
 
 def ch3_load_task(cluster_spec: ClusterSpec, warehouses: int, load_tclients: int,
                   data_url: str, multi_data_url: str, query_url: str,
-                  multi_query_url: str, load_mode: str):
+                  multi_query_url: str, load_mode: str, debug: bool = False):
     if load_mode == "qrysvc-load":
         qrysvc_mode = True
     else:
@@ -1308,6 +1308,7 @@ def ch3_load_task(cluster_spec: ClusterSpec, warehouses: int, load_tclients: int
              '--userid {}'.format(cluster_spec.rest_credentials[0]),
              '--password {}'.format(cluster_spec.rest_credentials[1]),
              '--no-execute',
+             '--debug' if debug else None,
              '--{} > ../../../ch3_load.log'.format(load_mode) if not qrysvc_mode else None,
              '--{} > /dev/null 2>&1'.format(load_mode) if qrysvc_mode else None]
 
@@ -1334,7 +1335,8 @@ def ch3_run_task(cluster_spec: ClusterSpec, warehouses: int, aclients: int = 0,
                  tclients: int = 0, fclients: int = 0, duration: int = 0,
                  iterations: int = 0, warmup_iterations: int = 0, warmup_duration: int = 0,
                  query_url: str = None, multi_query_url: str = None,
-                 analytics_url: str = None, fts_url: str = None, log_file: str = 'ch3_mixed'):
+                 analytics_url: str = None, fts_url: str = None, log_file: str = 'ch3_mixed',
+                 debug: bool = False):
 
     flags = ['--warehouses {}'.format(warehouses),
              '--aclients {}'.format(aclients) if aclients else None,
@@ -1352,6 +1354,7 @@ def ch3_run_task(cluster_spec: ClusterSpec, warehouses: int, aclients: int = 0,
              '--fts-url {}'.format(fts_url) if fclients else None,
              '--userid {}'.format(cluster_spec.rest_credentials[0]),
              '--password {}'.format(cluster_spec.rest_credentials[1]),
+             '--debug' if debug else None,
              '--no-load > ../../../{}.log'.format(log_file)]
 
     cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(

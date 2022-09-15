@@ -1325,7 +1325,8 @@ class CH3Test(PerfTest):
             multi_query_url=multi_query_url,
             analytics_url=analytics_url,
             fts_url=fts_url,
-            log_file=self.test_config.ch3_settings.workload
+            log_file=self.test_config.ch3_settings.workload,
+            debug=self.test_config.ch3_settings.debug
         )
 
     def create_fts_indexes(self):
@@ -1360,7 +1361,8 @@ class CH3Test(PerfTest):
             multi_data_url=multi_data_url,
             query_url=query_url,
             multi_query_url=multi_query_url,
-            load_mode=self.test_config.ch3_settings.load_mode
+            load_mode=self.test_config.ch3_settings.load_mode,
+            debug=self.test_config.ch3_settings.debug
         )
 
     def restart(self):

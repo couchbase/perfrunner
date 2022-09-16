@@ -132,6 +132,7 @@ def new_cbagent_settings(test: PerfTest):
         settings.cloud = {"enabled": True, "dynamic": True, "cloud_rest": test.rest}
     elif test.cluster_spec.cloud_infrastructure:
         settings.cloud.update({'enabled': True, 'dynamic': False, 'cloud_rest': test.rest})
+        settings.hostnames = test.cluster_spec.servers
 
     if test.test_config.collection.collection_map:
         settings.collections = test.test_config.collection.collection_map

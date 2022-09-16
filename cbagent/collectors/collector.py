@@ -145,12 +145,15 @@ class Collector:
                 yield bucket["name"]
 
     def get_nodes(self):
-        pool = self.get_http(path="/pools/default")
-        for node in pool["nodes"]:
-            hostname = node["hostname"].split(":")[0]
-            if self.hostnames is not None and hostname not in self.hostnames:
-                continue
-            yield hostname
+        if self.cloud_enabled:
+            return self.hostnames
+        else:
+            pool = self.get_http(path="/pools/default")
+            for node in pool["nodes"]:
+                hostname = node["hostname"].split(":")[0]
+                if self.hostnames is not None and hostname not in self.hostnames:
+                    continue
+                yield hostname
 
     def get_all_indexes(self):
         if self.collections:

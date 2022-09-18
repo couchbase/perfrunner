@@ -3,7 +3,7 @@ test = perfrunner.tests.secondary.InitialScanThroughputLatencyCloudTest
 
 [showfast]
 title = 1 bucket x 564M ,single index, 128 byte keysize,10%% RR, no mutations during initial build only, PLASMA
-component = secondary
+component = secondarycloud
 sub_category = PlasmaDGMDGM
 
 [stats]

@@ -4,7 +4,7 @@ test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 [showfast]
 title = 20 buckets, 64 vBuckets/bucket, 200 indexes, 256 byte keysize, 10%% RR, 250 ops incremental mutations
 component = secondarycloud
-sub_category = PlasmaDGMDGM
+sub_category = PlasmaDGM
 
 [stats]
 server_processes = projector

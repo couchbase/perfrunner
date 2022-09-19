@@ -1985,14 +1985,13 @@ class ThroughputLatencyMutationScanCloudTest(SecondaryIndexingThroughputTest):
                     time_elapsed: float = 0):
 
         if time_elapsed != 0:
-            if self.report_initial_build_time:
-                title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
-                self.reporter.post(
-                    *self.metrics.get_indexing_meta(value=time_elapsed,
-                                                    index_type="Initial",
-                                                    unit="min",
-                                                    name=title)
-                )
+            title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
+            self.reporter.post(
+                *self.metrics.get_indexing_meta(value=time_elapsed,
+                                                index_type="Initial",
+                                                unit="min",
+                                                name=title)
+            )
         else:
             title = "Secondary Scan Throughput (scanps) {}" \
                 .format(str(self.test_config.showfast.title).strip())

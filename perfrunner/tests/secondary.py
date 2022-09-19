@@ -419,9 +419,9 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.load()
         self.wait_for_persistence()
         time_elapsed = self.build_secondaryindex()
-        self.print_index_disk_usage()
         if not self.incremental_only:
             self.report_kpi(time_elapsed, 'Initial')
+        self.print_index_disk_usage(heap_profile=False)
 
     @with_stats
     @timeit
@@ -472,8 +472,8 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.load_and_build_initial_index()
 
         time_elapsed = self.build_incrindex()
-        self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
+        self.print_index_disk_usage(heap_profile=False)
 
         self.run_recovery_scenario()
 

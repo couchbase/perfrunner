@@ -1135,9 +1135,6 @@ class InitialIncrementalScanTest(InitialandIncrementalDGMSecondaryIndexTest):
         self.remove_statsfile()
         self.load_and_build_initial_index()
 
-        self.build_incrindex()
-        self.print_index_disk_usage()
-
         time_elapsed = self.build_incrindex()
         self.print_index_disk_usage()
 

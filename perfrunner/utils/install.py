@@ -517,18 +517,17 @@ class CloudInstaller(CouchbaseInstaller):
 
         user, password = self.cluster_spec.ssh_credentials
 
-        logger.info('Using this URL: {}'.format(self.url))
         self.remote.upload_iss_files(self.release)
         package_name = "couchbase.{}".format(self.remote.package)
         if self.options.remote_copy:
             with open(package_name, 'wb') as fh:
                 if self.options.local_copy_url:
-                    resp = requests.get(self.options.local_copy_url)
                     logger.info('Saving a local url {}'.format(self.options.local_copy_url))
+                    resp = requests.get(self.options.local_copy_url)
                 elif 'aarch64' in self.url:
-                    logger.info('Saving a local copy of {}'.format(
-                                self.url.replace('aarch64', 'x86_64')))
-                    resp = requests.get(self.url)
+                    local_url = self.url.replace('aarch64', 'x86_64')
+                    logger.info('Saving a local copy of x86_64 {}'.format(local_url))
+                    resp = requests.get(local_url)
                 else:
                     logger.info('Saving a local copy of {}'.format(self.url))
                     resp = requests.get(self.url)
@@ -537,6 +536,7 @@ class CloudInstaller(CouchbaseInstaller):
                 logger.info('uploading client package {} to {} '.format(package_name, client))
                 upload_couchbase(client, user, password, package_name)
         with open(package_name, 'wb') as fh:
+            logger.info('Server URL: {}'.format(self.url))
             resp = requests.get(self.url)
             fh.write(resp.content)
 

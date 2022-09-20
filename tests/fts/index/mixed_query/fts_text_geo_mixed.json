@@ -1,0 +1,15 @@
+{
+    "bucket-1": {
+        "test_data_file" : "../tests/fts/data/benchmark/hi.txt",
+        "test_query_type" : "term",
+        "test_query_field" : "fts_field1",
+        "couchbase_index_configfile" : "tests/fts/index/unified/fts_tvectors_off.json"
+    },
+    "bucket-2": {
+        "test_data_file": "../tests/fts/data/unified/geo_rad.txt",
+        "test_query_type": "geo_rad",
+        "test_geo_distance": "10mi",
+        "test_query_field": "location",
+        "couchbase_index_configfile": "tests/fts/index/unified/fts_geo.json"
+    }
+}

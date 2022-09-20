@@ -1,0 +1,63 @@
+{
+    "type": "fulltext-index",
+    "name": "",
+    "uuid": "",
+    "sourceType": "couchbase",
+    "sourceName": "",
+    "sourceUUID": "",
+    "planParams": {
+        "maxPartitionsPerPIndex": 171,
+        "numReplicas": 0,
+        "hierarchyRules": null,
+        "nodePlanParams": null,
+        "pindexWeights": null,
+        "planFrozen": false
+    },
+    "params": {
+        "doc_config": {
+            "mode": "type_field",
+            "type_field": "type"
+        },
+        "mapping": {
+            "default_analyzer": "simple",
+            "default_datetime_parser": "dateTimeOptional",
+            "default_field": "_all",
+            "default_mapping": {
+                "dynamic": false,
+                "enabled": true,
+                "properties": {
+                    "fts_field1": {
+                        "dynamic": false,
+                        "enabled": true,
+                        "fields": [
+                            {
+                                "name": "fts_field1",
+                                "include_term_vectors": false,
+                                "index": true,
+                                "store": false,
+                                "type": "text"
+                            }
+                        ]
+                    }
+                }
+            },
+            "default_type": "_default",
+            "index_dynamic": false,
+            "store_dynamic": false,
+            "type_field": "type"
+        },
+        "store": {
+            "kvStoreName": "mossStore"
+        }
+    },
+    "sourceParams": {
+        "clusterManagerBackoffFactor": 0,
+        "clusterManagerSleepInitMS": 0,
+        "clusterManagerSleepMaxMS": 2000,
+        "dataManagerBackoffFactor": 0,
+        "dataManagerSleepInitMS": 0,
+        "dataManagerSleepMaxMS": 2000,
+        "feedBufferAckThreshold": 0,
+        "feedBufferSizeBytes": 0
+    }
+}

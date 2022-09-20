@@ -51,6 +51,7 @@ class FTSCollector(Collector):
         super().__init__(settings)
         self.cbft_stats = dict()
         self.fts_index_name = "{}-0".format(test.access.couchbase_index_name)
+        self.fts_index_map = test.access.fts_index_map
         self.allbuckets = [x for x in self.get_buckets()]
         self.fts_nodes = test.fts_nodes
         self.rest = rest.RestHelper(test.cluster_spec, test.test_config)
@@ -74,9 +75,15 @@ class FTSCollector(Collector):
             for host in self.fts_nodes:
                 if host not in stats:
                     stats[host] = dict()
-                stats[host][metric] = self.get_fts_stats_by_name(host,
-                                                                 self.allbuckets[0],
-                                                                 self.fts_index_name, metric)
+                stats[host][metric] = 0
+                for index in self.fts_index_map.keys():
+                    stats[host][metric] += \
+                        self.get_fts_stats_by_name(host,
+                                                   self.fts_index_map[index]['bucket'],
+                                                   self.fts_index_map[index]['full_index_name']
+                                                   if 'full_index_name' in
+                                                   self.fts_index_map[index].keys() else index,
+                                                   metric)
         return stats
 
     def update_metadata(self):
@@ -148,3 +155,80 @@ class ElasticStats(FTSCollector):
             if samples:
                 self.store.append(samples, cluster=self.cluster,
                                   collector=self.COLLECTOR)
+
+
+class RegulatorStats(Collector):
+
+    COLLECTOR = "regulator_stats"
+
+    METRICS = (
+        "total_RUs_metered",
+        "total_WUs_metered",
+        "total_read_ops_capped",
+        "total_read_ops_rejected",
+        "total_write_ops_rejected",
+        "total_read_throttle_seconds",
+        "total_write_throttle_seconds",
+        "total_read_ops_metering_errs",
+        "total_write_ops_metering_errs",
+        "total_ops_timed_out_while_metering",
+        "total_batch_limting_timeouts",
+        "total_batch_rejection_backoff_time_ms"
+    )
+
+    def __init__(self, settings, test):
+        super().__init__(settings)
+        self.cbft_stats = dict()
+        self.fts_index_name = "{}-0".format(test.access.couchbase_index_name)
+        self.fts_index_map = test.access.fts_index_map
+        self.allbuckets = [x for x in self.get_buckets()]
+        self.fts_nodes = test.fts_nodes
+        self.rest = rest.RestHelper(test.cluster_spec, test.test_config)
+
+    def collect_stats(self):
+        for host in self.fts_nodes:
+            self.cbft_stats[host] = self.rest.get_fts_stats(host)
+
+    def get_regulator_stats_by_name(self, host, bucket, name):
+        if name in self.cbft_stats[host]:
+            return self.cbft_stats[host][name]
+
+        key = "regulatorStats:{}".format(bucket)
+        if key in self.cbft_stats[host]:
+            if name in self.cbft_stats[host][key]:
+                return self.cbft_stats[host][key][name]
+        return 0
+
+    def measure(self):
+        stats = dict()
+        for metric in self.METRICS:
+            for host in self.fts_nodes:
+                if host not in stats:
+                    stats[host] = dict()
+                for bucket in self.allbuckets:
+                    if bucket not in stats[host]:
+                        stats[host][bucket] = dict()
+                    stats[host][bucket][metric] = \
+                        self.get_regulator_stats_by_name(host,
+                                                         bucket,
+                                                         metric)
+        return stats
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+        for bucket in self.get_buckets():
+            self.mc.add_bucket(bucket)
+
+    def sample(self):
+        self.collect_stats()
+        for bucket in self.allbuckets:
+            self.update_metric_metadata(self.METRICS, bucket=bucket)
+        samples = self.measure()
+        for host in self.fts_nodes:
+            if host in samples:
+                for bucket in self.allbuckets:
+                    if bucket in samples[host]:
+                        self.store.append(samples[host][bucket],
+                                          cluster=self.cluster,
+                                          bucket=bucket,
+                                          collector=self.COLLECTOR)

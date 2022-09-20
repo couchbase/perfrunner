@@ -726,7 +726,7 @@ class DefaultMonitor(DefaultRestHelper):
         count = 0
         while count < items:
             count = self.get_fts_doc_count(host, index)
-            logger.info('FTS indexed documents: {:,}'.format(count))
+            logger.info('FTS indexed documents for {}: {:,}'.format(index, count))
             time.sleep(self.POLLING_INTERVAL)
 
     def monitor_fts_index_persistence(self, hosts: list, index: str, bkt: str = None):

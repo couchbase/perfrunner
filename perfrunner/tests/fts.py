@@ -1,7 +1,9 @@
 import copy
 import os
 import shutil
+import threading
 import time
+from collections import deque
 
 from logger import logger
 from perfrunner.helpers import local
@@ -92,6 +94,21 @@ class FTSTest(JTSTest):
             self.access.couchbase_index_name
         )
 
+    def delete_indexes(self):
+        for index_name in self.fts_index_defs.keys():
+            fts_updated_name = index_name
+            if self.fts_index_name_flag:
+                iname = copy.deepcopy(index_name)
+                fts_updated_name = "{}.{}.{}".format(
+                    self.fts_index_map[index_name]["bucket"],
+                    self.fts_index_map[index_name]["scope"],
+                    iname)
+            self.rest.delete_fts_index(
+                self.fts_master_node,
+                fts_updated_name
+            )
+        time.sleep(2)
+
     def collection_split(self, collection_map, bucket, scope):
         collection_list_per_index = []
         collection_list = list(collection_map[bucket][scope].keys())
@@ -107,6 +124,27 @@ class FTSTest(JTSTest):
             collection_list_per_index.append(collection_list[start:end])
 
         return collection_list_per_index
+
+    def update_index_def(self, index_def):
+        collection_map = self.test_config.collection.collection_map
+        # changing index configuration for serverless mode
+        if self.test_config.cluster.serverless_mode:
+            index_def["planParams"]["maxPartitionsPerPIndex"] = 1024
+            if "indexPartitions" not in list(index_def["planParams"].keys()) \
+                    or index_def["planParams"]["indexPartitions"] < 1:
+                index_def["planParams"]["indexPartitions"] = 1
+            if "numReplicas" not in list(index_def["planParams"].keys()) \
+                    or index_def["planParams"]["numReplicas"] < 1:
+                index_def["planParams"]["numReplicas"] = 1
+
+        if self.access.couchbase_index_type:
+            index_def["params"]["store"]["indexType"] = \
+                self.access.couchbase_index_type
+
+        # setting the type mapping for collection indexes
+        if collection_map:
+            index_def["params"]["doc_config"]["mode"] = "scope.collection.type_field"
+        return index_def
 
     def get_collection_index_def(self, collection_list, scope_name, index_type_mapping,
                                  custom_type_mapping_keys=[]):
@@ -135,46 +173,49 @@ class FTSTest(JTSTest):
             self.fts_index_name_flag = False
 
         logger.info("Creating indexing definitions:")
-        general_index_def = read_json(self.access.couchbase_index_configfile)
         collection_map = self.test_config.collection.collection_map
         index_id = 0
-
-        # changing index configuration for serverless mode
-        if self.test_config.cluster.serverless_mode:
-            general_index_def["planParams"]["maxPartitionsPerPIndex"] = 1024
-            if "indexPartitions" not in list(general_index_def["planParams"].keys()) \
-                    or general_index_def["planParams"]["indexPartitions"] < 1:
-                general_index_def["planParams"]["indexPartitions"] = 1
-            if "numReplicas" not in list(general_index_def["planParams"].keys()) \
-                    or general_index_def["planParams"]["numReplicas"] < 1:
-                general_index_def["planParams"]["numReplicas"] = 1
 
         # this variable will hold the key valuesfor the custom type mapping
         key_values = []
 
-        # Geo queries have a slightly different index type with custom type mapping
-        if "types" in list(general_index_def["params"]["mapping"].keys()):
-            # if any custom type mapping is present
-            key_values = list(general_index_def["params"]["mapping"]["types"].keys())
+        if self.access.test_query_mode == 'mixed':
+            self.mixed_query_map = dict()
+            self.mixed_query_map = read_json(self.access.couchbase_index_configmap)
+            self.access.mixed_query_map = self.mixed_query_map
+
+        else:
+            general_index_def = read_json(self.access.couchbase_index_configfile)
+            general_index_def = self.update_index_def(general_index_def)
+
+            # Geo queries have a slightly different index type with custom type mapping
+            if "types" in list(general_index_def["params"]["mapping"].keys()):
+                # if any custom type mapping is present
+                key_values = list(general_index_def["params"]["mapping"]["types"].keys())
+
+            if self.access.couchbase_index_type:
+                general_index_def["params"]["store"]["indexType"] = \
+                    self.access.couchbase_index_type
 
         # index_type_mapping holds the type mapping part of the index
         index_type_mapping = {}
 
-        if self.access.couchbase_index_type:
-            general_index_def["params"]["store"]["indexType"] = \
-                self.access.couchbase_index_type
-
-        # setting the type mapping for collection indexes
-        if collection_map:
-            general_index_def["params"]["doc_config"]["mode"] = "scope.collection.type_field"
-
         for bucket_name in self.test_config.buckets:
+            if self.test_config.jts_access_settings.test_query_mode == 'mixed':
+                bucket_index_def = read_json(
+                    self.mixed_query_map[bucket_name]["couchbase_index_configfile"])
+                bucket_index_def = self.update_index_def(bucket_index_def)
+                # Geo queries have a slightly different index type with custom type mapping
+                if "types" in list(bucket_index_def["params"]["mapping"].keys()):
+                    # if any custom type mapping is present
+                    key_values = list(bucket_index_def["params"]["mapping"]["types"].keys())
 
-            bucket_index_def = copy.deepcopy(general_index_def)
+            else:
+                bucket_index_def = copy.deepcopy(general_index_def)
+
             bucket_index_def.update({
                 'sourceName': bucket_name,
             })
-
             # if collection map exists , the index is on collections
             if collection_map and len(collection_map[bucket_name].keys()) > 1:
                 scope_names = list(collection_map[bucket_name].keys())[1:]
@@ -218,7 +259,7 @@ class FTSTest(JTSTest):
                                     "scope": scope_name,
                                     "collections": collection_list[coll_group_id],
                                     "total_docs": items_per_index
-                                }
+                            }
                             self.fts_index_defs[index_name] = {
                                 "index_def": collection_index_def
                             }
@@ -264,26 +305,65 @@ class FTSTest(JTSTest):
 
         self.access.fts_index_map = self.fts_index_map
 
+    def create_fts_index_and_wait(self, index_name, index_def):
+        time.sleep(1)
+        self.rest.create_fts_index(self.fts_master_node, index_name, index_def)
+        self.wait_for_index(index_name)
+
+    def sync_index_create(self, index_def_list):
+        for index_name, index_def in index_def_list:
+            self.create_fts_index_and_wait(index_name, index_def)
+
+    def async_index_create(self, thread_dict: dict):
+        # pushing one index per bucket at a time
+        thread_still_remaining = True
+        while thread_still_remaining:
+            current_thread_queue = []
+            for thread_queue in thread_dict.values():
+                if len(thread_queue) == 0:
+                    # with notion that each queue has equal number of threads
+                    thread_still_remaining = False
+                    break
+                thread = thread_queue.popleft()
+                current_thread_queue.append(thread)
+                thread.start()
+
+            for current_thread in current_thread_queue:
+                current_thread.join()
+
     def create_fts_indexes(self):
         total_time = 0
+        thread_dict = {}
+        index_def_list = []
+        logger.info("this is the defs : {}".format(self.fts_index_defs))
         for index_name in self.fts_index_defs.keys():
-            logger.info("this is the defs : {}".format(self.fts_index_defs))
             index_def = self.fts_index_defs[index_name]['index_def']
             logger.info('Index definition: {}'.format(pretty_dict(index_def)))
             if self.fts_index_name_flag:
                 iname = copy.deepcopy(index_name)
                 fts_updated_name = "{}.{}.{}".format(
-                                              self.fts_index_map[index_name]["bucket"],
-                                              self.fts_index_map[index_name]["scope"],
-                                              iname)
+                    self.fts_index_map[index_name]["bucket"],
+                    self.fts_index_map[index_name]["scope"],
+                    iname)
                 self.fts_index_map[index_name]["full_index_name"] = fts_updated_name
-            logger.info('Index map: {}'.format(pretty_dict(self.fts_index_map)))
-            t0 = time.time()
-            self.rest.create_fts_index(self.fts_master_node, index_name, index_def)
-            self.wait_for_index(index_name)
-            t1 = time.time()
-            logger.info("Time taken by {} is {} s".format(index_name, (t1-t0)))
-            total_time = total_time+(t1-t0)
+            bucket_name = self.fts_index_map[index_name]["bucket"]
+            if self.access.index_creation_style == 'async':
+                if thread_dict.get(bucket_name, None) is None:
+                    thread_dict[bucket_name] = deque()
+                thread_dict[bucket_name].append(threading.Thread(
+                                                        target=self.create_fts_index_and_wait,
+                                                        args=(index_name, index_def)))
+            else:
+                index_def_list.append([index_name, index_def])
+        logger.info('Index map: {}'.format(pretty_dict(self.fts_index_map)))
+        t0 = time.time()
+        logger.info("Creating indexes {}hronously.".format(self.access.index_creation_style))
+        if self.access.index_creation_style == 'async':
+            self.async_index_create(thread_dict)
+        else:
+            self.sync_index_create(index_def_list)
+        t1 = time.time()
+        total_time = (t1-t0)
         return total_time
 
     def wait_for_index(self, index_name):
@@ -292,14 +372,14 @@ class FTSTest(JTSTest):
                 self.fts_master_node,
                 self.fts_index_map[index_name]["full_index_name"],
                 self.fts_index_map[index_name]["total_docs"]
-                )
+            )
 
         if self.fts_index_name_flag is False:
             self.monitor.monitor_fts_indexing_queue(
                 self.fts_master_node,
                 index_name,
                 self.fts_index_map[index_name]["total_docs"]
-                )
+            )
 
     def wait_for_index_persistence(self, fts_nodes=None):
         if fts_nodes is None:
@@ -311,7 +391,7 @@ class FTSTest(JTSTest):
                     hosts=fts_nodes,
                     index=self.fts_index_map[index_name]["full_index_name"],
                     bkt=self.fts_index_map[index_name]["bucket"]
-                    )
+                )
 
         if self.fts_index_name_flag is False:
             for index_name in self.fts_index_map.keys():
@@ -319,7 +399,7 @@ class FTSTest(JTSTest):
                     hosts=fts_nodes,
                     index=index_name,
                     bkt=self.fts_index_map[index_name]["bucket"]
-                    )
+                )
 
     def add_extra_fts_parameters(self):
         logger.info("Adding extra parameter to the fts nodes")
@@ -342,16 +422,16 @@ class FTSTest(JTSTest):
         for index_name, index_info in self.fts_index_map.items():
             if self.fts_index_name_flag is True:
                 metric = '{}:{}:{}'.format(
-                                   index_info['bucket'],
-                                   index_info['full_index_name'],
-                                   'num_bytes_used_disk'
-                                    )
+                    index_info['bucket'],
+                    index_info['full_index_name'],
+                    'num_bytes_used_disk'
+                )
             if self.fts_index_name_flag is False:
                 metric = '{}:{}:{}'.format(
-                                   index_info['bucket'],
-                                   index_name,
-                                   'num_bytes_used_disk'
-                                )
+                    index_info['bucket'],
+                    index_name,
+                    'num_bytes_used_disk'
+                )
             for host in self.fts_nodes:
                 stats = self.rest.get_fts_stats(host)
                 size += stats[metric]
@@ -411,6 +491,12 @@ class FTSLatencyTest(FTSTest):
 
     COLLECTORS = {'jts_stats': True, 'fts_stats': True}
 
+    def update_settings_for_multi_queries(self, test_config):
+        for config in test_config.keys():
+            logger.info(test_config[config])
+            setattr(self.access, config, test_config[config])
+            logger.info(self.access)
+
     def report_kpi(self):
         self.reporter.post(*self.metrics.jts_latency(percentile=80))
         self.reporter.post(*self.metrics.jts_latency(percentile=95))
@@ -449,6 +535,20 @@ class FTSIndexTest(FTSTest):
 
     def run(self):
         self.cleanup_and_restore()
+        fts_nodes = self.add_extra_fts_parameters()
+        self.create_fts_index_definitions()
+        time_elapsed = self.build_index(fts_nodes)
+        size = self.calculate_index_size()
+        self.report_kpi(time_elapsed, size)
+
+
+class FTSIndexTestMultiTenant(FTSIndexTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.wait_for_index_persistence()
         fts_nodes = self.add_extra_fts_parameters()
         self.create_fts_index_definitions()
         time_elapsed = self.build_index(fts_nodes)
@@ -497,7 +597,6 @@ class FTSLatencyCloudBackupTest(FTSLatencyTest):
         credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
         self.remote.create_aws_credential(credential)
         self.remote.client_drop_caches()
-
         self.remote.restore(cluster_spec=self.cluster_spec,
                             master_node=self.master_node,
                             threads=self.test_config.restore_settings.threads,
@@ -558,6 +657,41 @@ class FTSThroughputLoadTest(FTSThroughputTest):
 
 
 class FTSLatencyLoadTest(FTSLatencyTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.run_test()
+        self.report_kpi()
+
+
+class FTSLatencyAccessLoadTest(FTSLatencyTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.access_bg()
+        self.run_test()
+        self.report_kpi()
+
+
+class FTSLatencysLoadWithStatsTest(FTSLatencyTest):
+
+    @with_stats
+    def load(self):
+        super().load()
 
     def run(self):
         self.load()

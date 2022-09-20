@@ -1374,7 +1374,7 @@ class JTSAccessSettings(PhaseSettings):
         self.test_query_type = options.get("test_query_type", "term")
         self.test_query_limit = options.get("test_query_limit", "10")
         self.test_query_field = options.get("test_query_field", "text")
-        self.test_mutation_field = options.get("test_mutation_field", "text2")
+        self.test_mutation_field = options.get("test_mutation_field", None)
         self.test_worker_type = options.get("test_worker_type", "latency")
         self.couchbase_index_name = options.get("couchbase_index_name", "perf_fts_index")
         self.couchbase_index_configfile = options.get("couchbase_index_configfile")
@@ -1383,6 +1383,8 @@ class JTSAccessSettings(PhaseSettings):
         self.time = options.get('test_duration', "600")
         self.warmup_query_workers = options.get("warmup_query_workers", "0")
         self.warmup_time = options.get('warmup_time', "0")
+        # index creation - async or sync
+        self.index_creation_style = options.get('index_creation_style', 'sync')
         # Geo Queries parameters
         self.test_geo_polygon_coord_list = options.get("test_geo_polygon_coord_list", "")
         self.test_query_lon_width = options.get("test_query_lon_width", "2")
@@ -1396,6 +1398,9 @@ class JTSAccessSettings(PhaseSettings):
         self.test_flex_query_type = options.get('test_flex_query_type', 'array_predicate')
         # Collection settings
         self.test_collection_query_mode = options.get('test_collection_query_mode', 'default')
+        self.couchbase_index_configmap = options.get('couchbase_index_configmap', None)
+        # Test query mode for mixed query
+        self.test_query_mode = options.get('test_query_mode', 'default')
         # Number of indexes per index - group
         self.indexes_per_group = int(options.get('indexes_per_group', '1'))
         # index_group is the number of collections per index

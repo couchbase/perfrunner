@@ -187,19 +187,31 @@ class MetricHelper:
         metric_id = metric_id.replace('.', '')
         title = "{}, {}".format(prefix, self._title)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
-        timings = self._jts_metric(collector="jts_stats", metric="jts_latency")
+        timings = self._jts_metric(collector="jts_stats", metric="jts_latency",
+                                   percentile=percentile)
         lat = round(np.percentile(timings, percentile), 2)
         if lat > 100:
             lat = round(lat)
         return lat, self._snapshots, metric_info
 
-    def _jts_metric(self, collector, metric):
+    def _jts_metric(self, collector, metric, percentile=None):
         timings = []
         for bucket in self._bucket_names:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector=collector,
                                          bucket=bucket)
-            timings += self.store.get_values(db, metric=metric)
+            bucket_timings = self.store.get_values(db, metric=metric)
+            bucket_metric = 0
+            if metric == "jts_latency":
+                bucket_metric = round(np.percentile(bucket_timings, percentile), 2)
+            elif metric == "jts_throughput":
+                bucket_metric = round(np.average(bucket_timings), 2)
+
+            if bucket_metric > 100:
+                bucket_metric = round(bucket_metric)
+            logger.info("The {}{} value for {} is {}".format(f"{percentile}th "
+                        if percentile is not None else "", metric, bucket, bucket_metric))
+            timings += bucket_timings
         return timings
 
     def avg_ops(self) -> Metric:

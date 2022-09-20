@@ -39,6 +39,7 @@ from cbagent.collectors import (
     ObserveSecondaryIndexLatency,
     PageCache,
     QueryLatency,
+    RegulatorStats,
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
     SecondaryDebugStatsIndex,
@@ -95,9 +96,9 @@ def new_cbagent_settings(test: PerfTest):
     if hasattr(test, 'ALL_BUCKETS'):
         buckets = None
     else:
-        buckets = test.test_config.buckets[:1] +\
-                  test.test_config.eventing_buckets +\
-                  test.test_config.eventing_metadata_bucket
+        buckets = test.test_config.buckets +\
+            test.test_config.eventing_buckets +\
+            test.test_config.eventing_metadata_bucket
 
     if hasattr(test, 'ALL_HOSTNAMES'):
         hostnames = test.cluster_spec.servers
@@ -227,7 +228,8 @@ class CbAgent:
                        sgimport_latency=False,
                        vmstat=False,
                        xdcr_lag=False,
-                       xdcr_stats=False):
+                       xdcr_stats=False,
+                       regulator_stats=False):
         self.collectors = []
         self.processes = []
 
@@ -239,7 +241,9 @@ class CbAgent:
         split_version = self.test.build.split(".")
         major = int(split_version[0])
         minor = int(split_version[1])
-
+        if self.test.test_config.cluster.fts_index_mem_quota != 0 \
+                and self.test.test_config.cluster.serverless_mode == 'enabled':
+            self.add_collector(RegulatorStats, self.test)
         if ns_server_overview:
             if (major == 6 and minor < 6) or (major < 6 and major != 0):
                 self.add_collector(NSServerOverview)

@@ -8,7 +8,11 @@ from cbagent.collectors.eventing_stats import (
     EventingPerNodeStats,
     EventingStats,
 )
-from cbagent.collectors.fts_stats import ElasticStats, FTSCollector
+from cbagent.collectors.fts_stats import (
+    ElasticStats,
+    FTSCollector,
+    RegulatorStats,
+)
 from cbagent.collectors.jts_stats import JTSCollector
 from cbagent.collectors.kvstore_stats import KVStoreStats
 from cbagent.collectors.latency import KVLatency, Latency, QueryLatency

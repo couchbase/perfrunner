@@ -1,0 +1,35 @@
+{
+    "queries": [
+        {
+            "test_data_file": "../tests/fts/data/benchmark/hi.txt",
+            "test_query_type": "term",
+            "test_query_field": "fts_field1"
+        },
+        {
+            "test_data_file": "../tests/fts/data/unified/geo_rad.txt",
+            "test_query_type": "geo_rad",
+            "test_geo_distance": "10mi",
+            "test_query_field": "location"
+        },
+        {
+            "test_data_file": "../tests/fts/data/unified/dateranges.txt",
+            "test_query_type": "daterange",
+            "test_query_field": "date"
+        },
+        {
+            "test_query_type": "fuzzy",
+            "test_data_file": "../tests/fts/data/unified/fuzzy_1.txt",
+            "test_query_field": "fts_field1"
+        },
+        {
+            "test_query_type": "prefix",
+            "test_data_file": "../tests/fts/data/unified/prefix.txt",
+            "test_query_field": "fts_field1"
+        },
+        {
+            "test_query_type": "numeric",
+            "test_data_file": "../tests/fts/data/enduser/numeric_range.txt",
+            "test_query_field": "num"
+        }
+    ]
+}

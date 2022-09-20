@@ -13,8 +13,8 @@
     "doc_config": {
       "docid_prefix_delim": "",
       "docid_regexp": "",
-      "mode": "type_field",
-      "type_field": "table_name"
+      "mode": "scope.collection.type_field",
+      "type_field": "type"
     },
     "mapping": {
       "analysis": {},
@@ -22,10 +22,10 @@
       "default_datetime_parser": "dateTimeOptional",
       "default_field": "_all",
       "default_mapping": {
-        "dynamic": true,
-        "enabled": false,
+        "dynamic": false,
+        "enabled": true,
         "properties": {
-          "cc_geo": {
+          "location": {
             "dynamic": false,
             "enabled": true,
             "fields": [
@@ -34,7 +34,7 @@
                 "include_in_all": true,
                 "include_term_vectors": true,
                 "index": true,
-                "name": "cc_geo",
+                "name": "location",
                 "store": true,
                 "type": "geopoint"
               }
@@ -43,31 +43,9 @@
         }
       },
       "default_type": "_default",
-      "docvalues_dynamic": true,
-      "index_dynamic": true,
+      "index_dynamic": false,
       "store_dynamic": false,
-      "type_field": "_type",
-      "types": {
-        "call_center": {
-          "dynamic": false,
-          "enabled": true,
-          "properties": {
-            "cc_geo": {
-              "dynamic": false,
-              "enabled": true,
-              "fields": [
-                {
-                  "docvalues": true,
-                  "include_term_vectors": true,
-                  "index": true,
-                  "name": "cc_geo",
-                  "type": "geopoint"
-                }
-              ]
-            }
-          }
-        }
-      }
+      "type_field": "type"
     },
     "store": {
       "indexType": "scorch"

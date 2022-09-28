@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialScanThroughputLatencyCloudTest
 
 [showfast]
-title = 20 buckets, 64 vBuckets/bucket ,200 indexes, 128 byte keysize, 10%% RR, small plasma size, 20/80 scan without mutations, concurrency = 64
+title = 20 buckets , 64 vBuckets/bucket, 200 indexes, 256 byte keysize,10%% RR , no incrememtal mutations, 5/95 scans, concurrency = 64
 component = secondarycloud
 sub_category = PlasmaDGM
 
@@ -29,15 +29,32 @@ eviction_policy = fullEviction
 [collection]
 config = collections/20bucket_1scope_5collections_2.json
 
+[load]
+items = 9000000
+size = 1024
+workers = 50
+key_fmtr = hash
+item_size = 228
+doc_gen = large_doc_random
+
 [secondary]
 indexes = tests/gsi/index_defs/20bucket_1scope_5collections_2indexes_1.json
 indexer.settings.storage_mode = plasma
-cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_20_80_plasma_20buckets_128B.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_5_95_plasma_20buckets_256B.json
 indexer.settings.minVbQueueLength = 50
 indexer.init_stream.smallSnapshotThreshold = 30
 indexer.plasma.mainIndex.maxNumPageDeltas = 150
 indexer.plasma.mainIndex.pageSplitThreshold = 150
 indexer.plasma.backIndex.pageSplitThreshold = 100
+
+[access]
+updates = 100
+ops = 2500000
+items = 2500000
+throughput = 250
+workers = 25
+item_size = 228
+doc_gen = large_doc_random
 
 [bucket_extras]
 num_writer_threads = disk_io_optimized

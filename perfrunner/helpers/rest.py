@@ -791,13 +791,32 @@ class DefaultRestHelper(RestBase):
         return response.json()
 
     def set_serverless_throttle(self, node, values):
-        api = 'http://{}:8091/internalSettings'.format(node)
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/internalSettings'.format(node)
+        else:
+            api = 'http://{}:8091/internalSettings'.format(node)
         for key in values:
             limit = values[key]
             if limit != 0:
                 data = {key: limit}
                 logger.info('Setting throttle limit: {}'.format(data))
                 self.post(url=api, data=data)
+
+    def reset_serverless_throttle(self, node):
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/internalSettings'.format(node)
+        else:
+            api = 'http://{}:8091/internalSettings'.format(node)
+        serverless_throttle = {'dataThrottleLimit': 5000,
+                               'indexThrottleLimit': 5000,
+                               'searchThrottleLimit': 5000,
+                               'queryThrottleLimit': 5000,
+                               'sgwReadThrottleLimit': 5000,
+                               'sgwWriteThrottleLimit': 5000}
+        for service, limit in serverless_throttle.items():
+            data = {service: limit}
+            logger.info('Setting throttle limit: {}'.format(data))
+            self.post(url=api, data=data)
 
     def explain_n1ql_statement(self, host: str, statement: str):
         statement = 'EXPLAIN {}'.format(statement)
@@ -1656,9 +1675,14 @@ class KubernetesRestHelper(RestBase):
         return trans_host, trans_port
 
     def exec_n1ql_statement(self, host: str, statement: str) -> dict:
-        host, port = self.translate_host_and_port(host, '8093')
-        api = 'http://{}:{}/query/service' \
-            .format(host, port)
+        if self.test_config.cluster.enable_n2n_encryption:
+            host, port = self.translate_host_and_port(host, '18093')
+            api = 'https://{}:{}/query/service' \
+                .format(host, port)
+        else:
+            host, port = self.translate_host_and_port(host, '8093')
+            api = 'http://{}:{}/query/service' \
+                .format(host, port)
         data = {
             'statement': statement,
         }

@@ -131,7 +131,6 @@ class N1QLTest(PerfTest):
 
     def enable_stats(self):
         if self.index_nodes:
-            self.COLLECTORS['secondary_stats'] = True
             if not hasattr(self, 'ALL_BUCKETS'):
                 self.COLLECTORS['secondary_debugstats'] = True
                 self.COLLECTORS['secondary_debugstats_index'] = True
@@ -353,6 +352,8 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
 
         if self.test_config.users.num_users_per_bucket > 0:
             self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
+        self.rest.reset_serverless_throttle(self.master_node)
 
         self.access_bg()
         self.access()

@@ -11,6 +11,9 @@ mem_quota = 51200
 initial_nodes = 4
 num_buckets = 1
 
+[bucket_extras]
+access_scanner_enabled = false
+
 [stats]
 interval = 1
 

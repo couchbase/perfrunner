@@ -14,6 +14,9 @@ num_buckets = 1
 [bucket]
 backend_storage = magma
 
+[bucket_extras]
+access_scanner_enabled = false
+
 [stats]
 interval = 1
 

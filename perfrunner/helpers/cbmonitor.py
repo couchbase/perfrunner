@@ -4,6 +4,7 @@ from copy import copy
 from multiprocessing import Process
 from typing import Callable, Union
 
+import pkg_resources
 import requests
 from decorator import decorator
 
@@ -71,6 +72,20 @@ def timeit(method: Callable, *args, **kwargs) -> float:
 def with_stats(method: Callable, *args, **kwargs) -> Union[float, None]:
     with CbAgent(test=args[0], phase=method.__name__):
         return method(*args, **kwargs)
+
+
+@decorator
+def with_cloudwatch(method, *args, **kwargs):
+    cb_version = pkg_resources.get_distribution("couchbase").version
+
+    if cb_version[0] == '3':
+        from perfrunner.helpers.cloudwatch import Cloudwatch
+        t0 = time.time()
+        method(*args, **kwargs)
+        t1 = time.time()
+        Cloudwatch(args[0].cluster_spec.servers, t0, t1, method.__name__)
+    else:
+        logger.info("Cloudwatch unavailable in Python SDK 2 Tests.")
 
 
 def new_cbagent_settings(test: PerfTest):

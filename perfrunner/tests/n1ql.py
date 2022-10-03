@@ -323,7 +323,12 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
         count = 0
         for bucket in self.test_config.buckets:
             udf = 'udflib' + str(count)
-            local.create_javascript_udf(self.query_nodes[0], udf, rest_username, rest_password)
+            if self.test_config.cluster.enable_n2n_encryption:
+                local.create_javascript_udf(self.query_nodes[0], udf,
+                                            rest_username, rest_password, True)
+            else:
+                local.create_javascript_udf(self.query_nodes[0], udf,
+                                            rest_username, rest_password, False)
             bucket_scopes = self.test_config.collection.collection_map[bucket]
             statement = "CREATE OR REPLACE FUNCTION `TARGET_SCOPE`.udf(id) LANGUAGE " \
                         "JAVASCRIPT AS 'udf' AT '{}';".format(udf)

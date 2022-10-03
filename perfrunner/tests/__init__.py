@@ -142,6 +142,9 @@ class PerfTest:
 
             self.cluster.reset_memory_settings()
 
+        if self.test_config.cluster.num_vbuckets:
+            self.remote.reset_num_vbuckets()
+
     def collect_linux_perf_profiles(self):
         self.remote.generate_linux_perf_script()
         self.remote.get_linuxperf_files()

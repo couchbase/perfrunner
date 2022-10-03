@@ -1,13 +1,14 @@
 import hashlib
+import json
 import math
 import random
-import sys
 import time
 from datetime import date, datetime, timedelta
 from typing import Iterator, List, Tuple
 
 import numpy as np
 import spooky
+from faker import Faker
 
 from fastdocgen import build_achievements
 from perfrunner.workloads.bigfun import query_gen
@@ -2247,6 +2248,8 @@ class UnifiedDocument(Document):
         super().__init__(avg_size)
         self.num_replies = num_replies
         self.item_size = item_size
+        self.fk = Faker()
+        Faker.seed(1000)
 
     @staticmethod
     def array_dic(batch_group_id: int, qualify_doc_id: int):
@@ -2301,7 +2304,11 @@ class UnifiedDocument(Document):
             "cid": self.doc_id(qualify_doc_id),
             "id": self.doc_id(qualify_doc_id),
             "index_field": self.build_index_md5(key.string, self.item_size),
+            "fts_field1": self.fk.sentence(20),
+            "location": {"lat": str(self.fk.latlng()[0]),  "log": str(self.fk.latlng()[1])},
+            "date": self.fk.date()
         }
-        current_size = sys.getsizeof(doc)
+        doc_b = json.dumps(doc).encode("utf-8")
+        current_size = len(doc_b)
         doc["comment"] = self.build_string(alphabet, self.avg_size - current_size)
         return doc

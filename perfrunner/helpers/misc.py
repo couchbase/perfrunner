@@ -206,17 +206,6 @@ def remove_nulls(d: dict) -> dict:
     return {k: new_v for k, v in d.items() if not is_null(new_v := remove_nulls(v))}
 
 
-def use_ssh_capella(spec) -> bool:
-    # Disable SSH for Capella if we aren't on AWS or if we are in capella-dev tenant,
-    # as this tenant has a higher level of security and we don't have permissions to do many
-    # things there
-    return (
-        spec.capella_infrastructure and
-        spec.capella_backend == 'aws' and
-        spec.infrastructure_settings['cbc_tenant'] != '1a3c4544-772e-449e-9996-1203e7020b96'
-    )
-
-
 def run_local_shell_command(command: str, success_msg: str = '',
                             err_msg: str = '') -> tuple[str, str, int]:
     process = subprocess.run(command, shell=True, capture_output=True)

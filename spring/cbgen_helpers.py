@@ -2,10 +2,11 @@ import random
 from collections import defaultdict
 from threading import Timer
 from time import sleep, time
-from typing import Callable
+from typing import Callable, Union
 
 import pkg_resources
 from decorator import decorator
+from requests import HTTPError
 
 from logger import logger
 
@@ -19,41 +20,44 @@ elif cb_version[0] == '3':
         TemporaryFailException as TemporaryFailError
 
 
+ClientError = Union[CouchbaseError, HTTPError]
+
+
 class ErrorTracker:
 
     MSG = 'Function: {}, error: {}'
-
-    MSG_REPEATED = 'Function: {}, error: {}, repeated {} times'
 
     QUIET_PERIOD = 10  # 10 seconds
 
     def __init__(self):
         self.errors = defaultdict(int)
 
-    def track(self, method: str, exc: CouchbaseError):
+    def track(self, method: str, exc: ClientError):
         if type(exc) not in self.errors:
             self.warn(method, exc)  # Always warn upon the first occurrence
             self.check_later(method, exc)
         self.incr(exc)
 
-    def incr(self, exc: CouchbaseError):
+    def incr(self, exc: ClientError):
         self.errors[type(exc)] += 1
 
-    def reset(self, exc: CouchbaseError):
+    def reset(self, exc: ClientError):
         self.errors[type(exc)] = 0
 
-    def check_later(self, method: str, exc: CouchbaseError):
+    def check_later(self, method: str, exc: ClientError):
         timer = Timer(self.QUIET_PERIOD, self.maybe_warn, args=[method, exc])
         timer.daemon = True
         timer.start()
 
-    def warn(self, method: str, exc: CouchbaseError, count: int = 0):
+    def warn(self, method: str, exc: ClientError, count: int = 0):
+        message = self.MSG.format(method, exc)
+        if isinstance(exc, HTTPError):
+            message += ', response text: {}'.format(exc.response.text)
         if count:
-            logger.warn(self.MSG_REPEATED.format(method, exc, count))
-        else:
-            logger.warn(self.MSG.format(method, exc))
+            message += ', repeated {} times'.format(count)
+        logger.warn(message)
 
-    def maybe_warn(self, method: str, exc: CouchbaseError):
+    def maybe_warn(self, method: str, exc: ClientError):
         count = self.errors[type(exc)]
         if count > 1:
             self.reset(exc)
@@ -71,6 +75,8 @@ def quiet(method: Callable, *args, **kwargs):
     try:
         return method(*args, **kwargs)
     except CouchbaseError as e:
+        error_tracker.track(method.__name__, e)
+    except HTTPError as e:
         error_tracker.track(method.__name__, e)
 
 
@@ -116,4 +122,6 @@ def time_all(method: Callable, *args, **kwargs):
                 sleep(retry_delay)
                 retry_delay *= 1 + 0.1 * random.random()
     except CouchbaseError as e:
+        error_tracker.track(method.__name__, e)
+    except HTTPError as e:
         error_tracker.track(method.__name__, e)

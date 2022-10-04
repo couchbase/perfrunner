@@ -6,6 +6,7 @@ import zipfile
 from argparse import ArgumentParser
 from collections import defaultdict
 from multiprocessing import set_start_method
+from pathlib import Path
 from typing import List
 
 from logger import logger
@@ -121,10 +122,34 @@ def main():
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(args.cluster_spec_fname)
+
+    remote = RemoteHelper(cluster_spec, verbose=False)
+
+    if cluster_spec.serverless_infrastructure:
+        remote.collect_dn_logs()
+        remote.collect_dapi_logs()
+
+        dapi_logs = [
+            fname
+            for iid in cluster_spec.dapi_instance_ids
+            for fname in glob.glob('{}/*.log'.format(iid))
+        ]
+
+        dn_logs = [
+            fname
+            for iid in cluster_spec.direct_nebula_instance_ids
+            for fname in glob.glob('{}/*.log'.format(iid))
+        ]
+
+        for zip_name, log_fnames in zip(['dapi', 'direct_nebula'], [dapi_logs, dn_logs]):
+            with zipfile.ZipFile('{}.zip'.format(zip_name), 'w',
+                                 compression=zipfile.ZIP_DEFLATED) as z:
+                for fname in log_fnames:
+                    z.write(fname, arcname=Path(fname).name)
+
     if cluster_spec.capella_infrastructure:
         get_capella_cluster_logs(cluster_spec, args.s3_bucket_name)
     else:
-        remote = RemoteHelper(cluster_spec, verbose=False)
         remote.collect_info()
         for hostname in cluster_spec.servers:
             for fname in glob.glob('{}/*.zip'.format(hostname)):

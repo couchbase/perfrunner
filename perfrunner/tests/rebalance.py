@@ -1,11 +1,10 @@
-import os
 import time
 
 import dateutil.parser
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import pretty_dict, use_ssh_capella
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSTest
@@ -124,37 +123,14 @@ class CapellaRebalanceTest(RebalanceTest):
 
         logger.info('Cluster nodes: {}'.format(pretty_dict(new_clusters)))
 
-        added_nodes = []
-
         for cluster_name, new_nodes in new_clusters.items():
-            if self.cluster_spec.using_instance_ids:
-                iid_map = self.cluster_spec.servers_hostname_to_instance_id
-                new_iids = []
-                for node in new_nodes:
-                    hostname = node.split(':')[0]
-                    if not (iid := iid_map.get(hostname, None)):
-                        region = os.environ.get('AWS_REGION', 'us-east-1')
-                        iid = self.cluster_spec.get_aws_iid(hostname, region)
-                        logger.info('Instance ID for new node {}: {}'.format(hostname, iid))
-                        added_nodes.append(iid)
-                    new_iids.append(iid)
-                self.cluster_spec.config.set('instance_ids', cluster_name,
-                                             '\n' + '\n'.join(new_iids))
-
             self.cluster_spec.config.set('clusters', cluster_name, '\n' + '\n'.join(new_nodes))
 
         self.cluster_spec.update_spec_file()
-        return added_nodes
-
-    def init_ssh_for_new_nodes(self, nodes):
-        if use_ssh_capella(self.cluster_spec):
-            if self.cluster_spec.capella_backend == 'aws':
-                self.remote.capella_aws_init_ssh(nodes)
 
     def post_rebalance(self):
         super().post_rebalance()
-        added_nodes = self.update_cluster_configs()
-        self.init_ssh_for_new_nodes(added_nodes)
+        self.update_cluster_configs()
 
     @timeit
     def _rebalance(self, services):

@@ -14,7 +14,7 @@ from twisted.internet import reactor
 
 from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
-from spring.cbgen3 import CBAsyncGen3, CBGen3
+from spring.cbgen3 import CBAsyncGen3, CBGen3, DAPIGen
 from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
@@ -107,7 +107,7 @@ def set_cpu_afinity(sid):
 
 
 Sequence = List[Tuple[str, Callable, Tuple]]
-Client = Union[CBAsyncGen3, CBGen3]
+Client = Union[CBAsyncGen3, CBGen3, DAPIGen]
 
 
 class Worker:
@@ -365,6 +365,7 @@ class Worker:
                                         self.ws.item_size)
 
     def init_db(self):
+        workload_client = CBGen3
         params = {
             'bucket': self.ts.bucket,
             'host': self.ts.node,
@@ -380,11 +381,14 @@ class Worker:
                 params['host'] = self.ts.cloud['nebula_uri']
             elif self.ws.nebula_mode == 'dapi':
                 params['host'] = self.ts.cloud['dapi_uri']
+                params['meta'] = self.ws.dapi_request_meta
+                params['logs'] = self.ws.dapi_request_logs
+                workload_client = DAPIGen
             else:
                 params['host'] = self.ts.cloud.get('cluster_svc', params['host'])
 
         try:
-            self.cb = CBGen3(**params)
+            self.cb = workload_client(**params)
         except Exception as e:
             raise SystemExit(e)
 

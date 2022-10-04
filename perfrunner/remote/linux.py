@@ -1,5 +1,4 @@
 import os
-import subprocess
 import time
 from collections import defaultdict
 from typing import Dict, List
@@ -9,10 +8,12 @@ from fabric.api import cd, get, put, quiet, run, settings
 from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
-from perfrunner.helpers.misc import uhex
+from perfrunner.helpers.misc import run_local_shell_command, uhex
 from perfrunner.remote import Remote
 from perfrunner.remote.context import (
     all_clients,
+    all_dapi_nodes,
+    all_dn_nodes,
     all_servers,
     master_client,
     master_server,
@@ -220,6 +221,26 @@ class RemoteLinux(Remote):
         if not r.return_code:
             get('{}'.format(fname))
             run('rm -f {}'.format(fname))
+
+    @all_dn_nodes
+    def collect_dn_logs(self):
+        logger.info('Collecting Direct Nebula logs')
+
+        r = run('curl http://169.254.169.254/latest/meta-data/instance-id')
+        fname = 'dn_{}.log'.format(r.stdout)
+        run('journalctl -u direct-nebula > {}'.format(fname))
+        get('{}'.format(fname))
+        run('rm -f {}'.format(fname))
+
+    @all_dapi_nodes
+    def collect_dapi_logs(self):
+        logger.info('Collecting Data API logs')
+
+        r = run('curl http://169.254.169.254/latest/meta-data/instance-id')
+        fname = 'dapi_{}.log'.format(r.stdout)
+        run('journalctl -u couchbase-data-api > {}'.format(fname))
+        get('{}'.format(fname))
+        run('rm -f {}'.format(fname))
 
     @all_servers
     def collect_index_datafiles(self):
@@ -1145,14 +1166,15 @@ class RemoteLinux(Remote):
               '-clients {} -timeout {}s > {}'.format(clients, timeout, result_path)
         run(cmd)
 
-    def capella_init_ssh(self):
-        if self.cluster_spec.capella_backend == 'aws':
-            self.capella_aws_init_ssh(self.cluster_spec.instance_ids)
+    def nebula_init_ssh(self):
+        if not (self.cluster_spec.serverless_infrastructure and
+                self.cluster_spec.capella_backend == 'aws'):
+            return
 
-    def capella_aws_init_ssh(self, instance_ids):
-        logger.info('Configuring SSH for Capella nodes.')
-        logger.info('Uploading SSH key to {}'
-                    .format(', '.join(instance_ids)))
+        iids = self.cluster_spec.direct_nebula_instance_ids + self.cluster_spec.dapi_instance_ids
+
+        logger.info('Configuring SSH for Nebula nodes.')
+        logger.info('Uploading SSH key to {}'.format(', '.join(iids)))
 
         upload_keys_command = (
             'env/bin/aws ssm send-command '
@@ -1166,27 +1188,31 @@ class RemoteLinux(Remote):
             '|| echo \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub) ssm-session\' >> '
             'authorized_keys\n'
             '\\""'
-        ).format('" "'.join(instance_ids))
+        ).format('" "'.join(iids))
 
-        process = subprocess.Popen(upload_keys_command, shell=True,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
+        _, _, returncode = run_local_shell_command(
+            command=upload_keys_command,
+            success_msg='Successfully uploaded SSH key to Nebula nodes.',
+            err_msg='Failed to upload SSH key to Nebula nodes.'
+        )
 
-        if (returncode := process.returncode) == 0:
-            for iid in instance_ids:
+        if returncode == 0:
+            for iid in iids:
                 logger.info('Testing SSH to {}'.format(iid))
                 test_ssh_command = 'ssh root@{} echo'.format(iid)
-                process = subprocess.Popen(test_ssh_command, shell=True,
-                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout_bytes, stderr_bytes = process.communicate()
-                stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
-                if process.returncode != 0:
-                    logger.warn('Command failed with return code {}: {}'
-                                .format(returncode, test_ssh_command))
-                    logger.warn('Command stdout: {}'.format(stdout))
-                    logger.warn('Command stderr: {}'.format(stderr))
-        else:
-            logger.error('Command failed with return code {}: {}'
-                         .format(returncode, upload_keys_command))
-            logger.error('Command stdout: {}'.format(stdout))
-            logger.error('Command stderr: {}'.format(stderr))
+
+                _, _, returncode = run_local_shell_command(
+                    command=test_ssh_command,
+                    success_msg='SSH connection established with {}'.format(iid),
+                    err_msg='Failed to establish SSH connection with {}'.format(iid)
+                )
+
+    @all_dapi_nodes
+    def set_dapi_log_level(self, level: str = 'debug'):
+        logger.info('Setting log level on Data API nodes: {}'.format(level))
+        run('curl -ks -X PUT http://localhost:8942/log?level={}'.format(level), warn_only=True)
+
+    @all_dn_nodes
+    def set_dn_log_level(self, level: str = 'debug'):
+        logger.info('Setting log level on Direct nebula nodes: {}'.format(level))
+        run('curl -ks -X PUT http://localhost:8941/log?level={}'.format(level), warn_only=True)

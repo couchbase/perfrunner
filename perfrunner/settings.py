@@ -280,13 +280,13 @@ class ClusterSpec(Config):
 
     @property
     def using_instance_ids(self):
-        return self.config.has_section('instance_ids')
+        return self.config.has_section('cluster_instance_ids')
 
     @property
     def instance_ids_per_cluster(self):
         iids_per_cluster = {}
         if self.using_instance_ids:
-            iids_per_cluster = {k: v.split() for k, v in self.config.items('instance_ids')}
+            iids_per_cluster = {k: v.split() for k, v in self.config.items('cluster_instance_ids')}
         return iids_per_cluster
 
     @property
@@ -301,11 +301,23 @@ class ClusterSpec(Config):
         return host_map
 
     @property
-    def instance_ids(self) -> List[str]:
+    def instance_ids_per_nebula_cluster(self):
+        return {k: v.split() for k, v in self.config.items('nebula_instance_ids')}
+
+    @property
+    def cluster_instance_ids(self) -> List[str]:
         iids = []
         for cluster_iids in self.instance_ids_per_cluster.values():
             iids += cluster_iids
         return iids
+
+    @property
+    def direct_nebula_instance_ids(self) -> List[str]:
+        return self.instance_ids_per_nebula_cluster.get('direct_nebula', [])
+
+    @property
+    def dapi_instance_ids(self) -> List[str]:
+        return self.instance_ids_per_nebula_cluster.get('dapi', [])
 
     @property
     def server_instance_ids_by_role(self, role: str) -> List[str]:
@@ -477,10 +489,10 @@ class ClusterSpec(Config):
 
     def set_capella_instance_ids(self) -> None:
         if self.capella_backend == 'aws':
-            logger.info('Getting instance IDs.')
+            logger.info('Getting cluster instance IDs')
 
-            if not self.config.has_section('instance_ids'):
-                self.config.add_section('instance_ids')
+            if not self.config.has_section('cluster_instance_ids'):
+                self.config.add_section('cluster_instance_ids')
 
             region = os.environ.get('AWS_REGION', 'us-east-1')
 
@@ -490,8 +502,41 @@ class ClusterSpec(Config):
                     iid = self.get_aws_iid(host, region)
                     logger.info('Instance ID for {}: {}'.format(host, iid))
                     iids.append(iid)
-                self.config.set('instance_ids', cluster_name, '\n' + '\n'.join(iids))
+                self.config.set('cluster_instance_ids', cluster_name, '\n' + '\n'.join(iids))
             self.update_spec_file()
+
+    def set_nebula_instance_ids(self) -> None:
+        if self.capella_backend == 'aws':
+            logger.info('Getting Nebula instance IDs')
+
+            if not self.config.has_section('nebula_instance_ids'):
+                self.config.add_section('nebula_instance_ids')
+
+            region = os.environ.get('AWS_REGION', 'us-east-1')
+
+            query = (
+                "env/bin/aws ec2 describe-instances --region {} "
+                "--filters \"Name=tag-key,Values={{}}\" "
+                "\"Name=tag:couchbase-cloud-dataplane-id,Values={}\" "
+                "--query \"Reservations[].Instances[].InstanceId\" "
+                "--output text"
+            ).format(region, self.infrastructure_settings['cbc_dataplane'])
+
+            dn_iids = local(
+                query.format('couchbase-cloud-nebula'),
+                capture=True
+            ).strip().split()
+            logger.info('Found DN instance IDs: {}'.format(', '.join(dn_iids)))
+            self.config.set('nebula_instance_ids', 'direct_nebula', '\n' + '\n'.join(dn_iids))
+
+            dapi_iids = local(
+                query.format('couchbase-cloud-data-api'),
+                capture=True
+            ).strip().split()
+            logger.info('Found DAPI instance IDs: {}'.format(', '.join(dapi_iids)))
+            self.config.set('nebula_instance_ids', 'dapi', '\n' + '\n'.join(dapi_iids))
+
+        self.update_spec_file()
 
     @property
     def direct_nebula(self) -> dict:
@@ -619,6 +664,22 @@ class ClusterSettings:
         self.bucket_name = options.get('bucket_name', self.BUCKET_NAME)
 
         self.cloud_server_groups = options.get('bucket_name', self.BUCKET_NAME)
+
+
+class DirectNebulaSettings:
+
+    LOG_LEVEL = None
+
+    def __init__(self, options: dict):
+        self.log_level = options.get('log_level', self.LOG_LEVEL)
+
+
+class DataApiSettings:
+
+    LOG_LEVEL = None
+
+    def __init__(self, options: dict):
+        self.log_level = options.get('log_level', self.LOG_LEVEL)
 
 
 class StatsSettings:
@@ -1060,6 +1121,9 @@ class PhaseSettings:
     NUM_BUCKETS = 0
     NEBULA_MODE = 'none'  # options: none, nebula, dapi
 
+    DAPI_REQUEST_META = 'false'
+    DAPI_REQUEST_LOGS = 'false'
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -1307,6 +1371,13 @@ class PhaseSettings:
             self.workload_mix = workload_mix.split(',')
         self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
         self.nebula_mode = options.get('nebula_mode', self.NEBULA_MODE)
+
+        self.dapi_request_meta = maybe_atoi(
+            options.get('dapi_request_meta', self.DAPI_REQUEST_META)
+        )
+        self.dapi_request_logs = maybe_atoi(
+            options.get('dapi_request_logs', self.DAPI_REQUEST_LOGS)
+        )
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -2629,6 +2700,16 @@ class TestConfig(Config):
     def cluster(self) -> ClusterSettings:
         options = self._get_options_as_dict('cluster')
         return ClusterSettings(options)
+
+    @property
+    def direct_nebula(self) -> DirectNebulaSettings:
+        options = self._get_options_as_dict('direct_nebula')
+        return DirectNebulaSettings(options)
+
+    @property
+    def data_api(self) -> DataApiSettings:
+        options = self._get_options_as_dict('data_api')
+        return DataApiSettings(options)
 
     @property
     def bucket(self) -> BucketSettings:

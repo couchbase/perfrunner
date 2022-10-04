@@ -12,7 +12,6 @@ from perfrunner.helpers.misc import (
     run_local_shell_command,
     set_azure_capella_subscription,
     set_azure_perf_subscription,
-    use_ssh_capella,
 )
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
@@ -1087,10 +1086,11 @@ class ClusterManager:
 
         self.test_config.serverless_db.update_db_map(dbs)
 
-    def init_capella_ssh(self):
-        if use_ssh_capella(self.cluster_spec):
-            self.cluster_spec.set_capella_instance_ids()
-            self.remote.capella_init_ssh()
+    def init_nebula_ssh(self):
+        if self.cluster_spec.serverless_infrastructure and \
+           self.cluster_spec.capella_backend == 'aws':
+            self.cluster_spec.set_nebula_instance_ids()
+            self.remote.nebula_init_ssh()
 
     def get_capella_cluster_admin_creds(self):
         if self.cluster_spec.capella_infrastructure:
@@ -1240,3 +1240,10 @@ class ClusterManager:
             logger.info('Found Security Group ID: {}'.format(sg_id))
 
         return sg_id
+
+    def set_nebula_log_levels(self):
+        if dn_log_level := self.test_config.direct_nebula.log_level:
+            self.remote.set_dn_log_level(dn_log_level)
+
+        if dapi_log_level := self.test_config.data_api.log_level:
+            self.remote.set_dapi_log_level(dapi_log_level)

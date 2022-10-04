@@ -10,7 +10,7 @@ from perfrunner.helpers import local
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
-from perfrunner.helpers.misc import pretty_dict, read_json, use_ssh_capella
+from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.profiler import Profiler
 from perfrunner.helpers.remote import RemoteHelper
@@ -164,7 +164,7 @@ class PerfTest:
             fh.write(cert)
 
     def check_rebalance(self) -> str:
-        if self.dynamic_infra or self.capella_infra:
+        if self.dynamic_infra:
             pass
         else:
             for master in self.cluster_spec.masters:
@@ -172,7 +172,7 @@ class PerfTest:
                     return 'The cluster is not balanced'
 
     def check_failover(self) -> Optional[str]:
-        if self.dynamic_infra or self.capella_infra:
+        if self.dynamic_infra:
             return
 
         if hasattr(self, 'rebalance_settings'):
@@ -186,7 +186,7 @@ class PerfTest:
                 return 'Failover happened {} time(s)'.format(num_failovers)
 
     def check_core_dumps(self) -> str:
-        if self.capella_infra and not use_ssh_capella(self.cluster_spec):
+        if self.capella_infra:
             return ''
         dumps_per_host = self.remote.detect_core_dumps()
         core_dumps = {

@@ -51,15 +51,18 @@ def main():
             cm.provision_serverless_db_keys()
             cm.bypass_nebula_for_clients()
             cm.serverless_throttle()
+            cm.init_nebula_ssh()
+            cm.set_nebula_log_levels()
         else:
             cm.get_capella_cluster_admin_creds()
             cm.create_buckets()
             cm.create_eventing_buckets()
             cm.create_eventing_metadata_bucket()
             cm.capella_allow_client_ips()
+
         if cm.test_config.collection.collection_map:
             cm.create_collections()
-        cm.init_capella_ssh()
+
         return
     elif cluster_spec.dynamic_infrastructure:
         cm.set_mem_quotas()

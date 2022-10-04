@@ -493,15 +493,16 @@ class CapellaTerraform(Terraform):
         self.terraform_destroy(self.backend)
 
         # Destroy capella cluster
-        if int(self.infra_spec.infrastructure_settings.get('cbc_use_internal_api', 0)):
-            self.destroy_cluster_internal_api()
-        else:
-            self.terraform_destroy('capella')
+        if not self.options.keep_cluster:
+            if int(self.infra_spec.infrastructure_settings.get('cbc_use_internal_api', 0)):
+                self.destroy_cluster_internal_api()
+            else:
+                self.terraform_destroy('capella')
 
-        if int(self.infra_spec.infrastructure_settings.get('cbc_project_created', 0)):
-            cluster_destroyed = self.wait_for_cluster_destroy()
-            if cluster_destroyed:
-                self.destroy_project()
+            if int(self.infra_spec.infrastructure_settings.get('cbc_project_created', 0)):
+                cluster_destroyed = self.wait_for_cluster_destroy()
+                if cluster_destroyed:
+                    self.destroy_project()
 
         if os.path.isfile(CAPELLA_CREDS_FILE):
             logger.info('Revoking API key...')
@@ -1061,13 +1062,24 @@ class ServerlessTerraform(CapellaTerraform):
             os.getenv('CBC_PWD')
         )
 
-        self.tenant_id = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
-        self.project_id = self.infra_spec.infrastructure_settings.get('cbc_project', None)
-        self.dp_id = self.infra_spec.infrastructure_settings.get('cbc_dataplane', None)
-        self.cluster_id = None
+        if (tenant := self.options.capella_tenant) is None:
+            tenant = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
+        else:
+            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
+            self.infra_spec.update_spec_file()
 
-        if self.tenant_id is None:
-            self.tenant_id = self.get_tenant_id()
+        self.tenant_id = tenant or self.get_tenant_id()
+
+        if (dp_id := self.options.capella_dataplane) is None:
+            dp_id = self.infra_spec.infrastructure_settings.get('cbc_dataplane', None)
+        else:
+            self.infra_spec.config.set('infrastructure', 'cbc_dataplane', dp_id)
+            self.infra_spec.update_spec_file()
+
+        self.dp_id = dp_id
+
+        self.project_id = self.infra_spec.infrastructure_settings.get('cbc_project', None)
+        self.cluster_id = self.infra_spec.infrastructure_settings.get('cbc_cluster', None)
 
     def get_tenant_id(self):
         logger.info('Getting tenant ID...')
@@ -1104,7 +1116,7 @@ class ServerlessTerraform(CapellaTerraform):
         # Destroy capella cluster
         if self.dp_id:
             dbs_destroyed = self.destroy_serverless_databases()
-            if dbs_destroyed:
+            if dbs_destroyed and not self.options.keep_cluster:
                 self.destroy_serverless_dataplane()
         else:
             logger.warn('No serverless dataplane ID found. Not destroying serverless dataplane.')
@@ -1115,59 +1127,66 @@ class ServerlessTerraform(CapellaTerraform):
             logger.warn('No tenant ID or project ID found. Not destroying project.')
 
     def deploy_serverless_dataplane(self):
-        nebula_config = self.infra_spec.direct_nebula
-        dapi_config = self.infra_spec.data_api
+        if not self.dp_id:
+            # If no dataplane ID given (which is normal) then we deploy a new one
+            nebula_config = self.infra_spec.direct_nebula
+            dapi_config = self.infra_spec.data_api
 
-        config = remove_nulls({
-            "provider": "aws",
-            "region": self.region,
-            'overRide': {
-                'couchbase': {
-                    'image': self.options.capella_ami,
-                    'version': self.options.capella_cb_version,
-                    'specs': (
-                        specs[0]
-                        if (specs := self.construct_capella_server_groups(
-                            self.infra_spec, self.node_list['clusters']
-                        ))
-                        else None
-                    )
-                },
-                'nebula': {
-                    'image': self.options.nebula_ami,
-                    'compute': {
-                        'type': nebula_config.get('instance_type', None),
-                        'count': {
-                            'min': maybe_atoi(nebula_config.get('min_count', '')),
-                            'max': maybe_atoi(nebula_config.get('max_count', '')),
-                            'overRide': maybe_atoi(nebula_config.get('override_count', ''))
+            config = remove_nulls({
+                "provider": "aws",
+                "region": self.region,
+                'overRide': {
+                    'couchbase': {
+                        'image': self.options.capella_ami,
+                        'version': self.options.capella_cb_version,
+                        'specs': (
+                            specs[0]
+                            if (specs := self.construct_capella_server_groups(
+                                self.infra_spec, self.node_list['clusters']
+                            ))
+                            else None
+                        )
+                    },
+                    'nebula': {
+                        'image': self.options.nebula_ami,
+                        'compute': {
+                            'type': nebula_config.get('instance_type', None),
+                            'count': {
+                                'min': maybe_atoi(nebula_config.get('min_count', '')),
+                                'max': maybe_atoi(nebula_config.get('max_count', '')),
+                                'overRide': maybe_atoi(nebula_config.get('override_count', ''))
+                            }
                         }
-                    }
-                },
-                'dataApi': {
-                    'image': self.options.dapi_ami,
-                    'compute': {
-                        'type': dapi_config.get('instance_type', None),
-                        'count': {
-                            'min': maybe_atoi(dapi_config.get('min_count', '')),
-                            'max': maybe_atoi(dapi_config.get('max_count', '')),
-                            'overRide': maybe_atoi(dapi_config.get('override_count', ''))
+                    },
+                    'dataApi': {
+                        'image': self.options.dapi_ami,
+                        'compute': {
+                            'type': dapi_config.get('instance_type', None),
+                            'count': {
+                                'min': maybe_atoi(dapi_config.get('min_count', '')),
+                                'max': maybe_atoi(dapi_config.get('max_count', '')),
+                                'overRide': maybe_atoi(dapi_config.get('override_count', ''))
+                            }
                         }
                     }
                 }
-            }
-        })
+            })
 
-        logger.info(pretty_dict(config))
+            logger.info(pretty_dict(config))
 
-        resp = self.serverless_client.create_serverless_dataplane(config)
-        raise_for_status(resp)
-        self.dp_id = resp.json().get('dataplaneId')
-        logger.info('Initialised deployment for serverless dataplane {}'.format(self.dp_id))
-        logger.info('Saving dataplane ID to spec file.')
-        self.infra_spec.config.set('infrastructure', 'cbc_dataplane', self.dp_id)
-        self.infra_spec.update_spec_file()
+            resp = self.serverless_client.create_serverless_dataplane(config)
+            raise_for_status(resp)
+            self.dp_id = resp.json().get('dataplaneId')
+            logger.info('Initialised deployment for serverless dataplane {}'.format(self.dp_id))
+            logger.info('Saving dataplane ID to spec file.')
+            self.infra_spec.config.set('infrastructure', 'cbc_dataplane', self.dp_id)
+            self.infra_spec.update_spec_file()
+        else:
+            logger.info('Existing dataplane specified: {}'.format(self.dp_id))
+            logger.info('Verifying existing dataplane deployment')
 
+        # Whether we have just deployed a dataplane or not, we will confirm the deployment
+        # status of the dataplane to check its ready for a test
         resp = self.serverless_client.get_dataplane_deployment_status(self.dp_id)
         raise_for_status(resp)
         status = resp.json()['status']['state']
@@ -1493,6 +1512,8 @@ def get_args():
                         help='tenant ID for Capella deployment')
     parser.add_argument('--capella-project',
                         help='project ID for Capella deployment')
+    parser.add_argument('--capella-dataplane',
+                        help='serverless dataplane ID to use for serverless database deployment')
     parser.add_argument('--capella-cb-version',
                         help='cb version to use for Capella deployment')
     parser.add_argument('--capella-ami',
@@ -1534,6 +1555,10 @@ def get_args():
                         action='store_true',
                         help='Disable cluster auto-scaling for Capella clusters by creating a '
                              'deployment circuit breaker for the cluster.')
+    parser.add_argument('--keep-cluster',
+                        action='store_true',
+                        help='Don\'t destroy cluster or serverless dataplane, only the clients '
+                             'and utilities')
     parser.add_argument('-t', '--tag',
                         help='Global tag for launched instances.')
     parser.add_argument('override',

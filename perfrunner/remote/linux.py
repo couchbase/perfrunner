@@ -739,6 +739,11 @@ class RemoteLinux(Remote):
             ' && systemctl restart couchbase-server'
             ' && sleep 10')
 
+    @all_servers
+    def disable_serverless_mode(self):
+        # Disabling serverless mode.
+        run('systemctl unset-environment CB_FORCE_PROFILE')
+
     @master_server
     def run_magma_benchmark(self, cmd: str, stats_file: str):
         logger.info('Running magma benchmark cmd: {}'.format(cmd))

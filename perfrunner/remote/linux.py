@@ -309,8 +309,8 @@ class RemoteLinux(Remote):
         run('systemctl restart couchbase-server', pty=False)
 
     @all_servers
-    def reset_num_vbuckets(self, num_vbuckets):
-        logger.info('Resetting number of vbuckets to {}'.format(num_vbuckets))
+    def reset_num_vbuckets(self):
+        logger.info('Resetting number of vbuckets')
         run('systemctl unset-environment COUCHBASE_NUM_VBUCKETS')
 
     @master_server

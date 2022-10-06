@@ -139,6 +139,16 @@ class FTSTest(JTSTest):
         collection_map = self.test_config.collection.collection_map
         index_id = 0
 
+        # changing index configuration for serverless mode
+        if self.test_config.cluster.serverless_mode:
+            general_index_def["planParams"]["maxPartitionsPerPIndex"] = 1024
+            if "indexPartitions" not in list(general_index_def["planParams"].keys()) \
+                    or general_index_def["planParams"]["indexPartitions"] < 1:
+                general_index_def["planParams"]["indexPartitions"] = 1
+            if "numReplicas" not in list(general_index_def["planParams"].keys()) \
+                    or general_index_def["planParams"]["numReplicas"] < 1:
+                general_index_def["planParams"]["numReplicas"] = 1
+
         # this variable will hold the key valuesfor the custom type mapping
         key_values = []
 

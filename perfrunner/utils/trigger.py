@@ -81,11 +81,11 @@ def main():
 
         logger.info('Checking build {}'.format(build))
 
-        if not build_exists(args.release, build):
+        if not build_exists(args.release, str(build)):
             missing += 1
             continue
 
-        if rpm_package_exists(args.release, build, args.relserver):
+        if rpm_package_exists(args.release, str(build), args.relserver):
             latest = build
 
     if latest:

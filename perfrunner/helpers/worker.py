@@ -4,9 +4,9 @@ import sys
 import time
 from itertools import cycle
 from multiprocessing import set_start_method
-from typing import Callable
+from typing import Callable, Iterable
 
-from celery import Celery, chain, group
+from celery import Celery, group
 from kombu.serialization import registry
 from sqlalchemy import create_engine
 
@@ -17,7 +17,7 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import (
     ClusterSpec,
     PhaseSettings,
-    TargetIterator,
+    TargetSettings,
     TestConfig,
 )
 from perfrunner.workloads import spring_workload
@@ -257,7 +257,7 @@ class WorkloadPhase:
 
     def __init__(self,
                  task: Callable,
-                 target_iterator: TargetIterator,
+                 target_iterator: Iterable[TargetSettings],
                  base_settings: PhaseSettings,
                  override_settings: dict = {},
                  timer: int = None):
@@ -268,40 +268,22 @@ class WorkloadPhase:
         for option, value in override_settings.items():
             if hasattr(self.task_settings, option):
                 setattr(self.task_settings, option, value)
-        self.task_settings.bucket_list = target_iterator.buckets
+        self.task_settings.bucket_list = [t.bucket for t in self.targets]
         self.timer = timer
-        self.chained_phases = []
 
     def task_sigs(self, workers):
-        sigs = [[] for _ in self.targets]
-        sig_workers = [next(workers) for _ in self.targets]
+        sigs, sig_workers = [], []
 
-        for phase in [self, *self.chained_phases]:
-            for i, target in enumerate(phase.targets):
-                for instance in range(phase.task_settings.workload_instances):
-                    sig = phase.task.si(
-                        phase.task_settings, target, phase.timer, instance
-                    ).set(queue=sig_workers[i], expires=phase.timer)
-                    sigs[i].append(sig)
-
-        if self.chained_phases:
-            sigs = [chain(*c) for c in sigs]
-        else:
-            sigs = [s[0] for s in sigs]
+        for target in self.targets:
+            for instance in range(self.task_settings.workload_instances):
+                sig_workers.append(worker := next(workers))
+                sigs.append(
+                    self.task.si(self.task_settings, target, self.timer, instance).set(
+                        queue=worker, expires=self.timer
+                    )
+                )
 
         return sigs, sig_workers
-
-    def chain(self, other):
-        if len(other.targets) == len(self.targets) and \
-           self.task_settings.workload_instances == other.task_settings.workload_instances:
-            chained = WorkloadPhase(
-                self.task, self.target_iterator, self.task_settings, {}, self.timer
-            )
-            chained.chained_phases.append(other)
-            return chained
-        else:
-            raise Exception("Workload phases must have same number of targets "
-                            "and workload instances to be chained")
 
 
 class WorkerManager:

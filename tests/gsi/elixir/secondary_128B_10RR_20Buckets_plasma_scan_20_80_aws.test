@@ -33,6 +33,14 @@ eviction_policy = fullEviction
 [collection]
 config = collections/20bucket_1scope_5collections_2.json
 
+[load]
+items = 18000000
+size = 1024
+workers = 50
+key_fmtr = hash
+item_size = 100
+doc_gen = single_field_large_doc
+
 [secondary]
 indexes = tests/gsi/index_defs/20bucket_1scope_5collections_2indexes_1.json
 indexer.settings.storage_mode = plasma

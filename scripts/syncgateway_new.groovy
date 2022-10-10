@@ -174,6 +174,36 @@ pipeline {
                         buildComponentSGReplicateMultiCluster('SGReplicateMulti', testCases)
                     }
                 }
+                stage('ReadOnDemand') {
+                    when { expression { return params.ReadOnDemand } }
+                    steps {
+                        buildComponent('ReadOnDemand', testCases)
+                    }
+                }
+                stage('WriteOnDemand') {
+                    when { expression { return params.WriteOnDemand } }
+                    steps {
+                        buildComponent('WriteOnDemand', testCases)
+                    }
+                }
+                stage('SyncOnDemand') {
+                    when { expression { return params.SyncOnDemand } }
+                    steps {
+                        buildComponent('SyncOnDemand', testCases)
+                    }
+                }
+                stage('ReplicateOnDemand') {
+                    when { expression { return params.ReplicateOnDemand } }
+                    steps {
+                        buildComponent('ReplicateOnDemand', testCases)
+                    }
+                }
+                stage('ImportOnDemand') {
+                    when { expression { return params.ImportOnDemand } }
+                    steps {
+                        buildComponentImport('ImportOnDemand', testCases)
+                    }
+                }
             }
         }
     }

@@ -4,78 +4,6 @@
           "sg_cluster_map": "hebe_1node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_read_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_read_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_read_revcache_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_read_revcache_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_readwithrevs_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_readwithrevs_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_readwithrevs_revcache_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_readwithrevs_revcache_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_norevcache_xattr",
-          "test": "syncgateway_read_norevcache_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_norevcache_xattr",
-          "test": "syncgateway_read_norevcache_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_norevcache_xattr",
-          "test": "syncgateway_readwithrevs_norevcache_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_norevcache_xattr",
-          "test": "syncgateway_readwithrevs_norevcache_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
           "test": "syncgateway_read_1node_replicator2.test"},
 
         {"job": "syncgteway-hebe-new",
@@ -174,30 +102,6 @@
           "sg_cluster_map": "hebe_1node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_write_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_write_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_write_1node_no_roundtripwrite.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_write_4node_no_roundtripwrite.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
           "test": "syncgateway_write_1node_replicator2.test"},
 
         {"job": "syncgteway-hebe-new",
@@ -222,14 +126,8 @@
           "sg_cluster_map": "hebe_1node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_write_1node_no_roundtripwrite_maxclients.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
           "test": "syncgateway_write_1node_no_roundtripwrite_replicator2_maxclients.test"}
-        
+
     ],
     "noxa_Write": [
         {"job": "syncgteway-hebe-new",
@@ -261,12 +159,6 @@
           "sg_cluster_map": "hebe_1node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr",
-          "test": "syncgateway_sync_1node_nochannelcompaction_byuser_35kchannels.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr",
           "test": "syncgateway_sync_1node_fullchannelcompaction_byuser_45kchannels.test"},
 
         {"job": "syncgteway-hebe-new",
@@ -274,24 +166,6 @@
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr",
           "test": "syncgateway_sync_1node_channelcachememory_byuser_1mchannels.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
-          "test": "syncgateway_sync_1node_200kchannels_100perchancache_initialload.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
-          "test": "syncgateway_sync_1node_400kchannels_100perchancache_initialload.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
-          "test": "syncgateway_sync_1node_600kchannels_100perchancache_initialload.test"},
 
         {"job": "syncgteway-hebe-new",
           "sg_cluster_map": "hebe_1node",
@@ -372,13 +246,8 @@
           "sg_cluster_map": "hebe_4node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_nocache_xattr",
-          "test": "syncgateway_sync_latency_1node_channelquery.test"},
+          "test": "syncgateway_sync_latency_1node_channelquery.test"}
 
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_nocache_xattr",
-          "test": "syncgateway_sync_1node_channelquery_with_limit_200.test"}
     ],
     "noxa_Query": [
         {"job": "syncgteway-hebe-new",
@@ -392,64 +261,36 @@
           "test_type": "throughput",
           "cluster": "hebe_import_5node_n1ql.spec",
           "load_config": "syncgateway_import_load_10M.test",
-          "test_config": "syncgateway_import_throughput_10M.test",
-          "sg_config": ""},
-
-        {"job": "hebe_sg_import",
-          "test_type": "throughput",
-          "cluster": "hebe_import_5node_n1ql.spec",
-          "load_config": "syncgateway_import_load_10M.test",
-          "test_config": "syncgateway_import_throughput_10M_8vCPU.test",
-          "sg_config": ""},
-
-        {"job": "hebe_sg_import",
-          "test_type": "throughput",
-          "cluster": "hebe_import_5node_n1ql.spec",
-          "load_config": "syncgateway_import_load_10M.test",
           "test_config": "syncgateway_import_throughput_10M_16vCPU.test",
-          "sg_config": ""},
+          "sg_config": "3.0/hebe_channel_xattr_import.config"},
 
         {"job": "hebe_sg_import",
           "test_type": "latency",
           "cluster": "hebe_import_5node_n1ql.spec",
           "load_config": "syncgateway_import_load_100K.test",
           "test_config": "syncgateway_import_latency_1k.test",
-          "sg_config": ""},
+          "sg_config": "3.0/hebe_channel_xattr_import.config"},
 
         {"job": "hebe_sg_import",
           "test_type": "latency",
           "cluster": "hebe_import_5node_n1ql.spec",
           "load_config": "syncgateway_import_load_100K.test",
           "test_config": "syncgateway_import_latency_2k.test",
-          "sg_config": ""},
+          "sg_config": "3.0/hebe_channel_xattr_import.config"},
 
         {"job": "hebe_sg_import",
           "test_type": "latency",
           "cluster": "hebe_import_5node_n1ql.spec",
           "load_config": "syncgateway_import_load_100K.test",
           "test_config": "syncgateway_import_latency_500.test",
-          "sg_config": ""},
+          "sg_config": "3.0/hebe_channel_xattr_import.config"},
 
         {"job": "hebe_sg_import",
           "test_type": "latency",
           "cluster": "hebe_import_5node_n1ql.spec",
           "load_config": "syncgateway_import_load_100K.test",
           "test_config": "syncgateway_import_latency_3k.test",
-          "sg_config": ""},
-
-        {"job": "hebe_sg_multiimport",
-          "cluster": "hebe_import_5node_n1ql.spec",
-          "test_config": "syncgateway_import_multinode_throughput_10M_48partition.test",
-          "sg_config": "3.0/hebe_channel_xattr_import_multinode_partition_48.config",
-          "test_type":  "",
-          "load_config": ""},
-
-        {"job": "hebe_sg_multiimport",
-          "cluster": "hebe_import_5node_n1ql.spec",
-          "test_config": "syncgateway_import_multinode_throughput_10M_48partition_8vCPU.test",
-          "sg_config": "3.0/hebe_channel_xattr_import_multinode_partition_48.config",
-          "test_type":  "",
-          "load_config": ""},
+          "sg_config": "3.0/hebe_channel_xattr_import.config"},
 
         {"job": "hebe_sg_multiimport",
           "cluster": "hebe_import_5node_n1ql.spec",
@@ -458,21 +299,7 @@
           "test_type":  "",
           "load_config": ""},
 
-        {"job": "hebe_sg_multiimport",
-          "cluster": "hebe_import_5node_n1ql.spec",
-          "test_config": "syncgateway_import_multinode_throughput_10M.test",
-          "sg_config": "3.0/hebe_channel_xattr_import.config",
-          "test_type":  "",
-          "load_config": ""},
-
-        {"job": "hebe_sg_multiimport",
-          "cluster": "hebe_import_5node_n1ql.spec",
-          "test_config": "syncgateway_import_multinode_throughput_10M_8vCPU.test",
-          "sg_config": "3.0/hebe_channel_xattr_import.config",
-          "test_type":  "",
-          "load_config": ""},
-
-        {"job": "hebe_sg_multiimport",
+          {"job": "hebe_sg_multiimport",
           "cluster": "hebe_import_5node_n1ql.spec",
           "test_config": "syncgateway_import_multinode_throughput_10M_16vCPU.test",
           "sg_config": "3.0/hebe_channel_xattr_import.config",
@@ -538,24 +365,6 @@
           "sg_cluster_map": "hebe_1node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr_deltasync_off",
-          "test": "syncgateway_deltasync_off_pull_10kb_10k.test"},
-
-        {"job": "syncgteway-hebe",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr_deltasync_on_revcache_on",
-          "test": "syncgateway_deltasync_on_pull_10kb_10k_cachehit100.test"},
-
-        {"job": "syncgteway-hebe",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
-          "test": "syncgateway_deltasync_on_pull_10kb_10k.test"},
-
-        {"job": "syncgteway-hebe",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr_deltasync_off",
           "test": "syncgateway_deltasync_off_pull_1node_1mb.test"},
 
         {"job": "syncgteway-hebe",
@@ -573,32 +382,8 @@
         {"job": "syncgteway-hebe",
           "sg_cluster_map": "hebe_1node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr_deltasync_off",
-          "test": "syncgateway_deltasync_off_push_1node.test"},
-
-        {"job": "syncgteway-hebe",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
-          "test": "syncgateway_deltasync_on_push_1node.test"},
-
-        {"job": "syncgteway-hebe",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr_deltasync_off",
-          "test": "syncgateway_deltasync_off_push_1k_10kb.test"},
-
-        {"job": "syncgteway-hebe",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
-          "test": "syncgateway_deltasync_on_push_1k_10kb.test"},
-
-        {"job": "syncgteway-hebe",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
-          "test": "syncgateway_deltasync_on_push_1k_1mb.test"}
+          "test": "syncgateway_deltasync_on_push_1k_10kb.test"}
     ],
     "SGReplicate": [
         {"job": "hebe_sg_replicate",
@@ -730,6 +515,226 @@
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_nocache_xattr_cachelength_300k",
           "test": "syncgateway_sg_replicate_multicluster_1_client.test"}
-    ]
+    ],
+    "ReadOnDemand": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_read_1node.test"},
 
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_read_4node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_read_revcache_1node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_read_revcache_4node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_readwithrevs_1node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_readwithrevs_4node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_readwithrevs_revcache_1node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_readwithrevs_revcache_4node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_norevcache_xattr",
+          "test": "syncgateway_read_norevcache_1node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_norevcache_xattr",
+          "test": "syncgateway_read_norevcache_4node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_norevcache_xattr",
+          "test": "syncgateway_readwithrevs_norevcache_1node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_norevcache_xattr",
+          "test": "syncgateway_readwithrevs_norevcache_4node.test"}
+    ],
+    "WriteOnDemand": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_1node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_4node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_1node_no_roundtripwrite.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_4node_no_roundtripwrite.test"},
+        
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_1node_no_roundtripwrite_maxclients.test"}
+    ],
+    "SyncOnDemand": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_sync_1node_nochannelcompaction_byuser_35kchannels.test"},
+        
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
+          "test": "syncgateway_sync_1node_200kchannels_100perchancache_initialload.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
+          "test": "syncgateway_sync_1node_400kchannels_100perchancache_initialload.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
+          "test": "syncgateway_sync_1node_600kchannels_100perchancache_initialload.test"}
+    ],
+    "ImportOnDemand": [
+        {"job": "hebe_sg_import",
+          "test_type": "throughput",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "load_config": "syncgateway_import_load_10M.test",
+          "test_config": "syncgateway_import_throughput_10M.test",
+          "sg_config": ""},
+
+        {"job": "hebe_sg_import",
+          "test_type": "throughput",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "load_config": "syncgateway_import_load_10M.test",
+          "test_config": "syncgateway_import_throughput_10M_8vCPU.test",
+          "sg_config": ""},
+
+        {"job": "hebe_sg_multiimport",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "test_config": "syncgateway_import_multinode_throughput_10M_48partition.test",
+          "sg_config": "3.0/hebe_channel_xattr_import_multinode_partition_48.config",
+          "test_type":  "",
+          "load_config": ""},
+
+        {"job": "hebe_sg_multiimport",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "test_config": "syncgateway_import_multinode_throughput_10M_48partition_8vCPU.test",
+          "sg_config": "3.0/hebe_channel_xattr_import_multinode_partition_48.config",
+          "test_type":  "",
+          "load_config": ""},
+
+        {"job": "hebe_sg_multiimport",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "test_config": "syncgateway_import_multinode_throughput_10M.test",
+          "sg_config": "3.0/hebe_channel_xattr_import.config",
+          "test_type":  "",
+          "load_config": ""},
+
+        {"job": "hebe_sg_multiimport",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "test_config": "syncgateway_import_multinode_throughput_10M_8vCPU.test",
+          "sg_config": "3.0/hebe_channel_xattr_import.config",
+          "test_type":  "",
+          "load_config": ""}
+    ],
+    "ReplicateOnDemand": [
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_off",
+          "test": "syncgateway_deltasync_off_pull_10kb_10k.test"},
+
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_on_revcache_on",
+          "test": "syncgateway_deltasync_on_pull_10kb_10k_cachehit100.test"},
+
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
+          "test": "syncgateway_deltasync_on_pull_10kb_10k.test"},
+
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_off",
+          "test": "syncgateway_deltasync_off_push_1node.test"},
+
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
+          "test": "syncgateway_deltasync_on_push_1node.test"},
+
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_off",
+          "test": "syncgateway_deltasync_off_push_1k_10kb.test"},
+
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
+          "test": "syncgateway_deltasync_on_push_1k_10kb.test"},
+
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
+          "test": "syncgateway_deltasync_on_push_1k_1mb.test"}
+    ]
 }

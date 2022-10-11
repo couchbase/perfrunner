@@ -1572,6 +1572,7 @@ class GSISettings:
     INCREMENTAL_ONLY = 0
     REPORT_INITIAL_BUILD_TIME = 0
     DISABLE_PERINDEX_STATS = False
+    AWS_CREDENTIAL_PATH = None
 
     def __init__(self, options: dict):
         self.indexes = {}
@@ -1614,6 +1615,7 @@ class GSISettings:
 
         self.disable_perindex_stats = options.get('disable_perindex_stats',
                                                   self.DISABLE_PERINDEX_STATS)
+        self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
 
         self.settings = {}
         for option in options:

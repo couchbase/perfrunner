@@ -315,6 +315,25 @@ class DefaultRestHelper(RestBase):
         }
         self.post(url=api, data=data)
 
+    def add_node_to_group(self, host: str, new_host: str, services: str = None, group: str = None):
+        logger.info('Adding new node: {} to group {}'.format(new_host, group))
+        server_group_info = self.get_server_group_info(host)["groups"]
+        for group_info in server_group_info:
+            if group_info['name'] == group:
+                add_node_uri = group_info['addNodeURI']
+                break
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091{}'.format(host, add_node_uri)
+        else:
+            api = 'http://{}:8091{}'.format(host, add_node_uri)
+        data = {
+            'hostname': new_host,
+            'user': self.rest_username,
+            'password': self.rest_password,
+            'services': services,
+        }
+        self.post(url=api, data=data)
+
     def rebalance(self, host: str, known_nodes: List[str],
                   ejected_nodes: List[str]):
         logger.info('Starting rebalance')

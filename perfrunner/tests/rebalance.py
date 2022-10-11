@@ -84,9 +84,13 @@ class RebalanceTest(PerfTest):
 
             if self.cluster_spec.using_private_cluster_ips:
                 new_nodes = [public_to_private_ip[node] for node in new_nodes]
-
+            group_map = self.cluster_spec.server_group_map
             for node in new_nodes:
-                self.rest.add_node(master, node, services=services)
+                if group_map:
+                    self.rest.add_node_to_group(master, node, services=services,
+                                                group=group_map[node])
+                else:
+                    self.rest.add_node(master, node, services=services)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor_progress(master)

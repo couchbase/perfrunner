@@ -672,6 +672,7 @@ class ClusterManager:
             self.rest.enable_audit(master, disabled)
 
     def add_server_groups(self):
+        logger.info("Server group map: {}".format(self.cluster_spec.server_group_map))
         if self.cluster_spec.server_group_map:
             server_group_info = self.rest.get_server_group_info(self.master_node)["groups"]
             existing_server_groups = [group_info["name"] for group_info in server_group_info]
@@ -693,18 +694,19 @@ class ClusterManager:
                 node_group_json["groups"].append(dict((k, group_info[k])
                                                       for k in ["name", "uri"]))
                 node_group_json["groups"][i]["nodes"] = []
-
+            nodes_initialised = 1
             for server, group in self.cluster_spec.server_group_map.items():
                 for server_info in node_group_json["groups"]:
-                    if server_info["name"] == group:
+                    if server_info["name"] == group and nodes_initialised <= self.initial_nodes[0]:
                         server_info["nodes"].append({"otpNode": "ns_1@{}".format(server)})
+                        nodes_initialised += 1
                         break
 
+            logger.info("node json {}".format(node_group_json))
             self.rest.change_group_membership(self.master_node,
                                               server_group_info["uri"],
                                               node_group_json)
-
-            logger.info("node json {}".format(node_group_json))
+            logger.info("group membership updated")
             for server_grp in server_group_info["groups"]:
                 if server_grp["name"] not in server_groups:
                     self.delete_server_group(server_grp["name"])

@@ -12,6 +12,7 @@ from perfrunner.helpers.local import (
     extract_cb_deb,
     get_indexer_heap_profile,
     kill_process,
+    read_aws_credential,
     run_cbindex,
     run_cbindexperf,
 )
@@ -87,6 +88,11 @@ class SecondaryIndexTest(PerfTest):
         if self.test_config.gsi_settings.disable_perindex_stats:
             self.COLLECTORS["secondary_debugstats_index"] = False
             self.COLLECTORS["secondary_storage_stats"] = False
+
+        if self.test_config.gsi_settings.aws_credential_path:
+            credential = read_aws_credential(self.test_config.gsi_settings.aws_credential_path)
+            self.remote.create_aws_config_gsi(credential)
+            self.remote.client_drop_caches()
 
         self.build = self.rest.get_version(self.master_node)
 
@@ -2117,3 +2123,31 @@ class ThroughputLatencyMutationScanCloudTest(SecondaryIndexingThroughputTest):
         percentile_latencies = self.calculate_scan_latencies()
         self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(percentile_latencies, scan_thr)
+
+
+class SecondaryRebalanceOnlyTest(SecondaryRebalanceTest):
+
+    COLLECTORS = {'secondary_stats': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+
+        self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        logger.info("Rebalance time: {}".format(self.rebalance_time))
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.print_index_disk_usage(heap_profile=False)
+        self.report_kpi(rebalance_time=True)

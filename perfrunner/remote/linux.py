@@ -815,12 +815,24 @@ class RemoteLinux(Remote):
         run('mkdir -p {}'.format(backup_dir))
 
     @master_client
+    @all_servers
     def create_aws_credential(self, credential):
         logger.info("Creating AWS credential")
         with cd('~/'):
             run('mkdir -p .aws')
             with cd('.aws'):
                 cmd = 'echo "{}" > credentials'.format(credential)
+                run(cmd)
+
+    @all_servers
+    def create_aws_config_gsi(self, credential):
+        logger.info("Creating AWS config")
+        with cd('/home/couchbase/'):
+            run('mkdir -p .aws')
+            with cd('.aws'):
+                cmd = 'echo "{}" > credentials'.format(credential)
+                run(cmd)
+                cmd = 'echo -e "[default] \nregion=us-east-1 \noutput=json" > config'
                 run(cmd)
 
     @master_client

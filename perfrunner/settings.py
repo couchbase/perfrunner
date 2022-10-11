@@ -256,6 +256,17 @@ class ClusterSpec(Config):
                 yield cluster_name, private_ips.split()
 
     @property
+    def servers_public_to_private_ip(self) -> dict:
+        private_clusters = dict(self.clusters_private)
+        ip_map = {}
+        for cluster, public_ips in self.clusters:
+            private_ips = private_clusters.get(cluster, [])
+            for i, public_ip in enumerate(public_ips):
+                private_ip = private_ips[i] if private_ips else None
+                ip_map[public_ip] = private_ip
+        return ip_map
+
+    @property
     def instance_ids_per_cluster(self):
         return {k: v.split() for k, v in self.config.items('instance_ids')}
 

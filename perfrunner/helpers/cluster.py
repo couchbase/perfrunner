@@ -65,11 +65,9 @@ class ClusterManager:
         if self.dynamic_infra or self.capella_infra:
             return
         elif self.cluster_spec.using_private_cluster_ips:
-            clusters_private = dict(self.cluster_spec.clusters_private)
-            for cluster_name, public_ips in self.cluster_spec.clusters:
-                private_ips = clusters_private.get(cluster_name, [])
-                for host, new_host in zip(public_ips, private_ips):
-                    self.rest.rename(host, new_host)
+            for public_ip, private_ip in self.cluster_spec.servers_public_to_private_ip.items():
+                if private_ip:
+                    self.rest.rename(public_ip, private_ip)
         else:
             for server in self.cluster_spec.servers:
                 self.rest.rename(server)

@@ -1248,8 +1248,13 @@ class DefaultRestHelper(RestBase):
     def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
         active_nodes = self.node_statuses(master_node)
         active_nodes_by_role = []
+
+        if use_private_ips := self.cluster_spec.using_private_cluster_ips:
+            ip_map = self.cluster_spec.servers_public_to_private_ip
+
         for node in self.cluster_spec.servers_by_role(role):
-            if node + ":8091" in active_nodes:
+            lookup = ip_map[node] + ":8091" if use_private_ips else node + ":8091"
+            if lookup in active_nodes:
                 active_nodes_by_role.append(node)
         return active_nodes_by_role
 

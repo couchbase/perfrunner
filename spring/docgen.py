@@ -2305,7 +2305,7 @@ class UnifiedDocument(Document):
             "id": self.doc_id(qualify_doc_id),
             "index_field": self.build_index_md5(key.string, self.item_size),
             "fts_field1": self.fk.sentence(20),
-            "location": {"lat": str(self.fk.latlng()[0]),  "log": str(self.fk.latlng()[1])},
+            "location": {"lat": str(self.fk.latlng()[0]),  "lon": str(self.fk.latlng()[1])},
             "date": self.fk.date()
         }
         doc_b = json.dumps(doc).encode("utf-8")

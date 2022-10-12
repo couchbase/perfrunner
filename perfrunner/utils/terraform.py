@@ -298,7 +298,9 @@ class CapellaTerraform(Terraform):
         self.backend = self.infra_spec.infrastructure_settings['backend']
 
         if public_api_url := self.options.capella_public_api_url:
-            env = public_api_url.removeprefix('https://').split('.')[1]
+            env = public_api_url.removeprefix('https://')\
+                                .removesuffix('.nonprod-project-avengers.com')\
+                                .split('.', 1)[1]
             self.infra_spec.config.set('infrastructure', 'cbc_env', env)
 
         if tenant := self.options.capella_tenant:

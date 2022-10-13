@@ -37,13 +37,13 @@ class Terraform:
     IMAGE_MAP = {
         'aws': {
             'clusters': {
-                'x86_64': 'ami-005bce54f0c4e2248',
-                'arm': 'ami-0f249abfe3dd01b30',
-                'al2': 'ami-060e286353d227c32'
+                'x86_64': 'perf-server-2022-03-us-east',  # ami-005bce54f0c4e2248
+                'arm': 'perf-server-arm-us-east',  # ami-0f249abfe3dd01b30
+                'al2': 'perf-server-al_x86-2022-03-us-east',  # ami-060e286353d227c32
             },
-            'clients': 'ami-01b36cb3330d38ac5',
-            'utilities': 'ami-0d9e5ee360aa02d94',
-            'sync_gateways': 'ami-005bce54f0c4e2248'
+            'clients': 'perf-client-sgw-cblite',  # ami-01b36cb3330d38ac5
+            'utilities': 'perf-broker-us-east',  # ami-0d9e5ee360aa02d94
+            'sync_gateways': 'perf-server-2022-03-us-east',  # ami-005bce54f0c4e2248
         },
         'gcp': {
             'clusters': 'perftest-server-disk-image-1',
@@ -126,9 +126,20 @@ class Terraform:
 
                 parameters['node_group'] = node_group
 
-                image = self.IMAGE_MAP[cloud_provider][role]
-                if cloud_provider == 'aws' and role == 'clusters':
-                    image = image.get(self.os_arch, image['x86_64'])
+                # Try getting image name from cli option
+                image = getattr(self.options, '{}_image'.format({
+                    'clusters': 'cluster',
+                    'clients': 'client',
+                    'utilities': 'utility',
+                    'sync_gateways': 'sgw'
+                }[role]))
+
+                # If image name isn't provided as cli param, use hardcoded defaults
+                if image is None:
+                    image = self.IMAGE_MAP[cloud_provider][role]
+                    if cloud_provider == 'aws' and role == 'clusters':
+                        image = image.get(self.os_arch, image['x86_64'])
+
                 parameters['image'] = image
 
                 parameters['volume_size'] = int(parameters.get('volume_size', 0))
@@ -835,6 +846,14 @@ def get_args():
                         ],
                         default='us-west1-b',
                         help='the cloud zone (GCP)')
+    parser.add_argument('--cluster-image',
+                        help='Image/AMI name to use for cluster nodes')
+    parser.add_argument('--client-image',
+                        help='Image/AMI name to use for client nodes')
+    parser.add_argument('--utility-image',
+                        help='Image/AMI name to use for utility nodes')
+    parser.add_argument('--sgw-image',
+                        help='Image/AMI name to use for sync gateway nodes')
     parser.add_argument('--capella-public-api-url',
                         help='public API URL for Capella environment')
     parser.add_argument('--capella-tenant',

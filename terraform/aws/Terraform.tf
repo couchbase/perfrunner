@@ -78,6 +78,50 @@ data "aws_ec2_instance_type_offerings" "available" {
   location_type = "availability-zone"
 }
 
+data "aws_ami" "cluster_ami" {
+  for_each = var.cluster_nodes
+
+  owners = ["self"]
+
+  filter {
+    name = "name"
+    values = [each.value.image]
+  }
+}
+
+data "aws_ami" "client_ami" {
+  for_each = var.client_nodes
+
+  owners = ["self"]
+
+  filter {
+    name = "name"
+    values = [each.value.image]
+  }
+}
+
+data "aws_ami" "utility_ami" {
+  for_each = var.utility_nodes
+
+  owners = ["self"]
+
+  filter {
+    name = "name"
+    values = [each.value.image]
+  }
+}
+
+data "aws_ami" "sync_gateway_ami" {
+  for_each = var.sync_gateway_nodes
+
+  owners = ["self"]
+
+  filter {
+    name = "name"
+    values = [each.value.image]
+  }
+}
+
 resource "random_shuffle" "az" {
   input        = distinct(data.aws_ec2_instance_type_offerings.available.locations)
   result_count = 1
@@ -247,7 +291,7 @@ resource "aws_instance" "cluster_instance" {
 
   availability_zone = one(random_shuffle.az.result)
   subnet_id         = aws_subnet.public.id
-  ami               = each.value.image
+  ami               = data.aws_ami.cluster_ami[each.key].id
   instance_type     = each.value.instance_type
   ebs_block_device {
     device_name = "/dev/sdb"
@@ -268,7 +312,7 @@ resource "aws_instance" "client_instance" {
 
   availability_zone = one(random_shuffle.az.result)
   subnet_id         = aws_subnet.public.id
-  ami               = each.value.image
+  ami               = data.aws_ami.client_ami[each.key].id
   instance_type     = each.value.instance_type
   ebs_block_device {
     device_name = "/dev/sdb"
@@ -289,7 +333,7 @@ resource "aws_instance" "utility_instance" {
 
   availability_zone = one(random_shuffle.az.result)
   subnet_id         = aws_subnet.public.id
-  ami               = each.value.image
+  ami               = data.aws_ami.utility_ami[each.key].id
   instance_type     = each.value.instance_type
   ebs_block_device {
     device_name = "/dev/sdb"
@@ -310,7 +354,7 @@ resource "aws_instance" "sync_gateway_instance" {
 
   availability_zone = one(random_shuffle.az.result)
   subnet_id         = aws_subnet.public.id
-  ami               = each.value.image
+  ami               = data.aws_ami.sync_gateway_ami[each.key].id
   instance_type     = each.value.instance_type
   ebs_block_device {
     device_name = "/dev/sdb"

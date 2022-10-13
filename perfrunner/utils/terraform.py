@@ -6,11 +6,20 @@ from collections import Counter
 from time import sleep, time
 from uuid import uuid4
 
+import requests
 from capella.dedicated.CapellaAPI import CapellaAPI
 from fabric.api import local
 
 from logger import logger
 from perfrunner.settings import ClusterSpec
+
+
+def raise_for_status(resp: requests.Response):
+    try:
+        resp.raise_for_status()
+    except Exception as e:
+        logger.error('HTTP Error {}: response content: {}'.format(resp.status_code, resp.content))
+        raise(e)
 
 
 class Terraform:
@@ -506,7 +515,7 @@ class CapellaTerraform(Terraform):
             logger.info('Deploying with custom AMI: {}'.format(self.options.capella_ami))
 
         resp = self.api_client.create_cluster_customAMI(self.tenant_id, config)
-        resp.raise_for_status()
+        raise_for_status(resp)
         cluster_id = resp.json().get('id')
         logger.info('Initialised cluster deployment for cluster {}'.format(cluster_id))
         logger.info('Saving cluster ID to spec file.')
@@ -536,7 +545,7 @@ class CapellaTerraform(Terraform):
     def destroy_cluster_internal_api(self, cluster_id):
         logger.info('Deleting Capella cluster...')
         resp = self.api_client.delete_cluster(cluster_id)
-        resp.raise_for_status()
+        raise_for_status(resp)
         logger.info('Capella cluster successfully queued for deletion.')
 
     def create_tfvar_server_groups(self) -> list[dict]:

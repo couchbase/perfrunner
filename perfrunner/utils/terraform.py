@@ -446,11 +446,17 @@ class CapellaTerraform(Terraform):
 
         cluster_list = []
         for cluster, server_groups in server_groups.items():
-            storage_class = self.infra_spec.infrastructure_section(cluster)['storage_class'].lower()
             server_list = []
+            cluster_params = self.infra_spec.infrastructure_section(cluster)
 
             for (node_group, services), size in server_groups.items():
                 node_group_config = self.infra_spec.infrastructure_section(node_group)
+
+                storage_class = node_group_config.get(
+                    'volume_type', node_group_config.get(
+                        'storage_class', cluster_params.get('storage_class')
+                    )
+                ).lower()
 
                 server_group = {
                     'count': size,
@@ -538,6 +544,8 @@ class CapellaTerraform(Terraform):
         tfvar_server_groups = {cluster: [] for cluster in server_group_sizes}
 
         for cluster, server_groups in server_group_sizes.items():
+            cluster_params = self.infra_spec.infrastructure_section(cluster)
+
             for (node_group, services), size in server_groups.items():
                 parameters = self.infra_spec.infrastructure_config()[node_group]
 
@@ -546,11 +554,12 @@ class CapellaTerraform(Terraform):
                     self.SERVICES_PERFRUNNER_TO_CAPELLA[svc]for svc in services
                 ]
 
-                if 'storage_class' in parameters:
-                    storage_class = parameters['storage_class'].upper()
-                else:
-                    storage_class = \
-                        self.infra_spec.infrastructure_section(cluster)['storage_class'].upper()
+                storage_class = parameters.pop(
+                    'volume_type', parameters.get(
+                        'storage_class', cluster_params.get('storage_class')
+                    )
+                ).upper()
+
                 parameters['storage_class'] = storage_class
                 parameters['volume_size'] = int(parameters['volume_size'])
                 parameters['iops'] = int(parameters.get('iops', 0))

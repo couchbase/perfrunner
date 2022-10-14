@@ -52,8 +52,10 @@ class RemoteKubernetes(Remote):
                     return res
             except Exception as ex_new:
                 ex = ex_new
+                logger.info(ex.stdout.decode('ascii'))
             finally:
                 attempt += 1
+        logger.info(str(ex))
         raise ex
 
     def kubectl_exec(self, pod, params):
@@ -788,7 +790,7 @@ class RemoteKubernetes(Remote):
               'PYTHONWARNINGS=ignore ' \
               'WORKER_TYPE=remote ' \
               'BROKER_URL={1} ' \
-              'nohup env/bin/celery worker -C -A perfrunner.helpers.worker worker' \
+              'nohup env/bin/celery -A perfrunner.helpers.worker worker' \
               ' -l INFO -Q {0} -n {0} --discard &>worker_{2}.log &' \
             .format(worker_hostname,
                     broker_url,

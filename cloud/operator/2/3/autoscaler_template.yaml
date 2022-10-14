@@ -1,0 +1,19 @@
+kind: HorizontalPodAutoscaler
+apiVersion: autoscaling/v2beta2
+metadata:
+  name: autoscaler1
+spec:
+  scaleTargetRef:
+    apiVersion: couchbase.com/v2
+    kind: CouchbaseAutoscaler
+    name: server_group.cluster_name
+  minReplicas: min_nodes
+  maxReplicas: max_nodes
+  metrics:
+  - type: Pods
+    pods:
+      metric:
+        name: target_metric
+      target:
+        type: target_type
+        target_type_key: target_value

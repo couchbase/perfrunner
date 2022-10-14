@@ -273,3 +273,6 @@ class RemoteWindows(Remote):
                     '{}/var/lib/couchbase/logs/info.log'.format(self.CB_DIR), quiet=True)
             if not r.return_code:
                 return r.strip().split(',')[1]
+
+    def disable_serverless_mode(self):
+        pass

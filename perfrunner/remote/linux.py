@@ -663,6 +663,10 @@ class RemoteLinux(Remote):
     def cloud_put_certificate(self, cert, worker_home):
         put(cert, worker_home + '/perfrunner')
 
+    @all_clients
+    def cloud_put_scanfile(self, file, file_path):
+        put(file, file_path + '/perfrunner/' + file)
+
     @master_client
     def run_cbindexperf(self, path_to_tool: str, node: str,
                         rest_username: str,

@@ -57,6 +57,7 @@ class SecondaryIndexTest(PerfTest):
         self.cbindexperf_gcpercent = self.test_config.gsi_settings.cbindexperf_gcpercent
         self.cbindexperf_repeat = self.test_config.gsi_settings.cbindexperf_repeat
         self.cbindexperf_clients = self.test_config.gsi_settings.cbindexperf_clients
+        self.cbindexperf_limit = self.test_config.gsi_settings.cbindexperf_limit
         self.local_path_to_cbindex = './opt/couchbase/bin/cbindex'
         self.is_ssl = False
         if self.test_config.cluster.enable_n2n_encryption:
@@ -70,6 +71,9 @@ class SecondaryIndexTest(PerfTest):
                 if self.cbindexperf_repeat:
                     for scan_spec in cbindexperf_contents["ScanSpecs"]:
                         scan_spec["Repeat"] = self.cbindexperf_repeat
+                if self.cbindexperf_limit:
+                    for scan_spec in cbindexperf_contents["ScanSpecs"]:
+                        scan_spec["Limit"] = self.cbindexperf_limit
                 if self.cbindexperf_clients:
                     cbindexperf_contents["Clients"] = self.cbindexperf_clients
 
@@ -257,7 +261,7 @@ class SecondaryIndexTest(PerfTest):
 
         if not self.test_config.gsi_settings.disable_perindex_stats:
             logger.info("cbindexperf config file: \n" + config_file_content)
-
+        self.remote.cloud_put_scanfile(self.configfile, self.worker_manager.WORKER_HOME)
         status = str(self.remote.run_cbindexperf(path_to_tool, self.index_nodes[0],
                                                  rest_username, rest_password,
                                                  self.configfile,

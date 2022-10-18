@@ -146,7 +146,8 @@ class Collector:
 
     def get_nodes(self):
         if self.cloud_enabled:
-            return self.hostnames
+            for hostname in self.hostnames:
+                yield hostname
         else:
             pool = self.get_http(path="/pools/default")
             for node in pool["nodes"]:

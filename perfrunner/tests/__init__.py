@@ -43,6 +43,7 @@ class PerfTest:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
+        self.cloud_infra = self.cluster_spec.cloud_infrastructure
         self.capella_infra = self.cluster_spec.capella_infrastructure
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.cluster = ClusterManager(cluster_spec, test_config)

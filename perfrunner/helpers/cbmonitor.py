@@ -271,14 +271,15 @@ class CbAgent:
                         self.add_collector(Memory)
                     if net:
                         self.add_collector(Net)
-                    if disk:
-                        self.add_io_collector(Disk)
-                    if iostat:
-                        self.add_io_collector(IO)
                     if page_cache:
                         self.add_io_collector(PageCache)
                     if vmstat:
                         self.add_collector(VMSTAT)
+                    if not self.test.cloud_infra:
+                        if disk:
+                            self.add_io_collector(Disk)
+                        if iostat:
+                            self.add_io_collector(IO)
                 else:
                     self.add_collector(TypePerf)
             else:

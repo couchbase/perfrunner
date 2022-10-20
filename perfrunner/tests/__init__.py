@@ -146,7 +146,7 @@ class PerfTest:
         if self.test_config.cluster.num_vbuckets:
             self.remote.reset_num_vbuckets()
 
-        if self.test_config.cluster.serverless_mode:
+        if self.test_config.cluster.serverless_mode and not self.cloud_infra:
             self.remote.disable_serverless_mode()
 
     def collect_linux_perf_profiles(self):

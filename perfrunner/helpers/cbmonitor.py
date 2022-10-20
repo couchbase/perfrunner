@@ -201,7 +201,6 @@ class CbAgent:
                        kvstore=False,
                        latency=False,
                        memory=True,
-                       metering=False,
                        n1ql_latency=False,
                        n1ql_stats=False,
                        net=True,
@@ -259,7 +258,8 @@ class CbAgent:
             self.add_collector(CBStatsMemory, self.test)
         if cbstats_all:
             self.add_collector(CBStatsAll, self.test)
-        if metering:
+
+        if self.test.test_config.cluster.serverless_mode == 'enabled':
             self.add_collector(MetricsRestApiMetering)
 
         if not self.test.dynamic_infra:

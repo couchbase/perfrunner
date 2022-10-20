@@ -1,6 +1,7 @@
 import base64
 import datetime
 import json
+import os
 import subprocess
 import time
 
@@ -28,6 +29,14 @@ class RemoteKubernetes(Remote):
         self.autoscaler_file = 'autoscaler.yaml'
         self.operator_version = None
 
+    @property
+    def _git_access_token(self):
+        return os.environ.get('GITHUB_ACCESS_TOKEN', None)
+
+    @property
+    def _git_username(self):
+        return os.environ.get('GITHUB_USERNAME', None)
+
     def kubectl(self, params, kube_config=None, split_lines=True, max_attempts=3):
         if not kube_config:
             kube_config = self.kube_config_path
@@ -37,26 +46,25 @@ class RemoteKubernetes(Remote):
         params = ['kubectl', '--kubeconfig', kube_config] + params
 
         attempt = 1
-        ex = Exception("max attempts exceeded")
+
         while attempt <= max_attempts:
             if attempt > 1:
                 time.sleep(1)
             try:
                 res = subprocess.run(params,
                                      check=True,
-                                     stderr=subprocess.STDOUT,
-                                     stdout=subprocess.PIPE).stdout
+                                     stderr=subprocess.PIPE,
+                                     stdout=subprocess.PIPE)
+
                 if split_lines:
-                    return res.splitlines()
+                    return res.stdout.splitlines()
                 else:
-                    return res
-            except Exception as ex_new:
-                ex = ex_new
-                logger.info(ex.stdout.decode('ascii'))
+                    return res.stdout
+            except Exception as ex:
+                logger.info(ex.stderr.decode('ascii'))
             finally:
                 attempt += 1
-        logger.info(str(ex))
-        raise ex
+        raise Exception("max attempts exceeded")
 
     def kubectl_exec(self, pod, params):
         return self.kubectl("exec {} -- bash -c {}".format(pod, params),
@@ -153,6 +161,12 @@ class RemoteKubernetes(Remote):
         elif secret_type == 'tls':
             cmd = "create secret tls {} " \
                   "--from-file={}".format(secret_name, file)
+        elif secret_type == 'docker-registry':
+            cmd = "create secret docker-registry {} " \
+                  "--docker-server=ghcr.io " \
+                  "--docker-username={} " \
+                  "--docker-password={} " \
+                  .format(secret_name, self._git_username, self._git_access_token)
         else:
             raise Exception('unknown secret type')
         self.kubectl(cmd, kube_config=self.kube_config_path)
@@ -572,6 +586,17 @@ class RemoteKubernetes(Remote):
                     new_string = '<{0}.version>{1}<\\/{0}.version>'.format(cb_version, sdk_version)
                     cmd = "sed -i 's/{}/{}/g' pom.xml".format(original_string, new_string)
                     self.kubectl_exec(worker_name, 'cd YCSB; {}'.format(cmd))
+
+    def build_ycsb(self, worker_home: str, ycsb_client: str):
+        ret = self.kubectl("get pods", kube_config=self.kube_config_path)
+        for line in ret:
+            line = line.decode("utf-8")
+            if "worker" in line:
+                worker_name = line.split()[0]
+                cmd = 'pyenv local system && bin/ycsb build {}'.format(ycsb_client)
+
+                logger.info('Running: {}'.format(cmd))
+                self.kubectl_exec(worker_name, 'cd YCSB; {}'.format(cmd))
 
     def sanitize_meta(self, config):
         config['generation'] = 0

@@ -59,6 +59,9 @@ Build = namedtuple('Build', ['filename', 'url'])
 
 class OperatorInstaller:
 
+    # ghcr.io/cb-vanilla/
+    CB_VANILLA_REGISTRY_BASE = "registry.gitlab.com/cb-vanilla/"
+
     def __init__(self, cluster_spec, options):
         self.options = options
         self.cluster_spec = cluster_spec
@@ -66,12 +69,11 @@ class OperatorInstaller:
         self.operator_version = self.options.operator_version
         if "-" in self.operator_version:
             self.operator_release = self.operator_version.split("-")[0]
-            self.operator_tag = 'registry.gitlab.com/cb-vanilla/operator:{}' \
-                .format(self.operator_version)
+            self.operator_tag = '{}operator:{}' \
+                .format(self.CB_VANILLA_REGISTRY_BASE, self.operator_version)
             self.admission_controller_release = self.operator_version.split("-")[0]
-            self.admission_controller_tag = \
-                'registry.gitlab.com/cb-vanilla/' \
-                'admission-controller:{}'.format(self.operator_version)
+            self.admission_controller_tag = '{}admission-controller:{}' \
+                .format(self.CB_VANILLA_REGISTRY_BASE, self.operator_version)
         else:
             self.operator_release = self.operator_version
             self.operator_tag = 'couchbase/operator:{}' \
@@ -83,8 +85,8 @@ class OperatorInstaller:
         self.couchbase_version = self.options.couchbase_version
         if "-" in self.couchbase_version:
             self.couchbase_release = self.couchbase_version.split("-")[0]
-            self.couchbase_tag = 'registry.gitlab.com/cb-vanilla/server:{}' \
-                .format(self.couchbase_version)
+            self.couchbase_tag = '{}server:{}' \
+                .format(self.CB_VANILLA_REGISTRY_BASE, self.couchbase_version)
         else:
             self.couchbase_release = self.couchbase_version
             self.couchbase_tag = 'couchbase/server:{}' \
@@ -94,14 +96,15 @@ class OperatorInstaller:
         if self.operator_backup_version:
             if "-" in self.operator_backup_version:
                 self.operator_backup_release = self.operator_backup_version.split("-")[0]
-                self.operator_backup_tag = 'registry.gitlab.com/cb-vanilla/operator-backup:{}' \
-                    .format(self.operator_backup_version)
+                self.operator_backup_tag = '{}operator-backup:{}' \
+                    .format(self.CB_VANILLA_REGISTRY_BASE, self.operator_backup_version)
             else:
                 self.operator_backup_release = self.operator_backup_version
                 self.operator_backup_tag = 'couchbase/operator-backup/{}' \
                     .format(self.operator_backup_version)
         else:
-            self.operator_backup_tag = 'registry.gitlab.com/cb-vanilla/operator-backup:latest'
+            self.operator_backup_tag = '{}operator-backup:latest' \
+                .format(self.CB_VANILLA_REGISTRY_BASE)
 
         self.node_count = len(self.cluster_spec.infrastructure_clusters['couchbase1'].split())
 

@@ -146,7 +146,7 @@ class Collector:
                 yield bucket["name"]
 
     def get_nodes(self):
-        if self.cloud_enabled:
+        if self.cloud_enabled and not self.cloud['dynamic']:
             for hostname in self.hostnames:
                 yield hostname
         else:

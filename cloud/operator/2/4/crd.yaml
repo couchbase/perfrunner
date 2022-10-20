@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbaseautoscalers.couchbase.com
 spec:
@@ -92,7 +92,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasebackuprestores.couchbase.com
 spec:
@@ -277,13 +277,28 @@ spec:
                 description: 'Number of hours to hold restore script logs for, everything
                   older will be deleted. More info: https://golang.org/pkg/time/#ParseDuration'
                 type: string
+              objectStore:
+                description: The remote destination for backup.
+                properties:
+                  secret:
+                    description: ObjStoreSecret must contain two fields, access-key-id,
+                      secret-access-key and optionally either region or refresh-token.
+                      These correspond to the fields used by cbbackupmgr https://docs.couchbase.com/server/current/backup-restore/cbbackupmgr-backup.html#optional-2
+                    type: string
+                  uri:
+                    description: URI is a reference to a remote object store. This
+                      is the prefix of the object store and the bucket name. i.e s3://bucket,
+                      az://bucket or gs://bucket.
+                    pattern: ^(az|s3|gs)://.{3,}$
+                    type: string
+                type: object
               repo:
                 description: Repo is the backup folder to restore from.  If no repository
                   is specified, the backup container will choose the latest.
                 type: string
               s3bucket:
-                description: Name of S3 bucket to restore from. If non-empty this
-                  overrides local backup.
+                description: DEPRECATED - by spec.objectStore.uri Name of S3 bucket
+                  to restore from. If non-empty this overrides local backup.
                 pattern: ^s3://[a-z0-9-\.]{3,63}$
                 type: string
               services:
@@ -373,7 +388,6 @@ spec:
                 type: integer
             required:
             - backup
-            - repo
             type: object
           status:
             description: CouchbaseBackupRestoreStatus provides status indications
@@ -459,7 +473,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasebackups.couchbase.com
 spec:
@@ -649,9 +663,24 @@ spec:
                 description: 'Number of hours to hold script logs for, everything
                   older will be deleted.  More info: https://golang.org/pkg/time/#ParseDuration'
                 type: string
+              objectStore:
+                description: ObjectStore allows for backing up to a remote cloud storage.
+                properties:
+                  secret:
+                    description: ObjStoreSecret must contain two fields, access-key-id,
+                      secret-access-key and optionally either region or refresh-token.
+                      These correspond to the fields used by cbbackupmgr https://docs.couchbase.com/server/current/backup-restore/cbbackupmgr-backup.html#optional-2
+                    type: string
+                  uri:
+                    description: URI is a reference to a remote object store. This
+                      is the prefix of the object store and the bucket name. i.e s3://bucket,
+                      az://bucket or gs://bucket.
+                    pattern: ^(az|s3|gs)://.{3,}$
+                    type: string
+                type: object
               s3bucket:
-                description: Name of S3 bucket to backup to. If non-empty this overrides
-                  local backup.
+                description: DEPRECATED - by spec.objectStore.uri Name of S3 bucket
+                  to backup to. If non-empty this overrides local backup.
                 pattern: ^s3://[a-z0-9-\.]{3,63}$
                 type: string
               services:
@@ -756,7 +785,7 @@ spec:
                 default: 1
                 description: How many threads to use during the backup.  This field
                   defaults to 1.
-                minimum: 1
+                minimum: 0
                 type: integer
             required:
             - strategy
@@ -857,7 +886,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasebuckets.couchbase.com
 spec:
@@ -1136,6 +1165,16 @@ spec:
                         type: object
                     type: object
                 type: object
+              storageBackend:
+                description: StorageBackend to be assigned to and used by the bucket.
+                  This cannot be edited after bucket creation. Two different backend
+                  storage mechanisms can be used - "couchstore" or "magma". The value
+                  can be either of those, defaulting to "couchstore" StorageBackend
+                  is only valid for Couchbase Server 7.1.0 onward.
+                enum:
+                - couchstore
+                - magma
+                type: string
             type: object
         type: object
     served: true
@@ -1145,7 +1184,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbaseclusters.couchbase.com
 spec:
@@ -1273,6 +1312,7 @@ spec:
                   backups, and how to lookup backup resources.
                 properties:
                   image:
+                    default: couchbase/operator-backup:1.3.1
                     description: The Backup Image to run on backup pods.
                     type: string
                   imagePullSecrets:
@@ -1347,9 +1387,10 @@ spec:
                         type: object
                     type: object
                   s3Secret:
-                    description: S3Secret contains the region and credentials for
-                      operating backups in S3. This field must be popluated when the
-                      `spec.s3bucket` field is specified for a backup or restore resource.
+                    description: 'Deprecated: by backup.spec.objectStore.secret S3Secret
+                      contains the region and credentials for operating backups in
+                      S3. This field must be popluated when the `spec.s3bucket` field
+                      is specified for a backup or restore resource.'
                     type: string
                   selector:
                     description: Selector allows CouchbaseBackup and CouchbaseBackupRestore
@@ -1787,6 +1828,25 @@ spec:
                           should be snapshotted. This defaults to 200ms, and must
                           be greater than or equal to 1ms.
                         type: string
+                      numReplica:
+                        default: 0
+                        description: NumberOfReplica specifies number of secondary
+                          index replicas to be created by the Index Service whenever
+                          CREATE INDEX is invoked, which ensures high availability
+                          and high performance. Note, if nodes and num_replica are
+                          both specified in the WITH clause, the specified number
+                          of nodes must be one greater than num_replica This defaults
+                          to 0, which means no index replicas to be created by default.
+                          Minimum must be 0.
+                        minimum: 0
+                        type: integer
+                      redistributeIndexes:
+                        default: false
+                        description: RedistributeIndexes when true, Couchbase Server
+                          redistributes indexes when rebalance occurs, in order to
+                          optimize performance. If false (the default), such redistribution
+                          does not occur.
+                        type: boolean
                       stableSnapshotInterval:
                         default: 5s
                         description: StableSnapshotInterval controls when disk indexes
@@ -1886,6 +1946,12 @@ spec:
                 description: DEPRECATED - This option only exists for backwards compatibility
                   and no longer restricts autoscaling to ephemeral services. EnablePreviewScaling
                   enables autoscaling for stateful services and buckets.
+                type: boolean
+              envImagePrecedence:
+                description: 'EnvImagePrecedence gives precedence over the default
+                  container image name in `spec.Image` to an image name provided through
+                  Operator environment variables. For more info on using Operator
+                  environment variables: https://docs.couchbase.com/operator/current/reference-operator-configuration.html'
                 type: boolean
               hibernate:
                 description: Hibernate is whether to hibernate the cluster.
@@ -2085,7 +2151,7 @@ spec:
                               environment variable.
                             type: string
                           image:
-                            default: couchbase/fluent-bit:1.1.1
+                            default: couchbase/fluent-bit:1.2.1
                             description: Image is the image to be used to deal with
                               logging as a sidecar. No validation is carried out as
                               this can be any arbitrary repo and tag. It will default
@@ -2144,6 +2210,17 @@ spec:
                           metrics. No validation is carried out as this can be any
                           arbitrary repo and tag.
                         type: string
+                      refreshRate:
+                        default: 60
+                        description: RefreshRate is the frequency in which cached
+                          statistics are updated in seconds. Shorter intervals will
+                          add additional resource overhead to clusters running Couchbase
+                          Server 7.0+ Default is 60 seconds, Maximum value is 600
+                          seconds, and minimum value is 1 second.
+                        format: int64
+                        maximum: 600
+                        minimum: 1
+                        type: integer
                       resources:
                         description: Resources is the resource requirements for the
                           metrics container. Will be populated by Kubernetes defaults
@@ -2937,17 +3014,83 @@ spec:
                         - All
                         - Strict
                         type: string
+                      passphrase:
+                        description: PassphraseConfig configures the passphrase key
+                          to use with encrypted certificates. The passphrase may be
+                          registered with Couchbase Server using a local script or
+                          a rest endpoint. Private key encryption is only available
+                          on Couchbase Server versions 7.1 and greater.
+                        properties:
+                          rest:
+                            description: PassphraseRestConfig is the configuration
+                              to register a private key passphrase with a rest endpoint.
+                              When the private key is accessed, Couchbase Server attempts
+                              to extract the password by means of the specified endpoint.
+                              The response status must be 200 and the response text
+                              must be the exact passphrase excluding newlines and
+                              extraneous spaces.
+                            properties:
+                              addressFamily:
+                                default: inet
+                                description: AddressFamily is the address family to
+                                  use. By default inet (meaning IPV4) is used.
+                                enum:
+                                - inet
+                                - inet6
+                                type: string
+                              headers:
+                                additionalProperties:
+                                  type: string
+                                description: Headers is a map of one or more key-value
+                                  pairs to pass alongside the Get request.
+                                type: object
+                              timeout:
+                                default: 5000
+                                description: Timeout is  the number of milliseconds
+                                  that must elapse before the call is timed out.
+                                format: int64
+                                type: integer
+                              url:
+                                description: URL is the endpoint to be called to retrieve
+                                  the passphrase. URL will be called using the GET
+                                  method and may use http/https protocol.
+                                type: string
+                              verifyPeer:
+                                default: true
+                                description: VerifyPeer ensures peer verification
+                                  is performed when Https is used.
+                                type: boolean
+                            required:
+                            - url
+                            type: object
+                          script:
+                            description: PassphraseScriptConfig is the configuration
+                              to register a private key passphrase with a script.
+                              The Operator auto-provisions the underlying script so
+                              this config simply provides a mechanism to perform the
+                              decryption of the Couchbase Private Key using a local
+                              script.
+                            properties:
+                              secret:
+                                description: Secret is the secret containing the passphrase
+                                  string. The secret is expected to contain "passphrase"
+                                  key with the passphrase string as a value.
+                                type: string
+                            required:
+                            - secret
+                            type: object
+                        type: object
                       rootCAs:
                         description: RootCAs defines a set of secrets that reside
                           in this namespace that contain additional CA certificates
                           that should be installed in Couchbase.  The CA certificates
                           that are defined here are in addition to those defined for
                           the cluster, optionally by couchbaseclusters.spec.networking.tls.secretSource,
-                          and thus should not be duplicated.  Secrets referred to
-                          must be of well-know type "kubernetes.io/tls" and must contain
-                          the CA certificate under the key "tls.crt". Multiple root
-                          CA certificates are only supported on Couchbase Server 7.1
-                          and greater, and not with legacy couchbaseclusters.spec.networking.tls.static
+                          and thus should not be duplicated.  Each Secret referred
+                          to must be of well-known type "kubernetes.io/tls" and must
+                          contain one or more CA certificates under the key "tls.crt".
+                          Multiple root CA certificates are only supported on Couchbase
+                          Server 7.1 and greater, and not with legacy couchbaseclusters.spec.networking.tls.static
                           configuration.
                         items:
                           type: string
@@ -2959,8 +3102,12 @@ spec:
                           the Operator's client certificate, providing cert-manager
                           compatibility without having to specify a separate root
                           CA.  A server CA certificate must be supplied by one of
-                          the provided methods. Certificates referred to must be of
-                          well-known type "kubernetes.io/tls".
+                          the provided methods. Certificates referred to must conform
+                          to the keys of well-known type "kubernetes.io/tls" with
+                          "tls.crt" and "tls.key". If the "tls.key" is an encrypted
+                          private key then the secret type can be the generic Opaque
+                          type since "kubernetes.io/tls" type secrets cannot verify
+                          encrypted keys.
                         properties:
                           clientSecretName:
                             description: ClientSecretName specifies the secret name,
@@ -2973,7 +3120,9 @@ spec:
                               in the same namespace as the cluster, that contains
                               server TLS data.  The secret is expected to contain
                               "tls.crt" and "tls.key" as per the kubernetes.io/tls
-                              secret type.  It may also contain "ca.crt".
+                              secret type.  It may also contain "ca.crt". Only a single
+                              Root CA can be provided to "ca.crt". Refer to couchbaseclusters.spec.networking.tls.rootcas
+                              for multiple Root CA deployments.
                             type: string
                         required:
                         - serverSecretName
@@ -3108,8 +3257,9 @@ spec:
                     type: string
                   ldap:
                     description: LDAP provides settings to authenticate and authorize
-                      LDAP users with Couchbase Server. `RBAC.managed` must also be
-                      set to `true` in order to apply LDAP settings to Cocuhbase Server.
+                      LDAP users with Couchbase Server. When specified, the Operator
+                      keeps these settings in sync with Cocuhbase Server's LDAP configuration.
+                      Leave empty to manually manage LDAP configuration.
                     properties:
                       authenticationEnabled:
                         default: true
@@ -4247,6 +4397,13 @@ spec:
                   in the UI. When enabled, the UI will alert when a Couchbase server
                   upgrade is available.
                 type: boolean
+              uiSessionTimeout:
+                description: UISessionTimeout sets how long, in minutes, before a
+                  user is declared inactive and signed out from the Couchbase Server
+                  UI. 0 represents no time out.
+                maximum: 16666
+                minimum: 0
+                type: integer
               upgradeStrategy:
                 description: UpgradeStrategy controls how aggressive the Operator
                   is when performing a cluster upgrade.  When a rolling upgrade is
@@ -4467,8 +4624,9 @@ spec:
                           type: string
                         hostname:
                           description: Hostname is the connection string to use to
-                            connect the remote cluster.
-                          pattern: ^((couchbase|couchbases|http|https)://)?[0-9a-zA-Z\-\.]+(:\d+)?(\?network=[^&]+)?$
+                            connect the remote cluster.  To use IPv6, place brackets
+                            (`[`, `]`) around the IPv6 value.
+                          pattern: ^((couchbase|http)(s)?(://))?((\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}\b)|((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))|\[(\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*\]))(:[0-9]{0,5})?(\\{0,1}\?network=[^&]+)?$
                           type: string
                         name:
                           description: Name of the remote cluster.
@@ -4716,6 +4874,10 @@ spec:
                     replicas:
                       description: BucketReplicas is the number of data replicas.
                       type: integer
+                    storageBackend:
+                      description: BucketStorageBackend is the storage backend of
+                        the bucket.
+                      type: string
                     type:
                       description: BucketType is the type of the bucket.
                       type: string
@@ -4730,6 +4892,7 @@ spec:
                   - name
                   - password
                   - replicas
+                  - storageBackend
                   - type
                   type: object
                 type: array
@@ -4835,7 +4998,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasecollectiongroups.couchbase.com
 spec:
@@ -4921,7 +5084,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasecollections.couchbase.com
 spec:
@@ -4994,7 +5157,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbaseephemeralbuckets.couchbase.com
 spec:
@@ -5269,7 +5432,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasegroups.couchbase.com
 spec:
@@ -5485,32 +5648,53 @@ spec:
                       description: Name of role.
                       enum:
                       - admin
-                      - cluster_admin
-                      - security_admin
-                      - ro_admin
-                      - replication_admin
-                      - query_external_access
-                      - query_system_catalog
+                      - analytics_admin
+                      - analytics_manager
                       - analytics_reader
+                      - analytics_select
+                      - backup_admin
                       - bucket_admin
-                      - views_admin
-                      - fts_admin
                       - bucket_full_access
+                      - cluster_admin
+                      - data_backup
+                      - data_dcp_reader
+                      - data_monitoring
                       - data_reader
                       - data_writer
-                      - data_dcp_reader
-                      - data_backup
-                      - data_monitoring
-                      - replication_target
-                      - analytics_manager
-                      - views_reader
+                      - eventing_admin
+                      - external_stats_reader
+                      - fts_admin
                       - fts_searcher
-                      - query_select
-                      - query_update
-                      - query_insert
-                      - query_delete
-                      - query_manage_index
                       - mobile_sync_gateway
+                      - mobile_sync_gateway_application
+                      - mobile_sync_gateway_application_read_only
+                      - mobile_sync_gateway_architect
+                      - mobile_sync_gateway_dev_ops
+                      - mobile_sync_gateway_replicator
+                      - query_delete
+                      - query_execute_external_functions
+                      - query_execute_functions
+                      - query_execute_global_external_functions
+                      - query_execute_global_functions
+                      - query_external_access
+                      - query_insert
+                      - query_manage_external_functions
+                      - query_manage_functions
+                      - query_manage_global_external_functions
+                      - query_manage_global_functions
+                      - query_manage_index
+                      - query_select
+                      - query_system_catalog
+                      - query_update
+                      - replication_admin
+                      - replication_target
+                      - ro_admin
+                      - scope_admin
+                      - security_admin
+                      - security_admin_external
+                      - security_admin_local
+                      - views_admin
+                      - views_reader
                       type: string
                     scopes:
                       description: Scope level access to apply to specified role.  The
@@ -5615,7 +5799,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasememcachedbuckets.couchbase.com
 spec:
@@ -5696,7 +5880,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasemigrationreplications.couchbase.com
 spec:
@@ -5844,7 +6028,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasereplications.couchbase.com
 spec:
@@ -6049,7 +6233,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbaserolebindings.couchbase.com
 spec:
@@ -6129,7 +6313,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasescopegroups.couchbase.com
 spec:
@@ -6304,7 +6488,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbasescopes.couchbase.com
 spec:
@@ -6476,7 +6660,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    config.couchbase.com/version: 2.3.0
+    config.couchbase.com/version: 2.4.0
     controller-gen.kubebuilder.io/version: v0.8.0
   name: couchbaseusers.couchbase.com
 spec:

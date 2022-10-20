@@ -443,7 +443,7 @@ class AWSDeployer(Deployer):
                     diskSize=int(node_group_spec['volume_size']),
                     subnets=eks_subnets,
                     instanceTypes=[node_group_spec['instance_type']],
-                    amiType='AL2_x86_64',
+                    amiType='AL2_x86_64' if self.os_arch == 'x86_64' else 'AL2_ARM_64',
                     remoteAccess={'ec2SshKey': self.infra_spec.aws_key_name},
                     nodeRole=self.deployed_infra['vpc']['eks_node_role_iam_arn'],
                     labels=labels,

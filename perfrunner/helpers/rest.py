@@ -676,11 +676,24 @@ class DefaultRestHelper(RestBase):
 
     def get_certificate(self, host: str) -> str:
         logger.info('Getting remote certificate')
+
+        build = self.get_version(host)
+        version, _ = build.split('-')
+        version_number = tuple(map(int, version.split('.')))
+
         if self.test_config.cluster.enable_n2n_encryption:
-            api = 'https://{}:18091/pools/default/certificate'.format(host)
+            api = 'https://{}:18091/pools/default/'.format(host)
         else:
-            api = 'http://{}:8091/pools/default/certificate'.format(host)
-        return self.get(url=api).text
+            api = 'http://{}:8091/pools/default/'.format(host)
+
+        if version_number < (7, 1, 0):
+            api += 'certificate'
+            return self.get(url=api).text
+
+        api += 'trustedCAs'
+        r = self.get(url=api)
+        certs = ''.join(cert['pem'] for cert in r.json())
+        return certs
 
     def fail_over(self, host: str, node: str):
         logger.info('Failing over node: {}'.format(node))

@@ -420,7 +420,7 @@ class CapellaTerraform(Terraform):
     def capella_server_group_sizes(self) -> dict:
         server_groups = {}
         for node in self.node_list['clusters']:
-            name, services = node.split(':')
+            name, services = node.split(':')[:2]
 
             _, cluster, node_group, _ = name.split('.')
             services_set = tuple(set(services.split(',')))

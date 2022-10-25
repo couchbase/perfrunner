@@ -16,6 +16,7 @@ from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec, TestConfig
+from perfrunner.utils.terraform import CAPELLA_CREDS_FILE
 
 MAX_RETRY = 20
 RETRY_DELAY = 10
@@ -1847,8 +1848,15 @@ class CapellaRestHelper(DefaultRestHelper):
         self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
         self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
         self.cluster_ids = self.cluster_spec.infrastructure_settings['cbc_cluster'].split()
+
+        access, secret = os.getenv('CBC_ACCESS_KEY'), os.getenv('CBC_SECRET_KEY')
+        if (not access or not secret) and os.path.isfile(CAPELLA_CREDS_FILE):
+            with open(CAPELLA_CREDS_FILE, 'r') as f:
+                creds = json.load(f)
+            access, secret = creds.get('access'), creds.get('secret')
+
         self.api_client = CapellaAPIDedicated(
-            self.base_url, self._secret_key, self._access_key, self._cbc_user, self._cbc_pwd
+            self.base_url, secret, access, self._cbc_user, self._cbc_pwd
         )
 
     def hostname_to_cluster_id(self, hostname: str):
@@ -1861,20 +1869,12 @@ class CapellaRestHelper(DefaultRestHelper):
         return None
 
     @property
-    def _access_key(self):
-        return os.environ.get('CBC_ACCESS_KEY', None)
-
-    @property
-    def _secret_key(self):
-        return os.environ.get('CBC_SECRET_KEY', None)
-
-    @property
     def _cbc_user(self):
-        return os.environ.get('CBC_USER', None)
+        return os.getenv('CBC_USER')
 
     @property
     def _cbc_pwd(self):
-        return os.environ.get('CBC_PWD', None)
+        return os.getenv('CBC_PWD')
 
     def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
         cluster_idx = self.cluster_ids.index(self.hostname_to_cluster_id(master_node))

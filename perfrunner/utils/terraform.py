@@ -10,18 +10,46 @@ import requests
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
 from capella.serverless.CapellaAPI import CapellaAPI as CapellaAPIServerless
 from fabric.api import local
+from requests.exceptions import HTTPError
 
 from logger import logger
 from perfrunner.helpers.misc import maybe_atoi, pretty_dict, remove_nulls
 from perfrunner.settings import ClusterSpec, TestConfig
 
+CAPELLA_CREDS_FILE = '.capella_creds'
+DATADOG_LINK_TEMPLATE = (
+    'https://app.datadoghq.com/logs?'
+    'query=status%3Aerror%20%40{}&'
+    'cols=host%2Cservice&index=%2A&messageDisplay=inline&stream_sort=time%2Cdesc&viz=stream&'
+    'from_ts={}&'
+    'to_ts={}&'
+    'live=true'
+)
+
 
 def raise_for_status(resp: requests.Response):
     try:
         resp.raise_for_status()
-    except Exception as e:
+    except HTTPError as e:
         logger.error('HTTP Error {}: response content: {}'.format(resp.status_code, resp.content))
         raise(e)
+
+
+def format_datadog_link(cluster_id: str = None, dataplane_id: str = None,
+                        database_id: str = None) -> str:
+    filters = [
+        'clusterId%3A{}'.format(cluster_id) if cluster_id else None,
+        'dataplaneId%3A{}'.format(dataplane_id) if dataplane_id else None,
+        'databaseId%3A{}'.format(database_id) if database_id else None
+    ]
+
+    filters = [f for f in filters if f]
+    filter_string = '%20%40'.join(filters) if filters else ''
+
+    now = time()
+    one_hour_ago = now - (60 * 60)
+
+    return DATADOG_LINK_TEMPLATE.format(filter_string, int(one_hour_ago * 1000), int(now * 1000))
 
 
 class Terraform:
@@ -339,17 +367,7 @@ class CapellaTerraform(Terraform):
                                 .removesuffix('.nonprod-project-avengers.com')\
                                 .split('.', 1)[1]
             self.infra_spec.config.set('infrastructure', 'cbc_env', env)
-
-        if tenant := self.options.capella_tenant:
-            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
-
-        if project := self.options.capella_project:
-            self.infra_spec.config.set('infrastructure', 'cbc_project', project)
-
-        self.infra_spec.update_spec_file()
-
-        self.tenant_id = self.infra_spec.infrastructure_settings['cbc_tenant']
-        self.project_id = self.infra_spec.infrastructure_settings['cbc_project']
+            self.infra_spec.update_spec_file()
 
         self.api_client = CapellaAPIDedicated(
             'https://cloudapi.{}.nonprod-project-avengers.com'.format(
@@ -361,16 +379,83 @@ class CapellaTerraform(Terraform):
             os.getenv('CBC_PWD')
         )
 
+        if (tenant := self.options.capella_tenant) is None:
+            tenant = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
+        else:
+            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
+            self.infra_spec.update_spec_file()
+
+        self.tenant_id = tenant or self.get_tenant_id()
+
+        if not self.api_client.ACCESS or not self.api_client.SECRET:
+            if os.path.isfile(CAPELLA_CREDS_FILE):
+                with open(CAPELLA_CREDS_FILE, 'r') as f:
+                    creds = json.load(f)
+                    self.api_client.ACCESS = creds.get('access')
+                    self.api_client.SECRET = creds.get('secret')
+            else:
+                self.api_client.ACCESS, self.api_client.SECRET = self.generate_api_key()
+
+        if (project := self.options.capella_project) is None:
+            project = self.infra_spec.infrastructure_settings.get('cbc_project', None)
+        else:
+            self.infra_spec.config.set('infrastructure', 'cbc_project', project)
+            self.infra_spec.update_spec_file()
+
+        self.project_id = project
+
         self.use_internal_api = (
             (self.options.capella_cb_version and self.options.capella_ami) or
             self.backend == 'gcp' or
             len(list(self.infra_spec.clusters)) > 1
         )
+
         self.capella_timeout = max(0, self.options.capella_timeout)
 
         self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
 
+    def generate_api_key(self):
+        logger.info('Generating API key...')
+        key_name = self.options.tag or 'perf-key-{}'.format(self.uuid)
+        resp = self.api_client.create_access_secret_key(key_name, self.tenant_id)
+        raise_for_status(resp)
+        creds = {
+            'id': resp.json()['id'],
+            'access': resp.json()['access'],
+            'secret': resp.json()['secret']
+        }
+        with open(CAPELLA_CREDS_FILE, 'w') as f:
+            json.dump(creds, f)
+        return creds['access'], creds['secret']
+
+    def get_tenant_id(self):
+        logger.info('Finding a tenant...')
+        resp = self.api_client.list_accessible_tenants()
+        raise_for_status(resp)
+        tenant = resp.json()[0]['id']
+        self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
+        self.infra_spec.update_spec_file()
+        logger.info('Found tenant ID: {}'.format(tenant))
+        return tenant
+
+    def create_project(self):
+        logger.info('Creating project...')
+        resp = self.api_client.create_project(
+            self.tenant_id,
+            self.options.tag or 'perf-provisioned-{}'.format(self.uuid)
+        )
+        raise_for_status(resp)
+        project = resp.json()['id']
+        self.infra_spec.config.set('infrastructure', 'cbc_project', project)
+        self.infra_spec.config.set('infrastructure', 'cbc_project_created', '1')
+        self.infra_spec.update_spec_file()
+        self.project_id = project
+        logger.info('Project created: {}'.format(project))
+
     def deploy(self):
+        if not self.project_id:
+            self.create_project()
+
         # Configure terraform
         self.populate_tfvars()
         self.terraform_init(self.backend)
@@ -409,6 +494,54 @@ class CapellaTerraform(Terraform):
             self.destroy_cluster_internal_api()
         else:
             self.terraform_destroy('capella')
+
+        if int(self.infra_spec.infrastructure_settings.get('cbc_project_created', 0)):
+            cluster_destroyed = self.wait_for_cluster_destroy()
+            if cluster_destroyed:
+                self.destroy_project()
+
+        if os.path.isfile(CAPELLA_CREDS_FILE):
+            logger.info('Revoking API key...')
+            with open(CAPELLA_CREDS_FILE, 'r') as f:
+                creds = json.load(f)
+                self.api_client.revoke_access_secret_key(self.tenant_id, creds['id'])
+            os.remove(CAPELLA_CREDS_FILE)
+
+    def wait_for_cluster_destroy(self) -> bool:
+        logger.info('Waiting for clusters to be destroyed...')
+
+        pending_clusters = [cluster_id for cluster_id in self.cluster_ids]
+        timeout_mins = self.capella_timeout
+        interval_secs = 30
+        t0 = time()
+        while pending_clusters and (time() - t0) < timeout_mins * 60:
+            sleep(interval_secs)
+
+            resp = self.api_client.get_clusters({'projectId': self.project_id, 'perPage': 100})
+            raise_for_status(resp)
+
+            pending_clusters = []
+            for cluster in resp.json()['data'].get('items', []):
+                if (cluster_id := cluster['id']) in self.cluster_ids:
+                    pending_clusters.append(cluster_id)
+                    logger.info('Cluster {} not destroyed yet'.format(cluster_id))
+
+        if pending_clusters:
+            logger.error('Timed out after {} mins waiting for clusters to delete.'
+                         .format(timeout_mins))
+            for cluster_id in pending_clusters:
+                logger.error('DataDog link for debugging (cluster {}): {}'
+                             .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
+            return False
+        else:
+            logger.info('All clusters destroyed.')
+            return True
+
+    def destroy_project(self):
+        logger.info('Deleting project...')
+        resp = self.api_client.delete_project(self.tenant_id, self.project_id)
+        raise_for_status(resp)
+        logger.info('Project successfully queued for deletion.')
 
     def populate_tfvars(self):
         super().populate_tfvars()
@@ -577,6 +710,10 @@ class CapellaTerraform(Terraform):
             for cluster_id in pending_clusters:
                 status = self.api_client.get_cluster_status(cluster_id).json().get('status')
                 logger.info('Cluster state for {}: {}'.format(cluster_id, status))
+                if status == 'deploymentFailed':
+                    logger.error('Deployment failed for cluster {}. DataDog link for debugging: {}'
+                                 .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
+                    exit(1)
                 statuses.append(status)
 
             pending_clusters = [
@@ -585,6 +722,9 @@ class CapellaTerraform(Terraform):
 
         if pending_clusters:
             logger.error('Deployment timed out after {} mins'.format(timeout_mins))
+            for cluster_id in pending_clusters:
+                logger.error('DataDog link for debugging (cluster {}): {}'
+                             .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
             exit(1)
 
     def destroy_cluster_internal_api(self):
@@ -927,14 +1067,17 @@ class ServerlessTerraform(CapellaTerraform):
         # Destroy non-capella resources
         self.terraform_destroy(self.backend)
 
+        dbs_destroyed = False
+
         # Destroy capella cluster
         if self.dp_id:
-            self.destroy_serverless_databases()
-            self.destroy_serverless_dataplane()
+            dbs_destroyed = self.destroy_serverless_databases()
+            if dbs_destroyed:
+                self.destroy_serverless_dataplane()
         else:
             logger.warn('No serverless dataplane ID found. Not destroying serverless dataplane.')
 
-        if self.tenant_id and self.project_id:
+        if self.tenant_id and self.project_id and dbs_destroyed:
             self.destroy_project()
         else:
             logger.warn('No tenant ID or project ID found. Not destroying project.')
@@ -1015,7 +1158,11 @@ class ServerlessTerraform(CapellaTerraform):
                 sleep(interval_secs)
 
         if status != 'ready':
-            logger.error('Deployment timed out after {} mins'.format(timeout_mins))
+            logger.error('Deployment timed out after {} mins.'.format(timeout_mins))
+            logger.error('DataDog link for debugging (filtering by dataplane ID): {}'
+                         .format(format_datadog_link(dataplane_id=self.dp_id)))
+            logger.error('DataDog link for debugging (filtering by cluster ID): {}'
+                         .format(format_datadog_link(cluster_id=self.cluster_id)))
             exit(1)
 
         resp = self.serverless_client.get_serverless_dataplane_info(self.dp_id)
@@ -1107,6 +1254,9 @@ class ServerlessTerraform(CapellaTerraform):
 
         if db_ids:
             logger.error('Serverless DB deployment timed out after {} mins'.format(timeout_mins))
+            for db_id in db_ids:
+                logger.error('DataDog link for debugging (database {}): {}'
+                             .format(db_id, format_datadog_link(database_id=db_id)))
             exit(1)
         else:
             logger.info('All serverless DBs deployed')
@@ -1173,7 +1323,7 @@ class ServerlessTerraform(CapellaTerraform):
         raise_for_status(resp)
         logger.info('Serverless DB queued for deletion: {}'.format(db_id))
 
-    def destroy_serverless_databases(self):
+    def destroy_serverless_databases(self) -> bool:
         logger.info('Deleting all serverless databases...')
 
         pending_dbs = []
@@ -1182,8 +1332,9 @@ class ServerlessTerraform(CapellaTerraform):
             pending_dbs.append(db_id)
         logger.info('All serverless databases queued for deletion.')
 
+        overall_timeout_mins = self.options.capella_timeout
         retries = 2
-        timeout_mins = self.options.capella_timeout / (retries + 1)
+        timeout_mins = overall_timeout_mins / (retries + 1)
         interval_secs = 20
         while pending_dbs and retries >= 0:
             logger.info('Waiting for databases to be deleted (retries left: {})'.format(retries))
@@ -1202,9 +1353,17 @@ class ServerlessTerraform(CapellaTerraform):
                     self._destroy_db(db_id)
             else:
                 logger.info('All databases successfully deleted.')
-                return
+                return True
 
             retries -= 1
+
+        if pending_dbs:
+            logger.error('Timed out after {} mins waiting for databases to delete.'
+                         .format(overall_timeout_mins))
+            for db_id in pending_dbs:
+                logger.error('DataDog link for debugging (database {}): {}'
+                             .format(db_id, format_datadog_link(database_id=db_id)))
+            return False
 
     def destroy_serverless_dataplane(self):
         logger.info('Deleting serverless dataplane...')

@@ -104,7 +104,8 @@ class KVStoreStats(Collector):
         "NBlocksDropped",
         "BlockCacheBlockSize",
         "NMemoryOptimisedCommitBatches",
-        "TotalDiskUsage"
+        "TotalDiskUsage",
+        "NonResidentBloomFilterSize"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

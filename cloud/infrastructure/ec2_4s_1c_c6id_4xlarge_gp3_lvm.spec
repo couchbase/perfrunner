@@ -1,7 +1,7 @@
 [infrastructure]
 provider = aws
 type = ec2
-os_arch = arm
+os_arch = al2
 
 [clusters]
 couchbase1 =

@@ -293,6 +293,9 @@ resource "aws_instance" "cluster_instance" {
   subnet_id         = aws_subnet.public.id
   ami               = data.aws_ami.cluster_ami[each.key].id
   instance_type     = each.value.instance_type
+  root_block_device {
+    volume_size = 32
+  }
   ebs_block_device {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size

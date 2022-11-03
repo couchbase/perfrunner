@@ -122,7 +122,8 @@ class AWSDeployer(Deployer):
             InstanceTenancy=desired_tenancy,
             TagSpecifications=[
                 {'ResourceType': 'vpc',
-                 'Tags': [{'Key': 'Use', 'Value': 'CloudPerfTesting'}]}])
+                 'Tags': [{'Key': 'Use', 'Value': 'CloudPerfTesting'},
+                          {'Key': 'Name', 'Value': self.options.tag}]}])
         self.deployed_infra['vpc'] = response['Vpc']
         self.write_infra_file()
         time.sleep(5)
@@ -166,7 +167,8 @@ class AWSDeployer(Deployer):
                              {'Key': 'Role',
                               'Value': cluster_name},
                              {'Key': 'kubernetes.io/cluster/{}'.format(cluster_name),
-                              'Value': 'shared'}]}],
+                              'Value': 'shared'},
+                             {'Key': 'Name', 'Value': self.options.tag}]}],
                     AvailabilityZone=az,
                     CidrBlock='10.{}.{}.0/24'.format(self.vpc_int, subnets+1),
                     VpcId=self.deployed_infra['vpc']['VpcId'],
@@ -188,7 +190,8 @@ class AWSDeployer(Deployer):
                          {'Key': 'Use',
                           'Value': 'CloudPerfTesting'},
                          {'Key': 'Role',
-                          'Value': 'ec2'}]}],
+                          'Value': 'ec2'},
+                         {'Key': 'Name', 'Value': self.options.tag}]}],
                 AvailabilityZone=az,
                 CidrBlock='10.{}.{}.0/24'.format(self.vpc_int, subnets+1),
                 VpcId=self.deployed_infra['vpc']['VpcId'],
@@ -229,7 +232,8 @@ class AWSDeployer(Deployer):
         logger.info("Creating internet gateway...")
         spec = {
             'ResourceType': 'internet-gateway',
-            'Tags': [{'Key': 'Use', 'Value': 'CloudPerfTesting'}]}
+            'Tags': [{'Key': 'Use', 'Value': 'CloudPerfTesting'},
+                     {'Key': 'Name', 'Value': self.options.tag}]}
         response = self.ec2client.create_internet_gateway(
             TagSpecifications=[spec],
             DryRun=False
@@ -470,6 +474,21 @@ class AWSDeployer(Deployer):
                 self.deployed_infra['vpc']['eks_clusters'][k8s_cluster_name] = cluster_infra
                 self.write_infra_file()
 
+        # Tag all instances created by the cluster node groups
+        self._tag_eks_node_group_instances()
+
+    def _tag_eks_node_group_instances(self):
+        filters = [
+            {
+                'Name': 'vpc-id',
+                'Values': ['{}'.format(self.deployed_infra['vpc']['VpcId'])]
+            }
+        ]
+        instances = self.ec2.instances.filter(Filters=filters)
+        instance_ids = [instance.instance_id for instance in instances]
+        self.ec2client.create_tags(Resources=instance_ids,
+                                   Tags=[{'Key': 'Name', 'Value': self.options.tag}])
+
     def create_ec2s(self):
         logger.info("Creating ec2s...")
         self.deployed_infra['vpc']['ec2'] = {}
@@ -489,7 +508,8 @@ class AWSDeployer(Deployer):
                     resource_path = 'ec2.{}.{}'.format(ec2_cluster_name, node_group)
                     tags = [{'Key': 'Use', 'Value': 'CloudPerfTesting'},
                             {'Key': 'Role', 'Value': node_group},
-                            {'Key': 'Jenkins Tag', 'Value': self.options.tag}]
+                            {'Key': 'Jenkins Tag', 'Value': self.options.tag},
+                            {'Key': 'Name', 'Value': self.options.tag}]
                     node_role = None
                     for k, v in self.clusters.items():
                         if 'couchbase' in k:

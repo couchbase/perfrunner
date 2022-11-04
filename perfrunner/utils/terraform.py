@@ -856,6 +856,7 @@ class ServerlessTerraform(CapellaTerraform):
         self.tenant_id = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
         self.project_id = self.infra_spec.infrastructure_settings.get('cbc_project', None)
         self.dp_id = self.infra_spec.infrastructure_settings.get('cbc_cluster', None)
+        self.cluster_id = None
 
         if self.tenant_id is None:
             self.tenant_id = self.get_tenant_id()
@@ -949,7 +950,15 @@ class ServerlessTerraform(CapellaTerraform):
         raise_for_status(resp)
         dp_id = resp.json().get('dataplaneId')
         logger.info('Initialised deployment for serverless dataplane {}'.format(dp_id))
-        logger.info('Saving cluster ID to spec file.')
+        logger.info('Saving dataplane ID to spec file.')
+
+        resp = self.serverless_client.get_dataplane_deployment_status(dp_id)
+        raise_for_status(resp)
+        status = resp.json()['status']['state']
+
+        self.cluster_id = resp.json()['couchbaseCluster']['id']
+        if not self.options.enable_autoscaling:
+            self.disable_autoscaling()
 
         self.dp_id = dp_id
         self.infra_spec.config.set('infrastructure', 'cbc_cluster', dp_id)
@@ -971,6 +980,21 @@ class ServerlessTerraform(CapellaTerraform):
         if status != 'ready':
             logger.error('Deployment timed out after {} mins'.format(timeout_mins))
             exit(1)
+
+        resp = self.serverless_client.get_serverless_dataplane_info(dp_id)
+        raise_for_status(resp)
+        logger.info('Deployed dataplane info: {}'.format(pretty_dict(resp.json())))
+
+    def disable_autoscaling(self):
+        logger.info('Creating deployment circuit breaker to prevent auto-scaling.')
+
+        resp = self.serverless_client.create_circuit_breaker(self.cluster_id)
+        raise_for_status(resp)
+
+        resp = self.serverless_client.get_circuit_breaker(self.cluster_id)
+        raise_for_status(resp)
+
+        logger.info('Circuit breaker created: {}'.format(pretty_dict(resp.json())))
 
     def _create_db(self, name, width=1, weight=30):
         logger.info('Adding new serverless DB: {}'.format(name))
@@ -1233,6 +1257,10 @@ def get_args():
                         type=int,
                         default=20,
                         help='Timeout (minutes) for Capella deployment when using internal API')
+    parser.add_argument('--enable-autoscaling',
+                        action='store_true',
+                        help='Enable cluster auto-scaling for serverless dataplanes. If not set, '
+                             'a deployment circuit breaker will be created for the cluster.')
     parser.add_argument('-t', '--tag',
                         help='Global tag for launched instances.')
     parser.add_argument('override',

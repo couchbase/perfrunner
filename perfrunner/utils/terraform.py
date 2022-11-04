@@ -406,7 +406,7 @@ class CapellaTerraform(Terraform):
 
         self.use_internal_api = (
             (self.options.capella_cb_version and self.options.capella_ami) or
-            self.backend == 'gcp' or
+            self.backend == 'azure' or
             len(list(self.infra_spec.clusters)) > 1
         )
 
@@ -632,6 +632,11 @@ class CapellaTerraform(Terraform):
                     )
                 ).lower()
 
+                if infra_spec.capella_backend == 'azure' and 'disk_tier' in node_group_config:
+                    disk_tier = node_group_config['disk_tier']
+                else:
+                    disk_tier = ""
+
                 server_group = {
                     'count': size,
                     'services': [{'type': svc} for svc in services],
@@ -641,7 +646,9 @@ class CapellaTerraform(Terraform):
                         'memoryInGb': 0
                     },
                     'disk': {
-                        'type': storage_class,
+                        'type': storage_class
+                        if infra_spec.capella_backend != 'azure'
+                        else disk_tier,
                         'sizeInGb': int(node_group_config['volume_size']),
                     }
                 }
@@ -669,7 +676,11 @@ class CapellaTerraform(Terraform):
                 "name": name,
                 "description": "",
                 "projectId": self.project_id,
-                "provider": 'hosted{}'.format(self.infra_spec.capella_backend.upper()),
+                "provider": {
+                    'aws': 'hostedAWS',
+                    'gcp': 'hostedGCP',
+                    'azure': 'hostedAzure'
+                }[self.infra_spec.capella_backend.lower()],
                 "region": self.region,
                 "singleAZ": True,
                 "server": None,
@@ -1401,7 +1412,18 @@ def get_args():
     parser.add_argument('--verbose',
                         action='store_true',
                         help='enable verbose logging')
-    parser.add_argument('-r', '--region',
+    parser.add_argument('--azure-region',
+                        choices=[
+                            'eastus',
+                            'westeurope',
+                            'eastus2',
+                            'westus2',
+                            'uksouth'
+                        ],
+                        default='eastus',
+                        dest='region',
+                        help='the cloud region (Azure)')
+    parser.add_argument('-r', '--aws-region',
                         choices=[
                             'us-east-1',
                             'us-east-2',
@@ -1418,8 +1440,9 @@ def get_args():
                             'sa-east-1'
                         ],
                         default='us-east-1',
+                        dest='region',
                         help='the cloud region (AWS)')
-    parser.add_argument('-z', '--zone',
+    parser.add_argument('-z', '--gcp-zone',
                         choices=[
                            'us-central1-a',
                            'us-central1-b',
@@ -1430,6 +1453,7 @@ def get_args():
                            'us-west1-c'
                         ],
                         default='us-west1-b',
+                        dest='zone',
                         help='the cloud zone (GCP)')
     parser.add_argument('--cluster-image',
                         help='Image/AMI name to use for cluster nodes')

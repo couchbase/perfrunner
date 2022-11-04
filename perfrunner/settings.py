@@ -2974,10 +2974,12 @@ class TargetIterator(Iterable):
                         username = bucket
                         password = self.test_config.bucket.password
 
+                    cloud = None
+
                     if self.cluster_spec.dynamic_infrastructure:
-                        yield TargetSettings(host=master, bucket=bucket, username=username,
-                                             password=password, prefix=prefix,
-                                             cloud={'cluster_svc': 'cb-example-perf'})
-                    else:
-                        yield TargetSettings(host=master, bucket=bucket, username=username,
-                                             password=password, prefix=prefix)
+                        cloud = {'cluster_svc': 'cb-example-perf'}
+                    elif self.test_config.cluster.serverless_mode == 'enabled':
+                        cloud = {'serverless': True}
+
+                    yield TargetSettings(host=master, bucket=bucket, username=username,
+                                         password=password, prefix=prefix, cloud=cloud)

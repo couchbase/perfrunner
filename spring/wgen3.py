@@ -13,7 +13,6 @@ from psutil import cpu_count
 from twisted.internet import reactor
 
 from logger import logger
-from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.sync import SyncHotWorkload
 from spring.cbgen3 import CBAsyncGen3, CBGen3
 from spring.docgen import (
@@ -383,8 +382,6 @@ class Worker:
                 params['host'] = self.ts.cloud['dapi_uri']
             else:
                 params['host'] = self.ts.cloud.get('cluster_svc', params['host'])
-
-        logger.info('Connection settings: {}'.format(pretty_dict(params)))
 
         try:
             self.cb = CBGen3(**params)

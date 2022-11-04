@@ -1,6 +1,5 @@
 import copy
 import glob
-import re
 import shutil
 import time
 from multiprocessing import set_start_method
@@ -361,7 +360,7 @@ class PerfTest:
         if not self.test_config.index_settings.couchbase_fts_index_name:
             create_statements = []
             build_statements = []
-            query_contexts = []
+
             for statement in self.test_config.index_settings.statements:
                 check_stmt = statement.replace(" ", "").upper()
                 if 'CREATEINDEX' in check_stmt \
@@ -370,13 +369,9 @@ class PerfTest:
                 elif 'BUILDINDEX' in check_stmt:
                     build_statements.append(statement)
 
-                if (match := re.search(r' ON (?:default:)?(.+?)\(', statement)):
-                    query_context = 'default:{}'.format(match.group(1))
-                    query_contexts.append(query_context)
-
-            for statement, query_context in zip(create_statements, query_contexts):
+            for statement in create_statements:
                 logger.info('Creating index: ' + statement)
-                self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
+                self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
                 cont = False
                 while not cont:
                     building = 0
@@ -390,9 +385,9 @@ class PerfTest:
                     else:
                         time.sleep(10)
 
-            for statement, query_context in zip(build_statements, query_contexts):
+            for statement in build_statements:
                 logger.info('Building index: ' + statement)
-                self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
+                self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
                 cont = False
                 while not cont:
                     building = 0

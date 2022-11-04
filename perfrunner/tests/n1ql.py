@@ -127,8 +127,14 @@ class N1QLTest(PerfTest):
                 plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
                                                         query_context)
             else:
-                bucket = re.search(r' FROM ([^\s]+)', query['statement']).group(1)
-                query_context = 'default:{}.`_default`'.format(bucket)
+                # If we aren't using collections, we could be using couchbase <7 in which case
+                # we can't use query context. Therefore, we will only use query context if we
+                # really should, which is for a serverless test
+                if self.test_config.cluster.serverless_mode == 'enabled':
+                    bucket = re.search(r' FROM ([^\s]+)', query['statement']).group(1)
+                    query_context = 'default:{}.`_default`'.format(bucket)
+                else:
+                    query_context = None
                 plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query['statement'],
                                                         query_context)
             with open('query_plan_{}.json'.format(i), 'w') as fh:

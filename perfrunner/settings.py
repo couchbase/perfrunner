@@ -2910,7 +2910,7 @@ class TestConfig(Config):
 class TargetSettings:
 
     def __init__(self, host: str, bucket: str, username: str, password: str,
-                 prefix: str = None, cloud: dict = None):
+                 prefix: str = None, cloud: dict = {}):
         self.password = password
         self.node = host
         self.bucket = bucket
@@ -2975,7 +2975,7 @@ class TargetIterator(Iterable):
                         username = bucket
                         password = self.test_config.bucket.password
 
-                    cloud = None
+                    cloud = {}
 
                     if self.cluster_spec.dynamic_infrastructure:
                         cloud = {'cluster_svc': 'cb-example-perf'}

@@ -1355,6 +1355,7 @@ class JTSAccessSettings(PhaseSettings):
     FTS_FILE_BASED_REBAL_DISABLED = "true"
 
     def __init__(self, options: dict):
+        super().__init__(options)
         self.jts_repo = self.JTS_REPO
         self.jts_home_dir = self.JTS_HOME_DIR
         self.jts_run_cmd = self.JTS_RUN_CMD

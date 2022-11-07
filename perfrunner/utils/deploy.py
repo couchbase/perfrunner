@@ -378,7 +378,7 @@ class AWSDeployer(Deployer):
                 [{"name": str(cluster_arn),
                   "user":
                       {"exec":
-                          {"apiVersion": "client.authentication.k8s.io/v1alpha1",
+                          {"apiVersion": "client.authentication.k8s.io/v1beta1",
                            "command": "aws",
                            "args":
                                ["--region",
@@ -399,6 +399,14 @@ class AWSDeployer(Deployer):
         self.deployed_infra['vpc']['eks_clusters'][cluster_name]['kube_config'] = cluster_config
         self.deployed_infra['vpc']['eks_clusters'][cluster_name]['kube_config_path'] = config_path
         self.write_infra_file()
+
+    def _get_ami_type_from_instance_name(self, instance_type):
+        # 'AL2_x86_64' for 'x86_64' and 'AL2_ARM_64' for graviton
+        name_part = instance_type.split(".")[0]
+        if len(name_part) >= 3 and name_part[2] == 'g':
+            return 'AL2_ARM_64'
+        else:
+            return 'AL2_x86_64'
 
     def create_eks_node_groups(self):
         if not self.desired_infra['k8s']:
@@ -447,7 +455,7 @@ class AWSDeployer(Deployer):
                     diskSize=int(node_group_spec['volume_size']),
                     subnets=eks_subnets,
                     instanceTypes=[node_group_spec['instance_type']],
-                    amiType='AL2_x86_64' if self.os_arch == 'x86_64' else 'AL2_ARM_64',
+                    amiType=self._get_ami_type_from_instance_name(node_group_spec['instance_type']),
                     remoteAccess={'ec2SshKey': self.infra_spec.aws_key_name},
                     nodeRole=self.deployed_infra['vpc']['eks_node_role_iam_arn'],
                     labels=labels,

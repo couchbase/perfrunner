@@ -369,9 +369,15 @@ class RemoteWorkerManager:
 
     def start_kubernetes_workers(self):
         num_workers = len(self.cluster_spec.workers)
-        misc.inject_num_workers(num_workers,
-                                self.worker_template_path,
-                                self.worker_path)
+        k8s = self.cluster_spec.infrastructure_section('k8s')
+        mem_limit = "{}Gi".format(k8s.get('worker_mem_limit', '128Gi'))
+        cpu_limit = k8s.get('worker_cpu_limit', 80)  # Gb
+
+        misc.inject_workers_spec(num_workers,
+                                 mem_limit,
+                                 cpu_limit,
+                                 self.worker_template_path,
+                                 self.worker_path)
         self.remote.create_from_file(self.worker_path)
         self.remote.wait_for_pods_ready("worker", num_workers)
         worker_idx = 0

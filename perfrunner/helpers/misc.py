@@ -8,6 +8,8 @@ from hashlib import md5
 from typing import Any, Union
 from uuid import uuid4
 
+import yaml
+
 from logger import logger
 
 
@@ -182,13 +184,17 @@ def inject_server_count(cluster_path, server_count):
             print(line.replace(search, replace), end='')
 
 
-def inject_num_workers(num_workers, worker_template_path, worker_path):
-    shutil.copyfile(worker_template_path, worker_path)
-    with fileinput.FileInput(worker_path, inplace=True, backup='.bak') as file:
-        search = 'NUM_WORKERS'
-        replace = '{}'.format(str(num_workers))
-        for line in file:
-            print(line.replace(search, replace), end='')
+def inject_workers_spec(num_workers, mem_limit, cpu_limit, worker_template_path, worker_path):
+    with open(worker_template_path) as file:
+        worker_config = yaml.safe_load(file)
+
+    worker_config['spec']['replicas'] = num_workers
+    limits = worker_config['spec']['template']['spec']['containers'][0]['resources']['limits']
+    limits['cpu'] = cpu_limit
+    limits['memory'] = mem_limit
+
+    with open(worker_path, "w") as file:
+        yaml.dump(worker_config, file)
 
 
 def is_null(element) -> bool:

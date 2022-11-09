@@ -575,6 +575,56 @@ class CloudInstaller(CouchbaseInstaller):
             self.remote.install_uploaded_couchbase(package_name)
 
 
+class ClientUploader(CouchbaseInstaller):
+
+    @property
+    def url(self) -> str:
+        if validators.url(self.options.couchbase_version):
+            return self.options.couchbase_version
+        else:
+            return self.find_package(edition=self.options.edition,
+                                     package='rpm',
+                                     os_release='7')
+
+    def download(self):
+        logger.info('Saving a local copy of {}'.format(self.url))
+        with open('couchbase.rpm', 'wb') as fh:
+            resp = requests.get(self.url)
+            fh.write(resp.content)
+
+    def upload(self):
+        logger.info('Using this URL: {}'.format(self.url))
+        package_name = 'couchbase.rpm'
+
+        logger.info('Uploading {} to clients'.format(package_name))
+        uploads = []
+        user, password = self.cluster_spec.ssh_credentials
+        hosts = self.cluster_spec.workers
+        for host in hosts:
+            logger.info('Uploading {} to {}'.format(package_name, host))
+            args = (host, user, password, package_name)
+
+            def upload_couchbase(to_host, to_user, to_password, package):
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.WarningPolicy())
+                client.connect(to_host, username=to_user, password=to_password)
+                sftp = client.open_sftp()
+                sftp.put(package, "/tmp/{}".format(package))
+                sftp.close()
+
+            worker_process = Process(target=upload_couchbase, args=args)
+            worker_process.daemon = True
+            worker_process.start()
+            uploads.append(worker_process)
+
+        for process in uploads:
+            process.join()
+
+    def install(self):
+        self.download()
+        self.upload()
+
+
 def get_args():
     parser = ArgumentParser()
 
@@ -635,6 +685,8 @@ def main():
             else:
                 raise Exception("{} is not a valid infrastructure provider"
                                 .format(infra_provider))
+        elif cluster_spec.capella_infrastructure:
+            installer = ClientUploader(cluster_spec, args)
         else:
             installer = CloudInstaller(cluster_spec, args)
 

@@ -1,0 +1,53 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunQueryAWSTest
+
+[showfast]
+title = 3 nodes, BigFUN 20M users (320M docs), 99 indexes, s=1 c=99
+component = analyticscloud
+category = latency
+sub_category = {provider}
+orderby = index
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 12800
+analytics_mem_quota = 24576
+initial_nodes = 6
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[collection]
+config = collections/1bucket_1scope_99collections_analytics.json
+
+[analytics]
+analytics_config_file = tests/analytics/config/99_datasets_collection_config.json
+queries = perfrunner/workloads/bigfun/queries_with_index_1s_99c.json
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[restore]
+backup_storage = s3://analytics-bigfun20m-99collections
+backup_repo = default
+threads = 8
+map_data = bucket-1.scope-1.GleambookUsers-1=bucket-1.scope-1.GleambookUsers-1,bucket-1.scope-1.GleambookMessages-1=bucket-1.scope-1.GleambookMessages-1,bucket-1.scope-1.ChirpMessages-1=bucket-1.scope-1.ChirpMessages-1,bucket-1.scope-1.GleambookUsers-2=bucket-1.scope-1.GleambookUsers-2,bucket-1.scope-1.GleambookMessages-2=bucket-1.scope-1.GleambookMessages-2,bucket-1.scope-1.ChirpMessages-2=bucket-1.scope-1.ChirpMessages-2,bucket-1.scope-1.GleambookUsers-3=bucket-1.scope-1.GleambookUsers-3,bucket-1.scope-1.GleambookMessages-3=bucket-1.scope-1.GleambookMessages-3,bucket-1.scope-1.ChirpMessages-3=bucket-1.scope-1.ChirpMessages-3,bucket-1.scope-1.GleambookUsers-4=bucket-1.scope-1.GleambookUsers-4,bucket-1.scope-1.GleambookMessages-4=bucket-1.scope-1.GleambookMessages-4,bucket-1.scope-1.ChirpMessages-4=bucket-1.scope-1.ChirpMessages-4,bucket-1.scope-1.GleambookUsers-5=bucket-1.scope-1.GleambookUsers-5,bucket-1.scope-1.GleambookMessages-5=bucket-1.scope-1.GleambookMessages-5,bucket-1.scope-1.ChirpMessages-5=bucket-1.scope-1.ChirpMessages-5,bucket-1.scope-1.GleambookUsers-6=bucket-1.scope-1.GleambookUsers-6,bucket-1.scope-1.GleambookMessages-6=bucket-1.scope-1.GleambookMessages-6,bucket-1.scope-1.ChirpMessages-6=bucket-1.scope-1.ChirpMessages-6,bucket-1.scope-1.GleambookUsers-7=bucket-1.scope-1.GleambookUsers-7,bucket-1.scope-1.GleambookMessages-7=bucket-1.scope-1.GleambookMessages-7,bucket-1.scope-1.ChirpMessages-7=bucket-1.scope-1.ChirpMessages-7,bucket-1.scope-1.GleambookUsers-8=bucket-1.scope-1.GleambookUsers-8,bucket-1.scope-1.GleambookMessages-8=bucket-1.scope-1.GleambookMessages-8,bucket-1.scope-1.ChirpMessages-8=bucket-1.scope-1.ChirpMessages-8,bucket-1.scope-1.GleambookUsers-9=bucket-1.scope-1.GleambookUsers-9,bucket-1.scope-1.GleambookMessages-9=bucket-1.scope-1.GleambookMessages-9,bucket-1.scope-1.ChirpMessages-9=bucket-1.scope-1.ChirpMessages-9,bucket-1.scope-1.GleambookUsers-10=bucket-1.scope-1.GleambookUsers-10,bucket-1.scope-1.GleambookMessages-10=bucket-1.scope-1.GleambookMessages-10,bucket-1.scope-1.ChirpMessages-10=bucket-1.scope-1.ChirpMessages-10,bucket-1.scope-1.GleambookUsers-11=bucket-1.scope-1.GleambookUsers-11,bucket-1.scope-1.GleambookMessages-11=bucket-1.scope-1.GleambookMessages-11,bucket-1.scope-1.ChirpMessages-11=bucket-1.scope-1.ChirpMessages-11,bucket-1.scope-1.GleambookUsers-12=bucket-1.scope-1.GleambookUsers-12,bucket-1.scope-1.GleambookMessages-12=bucket-1.scope-1.GleambookMessages-12,bucket-1.scope-1.ChirpMessages-12=bucket-1.scope-1.ChirpMessages-12,bucket-1.scope-1.GleambookUsers-13=bucket-1.scope-1.GleambookUsers-13,bucket-1.scope-1.GleambookMessages-13=bucket-1.scope-1.GleambookMessages-13,bucket-1.scope-1.ChirpMessages-13=bucket-1.scope-1.ChirpMessages-13,bucket-1.scope-1.GleambookUsers-14=bucket-1.scope-1.GleambookUsers-14,bucket-1.scope-1.GleambookMessages-14=bucket-1.scope-1.GleambookMessages-14,bucket-1.scope-1.ChirpMessages-14=bucket-1.scope-1.ChirpMessages-14,bucket-1.scope-1.GleambookUsers-15=bucket-1.scope-1.GleambookUsers-15,bucket-1.scope-1.GleambookMessages-15=bucket-1.scope-1.GleambookMessages-15,bucket-1.scope-1.ChirpMessages-15=bucket-1.scope-1.ChirpMessages-15,bucket-1.scope-1.GleambookUsers-16=bucket-1.scope-1.GleambookUsers-16,bucket-1.scope-1.GleambookMessages-16=bucket-1.scope-1.GleambookMessages-16,bucket-1.scope-1.ChirpMessages-16=bucket-1.scope-1.ChirpMessages-16,bucket-1.scope-1.GleambookUsers-17=bucket-1.scope-1.GleambookUsers-17,bucket-1.scope-1.GleambookMessages-17=bucket-1.scope-1.GleambookMessages-17,bucket-1.scope-1.ChirpMessages-17=bucket-1.scope-1.ChirpMessages-17,bucket-1.scope-1.GleambookUsers-18=bucket-1.scope-1.GleambookUsers-18,bucket-1.scope-1.GleambookMessages-18=bucket-1.scope-1.GleambookMessages-18,bucket-1.scope-1.ChirpMessages-18=bucket-1.scope-1.ChirpMessages-18,bucket-1.scope-1.GleambookUsers-19=bucket-1.scope-1.GleambookUsers-19,bucket-1.scope-1.GleambookMessages-19=bucket-1.scope-1.GleambookMessages-19,bucket-1.scope-1.ChirpMessages-19=bucket-1.scope-1.ChirpMessages-19,bucket-1.scope-1.GleambookUsers-20=bucket-1.scope-1.GleambookUsers-20,bucket-1.scope-1.GleambookMessages-20=bucket-1.scope-1.GleambookMessages-20,bucket-1.scope-1.ChirpMessages-20=bucket-1.scope-1.ChirpMessages-20,bucket-1.scope-1.GleambookUsers-21=bucket-1.scope-1.GleambookUsers-21,bucket-1.scope-1.GleambookMessages-21=bucket-1.scope-1.GleambookMessages-21,bucket-1.scope-1.ChirpMessages-21=bucket-1.scope-1.ChirpMessages-21,bucket-1.scope-1.GleambookUsers-22=bucket-1.scope-1.GleambookUsers-22,bucket-1.scope-1.GleambookMessages-22=bucket-1.scope-1.GleambookMessages-22,bucket-1.scope-1.ChirpMessages-22=bucket-1.scope-1.ChirpMessages-22,bucket-1.scope-1.GleambookUsers-23=bucket-1.scope-1.GleambookUsers-23,bucket-1.scope-1.GleambookMessages-23=bucket-1.scope-1.GleambookMessages-23,bucket-1.scope-1.ChirpMessages-23=bucket-1.scope-1.ChirpMessages-23,bucket-1.scope-1.GleambookUsers-24=bucket-1.scope-1.GleambookUsers-24,bucket-1.scope-1.GleambookMessages-24=bucket-1.scope-1.GleambookMessages-24,bucket-1.scope-1.ChirpMessages-24=bucket-1.scope-1.ChirpMessages-24,bucket-1.scope-1.GleambookUsers-25=bucket-1.scope-1.GleambookUsers-25,bucket-1.scope-1.GleambookMessages-25=bucket-1.scope-1.GleambookMessages-25,bucket-1.scope-1.ChirpMessages-25=bucket-1.scope-1.ChirpMessages-25,bucket-1.scope-1.GleambookUsers-26=bucket-1.scope-1.GleambookUsers-26,bucket-1.scope-1.GleambookMessages-26=bucket-1.scope-1.GleambookMessages-26,bucket-1.scope-1.ChirpMessages-26=bucket-1.scope-1.ChirpMessages-26,bucket-1.scope-1.GleambookUsers-27=bucket-1.scope-1.GleambookUsers-27,bucket-1.scope-1.GleambookMessages-27=bucket-1.scope-1.GleambookMessages-27,bucket-1.scope-1.ChirpMessages-27=bucket-1.scope-1.ChirpMessages-27,bucket-1.scope-1.GleambookUsers-28=bucket-1.scope-1.GleambookUsers-28,bucket-1.scope-1.GleambookMessages-28=bucket-1.scope-1.GleambookMessages-28,bucket-1.scope-1.ChirpMessages-28=bucket-1.scope-1.ChirpMessages-28,bucket-1.scope-1.GleambookUsers-29=bucket-1.scope-1.GleambookUsers-29,bucket-1.scope-1.GleambookMessages-29=bucket-1.scope-1.GleambookMessages-29,bucket-1.scope-1.ChirpMessages-29=bucket-1.scope-1.ChirpMessages-29,bucket-1.scope-1.GleambookUsers-30=bucket-1.scope-1.GleambookUsers-30,bucket-1.scope-1.GleambookMessages-30=bucket-1.scope-1.GleambookMessages-30,bucket-1.scope-1.ChirpMessages-30=bucket-1.scope-1.ChirpMessages-30,bucket-1.scope-1.GleambookUsers-31=bucket-1.scope-1.GleambookUsers-31,bucket-1.scope-1.GleambookMessages-31=bucket-1.scope-1.GleambookMessages-31,bucket-1.scope-1.ChirpMessages-31=bucket-1.scope-1.ChirpMessages-31,bucket-1.scope-1.GleambookUsers-32=bucket-1.scope-1.GleambookUsers-32,bucket-1.scope-1.GleambookMessages-32=bucket-1.scope-1.GleambookMessages-32,bucket-1.scope-1.ChirpMessages-32=bucket-1.scope-1.ChirpMessages-32,bucket-1.scope-1.GleambookUsers-33=bucket-1.scope-1.GleambookUsers-33,bucket-1.scope-1.GleambookMessages-33=bucket-1.scope-1.GleambookMessages-33,bucket-1.scope-1.ChirpMessages-33=bucket-1.scope-1.ChirpMessages-33
+use_tls = 1
+
+[access]
+analytics_warmup_ops = 10
+analytics_warmup_workers = 1
+ops = 30
+workers = 1
+
+[clients]
+python_client = 3.2.7

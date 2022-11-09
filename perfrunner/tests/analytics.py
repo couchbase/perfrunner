@@ -8,7 +8,7 @@ from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.worker import tpcds_initial_data_load_task
 from perfrunner.tests import PerfTest
-from perfrunner.tests.rebalance import RebalanceTest
+from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
 from perfrunner.workloads.bigfun.driver import bigfun
 from perfrunner.workloads.bigfun.query_gen import Query
 from perfrunner.workloads.tpcdsfun.driver import tpcds
@@ -362,6 +362,15 @@ class BigFunQueryAWSTest(BigFunQueryTest):
         self.report_kpi(results)
 
 
+class BigFunQueryNoIndexAWSTest(BigFunQueryAWSTest):
+
+    def create_index(self):
+        pass
+
+    def create_index_collections(self):
+        pass
+
+
 class BigFunQueryWithCompressionTest(BigFunQueryTest):
 
     def run(self):
@@ -502,6 +511,36 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
 
     def run(self):
         super().run()
+
+        self.sync()
+
+        self.rebalance_cbas()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
+class BigFunRebalanceAWSTest(BigFunRebalanceTest):
+
+    ALL_HOSTNAMES = True
+
+    def run(self):
+        self.restore_remote_s3()
+
+        self.sync()
+
+        self.rebalance_cbas()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
+class BigFunRebalanceCapellaTest(BigFunRebalanceTest, CapellaRebalanceKVTest):
+
+    ALL_HOSTNAMES = True
+
+    def run(self):
+        self.restore_remote_s3()
 
         self.sync()
 

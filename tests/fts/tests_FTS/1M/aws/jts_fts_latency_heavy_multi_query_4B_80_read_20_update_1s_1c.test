@@ -3,9 +3,9 @@ test = perfrunner.tests.fts.FTSLatencyAccessLoadTest
 
 [showfast]
 title = Heavy , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Prefix, wiki 1M x 1KB, 3 node, 4 buckets,80% read 20%write, FTS
-component = jts
-category = 1M
-sub_category = Latency
+component = jtscloud
+category = Latency
+sub_category = AWS
 orderby = q0b00000010
 
 [cluster]

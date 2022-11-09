@@ -10,7 +10,8 @@ couchbase1 =
     ec2.ec2_cluster_1.ec2_node_group_1.1:kv
     ec2.ec2_cluster_1.ec2_node_group_1.2:kv
     ec2.ec2_cluster_1.ec2_node_group_1.3:kv
-    ec2.ec2_cluster_1.ec2_node_group_1.4:index
+    ec2.ec2_cluster_1.ec2_node_group_1.4:fts
+    ec2.ec2_cluster_1.ec2_node_group_1.5:fts
 
 [clients]
 workers1 =
@@ -29,7 +30,7 @@ storage_class = GP3
 
 [ec2_node_group_1]
 instance_type = c5.4xlarge
-instance_capacity = 4
+instance_capacity = 5
 volume_size = 500
 iops = 12000
 

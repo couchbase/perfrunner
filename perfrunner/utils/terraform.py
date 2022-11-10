@@ -64,7 +64,7 @@ class Terraform:
     def __init__(self, options):
         self.options = options
         self.infra_spec = ClusterSpec()
-        self.infra_spec.parse(self.options.cluster)
+        self.infra_spec.parse(self.options.cluster, override=options.override)
         self.provider = self.infra_spec.cloud_provider
         self.backend = None
         self.uuid = uuid4().hex[0:6] if self.provider != 'aws' else None
@@ -815,7 +815,7 @@ class ServerlessTerraform(CapellaTerraform):
             exit(1)
 
         test_config = TestConfig()
-        test_config.parse(options.test_config)
+        test_config.parse(options.test_config, override=options.override)
         self.test_config = test_config
 
         for prefix, section in {'dapi': 'data_api', 'nebula': 'direct_nebula'}.items():
@@ -1235,6 +1235,9 @@ def get_args():
                         help='Timeout (minutes) for Capella deployment when using internal API')
     parser.add_argument('-t', '--tag',
                         help='Global tag for launched instances.')
+    parser.add_argument('override',
+                        nargs='*',
+                        help='custom cluster and/or test settings')
 
     return parser.parse_args()
 
@@ -1242,7 +1245,7 @@ def get_args():
 def destroy():
     args = get_args()
     infra_spec = ClusterSpec()
-    infra_spec.parse(fname=args.cluster)
+    infra_spec.parse(fname=args.cluster, override=args.override)
     if infra_spec.cloud_provider != 'capella':
         deployer = Terraform(args)
     elif infra_spec.serverless_infrastructure:
@@ -1256,7 +1259,7 @@ def destroy():
 def main():
     args = get_args()
     infra_spec = ClusterSpec()
-    infra_spec.parse(fname=args.cluster)
+    infra_spec.parse(fname=args.cluster, override=args.override)
     if infra_spec.cloud_provider != 'capella':
         deployer = Terraform(args)
     elif infra_spec.serverless_infrastructure:

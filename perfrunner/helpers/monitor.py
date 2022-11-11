@@ -66,6 +66,18 @@ class DefaultMonitor(DefaultRestHelper):
         version, build_number = self.build.split('-')
         self.build_version_number = tuple(map(int, version.split('.'))) + (int(build_number),)
 
+    def wait_for_rebalance_to_begin(self, host):
+        logger.info('Waiting for rebalance to start')
+
+        is_running, progress = self.get_task_status(host, task_type='rebalance')
+
+        while not is_running:
+            time.sleep(self.POLLING_INTERVAL)
+
+            is_running, progress = self.get_task_status(host, task_type='rebalance')
+
+        logger.info('Rebalance started. Rebalance progress: {} %'.format(progress))
+
     def monitor_rebalance(self, host):
         logger.info('Monitoring rebalance status')
 

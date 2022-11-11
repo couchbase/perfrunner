@@ -173,6 +173,13 @@ class ClusterSpec(Config):
             yield cluster_name, hosts
 
     @property
+    def clusters_schemas(self) -> Iterator:
+        if self.capella_infrastructure and not self.serverless_infrastructure:
+            for cluster_name, servers in self.config.items('clusters_schemas'):
+                schemas = servers.split()
+                yield cluster_name, schemas
+
+    @property
     def sgw_clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('sync_gateways'):
             hosts = [s.split(':')[0] for s in servers.split()]

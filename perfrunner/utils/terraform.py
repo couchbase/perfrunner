@@ -317,6 +317,21 @@ class CapellaTerraform(Terraform):
 
     def __init__(self, options):
         super().__init__(options)
+
+        self.test_config = None
+        if options.test_config:
+            test_config = TestConfig()
+            test_config.parse(options.test_config, override=options.override)
+            self.test_config = test_config
+
+        if self.test_config and self.test_config.rebalance_settings.nodes_after:
+            self.node_list['clusters'] = [
+                node
+                for nodes, initial_num in zip(self.infra_spec.infrastructure_clusters.values(),
+                                              self.test_config.cluster.initial_nodes)
+                for node in nodes.strip().split()[:initial_num]
+            ]
+
         self.backend = self.infra_spec.infrastructure_settings['backend']
 
         if public_api_url := self.options.capella_public_api_url:
@@ -419,9 +434,10 @@ class CapellaTerraform(Terraform):
             tfvars.seek(0)
             tfvars.write(file_string)
 
-    def capella_server_group_sizes(self) -> dict:
+    @staticmethod
+    def capella_server_group_sizes(node_schemas):
         server_groups = {}
-        for node in self.node_list['clusters']:
+        for node in node_schemas:
             name, services = node.split(':')[:2]
 
             _, cluster, node_group, _ = name.split('.')
@@ -440,7 +456,8 @@ class CapellaTerraform(Terraform):
 
         return server_group_sizes
 
-    def template_capella_server_internal_api(self):
+    @staticmethod
+    def construct_capella_server_groups(infra_spec, node_schemas):
         """Create correct server group objects for deploying clusters using internal API.
 
         Sample server group template:
@@ -464,15 +481,15 @@ class CapellaTerraform(Terraform):
         }
         ```
         """
-        server_groups = self.capella_server_group_sizes()
+        server_groups = CapellaTerraform.capella_server_group_sizes(node_schemas)
 
         cluster_list = []
         for cluster, server_groups in server_groups.items():
             server_list = []
-            cluster_params = self.infra_spec.infrastructure_section(cluster)
+            cluster_params = infra_spec.infrastructure_section(cluster)
 
             for (node_group, services), size in server_groups.items():
-                node_group_config = self.infra_spec.infrastructure_section(node_group)
+                node_group_config = infra_spec.infrastructure_section(node_group)
 
                 storage_class = node_group_config.get(
                     'volume_type', node_group_config.get(
@@ -494,7 +511,7 @@ class CapellaTerraform(Terraform):
                     }
                 }
 
-                if self.infra_spec.capella_backend == 'aws':
+                if infra_spec.capella_backend == 'aws':
                     server_group['disk']['iops'] = int(node_group_config.get('iops', 3000))
 
                 server_list.append(server_group)
@@ -513,7 +530,8 @@ class CapellaTerraform(Terraform):
             "region": self.region,
             "singleAZ": True,
             "server": None,
-            "specs": self.template_capella_server_internal_api()[0],
+            "specs": self.construct_capella_server_groups(self.infra_spec,
+                                                          self.node_list['clusters'])[0],
             "package": "enterprise"
         }
 
@@ -562,7 +580,9 @@ class CapellaTerraform(Terraform):
         logger.info('Capella cluster successfully queued for deletion.')
 
     def create_tfvar_server_groups(self) -> list[dict]:
-        server_group_sizes = self.capella_server_group_sizes()
+        server_group_sizes = CapellaTerraform.capella_server_group_sizes(
+            self.node_list['clusters']
+        )
         tfvar_server_groups = {cluster: [] for cluster in server_group_sizes}
 
         for cluster, server_groups in server_group_sizes.items():
@@ -620,6 +640,10 @@ class CapellaTerraform(Terraform):
 
     def update_spec(self, non_capella_output, cluster_id):
         super().update_spec(non_capella_output)
+
+        self.infra_spec.config.add_section('clusters_schemas')
+        for option, value in self.infra_spec.infrastructure_clusters.items():
+            self.infra_spec.config.set('clusters_schemas', option, value)
 
         hostnames = self.get_hostnames(cluster_id)
         cluster = self.infra_spec.config.options('clusters')[0]
@@ -915,7 +939,10 @@ class ServerlessTerraform(CapellaTerraform):
                     'image': self.options.capella_ami,
                     'version': self.options.capella_cb_version,
                     'specs': (
-                        specs[0] if (specs := self.template_capella_server_internal_api())
+                        specs[0]
+                        if (specs := self.construct_capella_server_groups(
+                            self.infra_spec, self.node_list['clusters']
+                        ))
                         else None
                     )
                 },

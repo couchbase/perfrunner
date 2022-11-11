@@ -1935,6 +1935,14 @@ class CapellaRestHelper(DefaultRestHelper):
             self.tenant_id, self.project_id, self.cluster_id, bucket)
         return resp
 
+    @retry
+    def update_cluster_configuration(self, new_cluster_config):
+        logger.info('Updating cluster config. New config: {}'
+                    .format(pretty_dict(new_cluster_config)))
+        resp = self.api_client.update_specs(self.tenant_id, self.project_id, self.cluster_id,
+                                            new_cluster_config)
+        return resp
+
 
 class ServerlessRestHelper(DefaultRestHelper):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):

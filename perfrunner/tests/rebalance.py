@@ -9,6 +9,7 @@ from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import DestTargetIterator, UniDirXdcrInitTest
+from perfrunner.utils.terraform import CapellaTerraform
 
 
 class RebalanceTest(PerfTest):
@@ -127,6 +128,47 @@ class RebalanceKVTest(RebalanceTest):
         self.hot_load()
 
         self.reset_kv_stats()
+
+        self.access_bg()
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
+class CapellaRebalanceKVTest(RebalanceTest):
+
+    ALL_HOSTNAMES = True
+
+    COLLECTORS = {'latency': True}
+
+    @timeit
+    def _rebalance(self, services):
+        masters = self.cluster_spec.masters
+        clusters_schemas = self.cluster_spec.clusters_schemas
+        nodes_after = self.rebalance_settings.nodes_after
+        swap = self.rebalance_settings.swap
+
+        if swap:
+            logger.info('Swap rebalance not available for Capella tests. Ignoring.')
+
+        for master, (_, schemas), nodes_after in zip(masters, clusters_schemas, nodes_after):
+            nodes_after_rebalance = schemas[:nodes_after]
+
+            new_cluster_config = {
+                'specs': CapellaTerraform.construct_capella_server_groups(self.cluster_spec,
+                                                                          nodes_after_rebalance)[0]
+            }
+
+            self.rest.update_cluster_configuration(new_cluster_config)
+            self.monitor.wait_for_rebalance_to_begin(master)
+            self.monitor_progress(master)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
 
         self.access_bg()
         self.rebalance()

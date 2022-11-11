@@ -58,6 +58,7 @@ class RebalanceTest(PerfTest):
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
+        public_to_private_ip = self.cluster_spec.servers_public_to_private_ip
 
         for (_, servers), initial_nodes, nodes_after in zip(clusters,
                                                             initial_nodes,
@@ -79,6 +80,9 @@ class RebalanceTest(PerfTest):
                 ejected_nodes = servers[initial_nodes - swap:initial_nodes]
             else:
                 continue
+
+            if public_to_private_ip:
+                new_nodes = [public_to_private_ip[node] for node in new_nodes]
 
             for node in new_nodes:
                 self.rest.add_node(master, node, services=services)

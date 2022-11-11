@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyAccessLoadTest
 
 [showfast]
-title = Heavy , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Prefix, wiki 1M x 1KB, 3 node, 4 buckets,80% read 20%write, FTS
+title = Heavy , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Prefix, wiki 1M x 1KB, 3 node, 4 buckets,80 read 20 write, FTS
 component = jtscloud
 category = Latency
 sub_category = AWS

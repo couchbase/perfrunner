@@ -982,7 +982,11 @@ class ClusterManager:
     def get_debug_rpm_url(self):
         release, build_number = self.build.split('-')
         build = tuple(map(int, release.split('.'))) + (int(build_number),)
-        if build > (7, 0, 0, 0):
+        if build > (7, 2, 0, 0):
+            release = 'elixir'
+        elif build > (7, 1, 0, 0):
+            release = 'neo'
+        elif build > (7, 0, 0, 0):
             release = 'cheshire-cat'
         elif build > (6, 5, 0, 0) and build < (7, 0, 0, 0):
             release = 'mad-hatter'

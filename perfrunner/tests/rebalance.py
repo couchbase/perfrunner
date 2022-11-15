@@ -82,7 +82,7 @@ class RebalanceTest(PerfTest):
             else:
                 continue
 
-            if public_to_private_ip:
+            if self.cluster_spec.using_private_cluster_ips:
                 new_nodes = [public_to_private_ip[node] for node in new_nodes]
 
             for node in new_nodes:

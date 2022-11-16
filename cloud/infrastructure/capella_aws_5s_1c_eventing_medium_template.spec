@@ -10,8 +10,8 @@ couchbase1 =
     ec2.ec2_cluster_1.ec2_node_group_1.1:kv
     ec2.ec2_cluster_1.ec2_node_group_1.2:kv
     ec2.ec2_cluster_1.ec2_node_group_1.3:kv
-    ec2.ec2_cluster_1.ec2_node_group_1.4:fts
-    ec2.ec2_cluster_1.ec2_node_group_1.5:fts
+    ec2.ec2_cluster_1.ec2_node_group_1.4:eventing
+    ec2.ec2_cluster_1.ec2_node_group_1.5:eventing
 
 [clients]
 workers1 =

@@ -314,6 +314,7 @@ class ClusterManager:
             for master in self.cluster_spec.masters:
                 for bucket_name in self.test_config.buckets:
                     bucket_params = {
+                        'host': master,
                         'name': bucket_name,
                         'ram_quota': per_bucket_quota,
                         'replica_number': self.test_config.bucket.replica_number,
@@ -330,7 +331,6 @@ class ClusterManager:
                         })
                     else:
                         bucket_params.update({
-                            'host': master,
                             'password': self.test_config.bucket.password,
                             'replica_index': self.test_config.bucket.replica_index,
                             'eviction_policy': self.test_config.bucket.eviction_policy,
@@ -388,6 +388,7 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.eventing_buckets:
                 bucket_params = {
+                    'host': master,
                     'name': bucket_name,
                     'ram_quota': per_bucket_quota,
                     'replica_number': self.test_config.bucket.replica_number,
@@ -403,7 +404,6 @@ class ClusterManager:
                     })
                 else:
                     bucket_params.update({
-                        'host': master,
                         'password': self.test_config.bucket.password,
                         'replica_index': self.test_config.bucket.replica_index,
                         'eviction_policy': self.test_config.bucket.eviction_policy,
@@ -419,6 +419,7 @@ class ClusterManager:
             return
         for master in self.cluster_spec.masters:
             bucket_params = {
+                'host': master,
                 'name': self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME,
                 'ram_quota': self.test_config.cluster.eventing_metadata_bucket_mem_quota,
                 'replica_number': self.test_config.bucket.replica_number,
@@ -434,7 +435,6 @@ class ClusterManager:
                 })
             else:
                 bucket_params.update({
-                    'host': master,
                     'password': self.test_config.bucket.password,
                     'replica_index': self.test_config.bucket.replica_index,
                     'eviction_policy': self.test_config.bucket.eviction_policy,
@@ -1045,7 +1045,7 @@ class ClusterManager:
                 client_ips = [
                     dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
                 ]
-            self.rest.add_allowed_ips(client_ips)
+            self.rest.add_allowed_ips_all_clusters(client_ips)
 
     def allow_ips_for_serverless_dbs(self):
         for db_id in self.test_config.buckets:

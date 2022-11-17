@@ -40,8 +40,8 @@ def main():
     # 2. Whitelist the local IP
     if cluster_spec.capella_infrastructure and not cluster_spec.serverless_infrastructure:
         rest = CapellaRestHelper(cluster_spec, test_config)
-        rest.allow_my_ip()
-        rest.create_db_user(*cluster_spec.rest_credentials)
+        rest.allow_my_ip_all_clusters()
+        rest.create_db_user_all_clusters(*cluster_spec.rest_credentials)
 
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 

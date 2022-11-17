@@ -146,23 +146,27 @@ class CapellaRebalanceKVTest(RebalanceTest):
     def _rebalance(self, services):
         masters = self.cluster_spec.masters
         clusters_schemas = self.cluster_spec.clusters_schemas
+        initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
 
         if swap:
             logger.info('Swap rebalance not available for Capella tests. Ignoring.')
 
-        for master, (_, schemas), nodes_after in zip(masters, clusters_schemas, nodes_after):
-            nodes_after_rebalance = schemas[:nodes_after]
+        for master, (_, schemas), initial_nodes, nodes_after in zip(masters, clusters_schemas,
+                                                                    initial_nodes, nodes_after):
+            if initial_nodes != nodes_after:
+                nodes_after_rebalance = schemas[:nodes_after]
 
-            new_cluster_config = {
-                'specs': CapellaTerraform.construct_capella_server_groups(self.cluster_spec,
-                                                                          nodes_after_rebalance)[0]
-            }
+                new_cluster_config = {
+                    'specs': CapellaTerraform.construct_capella_server_groups(
+                        self.cluster_spec, nodes_after_rebalance
+                    )[0]
+                }
 
-            self.rest.update_cluster_configuration(new_cluster_config)
-            self.monitor.wait_for_rebalance_to_begin(master)
-            self.monitor_progress(master)
+                self.rest.update_cluster_configuration(master, new_cluster_config)
+                self.monitor.wait_for_rebalance_to_begin(master)
+                self.monitor_progress(master)
 
     def run(self):
         self.load()

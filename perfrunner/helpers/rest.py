@@ -1846,10 +1846,19 @@ class CapellaRestHelper(DefaultRestHelper):
         )
         self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
         self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
-        self.cluster_id = self.cluster_spec.infrastructure_settings['cbc_cluster']
+        self.cluster_ids = self.cluster_spec.infrastructure_settings['cbc_cluster'].split()
         self.api_client = CapellaAPIDedicated(
             self.base_url, self._secret_key, self._access_key, self._cbc_user, self._cbc_pwd
         )
+
+    def hostname_to_cluster_id(self, hostname: str):
+        if len(self.cluster_ids) == 1:
+            return self.cluster_ids[0]
+
+        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
+            if hostname in hostnames:
+                return self.cluster_ids[i]
+        return None
 
     @property
     def _access_key(self):
@@ -1868,17 +1877,23 @@ class CapellaRestHelper(DefaultRestHelper):
         return os.environ.get('CBC_PWD', None)
 
     def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
-        return self.cluster_spec.servers_by_role(role)
+        cluster_idx = self.cluster_ids.index(self.hostname_to_cluster_id(master_node))
+        return self.cluster_spec.servers_by_cluster_and_role(role)[cluster_idx]
+
+    def create_db_user_all_clusters(self, username: str, password: str):
+        for cluster_id in self.cluster_ids:
+            self.create_db_user(cluster_id, username, password)
 
     @retry
-    def create_db_user(self, username: str, password: str):
+    def create_db_user(self, cluster_id: str, username: str, password: str):
         logger.info('Adding DB credential')
         resp = self.api_client.create_db_user(
-            self.tenant_id, self.project_id, self.cluster_id, username, password)
+            self.tenant_id, self.project_id, cluster_id, username, password)
         return resp
 
     @retry
-    def create_bucket(self, name: str,
+    def create_bucket(self, host: str,
+                      name: str,
                       ram_quota: int,
                       replica_number: int = 1,
                       conflict_resolution_type: str = "seqno",
@@ -1887,7 +1902,9 @@ class CapellaRestHelper(DefaultRestHelper):
                       backend_storage: str = "couchstore",
                       ttl_value: int = 0,
                       ttl_unit: str = None):
-        logger.info('Adding new bucket: {}'.format(name))
+        cluster_id = self.hostname_to_cluster_id(host)
+
+        logger.info('Adding new bucket on cluster {}: {}'.format(cluster_id, name))
 
         data = {
             'name': name,
@@ -1905,41 +1922,52 @@ class CapellaRestHelper(DefaultRestHelper):
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 
-        resp = self.api_client.create_bucket(self.tenant_id, self.project_id, self.cluster_id, data)
+        resp = self.api_client.create_bucket(self.tenant_id, self.project_id, cluster_id, data)
+        return resp
+
+    def allow_my_ip_all_clusters(self):
+        for cluster_id in self.cluster_ids:
+            self.allow_my_ip(cluster_id)
+
+    def add_allowed_ips_all_clusters(self, ips: list[str]):
+        for cluster_id in self.cluster_ids:
+            self.add_allowed_ips(cluster_id, ips)
+
+    @retry
+    def allow_my_ip(self, cluster_id):
+        logger.info('Whitelisting own IP on cluster {}'.format(cluster_id))
+        resp = self.api_client.allow_my_ip(self.tenant_id, self.project_id, cluster_id)
         return resp
 
     @retry
-    def allow_my_ip(self):
-        logger.info('Whitelisting own IP')
-        resp = self.api_client.allow_my_ip(self.tenant_id, self.project_id, self.cluster_id)
-        return resp
-
-    @retry
-    def add_allowed_ips(self, ips: list[str]):
-        logger.info('Whitelisting IPs: {}'.format(ips))
+    def add_allowed_ips(self, cluster_id, ips: list[str]):
+        logger.info('Whitelisting IPs on cluster {}: {}'.format(cluster_id, ips))
         resp = self.api_client.add_allowed_ips(
-            self.tenant_id, self.project_id, self.cluster_id, ips)
+            self.tenant_id, self.project_id, cluster_id, ips)
         return resp
 
     @retry
     def flush_bucket(self, host: str, bucket: str):
-        logger.info('Flushing bucket: {}'.format(bucket))
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Flushing bucket on cluster {}: {}'.format(cluster_id, bucket))
         resp = self.api_client.flush_bucket(
-            self.tenant_id, self.project_id, self.cluster_id, bucket)
+            self.tenant_id, self.project_id, cluster_id, bucket)
         return resp
 
     @retry
     def delete_bucket(self, host: str, bucket: str):
-        logger.info('Deleting bucket: {}'.format(bucket))
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Deleting bucket on cluster {}: {}'.format(cluster_id, bucket))
         resp = self.api_client.delete_bucket(
-            self.tenant_id, self.project_id, self.cluster_id, bucket)
+            self.tenant_id, self.project_id, cluster_id, bucket)
         return resp
 
     @retry
-    def update_cluster_configuration(self, new_cluster_config):
-        logger.info('Updating cluster config. New config: {}'
-                    .format(pretty_dict(new_cluster_config)))
-        resp = self.api_client.update_specs(self.tenant_id, self.project_id, self.cluster_id,
+    def update_cluster_configuration(self, host: str, new_cluster_config: dict):
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Updating cluster config for cluster {}. New config: {}'
+                    .format(cluster_id, pretty_dict(new_cluster_config)))
+        resp = self.api_client.update_specs(self.tenant_id, self.project_id, cluster_id,
                                             new_cluster_config)
         return resp
 

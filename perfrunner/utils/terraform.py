@@ -362,9 +362,13 @@ class CapellaTerraform(Terraform):
         )
 
         self.use_internal_api = (
-            (self.options.capella_cb_version and self.options.capella_ami) or self.backend == 'gcp'
+            (self.options.capella_cb_version and self.options.capella_ami) or
+            self.backend == 'gcp' or
+            len(list(self.infra_spec.clusters)) > 1
         )
         self.capella_timeout = max(0, self.options.capella_timeout)
+
+        self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
 
     def deploy(self):
         # Configure terraform
@@ -375,22 +379,23 @@ class CapellaTerraform(Terraform):
         # Deploy non-capella resources
         self.terraform_apply(self.backend)
         non_capella_output = self.terraform_output(self.backend)
+        Terraform.update_spec(self, non_capella_output)
 
         # Deploy capella cluster
         if self.use_internal_api:
-            cluster_id = self.deploy_cluster_internal_api()
+            self.deploy_cluster_internal_api()
         else:
             self.terraform_apply('capella')
             capella_output = self.terraform_output('capella')
-            cluster_id = capella_output['cluster_id']['value']
+            self.cluster_ids = [capella_output['cluster_id']['value']]
 
         # Update cluster spec file
-        self.update_spec(non_capella_output, cluster_id)
+        self.update_spec()
 
         # Do VPC peering
         if self.options.vpc_peering:
             network_info = non_capella_output['network']['value']
-            self.peer_vpc(network_info, cluster_id)
+            self.peer_vpc(network_info, self.cluster_ids[0])
 
     def destroy(self):
         # Tear down VPC peering connection
@@ -400,11 +405,8 @@ class CapellaTerraform(Terraform):
         self.terraform_destroy(self.backend)
 
         # Destroy capella cluster
-        use_internal_api = self.infra_spec.infrastructure_settings.get('cbc_use_internal_api', 0)
-
-        if int(use_internal_api):
-            cluster_id = self.infra_spec.infrastructure_settings['cbc_cluster']
-            self.destroy_cluster_internal_api(cluster_id)
+        if int(self.infra_spec.infrastructure_settings.get('cbc_use_internal_api', 0)):
+            self.destroy_cluster_internal_api()
         else:
             self.terraform_destroy('capella')
 
@@ -521,63 +523,76 @@ class CapellaTerraform(Terraform):
         return cluster_list
 
     def deploy_cluster_internal_api(self):
-        config = {
-            "cidr": self.get_available_cidr(),
-            "name": "perf-cluster-{}".format(self.uuid),
-            "description": "",
-            "projectId": self.project_id,
-            "provider": 'hosted{}'.format(self.infra_spec.capella_backend.upper()),
-            "region": self.region,
-            "singleAZ": True,
-            "server": None,
-            "specs": self.construct_capella_server_groups(self.infra_spec,
-                                                          self.node_list['clusters'])[0],
-            "package": "enterprise"
-        }
-
-        logger.info(config)
-
-        if self.options.capella_cb_version and self.options.capella_ami:
-            config['overRide'] = {
-                'token': os.getenv('CBC_OVERRIDE_TOKEN'),
-                'server': self.options.capella_cb_version,
-                'image': self.options.capella_ami
-            }
-            logger.info('Deploying with custom AMI: {}'.format(self.options.capella_ami))
-
-        resp = self.api_client.create_cluster_customAMI(self.tenant_id, config)
-        raise_for_status(resp)
-        cluster_id = resp.json().get('id')
-        logger.info('Initialised cluster deployment for cluster {}'.format(cluster_id))
-        logger.info('Saving cluster ID to spec file.')
-
-        self.infra_spec.config.set('infrastructure', 'cbc_cluster', cluster_id)
         self.infra_spec.config.set('infrastructure', 'cbc_use_internal_api', "1")
-        self.infra_spec.update_spec_file()
+
+        specs = self.construct_capella_server_groups(self.infra_spec, self.node_list['clusters'])
+        names = ['perf-cluster-{}'.format(self.uuid) for _ in specs]
+        if len(names) > 1:
+            names = ['{}-{}'.format(name, i) for i, name in enumerate(names)]
+
+        for name, spec in zip(names, specs):
+            config = {
+                "cidr": self.get_available_cidr(),
+                "name": name,
+                "description": "",
+                "projectId": self.project_id,
+                "provider": 'hosted{}'.format(self.infra_spec.capella_backend.upper()),
+                "region": self.region,
+                "singleAZ": True,
+                "server": None,
+                "specs": spec,
+                "package": "enterprise"
+            }
+
+            logger.info(pretty_dict(config))
+
+            if self.options.capella_cb_version and self.options.capella_ami:
+                config['overRide'] = {
+                    'token': os.getenv('CBC_OVERRIDE_TOKEN'),
+                    'server': self.options.capella_cb_version,
+                    'image': self.options.capella_ami
+                }
+                logger.info('Deploying cluster with custom AMI: {}'
+                            .format(self.options.capella_ami))
+
+            resp = self.api_client.create_cluster_customAMI(self.tenant_id, config)
+            raise_for_status(resp)
+            cluster_id = resp.json().get('id')
+            self.cluster_ids.append(cluster_id)
+
+            logger.info('Initialised cluster deployment for cluster {}'.format(cluster_id))
+            logger.info('Saving cluster ID to spec file.')
+            self.infra_spec.config.set('infrastructure', 'cbc_cluster',
+                                       '\n'.join(self.cluster_ids))
+            self.infra_spec.update_spec_file()
 
         timeout_mins = self.capella_timeout
         interval_secs = 30
-        status = None
+        pending_clusters = [cluster_id for cluster_id in self.cluster_ids]
         t0 = time()
-        while (time() - t0) < timeout_mins * 60:
-            status = self.api_client.get_cluster_status(cluster_id).json().get('status')
-            logger.info('Cluster state: {}'.format(status))
-            if status != 'healthy':
-                sleep(interval_secs)
-            else:
-                break
+        while pending_clusters and (time() - t0) < timeout_mins * 60:
+            sleep(interval_secs)
 
-        if status != 'healthy':
+            statuses = []
+            for cluster_id in pending_clusters:
+                status = self.api_client.get_cluster_status(cluster_id).json().get('status')
+                logger.info('Cluster state for {}: {}'.format(cluster_id, status))
+                statuses.append(status)
+
+            pending_clusters = [
+                pending_clusters[i] for i, status in enumerate(statuses) if status != 'healthy'
+            ]
+
+        if pending_clusters:
             logger.error('Deployment timed out after {} mins'.format(timeout_mins))
             exit(1)
 
-        return cluster_id
-
-    def destroy_cluster_internal_api(self, cluster_id):
-        logger.info('Deleting Capella cluster...')
-        resp = self.api_client.delete_cluster(cluster_id)
-        raise_for_status(resp)
-        logger.info('Capella cluster successfully queued for deletion.')
+    def destroy_cluster_internal_api(self):
+        for cluster_id in self.cluster_ids:
+            logger.info('Deleting Capella cluster {}...'.format(cluster_id))
+            resp = self.api_client.delete_cluster(cluster_id)
+            raise_for_status(resp)
+            logger.info('Capella cluster successfully queued for deletion.')
 
     def create_tfvar_server_groups(self) -> list[dict]:
         server_group_sizes = CapellaTerraform.capella_server_group_sizes(
@@ -638,19 +653,16 @@ class CapellaTerraform(Terraform):
         ret_list = kv_nodes + non_kv_nodes
         return ret_list
 
-    def update_spec(self, non_capella_output, cluster_id):
-        super().update_spec(non_capella_output)
-
+    def update_spec(self):
         self.infra_spec.config.add_section('clusters_schemas')
         for option, value in self.infra_spec.infrastructure_clusters.items():
             self.infra_spec.config.set('clusters_schemas', option, value)
 
-        hostnames = self.get_hostnames(cluster_id)
-        cluster = self.infra_spec.config.options('clusters')[0]
-        self.infra_spec.config.set('clusters', cluster, '\n' + '\n'.join(hostnames))
-        self.infra_spec.config.set('infrastructure', 'cbc_cluster', cluster_id)
-        if self.use_internal_api:
-            self.infra_spec.config.set('infrastructure', 'cbc_use_internal_api', "1")
+        for i, cluster_id in enumerate(self.cluster_ids):
+            hostnames = self.get_hostnames(cluster_id)
+            cluster = self.infra_spec.config.options('clusters')[i]
+            self.infra_spec.config.set('clusters', cluster, '\n' + '\n'.join(hostnames))
+
         self.infra_spec.update_spec_file()
 
     def peer_vpc(self, network_info, cluster_id):

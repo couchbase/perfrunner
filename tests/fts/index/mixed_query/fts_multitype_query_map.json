@@ -30,6 +30,11 @@
             "test_query_type": "numeric",
             "test_data_file": "../tests/fts/data/enduser/numeric_range.txt",
             "test_query_field": "num"
+        },
+        {
+            "test_query_type": "match_phrase",
+            "test_data_file": "../tests/fts/data/unified/match_phrase.txt",
+            "test_query_field": "fts_field1"
         }
     ]
 }

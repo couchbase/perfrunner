@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyAccessLoadTest
 
 [showfast]
-title = Light , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Prefix, wiki 1M x 1KB, 3 node, 4 buckets,80 read 20 write, FTS
+title = Heavy , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Match Phrase, Prefix, wiki 1M x 1KB, 3 node, 4 buckets, , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Match Phrase, Prefix, wiki 1M x 1KB, 3 node, 4 buckets, 4 bucket access phase, 80 read 20 write, FTS
 component = jtscloud
 category = Latency
 sub_category = AWS
@@ -20,6 +20,7 @@ config = collections/4buckets_1scope_1collection_basic.json
 [jts]
 index_creation_style = async
 jts_repo_branch = multi_query_support
+logging_method = bucket_wise
 jts_instances = 1
 test_duration = 60
 test_total_docs = 1000000
@@ -30,7 +31,7 @@ test_driver = couchbase
 test_stats_limit = 1000000
 test_stats_aggregation_step = 100
 test_debug = false
-test_query_limit = 10
+test_query_limit = 500
 test_worker_type = validatedLatency
 couchbase_index_name = perf_fts_index
 couchbase_index_configmap = tests/fts/index/mixed_query/fts_multitype_query_map.json
@@ -52,8 +53,8 @@ updates = 80
 deletes = 0
 throughput = 100000
 items = 1000000
-workers = 1
-time = 360
+workers = 5
+time = 450
 doc_gen = unified
 
 [profiling]

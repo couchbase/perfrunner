@@ -23,31 +23,36 @@ class JTSCollector(Collector):
                                    collector=self.COLLECTOR)
 
     def _consolidate_results(self, filename_pattern: str, storage_name: str):
-        all_results = dict()
         self.results[storage_name] = dict()
-        for file in glob("{}/*/{}".format(self.settings.jts_logs_dir, filename_pattern)):
-            f = open(file)
-            lines = f.readlines()
-            for line in lines:
-                kv = line.split(":")
-                k = 0
-                v = 0
-                if len(kv) > 0:
-                    k = int(kv[0])
-                    if len(kv) > 1:
-                        v = float(kv[1].rstrip('\n'))
-                    else:
-                        v = 0
-                if k not in all_results:
-                    all_results[k] = list()
-                all_results[k].append(v)
+        for bucket in self.buckets:
+            all_results = dict()
+            self.results[storage_name][bucket] = dict()
+            new_filename = filename_pattern
+            if self.settings.logging_method == "bucket_wise":
+                new_filename = bucket + "_" + filename_pattern
+            for file in glob("{}/*/{}".format(self.settings.jts_logs_dir, new_filename)):
+                f = open(file)
+                lines = f.readlines()
+                for line in lines:
+                    kv = line.split(":")
+                    k = 0
+                    v = 0
+                    if len(kv) > 0:
+                        k = int(kv[0])
+                        if len(kv) > 1:
+                            v = float(kv[1].rstrip('\n'))
+                        else:
+                            v = 0
+                    if k not in all_results:
+                        all_results[k] = list()
+                    all_results[k].append(v)
 
-        for k in all_results.keys():
-            self.results[storage_name][k] = 0
-            for v in all_results[k]:
-                self.results[storage_name][k] += float(v)
-            if storage_name == "latency":
-                self.results[storage_name][k] /= len(all_results[k])
+            for k in all_results.keys():
+                self.results[storage_name][bucket][k] = 0
+                for v in all_results[k]:
+                    self.results[storage_name][bucket][k] += float(v)
+                if storage_name == "latency":
+                    self.results[storage_name][bucket][k] /= len(all_results[k])
 
     def sample(self):
         pass
@@ -62,18 +67,18 @@ class JTSCollector(Collector):
 
         for bucket in self.get_buckets():
             if "throughput" in self.results:
-                for k in self.results["throughput"].keys():
+                for k in self.results["throughput"][bucket].keys():
                     data = {
-                        'jts_throughput': float(self.results["throughput"][k])
+                        'jts_throughput': float(self.results["throughput"][bucket][k])
                     }
                     self.append_to_store(data=data, timestamp=timestamp_offset + int(k) * 1000,
                                          cluster=self.cluster, bucket=bucket,
                                          collector=self.COLLECTOR)
 
             if "latency" in self.results:
-                for k in self.results["latency"].keys():
+                for k in self.results["latency"][bucket].keys():
                     data = {
-                        'jts_latency': float(self.results["latency"][k])
+                        'jts_latency': float(self.results["latency"][bucket][k])
                     }
                     self.append_to_store(data=data, timestamp=timestamp_offset + int(k) * 1000,
                                          cluster=self.cluster, bucket=bucket,
@@ -92,9 +97,9 @@ class JTSThroughputCollector(JTSCollector):
 
         if "throughput" in self.results:
             for bucket in self.get_buckets():
-                for k in self.results["throughput"].keys():
+                for k in self.results["throughput"][bucket].keys():
                     data = {
-                        'jts_throughput': float(self.results["throughput"][k])
+                        'jts_throughput': float(self.results["throughput"][bucket][k])
                     }
                     self.append_to_store(data=data, timestamp=timestamp_offset + int(k)*1000,
                                          cluster=self.cluster, bucket=bucket,
@@ -112,9 +117,9 @@ class JTSLatencyCollector(JTSCollector):
         timestamp_offset = round(time.time() * 1000)
         self.read_stats()
         for bucket in self.get_buckets():
-            for k in self.results["latency"].keys():
+            for k in self.results["latency"][bucket].keys():
                 data = {
-                    'jts_latency': float(self.results["latency"][k])
+                    'jts_latency': float(self.results["latency"][bucket][k])
                 }
                 self.append_to_store(data=data, timestamp=timestamp_offset + int(k) * 1000,
                                      cluster=self.cluster, bucket=bucket,

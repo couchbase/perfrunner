@@ -1423,6 +1423,9 @@ class JTSAccessSettings(PhaseSettings):
         self.fts_max_dcp_partitions = options.get('fts_max_dcp_partitions',
                                                   self.FTS_MAX_DCP_PARTITIONS)
         self.fts_node_level_parameters = {}
+        # Adding bucket wise latency logger for fts
+        # (please use this only with multi_query_support JTS branch)
+        self.logging_method = options.get('logging_method', None)
         if self.ftspartitions != self.FTS_PARTITIONS:
             self.fts_node_level_parameters["maxConcurrentPartitionMovesPerNode"] = \
                 self.ftspartitions

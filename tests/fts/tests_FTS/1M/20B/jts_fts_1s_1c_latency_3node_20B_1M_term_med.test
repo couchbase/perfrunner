@@ -27,7 +27,8 @@ item_size = 73
 
 
 [jts]
-jts_repo_branch = korry_jts_enhancements
+jts_repo_branch = multi_query_support
+logging_method = bucket_wise
 test_collection_query_mode = default
 index_groups = 1
 indexes_per_group = 1

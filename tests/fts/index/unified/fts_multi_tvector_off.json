@@ -42,6 +42,7 @@
             "enabled": true,
             "fields": [
               {
+                "include_term_vectors": true,
                 "index": true,
                 "name": "fts_field1",
                 "type": "text"

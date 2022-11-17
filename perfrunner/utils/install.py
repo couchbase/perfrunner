@@ -106,6 +106,17 @@ class OperatorInstaller:
             self.operator_backup_tag = '{}operator-backup:latest' \
                 .format(self.CB_VANILLA_REGISTRY_BASE)
 
+        self.exporter_version = self.options.exporter_version or self.cluster_spec \
+            .infrastructure_settings.get('exporter_version', '1.0.7')  # For now default to 1.0.7
+        if "-" in self.exporter_version:
+            self.exporter_release = self.exporter_version.split("-")[0]
+            self.exporter_tag = '{}exporter:{}' \
+                .format(self.CB_VANILLA_REGISTRY_BASE, self.exporter_version)
+        else:
+            self.exporter_release = self.exporter_version
+            self.exporter_tag = 'couchbase/exporter:{}' \
+                .format(self.exporter_version)
+
         self.node_count = len(self.cluster_spec.infrastructure_clusters['couchbase1'].split())
 
         self.remote = RemoteHelper(cluster_spec)
@@ -211,6 +222,7 @@ class OperatorInstaller:
             self.cb_cluster_path,
             self.couchbase_tag,
             self.operator_backup_tag,
+            self.exporter_tag,
             self.node_count)
 
     def wait_for_operator_and_admission(self):
@@ -592,6 +604,10 @@ def get_args():
     parser.add_argument('-ov', '--operator-version',
                         dest='operator_version',
                         help='the build version for the couchbase operator')
+    parser.add_argument('--exporter-version',
+                        dest='exporter_version',
+                        default=None,
+                        help='the build version for the couchbase prometheus exporter')
     parser.add_argument('-obv', '--operator-backup-version',
                         dest='operator_backup_version',
                         help='the build version for the couchbase operator')

@@ -122,7 +122,8 @@ def inject_config_tags(config_path,
 
 def inject_cluster_tags(cluster_path,
                         couchbase_tag,
-                        operator_backup_tag):
+                        operator_backup_tag,
+                        exporter_tag):
     #  couchbase
     with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
         search = 'couchbase/server:build'
@@ -134,6 +135,13 @@ def inject_cluster_tags(cluster_path,
     with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
         search = 'couchbase/operator-backup:build'
         replace = operator_backup_tag
+        for line in file:
+            print(line.replace(search, replace), end='')
+
+    #  exporter
+    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
+        search = 'couchbase/exporter:build'
+        replace = exporter_tag
         for line in file:
             print(line.replace(search, replace), end='')
 

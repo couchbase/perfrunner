@@ -200,12 +200,14 @@ class RemoteKubernetes(Remote):
                                  cb_cluster_path,
                                  couchbase_tag,
                                  operator_tag,
+                                 exporter_tag,
                                  node_count):
         misc.copy_template(template_cb_cluster_path,
                            cb_cluster_path)
         misc.inject_cluster_tags(cb_cluster_path,
                                  couchbase_tag,
-                                 operator_tag)
+                                 operator_tag,
+                                 exporter_tag)
         misc.inject_server_count(cb_cluster_path,
                                  node_count)
         self.create_from_file(cb_cluster_path)

@@ -296,9 +296,11 @@ class PerfTest:
             for server in self.index_nodes:
                 self.monitor.monitor_indexing(server)
 
-    def check_num_items(self, bucket_items: dict = None, max_retry: int = None):
+    def check_num_items(self, bucket_items: dict = None, max_retry: int = None,
+                        target_iterator: TargetIterator = None):
+        target_iterator = target_iterator or self.target_iterator
         if bucket_items:
-            for target in self.target_iterator:
+            for target in target_iterator:
                 num_items = bucket_items.get(target.bucket, None)
                 if num_items:
                     num_items = num_items * (1 + self.test_config.bucket.replica_number)
@@ -309,7 +311,7 @@ class PerfTest:
                         max_retry=max_retry
                     )
         elif getattr(self.test_config.load_settings, 'collections', None):
-            for target in self.target_iterator:
+            for target in target_iterator:
                 num_load_targets = 0
                 target_scope_collections = self.test_config.load_settings.collections[target.bucket]
                 for scope in target_scope_collections.keys():
@@ -326,7 +328,7 @@ class PerfTest:
             num_items = self.test_config.load_settings.items * (
                 1 + self.test_config.bucket.replica_number
             )
-            for target in self.target_iterator:
+            for target in target_iterator:
                 self.monitor.monitor_num_items(target.node, target.bucket,
                                                num_items, max_retry=max_retry)
 

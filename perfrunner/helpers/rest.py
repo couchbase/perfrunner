@@ -385,7 +385,7 @@ class DefaultRestHelper(RestBase):
             api = 'http://{}:8091/pools/default/tasks'.format(host)
         return self.get(url=api).json()
 
-    def get_task_status(self, host: str, task_type: str) -> [bool, float]:
+    def get_task_status(self, host: str, task_type: str) -> tuple[bool, float]:
         for task in self.get_tasks(host):
             if task['type'] == task_type:
                 is_running = task['status'] == 'running'
@@ -393,7 +393,7 @@ class DefaultRestHelper(RestBase):
                 return is_running, progress
         return False, 0
 
-    def get_xdcrlink_status(self, host: str, task_type: str, uuid: str) -> [bool, float]:
+    def get_xdcrlink_status(self, host: str, task_type: str, uuid: str) -> tuple[bool, float]:
         for task in self.get_tasks(host):
             if task['type'] == task_type and uuid in task['target']:
                 is_running = task['status'] == 'running'
@@ -1880,13 +1880,26 @@ class CapellaRestHelper(DefaultRestHelper):
         self.api_client = CapellaAPIDedicated(
             self.base_url, secret, access, self._cbc_user, self._cbc_pwd
         )
+        self.admin_credentials = self.cluster_spec.capella_admin_credentials
 
-    def hostname_to_cluster_id(self, hostname: str):
+    @contextmanager
+    def _admin_creds(self, host: str):
+        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
+            if host in hostnames:
+                username, password = self.admin_credentials[i]
+                self.auth = username, password
+
+        try:
+            yield
+        finally:
+            self.auth = self.rest_username, self.rest_password
+
+    def hostname_to_cluster_id(self, host: str):
         if len(self.cluster_ids) == 1:
             return self.cluster_ids[0]
 
         for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
-            if hostname in hostnames:
+            if host in hostnames:
                 return self.cluster_ids[i]
         return None
 
@@ -1897,6 +1910,13 @@ class CapellaRestHelper(DefaultRestHelper):
     @property
     def _cbc_pwd(self):
         return os.getenv('CBC_PWD')
+
+    def get_remote_clusters(self, host: str) -> List[Dict]:
+        logger.info('Getting remote clusters')
+        api = 'https://{}:18091/pools/default/remoteClusters'.format(host)
+        with self._admin_creds(host):
+            response = self.get(url=api)
+        return response.json()
 
     def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
         cluster_idx = self.cluster_ids.index(self.hostname_to_cluster_id(master_node))
@@ -2015,6 +2035,14 @@ class CapellaRestHelper(DefaultRestHelper):
             cluster_name = self.cluster_spec.config.options('clusters')[i]
             cluster_nodes[cluster_name] = kv_nodes + non_kv_nodes
         return cluster_nodes
+
+    def create_replication(self, host: str, params: dict):
+        logger.info('Creating XDCR replication with parameters: {}'.format(pretty_dict(params)))
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.api_client.create_xdcr_replication(self.tenant_id, self.project_id, cluster_id,
+                                                       params)
+        logger.info('XDCR replication created.')
+        return resp
 
 
 class ServerlessRestHelper(DefaultRestHelper):

@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.xdcr.CapellaAdvFilterXdcrTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 3 -> 3, 1 bucket x 5M x 1KB, Adv Filter, matching body (~100%% of the items), Magma, Capella
+component = xdcrcloud
+category = init_multi
+sub_category = {provider}
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 12800
+initial_nodes = 3 3
+num_buckets = 1
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 5000000
+size = 1024
+workers = 80
+doc_gen = advancedfilter
+ssl_mode = capella
+
+[xattr_load]
+items = 5000000
+size = 1024
+workers = 80
+doc_gen = advancedfilterxattr
+xattr_field = city
+ssl_mode = capella
+
+[xdcr]
+filter_expression = EXISTS(city)
+
+[clients]
+python_client = 3.2.7

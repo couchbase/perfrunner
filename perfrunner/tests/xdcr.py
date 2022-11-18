@@ -1,10 +1,13 @@
+import base64
 from multiprocessing import Pool
 
+from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import target_hash
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.utils.terraform import raise_for_status
 
 
 class XdcrTest(PerfTest):
@@ -18,6 +21,13 @@ class XdcrTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.xdcr_settings = self.test_config.xdcr_settings
+        self.load_target_iterator = TargetIterator(self.cluster_spec, self.test_config)
+
+    def load(self, *args):
+        super().load(*args, target_iterator=self.load_target_iterator)
+
+    def check_num_items(self, *args):
+        super().check_num_items(*args, target_iterator=self.load_target_iterator)
 
     def add_remote_cluster(self):
         m1, m2 = self.cluster_spec.masters
@@ -84,6 +94,7 @@ class XdcrTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.add_remote_cluster()
         self.create_replication()
@@ -93,6 +104,112 @@ class XdcrTest(PerfTest):
         self.hot_load()
 
         self.configure_wan()
+
+        self.access()
+
+        self.report_kpi()
+
+
+class CapellaXdcrTest(XdcrTest):
+
+    def add_remote_cluster(self):
+        logger.warn('add_remote_cluster not supported on Capella. Not doing anything.')
+
+    def configure_wan(self):
+        logger.warn('configure_wan not supported on Capella. Not doing anything.')
+
+    def replication_params(self, from_bucket: str, to_bucket: str, to_cluster: str,
+                           direction: str, priority: str, network_usage_limit: int):
+        params = {
+            'direction': direction.lower(),
+            'sourceBucket': base64.urlsafe_b64encode(from_bucket.encode()).decode(),
+            'target': {
+                'cluster': to_cluster,
+                'bucket': base64.urlsafe_b64encode(to_bucket.encode()).decode()
+            },
+            'settings': {
+                'priority': priority.lower()
+            }
+        }
+
+        if filter_exp := self.xdcr_settings.filter_expression:
+            params['settings'].update({
+                'filterExpression': filter_exp,
+            })
+
+        if coll_map := self.xdcr_settings.initial_collection_mapping:
+            # Turn something like:
+            #   {"scope-1.collection-1":"scope-1.collection-1"}
+            # into what we need for the Capella API
+            refactored_coll_map = {}
+            for source, target in coll_map.items():
+                scope_pair = '{}:{}'.format(source.split('.')[0], target.split('.')[0])
+                coll_pair = (source.split('.')[1], target.split('.')[1])
+                if scope_pair not in refactored_coll_map:
+                    refactored_coll_map[scope_pair] = [coll_pair]
+                else:
+                    refactored_coll_map[scope_pair].append(coll_pair)
+
+            params['target'].update({
+                'scopes': [
+                    {
+                        'source': scope_pair.split(':')[0],
+                        'target': scope_pair.split(':')[1],
+                        'collections': [
+                            {
+                                'source': source_coll,
+                                'target': target_coll
+                            }
+                            for source_coll, target_coll in colls
+                        ]
+                    }
+                    for scope_pair, colls in refactored_coll_map.items()
+                ]
+            })
+
+        if network_usage_limit > 0:
+            params['settings'].update({
+                'networkUsageLimit': network_usage_limit
+            })
+
+        return params
+
+    def create_replications(self, num_xdcr_links: int, xdcr_links_priority: list,
+                            xdcr_link_directions: list, xdcr_link_network_limits: list):
+        m1, m2 = self.cluster_spec.masters
+        for bucket in self.test_config.buckets:
+            for _, priority, direction, network_limit in zip(range(num_xdcr_links),
+                                                             xdcr_links_priority,
+                                                             xdcr_link_directions,
+                                                             xdcr_link_network_limits):
+                resp = self.rest.create_replication(
+                    m1,
+                    self.replication_params(
+                        from_bucket=bucket,
+                        to_bucket=bucket,
+                        to_cluster=self.rest.hostname_to_cluster_id(m2),
+                        direction=direction,
+                        priority=priority,
+                        network_usage_limit=network_limit
+                    )
+                )
+                raise_for_status(resp)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.create_replications(
+            num_xdcr_links=self.test_config.xdcr_settings.num_xdcr_links,
+            xdcr_links_priority=self.test_config.xdcr_settings.xdcr_links_priority,
+            xdcr_link_directions=self.test_config.xdcr_settings.xdcr_link_directions,
+            xdcr_link_network_limits=self.test_config.xdcr_settings.xdcr_link_network_limits
+        )
+        self.monitor_replication()
+        self.wait_for_persistence()
+
+        self.hot_load()
 
         self.access()
 
@@ -146,12 +263,13 @@ class UniDirXdcrTest(XdcrTest):
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config,
                                               prefix='symmetric')
+        self.load_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                      self.test_config,
+                                                      prefix='symmetric')
 
-    def load(self, *args):
-        src_target_iterator = SrcTargetIterator(self.cluster_spec,
-                                                self.test_config,
-                                                prefix='symmetric')
-        super().load(target_iterator=src_target_iterator)
+
+class CapellaUniDirXdcrTest(UniDirXdcrTest, CapellaXdcrTest):
+    pass
 
 
 class XdcrInitTest(XdcrTest):
@@ -179,6 +297,7 @@ class XdcrInitTest(XdcrTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket(wait=True)
 
         self.configure_wan()
@@ -187,25 +306,52 @@ class XdcrInitTest(XdcrTest):
         self.report_kpi(time_elapsed)
 
 
+class CapellaXdcrInitTest(XdcrInitTest, CapellaXdcrTest):
+
+    @timeit
+    def monitor_replication(self):
+        super().monitor_replication()
+
+    @with_stats
+    @with_profiles
+    def init_xdcr(self):
+        self.create_replications(
+            num_xdcr_links=self.test_config.xdcr_settings.num_xdcr_links,
+            xdcr_links_priority=self.test_config.xdcr_settings.xdcr_links_priority,
+            xdcr_link_directions=self.test_config.xdcr_settings.xdcr_link_directions,
+            xdcr_link_network_limits=self.test_config.xdcr_settings.xdcr_link_network_limits
+        )
+        time_elapsed = self.monitor_replication()
+        return time_elapsed
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)
+
+
 class UniDirXdcrInitTest(XdcrInitTest):
 
-    def load(self, *args):
-        src_target_iterator = SrcTargetIterator(self.cluster_spec,
-                                                self.test_config)
-        XdcrInitTest.load(self, target_iterator=src_target_iterator)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.load_target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+
+
+class CapellaUniDirXdcrInitTest(UniDirXdcrInitTest, CapellaXdcrInitTest):
+    pass
 
 
 class AdvFilterXdcrTest(XdcrInitTest):
 
-    def load(self, *args):
-        src_target_iterator = SrcTargetIterator(self.cluster_spec,
-                                                self.test_config)
-        super(XdcrInitTest, self).load(target_iterator=src_target_iterator)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.load_target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
 
     def xattr_load(self, *args):
-        src_target_iterator = SrcTargetIterator(self.cluster_spec,
-                                                self.test_config)
-        super(XdcrInitTest, self).xattr_load(target_iterator=src_target_iterator)
+        super().xattr_load(*args, target_iterator=self.load_target_iterator)
 
     def run(self):
         self.load()
@@ -220,16 +366,27 @@ class AdvFilterXdcrTest(XdcrInitTest):
         self.report_kpi(time_elapsed)
 
 
+class CapellaAdvFilterXdcrTest(AdvFilterXdcrTest, CapellaXdcrInitTest):
+
+    def run(self):
+        self.load()
+        self.xattr_load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)
+
+
 class XdcrPriorityThroughputTest(XdcrTest):
 
     COLLECTORS = {'xdcr_stats': True}
 
     CLUSTER_NAME = 'link'
 
-    def load(self, *args):
-        src_target_iterator = SrcTargetIterator(self.cluster_spec,
-                                                self.test_config)
-        XdcrInitTest.load(self, target_iterator=src_target_iterator)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.load_target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
 
     def add_remote_clusters(self, num_xdcr_links: int):
 
@@ -360,6 +517,7 @@ class XdcrPriorityThroughputTest(XdcrTest):
 
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.configure_wan()
 
         self.add_remote_clusters(num_xdcr_links=num_xdcr_links)
@@ -401,6 +559,8 @@ class XdcrPriorityLatencyTest(XdcrPriorityThroughputTest):
 
         self.wait_for_persistence()
 
+        self.check_num_items()
+
         self.add_remote_clusters(num_xdcr_links=num_xdcr_links)
 
         self.create_replications(num_xdcr_links=num_xdcr_links,
@@ -429,6 +589,8 @@ class XdcrBackfillLatencyTest(XdcrPriorityLatencyTest):
         self.load()
 
         self.wait_for_persistence()
+
+        self.check_num_items()
 
         self.add_remote_clusters(num_xdcr_links=num_xdcr_links)
 
@@ -557,6 +719,7 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
 
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.add_remote_cluster()
         self.create_initial_replication()
         self.monitor_replication()

@@ -8,11 +8,12 @@ from logger import logger
 from spring.docgen import Document, Key
 
 
-def new_client(host, bucket, password, timeout):
-    connection_string = 'couchbase://{}/{}?password={}'
-    connection_string = connection_string.format(host,
-                                                 bucket,
-                                                 password)
+def new_client(host, bucket, username, password, timeout, secure=False):
+    if secure:
+        connection_string = 'couchbases://{}/{}?username={}&password={}&certpath=root.pem'
+    else:
+        connection_string = 'couchbase://{}/{}?username={}&password={}'
+    connection_string = connection_string.format(host, bucket, username, password)
     client = Bucket(connection_string=connection_string)
     client.timeout = timeout
     return client
@@ -39,12 +40,16 @@ class XdcrLag(Latency):
         for bucket in self.get_buckets():
             src_client = new_client(host=settings.master_node,
                                     bucket=bucket,
+                                    username=settings.bucket_username,
                                     password=settings.bucket_password,
-                                    timeout=self.TIMEOUT)
+                                    timeout=self.TIMEOUT,
+                                    secure=settings.is_n2n)
             dst_client = new_client(host=settings.dest_master_node,
                                     bucket=bucket,
+                                    username=settings.bucket_username,
                                     password=settings.bucket_password,
-                                    timeout=self.TIMEOUT)
+                                    timeout=self.TIMEOUT,
+                                    secure=settings.is_n2n)
             self.clients.append((bucket, src_client, dst_client))
 
         self.new_docs = Document(workload.size)

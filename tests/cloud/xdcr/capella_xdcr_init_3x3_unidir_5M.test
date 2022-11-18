@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.xdcr.CapellaUniDirXdcrInitTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 3 -> 3, 1 bucket x 5M x 1KB, Magma, Capella
+component = xdcrcloud
+category = init_multi
+sub_category = {provider}
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 12800
+initial_nodes = 3 3
+num_buckets = 1
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 5000000
+size = 1024
+workers = 80
+doc_gen = large
+ssl_mode = capella
+
+[clients]
+python_client = 3.2.7

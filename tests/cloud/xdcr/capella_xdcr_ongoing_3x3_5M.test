@@ -1,0 +1,49 @@
+[test_case]
+test = perfrunner.tests.xdcr.CapellaUniDirXdcrTest
+
+[showfast]
+title = 3 -> 3, 1 bucket x 5M x 1KB, 40K updates/sec, Magma, Capella
+component = xdcrcloud
+category = ongoing
+sub_category = {provider}
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 12800
+initial_nodes = 3 3
+num_buckets = 1
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 5000000
+size = 1024
+workers = 80
+ssl_mode = capella
+
+[hot_load]
+items = 5000000
+workers = 80
+working_set = 10
+ssl_mode = capella
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+deletes = 0
+throughput = 40000
+items = 5000000
+workers = 80
+working_set = 10
+working_set_access = 98
+time = 3600
+ssl_mode = capella
+
+[clients]
+python_client = 3.2.7

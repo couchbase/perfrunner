@@ -52,6 +52,7 @@ def main():
             cm.bypass_nebula_for_clients()
             cm.serverless_throttle()
         else:
+            cm.get_capella_cluster_admin_creds()
             cm.create_buckets()
             cm.create_eventing_buckets()
             cm.create_eventing_metadata_bucket()

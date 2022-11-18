@@ -1,4 +1,5 @@
 import re
+import subprocess
 from typing import List
 
 from logger import logger
@@ -1081,3 +1082,31 @@ class ClusterManager:
         if use_ssh_capella(self.cluster_spec):
             self.cluster_spec.set_capella_instance_ids()
             self.remote.capella_init_ssh()
+
+    def get_capella_cluster_admin_creds(self):
+        if self.cluster_spec.capella_infrastructure:
+            logger.info('Getting cluster admin credentials.')
+            user = 'couchbase-cloud-admin'
+            pwds = []
+
+            command_template = 'env/bin/aws secretsmanager get-secret-value --region us-east-1 '\
+                               '--secret-id {}_dp-admin --query "SecretString" --output text'
+
+            for cluster_id in self.rest.cluster_ids:
+                command = command_template.format(cluster_id)
+                process = subprocess.Popen(command.format(cluster_id), shell=True,
+                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout_bytes, stderr_bytes = process.communicate()
+                stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
+
+                if (returncode := process.returncode) == 0:
+                    pwds.append(stdout.strip())
+                else:
+                    logger.error('Command failed with return code {}: {}'
+                                 .format(returncode, command))
+                    logger.error('Command stdout: {}'.format(stdout))
+                    logger.error('Command stderr: {}'.format(stderr))
+
+            creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
+            self.cluster_spec.config.set('credentials', 'admin', creds)
+            self.cluster_spec.update_spec_file()

@@ -435,6 +435,13 @@ class ClusterSpec(Config):
         return self.config.get('credentials', 'rest').split(':')
 
     @property
+    def capella_admin_credentials(self) -> List[List[str]]:
+        return [
+            creds.split(':')
+            for creds in self.config.get('credentials', 'admin', fallback='').split()
+        ]
+
+    @property
     def ssh_credentials(self) -> List[str]:
         return self.config.get('credentials', 'ssh').split(':')
 
@@ -470,6 +477,8 @@ class ClusterSpec(Config):
 
     def set_capella_instance_ids(self) -> None:
         if self.capella_backend == 'aws':
+            logger.info('Getting instance IDs.')
+
             if not self.config.has_section('instance_ids'):
                 self.config.add_section('instance_ids')
 
@@ -1544,6 +1553,8 @@ class XDCRSettings:
     XDCR_LINKS_PRIORITY = 'HIGH'
     INITIAL_COLLECTION_MAPPING = ''    # std format {"scope-1:collection-1":"scope-1:collection-1"}
     BACKFILL_COLLECTION_MAPPING = ''   # ----------------------"----------------------------------
+    XDCR_LINK_DIRECTIONS = 'one-way'
+    XDCR_LINK_NETWORK_LIMITS = '0'
 
     def __init__(self, options: dict):
         self.demand_encryption = options.get('demand_encryption')
@@ -1560,6 +1571,14 @@ class XDCRSettings:
         self.backfill_collection_mapping = options.get('backfill_collection_mapping',
                                                        self.BACKFILL_COLLECTION_MAPPING)
         self.collections_oso_mode = bool(options.get('collections_oso_mode'))
+
+        # Capella-specific settings
+        self.xdcr_link_directions = options.get('xdcr_link_directions',
+                                                self.XDCR_LINK_DIRECTIONS).split(',')
+        self.xdcr_link_network_limits = [
+            int(x) for x in options.get('xdcr_link_network_limits',
+                                        self.XDCR_LINK_NETWORK_LIMITS).split(',')
+        ]
 
     def __str__(self) -> str:
         return str(self.__dict__)

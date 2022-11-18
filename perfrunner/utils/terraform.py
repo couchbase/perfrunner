@@ -1118,10 +1118,9 @@ class ServerlessTerraform(CapellaTerraform):
             dp_creds['couchbaseCreds']['username'],
             dp_creds['couchbaseCreds']['password']
         )
+        self.infra_spec.config.set('credentials', 'rest', ':'.join(auth).replace('%', '%%'))
 
         default_pool = self.get_default_pool(hostname, auth)
-        self.infra_spec.config.set('credentials', 'rest', ':'.join(auth))
-
         nodes = []
         for node in default_pool['nodes']:
             hostname = node['hostname'].removesuffix(':8091')
@@ -1135,7 +1134,6 @@ class ServerlessTerraform(CapellaTerraform):
         node_string = '\n'.join(nodes)
 
         self.infra_spec.config.set('clusters', 'serverless', node_string)
-        self.infra_spec.config.set('credentials', 'rest', ':'.join(auth))
 
         self.infra_spec.update_spec_file()
 

@@ -1,10 +1,10 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsLatencyTest
+test = perfrunner.tests.eventing.FunctionsPillowfightThroughputTest
 
 [showfast]
-title = 80th percentile latency(ms), 1 bucket x 50M x 1KB, 3KV + 2Eventing node, single function-NOOP
+title = Functions executed/sec, 1 bucket x 50M x 1KB, 3KV + 2Eventing node, single function-NOOP
 component = eventing
-category = lat
+category = thr
 sub_category = Function
 
 [stats]
@@ -15,7 +15,7 @@ mem_quota = 25600
 eventing_mem_quota = 24576
 initial_nodes = 5
 num_buckets = 1
-eventing_bucket_mem_quota = 10000
+eventing_bucket_mem_quota = 5000
 eventing_metadata_bucket_mem_quota = 1024
 eventing_buckets = 1
 enable_cpu_cores = false
@@ -34,6 +34,7 @@ view_percentage = 100
 items = 50000000
 size = 1024
 workers = 100
+doc_gen = json
 ssl_mode = capella
 
 [eventing]
@@ -45,6 +46,6 @@ cpp_worker_thread_count = 2
 updates = 100
 items = 50000000
 workers = 100
-throughput = 100000
 time = 1200
+iterations = -1
 ssl_mode = capella

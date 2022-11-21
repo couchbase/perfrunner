@@ -18,6 +18,7 @@ fts_index_mem_quota = 20000
 config = collections/2buckets_1scope_1collection_basic.json
 
 [jts]
+index_creation_style = async
 jts_instances = 1
 test_duration = 600
 test_total_docs = 1000000

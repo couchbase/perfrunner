@@ -29,10 +29,10 @@ spec:
     serviceAccountName: couchbase-backup
     nodeSelector:
       NodeRoles: backups1
-    resources:
-      requests:
-        cpu: "24"
-        memory: 64Gi
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
   cluster:
     dataServiceMemoryQuota: 256Mi
     indexServiceMemoryQuota: 256Mi
@@ -42,6 +42,17 @@ spec:
     autoFailoverOnDataDiskIssues: true
     autoFailoverOnDataDiskIssuesTimePeriod: 120s
     autoFailoverServerGroup: false
+    autoCompaction:
+        databaseFragmentationThreshold:
+          percent: 100
+        parallelCompaction: true
+        timeWindow:
+          abortCompactionOutsideWindow: false
+          start: "00:01"
+          end: "23:59"
+        tombstonePurgeInterval: 72h0m0s
+        viewFragmentationThreshold:
+          percent: 30
   servers:
   - size: node_count
     name: data

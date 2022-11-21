@@ -1,8 +1,10 @@
 import datetime
+import time
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest
+from perfrunner.tests.ycsb import YCSBTest
 
 
 class OperatorTest(PerfTest):
@@ -112,6 +114,22 @@ class OperatorBackupRestoreTest(OperatorBackupTest):
 
     def run(self):
         self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.backup()
+        backup_status = self.remote.get_backup('my-backup')['status']
+        time_elapsed_backup, backup_size = self.parse_backup_status(backup_status)
+        self.flush_buckets()
+        time_elapsed_restore = self.restore()
+        self.report_kpi(time_elapsed_backup, time_elapsed_restore, backup_size)
+
+
+class OperatorBackupRestoreYCSBTest(YCSBTest, OperatorBackupRestoreTest):
+
+    def run(self):
+        self.download_ycsb()
+        self.load()
+        time.sleep(30)
         self.wait_for_persistence()
         self.check_num_items()
         self.backup()

@@ -373,7 +373,6 @@ spec:
                 type: integer
             required:
             - backup
-            - repo
             type: object
           status:
             description: CouchbaseBackupRestoreStatus provides status indications

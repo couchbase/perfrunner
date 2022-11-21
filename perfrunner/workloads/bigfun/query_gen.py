@@ -135,7 +135,7 @@ def new_dates(dataset: str, num_matches: float, num_set: int) -> List[str]:
 
 def bf03params(num_matches: float, num_set: int) -> List[str]:
     set_index = random.randrange(1, num_set+1)
-    return list(str(set_index)) + new_dates('GleambookUsers', num_matches, num_set)
+    return list(str(set_index).split()) + new_dates('GleambookUsers', num_matches, num_set)
 
 
 def bf04params(num_matches: float, num_set: int) -> List[str]:
@@ -144,12 +144,12 @@ def bf04params(num_matches: float, num_set: int) -> List[str]:
 
 def bf08params(num_matches: float, num_set: int) -> List[str]:
     set_index = random.randrange(1, num_set + 1)
-    return list(str(set_index)) + new_dates('ChirpMessages', num_matches, num_set)
+    return list(str(set_index).split()) + new_dates('ChirpMessages', num_matches, num_set)
 
 
 def bf10params(num_set: int) -> List[str]:
     set_index = random.randrange(1, num_set + 1)
-    return list(str(set_index))
+    return list(str(set_index).split())
 
 
 def bf11params(num_set: int) -> List[str]:

@@ -70,6 +70,7 @@ class RemoteLinux(Remote):
             "-indexes {all_indexes}".format(index_node=index_node,
                                             all_indexes=",".join(indexes))
         if is_ssl:
+            put("root.pem", "/root/root.pem")
             options = options + " -use_tls -cacert ./root.pem"
 
         output = self.run_cbindex_command(options)
@@ -114,6 +115,7 @@ class RemoteLinux(Remote):
 
             bucket_indexes.append("{}:{}".format(bucket, index))
             if is_ssl:
+                put("root.pem", "/root/root.pem")
                 options = options + " -use_tls -cacert ./root.pem"
             self.run_cbindex_command(options)
 

@@ -1,0 +1,59 @@
+[test_case]
+test = perfrunner.tests.secondary.CloudSecondaryIndexingScanTest
+
+[showfast]
+title = 1 bucket x 10K x 2KB, 100 KV ops/sec, 100 indexes, PLASMA, N2N, TLS, AWS/Capella, m5.4xlarge
+component = cloud
+category = gsi
+orderby = aa2
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 40960
+index_mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[load]
+items = 10000
+size = 1024
+workers = 100
+doc_gen = hundred_index_doc
+
+[secondary]
+indexes = myindex1:field1#myindex2:field2#myindex3:field3#myindex4:field4#myindex5:field5#myindex6:field6#myindex7:field7#myindex8:field8#myindex9:field9#myindex10:field10#myindex11:field11#myindex12:field12#myindex13:field13#myindex14:field14#myindex15:field15#myindex16:field16#myindex17:field17#myindex18:field18#myindex19:field19#myindex20:field20#myindex21:field1,field2#myindex22:field2,field3#myindex23:field3,field4#myindex24:field4,field5#myindex25:field5,field6#myindex26:field6,field7#myindex27:field7,field8#myindex28:field8,field9#myindex29:field9,field10#myindex30:field10,field11#myindex31:field11,field12#myindex32:field12,field13#myindex33:field13,field14#myindex34:field14,field15#myindex35:field15,field16#myindex36:field16,field17#myindex37:field17,field18#myindex38:field18,field19#myindex39:field19,field20#myindex40:field20,field1#myindex41:field1,field3#myindex42:field2,field4#myindex43:field3,field5#myindex44:field4,field6#myindex45:field5,field7#myindex46:field6,field8#myindex47:field7,field9#myindex48:field8,field10#myindex49:field9,field11#myindex50:field10,field12#myindex51:field11,field13#myindex52:field12,field14#myindex53:field13,field15#myindex54:field14,field16#myindex55:field15,field17#myindex56:field16,field18#myindex57:field17,field19#myindex58:field18,field20#myindex59:field19,field1#myindex60:field20,field2#myindex61:field1,field4#myindex62:field2,field5#myindex63:field3,field6#myindex64:field4,field7#myindex65:field5,field8#myindex66:field6,field9#myindex67:field7,field10#myindex68:field8,field11#myindex69:field9,field12#myindex70:field10,field13#myindex71:field11,field14#myindex72:field12,field15#myindex73:field13,field16#myindex74:field14,field17#myindex75:field15,field18#myindex76:field16,field19#myindex77:field17,field20#myindex78:field18,field1#myindex79:field19,field2#myindex80:field20,field3#myindex81:field1,field5#myindex82:field2,field6#myindex83:field3,field7#myindex84:field4,field8#myindex85:field5,field9#myindex86:field6,field10#myindex87:field7,field11#myindex88:field8,field12#myindex89:field9,field13#myindex90:field10,field14#myindex91:field11,field15#myindex92:field12,field16#myindex93:field13,field17#myindex94:field14,field18#myindex95:field15,field19#myindex96:field16,field20#myindex97:field17,field1#myindex98:field18,field2#myindex99:field19,field3#myindex100:field20,field4
+cbindexperf_configfile = tests/gsi/new_plasma/config/config_scan_multiple_plasma.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+report_initial_build_time = 1
+cbindexperf_concurrency = 32
+cbindexperf_repeat = 19999
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+items = 10000
+workers = 2
+throughput = 1000
+ssl_mode = data
+show_tls_version = true
+min_tls_version = tlsv1.2
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

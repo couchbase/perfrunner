@@ -482,6 +482,62 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.run_recovery_scenario()
 
 
+class CloudInitialandIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
+
+    """CLOUD - Measures time it takes to build index (both initial and incremental).
+
+    There is no disabling of index updates in incremental building, index
+    updating is conurrent to KV incremental load.
+    """
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+
+    def print_index_disk_usage(self, text=""):
+        self.print_average_rr()
+        if self.test_config.gsi_settings.disable_perindex_stats:
+            return
+
+        if text:
+            logger.info("{}".format(text))
+
+        disk_usage = self.remote.get_disk_usage(self.index_nodes[0],
+                                                self.cluster_spec.index_path)
+        logger.info("Disk usage:\n{}".format(disk_usage))
+
+        storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
+        logger.info("Index storage stats:\n{}".format(storage_stats.text))
+
+        heap_profile = self.remote.get_indexer_heap_profile(self.index_nodes[0])
+        logger.info("Indexer heap profile:\n{}".format(heap_profile))
+
+        if self.storage == 'plasma':
+            stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
+            logger.info("Index storage stats mm:\n{}".format(stats))
+
+        return self.remote.get_disk_usage(self.index_nodes[0],
+                                          self.cluster_spec.index_path,
+                                          human_readable=False)
+
+    def _report_kpi(self, time_elapsed, index_type, unit="min"):
+        self.reporter.post(
+            *self.metrics.get_indexing_meta(value=time_elapsed,
+                                            index_type=index_type,
+                                            unit=unit,
+                                            update_category=False)
+        )
+
+    def run(self):
+        self.download_certificate()
+        self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
+        self.load_and_build_initial_index()
+        time_elapsed = self.build_incrindex()
+        self.print_index_disk_usage()
+        self.report_kpi(time_elapsed, 'Incremental')
+        self.run_recovery_scenario()
+
+
 class InitialandIncrementalandRecoverySecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
     def run_recovery_scenario(self):
@@ -723,6 +779,37 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
     def __init__(self, *args):
         super().__init__(*args)
         self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+
+        def _report_kpi(self, percentile_latencies, scan_thr: float = 0, time_elapsed: float = 0):
+
+            if time_elapsed != 0:
+                if self.report_initial_build_time:
+                    title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
+                    self.reporter.post(
+                        *self.metrics.get_indexing_meta(value=time_elapsed,
+                                                        index_type="Initial",
+                                                        unit="min",
+                                                        name=title)
+                    )
+            else:
+                title = "Secondary Scan Throughput (scanps) {}" \
+                    .format(str(self.test_config.showfast.title).strip())
+                self.reporter.post(
+                    *self.metrics.scan_throughput(scan_thr,
+                                                  metric_id_append_str="thr",
+                                                  title=title, update_category=False)
+                )
+                title = str(self.test_config.showfast.title).strip()
+                self.reporter.post(
+                    *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                               percentile=90,
+                                                               title=title,
+                                                               update_category=False))
+                self.reporter.post(
+                    *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                               percentile=95,
+                                                               title=title,
+                                                               update_category=False))
 
     def print_index_disk_usage(self, text=""):
         self.print_average_rr()

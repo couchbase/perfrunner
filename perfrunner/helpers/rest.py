@@ -2007,15 +2007,9 @@ class ServerlessRestHelper(DefaultRestHelper):
         url = "{}/internal/support/serverless-dataplanes/{}/bypass"\
               .format(self.base_url.replace('cloudapi', 'api'), self.dp_id)
 
-        cbc_api_request_headers = {
-           'Authorization': 'Bearer {}'.format(self._cbc_token),
-           'Content-Type': 'application/json'
-        }
-
         body = {"allowCIDR": "{}/32".format(client_ip)}
 
-        resp = requests.post(url, headers=cbc_api_request_headers, data=json.dumps(body),
-                             verify=False)
+        resp = self.serverless_client.request(url, "POST", params=json.dumps(body))
         resp.raise_for_status()
         return resp
 

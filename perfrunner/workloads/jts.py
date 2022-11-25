@@ -59,7 +59,7 @@ def execute_jts_run(settings: PhaseSettings, target, full_index_name, index_map)
             couchbase_index_name=full_index_name,
             couchbase_cluster_ip=host,
             couchbase_bucket=target.bucket,
-            couchbase_user=target.bucket,
+            couchbase_user=target.username,
             couchbase_password=target.password,
             test_duration=settings.time,
             test_total_docs=settings.test_total_docs,
@@ -92,6 +92,8 @@ def execute_jts_run(settings: PhaseSettings, target, full_index_name, index_map)
             .format(test_collection_specific_count=settings.test_collection_specific_count)
         params += " -test_fts_index_map \'{test_fts_index_map}\'"\
             .format(test_fts_index_map=json.dumps(index_map))
+    if settings.capella_infrastructure:
+        params += " -couchbase_ssl_mode capella"
     if settings.test_mutation_field and settings.test_mutation_field != 'None':
         params += " -test_mutation_field {test_mutation_field}"\
             .format(test_mutation_field=settings.test_mutation_field)
@@ -114,7 +116,7 @@ def execute_jts_warmup(settings: PhaseSettings, target, full_index_name, index_m
         couchbase_index_name=full_index_name,
         couchbase_cluster_ip=host,
         couchbase_bucket=target.bucket,
-        couchbase_user=target.bucket,
+        couchbase_user=target.username,
         couchbase_password=target.password,
         test_duration=settings.warmup_time,
         test_total_docs=settings.test_total_docs,
@@ -147,6 +149,8 @@ def execute_jts_warmup(settings: PhaseSettings, target, full_index_name, index_m
             .format(test_collection_specific_count=settings.test_collection_specific_count)
         params += " -test_fts_index_map \'{test_fts_index_map}\'" \
             .format(test_fts_index_map=json.dumps(index_map))
+    if settings.capella_infrastructure == 'capella':
+        params += " -couchbase_ssl_mode capella"
     if settings.test_mutation_field and settings.test_mutation_field != 'None':
         params += " -test_mutation_field {test_mutation_field}"\
             .format(test_mutation_field=settings.test_mutation_field)

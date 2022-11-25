@@ -32,6 +32,7 @@ class JTSTest(PerfTest):
         self.fts_index_map = dict()
         self.fts_index_defs = dict()
         self.fts_index_name_flag = False
+        self.access.capella_infrastructure = self.cluster_spec.capella_infrastructure
 
     def download_jts(self):
         if self.worker_manager.is_remote:

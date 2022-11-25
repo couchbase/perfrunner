@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyCloudBackupTest
 
 [showfast]
-title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
+title = High Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
 component = cloud
 category = search
 sub_category = AWS
@@ -24,7 +24,7 @@ test_total_docs = 1000000
 test_query_workers = 1
 test_kv_workers = 60
 test_kv_throughput_goal = 10000
-test_data_file = ../tests/fts/data/benchmark/med.txt
+test_data_file = ../tests/fts/data/benchmark/hi.txt
 test_driver = couchbase
 test_stats_limit = 1000000
 test_stats_aggregation_step = 100

@@ -48,6 +48,7 @@ class ShowFastReporter(Reporter):
         sub_category = self.test_config.showfast.sub_category
         if self.cluster_spec.capella_infrastructure:
             sub_category = sub_category.format(provider=self.cluster_spec.capella_backend.upper())
+            metric['provider'] = self.cluster_spec.cloud_provider.upper()
         metric.update({
             'cluster': cluster,
             'component': component,

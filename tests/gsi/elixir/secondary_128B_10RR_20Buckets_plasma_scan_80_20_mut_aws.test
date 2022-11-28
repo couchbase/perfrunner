@@ -54,8 +54,8 @@ indexer.plasma.backIndex.pageSplitThreshold = 100
 
 [access]
 updates = 100
-ops = 5000000
-items = 5000000
+ops = 1000000
+items = 1000000
 throughput = 250
 workers = 25
 item_size = 100

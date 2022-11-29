@@ -987,11 +987,13 @@ class ServerlessTerraform(CapellaTerraform):
 
         resp = self.serverless_client.create_serverless_dataplane(config)
         raise_for_status(resp)
-        dp_id = resp.json().get('dataplaneId')
-        logger.info('Initialised deployment for serverless dataplane {}'.format(dp_id))
+        self.dp_id = resp.json().get('dataplaneId')
+        logger.info('Initialised deployment for serverless dataplane {}'.format(self.dp_id))
         logger.info('Saving dataplane ID to spec file.')
+        self.infra_spec.config.set('infrastructure', 'cbc_cluster', self.dp_id)
+        self.infra_spec.update_spec_file()
 
-        resp = self.serverless_client.get_dataplane_deployment_status(dp_id)
+        resp = self.serverless_client.get_dataplane_deployment_status(self.dp_id)
         raise_for_status(resp)
         status = resp.json()['status']['state']
 
@@ -999,16 +1001,12 @@ class ServerlessTerraform(CapellaTerraform):
         if not self.options.enable_autoscaling:
             self.disable_autoscaling()
 
-        self.dp_id = dp_id
-        self.infra_spec.config.set('infrastructure', 'cbc_cluster', dp_id)
-        self.infra_spec.update_spec_file()
-
         timeout_mins = self.options.capella_timeout
         interval_secs = 30
         status = None
         t0 = time()
         while (time() - t0) < timeout_mins * 60 and status != 'ready':
-            resp = self.serverless_client.get_dataplane_deployment_status(dp_id)
+            resp = self.serverless_client.get_dataplane_deployment_status(self.dp_id)
             raise_for_status(resp)
             status = resp.json()['status']['state']
 
@@ -1020,7 +1018,7 @@ class ServerlessTerraform(CapellaTerraform):
             logger.error('Deployment timed out after {} mins'.format(timeout_mins))
             exit(1)
 
-        resp = self.serverless_client.get_serverless_dataplane_info(dp_id)
+        resp = self.serverless_client.get_serverless_dataplane_info(self.dp_id)
         raise_for_status(resp)
         logger.info('Deployed dataplane info: {}'.format(pretty_dict(resp.json())))
 
@@ -1087,8 +1085,8 @@ class ServerlessTerraform(CapellaTerraform):
             }
             self.test_config.serverless_db.update_db_map(dbs)
 
-        timeout_mins = 20
-        interval_secs = 10
+        timeout_mins = self.options.capella_timeout
+        interval_secs = 20
         t0 = time()
         db_ids = list(dbs.keys())
         while db_ids and time() - t0 < timeout_mins * 60:
@@ -1173,13 +1171,40 @@ class ServerlessTerraform(CapellaTerraform):
         logger.info('Destroying serverless DB {}'.format(db_id))
         resp = self.serverless_client.delete_database(self.tenant_id, self.project_id, db_id)
         raise_for_status(resp)
-        logger.info('Serverless DB destroyed: {}'.format(db_id))
+        logger.info('Serverless DB queued for deletion: {}'.format(db_id))
 
     def destroy_serverless_databases(self):
         logger.info('Deleting all serverless databases...')
+
+        pending_dbs = []
         for db_id in self.test_config.serverless_db.db_map:
             self._destroy_db(db_id)
-        logger.info('All serverless databases destroyed.')
+            pending_dbs.append(db_id)
+        logger.info('All serverless databases queued for deletion.')
+
+        retries = 2
+        timeout_mins = self.options.capella_timeout / (retries + 1)
+        interval_secs = 20
+        while pending_dbs and retries >= 0:
+            logger.info('Waiting for databases to be deleted (retries left: {})'.format(retries))
+            t0 = time()
+            while pending_dbs and time() - t0 < timeout_mins * 60:
+                sleep(interval_secs)
+                resp = self.serverless_client.list_all_databases(self.tenant_id, self.project_id)
+                raise_for_status(resp)
+                pending_dbs = [db['data']['id'] for db in resp.json()['data']]
+                logger.info('{} databases remaining: {}'.format(len(pending_dbs), pending_dbs))
+
+            if pending_dbs:
+                logger.info('Database deletion timeout reached.'
+                            'Retrying deletion of remaining databases.')
+                for db_id in pending_dbs:
+                    self._destroy_db(db_id)
+            else:
+                logger.info('All databases successfully deleted.')
+                return
+
+            retries -= 1
 
     def destroy_serverless_dataplane(self):
         logger.info('Deleting serverless dataplane...')
@@ -1192,7 +1217,11 @@ class ServerlessTerraform(CapellaTerraform):
     def destroy_project(self):
         logger.info('Deleting project...')
         resp = self.dedicated_client.delete_project(self.tenant_id, self.project_id)
-        raise_for_status(resp)
+        if resp.status_code == 400 and resp.json()['errorType'] == 'DeleteProjectsWithDatabases':
+            logger.warn('Cannot delete project because some serverless databases failed to delete.')
+            return
+        else:
+            raise_for_status(resp)
         logger.info('Project successfully queued for deletion.')
 
 

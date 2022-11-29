@@ -655,7 +655,7 @@ class RemoteKubernetes(Remote):
         misc.copy_template(backup_template_path, backup_path)
         # 2020-12-04T23:33:57Z
         current_utc = datetime.datetime.utcnow()
-        minute = current_utc.minute + 5
+        minute = (current_utc.minute + 5) % 60
         cron_schedule = '{} * * * *'.format(minute)
         backup_def = self.yaml_to_json(backup_path)
         backup_def['spec']['full']['schedule'] = cron_schedule

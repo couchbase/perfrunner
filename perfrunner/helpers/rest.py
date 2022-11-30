@@ -16,7 +16,10 @@ from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec, TestConfig
-from perfrunner.utils.terraform import CAPELLA_CREDS_FILE
+from perfrunner.utils.terraform import (
+    CAPELLA_CREDS_FILE,
+    SERVICES_CAPELLA_TO_PERFRUNNER,
+)
 
 MAX_RETRY = 20
 RETRY_DELAY = 10
@@ -1989,6 +1992,29 @@ class CapellaRestHelper(DefaultRestHelper):
         resp = self.api_client.update_specs(self.tenant_id, self.project_id, cluster_id,
                                             new_cluster_config)
         return resp
+
+    def get_all_cluster_nodes(self):
+        cluster_nodes = {}
+        for i, cluster_id in enumerate(self.cluster_ids):
+            resp = self.api_client.get_nodes(tenant_id=self.tenant_id,
+                                             project_id=self.project_id,
+                                             cluster_id=cluster_id)
+            nodes = resp.json()['data']
+            nodes = [node['data'] for node in nodes]
+            services_per_node = {node['hostname']: node['services'] for node in nodes}
+
+            kv_nodes = []
+            non_kv_nodes = []
+            for hostname, services in services_per_node.items():
+                services_string = ','.join(SERVICES_CAPELLA_TO_PERFRUNNER[svc] for svc in services)
+                if 'kv' in services_string:
+                    kv_nodes.append("{}:{}".format(hostname, services_string))
+                else:
+                    non_kv_nodes.append("{}:{}".format(hostname, services_string))
+
+            cluster_name = self.cluster_spec.config.options('clusters')[i]
+            cluster_nodes[cluster_name] = kv_nodes + non_kv_nodes
+        return cluster_nodes
 
 
 class ServerlessRestHelper(DefaultRestHelper):

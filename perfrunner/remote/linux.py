@@ -1,10 +1,11 @@
 import os
+import subprocess
 import time
 from collections import defaultdict
 from typing import Dict, List
 from urllib.parse import urlparse
 
-from fabric.api import cd, get, local, put, quiet, run, settings
+from fabric.api import cd, get, put, quiet, run, settings
 from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
@@ -1148,23 +1149,46 @@ class RemoteLinux(Remote):
 
     def capella_init_ssh(self):
         if self.cluster_spec.capella_backend == 'aws':
-            for iid in self.cluster_spec.instance_ids:
-                logger.info('Uploading SSH key to {}'.format(iid))
-                local(
-                    (
-                        'env/bin/aws ssm send-command '
-                        '--region $AWS_REGION '
-                        '--instance-ids "{}" '
-                        '--document-name \'AWS-RunShellScript\' '
-                        '--parameters commands="\\"\n'
-                        'mkdir -p ~root/.ssh\n'
-                        'cd ~root/.ssh || exit 1\n'
-                        'grep -q \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub)\' authorized_keys '
-                        '|| echo \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub) ssm-session\' >> '
-                        'authorized_keys\n'
-                        '\\""'
-                    ).format(iid),
-                    capture=True
-                )
+            self.capella_aws_init_ssh(self.cluster_spec.instance_ids)
+
+    def capella_aws_init_ssh(self, instance_ids):
+        logger.info('Configuring SSH for Capella nodes.')
+        logger.info('Uploading SSH key to {}'
+                    .format(', '.join(instance_ids)))
+
+        upload_keys_command = (
+            'env/bin/aws ssm send-command '
+            '--region $AWS_REGION '
+            '--instance-ids "{}" '
+            '--document-name \'AWS-RunShellScript\' '
+            '--parameters commands="\\"\n'
+            'mkdir -p ~root/.ssh\n'
+            'cd ~root/.ssh || exit 1\n'
+            'grep -q \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub)\' authorized_keys '
+            '|| echo \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub) ssm-session\' >> '
+            'authorized_keys\n'
+            '\\""'
+        ).format('" "'.join(instance_ids))
+
+        process = subprocess.Popen(upload_keys_command, shell=True,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+
+        if (returncode := process.returncode) == 0:
+            for iid in instance_ids:
                 logger.info('Testing SSH to {}'.format(iid))
-                local('ssh root@{} echo'.format(iid))
+                test_ssh_command = 'ssh root@{} echo'.format(iid)
+                process = subprocess.Popen(test_ssh_command, shell=True,
+                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout_bytes, stderr_bytes = process.communicate()
+                stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
+                if process.returncode != 0:
+                    logger.warn('Command failed with return code {}: {}'
+                                .format(returncode, test_ssh_command))
+                    logger.warn('Command stdout: {}'.format(stdout))
+                    logger.warn('Command stderr: {}'.format(stderr))
+        else:
+            logger.error('Command failed with return code {}: {}'
+                         .format(returncode, upload_keys_command))
+            logger.error('Command stdout: {}'.format(stdout))
+            logger.error('Command stderr: {}'.format(stderr))

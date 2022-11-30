@@ -25,6 +25,23 @@ DATADOG_LINK_TEMPLATE = (
     'to_ts={}&'
     'live=true'
 )
+SERVICES_CAPELLA_TO_PERFRUNNER = {
+    'Data': 'kv',
+    'Analytics': 'cbas',
+    'Query': 'n1ql',
+    'Index': 'index',
+    'Search': 'fts',
+    'Eventing': 'eventing'
+}
+
+SERVICES_PERFRUNNER_TO_CAPELLA = {
+    'kv': 'data',
+    'cbas': 'analytics',
+    'n1ql': 'query',
+    'index': 'index',
+    'fts': 'search',
+    'eventing': 'eventing'
+}
 
 
 def raise_for_status(resp: requests.Response):
@@ -324,24 +341,6 @@ class Terraform:
 
 
 class CapellaTerraform(Terraform):
-
-    SERVICES_CAPELLA_TO_PERFRUNNER = {
-        'Data': 'kv',
-        'Analytics': 'cbas',
-        'Query': 'n1ql',
-        'Index': 'index',
-        'Search': 'fts',
-        'Eventing': 'eventing'
-    }
-
-    SERVICES_PERFRUNNER_TO_CAPELLA = {
-        'kv': 'data',
-        'cbas': 'analytics',
-        'n1ql': 'query',
-        'index': 'index',
-        'fts': 'search',
-        'eventing': 'eventing'
-    }
 
     def __init__(self, options):
         super().__init__(options)
@@ -758,9 +757,7 @@ class CapellaTerraform(Terraform):
                 parameters = self.infra_spec.infrastructure_config()[node_group]
 
                 parameters['instance_capacity'] = size
-                parameters['services'] = [
-                    self.SERVICES_PERFRUNNER_TO_CAPELLA[svc]for svc in services
-                ]
+                parameters['services'] = [SERVICES_PERFRUNNER_TO_CAPELLA[svc]for svc in services]
 
                 storage_class = parameters.pop(
                     'volume_type', parameters.get(
@@ -795,7 +792,7 @@ class CapellaTerraform(Terraform):
         kv_nodes = []
         non_kv_nodes = []
         for hostname, services in services_per_node.items():
-            services_string = ','.join(self.SERVICES_CAPELLA_TO_PERFRUNNER[svc] for svc in services)
+            services_string = ','.join(SERVICES_CAPELLA_TO_PERFRUNNER[svc] for svc in services)
             if 'kv' in services_string:
                 kv_nodes.append("{}:{}".format(hostname, services_string))
             else:

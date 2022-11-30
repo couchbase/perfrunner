@@ -279,8 +279,26 @@ class ClusterSpec(Config):
         return ip_map
 
     @property
+    def using_instance_ids(self):
+        return self.config.has_section('instance_ids')
+
+    @property
     def instance_ids_per_cluster(self):
-        return {k: v.split() for k, v in self.config.items('instance_ids')}
+        iids_per_cluster = {}
+        if self.using_instance_ids:
+            iids_per_cluster = {k: v.split() for k, v in self.config.items('instance_ids')}
+        return iids_per_cluster
+
+    @property
+    def servers_hostname_to_instance_id(self) -> dict:
+        iids_per_cluster = self.instance_ids_per_cluster
+        host_map = {}
+        for cluster, hostnames in self.clusters:
+            iids = iids_per_cluster.get(cluster, [])
+            for i, hostname in enumerate(hostnames):
+                iid = iids[i] if iids else None
+                host_map[hostname] = iid
+        return host_map
 
     @property
     def instance_ids(self) -> List[str]:
@@ -292,11 +310,12 @@ class ClusterSpec(Config):
     @property
     def server_instance_ids_by_role(self, role: str) -> List[str]:
         has_service = []
-        for cluster_name, servers in self.config.items('clusters'):
-            for i, server in enumerate(servers.split()):
-                _, roles = server.split(':')
-                if role in roles:
-                    has_service.append(self.instance_ids_per_cluster[cluster_name][i])
+        if self.using_instance_ids:
+            for cluster_name, servers in self.config.items('clusters'):
+                for i, server in enumerate(servers.split()):
+                    _, roles = server.split(':')
+                    if role in roles:
+                        has_service.append(self.instance_ids_per_cluster[cluster_name][i])
         return has_service
 
     def servers_by_role(self, role: str) -> List[str]:
@@ -437,27 +456,31 @@ class ClusterSpec(Config):
                     server_grp_map[host] = group[0]
         return server_grp_map
 
-    def set_capella_instance_ids(self) -> None:
-        if not self.config.has_section('instance_ids'):
-            self.config.add_section('instance_ids')
+    def get_aws_iid(self, hostname: str, region: str) -> str:
+        iid = local(
+            (
+                "env/bin/aws ec2 describe-instances --region {} "
+                "--filter \"Name=ip-address,Values=$(dig +short {})\" "
+                "--query \"Reservations[].Instances[].InstanceId\" "
+                "--output text"
+            ).format(region, hostname),
+            capture=True
+        )
+        return iid.strip()
 
+    def set_capella_instance_ids(self) -> None:
         if self.capella_backend == 'aws':
+            if not self.config.has_section('instance_ids'):
+                self.config.add_section('instance_ids')
+
             region = os.environ.get('AWS_REGION', 'us-east-1')
 
             for cluster_name, hosts in self.clusters:
                 iids = []
                 for host in hosts:
-                    iid = local(
-                        (
-                            "env/bin/aws ec2 describe-instances --region {} "
-                            "--filter \"Name=ip-address,Values=$(dig +short {})\" "
-                            "--query \"Reservations[].Instances[].InstanceId\" "
-                            "--output text"
-                        ).format(region, host),
-                        capture=True
-                    )
-                    logger.info('Instance ID for {}: {}'.format(host, iid.strip()))
-                    iids.append(iid.strip())
+                    iid = self.get_aws_iid(host, region)
+                    logger.info('Instance ID for {}: {}'.format(host, iid))
+                    iids.append(iid)
                 self.config.set('instance_ids', cluster_name, '\n' + '\n'.join(iids))
             self.update_spec_file()
 

@@ -69,12 +69,14 @@ class DefaultMonitor(DefaultRestHelper):
     def wait_for_rebalance_to_begin(self, host):
         logger.info('Waiting for rebalance to start')
 
-        is_running, progress = self.get_task_status(host, task_type='rebalance')
-
+        is_running = False
+        start_time = time.time()
         while not is_running:
-            time.sleep(self.POLLING_INTERVAL)
-
             is_running, progress = self.get_task_status(host, task_type='rebalance')
+            logger.info('Rebalance running: {}'.format(is_running))
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('Monitoring got stuck')
+            time.sleep(self.POLLING_INTERVAL)
 
         logger.info('Rebalance started. Rebalance progress: {} %'.format(progress))
 

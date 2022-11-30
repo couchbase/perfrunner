@@ -1,9 +1,11 @@
+import os
 import time
 
 import dateutil.parser
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import pretty_dict, use_ssh_capella
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSTest
@@ -115,36 +117,44 @@ class RebalanceTest(PerfTest):
         self.post_rebalance()
 
 
-class RebalanceKVTest(RebalanceTest):
+class CapellaRebalanceTest(RebalanceTest):
 
-    ALL_HOSTNAMES = True
+    def update_cluster_configs(self) -> list[str]:
+        new_clusters = self.rest.get_all_cluster_nodes()
 
-    COLLECTORS = {'latency': True}
+        logger.info('Cluster nodes: {}'.format(pretty_dict(new_clusters)))
+
+        added_nodes = []
+
+        for cluster_name, new_nodes in new_clusters.items():
+            if self.cluster_spec.using_instance_ids:
+                iid_map = self.cluster_spec.servers_hostname_to_instance_id
+                new_iids = []
+                for node in new_nodes:
+                    hostname = node.split(':')[0]
+                    if not (iid := iid_map.get(hostname, None)):
+                        region = os.environ.get('AWS_REGION', 'us-east-1')
+                        iid = self.cluster_spec.get_aws_iid(hostname, region)
+                        logger.info('Instance ID for new node {}: {}'.format(hostname, iid))
+                        added_nodes.append(iid)
+                    new_iids.append(iid)
+                self.cluster_spec.config.set('instance_ids', cluster_name,
+                                             '\n' + '\n'.join(new_iids))
+
+            self.cluster_spec.config.set('clusters', cluster_name, '\n' + '\n'.join(new_nodes))
+
+        self.cluster_spec.update_spec_file()
+        return added_nodes
+
+    def init_ssh_for_new_nodes(self, nodes):
+        if use_ssh_capella(self.cluster_spec):
+            if self.cluster_spec.capella_backend == 'aws':
+                self.remote.capella_aws_init_ssh(nodes)
 
     def post_rebalance(self):
         super().post_rebalance()
-        self.worker_manager.abort()
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self.hot_load()
-
-        self.reset_kv_stats()
-
-        self.access_bg()
-        self.rebalance()
-
-        if self.is_balanced():
-            self.report_kpi()
-
-
-class CapellaRebalanceKVTest(RebalanceTest):
-
-    ALL_HOSTNAMES = True
-
-    COLLECTORS = {'latency': True}
+        added_nodes = self.update_cluster_configs()
+        self.init_ssh_for_new_nodes(added_nodes)
 
     @timeit
     def _rebalance(self, services):
@@ -172,17 +182,37 @@ class CapellaRebalanceKVTest(RebalanceTest):
                 self.monitor.wait_for_rebalance_to_begin(master)
                 self.monitor_progress(master)
 
+
+class RebalanceKVTest(RebalanceTest):
+
+    ALL_HOSTNAMES = True
+
+    COLLECTORS = {'latency': True}
+
+    def post_rebalance(self):
+        super().post_rebalance()
+        self.worker_manager.abort()
+
     def run(self):
         self.load()
         self.wait_for_persistence()
 
         self.hot_load()
 
+        self.reset_kv_stats()
+
         self.access_bg()
         self.rebalance()
 
         if self.is_balanced():
             self.report_kpi()
+
+
+class CapellaRebalanceKVTest(RebalanceKVTest, CapellaRebalanceTest):
+
+    def post_rebalance(self):
+        super().post_rebalance()
+        self.worker_manager.abort()
 
 
 class RebalanceKVCompactionTest(RebalanceKVTest):

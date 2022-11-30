@@ -3,7 +3,7 @@ from typing import List
 
 from logger import logger
 from perfrunner.helpers.memcached import MemcachedHelper
-from perfrunner.helpers.misc import maybe_atoi, pretty_dict
+from perfrunner.helpers.misc import maybe_atoi, pretty_dict, use_ssh_capella
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
@@ -1076,3 +1076,8 @@ class ClusterManager:
             dbs[db_id]['secret'] = resp.json()['secret']
 
         self.test_config.serverless_db.update_db_map(dbs)
+
+    def init_capella_ssh(self):
+        if use_ssh_capella(self.cluster_spec):
+            self.cluster_spec.set_capella_instance_ids()
+            self.remote.capella_init_ssh()

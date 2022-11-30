@@ -10,7 +10,7 @@ from perfrunner.helpers import local
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
-from perfrunner.helpers.misc import pretty_dict, read_json
+from perfrunner.helpers.misc import pretty_dict, read_json, use_ssh_capella
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.profiler import Profiler
 from perfrunner.helpers.remote import RemoteHelper
@@ -74,20 +74,6 @@ class PerfTest:
             if self.worker_manager.is_remote or self.cluster_spec.cloud_infrastructure:
                 self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE,
                                                   self.worker_manager.WORKER_HOME)
-
-        self.capella_ssh = True
-        if self.cluster_spec.capella_infrastructure:
-            tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
-
-            # Disable SSH if we aren't on AWS or if we are in capella-dev tenant, as this tenant
-            # has a higher level of security and we don't have permissions to do many things there
-            if self.cluster_spec.capella_backend != 'aws' or \
-               tenant_id == '1a3c4544-772e-449e-9996-1203e7020b96':
-                self.capella_ssh = False
-
-            if self.capella_ssh:
-                self.cluster_spec.set_capella_instance_ids()
-                self.remote.capella_init_ssh()
 
     def __enter__(self):
         return self
@@ -200,7 +186,7 @@ class PerfTest:
                 return 'Failover happened {} time(s)'.format(num_failovers)
 
     def check_core_dumps(self) -> str:
-        if self.capella_infra and not self.capella_ssh:
+        if self.capella_infra and not use_ssh_capella(self.cluster_spec):
             return ''
         dumps_per_host = self.remote.detect_core_dumps()
         core_dumps = {

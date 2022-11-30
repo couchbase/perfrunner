@@ -80,9 +80,10 @@ def main():
     remote.collect_info()
 
     if cluster_spec.capella_infrastructure:
-        for hostname, iid in zip(cluster_spec.servers, cluster_spec.instance_ids):
-            for fname in glob.glob('{}/*.zip'.format(iid)):
-                shutil.move(fname, '{}.zip'.format(hostname))
+        if cluster_spec.capella_backend == 'aws':
+            for hostname, iid in cluster_spec.servers_hostname_to_instance_id.items():
+                for fname in glob.glob('{}/*.zip'.format(iid)):
+                    shutil.move(fname, '{}.zip'.format(hostname))
     else:
         for hostname in cluster_spec.servers:
             for fname in glob.glob('{}/*.zip'.format(hostname)):

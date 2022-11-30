@@ -153,13 +153,20 @@ class BigFunTest(PerfTest):
                     format(dataset, result['results'][0]['$1']))
         return result['results'][0]['$1']
 
-    def restore_remote_s3(self):
+    def restore_remote_storage(self):
         self.remote.extract_cb(filename='couchbase.rpm',
                                worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
-        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
-        self.remote.create_aws_credential(credential)
+        if self.cluster_spec.capella_infrastructure:
+            backend = self.cluster_spec.capella_backend
+        else:
+            backend = self.cluster_spec.cloud_provider
+
+        if backend == 'aws':
+            credential = local.read_aws_credential(
+                self.test_config.backup_settings.aws_credential_path)
+            self.remote.create_aws_credential(credential)
         self.remote.client_drop_caches()
 
         self.remote.restore(cluster_spec=self.cluster_spec,
@@ -170,6 +177,7 @@ class BigFunTest(PerfTest):
                             repo=self.test_config.restore_settings.backup_repo,
                             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
                             obj_region=self.test_config.backup_settings.obj_region,
+                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
                             use_tls=self.test_config.restore_settings.use_tls,
                             map_data=self.test_config.restore_settings.map_data)
         self.wait_for_persistence()
@@ -204,10 +212,10 @@ class BigFunSyncTest(BigFunTest):
         self.report_kpi(sync_time)
 
 
-class BigFunSyncAWSTest(BigFunSyncTest):
+class BigFunSyncCloudTest(BigFunSyncTest):
 
     def run(self):
-        self.restore_remote_s3()
+        self.restore_remote_storage()
 
         if self.analytics_link != "Local":
             rest_username, rest_password = self.cluster_spec.rest_credentials
@@ -345,11 +353,11 @@ class BigFunQueryTest(BigFunTest):
         self.report_kpi(results)
 
 
-class BigFunQueryAWSTest(BigFunQueryTest):
+class BigFunQueryCloudTest(BigFunQueryTest):
 
     def run(self):
         random.seed(8095)
-        self.restore_remote_s3()
+        self.restore_remote_storage()
 
         self.sync()
 
@@ -362,7 +370,7 @@ class BigFunQueryAWSTest(BigFunQueryTest):
         self.report_kpi(results)
 
 
-class BigFunQueryNoIndexAWSTest(BigFunQueryAWSTest):
+class BigFunQueryNoIndexCloudTest(BigFunQueryCloudTest):
 
     def create_index(self):
         pass
@@ -520,12 +528,12 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
             self.report_kpi()
 
 
-class BigFunRebalanceAWSTest(BigFunRebalanceTest):
+class BigFunRebalanceCloudTest(BigFunRebalanceTest):
 
     ALL_HOSTNAMES = True
 
     def run(self):
-        self.restore_remote_s3()
+        self.restore_remote_storage()
 
         self.sync()
 
@@ -540,7 +548,7 @@ class BigFunRebalanceCapellaTest(BigFunRebalanceTest, CapellaRebalanceKVTest):
     ALL_HOSTNAMES = True
 
     def run(self):
-        self.restore_remote_s3()
+        self.restore_remote_storage()
 
         self.sync()
 

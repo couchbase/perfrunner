@@ -931,7 +931,6 @@ class RemoteLinux(Remote):
                 '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
                 '--map-data {}'.format(map_data) if map_data else None,
                 '--disable-analytics --disable-cluster-analytics' if restore_to_capella else None,
-                '--purge',
                 '--no-progress-bar'
             ]
 

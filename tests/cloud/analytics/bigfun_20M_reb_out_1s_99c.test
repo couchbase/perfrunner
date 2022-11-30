@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunRebalanceAWSTest
+test = perfrunner.tests.analytics.BigFunRebalanceCloudTest
 
 [showfast]
 title = Rebalance-out (min), 4 -> 3 nodes, BigFUN 20M users (320M docs), s=1 c=99

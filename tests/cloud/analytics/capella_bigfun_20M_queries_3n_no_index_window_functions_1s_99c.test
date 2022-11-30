@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunQueryNoIndexAWSTest
+test = perfrunner.tests.analytics.BigFunQueryNoIndexCloudTest
 
 [showfast]
 title = 3 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), window functions, s=1 c=99

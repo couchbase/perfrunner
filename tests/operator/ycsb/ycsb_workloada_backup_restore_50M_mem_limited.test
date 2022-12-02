@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.operator.OperatorBackupRestoreYCSBTest
+
+[showfast]
+title = 4 nodes, 1 bucket x 50M x 1KB, YCSB Workload A
+component = operator
+category = backup
+
+[cluster]
+mem_quota = 23552
+initial_nodes = 4
+num_buckets = 1
+online_cores = 6
+kernel_mem_limit_services = kv
+kernel_mem_limit = 25600
+
+[compaction]
+db_percentage = 100
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 50000000
+size = 1024
+workers = 100
+
+[ycsb]
+branch = couchbase3
+
+[stats]
+client_processes = java

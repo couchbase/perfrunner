@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBLatencyTest
+
+[showfast]
+title = Latency(ms), Workload A, 3 nodes, 12 vCPU, uniform distribution, 60K ops/sec, 20GB Quota
+component = operator
+category = latency
+orderby = a91
+
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 3
+num_buckets = 1
+online_cores = 6
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+workers = 160
+
+[access]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+target = 10000
+ops = 0
+time = 1200
+boost = 12
+workers = 10
+timeseries = 1
+workload_instances = 6
+requestdistribution = uniform
+kv_endpoints = 16
+
+[ycsb]
+latency_percentiles = 99
+average_latency = 1
+branch = couchbase3
+
+[stats]
+client_processes = java

@@ -48,7 +48,10 @@ class ShowFastReporter(Reporter):
         sub_category = self.test_config.showfast.sub_category
         if self.cluster_spec.capella_infrastructure:
             sub_category = sub_category.format(provider=self.cluster_spec.capella_backend.upper())
-            metric['provider'] = self.cluster_spec.cloud_provider.upper()
+            if self.cluster_spec.serverless_infrastructure:
+                metric['provider'] = "serverless"
+            else:
+                metric['provider'] = self.cluster_spec.cloud_provider.lower()
         metric.update({
             'cluster': cluster,
             'component': component,
@@ -94,10 +97,10 @@ class ShowFastReporter(Reporter):
             db_config = self.rest.get_db_info(self.test_config.buckets[0])
             if nebula_mode == 'nebula':
                 nebula_version = db_config['dataplane']['nebula']['image']\
-                                .removeprefix('direct-nebula-')
+                    .removeprefix('direct-nebula-')
             elif nebula_mode == 'dapi':
                 nebula_version = db_config['dataplane']['dataApi']['image']\
-                                 .removeprefix('couchbase-data-api-')
+                    .removeprefix('couchbase-data-api-')
 
             build_str = nebula_version + ' : ' + build_str
 

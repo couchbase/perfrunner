@@ -28,6 +28,7 @@ setup(
             'sg_install = perfrunner.utils.syncgateway.install:main',
             'terraform = perfrunner.utils.terraform:main',
             'terraform_destroy = perfrunner.utils.terraform:destroy',
+            'nebula_metrics = perfrunner.utils.nebula_metrics:main',
         ],
     },
     ext_modules=[

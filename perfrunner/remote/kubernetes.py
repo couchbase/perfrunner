@@ -338,6 +338,7 @@ class RemoteKubernetes(Remote):
     def update_cluster_config(self, cluster, timeout=1200, reboot=False):
         cluster_path = self.get_cluster_path()
         if reboot:
+            logger.info("Deleting and recreating the cluster")
             self.delete_cluster()
             self.wait_for_pods_deleted('cb-example', timeout=timeout)
             cluster['metadata'] = {'name': 'cb-example-perf'}
@@ -346,6 +347,7 @@ class RemoteKubernetes(Remote):
             self.create_cluster()
             self.wait_for_cluster_ready(timeout=timeout)
         else:
+            logger.info("Updating existing cluster config")
             cluster['metadata'] = self.sanitize_meta(cluster['metadata'])
             self.dump_config_to_yaml_file(cluster, cluster_path)
             self.kubectl(

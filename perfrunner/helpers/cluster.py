@@ -92,6 +92,7 @@ class ClusterManager:
         if self.capella_infra:
             return
         elif self.dynamic_infra:
+            logger.info("Setting Memory Quotas")
             cluster = self.remote.get_cluster()
             cluster['spec']['cluster']['dataServiceMemoryQuota'] = \
                 '{}Mi'.format(self.test_config.cluster.mem_quota)
@@ -175,6 +176,7 @@ class ClusterManager:
         if self.capella_infra:
             return
         elif self.dynamic_infra:
+            logger.info("Setting services")
             cluster = self.remote.get_cluster()
             server_types = dict()
             server_roles = self.cluster_spec.roles
@@ -248,6 +250,8 @@ class ClusterManager:
 
             cluster['spec']['servers'] = cluster_servers
             cluster['spec']['volumeClaimTemplates'] = volume_claims
+            logger.info("Servers: {}".format(cluster_servers))
+            logger.info("Volume claims: {}".format(volume_claims))
             self.remote.update_cluster_config(cluster, timeout=300, reboot=True)
         else:
             if not self.is_compatible(min_release='4.0.0'):
@@ -457,6 +461,7 @@ class ClusterManager:
         if self.capella_infra:
             return
         elif self.dynamic_infra:
+            logger.info("Configuring auto-compaction")
             cluster = self.remote.get_cluster()
             db = int(compaction_settings.db_percentage)
             view = int(compaction_settings.view_percentage)
@@ -604,6 +609,7 @@ class ClusterManager:
         if self.capella_infra:
             return
         if self.dynamic_infra:
+            logger.info("Setting auto-failover settings")
             cluster = self.remote.get_cluster()
             cluster['spec']['cluster']['autoFailoverMaxCount'] = 1
             cluster['spec']['cluster']['autoFailoverServerGroup'] = bool(enabled)
@@ -842,6 +848,7 @@ class ClusterManager:
             return
         if self.dynamic_infra:
             if self.test_config.cluster.online_cores:
+                logger.info("Throttling cpu")
                 cluster = self.remote.get_cluster()
                 server_groups = cluster['spec']['servers']
                 updated_server_groups = []
@@ -854,6 +861,7 @@ class ClusterManager:
                     server_group['resources'] = resources
                     updated_server_groups.append(server_group)
                 cluster['spec']['servers'] = updated_server_groups
+                logger.info("Updated server groups: {}".format(updated_server_groups))
                 self.remote.update_cluster_config(cluster, timeout=300, reboot=True)
         else:
             if self.remote.os == 'Cygwin':
@@ -875,6 +883,7 @@ class ClusterManager:
         kv_kernel_memory = self.test_config.cluster.kv_kernel_mem_limit
         if kernel_memory or kv_kernel_memory:
             if self.dynamic_infra:
+                logger.info("Tuning memory settings")
                 cluster = self.remote.get_cluster()
                 server_groups = cluster['spec']['servers']
                 tune_services = set()
@@ -905,6 +914,7 @@ class ClusterManager:
                     updated_server_groups.append(server_group)
 
                 cluster['spec']['servers'] = updated_server_groups
+                logger.info("Updated server groups: {}".format(updated_server_groups))
                 self.remote.update_cluster_config(cluster, timeout=300, reboot=True)
             else:
                 for service in self.test_config.cluster.kernel_mem_limit_services:
@@ -1023,6 +1033,7 @@ class ClusterManager:
     def configure_autoscaling(self):
         autoscaling_settings = self.test_config.autoscaling_setting
         if self.dynamic_infra and autoscaling_settings.enabled:
+            logger.info("Configuring auto-scaling")
             cluster = self.remote.get_cluster()
             server_groups = cluster['spec']['servers']
             updated_server_groups = []

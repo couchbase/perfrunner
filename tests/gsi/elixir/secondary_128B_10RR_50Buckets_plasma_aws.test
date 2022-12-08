@@ -1,0 +1,65 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+
+[showfast]
+title = 50 buckets, 64 vBuckets/bucket, 500 indexes, 128 byte keysize, 10%% RR, 100 ops incremental mutations
+component = secondarycloud
+sub_category = PlasmaDGM
+
+[stats]
+server_processes = projector
+
+[profiling]
+services = index
+profiles = cpu,heap
+
+[cluster]
+mem_quota = 23552
+index_mem_quota = 23552
+initial_nodes = 4
+num_buckets = 50
+num_vbuckets = 64
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[internal]
+magmaMinMemoryQuota = 256
+
+[bucket]
+replica_number=0
+replica_index=0
+backend_storage = magma
+eviction_policy = fullEviction
+
+[collection]
+config = collections/50bucket_1scope_5collections_basic.json
+
+[load]
+items = 7200000
+size = 1024
+workers = 50
+key_fmtr = hash
+item_size = 100
+doc_gen = single_field_large_doc
+
+[secondary]
+indexes = tests/gsi/index_defs/50bucket_1scope_5collections_2indexes_1.json
+indexer.settings.storage_mode = plasma
+indexer.settings.minVbQueueLength = 50
+indexer.init_stream.smallSnapshotThreshold = 30
+
+[access]
+updates = 100
+ops = 400000
+items = 400000
+throughput = 100
+workers = 25
+item_size = 100
+doc_gen = single_field_large_doc
+
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+num_reader_threads = disk_io_optimized
+

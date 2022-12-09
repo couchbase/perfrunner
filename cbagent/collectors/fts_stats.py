@@ -218,17 +218,20 @@ class RegulatorStats(Collector):
         self.mc.add_cluster()
         for bucket in self.get_buckets():
             self.mc.add_bucket(bucket)
+        for host in self.fts_nodes:
+            self.mc.add_server(host)
 
     def sample(self):
         self.collect_stats()
-        for bucket in self.allbuckets:
-            self.update_metric_metadata(self.METRICS, bucket=bucket)
+
         samples = self.measure()
         for host in self.fts_nodes:
             if host in samples:
                 for bucket in self.allbuckets:
                     if bucket in samples[host]:
+                        self.update_metric_metadata(self.METRICS, bucket=bucket, server=host)
                         self.store.append(samples[host][bucket],
                                           cluster=self.cluster,
                                           bucket=bucket,
+                                          server=host,
                                           collector=self.COLLECTOR)

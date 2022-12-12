@@ -3,7 +3,7 @@ test = perfrunner.tests.eventing.FunctionsPhaseChangeTimeTest
 
 [showfast]
 title = 1 bucket x 50M x 1KB, 4KV + 1Eventing node, 3KV + 2Eventing node, single function-bucket-op, magma
-component = eventing
+component = eventingcloud
 category = lat
 sub_category = Function
 

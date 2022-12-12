@@ -3,7 +3,7 @@ test = perfrunner.tests.eventing.FunctionsLatencyTest
 
 [showfast]
 title = 80th percentile latency(ms), 1 bucket x 50M x 1KB, 3KV + 2Eventing node, single function-NOOP
-component = eventing
+component = eventingcloud
 category = lat
 sub_category = Function
 

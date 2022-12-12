@@ -3,7 +3,7 @@ test = perfrunner.tests.eventing.TimerUndeployTest
 
 [showfast]
 title = 1 bucket x 50M x 1KB, 3KV + 2Eventing node, single timer, 512bytes context
-component = eventing
+component = eventingcloud
 category = lat
 sub_category = Timer
 

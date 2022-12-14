@@ -144,7 +144,8 @@ class RemoteLinux(Remote):
             "-auth='{}:{}' " \
             "-server {index_node}:{port} " \
             "-type batch_process " \
-            "-input /tmp/batch.txt ".format(auth[0], auth[1], port=port, index_node=index_nodes[0])
+            "-input /tmp/batch.txt " \
+            "-refresh_settings true".format(auth[0], auth[1], port=port, index_node=index_nodes[0])
         with open("/tmp/batch.txt", "w+") as bf:
             bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
@@ -167,7 +168,8 @@ class RemoteLinux(Remote):
             "-auth='{}:{}' " \
             "-server {index_node}:{port} " \
             "-type batch_build " \
-            "-input /tmp/batch.txt ".format(auth[0], auth[1], port=port, index_node=index_nodes[0])
+            "-input /tmp/batch.txt " \
+            "-refresh_settings true".format(auth[0], auth[1], port=port, index_node=index_nodes[0])
         with open("/tmp/batch.txt", "w+") as bf:
             bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")

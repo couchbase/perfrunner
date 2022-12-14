@@ -1,0 +1,68 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryRebalanceTest
+
+[showfast]
+title = File-based Rebalance-out, 1 bucket x 100M x 1KB, 2K KV ops/sec, 1000 indexes, 20%% RR, Plasma, s=1 c=100
+component = secondary
+category = lat
+sub_category = PlasmaDGM
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 45000
+kernel_mem_limit = 60G
+initial_nodes = 7
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+config = collections/1bucket_1scope_100collections_basic.json
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+doc_gen = grouped
+doc_groups = 1
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_100collections_1000_indexes_1.json
+cbindexperf_configfile = tests/gsi/scan_config/config_scan_1000_indexes_1s_100c_1.json
+indexer.settings.rebalance.redistribute_indexes = True
+indexer.settings.enable_shard_affinity = True
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+queryport.client.usePlanner = True
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
+disable_perindex_stats = True
+indexer.settings.build.batch_size = 100
+cbindexperf_concurrency = 128
+cbindexperf_repeat = 29999
+
+[access]
+updates = 100
+items = 100000000
+throughput = 2000
+workers = 2
+
+[clients]
+libcouchbase = 3.2.0
+python_client = 3.2.0
+
+[rebalance]
+nodes_after = 6
+start_after = 180
+stop_after = 180

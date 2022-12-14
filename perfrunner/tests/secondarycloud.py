@@ -15,8 +15,12 @@ from perfrunner.helpers.local import (
 from perfrunner.helpers.misc import SGPortRange, pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.tests.integration import EndToEndLatencyTest
 from perfrunner.tests.rebalance import CapellaRebalanceTest
-from perfrunner.tests.secondary import SecondaryIndexingScanTest
+from perfrunner.tests.secondary import (
+    SecondaryIndexingScanTest,
+    SecondaryRebalanceTest,
+)
 from spring.docgen import decimal_fmtr
 
 
@@ -661,4 +665,41 @@ class CloudSecondaryRebalanceTestWithoutScan(CloudSecondaryRebalanceTest):
             logger.info("{} : {} Indexes".format(server,
                                                  self.rest.indexes_instances_per_node(server)))
         self.print_average_rr()
+        self.report_kpi(rebalance_time=True)
+
+
+class CloudSecondaryRebalanceOnlyTest(EndToEndLatencyTest, SecondaryRebalanceTest):
+    COLLECTORS = {'secondary_stats': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+
+    @with_stats
+    @timeit
+    def create_indexes_with_stats(self):
+        self.create_indexes_with_statement_only()
+        self.wait_for_indexing()
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        build_time = self.create_indexes_with_stats()
+        logger.info("index build completed in {} sec".format(build_time))
+        index_meta = {"time": build_time, "type": "initial", "unit": "min"}
+        self.report_index_kpi(index_meta)
+
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+
+        self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        logger.info("Rebalance time: {}".format(self.rebalance_time))
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(rebalance_time=True)

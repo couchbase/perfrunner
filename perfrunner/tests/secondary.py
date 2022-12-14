@@ -343,16 +343,17 @@ class SecondaryIndexTest(PerfTest):
             total_num_rec_compressed = 0, 0, 0, 0, 0
 
         for index in storage_stats:
-            total_num_rec_compressed += index["Stats"]["MainStore"]["num_rec_compressed"] + \
-                index["Stats"]["BackStore"]["num_rec_compressed"]
-            total_num_rec_allocs += index["Stats"]["MainStore"]["num_rec_allocs"] + \
-                index["Stats"]["BackStore"]["num_rec_allocs"]
-            total_num_rec_frees += index["Stats"]["MainStore"]["num_rec_frees"] + \
-                index["Stats"]["BackStore"]["num_rec_frees"]
-            total_num_rec_swapout += index["Stats"]["MainStore"]["num_rec_swapout"] + \
-                index["Stats"]["BackStore"]["num_rec_swapout"]
-            total_num_rec_swapin += index["Stats"]["MainStore"]["num_rec_swapin"] + \
-                index["Stats"]["BackStore"]["num_rec_swapin"]
+            if "_system:_query:#primary" not in index["Index"]:
+                total_num_rec_compressed += index["Stats"]["MainStore"]["num_rec_compressed"] + \
+                                            index["Stats"]["BackStore"]["num_rec_compressed"]
+                total_num_rec_allocs += index["Stats"]["MainStore"]["num_rec_allocs"] + \
+                    index["Stats"]["BackStore"]["num_rec_allocs"]
+                total_num_rec_frees += index["Stats"]["MainStore"]["num_rec_frees"] + \
+                    index["Stats"]["BackStore"]["num_rec_frees"]
+                total_num_rec_swapout += index["Stats"]["MainStore"]["num_rec_swapout"] + \
+                    index["Stats"]["BackStore"]["num_rec_swapout"]
+                total_num_rec_swapin += index["Stats"]["MainStore"]["num_rec_swapin"] + \
+                    index["Stats"]["BackStore"]["num_rec_swapin"]
 
         total_recs_in_mem = total_num_rec_allocs - total_num_rec_frees + total_num_rec_compressed
         total_recs_on_disk = total_num_rec_swapout - total_num_rec_swapin
@@ -445,6 +446,53 @@ class SecondaryIndexTest(PerfTest):
         scansps = numscans / duration_s
         rowps = num_rows / duration_s
         return scansps, rowps
+
+    def create_indexes_with_statement_only(self):
+        logger.info('Creating and building indexes uing N1ql statements only')
+
+        create_statements = []
+        build_statements = []
+        for statement in self.test_config.index_settings.statements:
+            if statement.split()[0].upper() == 'CREATE':
+                create_statements.append(statement)
+            elif statement.split()[0].upper() == 'BUILD':
+                build_statements.append(statement)
+            else:
+                logger.info("Something is wrong with {}".format(statement))
+
+        for statement in create_statements:
+            logger.info('Creating index: ' + statement)
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            cont = False
+            while not cont:
+                building = 0
+                index_status = self.rest.get_index_status(self.index_nodes[0])
+                index_list = index_status['status']
+                for index in index_list:
+                    if index['status'] != "Ready" and index['status'] != "Created":
+                        building += 1
+                if building < 10:
+                    cont = True
+                else:
+                    time.sleep(10)
+
+        for statement in build_statements:
+            logger.info('Building index: ' + statement)
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            cont = False
+            while not cont:
+                building = 0
+                index_status = self.rest.get_index_status(self.index_nodes[0])
+                index_list = index_status['status']
+                for index in index_list:
+                    if index['status'] != "Ready" and index['status'] != "Created":
+                        building += 1
+                if building < 10:
+                    cont = True
+                else:
+                    time.sleep(10)
+
+        logger.info('Index Create and Build Complete')
 
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
@@ -1509,7 +1557,8 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         self.load()
         self.wait_for_persistence()
 
-        self.build_secondaryindex()
+        build_time = self.build_secondaryindex()
+        logger.info(f"indexer build completed in {build_time}")
         for server in self.index_nodes:
             logger.info("{} : {} Indexes".format(server,
                                                  self.rest.indexes_instances_per_node(server)))
@@ -2265,3 +2314,54 @@ class InitialSecondaryIndexExpiryTest(InitialSecondaryIndexTest):
         self.measure_resource_during_expiry()
         incremental_time = self.wait_for_indexing()
         self.report_kpi(incremental_time, 'Incremental')
+
+
+class RebalanceThroughputLatencyMutationScanCloudTest(SecondaryRebalanceTest):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.print_index_disk_usage(heap_profile=False)
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.access_bg()
+        self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
+                                      run_in_background=True)
+        self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        logger.info("Rebalance time: {}".format(self.rebalance_time))
+        self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        percentile_latencies = self.calculate_scan_latencies()
+        self.print_index_disk_usage(heap_profile=False)
+        self.report_kpi(percentile_latencies, scan_thr)
+
+
+class SecondaryIndexRebalanceOnlyTest(SecondaryRebalanceTest):
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_indexes_with_statement_only()
+        self.wait_for_indexing()
+        self.print_index_disk_usage()
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.rebalance_timings = self.get_rebalance_timings()
+        logger.info('Rebalance completed in {} secs'.format(self.rebalance_timings['total_time']))
+        self.report_kpi(rebalance_time=True)
+        self.print_index_disk_usage()

@@ -1,0 +1,104 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryRebalanceTest
+
+[showfast]
+title = Rebalance-swap (min) 1->1, 1 bucket x 55M x 1KB, 100 indexes, 10K KV ops/sec, Scan Workload concurrency=128, Plasma, s=1 c=50
+component = secondary
+category = rebalance
+sub_category = Plasma
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 127000
+initial_nodes = 5
+num_buckets = 10
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+scopes_per_bucket = 1
+collections_per_scope = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+workload_mix = a1,a2,a3,a4,a5,a6,a7,a8,a9,a10
+size = 1024
+workers = 100
+doc_gen = grouped
+doc_groups = 1
+
+[load-a1]
+num_buckets = 1
+items = 1000000
+
+[load-a2]
+num_buckets = 2
+items = 2000000
+
+[load-a3]
+num_buckets = 3
+items = 3000000
+
+[load-a4]
+num_buckets = 4
+items = 4000000
+
+[load-a5]
+num_buckets = 5
+items = 5000000
+
+[load-a6]
+num_buckets = 6
+items = 6000000
+
+[load-a7]
+num_buckets = 7
+items = 7000000
+
+[load-a8]
+num_buckets = 8
+items = 8000000
+
+[load-a9]
+num_buckets = 9
+items = 9000000
+
+[load-a10]
+num_buckets = 10
+items = 10000000
+
+[rebalance]
+nodes_after = 5
+start_after = 180
+stop_after = 180
+swap = 1
+
+[secondary]
+indexes = tests/gsi/index_defs/10bucket_1scope_1collections_100_indexes_partitioned.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_sessionconsistent_10b_100_indexes_1s_10c_partitioned.json
+indexer.settings.rebalance.redistribute_indexes = True
+indexer.settings.enable_shard_affinity  = True
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+queryport.client.usePlanner = True
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
+disable_perindex_stats = True
+indexer.settings.build.batch_size = 100
+cbindexperf_repeat = 299999
+cbindexperf_concurrency = 128
+
+[access]
+updates = 100
+items = 55000000
+throughput = 1000
+workers = 20

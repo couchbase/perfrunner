@@ -1,0 +1,102 @@
+{
+  "bucket-1":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio":1
+      }
+    }
+  },
+  "bucket-2":{
+    "_default": {},
+    "scope-1":{
+      "collection-1": {
+        "load": 1,
+        "access":1,
+        "ratio": 2
+      }
+    }
+  },
+  "bucket-3":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio":3
+      }
+    }
+  },
+  "bucket-4":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio":4
+      }
+    }
+  },
+  "bucket-5":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio":5
+      }
+    }
+  },
+  "bucket-6":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio":6
+      }
+    }
+  },
+  "bucket-7":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio":7
+      }
+    }
+  },
+  "bucket-8":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio":8
+      }
+    }
+  },
+  "bucket-9":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio":9
+      }
+    }
+  },
+  "bucket-10":{
+    "_default": {},
+    "scope-1":{
+      "collection-1":{
+        "load": 1,
+        "access":1,
+        "ratio": 10
+      }
+    }
+  }
+}

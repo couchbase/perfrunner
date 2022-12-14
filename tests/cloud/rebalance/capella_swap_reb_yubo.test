@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.secondarycloud.CloudSecondaryRebalanceOnlyTest
+
+[showfast]
+title = Swap-Rebalance (min), 1 -> 1, 1 bucket x 1.6B x 230B
+component = secondarycloud
+sub_category = AWS
+
+[cluster]
+mem_quota = 54000
+index_mem_quota = 123000
+initial_nodes = 5
+num_buckets = 1
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+replica_number = 1
+
+[collection]
+config = collections/1bucket_1scope_3collections.json
+
+[load]
+items = 1600000000
+size = 230
+workers = 80
+key_fmtr = hash
+doc_gen = yubo
+ssl_mode = capella
+
+[rebalance]
+nodes_after = 5
+start_after = 300
+stop_after = 300
+swap = 1
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.settings.num_replica = 1
+queryport.client.usePlanner = false
+indexer.settings.rebalance.blob_storage_scheme = https
+indexer.planner.enableShardAffinity = true
+
+[index]
+statements =
+    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` ON `bucket-1`.`users`.`swipes`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":3 };
+    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` ON `bucket-1`.`users`.`views`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {  "defer_build":true, "num_replica":1, "num_partition":3 };
+    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`users`.`swipes`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH { "defer_build":true, "num_replica":1, "num_partition":3 };
+    BUILD INDEX on `bucket-1`.`users`.`swipes`(adv_linked_uidDESC_swipe_dateDESC_uid,adv_uid_swipe_dateDESC_linked_uidDESC)
+    BUILD INDEX on `bucket-1`.`users`.`views`(adv_linked_uid_countDESC_last_seenDESC_uid)
+
+[clients]
+python_client = 3.2.7

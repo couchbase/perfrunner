@@ -2016,6 +2016,12 @@ class KubernetesRestHelper(RestBase):
         api = 'http://{}:{}/pools/default/buckets/{}/controller/doFlush'.format(host, port, bucket)
         self.post(url=api)
 
+    def get_dcp_replication_items(self, host: str, bucket: str) -> dict:
+        host, port = self.translate_host_and_port(host, '8091')
+        api = 'http://{}:{}/pools/default/stats/range/kv_dcp_items_remaining?bucket={}&' \
+              'connection_type=replication&aggregationFunction=sum'.format(host, port, bucket)
+        return self.get(url=api).json()
+
 
 class CapellaRestBase(DefaultRestHelper):
 

@@ -1407,6 +1407,13 @@ class KubernetesMonitor(KubernetesRestHelper):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+        self.master_node = next(cluster_spec.masters)
+        # We create a k8s monitor during cluster creation, when we dont have cluster yet.
+        # The k8s monitor is not used during cluster creation anyways, so empty string is OK.
+        try:
+            self.build = self.get_version(self.master_node)
+        except Exception:
+            self.build = ''
 
     def is_index_ready(self, host: str) -> bool:
         return True
@@ -1436,12 +1443,43 @@ class KubernetesMonitor(KubernetesRestHelper):
 
     def monitor_dcp_queues(self, host, bucket):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
-                                    self.get_bucket_stats)
+
+        version, build_number = self.build.split('-')
+        build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
+        if build < (7, 0, 0, 3937):
+            self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
+                                        self.get_bucket_stats)
+        else:
+            if self.test_config.bucket.replica_number != 0:
+                self._wait_for_empty_dcp_queues(host, bucket,
+                                                self.get_dcp_replication_items)
+            self.DCP_QUEUES = (
+                'ep_dcp_other_items_remaining',
+            )
+            self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
+                                        self.get_bucket_stats)
 
     def monitor_replica_count(self, host, bucket):
         logger.info('Monitoring replica count match: {}'.format(bucket))
         self._wait_for_replica_count_match(host, bucket)
+
+    def _wait_for_empty_dcp_queues(self, host, bucket, stats_function):
+        start_time = time.time()
+        while True:
+            kv_dcp_stats = stats_function(host, bucket)
+            try:
+                if stats := int(kv_dcp_stats['data'][0]['values'][-1][1]):
+                    logger.info('{} = {}'.format('ep_dcp_replica_items_remaining', stats))
+                else:
+                    logger.info('{} reached 0'.format('ep_dcp_replica_items_remaining'))
+                    break
+            except Exception:
+                pass
+
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('DCP queue Monitoring got stuck')
+            time.sleep(self.POLLING_INTERVAL)
 
     def _wait_for_empty_queues(self, host, bucket, queues, stats_function):
         metrics = list(queues)
@@ -1460,6 +1498,9 @@ class KubernetesMonitor(KubernetesRestHelper):
                         continue
                     else:
                         logger.info('{} reached 0'.format(metric))
+                    metrics.remove(metric)
+                else:
+                    logger.info('{} reached 0'.format(metric))
                     metrics.remove(metric)
             if metrics:
                 time.sleep(self.POLLING_INTERVAL)

@@ -34,9 +34,9 @@ iops = 16000
 [azurerm_node_group_2]
 instance_type = Standard_F16s_v2
 instance_capacity = 2
-volume_size = 2000
-disk_tier = P20
-iops = 2300
+volume_size = 4100
+disk_tier = P60
+iops = 16000
 
 [azurerm_node_group_3]
 instance_type = Standard_F64s_v2

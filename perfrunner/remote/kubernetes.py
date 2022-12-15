@@ -725,10 +725,34 @@ class RemoteKubernetes(Remote):
                                 {
                                     'type': target_type,
                                     target_type: target_value
-                                }
+                            }
                         }
                 }
-            ]
+        ]
+
+    def get_logs(self, pod_name: str, container: str = None, options: str = '') -> str:
+        # Get from all pod's containers if none is specified,
+        # useful for our usecase here
+        if not container:
+            container = '--all-containers=true'
+        else:
+            container = '-c {}'.format(container)
+        return self.k8s_client("logs {} {} {}".format(pod_name, container, options),
+                               split_lines=False).decode('utf8')
+
+    def collect_k8s_logs(self):
+        # Collect operator and backup pods logs if one exists
+        pods = self.get_pods()
+        for pod in pods:
+            pod_name = pod.get("metadata", {}).get("name", "")
+            # Generally we will only care about operator and backup pods logs.
+            # But we can revisit this to include other pods when needed.
+            if ("couchbase-operator-" in pod_name and "admission" not in pod_name)\
+                    or "backup" in pod_name:
+                logger.info("Collecting pod '{}' logs".format(pod_name))
+                logs = self.get_logs(pod_name)
+                with open("{}.log".format(pod_name), 'w') as file:
+                    file.write(logs)
 
     def istioctl(self, params, kube_config=None, split_lines=True, max_attempts=1):
         kube_config = kube_config or self.kube_config_path

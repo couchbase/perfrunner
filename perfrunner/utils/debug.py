@@ -155,6 +155,9 @@ def main():
 
     if cluster_spec.capella_infrastructure:
         get_capella_cluster_logs(cluster_spec, args.s3_bucket_name)
+    elif cluster_spec.dynamic_infrastructure:
+        remote.collect_k8s_logs()
+        return
     else:
         remote.collect_info()
         for hostname in cluster_spec.servers:

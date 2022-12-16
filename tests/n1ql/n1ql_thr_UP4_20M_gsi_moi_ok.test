@@ -43,7 +43,7 @@ time = 1200
 n1ql_op = update
 n1ql_queries = updaterange
 n1ql_workers = 240
-workload_instances = 2
+workload_instances = 3
 
 [n1ql-updaterange]
 statement = UPDATE `bucket-1` SET name = name||'_UPDATED' WHERE capped_small=$1;

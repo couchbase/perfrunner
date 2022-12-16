@@ -39,7 +39,7 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = empty-function
-workload_instances = 2
+workload_instances = 3
 n1ql_workers = 240
 
 [n1ql-empty-function]

@@ -43,7 +43,7 @@ workers = 20
 time = 1200
 n1ql_queries = index-projection
 n1ql_workers = 240
-workload_instances = 2
+workload_instances = 3
 
 [n1ql-index-projection]
 statement = SELECT email, alt_email FROM `bucket-1` WHERE email = $1;

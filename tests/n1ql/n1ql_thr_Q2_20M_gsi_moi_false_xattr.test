@@ -50,7 +50,7 @@ xattr_field = user
 time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_workers = 120
-workload_instances = 2
+workload_instances = 3
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT META().xattrs.`user` FROM `bucket-1` WHERE META().xattrs.`user`.email = $1;

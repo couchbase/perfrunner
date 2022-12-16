@@ -48,7 +48,7 @@ workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_workers = 120
-workload_instances = 2
+workload_instances = 3
 
 [n1ql-singleton-unique-lookup]
 statement = execute function func2($1);

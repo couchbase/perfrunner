@@ -42,7 +42,7 @@ workers = 20
 time = 1200
 n1ql_queries = aggregation-query
 n1ql_workers = 360
-workload_instances = 2
+workload_instances = 3
 
 [n1ql-aggregation-query]
 statement = SELECT SUM(coins) FROM `bucket-1` WHERE capped_small=$1;

@@ -48,7 +48,7 @@ workers = 20
 time = 1200
 n1ql_queries = page-query
 n1ql_workers = 120
-workload_instances = 2
+workload_instances = 3
 
 [n1ql-page-query]
 statement = execute function func($1);

@@ -673,7 +673,8 @@ class PipelineTest(TestCase):
                   'KV', 'KV-DGM', 'KV-Windows', 'KV-Athena', 'KV-Hercules',
                   'Rebalance', 'Rebalance-C1', 'Rebalance-C2', 'Rebalance-Hestia',
                   'Rebalance-Large-Scale', 'Rebalance-Large-Scale-C1', 'Rebalance-Large-Scale-C2',
-                  'XDCR', 'XDCR-C1', 'XDCR-C2', 'XDCR-Windows'}
+                  'Rebalance-C1-OnDemand', 'Rebalance-C2-OnDemand', 'Rebalance-OnDemand',
+                  'Rebalance-Hestia-OnDemand', 'XDCR', 'XDCR-C1', 'XDCR-C2', 'XDCR-Windows'}
         for pipeline in ('tests/pipelines/weekly-watson.json',
                          'tests/pipelines/weekly-spock.json',
                          'tests/pipelines/weekly-vulcan.json',

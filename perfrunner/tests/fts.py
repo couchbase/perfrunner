@@ -595,8 +595,14 @@ class FTSLatencyCloudBackupTest(FTSLatencyTest):
         self.remote.extract_cb(filename='couchbase.rpm',
                                worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
-        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
-        self.remote.create_aws_credential(credential)
+        if self.cluster_spec.capella_infrastructure:
+            backend = self.cluster_spec.capella_backend
+        else:
+            backend = self.cluster_spec.cloud_provider
+        if backend == 'aws':
+            credential = local.read_aws_credential(
+                self.test_config.backup_settings.aws_credential_path)
+            self.remote.create_aws_credential(credential)
         self.remote.client_drop_caches()
         self.remote.restore(cluster_spec=self.cluster_spec,
                             master_node=self.master_node,
@@ -606,6 +612,7 @@ class FTSLatencyCloudBackupTest(FTSLatencyTest):
                             repo=self.test_config.restore_settings.backup_repo,
                             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
                             obj_region=self.test_config.backup_settings.obj_region,
+                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
                             use_tls=self.test_config.restore_settings.use_tls,
                             map_data=self.test_config.restore_settings.map_data)
         self.wait_for_persistence()

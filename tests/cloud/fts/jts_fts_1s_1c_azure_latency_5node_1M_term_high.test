@@ -2,12 +2,11 @@
 test = perfrunner.tests.fts.FTSLatencyCloudBackupTest
 
 [showfast]
-title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=1
+title = High Term, 10K KV w/sec, wiki 1M x 1KB, 5 node, FTS, s=1 c=1
 component = jtscloud
 category = Latency
 sub_category = AZURE
 orderby = q0b00000010
-
 
 [cluster]
 mem_quota = 8192
@@ -36,13 +35,12 @@ test_collection_query_mode = default
 index_groups = 1
 indexes_per_group = 1
 jts_instances = 1
-test_docid_use_long = 1
 test_duration = 600
 test_total_docs = 1000000
 test_query_workers = 1
 test_kv_workers = 60
 test_kv_throughput_goal = 10000
-test_data_file = ../tests/fts/data/benchmark/med.txt
+test_data_file = ../tests/fts/data/benchmark/hi.txt
 test_driver = couchbase
 test_stats_limit = 1000000
 test_stats_aggregation_step = 100

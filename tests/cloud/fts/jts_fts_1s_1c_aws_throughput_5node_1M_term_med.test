@@ -1,10 +1,10 @@
 [test_case]
-test = perfrunner.tests.fts.FTSLatencyCloudBackupTest
+test = perfrunner.tests.fts.FTSThroughputCloudBackupTest
 
 [showfast]
-title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 5 node, FTS
+title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 5 node, FTS, s=1 c=1
 component = jtscloud
-category = Latency
+category = Throughput
 sub_category = AWS
 
 [cluster]
@@ -18,12 +18,15 @@ enable_n2n_encryption = all
 
 [jts]
 jts_repo_branch = korry_jts_enhancements
-jts_instances = 1
+test_collection_query_mode = default
+index_groups = 1
+indexes_per_group = 1
+jts_instances = 6
 test_duration = 600
 test_total_docs = 1000000
-test_query_workers = 1
-test_kv_workers = 60
-test_kv_throughput_goal = 10000
+test_query_workers = 10
+test_kv_workers = 5
+test_kv_throughput_goal = 1660
 test_data_file = ../tests/fts/data/benchmark/med.txt
 test_driver = couchbase
 test_stats_limit = 1000000
@@ -33,9 +36,12 @@ test_query_type = term
 test_query_limit = 10
 test_query_field = text
 test_mutation_field = text2
-test_worker_type = validatedLatency
+test_worker_type = validatedThroughput
 couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
 
 [backup]
 obj_staging_dir = /root
@@ -43,8 +49,8 @@ obj_region = us-east-1
 aws_credential_path = /root/.ssh
 
 [restore]
-backup_storage = s3://fts-wiki-1m
-backup_repo = fts_wiki
+backup_storage = s3://fts-wiki
+backup_repo = fts_wiki_collection
 threads = 8
 use_tls = 1
 

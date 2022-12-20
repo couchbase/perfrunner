@@ -2,9 +2,9 @@
 test = perfrunner.tests.fts.FTSLatencyCloudBackupTest
 
 [showfast]
-title = Low Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
-component = cloud
-category = search
+title = Low Term, 10K KV w/sec, wiki 1M x 1KB, 5 node, FTS
+component = jtscloud
+category = Latency
 sub_category = AWS
 
 [cluster]

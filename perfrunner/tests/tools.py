@@ -757,3 +757,67 @@ class AzureRestoreTest(CloudRestoreTest):
         super().__init__(*args, **kwargs)
         storage_acc = self.cluster_spec.infrastructure_section('storage')['storage_acc']
         self.test_config.config.set('backup', 'obj_access_key_id', storage_acc)
+
+
+class ProvisionedCapellaBackup(PerfTest):
+
+    @with_stats
+    def backup(self):
+        self.rest.backup(self.master_node)
+        backup_time = self.rest.wait_for_backup(self.master_node)
+        logger.info("Backup took: {}s ".format(backup_time))
+        return backup_time
+
+    def _report_kpi(self, time_elapsed):
+        edition = 'Capella'
+        tool = 'backup'
+        storage = 'Rift'
+
+        self.reporter.post(
+            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
+        )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        time_elapsed = self.backup()
+        self.report_kpi(time_elapsed)
+
+
+class ProvisionedCapellaRestore(ProvisionedCapellaBackup):
+
+    def flush_buckets(self):
+        self.rest.flush_bucket(self.master_node, 'bucket-1')
+
+    def backup(self):
+        self.rest.backup(self.master_node)
+        self.rest.wait_for_backup(self.master_node)
+
+    def trigger_restore(self):
+        self.rest.restore(self.master_node)
+        self.rest.wait_for_restore_initialize(self.master_node, 'bucket-1')
+
+    @with_stats
+    @timeit
+    def restore(self):
+        self.rest.wait_for_restore(self.master_node, 'bucket-1')
+
+    def _report_kpi(self, time_elapsed):
+        edition = 'Capella'
+        tool = 'restore'
+        storage = 'Rift'
+
+        self.reporter.post(
+            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
+        )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.backup()
+        self.flush_buckets()
+        self.trigger_restore()
+        time_elapsed = self.restore()
+        self.report_kpi(time_elapsed)

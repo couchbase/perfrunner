@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.tools.ProvisionedCapellaBackup
+
+[showfast]
+title = 3 nodes, 1 bucket x 10M x 1KB, Idle, Azure, Standard_F8s_v2
+component = toolscloud
+category = backup
+sub_category = AZURE  
+
+[cluster]
+mem_quota = 12500
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+backend_storage = magma
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 10000000
+size = 1024
+workers = 80
+ssl_mode = capella

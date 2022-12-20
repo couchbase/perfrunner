@@ -1,8 +1,10 @@
+import base64
 import json
 import os
 import time
 from collections import namedtuple
 from contextlib import contextmanager
+from json import JSONDecodeError
 from typing import Callable, Dict, Iterator, List
 
 import requests
@@ -1995,9 +1997,10 @@ class CapellaRestHelper(DefaultRestHelper):
     @retry
     def flush_bucket(self, host: str, bucket: str):
         cluster_id = self.hostname_to_cluster_id(host)
-        logger.info('Flushing bucket on cluster {}: {}'.format(cluster_id, bucket))
+        bucket_id = base64.urlsafe_b64encode(bucket.encode()).decode()
+        logger.info('Flushing bucket on cluster {}: {}'.format(cluster_id, bucket_id))
         resp = self.api_client.flush_bucket(
-            self.tenant_id, self.project_id, cluster_id, bucket)
+            self.tenant_id, self.project_id, cluster_id, bucket_id)
         return resp
 
     @retry
@@ -2016,6 +2019,60 @@ class CapellaRestHelper(DefaultRestHelper):
         resp = self.api_client.update_specs(self.tenant_id, self.project_id, cluster_id,
                                             new_cluster_config)
         return resp
+
+    @retry
+    def backup(self, host: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Triggering backup.')
+        resp = self.api_client.backup_now(
+            self.tenant_id, self.project_id, cluster_id, 'bucket-1')
+        return resp
+
+    def wait_for_backup(self, host: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        while True:
+            time.sleep(30)
+            resp = self.api_client.get_backups(
+                self.tenant_id, self.project_id, cluster_id
+            )
+            if resp is not None:
+                logger.info(str(resp.json()))
+
+                if resp.json()['data']:
+                    if 'elapsedTimeInSeconds' in resp.json()['data'][0]['data']:
+                        if resp.json()['data'][0]['data']['status'] != 'pending':
+                            logger.info('Backup complete.')
+                            return resp.json()['data'][0]['data']['elapsedTimeInSeconds']
+
+    def restore(self, host: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Triggering restore.')
+        self.api_client.restore_from_backup(
+            self.tenant_id, self.project_id, cluster_id, 'bucket-1')
+
+    def wait_for_restore_initialize(self, host: str, bucket):
+        cluster_id = self.hostname_to_cluster_id(host)
+        while True:
+            try:
+                resp = self.api_client.get_restores(
+                    self.tenant_id, self.project_id, cluster_id, bucket
+                )
+                if resp.json()['status']:
+                    break
+            except JSONDecodeError:
+                if resp.status_code == 204:
+                    continue
+                else:
+                    logger.info('Restore trigger failed, error code: {}'.format(resp.status_code))
+
+    def wait_for_restore(self, host: str, bucket):
+        cluster_id = self.hostname_to_cluster_id(host)
+        while(True):
+            resp = self.api_client.get_restores(
+                        self.tenant_id, self.project_id, cluster_id, bucket
+                        )
+            if resp.json()['status'] == 'complete':
+                break
 
     def get_all_cluster_nodes(self):
         cluster_nodes = {}

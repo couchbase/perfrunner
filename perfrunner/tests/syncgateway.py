@@ -99,7 +99,10 @@ class SGPerfTest(PerfTest):
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.sg_settings = self.test_config.syncgateway_settings
-        self.collections = self.test_config.collection
+        if self.test_config.collection.collection_map:
+            self.collection_map = self.test_config.collection.collection_map
+        else:
+            self.collection_map = {}
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
@@ -1719,38 +1722,41 @@ class EndToEndTest(SGPerfTest):
 
     def _report_kpi(self, sgw_load_tp: int, sgw_access_tp: int):
         field_length = str(self.test_config.syncgateway_settings.fieldlength)
-        self.reporter.post(
-            *self.metrics.sgw_e2e_throughput(
-                throughput=sgw_load_tp,
-                field_length=field_length,
-                operation="INSERT",
-                replication=self.test_config.syncgateway_settings.replication_type
+        if sgw_load_tp > 0:  # Make E2E tests a bit resilient, collect partial data when available
+            self.reporter.post(
+                *self.metrics.sgw_e2e_throughput(
+                    throughput=sgw_load_tp,
+                    field_length=field_length,
+                    operation="INSERT",
+                    replication=self.test_config.syncgateway_settings.replication_type
+                )
             )
-        )
-        self.reporter.post(
-            *self.metrics.sgw_e2e_throughput_per_cblite(
-                throughput=sgw_load_tp / float(self.settings.syncgateway_settings.threads),
-                field_length=field_length,
-                operation="INSERT",
-                replication=self.test_config.syncgateway_settings.replication_type
+            self.reporter.post(
+                *self.metrics.sgw_e2e_throughput_per_cblite(
+                    throughput=sgw_load_tp / float(self.settings.syncgateway_settings.threads),
+                    field_length=field_length,
+                    operation="INSERT",
+                    replication=self.test_config.syncgateway_settings.replication_type
+                )
             )
-        )
-        self.reporter.post(
-            *self.metrics.sgw_e2e_throughput(
-                throughput=sgw_access_tp,
-                field_length=field_length,
-                operation="UPDATE",
-                replication=self.test_config.syncgateway_settings.replication_type
+
+        if sgw_access_tp > 0:
+            self.reporter.post(
+                *self.metrics.sgw_e2e_throughput(
+                    throughput=sgw_access_tp,
+                    field_length=field_length,
+                    operation="UPDATE",
+                    replication=self.test_config.syncgateway_settings.replication_type
+                )
             )
-        )
-        self.reporter.post(
-            *self.metrics.sgw_e2e_throughput_per_cblite(
-                throughput=sgw_access_tp / float(self.settings.syncgateway_settings.threads),
-                field_length=field_length,
-                operation="UPDATE",
-                replication=self.test_config.syncgateway_settings.replication_type
+            self.reporter.post(
+                *self.metrics.sgw_e2e_throughput_per_cblite(
+                    throughput=sgw_access_tp / float(self.settings.syncgateway_settings.threads),
+                    field_length=field_length,
+                    operation="UPDATE",
+                    replication=self.test_config.syncgateway_settings.replication_type
+                )
             )
-        )
 
     @with_stats
     @with_profiles
@@ -2034,9 +2040,10 @@ class EndToEndMultiCBLTest(EndToEndTest):
     @with_stats
     @with_profiles
     def push_update(self, post_load_writes, load_docs):
+        collections_count = len(self.collection_map.get('bucket-1', {'scope-1'})['scope-1'])
         queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self.push_monitor, args=(queue, post_load_writes,
-                                    int(load_docs)))
+                                    int(load_docs) // collections_count))
         p.daemon = True
         p.start()
         try:
@@ -2078,7 +2085,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
         p.daemon = True
         p.start()
         try:
-            PerfTest.load(self, task=ycsb_data_load_task)
+            self.load_docs()
             ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
@@ -2107,7 +2114,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
         p.daemon = True
         p.start()
         try:
-            PerfTest.access(self, task=ycsb_task)
+            self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, None,
+                              self.settings.time, True)
             ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
@@ -2162,7 +2170,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             settings.syncgateway_settings.documents = \
                 int(load_docs *
                     float(settings.syncgateway_settings.pullproportion))
-            PerfTest.load(self, task=ycsb_data_load_task)
+            self.load_docs()
             ret1 = queue.get(timeout=900)
             ret2 = queue.get(timeout=900)
         except Exception as ex:
@@ -2235,7 +2243,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
             settings.syncgateway_settings.documents = \
                 int(load_docs *
                     float(settings.syncgateway_settings.pullproportion))
-            PerfTest.access(self, task=ycsb_task)
+            self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, None,
+                              self.settings.time, True)
             ret1 = queue.get(timeout=900)
             ret2 = queue.get(timeout=900)
         except Exception as ex:
@@ -2279,7 +2288,9 @@ class EndToEndMultiCBLTest(EndToEndTest):
                                                     self.settings.syncgateway_settings.clients)]:
                 port = 4985 + instance_id
                 db_name = "db_{}".format(instance_id)
-                self.remote.start_cblitedb_continuous(client, db_name, port, verbose)
+                self.remote.start_cblitedb_continuous(client, db_name, port, verbose,
+                                                      self.collection_map
+                                                      .get('bucket-1', {}))
 
     def start_multi_continuous_replication(self):
         replication_type = self.test_config.syncgateway_settings.replication_type
@@ -2316,30 +2327,33 @@ class EndToEndMultiCBLTest(EndToEndTest):
                     cblites_on_current_sgw = 0
                     current_sgw += 1
                     sgw_ip = self.cluster_spec.sgw_servers[current_sgw]
+
+                scopes = self.collection_map.get('bucket-1', None)
+                # Use _default collection to start replication for non collection runs
+                collections = ['_default._default']
+                if scopes:
+                    collections = []
+                    for scope, coll in scopes.items():
+                        if scope == '_default':
+                            continue
+                        for col_name, _ in coll.items():
+                            collections.append("{}.{}".format(scope, col_name))
+
                 if replication_type == 'E2E_PUSH':
                     sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
-                    if self.capella_infra and self.cluster_spec.capella_backend == 'aws':
-                        self.remote.start_cblite_replication_aws_bidi(
-                            client, sgw_ip, sgw_port, db_name, username, password)
-                    else:
-                        self.rest.start_cblite_replication_push(
-                            client, port, db_name, sgw_ip, sgw_port, username, password)
+                    self.rest.start_cblite_replication_push(
+                        client, port, db_name, sgw_ip, sgw_port, username, password,
+                        collections=collections)
                 elif replication_type == 'E2E_PULL':
                     sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
-                    if self.capella_infra and self.cluster_spec.capella_backend == 'aws':
-                        self.remote.start_cblite_replication_aws_bidi(
-                            client, sgw_ip, sgw_port, db_name, username, password)
-                    else:
-                        self.rest.start_cblite_replication_pull(
-                            client, port, db_name, sgw_ip, sgw_port, username, password)
+                    self.rest.start_cblite_replication_pull(
+                        client, port, db_name, sgw_ip, sgw_port, username, password,
+                        collections=collections)
                 elif replication_type == 'E2E_BIDI':
                     sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
-                    if self.capella_infra and self.cluster_spec.capella_backend == 'aws':
-                        self.remote.start_cblite_replication_aws_bidi(
-                            client, sgw_ip, sgw_port, db_name, username, password)
-                    else:
-                        self.rest.start_cblite_replication_bidi(
-                            client, port, db_name, sgw_ip, sgw_port, username, password)
+                    self.rest.start_cblite_replication_bidi(
+                        client, port, db_name, sgw_ip, sgw_port, username, password,
+                        collections=collections)
                 else:
                     raise Exception(
                         "replication type must be either E2E_PUSH or E2E_PULL: {}".
@@ -2419,19 +2433,23 @@ class EndToEndMultiCBLPushTest(EndToEndMultiCBLTest):
         logger.info("initial pushed: {}".format(pre_load_writes))
 
         sgw_load_time, observed_pushed_load = self.push_load(pre_load_writes, load_docs)
+        sgw_load_tp = observed_pushed_load / sgw_load_time
 
         post_load_stats = self.post_delta_stats()
         post_load_writes = post_load_stats['push_count']
         logger.info("post load pushed: {}".format(post_load_writes))
 
-        sgw_access_time, observed_pushed_access = self.push_update(post_load_writes, load_docs)
+        try:
+            sgw_access_time, observed_pushed_access = self.push_update(post_load_writes, load_docs)
 
-        post_access_stats = self.post_delta_stats()
-        post_access_writes = post_access_stats['push_count']
-        logger.info("post access pushed: {}".format(post_access_writes))
+            post_access_stats = self.post_delta_stats()
+            post_access_writes = post_access_stats['push_count']
+            logger.info("post access pushed: {}".format(post_access_writes))
 
-        sgw_load_tp = observed_pushed_load / sgw_load_time
-        sgw_access_tp = observed_pushed_access / sgw_access_time
+            sgw_access_tp = observed_pushed_access / sgw_access_time
+        except Exception as ex:
+            logger.warn('PUSH access phase failed: {}'.format(ex))
+            sgw_access_tp = 0
 
         self.collect_execution_logs()
         self.report_kpi(sgw_load_tp, sgw_access_tp)
@@ -2447,19 +2465,23 @@ class EndToEndMultiCBLPullTest(EndToEndMultiCBLTest):
         logger.info("initial pulled: {}".format(pre_load_reads))
 
         sgw_load_time, observed_pulled_load = self.pull_load(pre_load_reads, load_docs)
+        sgw_load_tp = observed_pulled_load / sgw_load_time
 
         post_load_stats = self.post_delta_stats()
         post_load_reads = post_load_stats['pull_count']
         logger.info("post load pulled: {}".format(post_load_reads))
 
-        sgw_access_time, observed_pulled_access = self.pull_update(post_load_reads, load_docs)
+        try:
+            sgw_access_time, observed_pulled_access = self.pull_update(post_load_reads, load_docs)
 
-        post_access_stats = self.post_delta_stats()
-        post_access_reads = post_access_stats['pull_count']
-        logger.info("post access pulled: {}".format(post_access_reads))
+            post_access_stats = self.post_delta_stats()
+            post_access_reads = post_access_stats['pull_count']
+            logger.info("post access pulled: {}".format(post_access_reads))
 
-        sgw_load_tp = observed_pulled_load / sgw_load_time
-        sgw_access_tp = observed_pulled_access / sgw_access_time
+            sgw_access_tp = observed_pulled_access / sgw_access_time
+        except Exception as ex:
+            logger.warn('PULL access phase failed: {}'.format(ex))
+            sgw_access_tp = 0
 
         self.collect_execution_logs()
         self.report_kpi(sgw_load_tp, sgw_access_tp)
@@ -2469,6 +2491,8 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
 
     def _report_kpi(self, sgw_load_tp: int, operation: str):
         field_length = str(self.test_config.syncgateway_settings.fieldlength)
+        if sgw_load_tp <= 0:
+            return
         self.reporter.post(
             *self.metrics.sgw_e2e_throughput(
                 throughput=sgw_load_tp,
@@ -2496,8 +2520,16 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
         pre_load_reads = pre_load_stats['pull_count']
         logger.info("initial pulled: {}".format(pre_load_reads))
 
-        sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, sgw_pull_load_docs = \
-            self.bidi_load(pre_load_writes, pre_load_reads, load_docs)
+        try:
+            sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, sgw_pull_load_docs = \
+                self.bidi_load(pre_load_writes, pre_load_reads, load_docs)
+            sgw_push_load_tp = sgw_push_load_docs / sgw_push_load_time
+            sgw_pull_load_tp = sgw_pull_load_docs / sgw_pull_load_time
+
+            self.report_kpi(sgw_push_load_tp, "PUSH_INSERT")
+            self.report_kpi(sgw_pull_load_tp, "PULL_INSERT")
+        except Exception as ex:
+            logger.warn('BIDI load phase failed: {}'.format(ex))
 
         post_load_stats = self.post_delta_stats()
         post_load_writes = post_load_stats['push_count']
@@ -2505,22 +2537,21 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
         post_load_reads = post_load_stats['pull_count']
         logger.info("post load pulled: {}".format(post_load_reads))
 
-        sgw_push_access_time, sgw_push_access_docs, sgw_pull_access_time, sgw_pull_access_docs = \
-            self.bidi_update(post_load_writes, post_load_reads, load_docs)
+        try:
+            sgw_push_access_time, sgw_push_access_docs, \
+                sgw_pull_access_time, sgw_pull_access_docs = \
+                self.bidi_update(post_load_writes, post_load_reads, load_docs)
+            sgw_push_access_tp = sgw_push_access_docs / sgw_push_access_time
+            sgw_pull_access_tp = sgw_pull_access_docs / sgw_pull_access_time
 
-        post_access_stats = self.post_delta_stats()
-        post_access_writes = post_access_stats['push_count']
-        logger.info("post access pushed: {}".format(post_access_writes))
-        post_access_reads = post_access_stats['pull_count']
-        logger.info("post access pulled: {}".format(post_access_reads))
-
-        sgw_push_load_tp = sgw_push_load_docs / sgw_push_load_time
-        sgw_push_access_tp = sgw_push_access_docs / sgw_push_access_time
-        sgw_pull_load_tp = sgw_pull_load_docs / sgw_pull_load_time
-        sgw_pull_access_tp = sgw_pull_access_docs / sgw_pull_access_time
+            post_access_stats = self.post_delta_stats()
+            post_access_writes = post_access_stats['push_count']
+            logger.info("post access pushed: {}".format(post_access_writes))
+            post_access_reads = post_access_stats['pull_count']
+            logger.info("post access pulled: {}".format(post_access_reads))
+            self.report_kpi(sgw_push_access_tp, "PUSH_UPDATE")
+            self.report_kpi(sgw_pull_access_tp, "PULL_UPDATE")
+        except Exception as ex:
+            logger.warn('BIDI access phase failed: {}'.format(ex))
 
         self.collect_execution_logs()
-        self.report_kpi(sgw_push_load_tp, "PUSH_INSERT")
-        self.report_kpi(sgw_pull_load_tp, "PULL_INSERT")
-        self.report_kpi(sgw_push_access_tp, "PUSH_UPDATE")
-        self.report_kpi(sgw_pull_access_tp, "PULL_UPDATE")

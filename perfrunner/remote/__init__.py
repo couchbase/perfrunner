@@ -382,13 +382,24 @@ class Remote:
         with cd('/tmp/couchbase-mobile-tools/cblite/build_cmake'):
             run('/usr/bin/make -j 5', quiet=True)
 
-    def start_cblitedb_continuous(self, worker: str, db_name: str, port: int, verbose: int = 1):
-        cmd = '/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite --create serve {2} --port' \
-              ' {0} /tmp/couchbase-mobile-tools/{1}.cblite2 &>serve_{1}.log & '\
-            .format(port, db_name, '--verbose' if verbose else '')
+    def start_cblitedb_continuous(self, worker: str, db_name: str, port: int, verbose: int = 1,
+                                  collection: dict = {}):
+        cblite = '/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite'
+        db_path = '/tmp/couchbase-mobile-tools/{}.cblite2'.format(db_name)
+        cmd = '{} --create serve {} --port {} {} &>serve_{}.log & '\
+            .format(cblite, '--verbose' if verbose else '', port, db_path, db_name)
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)
+
+        # Create collections
+        for scope, coll in collection.items():
+            if scope == '_default':
+                continue
+            for col_name, _ in coll.items():
+                cmd = '{} mkcoll {} {}/{}'.format(cblite, db_path, scope, col_name)
+                with settings(host_string=worker):
+                    run(cmd, pty=False)
 
     def start_cblite_replication_aws_pull(self,
                                           worker,

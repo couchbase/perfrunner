@@ -21,7 +21,8 @@ LOAD_USERS_CMD = " load {ycsb_command} -s -P {workload} " \
                  "-p insertstart={insertstart} " \
                  "-p exportfile={exportfile} " \
                  "-p syncgateway.usecapella={use_capella} " \
-                 "-p syncgateway.starchannel={starchannel}"
+                 "-p syncgateway.starchannel={starchannel} " \
+                 "-p syncgateway.e2e={e2e}"
 
 LOAD_DOCS_CMD = " load {ycsb_command} -s -P {workload} " \
                 "-p recordcount={total_docs} " \
@@ -404,7 +405,8 @@ def get_memcached_host(cluster, workload_settings):
     return memcached_ip
 
 
-def add_collections(cmd, workload_settings: PhaseSettings, target: TargetSettings):
+def add_collections(cmd, workload_settings: PhaseSettings, target: TargetSettings,
+                    is_e2e_access: bool = False):
     sgs = workload_settings.syncgateway_settings
     collections_map = workload_settings.collections
     bucket = target.bucket
@@ -419,7 +421,11 @@ def add_collections(cmd, workload_settings: PhaseSettings, target: TargetSetting
                 target_scopes.add(scope)
                 target_collections.add(collection)
 
-    records_per_collection = int(sgs.documents) // len(target_collections)
+    if is_e2e_access:
+        records_per_collection = int(sgs.documents)
+    else:
+        records_per_collection = int(sgs.documents) // len(target_collections)
+
     cmd += ' -p recordspercollection={recordspercollection} '\
         .format(recordspercollection=records_per_collection)
     cmd += ' -p collectioncount={num_of_collections} '\
@@ -487,7 +493,8 @@ def syncgateway_load_users(workload_settings: PhaseSettings,
                                    exportfile=res_file_name,
                                    use_capella="true"
                                                if cluster.capella_infrastructure else "false",
-                                   starchannel=sgs.starchannel)
+                                   starchannel=sgs.starchannel,
+                                   e2e=sgs.e2e)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
@@ -964,6 +971,12 @@ def syncgateway_e2e_multi_cbl_run_test(
         docs_per_instance = docs - insert_offset
     q, mod = divmod(worker_id-1, int(sgs.clients))
     target_port = 4985 + q
+    operations = docs_per_instance
+    if workload_settings.collections:
+        # When multiple scopes are supported, update this appropriatelly
+        collections_count = len(workload_settings.collections[target.bucket]['scope-1'])
+        operations = int(docs_per_instance) // collections_count
+
     params = E2E_MULTI_RUN_TEST_CMD.format(
         ycsb_command=sgs.ycsb_command,
         workload=sgs.workload,
@@ -979,8 +992,8 @@ def syncgateway_e2e_multi_cbl_run_test(
         cbl_throughput=sgs.cbl_throughput,
         doctype=sgs.doctype,
         doc_depth=sgs.doc_depth,
-        total_docs=sgs.documents,
-        operations=docs_per_instance,
+        total_docs=docs_per_instance,
+        operations=operations,
         memcached_host=get_memcached_host(cluster, workload_settings),
         auth=sgs.auth,
         total_users=sgs.users,
@@ -1011,7 +1024,7 @@ def syncgateway_e2e_multi_cbl_run_test(
         params = add_capella_password(params)
 
     if workload_settings.collections:
-        params = add_collections(params, workload_settings, target)
+        params = add_collections(params, workload_settings, target, True)
 
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
@@ -1085,13 +1098,19 @@ def syncgateway_e2e_multi_cb_run_test(
     if replication_type == "E2E_BIDI":
         total_docs += docs
         insert_offset += docs
+    operations = docs_per_instance
+    if workload_settings.collections:
+        # When multiple scopes are supported, update this appropriatelly
+        collections_count = len(workload_settings.collections.collection_map[bucket]['scope-1'])
+        operations = int(docs_per_instance) // collections_count
+
     params = E2E_CB_MULTI_RUN_TEST_CMD.format(
         ycsb_command=workload_settings.ycsb_client,
         workload=workload_settings.workload_path,
         host=cluster.servers[0],
         bucket=target.bucket,
         threads=sgs.threads_per_instance,
-        operations=docs_per_instance,
+        operations=operations,
         total_docs=total_docs,
         channels=sgs.channels,
         fieldlength=sgs.fieldlength,
@@ -1105,7 +1124,7 @@ def syncgateway_e2e_multi_cb_run_test(
         exportfile=res_file_name)
 
     if workload_settings.collections:
-        params = add_collections(params, workload_settings, target)
+        params = add_collections(params, workload_settings, target, True)
 
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)

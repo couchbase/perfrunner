@@ -1732,7 +1732,8 @@ class DefaultRestHelper(RestBase):
             sgw_host,
             sgw_port=4984,
             user="guest",
-            password="guest"):
+            password="guest",
+            collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
@@ -1755,6 +1756,9 @@ class DefaultRestHelper(RestBase):
                 "continuous": 1,
                 "bidi": 0
             }
+        if collections:
+            data['collections'] = collections
+
         logger.info("The sgw host is: {}".format(sgw_host))
         logger.info("The url is: {}".format(api))
         logger.info("The json data is: {}".format(data))
@@ -1769,7 +1773,8 @@ class DefaultRestHelper(RestBase):
             sgw_host,
             sgw_port=4984,
             user="guest",
-            password="guest"):
+            password="guest",
+            collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
@@ -1792,6 +1797,9 @@ class DefaultRestHelper(RestBase):
                 "continuous": 1,
                 "bidi": 0
             }
+        if collections:
+            data['collections'] = collections
+
         logger.info("The sgw host is: {}".format(sgw_host))
         logger.info("The url is: {}".format(api))
         logger.info("The json data is: {}".format(data))
@@ -1806,7 +1814,8 @@ class DefaultRestHelper(RestBase):
             sgw_host,
             sgw_port=4984,
             user="guest",
-            password="guest"):
+            password="guest",
+            collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
@@ -1829,6 +1838,9 @@ class DefaultRestHelper(RestBase):
                 "continuous": 1,
                 "bidi": 1
             }
+        if collections:
+            data['collections'] = collections
+
         logger.info("The sgw host is: {}".format(sgw_host))
         logger.info("The url is: {}".format(api))
         logger.info("The json data is: {}".format(data))

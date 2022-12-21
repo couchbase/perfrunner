@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyCloudBackupTest
 
 [showfast]
-title = Low Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
+title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
 component = cloud
 category = search
 sub_category = AWS
@@ -11,7 +11,7 @@ sub_category = AWS
 mem_quota = 8192
 index_mem_quota = 8192
 fts_index_mem_quota = 8192
-initial_nodes = 3
+initial_nodes = 5
 num_buckets = 1
 enable_cpu_cores = false
 enable_n2n_encryption = all
@@ -24,7 +24,7 @@ test_total_docs = 1000000
 test_query_workers = 1
 test_kv_workers = 60
 test_kv_throughput_goal = 10000
-test_data_file = ../tests/fts/data/benchmark/low.txt
+test_data_file = ../tests/fts/data/benchmark/med.txt
 test_driver = couchbase
 test_stats_limit = 1000000
 test_stats_aggregation_step = 100
@@ -37,7 +37,6 @@ test_worker_type = validatedLatency
 couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 
-
 [backup]
 obj_staging_dir = /root
 obj_region = us-east-1
@@ -47,6 +46,5 @@ aws_credential_path = /root/.ssh
 backup_storage = s3://fts-wiki-1m
 backup_repo = fts_wiki
 threads = 8
+use_tls = 1
 
-[profiling]
-services = fts

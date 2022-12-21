@@ -5,7 +5,7 @@ test = perfrunner.tests.eventing.TimerThroughputTest
 title = Timers executed/sec, 1 bucket x 50M x 1KB, 3KV + 2Eventing node, single timer, no context-NOOP
 component = eventingcloud
 category = thr
-sub_category = Timer
+sub_category = AWS
 
 [stats]
 server_processes = eventing-produc

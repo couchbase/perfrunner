@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.eventing.FunctionsPhaseChangeTimeTest
+
+[showfast]
+title = 1 bucket x 50M x 1KB, 4KV + 1Eventing node, 3KV + 2Eventing node, single function-bucket-op, magma
+component = eventingcloud
+category = lat
+sub_category = AZURE
+
+[stats]
+server_processes = eventing-produc
+
+[cluster]
+mem_quota = 25600
+eventing_mem_quota = 24576
+initial_nodes = 5
+num_buckets = 1
+eventing_bucket_mem_quota = 10000
+eventing_metadata_bucket_mem_quota = 1024
+eventing_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 50000000
+size = 1024
+workers = 100
+ssl_mode = capella
+
+[eventing]
+functions = perf-test1:tests/eventing/code/bktop.js
+worker_count = 24
+cpp_worker_thread_count = 2
+
+[access]
+updates = 100
+items = 50000000
+workers = 100
+ssl_mode = capella

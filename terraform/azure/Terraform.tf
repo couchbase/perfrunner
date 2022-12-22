@@ -1,6 +1,6 @@
- provider "azurerm" {
-   features {}
- }
+provider "azurerm" {
+  features {}
+}
 
 variable "uuid" {
   type = string
@@ -59,20 +59,24 @@ variable "global_tag" {
 }
 
 # Create virtual network.
- resource "azurerm_virtual_network" "perf-vn" {
-   name                = "perf-vn-${var.uuid}"
-   address_space       = ["10.0.0.0/16"]
-   location            = "East US"
-   resource_group_name = "perf-resources-eastus"
- }
+resource "azurerm_virtual_network" "perf-vn" {
+  name                = "perf-vn-${var.uuid}"
+  address_space       = ["10.0.0.0/16"]
+  location            = "East US"
+  resource_group_name = "perf-resources-eastus"
+
+  tags = {
+  deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
 
 # Create subnet.
- resource "azurerm_subnet" "perf-sn" {
-   name                 = "perf-sn-${var.uuid}"
-   resource_group_name  = "perf-resources-eastus"
-   virtual_network_name = azurerm_virtual_network.perf-vn.name
-   address_prefixes     = ["10.0.2.0/24"]
- }
+resource "azurerm_subnet" "perf-sn" {
+  name                 = "perf-sn-${var.uuid}"
+  resource_group_name  = "perf-resources-eastus"
+  virtual_network_name = azurerm_virtual_network.perf-vn.name
+  address_prefixes     = ["10.0.2.0/24"]
+}
 
 # Create public cluster ip(s).
 resource "azurerm_public_ip" "perf-public-cluster" {
@@ -82,6 +86,11 @@ resource "azurerm_public_ip" "perf-public-cluster" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
+
+  tags = {
+    role       = "cluster"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Create public client ip(s).
@@ -92,6 +101,11 @@ resource "azurerm_public_ip" "perf-public-client" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
+
+  tags = {
+    role       = "client"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Create public utility ip(s).
@@ -102,6 +116,11 @@ resource "azurerm_public_ip" "perf-public-utility" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
+
+  tags = {
+    role       = "utility"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Create public utility ip(s).
@@ -112,6 +131,11 @@ resource "azurerm_public_ip" "perf-public-sync_gateway" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
+
+  tags = {
+    role       = "sync_gateway"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Create network interface, map public ips.
@@ -128,6 +152,11 @@ resource "azurerm_network_interface" "perf-cluster-ni" {
     subnet_id                     = azurerm_subnet.perf-sn.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.perf-public-cluster[each.key].id
+  }
+
+  tags = {
+    role       = "cluster"
+    deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -146,6 +175,11 @@ resource "azurerm_network_interface" "perf-client-ni" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.perf-public-client[each.key].id
   }
+
+  tags = {
+    role       = "client"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Create network interface, map public ips.
@@ -162,6 +196,11 @@ resource "azurerm_network_interface" "perf-utility-ni" {
     subnet_id                     = azurerm_subnet.perf-sn.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.perf-public-utility[each.key].id
+  }
+
+  tags = {
+    role       = "utility"
+    deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
 
@@ -180,6 +219,11 @@ resource "azurerm_network_interface" "perf-sync_gateway-ni" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.perf-public-sync_gateway[each.key].id
   }
+
+  tags = {
+    role       = "sync_gateway"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Config and create cluster disk(s).
@@ -193,6 +237,11 @@ resource "azurerm_managed_disk" "perf-cluster-disk" {
   create_option        = "Empty"
   disk_size_gb         = each.value.volume_size
   tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+
+  tags = {
+    role       = "cluster"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Config and create client disk(s).
@@ -206,6 +255,11 @@ resource "azurerm_managed_disk" "perf-client-disk" {
   create_option        = "Empty"
   disk_size_gb         = each.value.volume_size
   tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+
+  tags = {
+    role       = "client"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Config and create utility disk(s).
@@ -219,6 +273,11 @@ resource "azurerm_managed_disk" "perf-utility-disk" {
   create_option        = "Empty"
   disk_size_gb         = each.value.volume_size
   tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+
+  tags = {
+    role       = "utility"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Config and create sync gateway disk(s).
@@ -232,6 +291,11 @@ resource "azurerm_managed_disk" "perf-sync_gateway-disk" {
   create_option        = "Empty"
   disk_size_gb         = each.value.volume_size
   tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+
+  tags = {
+    role       = "sync_gateway"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
 }
 
 # Create cluster VMs.

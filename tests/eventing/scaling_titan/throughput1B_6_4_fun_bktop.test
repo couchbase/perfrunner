@@ -41,6 +41,3 @@ cpp_worker_thread_count = 2
 [access]
 time = 400
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

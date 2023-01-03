@@ -44,6 +44,3 @@ request_url = https://172.23.99.247/cgi-bin/json/1kb_text_200ms.py
 [access]
 time = 1200
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

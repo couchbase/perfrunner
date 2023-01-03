@@ -41,9 +41,7 @@ cpp_worker_thread_count = 2
 timer_timeout = 8000
 timer_fuzz = 2500
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+
 
 [bucket_extras]
 num_writer_threads = disk_io_optimized

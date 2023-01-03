@@ -46,6 +46,3 @@ workers = 1
 throughput = 100
 time = 600
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

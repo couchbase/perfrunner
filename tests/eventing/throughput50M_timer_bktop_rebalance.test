@@ -45,6 +45,3 @@ cpp_worker_thread_count = 2
 timer_timeout = 1500
 timer_fuzz = 500
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

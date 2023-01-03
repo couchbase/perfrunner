@@ -42,6 +42,3 @@ config_file = tests/eventing/config/function_5timer_noop.json
 [access]
 time = 600
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

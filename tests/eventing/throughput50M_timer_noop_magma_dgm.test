@@ -44,9 +44,7 @@ timer_fuzz = 500
 [access]
 time = 600
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+
 
 [bucket_extras]
 num_writer_threads = disk_io_optimized

@@ -95,10 +95,15 @@ class SecondaryIndexTest(PerfTest):
             self.remote.client_drop_caches()
 
         self.build = self.rest.get_version(self.master_node)
+        self.admin_auth = self.admin_creds(self.master_node)
 
-        if self.cluster_spec.capella_infrastructure:
-            # Open ports for cbindex and cbindexperf
-            self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
+    def admin_creds(self, host: str):
+        admin_credentials = self.cluster_spec.capella_admin_credentials
+        username, password = '',  ''
+        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
+            if host in hostnames:
+                username, password = admin_credentials[i]
+        return username, password
 
     def remove_statsfile(self):
         rmfile = "rm -f {}".format(self.SECONDARY_STATS_FILE)
@@ -199,13 +204,13 @@ class SecondaryIndexTest(PerfTest):
         if self.test_config.collection.collection_map:
             create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
             self.remote.create_secondary_index_collections(
-                self.index_nodes, create_options, self.is_ssl)
+                self.index_nodes, create_options, self.is_ssl, self.admin_auth)
 
             build_options = self.batch_build_index_collection_options(self.indexes)
 
             build_start = time.time()
             self.remote.build_secondary_index_collections(
-                self.index_nodes, build_options, self.is_ssl)
+                self.index_nodes, build_options, self.is_ssl, self.admin_auth)
             self.monitor.wait_for_secindex_init_build_collections(
                 self.index_nodes[0],
                 self.indexes)
@@ -217,7 +222,8 @@ class SecondaryIndexTest(PerfTest):
                 self.bucket,
                 self.indexes,
                 self.storage,
-                self.is_ssl)
+                self.is_ssl,
+                self.admin_auth)
 
             time_elapsed = self.monitor.wait_for_secindex_init_build(
                 self.index_nodes[0],
@@ -266,17 +272,19 @@ class SecondaryIndexTest(PerfTest):
     def cloud_apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
                                  run_in_background=False, is_ssl=False):
         rest_username, rest_password = self.cluster_spec.rest_credentials
+        if self.cluster_spec.capella_infrastructure:
+            rest_username, rest_password = self.admin_auth[0], self.admin_auth[1]
         with open(self.configfile, 'r') as fp:
             config_file_content = fp.read()
 
         if not self.test_config.gsi_settings.disable_perindex_stats:
             logger.info("cbindexperf config file: \n" + config_file_content)
         self.remote.cloud_put_scanfile(self.configfile, self.worker_manager.WORKER_HOME)
-        status = str(self.remote.run_cbindexperf(path_to_tool, self.index_nodes[0],
-                                                 rest_username, rest_password,
-                                                 self.configfile,
-                                                 self.worker_manager.WORKER_HOME,
-                                                 run_in_background, is_ssl=is_ssl))
+        status = str(self.remote.run_cbindexperf_cloud(path_to_tool, self.index_nodes[0],
+                                                       rest_username, rest_password,
+                                                       self.configfile,
+                                                       self.worker_manager.WORKER_HOME,
+                                                       run_in_background, is_ssl=is_ssl))
 
         logger.info("scan status {}".format(status))
         if "Log Level = error" not in status:
@@ -541,11 +549,12 @@ class CloudInitialandIncrementalSecondaryIndexTest(InitialandIncrementalSecondar
     def run(self):
         self.download_certificate()
         self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
+        if self.cluster_spec.capella_infrastructure:
+            # Open ports for cbindex and cbindexperf
+            self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
         self.load_and_build_initial_index()
         time_elapsed = self.build_incrindex()
-        self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
-        self.run_recovery_scenario()
 
 
 class InitialandIncrementalandRecoverySecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
@@ -790,44 +799,39 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
         super().__init__(*args)
         self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
 
-        def _report_kpi(self, percentile_latencies, scan_thr: float = 0, time_elapsed: float = 0):
+    def _report_kpi(self, percentile_latencies, scan_thr: float = 0, time_elapsed: float = 0):
 
-            if time_elapsed != 0:
-                if self.report_initial_build_time:
-                    title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
-                    self.reporter.post(
-                        *self.metrics.get_indexing_meta(value=time_elapsed,
-                                                        index_type="Initial",
-                                                        unit="min",
-                                                        name=title)
-                    )
-            else:
-                title = "Secondary Scan Throughput (scanps) {}" \
-                    .format(str(self.test_config.showfast.title).strip())
+        if time_elapsed != 0:
+            if self.report_initial_build_time:
+                title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
                 self.reporter.post(
-                    *self.metrics.scan_throughput(scan_thr,
-                                                  metric_id_append_str="thr",
-                                                  title=title, update_category=False)
+                    *self.metrics.get_indexing_meta(value=time_elapsed,
+                                                    index_type="Initial",
+                                                    unit="min",
+                                                    name=title)
                 )
-                title = str(self.test_config.showfast.title).strip()
-                self.reporter.post(
-                    *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
-                                                               percentile=90,
-                                                               title=title,
-                                                               update_category=False))
-                self.reporter.post(
-                    *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
-                                                               percentile=95,
-                                                               title=title,
-                                                               update_category=False))
+        else:
+            title = "Secondary Scan Throughput (scanps) {}" \
+                .format(str(self.test_config.showfast.title).strip())
+            self.reporter.post(
+                *self.metrics.scan_throughput(scan_thr,
+                                              metric_id_append_str="thr",
+                                              title=title)
+            )
+            title = str(self.test_config.showfast.title).strip()
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                           percentile=90,
+                                                           title=title))
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                           percentile=95,
+                                                           title=title))
 
-    def print_index_disk_usage(self, text=""):
+    def print_index_disk_usage(self):
         self.print_average_rr()
         if self.test_config.gsi_settings.disable_perindex_stats:
             return
-
-        if text:
-            logger.info("{}".format(text))
 
         disk_usage = self.remote.get_disk_usage(self.index_nodes[0],
                                                 self.cluster_spec.index_path)
@@ -853,19 +857,23 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
+        if self.cluster_spec.capella_infrastructure:
+            # Open ports for cbindex and cbindexperf
+            self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
 
         initial_index_time = self.build_secondaryindex()
         self.report_kpi(0, 0, initial_index_time)
         self.access_bg()
+        if self.cluster_spec.capella_infrastructure:
+            # Open ports for cbindex and cbindexperf
+            self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
         self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
                                       is_ssl=self.is_ssl)
         self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
-        self.remote.get_indexer_heap_profile(self.index_nodes[0])
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
 
@@ -2155,3 +2163,24 @@ class SecondaryRebalanceOnlyTest(SecondaryRebalanceTest):
                                                  self.rest.indexes_instances_per_node(server)))
         self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(rebalance_time=True)
+
+
+class CloudSecondaryInitialBuildTest(CloudSecondaryIndexingScanTest):
+
+    """CLOUD - Measure initial build time for multiple tanents."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+
+    def run(self):
+        self.download_certificate()
+        self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+        if self.cluster_spec.capella_infrastructure:
+            # Open ports for cbindex and cbindexperf
+            self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
+        initial_index_time = self.build_secondaryindex()
+        self.report_kpi(0, 0, initial_index_time)

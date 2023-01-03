@@ -581,6 +581,8 @@ class ClientUploader(CouchbaseInstaller):
     def url(self) -> str:
         if validators.url(self.options.couchbase_version):
             return self.options.couchbase_version
+        elif self.options.local_copy_url:
+            return self.options.local_copy_url
         else:
             return self.find_package(edition=self.options.edition,
                                      package='rpm',

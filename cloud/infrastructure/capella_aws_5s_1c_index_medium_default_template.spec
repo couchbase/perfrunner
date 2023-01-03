@@ -29,7 +29,7 @@ storage_class = GP3
 instance_type = c5.4xlarge
 instance_capacity = 5
 volume_size = 500
-iops = 16000
+iops = 3000
 
 [ec2_node_group_2]
 instance_type = c5.24xlarge
@@ -54,4 +54,4 @@ ssh = root:couchbase
 os = Amazon Linux 2
 cpu = 16vCPU
 memory = 32GB
-disk = GP3, 500GB, 16000 IOPS
+disk = GP3, 500GB, 3000 IOPS

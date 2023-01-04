@@ -1,5 +1,6 @@
 import glob
 import os
+import re
 import shutil
 import zipfile
 from argparse import ArgumentParser
@@ -8,9 +9,11 @@ from multiprocessing import set_start_method
 from typing import List
 
 from logger import logger
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers import local
+from perfrunner.helpers.misc import pretty_dict, run_local_shell_command
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.settings import ClusterSpec
+from perfrunner.helpers.rest import RestHelper
+from perfrunner.settings import ClusterSpec, TestConfig
 
 set_start_method("fork")
 
@@ -28,6 +31,9 @@ def get_args():
     parser.add_argument('-c', '--cluster', dest='cluster_spec_fname',
                         required=True,
                         help='path to the cluster specification file')
+    parser.add_argument('-b', '--s3-bucket', dest='s3_bucket_name',
+                        required=False,
+                        help='name of the s3 bucket to download Capella cluster logs from')
     return parser.parse_args()
 
 
@@ -69,22 +75,56 @@ def validate_logs(file_name: str):
     return panic_files, crash_files, storage_corrupted
 
 
+def create_s3_bucket_file_key(log_path: str, log_url: str):
+    date = re.search(r"\d{4}-\d{2}-\d{2}", log_url)
+    url_split = log_url.split('/')
+    org = re.sub(r'\+', '-', url_split[3].lower())
+    log_name = re.split('/', log_path)[-1]
+    file_key = '{}/{}/{}'.format(org, date.group(0), log_name.lower())
+    return file_key
+
+
+def check_if_log_file_exists(bucket_name: str, file_key: str):
+    cmd = 'aws s3api wait object-exists \
+    --bucket {} \
+    --key {}'.format(bucket_name, file_key)
+    retries = 3
+    while retries > 0:
+        stdout, _, returncode = run_local_shell_command(cmd)
+        if returncode == 0:
+            return
+    logger.interupt('Log file not found due to the following error: {}'.format(stdout))
+
+
+def get_capella_cluster_logs(cluster_spec: ClusterSpec, s3_bucket_name: str):
+    test_config = TestConfig()
+    rest = RestHelper(cluster_spec, test_config)
+
+    rest.trigger_all_cluster_log_collection()
+    rest.wait_until_all_logs_uploaded()
+    log_paths_urls = rest.get_all_cluster_log_paths_urls()
+
+    for log_path, log_url in log_paths_urls:
+        file_key = create_s3_bucket_file_key(log_path, log_url)
+        path_name = 's3://{}/{}'.format(s3_bucket_name, file_key)
+        check_if_log_file_exists(s3_bucket_name, file_key)
+        for hostname in cluster_spec.servers:
+            if re.search(hostname, log_url) is not None:
+                file_name = '{}.zip'.format(hostname)
+
+        local.download_all_s3_logs(path_name, file_name)
+
+
 def main():
     args = get_args()
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(args.cluster_spec_fname)
-
-    remote = RemoteHelper(cluster_spec, verbose=False)
-
-    remote.collect_info()
-
     if cluster_spec.capella_infrastructure:
-        if cluster_spec.capella_backend == 'aws':
-            for hostname, iid in cluster_spec.servers_hostname_to_instance_id.items():
-                for fname in glob.glob('{}/*.zip'.format(iid)):
-                    shutil.move(fname, '{}.zip'.format(hostname))
+        get_capella_cluster_logs(cluster_spec, args.s3_bucket_name)
     else:
+        remote = RemoteHelper(cluster_spec, verbose=False)
+        remote.collect_info()
         for hostname in cluster_spec.servers:
             for fname in glob.glob('{}/*.zip'.format(hostname)):
                 shutil.move(fname, '{}.zip'.format(hostname))
@@ -104,7 +144,8 @@ def main():
             failures['crashes'][file_name] = crash_files
         if storage_corrupted:
             failures['storage_corrupted'][file_name] = True
-            remote.collect_index_datafiles()
+            if not cluster_spec.capella_infrastructure:
+                remote.collect_index_datafiles()
 
     if failures:
         logger.interrupt(

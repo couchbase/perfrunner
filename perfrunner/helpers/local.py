@@ -1100,6 +1100,13 @@ def download_pytppc(repo: str, branch: str):
     local(cmd)
 
 
+def download_all_s3_logs(path_name: str, file_name: str):
+    logger.info('Downloading {}'.format(file_name))
+    # <organization name>/<date as YYYY-MM-DD>/<logfile>
+    cmd = 'aws s3 cp {} {}'.format(path_name, file_name)
+    local(cmd)
+
+
 def pytpcc_create_collections(collection_config: str, master_node:  str):
 
     cmd = 'cp py-tpcc/pytpcc/constants.py.collections py-tpcc/pytpcc/constants.py'

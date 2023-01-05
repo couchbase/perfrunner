@@ -28,7 +28,7 @@ CMD = " -test_duration {test_duration}" \
       " -couchbase_cluster_ip {couchbase_cluster_ip}" \
       " -couchbase_bucket {couchbase_bucket}" \
       " -couchbase_user {couchbase_user}" \
-      " -couchbase_password {couchbase_password}"
+      " -couchbase_password \'{couchbase_password}\'"
 
 
 def create_index_list_by_bucket(settings: PhaseSettings, bucket):

@@ -1,10 +1,15 @@
 import re
 import subprocess
-from typing import List
+from typing import Iterable, List
 
 from logger import logger
 from perfrunner.helpers.memcached import MemcachedHelper
-from perfrunner.helpers.misc import maybe_atoi, pretty_dict, use_ssh_capella
+from perfrunner.helpers.misc import (
+    SGPortRange,
+    maybe_atoi,
+    pretty_dict,
+    use_ssh_capella,
+)
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
@@ -1089,12 +1094,16 @@ class ClusterManager:
             user = 'couchbase-cloud-admin'
             pwds = []
 
-            command_template = 'env/bin/aws secretsmanager get-secret-value --region us-east-1 '\
-                               '--secret-id {}_dp-admin --query "SecretString" --output text'
+            command_template = (
+                'env/bin/aws secretsmanager get-secret-value --region us-east-1 '
+                '--secret-id {}_dp-admin '
+                '--query "SecretString" '
+                '--output text'
+            )
 
             for cluster_id in self.rest.cluster_ids:
                 command = command_template.format(cluster_id)
-                process = subprocess.Popen(command.format(cluster_id), shell=True,
+                process = subprocess.Popen(command, shell=True,
                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdout_bytes, stderr_bytes = process.communicate()
                 stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
@@ -1110,3 +1119,109 @@ class ClusterManager:
             creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
             self.cluster_spec.config.set('credentials', 'admin', creds)
             self.cluster_spec.update_spec_file()
+
+    def open_capella_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
+        if self.cluster_spec.capella_infrastructure:
+            logger.info('Opening port ranges for Capella cluster:\n{}'
+                        .format('\n'.join(str(pr) for pr in port_ranges)))
+
+            if self.cluster_spec.capella_backend == 'aws':
+                self._open_capella_aws_cluster_ports(port_ranges)
+            elif self.cluster_spec.capella_backend == 'azure':
+                self._open_capella_azure_cluster_ports(port_ranges)
+
+    def _open_capella_aws_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
+        command_template = (
+            'env/bin/aws ec2 authorize-security-group-ingress --region $AWS_REGION '
+            '--group-id {} '
+            '--ip-permissions {}'
+        )
+
+        if not (vpc_id := self.get_capella_aws_cluster_vpc_id()):
+            logger.error(
+                'Failed to get Capella cluster VPC ID in order to get Security Group ID. '
+                'Cannot open desired ports.'
+            )
+            return
+
+        if not (sg_id := self.get_capella_aws_cluster_security_group_id(vpc_id)):
+            logger.error(
+                'Failed to get Security Group ID for Capella cluster VPC. '
+                'Cannot open desired ports.'
+            )
+            return
+
+        ip_perms_template = 'IpProtocol={},FromPort={},ToPort={},IpRanges=[{{CidrIp=0.0.0.0/0}}]'
+        ip_perms_list = [
+            ip_perms_template.format(pr.protocol, pr.min_port, pr.max_port)
+            for pr in port_ranges
+        ]
+
+        command = command_template.format(sg_id, ' '.join(ip_perms_list))
+        process = subprocess.Popen(command, shell=True,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout_bytes, stderr_bytes = process.communicate()
+        stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
+
+        if (returncode := process.returncode) == 0:
+            logger.info('Successfully opened ports for Capella cluster.')
+        else:
+            logger.error('Command failed with return code {}: {}'
+                         .format(returncode, command))
+            logger.error('Command stdout: {}'.format(stdout))
+            logger.error('Command stderr: {}'.format(stderr))
+
+    def _open_capella_azure_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
+        logger.info('Opening ports for Azure Capella cluster not supported yet.')
+
+    def get_capella_aws_cluster_vpc_id(self):
+        command_template = (
+            'env/bin/aws ec2 describe-instances --region $AWS_REGION '
+            '--filter Name=ip-address,Values=$(dig +short {}) '
+            '--query "Reservations[].Instances[].VpcId" '
+            '--output text'
+        )
+
+        command = command_template.format(next(self.cluster_spec.masters))
+        process = subprocess.Popen(command, shell=True,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout_bytes, stderr_bytes = process.communicate()
+        stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
+
+        vpc_id = None
+
+        if (returncode := process.returncode) == 0:
+            vpc_id = stdout.strip()
+        else:
+            logger.error('Command failed with return code {}: {}'
+                         .format(returncode, command))
+            logger.error('Command stdout: {}'.format(stdout))
+            logger.error('Command stderr: {}'.format(stderr))
+
+        return vpc_id
+
+    def get_capella_aws_cluster_security_group_id(self, vpc_id):
+        command_template = (
+            'env/bin/aws ec2 describe-security-groups --region $AWS_REGION '
+            '--filters Name=vpc-id,Values={} Name=group-name,Values=default '
+            '--query "SecurityGroups[*].GroupId '
+            '--output text'
+        )
+
+        command = command_template.format(vpc_id)
+        process = subprocess.Popen(command, shell=True,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout_bytes, stderr_bytes = process.communicate()
+        stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
+
+        sg_id = None
+
+        if (returncode := process.returncode) == 0:
+            sg_id = stdout.strip()
+        else:
+            logger.error('Command failed with return code {}: {}'
+                         .format(returncode, command))
+            logger.error('Command stdout: {}'.format(stdout))
+            logger.error('Command stderr: {}'.format(stderr))
+
+        return sg_id

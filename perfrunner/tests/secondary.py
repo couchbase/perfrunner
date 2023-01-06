@@ -16,7 +16,7 @@ from perfrunner.helpers.local import (
     run_cbindex,
     run_cbindexperf,
 )
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import SGPortRange, pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import RebalanceTest
@@ -95,6 +95,10 @@ class SecondaryIndexTest(PerfTest):
             self.remote.client_drop_caches()
 
         self.build = self.rest.get_version(self.master_node)
+
+        if self.cluster_spec.capella_infrastructure:
+            # Open ports for cbindex and cbindexperf
+            self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
 
     def remove_statsfile(self):
         rmfile = "rm -f {}".format(self.SECONDARY_STATS_FILE)

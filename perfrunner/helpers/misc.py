@@ -2,9 +2,29 @@ import fileinput
 import json
 import shutil
 import time
+from dataclasses import dataclass
 from hashlib import md5
 from typing import Any, Union
 from uuid import uuid4
+
+
+@dataclass
+class SGPortRange:
+    min_port: int
+    max_port: int = None
+    protocol: str = 'tcp'
+
+    def __init__(self, min_port: int, max_port: int = None, protocol: str = 'tcp'):
+        self.min_port = min_port
+        self.max_port = max_port if max_port else min_port
+        self.protocol = protocol
+
+    def __str__(self) -> str:
+        return '(ports={}{}, protocol={})'.format(
+            self.min_port,
+            '-{}'.format(self.max_port) if self.max_port != self.min_port else '',
+            self.protocol
+        )
 
 
 def uhex() -> str:

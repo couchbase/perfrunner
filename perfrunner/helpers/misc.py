@@ -1,11 +1,14 @@
 import fileinput
 import json
 import shutil
+import subprocess
 import time
 from dataclasses import dataclass
 from hashlib import md5
 from typing import Any, Union
 from uuid import uuid4
+
+from logger import logger
 
 
 @dataclass
@@ -19,10 +22,15 @@ class SGPortRange:
         self.max_port = max_port if max_port else min_port
         self.protocol = protocol
 
-    def __str__(self) -> str:
-        return '(ports={}{}, protocol={})'.format(
+    def port_range_str(self) -> str:
+        return '{}{}'.format(
             self.min_port,
-            '-{}'.format(self.max_port) if self.max_port != self.min_port else '',
+            '-{}'.format(self.max_port) if self.max_port != self.min_port else ''
+        )
+
+    def __str__(self) -> str:
+        return '(ports={}, protocol={})'.format(
+            self.port_range_str(),
             self.protocol
         )
 
@@ -207,3 +215,35 @@ def use_ssh_capella(spec) -> bool:
         spec.capella_backend == 'aws' and
         spec.infrastructure_settings['cbc_tenant'] != '1a3c4544-772e-449e-9996-1203e7020b96'
     )
+
+
+def run_local_shell_command(command: str, success_msg: str = '',
+                            err_msg: str = '') -> tuple[str, str, int]:
+    process = subprocess.run(command, shell=True, capture_output=True)
+    if (returncode := process.returncode) == 0:
+        logger.info(success_msg)
+    else:
+        if err_msg:
+            logger.error(err_msg)
+        logger.error('Command failed with return code {}: {}'
+                     .format(returncode, ' '.join(process.args)))
+        logger.error('Command stdout: {}'.format(process.stdout.decode()))
+        logger.error('Command stderr: {}'.format(process.stderr.decode()))
+
+    return process.stdout.decode(), process.stderr.decode(), returncode
+
+
+def set_azure_subscription(sub_name: str, alias: str) -> int:
+    _, _, err = run_local_shell_command(
+        'az account set --subscription "{}"'.format(sub_name),
+        'Failed to set active Azure subscription to "{}" ({})'.format(sub_name, alias)
+    )
+    return err
+
+
+def set_azure_perf_subscription() -> int:
+    return set_azure_subscription('130 - QE', 'perf')
+
+
+def set_azure_capella_subscription() -> int:
+    return set_azure_subscription('160 - CBC Test Subscription', 'capella')

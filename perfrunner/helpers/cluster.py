@@ -1,6 +1,7 @@
+import random
 import re
-import subprocess
 from typing import Iterable, List
+from uuid import uuid4
 
 from logger import logger
 from perfrunner.helpers.memcached import MemcachedHelper
@@ -8,6 +9,9 @@ from perfrunner.helpers.misc import (
     SGPortRange,
     maybe_atoi,
     pretty_dict,
+    run_local_shell_command,
+    set_azure_capella_subscription,
+    set_azure_perf_subscription,
     use_ssh_capella,
 )
 from perfrunner.helpers.monitor import Monitor
@@ -1103,18 +1107,11 @@ class ClusterManager:
 
             for cluster_id in self.rest.cluster_ids:
                 command = command_template.format(cluster_id)
-                process = subprocess.Popen(command, shell=True,
-                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout_bytes, stderr_bytes = process.communicate()
-                stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
 
-                if (returncode := process.returncode) == 0:
+                stdout, _, returncode = run_local_shell_command(command)
+
+                if returncode == 0:
                     pwds.append(stdout.strip())
-                else:
-                    logger.error('Command failed with return code {}: {}'
-                                 .format(returncode, command))
-                    logger.error('Command stdout: {}'.format(stdout))
-                    logger.error('Command stderr: {}'.format(stderr))
 
             creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
             self.cluster_spec.config.set('credentials', 'admin', creds)
@@ -1137,44 +1134,74 @@ class ClusterManager:
             '--ip-permissions {}'
         )
 
-        if not (vpc_id := self.get_capella_aws_cluster_vpc_id()):
-            logger.error(
-                'Failed to get Capella cluster VPC ID in order to get Security Group ID. '
-                'Cannot open desired ports.'
+        for cluster_id, hostname in zip(self.rest.cluster_ids, self.cluster_spec.masters):
+            if not (vpc_id := self.get_capella_aws_cluster_vpc_id(hostname)):
+                logger.error(
+                    'Failed to get Capella cluster VPC ID in order to get Security Group ID. '
+                    'Cannot open desired ports for cluster {}.'.format(cluster_id)
+                )
+                continue
+
+            if not (sg_id := self.get_capella_aws_cluster_security_group_id(vpc_id)):
+                logger.error(
+                    'Failed to get Security Group ID for Capella cluster VPC. '
+                    'Cannot open desired ports for cluster {}.'.format(cluster_id)
+                )
+                continue
+
+            ip_perms_template = \
+                'IpProtocol={},FromPort={},ToPort={},IpRanges=[{{CidrIp=0.0.0.0/0}}]'
+            ip_perms_list = [
+                ip_perms_template.format(pr.protocol, pr.min_port, pr.max_port)
+                for pr in port_ranges
+            ]
+
+            command = command_template.format(sg_id, ' '.join(ip_perms_list))
+
+            run_local_shell_command(
+                command=command,
+                success_msg='Successfully opened ports for Capella cluster {}.'.format(cluster_id),
+                err_msg='Failed to open ports for Capella cluster {}.'.format(cluster_id)
             )
-            return
-
-        if not (sg_id := self.get_capella_aws_cluster_security_group_id(vpc_id)):
-            logger.error(
-                'Failed to get Security Group ID for Capella cluster VPC. '
-                'Cannot open desired ports.'
-            )
-            return
-
-        ip_perms_template = 'IpProtocol={},FromPort={},ToPort={},IpRanges=[{{CidrIp=0.0.0.0/0}}]'
-        ip_perms_list = [
-            ip_perms_template.format(pr.protocol, pr.min_port, pr.max_port)
-            for pr in port_ranges
-        ]
-
-        command = command_template.format(sg_id, ' '.join(ip_perms_list))
-        process = subprocess.Popen(command, shell=True,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout_bytes, stderr_bytes = process.communicate()
-        stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
-
-        if (returncode := process.returncode) == 0:
-            logger.info('Successfully opened ports for Capella cluster.')
-        else:
-            logger.error('Command failed with return code {}: {}'
-                         .format(returncode, command))
-            logger.error('Command stdout: {}'.format(stdout))
-            logger.error('Command stderr: {}'.format(stderr))
 
     def _open_capella_azure_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
-        logger.info('Opening ports for Azure Capella cluster not supported yet.')
+        command_template = (
+            'az network nsg rule create '
+            '--resource-group rg-{0} '
+            '--nsg-name cc-{0} '
+            '--name {1} '
+            '--priority {2} '
+            '--destination-address-prefixes \'VirtualNetwork\' '
+            '--destination-port-ranges {3} '
+            '--access Allow '
+            '--direction Inbound'
+        )
 
-    def get_capella_aws_cluster_vpc_id(self):
+        # NSG rule priorities need to be unique within an NSG, so choose one at random from a
+        # large enough range to minimize collisions
+        rule_priority = random.randint(1000, 2000)
+        rule_name = 'AllowPerfrunnerInbound-{}'.format(uuid4()[:6])
+
+        err = set_azure_capella_subscription()
+        if not err:
+            for cluster_id in self.rest.cluster_ids:
+                command = command_template.format(
+                    cluster_id,
+                    rule_name,
+                    rule_priority,
+                    ' '.join(pr.port_range_str() for pr in port_ranges)
+                )
+
+                run_local_shell_command(
+                    command=command,
+                    success_msg='Successfully opened ports for Capella cluster {}.'
+                                .format(cluster_id),
+                    err_msg='Failed to create NSG rule for cluster {}'.format(cluster_id)
+                )
+
+            set_azure_perf_subscription()
+
+    def get_capella_aws_cluster_vpc_id(self, cluster_node_hostname):
         command_template = (
             'env/bin/aws ec2 describe-instances --region $AWS_REGION '
             '--filter Name=ip-address,Values=$(dig +short {}) '
@@ -1182,21 +1209,14 @@ class ClusterManager:
             '--output text'
         )
 
-        command = command_template.format(next(self.cluster_spec.masters))
-        process = subprocess.Popen(command, shell=True,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout_bytes, stderr_bytes = process.communicate()
-        stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
+        command = command_template.format(cluster_node_hostname)
 
         vpc_id = None
+        stdout, _, returncode = run_local_shell_command(command)
 
-        if (returncode := process.returncode) == 0:
+        if returncode == 0:
             vpc_id = stdout.strip()
-        else:
-            logger.error('Command failed with return code {}: {}'
-                         .format(returncode, command))
-            logger.error('Command stdout: {}'.format(stdout))
-            logger.error('Command stderr: {}'.format(stderr))
+            logger.info('Found VPC ID: {}'.format(vpc_id))
 
         return vpc_id
 
@@ -1209,19 +1229,12 @@ class ClusterManager:
         )
 
         command = command_template.format(vpc_id)
-        process = subprocess.Popen(command, shell=True,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout_bytes, stderr_bytes = process.communicate()
-        stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
 
         sg_id = None
+        stdout, _, returncode = run_local_shell_command(command)
 
-        if (returncode := process.returncode) == 0:
+        if returncode == 0:
             sg_id = stdout.strip()
-        else:
-            logger.error('Command failed with return code {}: {}'
-                         .format(returncode, command))
-            logger.error('Command stdout: {}'.format(stdout))
-            logger.error('Command stderr: {}'.format(stderr))
+            logger.info('Found Security Group ID: {}'.format(sg_id))
 
         return sg_id

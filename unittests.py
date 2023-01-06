@@ -666,15 +666,16 @@ class BigFunTest(TestCase):
 class PipelineTest(TestCase):
 
     def test_stages(self):
-        stages = {'Analytics', 'Eventing', 'FTS', 'Tools', 'Views',
+        stages = {'Analytics', 'Analytics-OnDemand', 'Eventing', 'FTS', 'Tools', 'Views',
                   'GSI', 'GSI-DGM',
-                  'N1QL', 'N1QL-QE24', 'N1QL-Windows', 'N1QL-Arke', 'N1QL-Arke-QE24',
-                  'YCSB', 'YCSB-QE24', 'YCSB-Hebe', 'YCSB-Hebe-QE24',
+                  'N1QL', 'N1QL-OnDemand', 'N1QL-Windows', 'N1QL-Arke', 'N1QL-Arke-OnDemand',
+                  'YCSB', 'YCSB-OnDemand', 'YCSB-Hebe', 'YCSB-Hebe-OnDemand',
                   'KV', 'KV-DGM', 'KV-Windows', 'KV-Athena', 'KV-Hercules',
                   'Rebalance', 'Rebalance-C1', 'Rebalance-C2', 'Rebalance-Hestia',
                   'Rebalance-Large-Scale', 'Rebalance-Large-Scale-C1', 'Rebalance-Large-Scale-C2',
                   'Rebalance-C1-OnDemand', 'Rebalance-C2-OnDemand', 'Rebalance-OnDemand',
-                  'Rebalance-Hestia-OnDemand', 'XDCR', 'XDCR-C1', 'XDCR-C2', 'XDCR-Windows'}
+                  'Rebalance-Hestia-OnDemand', 'XDCR', 'XDCR-OnDemand', 'XDCR-Windows',
+                  'XDCR-C1', 'XDCR-C1-OnDemand', 'XDCR-C2', 'XDCR-C2-OnDemand'}
         for pipeline in ('tests/pipelines/weekly-watson.json',
                          'tests/pipelines/weekly-spock.json',
                          'tests/pipelines/weekly-vulcan.json',

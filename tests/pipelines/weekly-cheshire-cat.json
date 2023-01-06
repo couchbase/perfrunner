@@ -256,7 +256,7 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p1_1s_1c_tls.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p2_1s_1c_tls.test"}
     ],
-    "N1QL": [
+    "N1QL-OnDemand": [
         {"job": "iris",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_lat_Q1_20M_10KQops_1s_1000c.test"},
         {"job": "iris",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_lat_Q1_20M_10KQops_default.test"},
         {"job": "iris",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_lat_Q1_200M_10KQops_1s_1000c.test"},
@@ -294,7 +294,7 @@
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_Q19_20M_gsi_moi_ok_default.test"},
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_Q19_20M_gsi_plasma_ok_1s_1c_1i.test"}
     ],
-    "N1QL-QE24": [
+    "N1QL": [
         {"job": "iris",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_lat_Q1_20M_10KQops_1s_1c.test"},
         {"job": "iris",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_lat_Q2_20M_30Kops_450Qops_gsi_moi_false_1s_1c_1i.test"},
         {"job": "iris",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_lat_Q3_20M_30Kops_960Qops_gsi_moi_ok_1s_1c_1i.test"},
@@ -315,7 +315,7 @@
         {"job": "iris-multi-client",     "cluster": "iris_extra_n1ql.spec", "test_config": "n1ql/collections/n1ql_thr_Q3_20M_gsi_plasma_ok_hard_failover_1s_1c_1i.test"},
         {"job": "iris-multi-client",     "cluster": "iris_extra_n1ql.spec", "test_config": "n1ql/collections/n1ql_thr_Q3_20M_gsi_plasma_ok_rebalance_out_1s_1c_1i.test"}
     ],
-    "N1QL-Arke": [
+    "N1QL-Arke-OnDemand": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_WF3_100M_plasma_ok_1s_1c_1i.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_WF10_100M_plasma_ok_1s_1c_1i.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_thr_WF3_100M_plasma_ok_1s_1c_1i.test"},
@@ -326,7 +326,7 @@
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_WF1_100M_plasma_ok_default.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_thr_WF1_100M_plasma_ok_default.test"}
     ],
-    "N1QL-Arke-QE24": [
+    "N1QL-Arke": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG1_100M_plasma_ok_1s_1c_1i.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG2_100M_plasma_ok_1s_1c_1i.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG3_100M_plasma_ok_1s_1c_1i.test"},
@@ -348,7 +348,7 @@
         {"job": "arke-multi-client", "cluster": "arke_extra_n1ql.spec", "test_config": "n1ql/collections/n1ql_thr_AG2_100M_plasma_hard_failover_ok_1s_1c_1i.test"},
         {"job": "arke-multi-client", "cluster": "arke_extra_n1ql.spec", "test_config": "n1ql/collections/n1ql_thr_AG2_100M_plasma_rebalance_out_ok_1s_1c_1i.test"}
     ],
-    "N1QL-PYTPCC": [
+    "N1QL-PYTPCC-OnDemand": [
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_1node_pytpcc_16core_100warehouse_40clients_replica1_dur_maj_scancons_requestplus.test"},
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_pers_to_maj_scancons_requestplus.test"},
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_pers_to_maj_scancons_requestplus.test"},
@@ -356,16 +356,16 @@
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus.test"},
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_maj_scancons_requestplus.test"}
     ],
-    "N1QL-PYTPCC-QE24": [
+    "N1QL-PYTPCC": [
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_maj_scancons_requestplus.test"},
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_maj_scancons_requestplus.test"},
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus.test"}
     ],
-    "YCSB": [
+    "YCSB-OnDemand": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_10c.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_10c.test"}
     ],
-    "YCSB-QE24": [
+    "YCSB": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1c.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1c.test"}
     ],
@@ -389,8 +389,10 @@
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_10c_backfill_1_oso.test"}
     ],
     "XDCR-C2": [
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_1c_external_map.test"},
         {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "collections/xdcr/xdcr_init_1x1_unidir_100M_1s_1000c.test"}
+    ],
+    "XDCR-C2-OnDemand": [
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_1c_external_map.test"}
     ],
     "GSI-ForestDB": [
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_1M_100Index_fdb_ce.test"},
@@ -425,15 +427,17 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_999c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_999c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out_1s_999c.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_default_99indexes.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_connect_4n_1s_999c.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_incr.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_3c_incr.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_99c_incr.test"},
         {"job": "oceanus-remotelink", "cluster": "oceanus_2x4.spec",     "test_config": "bigfun_20M_remote_sync_4n_1s_999c.test"},
-        {"job": "oceanus-remotelink", "cluster": "oceanus_2x4.spec",     "test_config": "bigfun_20M_remote_connect_4n_1s_999c.test"},
         {"job": "oceanus", "cluster": "oceanus_benchmark.spec",     "test_config": "volume/ch2_transaction_2n.test"},
         {"job": "oceanus", "cluster": "oceanus_benchmark.spec",     "test_config": "volume/ch2_mixed_2n.test"}
+    ],
+    "Analytics-OnDemand": [
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_default_99indexes.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_incr.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_connect_4n_1s_999c.test"},
+        {"job": "oceanus-remotelink", "cluster": "oceanus_2x4.spec",     "test_config": "bigfun_20M_remote_connect_4n_1s_999c.test"}
     ],
     "Views": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "index_20M_default.test"},

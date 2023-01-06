@@ -1,5 +1,5 @@
 {
-    "Analytics": [
+    "Analytics-OnDemand": [
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_2n_no_index_window_functions.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions.test"}
     ],
@@ -198,7 +198,7 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p1_tls.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p2_tls.test"}
     ],
-    "N1QL": [
+    "N1QL-OnDemand": [
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q2_20M_gsi_plasma_ok.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q3_20M_between_gsi_plasma_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q3_20M_between_gsi_plasma_ok.test"},
@@ -206,7 +206,7 @@
         {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q2_20M_gsi_plasma_ok.test"},
         {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q3_20M_between_gsi_plasma_false.test"}
     ],
-    "N1QL-QE24": [
+    "N1QL": [
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_empty.test"},
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_empty.test"},
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_QU2_20M_gsi_moi_ok.test"},
@@ -222,8 +222,8 @@
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_QU3_20M_gsi_moi_ok.test"},
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_CU18_20M_1K_gsi_moi_ok.test"}
     ],
-    "YCSB": [],
-    "N1QL-Arke": [
+    "YCSB-OnDemand": [],
+    "N1QL-Arke-OnDemand": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF1_100M_plasma_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF1_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF2_100M_plasma_ok.test"},
@@ -244,7 +244,7 @@
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF10_100M_plasma_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF10_100M_plasma_ok.test"}
     ],
-    "N1QL-Arke-QE24": [],
+    "N1QL-Arke": [],
     "N1QL-Windows": [],
     "Rebalance": [
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_n2n_kv.test"}
@@ -278,8 +278,10 @@
     "XDCR-C1": [
         {"job": "titan_5node1", "cluster": "titan_1x1x1_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_high.test"},
         {"job": "titan_5node1", "cluster": "titan_1x1x1_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_low.test"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchbody_100.test"}
+    ],
+    "XDCR-C1-OnDemand": [
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_arraymatch_100.test"},
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchbody_100.test"},
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchxattr_100.test"}
     ],
     "XDCR-C2": [

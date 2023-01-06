@@ -61,6 +61,12 @@ pipeline {
                         buildComponent('Analytics', testCases)
                     }
                 }
+                stage('Analytics-OnDemand') {
+                    when { expression { return params.Analytics_OnDemand } }
+                    steps {
+                        buildComponent('Analytics-OnDemand', testCases)
+                    }
+                }
                 stage('Eventing') {
                     when { expression { return params.Eventing } }
                     steps {
@@ -158,10 +164,10 @@ pipeline {
                         buildComponent('N1QL', testCases)
                     }
                 }
-                stage('N1QL-QE24') {
-                    when { expression { return params.N1QL_QE24 } }
+                stage('N1QL-OnDemand') {
+                    when { expression { return params.N1QL_OnDemand } }
                     steps {
-                        buildComponent('N1QL-QE24', testCases)
+                        buildComponent('N1QL-OnDemand', testCases)
                     }
                 }
                 stage('N1QL-Windows') {
@@ -176,10 +182,10 @@ pipeline {
                         buildComponent('N1QL-Arke', testCases)
                     }
                 }
-                stage('N1QL-Arke-QE24') {
-                    when { expression { return params.N1QL_QE24 } }
+                stage('N1QL-Arke-OnDemand') {
+                    when { expression { return params.N1QL_Arke_OnDemand } }
                     steps {
-                        buildComponent('N1QL-Arke-QE24', testCases)
+                        buildComponent('N1QL-Arke-OnDemand', testCases)
                     }
                 }
                 stage('N1QL-PYTPCC') {
@@ -188,10 +194,10 @@ pipeline {
                         buildComponent('N1QL-PYTPCC', testCases)
                     }
                 }
-                stage('N1QL-PYTPCC-QE24') {
-                    when { expression { return params.N1QL_QE24 } }
+                stage('N1QL-PYTPCC-OnDemand') {
+                    when { expression { return params.N1QL_PYTPCC_OnDemand } }
                     steps {
-                        buildComponent('N1QL-PYTPCC-QE24', testCases)
+                        buildComponent('N1QL-PYTPCC-OnDemand', testCases)
                     }
                 }
                 stage('Tools') {
@@ -284,16 +290,34 @@ pipeline {
                         buildComponent('XDCR', testCases)
                     }
                 }
+                stage('XDCR-OnDemand') {
+                    when { expression { return params.XDCR_OnDemand } }
+                    steps {
+                        buildComponent('XDCR-OnDemand', testCases)
+                    }
+                }
                 stage('XDCR-C1') {
                     when { expression { return params.XDCR } }
                     steps {
                         buildComponent('XDCR-C1', testCases)
                     }
                 }
+                stage('XDCR-C1-OnDemand') {
+                    when { expression { return params.XDCR_OnDemand } }
+                    steps {
+                        buildComponent('XDCR-C1-OnDemand', testCases)
+                    }
+                }
                 stage('XDCR-C2') {
                     when { expression { return params.XDCR } }
                     steps {
                         buildComponent('XDCR-C2', testCases)
+                    }
+                }
+                stage('XDCR-C2-OnDemand') {
+                    when { expression { return params.XDCR_OnDemand } }
+                    steps {
+                        buildComponent('XDCR-C2-OnDemand', testCases)
                     }
                 }
                 stage('XDCR-Windows') {
@@ -308,10 +332,10 @@ pipeline {
                         buildComponent('YCSB', testCases)
                     }
                 }
-                stage('YCSB-QE24') {
-                    when { expression { return params.N1QL_QE24 } }
+                stage('YCSB-OnDemand') {
+                    when { expression { return params.YCSB_OnDemand } }
                     steps {
-                        buildComponent('YCSB-QE24', testCases)
+                        buildComponent('YCSB-OnDemand', testCases)
                     }
                 }
                 stage('YCSB-Hebe') {
@@ -320,10 +344,10 @@ pipeline {
                         buildComponent('YCSB-Hebe', testCases)
                     }
                 }
-                stage('YCSB-Hebe-QE24') {
-                    when { expression { return params.N1QL_QE24 } }
+                stage('YCSB-Hebe-OnDemand') {
+                    when { expression { return params.YCSB_OnDemand } }
                     steps {
-                        buildComponent('YCSB-Hebe-QE24', testCases)
+                        buildComponent('YCSB-Hebe-OnDemand', testCases)
                     }
                 }
                 stage('Magma-Legacy') {

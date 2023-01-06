@@ -1,5 +1,6 @@
 {
     "Analytics": [],
+    "Analytics-OnDemand": [],
     "Eventing": [
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_bktop.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_timer_bktop_512bytes_context.test"},
@@ -25,10 +26,10 @@
         {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_200M_compressed_warmup_resident_50.test"}
     ],
     "KV-Windows":[],
+    "N1QL-OnDemand": [],
     "N1QL": [],
-    "N1QL-QE24": [],
+    "N1QL-Arke-OnDemand": [],
     "N1QL-Arke": [],
-    "N1QL-Arke-QE24": [],
     "N1QL-Windows": [],
     "Rebalance": [],
     "Rebalance-C1": [
@@ -49,11 +50,14 @@
     "Tools": [],
     "Views": [],
     "XDCR": [],
+    "XDCR-OnDemand": [],
     "XDCR-C1": [],
+    "XDCR-C1-OnDemand": [],
     "XDCR-C2": [],
+    "XDCR-C2-OnDemand": [],
     "XDCR-Windows": [],
+    "YCSB-OnDemand": [],
     "YCSB": [],
-    "YCSB-QE24": [],
-    "YCSB-Hebe": [],
-    "YCSB-Hebe-QE24": []
+    "YCSB-Hebe-OnDemand": [],
+    "YCSB-Hebe": []
 }

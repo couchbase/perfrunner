@@ -1,5 +1,6 @@
 {
-    "Analytics": [
+    "Analytics": [],
+    "Analytics-OnDemand": [
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_1n.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_2n.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n.test"},
@@ -82,7 +83,7 @@
     ],
     "KV-Windows":[],
     "KV-DGM": [],
-    "N1QL": [
+    "N1QL-OnDemand": [
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI6_20M_moi_ok_part.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI6_20M_moi_false_part.test"},
 
@@ -90,11 +91,11 @@
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok_xattr.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false_xattr.test"}
     ],
-    "N1QL-QE24": [
+    "N1QL": [
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_audit.test"}
     ],
     "N1QL-Windows": [],
-    "N1QL-Arke":[
+    "N1QL-Arke-OnDemand":[
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q8_10M_gsi_moi_false.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q8_10M_gsi_moi_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/n1ql_thr_JOIN_Q9_10M_gsi_moi_false.test"},
@@ -122,7 +123,7 @@
         {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma.test"},
         {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma_dgm.test"}
     ],
-    "N1QL-Arke-QE24":[
+    "N1QL-Arke":[
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG2_100M_plasma_ok_part.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG4_100M_plasma_ok_part.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_AG5_100M_plasma_ok.test"},
@@ -174,18 +175,21 @@
     ],
     "Views": [],
     "XDCR": [],
-    "XDCR-C1": [
+    "XDCR-OnDemand": [],
+    "XDCR-C1": [],
+    "XDCR-C1-OnDemand": [
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_scram_sha.test"}
     ],
     "XDCR-C2": [],
+    "XDCR-C2-OnDemand": [],
     "XDCR-Windows": [],
     "KV-Hercules": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_part.test"}
     ],
-    "YCSB": [],
-    "YCSB-QE24": [
+    "YCSB-OnDemand": [],
+    "YCSB": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_part.test"}
     ],
-    "YCSB-Hebe": [],
-    "YCSB-Hebe-QE24": []
+    "YCSB-Hebe-OnDemand": [],
+    "YCSB-Hebe": []
 }

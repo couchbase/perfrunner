@@ -1,5 +1,6 @@
 {
     "Analytics": [],
+    "Analytics-OnDemand": [],
     "Eventing": [],
     "FTS": [],
     "GSI": [
@@ -43,7 +44,7 @@
         {"job": "athena", "cluster": "athena.spec", "test_config": "kv_warmup_500M_dgm.test"}
     ],
     "KV-Hercules": [],
-    "N1QL": [
+    "N1QL-OnDemand": [
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok.test"},
@@ -93,7 +94,7 @@
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q21_20M_gsi_moi_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q21_20M_gsi_moi_ok.test"}
     ],
-    "N1QL-QE24": [
+    "N1QL": [
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_tls.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q3_20M_18Kops_200Qops_gsi_moi_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI3_20M_gsi_moi_false.test"},
@@ -113,8 +114,8 @@
         {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_false.test"},
         {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_ok.test"}
     ],
+    "N1QL-Arke-OnDemand": [],
     "N1QL-Arke": [],
-    "N1QL-Arke-QE24": [],
     "Rebalance": [],
     "Rebalance-C1": [],
     "Rebalance-C2": [],
@@ -185,6 +186,7 @@
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_500M_dgm_2b.test"},
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm_wan.test"}
     ],
+    "XDCR-OnDemand": [],
     "XDCR-C1": [
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M.test"},
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt.test"},
@@ -192,6 +194,7 @@
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_filter.test"},
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_ssl.test"}
     ],
+    "XDCR-C1-OnDemand": [],
     "XDCR-C2": [
         {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_wan.test"},
         {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_lww.test"},
@@ -200,11 +203,12 @@
         {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_reb_22_12_unidir_200M_dgm.test"},
         {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_reb_12_22_unidir_200M_dgm.test"}
     ],
+    "XDCR-C2-OnDemand": [],
     "XDCR-Windows":[
         {"job": "zeus",  "cluster": "zeus_2x2.spec",  "test_config": "xdcr_init_2x2_unidir_25M.test"}
     ],
+    "YCSB-OnDemand": [],
     "YCSB": [],
-    "YCSB-QE24": [],
-    "YCSB-Hebe": [],
-    "YCSB-Hebe-QE24": []
+    "YCSB-Hebe-OnDemand": [],
+    "YCSB-Hebe": []
 }

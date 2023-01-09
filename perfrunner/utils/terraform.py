@@ -473,6 +473,9 @@ class CapellaTerraform(Terraform):
             capella_output = self.terraform_output('capella')
             self.cluster_ids = [capella_output['cluster_id']['value']]
 
+        if self.options.disable_autoscaling:
+            self.disable_autoscaling()
+
         # Update cluster spec file
         self.update_spec()
 
@@ -813,6 +816,21 @@ class CapellaTerraform(Terraform):
 
         self.infra_spec.update_spec_file()
 
+    def disable_autoscaling(self):
+        for cluster_id in self.cluster_ids:
+            logger.info(
+                'Creating deployment circuit breaker to prevent auto-scaling for cluster {}.'
+                .format(cluster_id)
+            )
+
+            resp = self.api_client.create_circuit_breaker(cluster_id)
+            raise_for_status(resp)
+
+            resp = self.api_client.get_circuit_breaker(cluster_id)
+            raise_for_status(resp)
+
+            logger.info('Circuit breaker created: {}'.format(pretty_dict(resp.json())))
+
     def peer_vpc(self, network_info, cluster_id):
         logger.info('Setting up VPC peering...')
         if self.infra_spec.capella_backend == 'aws':
@@ -1149,7 +1167,7 @@ class ServerlessTerraform(CapellaTerraform):
         status = resp.json()['status']['state']
 
         self.cluster_id = resp.json()['couchbaseCluster']['id']
-        if not self.options.enable_autoscaling:
+        if self.options.disable_autoscaling:
             self.disable_autoscaling()
 
         timeout_mins = self.options.capella_timeout
@@ -1503,10 +1521,10 @@ def get_args():
                         type=int,
                         default=20,
                         help='Timeout (minutes) for Capella deployment when using internal API')
-    parser.add_argument('--enable-autoscaling',
+    parser.add_argument('--disable-autoscaling',
                         action='store_true',
-                        help='Enable cluster auto-scaling for serverless dataplanes. If not set, '
-                             'a deployment circuit breaker will be created for the cluster.')
+                        help='Disable cluster auto-scaling for Capella clusters by creating a '
+                             'deployment circuit breaker for the cluster.')
     parser.add_argument('-t', '--tag',
                         help='Global tag for launched instances.')
     parser.add_argument('override',

@@ -375,7 +375,8 @@ class CapellaTerraform(Terraform):
             os.getenv('CBC_SECRET_KEY'),
             os.getenv('CBC_ACCESS_KEY'),
             os.getenv('CBC_USER'),
-            os.getenv('CBC_PWD')
+            os.getenv('CBC_PWD'),
+            os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
         )
 
         if (tenant := self.options.capella_tenant) is None:
@@ -817,6 +818,11 @@ class CapellaTerraform(Terraform):
         self.infra_spec.update_spec_file()
 
     def disable_autoscaling(self):
+        if self.api_client.TOKEN_FOR_INTERNAL_SUPPORT is None:
+            logger.error('Cannot create circuit breaker to prevent auto-scaling. No value found '
+                         'for CBC_TOKEN_FOR_INTERNAL_SUPPORT, so cannot authenticate with CP API.')
+            return
+
         for cluster_id in self.cluster_ids:
             logger.info(
                 'Creating deployment circuit breaker to prevent auto-scaling for cluster {}.'

@@ -1182,7 +1182,9 @@ class ClusterManager:
         rule_priority = random.randint(1000, 2000)
         rule_name = 'AllowPerfrunnerInbound-{}'.format(uuid4().hex[:6])
 
-        err = set_azure_capella_subscription()
+        err = set_azure_capella_subscription(
+            self.cluster_spec.infrastructure_settings.get('cbc_env', 'sandbox')
+        )
         if not err:
             for cluster_id in self.rest.cluster_ids:
                 command = command_template.format(

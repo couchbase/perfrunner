@@ -226,7 +226,7 @@ def run_local_shell_command(command: str, success_msg: str = '',
         if err_msg:
             logger.error(err_msg)
         logger.error('Command failed with return code {}: {}'
-                     .format(returncode, ' '.join(process.args)))
+                     .format(returncode, process.args))
         logger.error('Command stdout: {}'.format(process.stdout.decode()))
         logger.error('Command stderr: {}'.format(process.stderr.decode()))
 
@@ -235,8 +235,9 @@ def run_local_shell_command(command: str, success_msg: str = '',
 
 def set_azure_subscription(sub_name: str, alias: str) -> int:
     _, _, err = run_local_shell_command(
-        'az account set --subscription "{}"'.format(sub_name),
-        'Failed to set active Azure subscription to "{}" ({})'.format(sub_name, alias)
+        command='az account set --subscription "{}"'.format(sub_name),
+        success_msg='Set active Azure subscription to "{}" ({})'.format(sub_name, alias),
+        err_msg='Failed to set active Azure subscription to "{}" ({})'.format(sub_name, alias)
     )
     return err
 
@@ -245,5 +246,10 @@ def set_azure_perf_subscription() -> int:
     return set_azure_subscription('130 - QE', 'perf')
 
 
-def set_azure_capella_subscription() -> int:
-    return set_azure_subscription('160 - CBC Test Subscription', 'capella')
+def set_azure_capella_subscription(capella_env: str) -> int:
+    if 'sandbox' in capella_env:
+        sub = 'couchbasetest1-rcm'
+    else:
+        sub = 'capellanonprod-rcm'
+
+    return set_azure_subscription(sub, 'capella')

@@ -1180,7 +1180,7 @@ class ClusterManager:
         # NSG rule priorities need to be unique within an NSG, so choose one at random from a
         # large enough range to minimize collisions
         rule_priority = random.randint(1000, 2000)
-        rule_name = 'AllowPerfrunnerInbound-{}'.format(uuid4()[:6])
+        rule_name = 'AllowPerfrunnerInbound-{}'.format(uuid4().hex[:6])
 
         err = set_azure_capella_subscription()
         if not err:

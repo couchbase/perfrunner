@@ -1,7 +1,7 @@
 {
     "queries": [
         {
-            "test_data_file": "../tests/fts/data/benchmark/hi.txt",
+            "test_data_file": "../tests/fts/data/unified/term.txt",
             "test_query_type": "term",
             "test_query_field": "fts_field1"
         },

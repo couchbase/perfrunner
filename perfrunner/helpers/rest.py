@@ -64,7 +64,7 @@ class RestHelper:
         elif cluster_spec.serverless_infrastructure:
             return ServerlessRestHelper(cluster_spec, test_config)
         elif cluster_spec.capella_infrastructure:
-            return CapellaRestHelper(cluster_spec, test_config)
+            return ProvisionedCapellaRestHelper(cluster_spec, test_config)
         else:
             return DefaultRestHelper(cluster_spec, test_config)
 
@@ -1862,10 +1862,10 @@ class KubernetesRestHelper(RestBase):
         self.post(url=api)
 
 
-class CapellaRestHelper(DefaultRestHelper):
+class CapellaRestBase(DefaultRestHelper):
 
     def __init__(self, cluster_spec, test_config):
-        DefaultRestHelper.__init__(self, cluster_spec=cluster_spec, test_config=test_config)
+        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
         self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
             self.cluster_spec.infrastructure_settings['cbc_env']
         )
@@ -1879,7 +1879,7 @@ class CapellaRestHelper(DefaultRestHelper):
                 creds = json.load(f)
             access, secret = creds.get('access'), creds.get('secret')
 
-        self.api_client = CapellaAPIDedicated(
+        self.dedicated_client = CapellaAPIDedicated(
             self.base_url, secret, access, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
         self.admin_credentials = self.cluster_spec.capella_admin_credentials
@@ -1896,15 +1896,6 @@ class CapellaRestHelper(DefaultRestHelper):
         finally:
             self.auth = self.rest_username, self.rest_password
 
-    def hostname_to_cluster_id(self, host: str):
-        if len(self.cluster_ids) == 1:
-            return self.cluster_ids[0]
-
-        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
-            if host in hostnames:
-                return self.cluster_ids[i]
-        return None
-
     @property
     def _cbc_user(self):
         return os.getenv('CBC_USER')
@@ -1917,197 +1908,9 @@ class CapellaRestHelper(DefaultRestHelper):
     def _cbc_token(self):
         return os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
 
-    def get_remote_clusters(self, host: str) -> List[Dict]:
-        logger.info('Getting remote clusters')
-        api = 'https://{}:18091/pools/default/remoteClusters'.format(host)
-        with self._admin_creds(host):
-            response = self.get(url=api)
-        return response.json()
-
-    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
-        cluster_idx = self.cluster_ids.index(self.hostname_to_cluster_id(master_node))
-        return self.cluster_spec.servers_by_cluster_and_role(role)[cluster_idx]
-
-    def create_db_user_all_clusters(self, username: str, password: str):
-        for cluster_id in self.cluster_ids:
-            self.create_db_user(cluster_id, username, password)
-
-    @retry
-    def create_db_user(self, cluster_id: str, username: str, password: str):
-        logger.info('Adding DB credential')
-        resp = self.api_client.create_db_user(
-            self.tenant_id, self.project_id, cluster_id, username, password)
-        return resp
-
-    @retry
-    def create_bucket(self, host: str,
-                      name: str,
-                      ram_quota: int,
-                      replica_number: int = 1,
-                      conflict_resolution_type: str = "seqno",
-                      flush: bool = True,
-                      durability: str = "none",
-                      backend_storage: str = "couchstore",
-                      ttl_value: int = 0,
-                      ttl_unit: str = None):
-        cluster_id = self.hostname_to_cluster_id(host)
-
-        logger.info('Adding new bucket on cluster {}: {}'.format(cluster_id, name))
-
-        data = {
-            'name': name,
-            'bucketConflictResolution': conflict_resolution_type,
-            'memoryAllocationInMb': ram_quota,
-            'flush': flush,
-            'replicas': replica_number,
-            'durabilityLevel': durability,
-            'storageBackend': backend_storage,
-            'timeToLive': {
-                'unit': ttl_unit,
-                'value': ttl_value
-            }
-        }
-
-        logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
-
-        resp = self.api_client.create_bucket(self.tenant_id, self.project_id, cluster_id, data)
-        return resp
-
-    def allow_my_ip_all_clusters(self):
-        for cluster_id in self.cluster_ids:
-            self.allow_my_ip(cluster_id)
-
-    def add_allowed_ips_all_clusters(self, ips: list[str]):
-        for cluster_id in self.cluster_ids:
-            self.add_allowed_ips(cluster_id, ips)
-
-    @retry
-    def allow_my_ip(self, cluster_id):
-        logger.info('Whitelisting own IP on cluster {}'.format(cluster_id))
-        resp = self.api_client.allow_my_ip(self.tenant_id, self.project_id, cluster_id)
-        return resp
-
-    @retry
-    def add_allowed_ips(self, cluster_id, ips: list[str]):
-        logger.info('Whitelisting IPs on cluster {}: {}'.format(cluster_id, ips))
-        resp = self.api_client.add_allowed_ips(
-            self.tenant_id, self.project_id, cluster_id, ips)
-        return resp
-
-    @retry
-    def flush_bucket(self, host: str, bucket: str):
-        cluster_id = self.hostname_to_cluster_id(host)
-        bucket_id = base64.urlsafe_b64encode(bucket.encode()).decode()
-        logger.info('Flushing bucket on cluster {}: {}'.format(cluster_id, bucket_id))
-        resp = self.api_client.flush_bucket(
-            self.tenant_id, self.project_id, cluster_id, bucket_id)
-        return resp
-
-    @retry
-    def delete_bucket(self, host: str, bucket: str):
-        cluster_id = self.hostname_to_cluster_id(host)
-        logger.info('Deleting bucket on cluster {}: {}'.format(cluster_id, bucket))
-        resp = self.api_client.delete_bucket(
-            self.tenant_id, self.project_id, cluster_id, bucket)
-        return resp
-
-    @retry
-    def update_cluster_configuration(self, host: str, new_cluster_config: dict):
-        cluster_id = self.hostname_to_cluster_id(host)
-        logger.info('Updating cluster config for cluster {}. New config: {}'
-                    .format(cluster_id, pretty_dict(new_cluster_config)))
-        resp = self.api_client.update_specs(self.tenant_id, self.project_id, cluster_id,
-                                            new_cluster_config)
-        return resp
-
-    @retry
-    def backup(self, host: str, bucket):
-        cluster_id = self.hostname_to_cluster_id(host)
-        logger.info('Triggering backup.')
-        resp = self.api_client.backup_now(
-            self.tenant_id, self.project_id, cluster_id, bucket)
-        return resp
-
-    def wait_for_backup(self, host: str):
-        cluster_id = self.hostname_to_cluster_id(host)
-        while True:
-            time.sleep(30)
-            resp = self.api_client.get_backups(
-                self.tenant_id, self.project_id, cluster_id
-            )
-            if resp is not None:
-                logger.info(str(resp.json()))
-
-                if resp.json()['data']:
-                    if 'elapsedTimeInSeconds' in resp.json()['data'][0]['data']:
-                        if resp.json()['data'][0]['data']['status'] != 'pending':
-                            logger.info('Backup complete.')
-                            return resp.json()['data'][0]['data']['elapsedTimeInSeconds']
-
-    def restore(self, host: str, bucket):
-        cluster_id = self.hostname_to_cluster_id(host)
-        logger.info('Triggering restore.')
-        self.api_client.restore_from_backup(
-            self.tenant_id, self.project_id, cluster_id, bucket)
-
-    def wait_for_restore_initialize(self, host: str, bucket):
-        cluster_id = self.hostname_to_cluster_id(host)
-        while True:
-            try:
-                resp = self.api_client.get_restores(
-                    self.tenant_id, self.project_id, cluster_id, bucket
-                )
-                if resp.json()['status']:
-                    break
-            except JSONDecodeError:
-                if resp.status_code == 204:
-                    continue
-                else:
-                    logger.info('Restore trigger failed, error code: {}'.format(resp.status_code))
-
-    def wait_for_restore(self, host: str, bucket):
-        cluster_id = self.hostname_to_cluster_id(host)
-        while(True):
-            resp = self.api_client.get_restores(
-                        self.tenant_id, self.project_id, cluster_id, bucket
-                        )
-            if resp.json()['status'] == 'complete':
-                break
-
-    def get_all_cluster_nodes(self):
-        cluster_nodes = {}
-        for i, cluster_id in enumerate(self.cluster_ids):
-            resp = self.api_client.get_nodes(tenant_id=self.tenant_id,
-                                             project_id=self.project_id,
-                                             cluster_id=cluster_id)
-            nodes = resp.json()['data']
-            nodes = [node['data'] for node in nodes]
-            services_per_node = {node['hostname']: node['services'] for node in nodes}
-
-            kv_nodes = []
-            non_kv_nodes = []
-            for hostname, services in services_per_node.items():
-                services_string = ','.join(SERVICES_CAPELLA_TO_PERFRUNNER[svc] for svc in services)
-                if 'kv' in services_string:
-                    kv_nodes.append("{}:{}".format(hostname, services_string))
-                else:
-                    non_kv_nodes.append("{}:{}".format(hostname, services_string))
-
-            cluster_name = self.cluster_spec.config.options('clusters')[i]
-            cluster_nodes[cluster_name] = kv_nodes + non_kv_nodes
-        return cluster_nodes
-
-    def create_replication(self, host: str, params: dict):
-        logger.info('Creating XDCR replication with parameters: {}'.format(pretty_dict(params)))
-        cluster_id = self.hostname_to_cluster_id(host)
-        resp = self.api_client.create_xdcr_replication(self.tenant_id, self.project_id, cluster_id,
-                                                       params)
-        logger.info('XDCR replication created.')
-        return resp
-
     @retry
     def trigger_log_collection(self, cluster_id: str):
-        resp = self.api_client.trigger_log_collection(cluster_id)
+        resp = self.dedicated_client.trigger_log_collection(cluster_id)
         return resp
 
     def trigger_all_cluster_log_collection(self):
@@ -2118,7 +1921,7 @@ class CapellaRestHelper(DefaultRestHelper):
 
     @retry
     def get_cluster_tasks(self, cluster_id: str):
-        resp = self.api_client.get_cluster_tasks(cluster_id)
+        resp = self.dedicated_client.get_cluster_tasks(cluster_id)
         return resp
 
     def get_log_information(self, cluster_id: str):
@@ -2176,33 +1979,221 @@ class CapellaRestHelper(DefaultRestHelper):
         return log_paths_urls
 
 
-class ServerlessRestHelper(DefaultRestHelper):
+class ProvisionedCapellaRestHelper(CapellaRestBase):
+
+    def hostname_to_cluster_id(self, host: str):
+        if len(self.cluster_ids) == 1:
+            return self.cluster_ids[0]
+
+        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
+            if host in hostnames:
+                return self.cluster_ids[i]
+        return None
+
+    def get_remote_clusters(self, host: str) -> List[Dict]:
+        logger.info('Getting remote clusters')
+        api = 'https://{}:18091/pools/default/remoteClusters'.format(host)
+        with self._admin_creds(host):
+            response = self.get(url=api)
+        return response.json()
+
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
+        cluster_idx = self.cluster_ids.index(self.hostname_to_cluster_id(master_node))
+        return self.cluster_spec.servers_by_cluster_and_role(role)[cluster_idx]
+
+    def create_db_user_all_clusters(self, username: str, password: str):
+        for cluster_id in self.cluster_ids:
+            self.create_db_user(cluster_id, username, password)
+
+    @retry
+    def create_db_user(self, cluster_id: str, username: str, password: str):
+        logger.info('Adding DB credential')
+        resp = self.dedicated_client.create_db_user(self.tenant_id, self.project_id, cluster_id,
+                                                    username, password)
+        return resp
+
+    @retry
+    def create_bucket(self, host: str,
+                      name: str,
+                      ram_quota: int,
+                      replica_number: int = 1,
+                      conflict_resolution_type: str = "seqno",
+                      flush: bool = True,
+                      durability: str = "none",
+                      backend_storage: str = "couchstore",
+                      ttl_value: int = 0,
+                      ttl_unit: str = None):
+        cluster_id = self.hostname_to_cluster_id(host)
+
+        logger.info('Adding new bucket on cluster {}: {}'.format(cluster_id, name))
+
+        data = {
+            'name': name,
+            'bucketConflictResolution': conflict_resolution_type,
+            'memoryAllocationInMb': ram_quota,
+            'flush': flush,
+            'replicas': replica_number,
+            'durabilityLevel': durability,
+            'storageBackend': backend_storage,
+            'timeToLive': {
+                'unit': ttl_unit,
+                'value': ttl_value
+            }
+        }
+
+        logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
+
+        resp = self.dedicated_client.create_bucket(
+            self.tenant_id, self.project_id, cluster_id, data
+        )
+        return resp
+
+    def allow_my_ip_all_clusters(self):
+        for cluster_id in self.cluster_ids:
+            self.allow_my_ip(cluster_id)
+
+    def add_allowed_ips_all_clusters(self, ips: list[str]):
+        for cluster_id in self.cluster_ids:
+            self.add_allowed_ips(cluster_id, ips)
+
+    @retry
+    def allow_my_ip(self, cluster_id):
+        logger.info('Whitelisting own IP on cluster {}'.format(cluster_id))
+        resp = self.dedicated_client.allow_my_ip(self.tenant_id, self.project_id, cluster_id)
+        return resp
+
+    @retry
+    def add_allowed_ips(self, cluster_id, ips: list[str]):
+        logger.info('Whitelisting IPs on cluster {}: {}'.format(cluster_id, ips))
+        resp = self.dedicated_client.add_allowed_ips(
+            self.tenant_id, self.project_id, cluster_id, ips)
+        return resp
+
+    @retry
+    def flush_bucket(self, host: str, bucket: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        bucket_id = base64.urlsafe_b64encode(bucket.encode()).decode()
+        logger.info('Flushing bucket on cluster {}: {}'.format(cluster_id, bucket_id))
+        resp = self.dedicated_client.flush_bucket(
+            self.tenant_id, self.project_id, cluster_id, bucket_id)
+        return resp
+
+    @retry
+    def delete_bucket(self, host: str, bucket: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Deleting bucket on cluster {}: {}'.format(cluster_id, bucket))
+        resp = self.dedicated_client.delete_bucket(
+            self.tenant_id, self.project_id, cluster_id, bucket)
+        return resp
+
+    @retry
+    def update_cluster_configuration(self, host: str, new_cluster_config: dict):
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Updating cluster config for cluster {}. New config: {}'
+                    .format(cluster_id, pretty_dict(new_cluster_config)))
+        resp = self.dedicated_client.update_specs(self.tenant_id, self.project_id, cluster_id,
+                                                  new_cluster_config)
+        return resp
+
+    def create_replication(self, host: str, params: dict):
+        logger.info('Creating XDCR replication with parameters: {}'.format(pretty_dict(params)))
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.create_xdcr_replication(self.tenant_id, self.project_id,
+                                                             cluster_id, params)
+        logger.info('XDCR replication created.')
+        return resp
+
+    def get_all_cluster_nodes(self):
+        cluster_nodes = {}
+        for i, cluster_id in enumerate(self.cluster_ids):
+            resp = self.dedicated_client.get_nodes(tenant_id=self.tenant_id,
+                                                   project_id=self.project_id,
+                                                   cluster_id=cluster_id)
+            nodes = resp.json()['data']
+            nodes = [node['data'] for node in nodes]
+            services_per_node = {node['hostname']: node['services'] for node in nodes}
+
+            kv_nodes = []
+            non_kv_nodes = []
+            for hostname, services in services_per_node.items():
+                services_string = ','.join(SERVICES_CAPELLA_TO_PERFRUNNER[svc] for svc in services)
+                if 'kv' in services_string:
+                    kv_nodes.append("{}:{}".format(hostname, services_string))
+                else:
+                    non_kv_nodes.append("{}:{}".format(hostname, services_string))
+
+            cluster_name = self.cluster_spec.config.options('clusters')[i]
+            cluster_nodes[cluster_name] = kv_nodes + non_kv_nodes
+        return cluster_nodes
+
+    @retry
+    def backup(self, host: str, bucket: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Triggering backup.')
+        resp = self.dedicated_client.backup_now(self.tenant_id, self.project_id, cluster_id,
+                                                bucket)
+        return resp
+
+    def wait_for_backup(self, host: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        while True:
+            time.sleep(30)
+            resp = self.dedicated_client.get_backups(self.tenant_id, self.project_id, cluster_id)
+            if resp is not None:
+                logger.info(str(resp.json()))
+
+                if resp.json()['data']:
+                    if 'elapsedTimeInSeconds' in resp.json()['data'][0]['data']:
+                        if resp.json()['data'][0]['data']['status'] != 'pending':
+                            logger.info('Backup complete.')
+                            return resp.json()['data'][0]['data']['elapsedTimeInSeconds']
+
+    def restore(self, host: str, bucket: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        logger.info('Triggering restore.')
+        self.dedicated_client.restore_from_backup(self.tenant_id, self.project_id, cluster_id,
+                                                  bucket)
+
+    def wait_for_restore_initialize(self, host: str, bucket):
+        cluster_id = self.hostname_to_cluster_id(host)
+        while True:
+            try:
+                resp = self.dedicated_client.get_restores(self.tenant_id, self.project_id,
+                                                          cluster_id, bucket)
+                if resp.json()['status']:
+                    break
+            except JSONDecodeError:
+                if resp.status_code == 204:
+                    continue
+                else:
+                    logger.info('Restore trigger failed, error code: {}'.format(resp.status_code))
+
+    def wait_for_restore(self, host: str, bucket):
+        cluster_id = self.hostname_to_cluster_id(host)
+        while True:
+            resp = self.dedicated_client.get_restores(self.tenant_id, self.project_id, cluster_id,
+                                                      bucket)
+            if resp.json()['status'] == 'complete':
+                break
+
+
+class ServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+        DefaultRestHelper.__init__(self, cluster_spec=cluster_spec, test_config=test_config)
         self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
             self.cluster_spec.infrastructure_settings['cbc_env']
         )
         self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
         self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
-        self.dp_id = self.cluster_spec.infrastructure_settings['cbc_cluster']
+        self.dp_id = self.cluster_spec.infrastructure_settings['cbc_dataplane']
+        self.cluster_ids = self.cluster_spec.infrastructure_settings['cbc_cluster'].split()
         self.dedicated_client = CapellaAPIDedicated(
-            self.base_url, None, None, self._cbc_user, self._cbc_pwd
+            self.base_url, None, None, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
         self.serverless_client = CapellaAPIServerless(
             self.base_url, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
-
-    @property
-    def _cbc_user(self):
-        return os.getenv('CBC_USER')
-
-    @property
-    def _cbc_pwd(self):
-        return os.getenv('CBC_PWD')
-
-    @property
-    def _cbc_token(self):
-        return os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
+        self.admin_credentials = self.cluster_spec.capella_admin_credentials
 
     def get_db_info(self, db_id):
         logger.info('Getting debug info for DB {}'.format(db_id))
@@ -2226,9 +2217,7 @@ class ServerlessRestHelper(DefaultRestHelper):
             ]
         }
 
-        resp = self.serverless_client.add_ip_allowlists(self.tenant_id,
-                                                        db_id,
-                                                        self.project_id,
+        resp = self.serverless_client.add_ip_allowlists(self.tenant_id, db_id, self.project_id,
                                                         data)
         return resp
 

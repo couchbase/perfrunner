@@ -1063,7 +1063,7 @@ class ServerlessTerraform(CapellaTerraform):
 
         self.tenant_id = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
         self.project_id = self.infra_spec.infrastructure_settings.get('cbc_project', None)
-        self.dp_id = self.infra_spec.infrastructure_settings.get('cbc_cluster', None)
+        self.dp_id = self.infra_spec.infrastructure_settings.get('cbc_dataplane', None)
         self.cluster_id = None
 
         if self.tenant_id is None:
@@ -1165,7 +1165,7 @@ class ServerlessTerraform(CapellaTerraform):
         self.dp_id = resp.json().get('dataplaneId')
         logger.info('Initialised deployment for serverless dataplane {}'.format(self.dp_id))
         logger.info('Saving dataplane ID to spec file.')
-        self.infra_spec.config.set('infrastructure', 'cbc_cluster', self.dp_id)
+        self.infra_spec.config.set('infrastructure', 'cbc_dataplane', self.dp_id)
         self.infra_spec.update_spec_file()
 
         resp = self.serverless_client.get_dataplane_deployment_status(self.dp_id)
@@ -1173,6 +1173,9 @@ class ServerlessTerraform(CapellaTerraform):
         status = resp.json()['status']['state']
 
         self.cluster_id = resp.json()['couchbaseCluster']['id']
+        self.infra_spec.config.set('infrastructure', 'cbc_cluster', self.cluster_id)
+        self.infra_spec.update_spec_file()
+
         if self.options.disable_autoscaling:
             self.disable_autoscaling()
 

@@ -93,6 +93,7 @@ def check_if_log_file_exists(bucket_name: str, file_key: str):
         stdout, _, returncode = run_local_shell_command(cmd)
         if returncode == 0:
             return
+        retries -= 1
     logger.interupt('Log file not found due to the following error: {}'.format(stdout))
 
 

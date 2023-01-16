@@ -763,7 +763,7 @@ class ProvisionedCapellaBackup(PerfTest):
 
     @with_stats
     def backup(self):
-        self.rest.backup(self.master_node)
+        self.rest.backup(self.master_node, self.test_config.buckets[0])
         backup_time = self.rest.wait_for_backup(self.master_node)
         logger.info("Backup took: {}s ".format(backup_time))
         return backup_time
@@ -788,7 +788,7 @@ class ProvisionedCapellaBackup(PerfTest):
 class ProvisionedCapellaRestore(ProvisionedCapellaBackup):
 
     def flush_buckets(self):
-        self.rest.flush_bucket(self.master_node, 'bucket-1')
+        self.rest.flush_bucket(self.master_node, self.test_config.buckets[0])
 
     def backup(self):
         self.rest.backup(self.master_node)
@@ -796,12 +796,12 @@ class ProvisionedCapellaRestore(ProvisionedCapellaBackup):
 
     def trigger_restore(self):
         self.rest.restore(self.master_node)
-        self.rest.wait_for_restore_initialize(self.master_node, 'bucket-1')
+        self.rest.wait_for_restore_initialize(self.master_node, self.test_config.buckets[0])
 
     @with_stats
     @timeit
     def restore(self):
-        self.rest.wait_for_restore(self.master_node, 'bucket-1')
+        self.rest.wait_for_restore(self.master_node, self.test_config.buckets[0])
 
     def _report_kpi(self, time_elapsed):
         edition = 'Capella'

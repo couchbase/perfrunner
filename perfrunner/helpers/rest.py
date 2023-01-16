@@ -2021,11 +2021,11 @@ class CapellaRestHelper(DefaultRestHelper):
         return resp
 
     @retry
-    def backup(self, host: str):
+    def backup(self, host: str, bucket):
         cluster_id = self.hostname_to_cluster_id(host)
         logger.info('Triggering backup.')
         resp = self.api_client.backup_now(
-            self.tenant_id, self.project_id, cluster_id, 'bucket-1')
+            self.tenant_id, self.project_id, cluster_id, bucket)
         return resp
 
     def wait_for_backup(self, host: str):
@@ -2044,11 +2044,11 @@ class CapellaRestHelper(DefaultRestHelper):
                             logger.info('Backup complete.')
                             return resp.json()['data'][0]['data']['elapsedTimeInSeconds']
 
-    def restore(self, host: str):
+    def restore(self, host: str, bucket):
         cluster_id = self.hostname_to_cluster_id(host)
         logger.info('Triggering restore.')
         self.api_client.restore_from_backup(
-            self.tenant_id, self.project_id, cluster_id, 'bucket-1')
+            self.tenant_id, self.project_id, cluster_id, bucket)
 
     def wait_for_restore_initialize(self, host: str, bucket):
         cluster_id = self.hostname_to_cluster_id(host)

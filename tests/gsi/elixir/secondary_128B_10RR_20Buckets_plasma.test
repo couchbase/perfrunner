@@ -43,8 +43,7 @@ doc_gen = single_field_large_doc
 indexes = tests/gsi/index_defs/20bucket_1scope_5collections_2indexes_1.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 1600
-indexer.settings.minVbQueueLength = 50
-indexer.init_stream.smallSnapshotThreshold = 30
+
 
 [access]
 updates = 100

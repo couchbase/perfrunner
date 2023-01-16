@@ -49,8 +49,7 @@ indexes = tests/gsi/index_defs/20bucket_1scope_5collections_2indexes_1.json
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_80_20_plasma_20buckets_128B.json
 cbindexperf_concurrency = 32
 indexer.settings.storage_mode = plasma
-indexer.settings.minVbQueueLength = 50
-indexer.init_stream.smallSnapshotThreshold = 30
+
 indexer.settings.max_cpu_percent = 1600
 indexer.plasma.mainIndex.maxNumPageDeltas = 150
 indexer.plasma.mainIndex.pageSplitThreshold = 150

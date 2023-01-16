@@ -45,8 +45,7 @@ doc_gen = single_field_large_doc
 indexes = tests/gsi/index_defs/20bucket_1scope_5collections_2indexes_1.json
 indexer.settings.storage_mode = plasma
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_80_20_plasma_20buckets_128B.json
-indexer.settings.minVbQueueLength = 50
-indexer.init_stream.smallSnapshotThreshold = 30
+
 indexer.plasma.mainIndex.maxNumPageDeltas = 150
 indexer.plasma.mainIndex.pageSplitThreshold = 150
 indexer.plasma.backIndex.pageSplitThreshold = 100

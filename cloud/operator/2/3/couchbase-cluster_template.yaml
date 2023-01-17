@@ -17,7 +17,7 @@ spec:
   monitoring:
     prometheus:
       enabled: true
-      image: couchbase/exporter:1.0.7
+      image: couchbase/exporter:build
   buckets:
     managed: true
   backup:

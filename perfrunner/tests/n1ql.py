@@ -349,10 +349,11 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
                 for collection in bucket_scopes[scope].keys():
                     if bucket_scopes[scope][collection]["access"] == 1:
                         target_scope = "`{}`.`{}`".format(bucket, scope)
+                        query_context = "default:{}".format(target_scope)
                         replace_target = "`TARGET_SCOPE`"
                         statement = statement.replace(replace_target, target_scope)
                         logger.info('Creating UDF FUNCTION: ' + statement)
-                        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+                        self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
                         break
             count += 1
 

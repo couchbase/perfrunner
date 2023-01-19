@@ -376,4 +376,4 @@ long hourInMillis = minuteInMillis * 60;
 long dayInMillis = hourInMillis * 24;
 long elapsedHours = diff / hourInMillis;
 diff = diff % hourInMillis;
-echo "Total time taken : " + diff.toString() + hrs
+echo "Total time taken : " + diff.toString() + " hrs"

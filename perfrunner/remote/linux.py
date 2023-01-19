@@ -1120,7 +1120,7 @@ class RemoteLinux(Remote):
         run('tar cvzf /var/tmp/sglogs/syncgateway_logs.tar.gz /tmp/sglogs_temp', warn_only=True)
         run('rm -rf /tmp/sglogs_temp', warn_only=True)
 
-    @all_servers
+    @syncgateway_servers
     def remove_sglogs(self):
         logger.info('removing old sglogs')
         cmd = 'rm -rf /var/tmp/sglogs/*'

@@ -4,7 +4,8 @@ import groovy.time.TimeDuration
 currentBuild.description = params.version
 
 def testCases = [:]
-
+Date start = new Date()
+long l1 = start.getTime();
 def buildTests(tests) {
     def totalTests = 0
     for ( test in tests ) {
@@ -54,8 +55,6 @@ def buildComponent(component, testCases) {
 
 pipeline {
     agent {label 'master'}
-    Date start = new Date()
-    long l1 = start.getTime();
     stages {
         stage('Setup') {
             steps {
@@ -366,15 +365,15 @@ pipeline {
             }
         }
     }
-    Date stop = new Date()
-    long l2 = stop.getTime();
-    long diff = l2 - l1;
-    long secondInMillis = 1000;
-    long minuteInMillis = secondInMillis * 60;
-    long hourInMillis = minuteInMillis * 60;
-    long dayInMillis = hourInMillis * 24;
-    long elapsedHours = diff / hourInMillis;
-    diff = diff % hourInMillis;
-    echo "Total time taken : " + diff.toString() + hrs
 }
 
+Date stop = new Date()
+long l2 = stop.getTime();
+long diff = l2 - l1;
+long secondInMillis = 1000;
+long minuteInMillis = secondInMillis * 60;
+long hourInMillis = minuteInMillis * 60;
+long dayInMillis = hourInMillis * 24;
+long elapsedHours = diff / hourInMillis;
+diff = diff % hourInMillis;
+echo "Total time taken : " + diff.toString() + hrs

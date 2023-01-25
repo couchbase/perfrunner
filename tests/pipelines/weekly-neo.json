@@ -75,17 +75,17 @@
         {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO_100RR.test"}
     ],
     "Eventing": [
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_64byte_fun_bktop_magma.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_noop_magma.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_get_advbktop_src_bkt_mut_1s_1c_magma.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_get_advbktop_src_bkt_mut_1s_1c_magma_dgm.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput80M_fun_bktop_src_bkt_mut_1s_1c_magma.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput80M_fun_bktop_src_bkt_mut_1s_1c_magma_dgm.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "phase_change_time100M_bktop_magma.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "undeploy_time50M_timer_512bytes_context_magma.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "undeploy_time50M_timer_512bytes_context_magma_dgm.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_adv_multi_dst_insert.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_adv_multi_src_multi_dst_insert.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_noop_multi_coll.test"}
-    ]
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_64byte_fun_bktop_magma.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_noop_magma.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_get_advbktop_src_bkt_mut_1s_1c_magma.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_get_advbktop_src_bkt_mut_1s_1c_magma_dgm.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput80M_fun_bktop_src_bkt_mut_1s_1c_magma.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput80M_fun_bktop_src_bkt_mut_1s_1c_magma_dgm.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "phase_change_time100M_bktop_magma.test", "group": "P1"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "undeploy_time50M_timer_512bytes_context_magma.test", "group": "P1"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "undeploy_time50M_timer_512bytes_context_magma_dgm.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_adv_multi_dst_insert.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_adv_multi_src_multi_dst_insert.test", "group": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_noop_multi_coll.test", "group": "P0"}
+      ]
 }

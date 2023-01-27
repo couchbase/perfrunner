@@ -404,12 +404,6 @@ class CapellaTerraform(Terraform):
 
         self.project_id = project
 
-        self.use_internal_api = (
-            (self.options.capella_cb_version and self.options.capella_ami) or
-            self.backend == 'azure' or
-            len(list(self.infra_spec.clusters)) > 1
-        )
-
         self.capella_timeout = max(0, self.options.capella_timeout)
 
         self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
@@ -459,7 +453,6 @@ class CapellaTerraform(Terraform):
         # Configure terraform
         self.populate_tfvars()
         self.terraform_init(self.backend)
-        self.terraform_init('capella')
 
         # Deploy non-capella resources
         self.terraform_apply(self.backend)
@@ -467,12 +460,7 @@ class CapellaTerraform(Terraform):
         Terraform.update_spec(self, non_capella_output)
 
         # Deploy capella cluster
-        if self.use_internal_api:
-            self.deploy_cluster_internal_api()
-        else:
-            self.terraform_apply('capella')
-            capella_output = self.terraform_output('capella')
-            self.cluster_ids = [capella_output['cluster_id']['value']]
+        self.deploy_cluster()
 
         if self.options.disable_autoscaling:
             self.disable_autoscaling()
@@ -494,10 +482,7 @@ class CapellaTerraform(Terraform):
 
         # Destroy capella cluster
         if not self.options.keep_cluster:
-            if int(self.infra_spec.infrastructure_settings.get('cbc_use_internal_api', 0)):
-                self.destroy_cluster_internal_api()
-            else:
-                self.terraform_destroy('capella')
+            self.destroy_cluster()
 
             if int(self.infra_spec.infrastructure_settings.get('cbc_project_created', 0)):
                 cluster_destroyed = self.wait_for_cluster_destroy()
@@ -546,32 +531,6 @@ class CapellaTerraform(Terraform):
         resp = self.api_client.delete_project(self.tenant_id, self.project_id)
         raise_for_status(resp)
         logger.info('Project successfully queued for deletion.')
-
-    def populate_tfvars(self):
-        super().populate_tfvars()
-
-        replacements = {
-            '<UUID>': self.uuid,
-            '<CLUSTER_SETTINGS>': {
-                'project_id': self.project_id,
-                'provider': self.backend,
-                'region': self.region,
-                'cidr': self.get_available_cidr()
-            },
-            '<SERVER_GROUPS>': [
-                group for groups in self.create_tfvar_server_groups().values()
-                for group in groups
-            ]
-        }
-
-        with open('terraform/capella/terraform.tfvars', 'r+') as tfvars:
-            file_string = tfvars.read()
-
-            for k, v in replacements.items():
-                file_string = file_string.replace(k, json.dumps(v, indent=4))
-
-            tfvars.seek(0)
-            tfvars.write(file_string)
 
     @staticmethod
     def capella_server_group_sizes(node_schemas):
@@ -666,8 +625,7 @@ class CapellaTerraform(Terraform):
 
         return cluster_list
 
-    def deploy_cluster_internal_api(self):
-        self.infra_spec.config.set('infrastructure', 'cbc_use_internal_api', "1")
+    def deploy_cluster(self):
 
         specs = self.construct_capella_server_groups(self.infra_spec, self.node_list['clusters'])
         names = ['perf-cluster-{}'.format(self.uuid) for _ in specs]
@@ -742,41 +700,12 @@ class CapellaTerraform(Terraform):
                              .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
             exit(1)
 
-    def destroy_cluster_internal_api(self):
+    def destroy_cluster(self):
         for cluster_id in self.cluster_ids:
             logger.info('Deleting Capella cluster {}...'.format(cluster_id))
             resp = self.api_client.delete_cluster(cluster_id)
             raise_for_status(resp)
             logger.info('Capella cluster successfully queued for deletion.')
-
-    def create_tfvar_server_groups(self) -> list[dict]:
-        server_group_sizes = CapellaTerraform.capella_server_group_sizes(
-            self.node_list['clusters']
-        )
-        tfvar_server_groups = {cluster: [] for cluster in server_group_sizes}
-
-        for cluster, server_groups in server_group_sizes.items():
-            cluster_params = self.infra_spec.infrastructure_section(cluster)
-
-            for (node_group, services), size in server_groups.items():
-                parameters = self.infra_spec.infrastructure_config()[node_group]
-
-                parameters['instance_capacity'] = size
-                parameters['services'] = [SERVICES_PERFRUNNER_TO_CAPELLA[svc]for svc in services]
-
-                storage_class = parameters.pop(
-                    'volume_type', parameters.get(
-                        'storage_class', cluster_params.get('storage_class')
-                    )
-                ).upper()
-
-                parameters['storage_class'] = storage_class
-                parameters['volume_size'] = int(parameters['volume_size'])
-                parameters['iops'] = int(parameters.get('iops', 0))
-
-                tfvar_server_groups[cluster].append(parameters)
-
-        return tfvar_server_groups
 
     def get_available_cidr(self):
         resp = self.api_client.get_deployment_options(self.tenant_id)

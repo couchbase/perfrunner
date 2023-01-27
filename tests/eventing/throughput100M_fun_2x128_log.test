@@ -45,3 +45,6 @@ workers = 100
 time = 1200
 iterations = -1
 
+[clients]
+libcouchbase = 3.2.0
+python_client = 3.2.0

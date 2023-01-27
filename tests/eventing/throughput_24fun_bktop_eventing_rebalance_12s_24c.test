@@ -54,4 +54,5 @@ iterations = -1
 batch_size = 1
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.2.0
+python_client = 3.2.0

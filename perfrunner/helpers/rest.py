@@ -2201,6 +2201,11 @@ class ServerlessRestHelper(CapellaRestBase):
         resp.raise_for_status()
         return resp.json()
 
+    def get_dataplane_info(self) -> dict:
+        resp = self.serverless_client.get_serverless_dataplane_info(self.dp_id)
+        resp.raise_for_status()
+        return resp.json()
+
     @retry
     def allow_my_ip(self, db_id):
         logger.info('Whitelisting own IP on DB {}'.format(db_id))
@@ -2310,3 +2315,12 @@ class ServerlessRestHelper(CapellaRestBase):
             response = self.post(url=api, data=data)
 
         return response.json()
+
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
+        resp = self.get_dataplane_info()
+        node_list = resp['couchbase']['nodes']
+        has_role = []
+        for node_config in node_list:
+            if role in node_config['services'][0]['type']:
+                has_role.append(node_config['hostname'])
+        return has_role

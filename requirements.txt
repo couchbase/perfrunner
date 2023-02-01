@@ -1,4 +1,4 @@
-ansible==2.9.2
+ansible==7.0.0
 aiohttp==3.7.3
 awscli==1.24.6
 billiard==3.6.4.0

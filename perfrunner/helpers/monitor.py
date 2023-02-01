@@ -3,7 +3,11 @@ import time
 from logger import logger
 from perfrunner.helpers import misc
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.helpers.rest import DefaultRestHelper, KubernetesRestHelper
+from perfrunner.helpers.rest import (
+    DefaultRestHelper,
+    KubernetesRestHelper,
+    ServerlessRestHelper,
+)
 from perfrunner.settings import ClusterSpec, TestConfig
 
 
@@ -15,6 +19,8 @@ class Monitor:
                 verbose: bool = False):
         if cluster_spec.dynamic_infrastructure:
             return KubernetesMonitor(cluster_spec, test_config, verbose)
+        elif cluster_spec.serverless_infrastructure:
+            return ServerlessMonitor(cluster_spec, test_config, verbose)
         else:
             return DefaultMonitor(cluster_spec, test_config, verbose)
 
@@ -521,7 +527,7 @@ class DefaultMonitor(DefaultRestHelper):
             for i, node in enumerate(index_nodes):
                 indexes_remaining[i] = self.indexes_per_node(node)
 
-        while(sum(indexes_remaining) != 0):
+        while (sum(indexes_remaining) != 0):
             time.sleep(self.POLLING_INTERVAL_INDEXING)
             update_indexes_remaining()
 
@@ -735,11 +741,11 @@ class DefaultMonitor(DefaultRestHelper):
 
         logger.interrupt('Some nodes are still down')
 
-    def monitor_fts_indexing_queue(self, host: str, index: str, items: int):
+    def monitor_fts_indexing_queue(self, host: str, index: str, items: int, bucket="bucket-1"):
         logger.info('{} : Waiting for indexing to finish'.format(index))
         count = 0
         while count < items:
-            count = self.get_fts_doc_count(host, index)
+            count = self.get_fts_doc_count(host, index, bucket)
             logger.info('FTS indexed documents for {}: {:,}'.format(index, count))
             time.sleep(self.POLLING_INTERVAL)
 
@@ -760,7 +766,6 @@ class DefaultMonitor(DefaultRestHelper):
 
                     metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
                     compact += stats[metric]
-
                 pending_items = persist or compact
                 logger.info('Records to persist: {:,}'.format(persist))
                 logger.info('Ongoing compactions: {:,}'.format(compact))
@@ -1499,3 +1504,44 @@ class KubernetesMonitor(KubernetesRestHelper):
         if curr_items:
             return curr_items[-1]
         return 0
+
+
+class ServerlessMonitor(DefaultMonitor):
+
+    def __init__(self, cluster_spec, test_config, verbose):
+        super().__init__(cluster_spec=cluster_spec, test_config=test_config, verbose=verbose)
+        self.rest = ServerlessRestHelper(cluster_spec=cluster_spec, test_config=test_config)
+
+    def monitor_fts_indexing_queue(self, host: str, index: str, items: int, bucket="bucket-1"):
+        logger.info('{} : Waiting for indexing to finish'.format(index))
+        count = 0
+        while count < items:
+            count = self.rest.get_fts_doc_count(host, index, bucket)
+            logger.info('FTS indexed documents for {}: {:,}'.format(index, count))
+            time.sleep(self.POLLING_INTERVAL)
+
+    def monitor_fts_index_persistence(self, hosts: list, index: str, bkt: str = None):
+        logger.info('{}: Waiting for index to be persisted'.format(index))
+        if not bkt:
+            bkt = self.test_config.buckets[0]
+        tries = 0
+        pending_items = 1
+        while pending_items:
+            try:
+                persist = 0
+                compact = 0
+                for host in hosts:
+                    stats = self.rest.get_fts_stats(host)
+                    metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
+                    persist += stats[metric]
+
+                    metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
+                    compact += stats[metric]
+                pending_items = persist or compact
+                logger.info('Records to persist: {:,}'.format(persist))
+                logger.info('Ongoing compactions: {:,}'.format(compact))
+            except KeyError:
+                tries += 1
+            if tries >= 10:
+                raise Exception("cannot get fts stats")
+            time.sleep(self.POLLING_INTERVAL)

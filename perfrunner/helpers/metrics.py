@@ -1,5 +1,6 @@
 import glob
 import os
+import statistics
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
@@ -95,6 +96,13 @@ class MetricHelper:
                 self.test_config.serverless_db.db_map[bucket]['name'] for bucket in bucket_names
             ]
         return bucket_names
+
+    @property
+    def _custom_bucket_names(self):
+        return [
+            'bucket-{}'.format(i + 1)
+            for i in range(int(self.test_config.jts_access_settings.custom_num_buckets))
+        ]
 
     @property
     def query_id(self) -> str:
@@ -196,7 +204,11 @@ class MetricHelper:
 
     def _jts_metric(self, collector, metric, percentile=None):
         timings = []
-        for bucket in self._bucket_names:
+        bucket_names = self._bucket_names
+        if int(self.test_config.jts_access_settings.custom_num_buckets) > 0:
+            bucket_names = self._custom_bucket_names
+        bucket_metric_list = []
+        for bucket in bucket_names:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector=collector,
                                          bucket=bucket)
@@ -211,7 +223,11 @@ class MetricHelper:
                 bucket_metric = round(bucket_metric)
             logger.info("The {}{} value for {} is {}".format(f"{percentile}th "
                         if percentile is not None else "", metric, bucket, bucket_metric))
+            bucket_metric_list.append(bucket_metric)
             timings += bucket_timings
+        if len(bucket_metric_list) > 1:
+            logger.info("The standard deviation across all buckets is: {}".format(
+                statistics.stdev(bucket_metric_list)))
         return timings
 
     def avg_ops(self) -> Metric:

@@ -24,6 +24,7 @@ from cbagent.collectors import (
     EventingPerNodeStats,
     EventingStats,
     FTSCollector,
+    FTSUtilisationCollector,
     JTSCollector,
     KVLatency,
     KVStoreStats,
@@ -161,7 +162,8 @@ class CbAgent:
                        vmstat=False,
                        xdcr_lag=False,
                        xdcr_stats=False,
-                       regulator_stats=False):
+                       regulator_stats=False,
+                       utilisation_stats=False):
         self.collectors = []
         self.processes = []
 
@@ -176,6 +178,8 @@ class CbAgent:
         if self.test.test_config.cluster.fts_index_mem_quota != 0 \
                 and self.test.test_config.cluster.serverless_mode == 'enabled':
             self.add_collector(RegulatorStats, self.test)
+            self.add_collector(FTSUtilisationCollector, self.test)
+
         if ns_server_overview:
             if (major == 6 and minor < 6) or (major < 6 and major != 0):
                 self.add_collector(NSServerOverview)

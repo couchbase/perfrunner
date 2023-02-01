@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.fts.FTSIndexTestMultiTenant
+
+[showfast]
+title = Parallel Index build time, initial (sec), wiki 1M x 1KB, 3 node, 4 bucket FTS, s=1, c=1 , i=1, per Bucket 
+component = jts
+category = elixir
+sub_category = Index
+orderby = q0b00000000
+
+[bucket]
+replica_number=0
+
+[cluster]
+mem_quota =  63126
+initial_nodes = 3
+num_buckets = 4
+fts_index_mem_quota = 63129
+
+[collection]
+config = collections/4buckets_1scope_1collection_basic.json
+
+[load]
+items = 1000000
+size = 1024
+workers = 10
+doc_gen = unified
+num_replies = 100
+item_size = 73
+
+[jts]
+index_creation_style = async
+test_total_docs = 1000000
+couchbase_index_name = perf_fts_index
+couchbase_index_configfile = tests/fts/index/unified/fts_tvectors_off.json
+
+[profiling]
+services = fts

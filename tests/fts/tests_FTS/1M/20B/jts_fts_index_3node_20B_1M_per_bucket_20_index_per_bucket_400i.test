@@ -4,7 +4,7 @@ test = perfrunner.tests.fts.FTSIndexTestMultiTenant
 [showfast]
 title = Index build time, initial (sec), wiki 1M x 1KB, 3 node,20 bucket, FTS, s=1, c=1 , i=20, per Bucket 
 component = jts
-category = capella
+category = elixir
 sub_category = Index
 orderby = q0b00000000
 

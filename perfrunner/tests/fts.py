@@ -16,6 +16,7 @@ from perfrunner.helpers.worker import (
     jts_warmup_task,
     spring_task,
 )
+from perfrunner.settings import TargetIterator
 from perfrunner.tests import PerfTest
 
 
@@ -81,6 +82,11 @@ class JTSTest(PerfTest):
                 self.access.jts_home_dir,
                 local_dir
             )
+
+    def custom_target_iterator(self, num_buckets):
+        bucket_list = ['bucket-{}'.format(i + 1) for i in range(num_buckets)]
+        self.target_iterator = TargetIterator(
+            self.cluster_spec, self.test_config, buckets=bucket_list)
 
 
 class FTSTest(JTSTest):
@@ -352,8 +358,8 @@ class FTSTest(JTSTest):
                 if thread_dict.get(bucket_name, None) is None:
                     thread_dict[bucket_name] = deque()
                 thread_dict[bucket_name].append(threading.Thread(
-                                                        target=self.create_fts_index_and_wait,
-                                                        args=(index_name, index_def)))
+                    target=self.create_fts_index_and_wait,
+                    args=(index_name, index_def)))
             else:
                 index_def_list.append([index_name, index_def])
         logger.info('Index map: {}'.format(pretty_dict(self.fts_index_map)))
@@ -372,7 +378,8 @@ class FTSTest(JTSTest):
             self.monitor.monitor_fts_indexing_queue(
                 self.fts_master_node,
                 self.fts_index_map[index_name]["full_index_name"],
-                self.fts_index_map[index_name]["total_docs"]
+                self.fts_index_map[index_name]["total_docs"],
+                self.fts_index_map[index_name]["bucket"]
             )
 
         if self.fts_index_name_flag is False:
@@ -664,6 +671,39 @@ class FTSThroughputLoadTest(FTSThroughputTest):
         self.report_kpi()
 
 
+class FTSThroughputAccessLoadTest(FTSThroughputTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.access_bg()
+        self.run_test()
+        self.report_kpi()
+
+
+class FTSThroughputAccessLoadTestWithCustomBucket(FTSThroughputTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.custom_target_iterator(int(self.test_config.jts_access_settings.custom_num_buckets))
+        self.warmup()
+        self.access_bg()
+        self.run_test()
+        self.report_kpi()
+
+
 class FTSLatencyLoadTest(FTSLatencyTest):
 
     def run(self):
@@ -675,6 +715,49 @@ class FTSLatencyLoadTest(FTSLatencyTest):
         self.download_jts()
         self.wait_for_index_persistence()
         self.warmup()
+        self.run_test()
+        self.report_kpi()
+
+
+class AutoScalingLoadLatencyTest(FTSLatencyTest):
+
+    def check_autoscaling(self):
+        if len(self.last_fts_cluster) < len(self.fts_nodes):
+            logger.info('*'*10 + "Autoscaling Happened"+'*'*10)
+        else:
+            logger.info('*'*10 + "Autoscaling Not Happened"+'*'*10)
+
+    def capture_fts_nodes(self):
+        self.last_fts_cluster = self.fts_nodes
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.capture_fts_nodes()
+        self.warmup()
+        self.run_test()
+        self.check_autoscaling()
+        self.report_kpi()
+
+
+class FTSLatencyAccessLoadTestWithCustomBucket(FTSLatencyTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.custom_target_iterator(int(self.test_config.jts_access_settings.custom_num_buckets))
+        self.warmup()
+        self.access_bg()
         self.run_test()
         self.report_kpi()
 

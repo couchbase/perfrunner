@@ -944,7 +944,7 @@ class DefaultRestHelper(RestBase):
 
         self.put(url=api, data=data, headers=headers)
 
-    def get_fts_doc_count(self, host: str, index: str) -> int:
+    def get_fts_doc_count(self, host: str, index: str, bucket: str) -> int:
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18094/api/index/{}/count'.format(host, index)
         else:
@@ -2413,6 +2413,27 @@ class ServerlessRestHelper(CapellaRestBase):
         finally:
             self.auth = self.rest_username, self.rest_password
 
+    def create_fts_index(self, host: str, index: str, definition: dict):
+        logger.info('Creating a new FTS index: {}'.format(index))
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18094/api/index/{}'.format(host, index)
+        else:
+            api = 'http://{}:8094/api/index/{}'.format(host, index)
+        headers = {'Content-Type': 'application/json'}
+        data = json.dumps(definition, ensure_ascii=False)
+        bucket = definition['sourceName']
+        with self._bucket_creds(bucket):
+            self.put(url=api, data=data, headers=headers)
+
+    def get_fts_doc_count(self, host: str, index: str, bucket: str) -> int:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18094/api/index/{}/count'.format(host, index)
+        else:
+            api = 'http://{}:8094/api/index/{}/count'.format(host, index)
+        with self._bucket_creds(bucket):
+            response = self.get(url=api).json()
+        return response['count']
+
     def exec_n1ql_statement(self, host: str, statement: str, query_context: str) -> dict:
         api = 'https://{}:18091/_p/query/query/service'.format(host)
 
@@ -2436,3 +2457,33 @@ class ServerlessRestHelper(CapellaRestBase):
             if role in node_config['services'][0]['type']:
                 has_role.append(node_config['hostname'])
         return has_role
+
+    def get_bucket_fts_stats(self, host: str, bucket, index) -> dict:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18094/api/nsstats/index/{}'.format(host, index)
+        else:
+            api = 'http://{}:8094/api/nsstats/index/{}'.format(host, index)
+        with self._bucket_creds(bucket):
+            response = self.get(url=api)
+        return response.json()
+
+    @contextmanager
+    def _admin_creds(self, host: str):
+        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
+            if host in hostnames:
+                username, password = self.admin_credentials[i]
+                self.auth = username, password
+
+        try:
+            yield
+        finally:
+            self.auth = self.rest_username, self.rest_password
+
+    def get_fts_stats(self, host: str) -> dict:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18094/api/nsstats'.format(host)
+        else:
+            api = 'http://{}:8094/api/nsstats'.format(host)
+        with self._admin_creds(host):
+            response = self.get(url=api)
+        return response.json()

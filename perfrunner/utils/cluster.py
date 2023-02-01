@@ -54,11 +54,11 @@ def main():
             cm.init_nebula_ssh()
             cm.set_nebula_log_levels()
         else:
-            cm.get_capella_cluster_admin_creds()
             cm.create_buckets()
             cm.create_eventing_buckets()
             cm.create_eventing_metadata_bucket()
             cm.capella_allow_client_ips()
+        cm.get_capella_cluster_admin_creds()
 
         if cm.test_config.collection.collection_map:
             cm.create_collections()

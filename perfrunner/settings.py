@@ -1558,6 +1558,7 @@ class JTSAccessSettings(PhaseSettings):
         self.time = options.get('test_duration', "600")
         self.warmup_query_workers = options.get("warmup_query_workers", "0")
         self.warmup_time = options.get('warmup_time', "0")
+        self.custom_num_buckets = options.get('custom_num_buckets', "0")
         # index creation - async or sync
         self.index_creation_style = options.get('index_creation_style', 'sync')
         # Geo Queries parameters

@@ -2,13 +2,14 @@
 test = perfrunner.tests.fts.FTSLatencyAccessLoadTest
 
 [showfast]
-title = Light , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Match Phrase, Prefix, wiki 1M x 1KB, 3 node, 4 buckets, 4 bucket access phase, 80 read 20 write, FTS
+title = Light , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Match Phrase, Prefix, wiki 1M x 1KB, 3 node, 4 buckets, 4 bucket mutations phase, 80 read 20 write, FTS
 component = jts
-category = capella
+category = serverless
 sub_category = Latency
 orderby = q0b00000010
 
 [cluster]
+serverless_mode = enabled
 mem_quota = 51024
 initial_nodes = 3
 num_buckets = 4
@@ -48,13 +49,13 @@ item_size = 73
 
 [access]
 creates = 0
-reads = 20
-updates = 80
+reads = 80
+updates = 20
 deletes = 0
-throughput = 100000
+throughput = 5000
 items = 1000000
-workers = 5
-time = 450
+workers = 10
+time = 600
 doc_gen = unified
 
 [profiling]

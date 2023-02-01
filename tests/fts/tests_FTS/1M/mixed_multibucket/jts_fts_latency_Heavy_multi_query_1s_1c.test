@@ -4,11 +4,12 @@ test = perfrunner.tests.fts.FTSLatencyLoadTest
 [showfast]
 title = Heavy , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Match Phrase, Prefix, wiki 1M x 1KB, 3 node, 1 bucket, FTS
 component = jts
-category = capella
+category = serverless
 sub_category = Latency
 orderby = q0b00000010
 
 [cluster]
+serverless_mode = enabled
 mem_quota = 51024
 initial_nodes = 3
 num_buckets = 1
@@ -18,6 +19,7 @@ fts_index_mem_quota = 20000
 config = collections/1bucket_1scope_1collection_basic.json
 
 [jts]
+index_creation_style = async
 jts_repo_branch = multi_query_support
 logging_method = bucket_wise
 jts_instances = 1

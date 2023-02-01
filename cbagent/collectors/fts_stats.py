@@ -235,3 +235,39 @@ class RegulatorStats(Collector):
                                           bucket=bucket,
                                           server=host,
                                           collector=self.COLLECTOR)
+
+
+class FTSUtilisationCollector(FTSCollector):
+
+    COLLECTOR = "utilisation_stats"
+
+    METRICS = (
+        "utilization:cpuPercent",
+        "utilization:memoryBytes"
+    )
+
+    def get_fts_stats(self, host, name):
+        return self.cbft_stats[host][name]
+
+    def measure(self):
+        stats = dict()
+        for metric in self.METRICS:
+            for host in self.fts_nodes:
+                if host not in stats:
+                    stats[host] = dict()
+                data = self.get_fts_stats(host, metric)
+                if metric == "utilization:memoryBytes":
+                    data = (data/(self.cbft_stats[host]["limits:memoryBytes"])) * 100
+                stats[host][metric] = data
+        return stats
+
+    def sample(self):
+        self.collect_stats()
+        self.update_metric_metadata(self.METRICS)
+        samples = self.measure()
+        for host in self.fts_nodes:
+            if host in samples:
+                self.store.append(samples[host],
+                                  cluster=self.cluster,
+                                  server=host,
+                                  collector=self.COLLECTOR)

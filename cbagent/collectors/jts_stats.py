@@ -16,7 +16,7 @@ class JTSCollector(Collector):
 
     def update_metadata(self):
         self.mc.add_cluster()
-        for bucket in self.get_buckets():
+        for bucket in self.buckets:
             self.mc.add_bucket(bucket)
             for metric in self.METRICS:
                 self.mc.add_metric(metric, bucket=bucket,
@@ -57,15 +57,23 @@ class JTSCollector(Collector):
     def sample(self):
         pass
 
+    def custom_bucket_list(self):
+        return [
+                'bucket-{}'.format(i + 1) for i in range(int(self.settings.custom_num_buckets))
+            ]
+
     def read_stats(self):
         self._consolidate_results("aggregated_throughput.log", "throughput")
         self._consolidate_results("aggregated_latency.log", "latency")
 
     def reconstruct(self):
+        if int(self.settings.custom_num_buckets) > 0:
+            self.buckets = self.custom_bucket_list()
+
         timestamp_offset = round(time.time() * 1000)
         self.read_stats()
 
-        for bucket in self.get_buckets():
+        for bucket in self.buckets:
             if "throughput" in self.results:
                 for k in self.results["throughput"][bucket].keys():
                     data = {
@@ -92,11 +100,13 @@ class JTSThroughputCollector(JTSCollector):
         self._consolidate_results("aggregated_throughput.log", "throughput")
 
     def reconstruct(self):
+        if int(self.settings.custom_num_buckets) > 0:
+            self.buckets = self.custom_bucket_list()
         timestamp_offset = round(time.time() * 1000)
         self.read_stats()
 
         if "throughput" in self.results:
-            for bucket in self.get_buckets():
+            for bucket in self.buckets:
                 for k in self.results["throughput"][bucket].keys():
                     data = {
                         'jts_throughput': float(self.results["throughput"][bucket][k])
@@ -114,9 +124,11 @@ class JTSLatencyCollector(JTSCollector):
         self._consolidate_results("aggregated_latency.log", "latency")
 
     def reconstruct(self):
+        if int(self.settings.custom_num_buckets) > 0:
+            self.buckets = self.custom_bucket_list()
         timestamp_offset = round(time.time() * 1000)
         self.read_stats()
-        for bucket in self.get_buckets():
+        for bucket in self.buckets:
             for k in self.results["latency"][bucket].keys():
                 data = {
                     'jts_latency': float(self.results["latency"][bucket][k])

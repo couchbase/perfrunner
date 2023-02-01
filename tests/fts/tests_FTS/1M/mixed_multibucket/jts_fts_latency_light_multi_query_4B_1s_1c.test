@@ -4,11 +4,12 @@ test = perfrunner.tests.fts.FTSLatencyLoadTest
 [showfast]
 title = Light , Multi query , Geo Radius = 10mi, Term, Fuzzy 1, Date, Numeric Range, Match Phrase, Prefix, wiki 1M x 1KB, 3 node, 4 buckets, FTS
 component = jts
-category = capella
+category = serverless
 sub_category = Latency
 orderby = q0b00000010
 
 [cluster]
+serverless_mode = enabled
 mem_quota = 51024
 initial_nodes = 3
 num_buckets = 4

@@ -2,6 +2,7 @@ import socket
 import sys
 import time
 from threading import Thread
+from typing import Optional, Union
 
 import requests
 
@@ -44,7 +45,8 @@ class Collector:
         self.metrics = set()
         self.updater = None
 
-    def get_http(self, path, server=None, port=8091, json=True):
+    def get_http(self, path: str, server: Optional[str] = None, port: int = 8091,
+                 json: bool = True) -> Union[dict, str]:
         server = server or self.master_node
         url_template = "http://{}:{}{}"
 
@@ -71,13 +73,15 @@ class Collector:
             if r.status_code in (200, 201, 202):
                 return json and r.json() or r.text
             else:
-                logger.warn("Bad response: {}".format(url))
+                logger.warn("Bad response (GET): {}".format(url))
+                logger.warn("Response text: {}".format(r.text))
                 return self.refresh_nodes_and_retry(path, server, port)
         except requests.ConnectionError:
             logger.warn("Connection error: {}".format(url))
             return self.refresh_nodes_and_retry(path, server, port, json)
 
-    def post_http(self, path, server=None, port=8091, json_out=True, json_data=None):
+    def post_http(self, path: str, server: Optional[str] = None, port: int = 8091,
+                  json_out: bool = True, json_data: Optional[dict] = None) -> Union[dict, str]:
         server = server or self.master_node
         url_template = "http://{}:{}{}"
         try:
@@ -100,7 +104,9 @@ class Collector:
             if r.status_code in (200, 201, 202):
                 return json_out and r.json() or r.text
             else:
-                logger.warn("Bad response: {}".format(url))
+                logger.warn("Bad response (POST): {}".format(url))
+                logger.warn("Request payload: {}".format(json_data))
+                logger.warn("Response text: {}".format(r.text))
                 return self.refresh_nodes_and_retry(path, server, port)
         except requests.ConnectionError:
             logger.warn("Connection error: {}".format(url))

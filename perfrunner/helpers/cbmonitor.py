@@ -28,6 +28,7 @@ from cbagent.collectors import (
     KVLatency,
     KVStoreStats,
     Memory,
+    MetricsRestApiDeduplication,
     MetricsRestApiMetering,
     MetricsRestApiProcesses,
     N1QLStats,
@@ -206,6 +207,7 @@ class CbAgent:
                        index_latency=False,
                        iostat=True,
                        jts_stats=False,
+                       kv_dedup=False,
                        kvstore=False,
                        latency=False,
                        memory=True,
@@ -263,6 +265,8 @@ class CbAgent:
             self.add_collector(XdcrStats)
         if analytics:
             self.add_collector(AnalyticsStats, self.test)
+        if kv_dedup:
+            self.add_collector(MetricsRestApiDeduplication)
         if kvstore:
             self.add_collector(KVStoreStats, self.test)
         if cbstats_memory:

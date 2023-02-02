@@ -14,17 +14,17 @@ class MetricsRestApiBase(Collector):
         for node in self.nodes:
             self.mc.add_server(node)
 
-    def add_stats(self, node, stats):
+    def add_stats(self, stats: dict, node: str = '', bucket: str = ''):
         if stats:
-            self.update_metric_metadata(stats.keys(), server=node)
-            self.store.append(stats, cluster=self.cluster, server=node, collector=self.COLLECTOR)
+            self.update_metric_metadata(stats.keys(), server=node, bucket=bucket)
+            self.store.append(stats, cluster=self.cluster, server=node, bucket=bucket,
+                              collector=self.COLLECTOR)
 
     def get_stats(self):
         raise NotImplementedError()
 
     def sample(self):
-        for node, stats in self.get_stats().items():
-            self.add_stats(node, stats)
+        raise NotImplementedError()
 
 
 class MetricsRestApiProcesses(MetricsRestApiBase):
@@ -65,7 +65,7 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
             for proc in set(self.server_processes) & set(self.PROCESSES)
         ]
 
-    def get_stats(self):
+    def get_stats(self) -> dict:
         samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
         stats = {}
         for data in samples:
@@ -80,6 +80,10 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
                 else:
                     stats[node][title] = value
         return stats
+
+    def sample(self):
+        for node, stats in self.get_stats().items():
+            self.add_stats(stats, node=node)
 
 
 class MetricsRestApiMetering(MetricsRestApiBase):
@@ -113,12 +117,7 @@ class MetricsRestApiMetering(MetricsRestApiBase):
         for bucket in self.get_buckets():
             self.mc.add_bucket(bucket)
 
-    def add_stats(self, bucket, stats):
-        if stats:
-            self.update_metric_metadata(stats.keys(), bucket=bucket)
-            self.store.append(stats, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR)
-
-    def get_stats(self):
+    def get_stats(self) -> dict:
         samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
         stats = {}
         for data in samples:
@@ -140,4 +139,64 @@ class MetricsRestApiMetering(MetricsRestApiBase):
     def sample(self):
         for bucket, stats in self.get_stats().items():
             bucket = self.serverless_db_names.get(bucket, bucket)
-            self.add_stats(bucket, stats)
+            self.add_stats(stats, bucket=bucket)
+
+
+class MetricsRestApiDeduplication(MetricsRestApiBase):
+
+    COLLECTOR = "metrics_rest_api_dedup"
+
+    METRICS = {
+        "kv_ep_total_deduplicated": "kv_ep_total_deduplicated_rate",
+        "kv_ep_total_enqueued": "kv_ep_total_enqueued_rate"
+    }
+
+    def __init__(self, settings):
+        super().__init__(settings)
+        self.stats_uri = '/pools/default/stats/range/'
+        self.stats_data = [
+            {
+                "metric": [
+                    {"label": "name", "value": metric}
+                ],
+                "applyFunctions": ["irate"],
+                "step": 1,
+                "start": -1
+            }
+            for metric in self.METRICS
+        ]
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+
+        for node in self.nodes:
+            self.mc.add_server(node)
+
+        for bucket in self.get_buckets():
+            self.mc.add_bucket(bucket)
+
+    def get_stats(self) -> dict:
+        samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
+        metrics = {}
+        for data in samples:
+            for metric in data['data']:
+                if 'bucket' in metric['metric']:
+                    metric_name = self.METRICS[metric['metric']['name']]
+                    node = metric['metric']['nodes'][0].split(':')[0]
+                    bucket = metric['metric']['bucket']
+                    value = float(metric['values'][-1][-1])
+                    if node not in metrics:
+                        metrics[node] = {bucket: {metric_name: value}}
+                    elif bucket not in metrics[node]:
+                        metrics[node][bucket] = {metric_name: value}
+                    elif metric_name not in metrics[node][bucket]:
+                        metrics[node][bucket][metric_name] = value
+
+        return metrics
+
+    def sample(self):
+        current_stats = self.get_stats()
+        for node, per_bucket_stats in current_stats.items():
+            for bucket, stats in per_bucket_stats.items():
+                bucket = self.serverless_db_names.get(bucket, bucket)
+                self.add_stats(stats, node=node, bucket=bucket)

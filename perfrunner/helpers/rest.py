@@ -5,7 +5,7 @@ import time
 from collections import namedtuple
 from contextlib import contextmanager
 from json import JSONDecodeError
-from typing import Callable, Dict, Iterator, List
+from typing import Callable, Dict, Iterator, List, Optional
 
 import requests
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
@@ -430,9 +430,11 @@ class DefaultRestHelper(RestBase):
                       eviction_policy: str,
                       bucket_type: str,
                       magma_seq_tree_data_block_size: int = 0,
-                      backend_storage: str = None,
-                      conflict_resolution_type: str = None,
-                      compression_mode: str = None):
+                      backend_storage: Optional[str] = None,
+                      conflict_resolution_type: Optional[str] = None,
+                      compression_mode: Optional[str] = None,
+                      history_seconds: int = 0,
+                      history_bytes: int = 0) -> requests.Response:
         logger.info('Adding new bucket: {}'.format(name))
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18091/pools/default/buckets'.format(host)
@@ -462,6 +464,12 @@ class DefaultRestHelper(RestBase):
 
         if magma_seq_tree_data_block_size:
             data['magmaSeqTreeDataBlockSize'] = magma_seq_tree_data_block_size
+
+        if history_seconds:
+            data['historyRetentionSeconds'] = history_seconds
+
+        if history_bytes:
+            data['historyRetentionBytes'] = history_bytes
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 
@@ -849,6 +857,18 @@ class DefaultRestHelper(RestBase):
         else:
             api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
         return self.get(url=api).json()
+
+    def set_bucket_history(self, host: str, bucket: str, history_bytes: int = 0,
+                           history_seconds: int = 0) -> requests.Response:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/buckets/{}'.format(host, bucket)
+        else:
+            api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
+        data = {
+            'historyRetentionBytes': history_bytes,
+            'historyRetentionSeconds': history_seconds
+        }
+        return self.post(url=api, data=data)
 
     def exec_n1ql_statement(self, host: str, statement: str, query_context: str = None) -> dict:
         if self.test_config.cluster.enable_n2n_encryption:
@@ -1508,8 +1528,10 @@ class DefaultRestHelper(RestBase):
             .format(protocol, host, port, bucket)
         self.delete(url=api)
 
-    def create_collection(self, host, bucket, scope, collection):
-        logger.info("Creating collection {}:{}.{}".format(bucket, scope, collection))
+    def create_collection(self, host: str, bucket: str, scope: str, collection: str,
+                          history: Optional[bool] = None) -> requests.Response:
+        logger.info("Creating collection {}:{}.{} (history={})"
+                    .format(bucket, scope, collection, history))
         if self.test_config.cluster.enable_n2n_encryption:
             protocol, port = 'https', 18091
         else:
@@ -1517,8 +1539,10 @@ class DefaultRestHelper(RestBase):
         api = '{}://{}:{}/pools/default/buckets/{}/scopes/{}/collections' \
             .format(protocol, host, port, bucket, scope)
         data = {
-            'name': collection
+            'name': collection,
         }
+        if history is not None:
+            data['history'] = str(history).lower()
         self.post(url=api, data=data)
 
     def delete_collection(self, host, bucket, scope, collection):

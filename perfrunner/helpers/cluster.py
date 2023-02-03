@@ -37,6 +37,8 @@ class ClusterManager:
         else:
             self.initial_nodes = test_config.cluster.initial_nodes
         self.build = self.rest.get_version(self.master_node)
+        version, build_number = self.build.split('-')
+        self.build_tuple = tuple(map(int, version.split('.'))) + (int(build_number),)
 
     def is_compatible(self, min_release: str) -> bool:
         for master in self.cluster_spec.masters:
@@ -350,8 +352,11 @@ class ClusterManager:
                             'bucket_type': self.test_config.bucket.bucket_type,
                             'compression_mode': self.test_config.bucket.compression_mode,
                             'magma_seq_tree_data_block_size':
-                                self.test_config.bucket.magma_seq_tree_data_block_size
+                                self.test_config.bucket.magma_seq_tree_data_block_size,
+                            'history_seconds': self.test_config.bucket.history_seconds,
+                            'history_bytes': self.test_config.bucket.history_bytes
                         })
+
                     self.rest.create_bucket(**bucket_params)
 
     def create_collections(self):
@@ -361,35 +366,40 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             if collection_map is not None:
                 if self.test_config.collection.use_bulk_api:
-                    for bucket in collection_map.keys():
+                    for bucket, scopes in collection_map.items():
                         create_scopes = []
-                        for scope in collection_map[bucket]:
-                            scope_collections = []
-                            for collection in collection_map[bucket][scope]:
-                                scope_collections.append({"name": collection})
-                            create_scopes.append({"name": scope, "collections": scope_collections})
-                        self.rest.set_collection_map(master, bucket, {"scopes": create_scopes})
+                        for scope, collections in scopes.items():
+                            create_collections = []
+                            for collection, options in collections.items():
+                                create_collection = {'name': collection}
+                                if 'history' in options:
+                                    create_collection['history'] = bool(options['history'])
+                                create_collections.append(create_collection)
+                            create_scope = {'name': scope, 'collections': create_collections}
+                            create_scopes.append(create_scope)
+
+                        self.rest.set_collection_map(master, bucket, {'scopes': create_scopes})
                 else:
-                    for bucket in collection_map.keys():
-                        if self.test_config.access_settings.transactionsenabled:
-                            delete_default = False
-                        else:
-                            delete_default = True
-                            for scope in collection_map[bucket]:
-                                if scope == '_default':
-                                    for collection in collection_map[bucket][scope]:
-                                        if collection == "_default":
-                                            delete_default = False
+                    for bucket, scopes in collection_map.items():
+                        # If transactions are enabled, we need to keep the default collection
+                        # Otherwise, we can delete it if it is not specified in the collection map
+                        delete_default = (
+                            (not self.test_config.access_settings.transactionsenabled) and
+                            '_default' not in scopes.get('_default', {})
+                        )
+
                         if delete_default:
                             self.rest.delete_collection(master, bucket, '_default', '_default')
 
-                    for bucket in collection_map.keys():
-                        for scope in collection_map[bucket]:
+                        for scope, collections in scopes.items():
                             if scope != '_default':
                                 self.rest.create_scope(master, bucket, scope)
-                            for collection in collection_map[bucket][scope]:
+                            for collection, options in collections.items():
                                 if collection != '_default':
-                                    self.rest.create_collection(master, bucket, scope, collection)
+                                    history = bool(options['history']) \
+                                              if 'history' in options else None
+                                    self.rest.create_collection(master, bucket, scope, collection,
+                                                                history)
 
     def create_eventing_buckets(self):
         if not self.test_config.cluster.eventing_bucket_mem_quota:
@@ -956,10 +966,7 @@ class ClusterManager:
         if self.dynamic_infra or self.capella_infra:
             return
         if self.test_config.cluster.ipv6:
-            version, build_number = self.build.split('-')
-            build = tuple(map(int, version.split('.'))) + (int(build_number),)
-
-            if build < (6, 5, 0, 0):
+            if self.build_tuple < (6, 5, 0, 0):
                 self.remote.update_ip_family_rest()
             else:
                 self.remote.update_ip_family_cli()
@@ -1004,16 +1011,15 @@ class ClusterManager:
 
     def get_debug_rpm_url(self):
         release, build_number = self.build.split('-')
-        build = tuple(map(int, release.split('.'))) + (int(build_number),)
-        if build > (7, 2, 0, 0):
+        if self.build_tuple > (7, 2, 0, 0):
             release = 'elixir'
-        elif build > (7, 1, 0, 0):
+        elif self.build_tuple > (7, 1, 0, 0):
             release = 'neo'
-        elif build > (7, 0, 0, 0):
+        elif self.build_tuple > (7, 0, 0, 0):
             release = 'cheshire-cat'
-        elif build > (6, 5, 0, 0) and build < (7, 0, 0, 0):
+        elif self.build_tuple > (6, 5, 0, 0) and self.build_tuple < (7, 0, 0, 0):
             release = 'mad-hatter'
-        elif build < (6, 5, 0, 0):
+        elif self.build_tuple < (6, 5, 0, 0):
             release = 'alice'
         centos_version = self.remote.detect_centos_release()
 
@@ -1027,9 +1033,7 @@ class ClusterManager:
         self.remote.install_cb_debug_rpm(url=self.get_debug_rpm_url())
 
     def enable_developer_preview(self):
-        version, build_number = self.build.split('-')
-        build = tuple(map(int, version.split('.'))) + (int(build_number),)
-        if build > (7, 0, 0, 4698) or build < (1, 0, 0, 0):
+        if self.build_tuple > (7, 0, 0, 4698) or self.build_tuple < (1, 0, 0, 0):
             self.remote.enable_developer_preview()
 
     def configure_autoscaling(self):

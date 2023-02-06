@@ -262,15 +262,15 @@
         {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_30bucket_100M_dgm_kv_hard.test"}
     ],
     "Tools": [
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_sqlite.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_incremental_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_list_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_merge_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_comp_size_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_rift.test"}
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift.test", "groups": "P0"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_sqlite.test", "groups": "P0"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_rift.test", "groups": "P0"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_incremental_100M_rift.test", "groups": "P0"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_list_100M_rift.test", "groups": "P0"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_merge_100M_rift.test", "groups": "P0"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_comp_size_rift.test", "groups": "P0"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift.test", "groups": "P0"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_rift.test", "groups": "P0"}
     ],
     "Views": [],
     "XDCR": [],

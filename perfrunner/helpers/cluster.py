@@ -348,7 +348,9 @@ class ClusterManager:
                             'replica_index': self.test_config.bucket.replica_index,
                             'eviction_policy': self.test_config.bucket.eviction_policy,
                             'bucket_type': self.test_config.bucket.bucket_type,
-                            'compression_mode': self.test_config.bucket.compression_mode
+                            'compression_mode': self.test_config.bucket.compression_mode,
+                            'magma_seq_tree_data_block_size':
+                                self.test_config.bucket.magma_seq_tree_data_block_size
                         })
                     self.rest.create_bucket(**bucket_params)
 

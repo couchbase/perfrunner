@@ -781,6 +781,7 @@ class BucketSettings:
     MIN_DURABILITY = 'none'
     DOC_TTL_UNIT = None
     DOC_TTL_VALUE = 0
+    MAGMA_SEQ_TREE_DATA_BLOCK_SIZE = 0
 
     def __init__(self, options: dict):
         self.password = options.get('password', self.PASSWORD)
@@ -816,6 +817,9 @@ class BucketSettings:
         self.doc_ttl_unit = options.get('doc_ttl_unit', self.DOC_TTL_UNIT)
 
         self.doc_ttl_value = options.get('doc_ttl_value', self.DOC_TTL_VALUE)
+
+        self.magma_seq_tree_data_block_size = int(options.get('magma_seq_tree_data_block_size',
+                                                              self.MAGMA_SEQ_TREE_DATA_BLOCK_SIZE))
 
 
 class CollectionSettings:

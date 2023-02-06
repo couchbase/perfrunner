@@ -429,6 +429,7 @@ class DefaultRestHelper(RestBase):
                       replica_index: int,
                       eviction_policy: str,
                       bucket_type: str,
+                      magma_seq_tree_data_block_size: int,
                       backend_storage: str = None,
                       conflict_resolution_type: str = None,
                       compression_mode: str = None):
@@ -458,6 +459,9 @@ class DefaultRestHelper(RestBase):
 
         if backend_storage:
             data['storageBackend'] = backend_storage
+
+        if magma_seq_tree_data_block_size:
+            data['magmaSeqTreeDataBlockSize'] = magma_seq_tree_data_block_size
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 

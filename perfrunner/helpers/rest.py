@@ -429,7 +429,7 @@ class DefaultRestHelper(RestBase):
                       replica_index: int,
                       eviction_policy: str,
                       bucket_type: str,
-                      magma_seq_tree_data_block_size: int,
+                      magma_seq_tree_data_block_size: int = 0,
                       backend_storage: str = None,
                       conflict_resolution_type: str = None,
                       compression_mode: str = None):

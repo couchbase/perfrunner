@@ -141,14 +141,13 @@ class Worker:
         self.load_map = {}
         self.load_ratios = {}
         num_ratio = 0
+
         if self.ws.collections is not None:
-            target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope, collections in target_scope_collections.items():
+            for scope, collections in self.ws.collections[self.ts.bucket].items():
                 for collection, options in collections.items():
                     if options['load'] == 1:
                         self.load_targets.append(scope + ":" + collection)
-                        if ratio := options.get('ratio'):
-                            num_ratio += ratio
+                        num_ratio += options.get('ratio', 0)
         else:
             self.load_targets = ["_default:_default"]
 
@@ -156,8 +155,7 @@ class Worker:
 
         if num_ratio > 0:
             base_items = self.ws.items // num_ratio
-            target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope, collections in target_scope_collections.items():
+            for scope, collections in self.ws.collections[self.ts.bucket].items():
                 for collection, options in collections.items():
                     if options['load'] == 1:
                         target = scope + ":" + collection
@@ -174,14 +172,13 @@ class Worker:
     def init_access_targets(self):
         self.access_targets = []
         if self.ws.collections is not None:
-            target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1 and \
-                            target_scope_collections[scope][collection]['access'] == 1:
-                        self.access_targets += [scope+":"+collection]
+            for scope, collections in self.ws.collections[self.ts.bucket].items():
+                for collection, options in collections.items():
+                    if options['load'] == 1 and options['access'] == 1:
+                        self.access_targets.append(scope + ":" + collection)
         else:
             self.access_targets = ["_default:_default"]
+
         self.num_access_targets = len(self.access_targets)
 
     def init_keys(self):
@@ -580,7 +577,8 @@ class KVWorker(Worker):
             for cmd, func, args in cmd_seq:
                 latency = func(*args)
                 if latency is not None:
-                    self.reservoir.update(operation=cmd, value=latency)
+                    target = args[0] if self.ws.per_collection_latency else None
+                    self.reservoir.update(operation=cmd, value=latency, target=target)
                 if self.op_delay > 0:
                     time.sleep(self.op_delay * self.CORRECTION_FACTOR)
                 if not op_count % 5:
@@ -981,9 +979,9 @@ class UserModWorker(AuxillaryWorker):
         self.cb.create_user_manager()
         self.supported_roles = [raw_role for raw_role in self.cb.get_roles()]
         self.targets = []
-        for bucket in self.ws.collections.keys():
-            for scope in self.ws.collections[bucket].keys():
-                for collection in self.ws.collections[bucket][scope].keys():
+        for bucket, scopes in self.ws.collections.items():
+            for scope, collections in scopes.items():
+                for collection in collections.keys():
                     target = bucket+":"+scope+":"+collection
                     self.targets.append(target)
 
@@ -1031,12 +1029,10 @@ class CollectionModWorker(AuxillaryWorker):
 
         self.target_scopes = []
         if self.ws.collections is not None:
-            target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1 and \
-                            target_scope_collections[scope][collection]['access'] == 1:
-                        self.target_scopes += [scope]
+            for scope, collections in self.ws.collections[self.ts.bucket].items():
+                for options in collections.values():
+                    if options['load'] == 1 and options['access'] == 1:
+                        self.target_scopes.append(scope)
                         break
         else:
             self.target_scopes = ["_default"]
@@ -1185,15 +1181,12 @@ class N1QLWorker(Worker):
         for bucket in self.ws.bucket_list:
             targets = []
             if self.ws.collections is not None:
-                scopes = self.ws.collections[bucket]
-                for scope in scopes.keys():
-                    collections = scopes[scope]
-                    for collection in collections.keys():
-                        if collections[collection]['load'] == 1 and \
-                                collections[collection]['access'] == 1:
-                            targets += [":".join([scope, collection])]
+                for scope, collections in self.ws.collections[bucket].items():
+                    for collection, options in collections.items():
+                        if options['load'] == 1 and options['access'] == 1:
+                            targets.append(scope + ":" + collection)
             else:
-                targets = [":".join(['_default', '_default'])]
+                targets = ['_default:_default']
             self.bucket_targets[bucket] = targets
 
         # create access targets
@@ -1253,8 +1246,7 @@ class N1QLWorker(Worker):
         # choose which occurrence of the bucket to randomly select before we randomly choose
         # a replacement target for that instance of the bucket.
         target = None
-        for bucket in self.access_targets.keys():
-            bucket_instances = self.access_targets[bucket]
+        for bucket, bucket_instances in self.access_targets.items():
             if bucket == self.ts.bucket:
                 num_bucket_instances = len(bucket_instances)
                 random_instance = random.randint(num_bucket_instances)
@@ -1506,22 +1498,23 @@ class WorkloadGen:
             num_load = 0
             num_ratio = 0
             target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1:
+
+            for scope, collections in target_scope_collections.items():
+                for collection, options in collections.items():
+                    if options['load'] == 1:
                         num_load += 1
-                    if target_scope_collections[scope][collection].get('ratio'):
-                        num_ratio += target_scope_collections[scope][collection].get('ratio')
+
+                    num_ratio += options.get('ratio', 0)
 
             curr_items = self.ws.items // num_load
             if num_ratio > 0:
                 curr_items = self.ws.items // num_ratio
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
+
+            for scope, collections in target_scope_collections.items():
+                for collection, options in collections.items():
                     target = scope+":"+collection
-                    if target_scope_collections[scope][collection]['load'] == 1:
-                        if target_scope_collections[scope][collection].get('ratio'):
-                            ratio = target_scope_collections[scope][collection]['ratio']
+                    if options['load'] == 1:
+                        if ratio := options.get('ratio'):
                             final_items = curr_items * ratio
                             self.shared_dict[target] = [final_items, 0]
                         else:

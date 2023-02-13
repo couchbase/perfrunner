@@ -43,9 +43,8 @@ class ReadLatencyTest(KVTest):
     COLLECTORS = {'latency': True}
 
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.kv_latency(operation='get')
-        )
+        for metric in self.metrics.kv_latency(operation='get'):
+            self.reporter.post(*metric)
 
 
 class MixedLatencyTest(ReadLatencyTest):
@@ -53,11 +52,10 @@ class MixedLatencyTest(ReadLatencyTest):
     """Enable reporting of GET and SET latency."""
 
     def _report_kpi(self):
+        percentiles = self.test_config.access_settings.latency_percentiles
         for operation in ('get', 'set'):
-            for percentile in self.test_config.access_settings.latency_percentiles:
-                self.reporter.post(
-                    *self.metrics.kv_latency(operation=operation, percentile=percentile)
-                )
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                self.reporter.post(*metric)
 
     def run(self):
         self.load()
@@ -102,10 +100,8 @@ class EnhancedDurabilityLatencyTest(ReadLatencyTest):
     """Enable reporting of SET latency."""
 
     def _report_kpi(self):
-        for percentile in 50.00, 99.9:
-            self.reporter.post(
-                *self.metrics.kv_latency(operation='set', percentile=percentile)
-            )
+        for metric in self.metrics.kv_latency(operation='set', percentiles=[50.0, 99.9]):
+            self.reporter.post(*metric)
 
     def run(self):
         self.load()
@@ -175,18 +171,16 @@ class ReadLatencyDGMTest(KVTest):
         self.COLLECTORS["latency"] = True
 
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.kv_latency(operation='get')
-        )
+        for metric in self.metrics.kv_latency(operation='get'):
+            self.reporter.post(*metric)
 
 
 class MixedLatencyDGMTest(ReadLatencyDGMTest):
 
     def _report_kpi(self):
         for operation in ('get', 'set'):
-            self.reporter.post(
-                *self.metrics.kv_latency(operation=operation)
-            )
+            for metric in self.metrics.kv_latency(operation=operation):
+                self.reporter.post(*metric)
 
 
 class ReadLatencyDGMCompactionTest(DGMCompactionTest):
@@ -194,9 +188,8 @@ class ReadLatencyDGMCompactionTest(DGMCompactionTest):
     COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.kv_latency(operation='get')
-        )
+        for metric in self.metrics.kv_latency(operation='get'):
+            self.reporter.post(*metric)
 
 
 class ReadLatencyDGMCompactedTest(DGMCompactedTest):
@@ -204,10 +197,8 @@ class ReadLatencyDGMCompactedTest(DGMCompactedTest):
     COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
     def _report_kpi(self):
-        for percentile in 99.9, 99.99:
-            self.reporter.post(
-                *self.metrics.kv_latency(operation='get', percentile=percentile)
-            )
+        for metric in self.metrics.kv_latency(operation='get', percentiles=[99.9, 99.99]):
+            self.reporter.post(*metric)
 
 
 class ThroughputDGMCompactedTest(DGMCompactedTest):
@@ -228,10 +219,8 @@ class DurabilityTest(KVTest):
 
     def _report_kpi(self):
         for operation in ('replicate_to', 'persist_to'):
-            self.reporter.post(
-                *self.metrics.kv_latency(operation=operation,
-                                         collector='durability')
-            )
+            for metric in self.metrics.kv_latency(operation=operation, collector='durability'):
+                self.reporter.post(*metric)
 
 
 class SubDocTest(MixedLatencyTest):

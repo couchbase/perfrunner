@@ -584,29 +584,26 @@ class LoadThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
 class ReadLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        for percentile in self.test_config.access_settings.latency_percentiles:
-            self.reporter.post(
-                *self.metrics.kv_latency(operation='get', percentile=percentile)
-            )
+        percentiles = self.test_config.access_settings.latency_percentiles
+        for metric in self.metrics.kv_latency(operation='get', percentiles=percentiles):
+            self.reporter.post(*metric)
 
 
 class MixedLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        for percentile in self.test_config.access_settings.latency_percentiles:
-            for operation in ('get', 'set'):
-                self.reporter.post(
-                    *self.metrics.kv_latency(operation=operation, percentile=percentile)
-                )
+        percentiles = self.test_config.access_settings.latency_percentiles
+        for operation in ('get', 'set'):
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                self.reporter.post(*metric)
 
 
 class WriteLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        for percentile in self.test_config.access_settings.latency_percentiles:
-            self.reporter.post(
-                *self.metrics.kv_latency(operation='set', percentile=percentile)
-            )
+        percentiles = self.test_config.access_settings.latency_percentiles
+        for metric in self.metrics.kv_latency(operation='set', percentiles=percentiles):
+            self.reporter.post(*metric)
 
 
 class CompactionMagmaTest(StabilityBootstrap):
@@ -747,9 +744,8 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
 
     def _report_kpi(self):
         for operation in ('get', 'set'):
-            self.reporter.post(
-                *self.metrics.kv_latency(operation=operation)
-            )
+            for metric in self.metrics.kv_latency(operation=operation):
+                self.reporter.post(*metric)
 
     def run(self):
         if self.test_config.load_settings.use_backup:
@@ -787,10 +783,8 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
 class EnhancedDurabilityLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        for percentile in 50.00, 99.9:
-            self.reporter.post(
-                *self.metrics.kv_latency(operation='set', percentile=percentile)
-            )
+        for metric in self.metrics.kv_latency(operation='set', percentiles=[50.0, 99.9]):
+            self.reporter.post(*metric)
 
 
 class PillowFightDGMTest(StabilityBootstrap):

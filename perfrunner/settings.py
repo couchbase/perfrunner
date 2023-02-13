@@ -900,6 +900,7 @@ class CollectionSettings:
     USE_BULK_API = 1
     SCOPES_PER_BUCKET = 0
     COLLECTIONS_PER_SCOPE = 0
+    COLLECTION_STAT_GROUPS = {}
 
     def __init__(self, options: dict, buckets: Iterable[str] = None):
         self.config = options.get('config', self.CONFIG)
@@ -913,6 +914,15 @@ class CollectionSettings:
                 self.collection_map = json.load(f)
         elif self.scopes_per_bucket > 0 and buckets:
             self.collection_map = self.create_uniform_collection_map(buckets)
+
+        self.collection_stat_groups = self.COLLECTION_STAT_GROUPS
+        if self.collection_map:
+            self.collection_stat_groups = set([
+                options.get('stat_group')
+                for scopes in self.collection_map.values()
+                for collections in scopes.values()
+                for options in collections.values()
+            ]) - {None}
 
     def create_uniform_collection_map(self, buckets: Iterable[str]):
         coll_map = {
@@ -1223,6 +1233,8 @@ class PhaseSettings:
     DAPI_REQUEST_META = 'false'
     DAPI_REQUEST_LOGS = 'false'
 
+    PER_COLLECTION_LATENCY = False
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -1495,6 +1507,9 @@ class PhaseSettings:
             options.get('dapi_request_logs', self.DAPI_REQUEST_LOGS)
         )
 
+        # Default setting. Is set based on collection stat groups in configure_collection_settings
+        self.per_collection_latency = self.PER_COLLECTION_LATENCY
+
     def __str__(self) -> str:
         return str(self.__dict__)
 
@@ -1512,11 +1527,12 @@ class PhaseSettings:
         if hasattr(client_settings, "pillowfight"):
             self.custom_pillowfight = True
 
-    def configure_collection_settings(self, collection_settings):
+    def configure_collection_settings(self, collection_settings: CollectionSettings):
         if collection_settings.collection_map is not None:
             self.collections = collection_settings.collection_map
+            self.per_collection_latency = bool(collection_settings.collection_stat_groups)
 
-    def configure_user_settings(self, user_settings):
+    def configure_user_settings(self, user_settings: UserSettings):
         self.users = user_settings.num_users_per_bucket
 
     def configure_java_dcp_settings(self, java_dcp_settings):
@@ -1954,11 +1970,11 @@ class IndexSettings:
             statements = []
             build_statements = []
             if self.fields.strip() == 'primary':
-                for bucket in self.collection_map.keys():
-                    for scope in self.collection_map[bucket].keys():
-                        for collection in self.collection_map[bucket][scope].keys():
+                for bucket, scopes in self.collection_map.items():
+                    for scope, collections in scopes.items():
+                        for collection, options in collections.items():
                             index_num = 1
-                            if self.collection_map[bucket][scope][collection]['load'] == 1:
+                            if options['load'] == 1:
                                 collection_num = collection.replace("collection-", "")
                                 index_name = 'pi{}_{}'\
                                     .format(collection_num, index_num)
@@ -1991,10 +2007,10 @@ class IndexSettings:
                                                         for r in range(1, len(fields)+1)))
                 if self.top_down:
                     field_combos.reverse()
-                for bucket in self.collection_map.keys():
-                    for scope in self.collection_map[bucket].keys():
-                        for collection in self.collection_map[bucket][scope].keys():
-                            if self.collection_map[bucket][scope][collection]['load'] == 1:
+                for bucket, scopes in self.collection_map.items():
+                    for scope, collections in scopes.items():
+                        for collection, options in collections.items():
+                            if options['load'] == 1:
                                 indexes_created = 0
                                 collection_num = collection.replace("collection-", "")
                                 for field_subset in field_combos:
@@ -2050,10 +2066,10 @@ class IndexSettings:
                     indexes.append(match.group(1))
             indexes_per_collection = set(indexes)
             index_map = {}
-            for bucket in self.collection_map.keys():
-                for scope in self.collection_map[bucket].keys():
-                    for collection in self.collection_map[bucket][scope].keys():
-                        if self.collection_map[bucket][scope][collection]['load'] == 1:
+            for bucket, scopes in self.collection_map.items():
+                for scope, collections in scopes.items():
+                    for collection, options in collections.items():
+                        if options['load'] == 1:
                             bucket_map = index_map.get(bucket, {})
                             if bucket_map == {}:
                                 index_map[bucket] = {}

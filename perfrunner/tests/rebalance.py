@@ -232,10 +232,8 @@ class RebalanceDurabilityTest(RebalanceTest):
         self.worker_manager.abort()
 
     def _report_kpi(self, *args):
-        for percentile in 50.00, 99.9:
-            self.reporter.post(
-                *self.metrics.kv_latency(operation='set', percentile=percentile)
-            )
+        for metric in self.metrics.kv_latency(operation='set', percentiles=[50.0, 99.9]):
+            self.reporter.post(*metric)
 
     def run(self):
         self.load()

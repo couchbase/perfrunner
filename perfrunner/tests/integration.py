@@ -69,11 +69,10 @@ class EndToEndLatencyTest(N1QLElixirThroughputTest):
         logger.info('Index Create and Build Complete')
 
     def report_kv_kpi(self):
+        percentiles = self.test_config.access_settings.latency_percentiles
         for operation in ('get', 'set'):
-            for percentile in self.test_config.access_settings.latency_percentiles:
-                self.reporter.post(
-                    *self.metrics.kv_latency(operation=operation, percentile=percentile)
-                )
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                self.reporter.post(*metric)
 
     def report_n1ql_kpi(self):
         for percentile in self.test_config.access_settings.latency_percentiles:
@@ -309,13 +308,14 @@ class EndToEndLatencyWithXDCRTest(EndToEndLatencyTest, CapellaXdcrTest):
             PerfTest.access(self, settings=n1ql_settings, target_iterator=self.load_target_iterator)
 
     def report_kv_kpi(self):
+        percentiles = self.test_config.access_settings.latency_percentiles
         for i, _ in enumerate(self.cluster_spec.masters):
             for operation in ('get', 'set'):
-                for percentile in self.test_config.access_settings.latency_percentiles:
-                    self.reporter.post(
-                        *self.metrics.kv_latency(operation=operation, percentile=percentile,
-                                                 cluster_idx=i)
-                    )
+                metrics = self.metrics.kv_latency(operation=operation, percentiles=percentiles,
+                                                  cluster_idx=i)
+                for metric in metrics:
+                    self.reporter.post(*metric)
+
             if not self.test_config.stats_settings.report_for_all_clusters:
                 break
 
@@ -457,11 +457,10 @@ class EndToEndFTSLatencyTest(EndToEndLatencyTest, FTSLatencyLoadTest):
                 )
 
     def report_kv_kpi(self):
+        percentiles = self.test_config.access_settings.latency_percentiles
         for operation in ('get', 'set'):
-            for percentile in self.test_config.access_settings.latency_percentiles:
-                self.reporter.post(
-                    *self.metrics.kv_latency(operation=operation, percentile=percentile)
-                )
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                self.reporter.post(*metric)
 
     def enable_stats(self):
         if self.index_nodes:

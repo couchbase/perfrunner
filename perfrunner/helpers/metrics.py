@@ -4,7 +4,7 @@ import glob
 import os
 import re
 import statistics
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
 
 import numpy as np
 
@@ -540,45 +540,72 @@ class MetricHelper:
 
     def kv_latency(self,
                    operation: str,
-                   percentile: Number = 99.9,
+                   percentiles: Iterable[Number] = [99.9],
                    collector: str = 'spring_latency',
-                   cluster_idx: int = 0) -> Metric:
-        metric_id = '{}_{}_{:g}th'.format(self.test_config.name,
-                                          operation,
-                                          percentile)
-        metric_id = metric_id.replace('.', '')
+                   cluster_idx: int = 0) -> List[Metric]:
+        metrics = []
 
-        title_prefix = '{:g}th percentile {}'.format(percentile, operation.upper())
+        # The [''] represents the default case of not having any stat groups
+        stat_groups = self.test_config.collection.collection_stat_groups or ['']
 
-        if len(self.test.cbmonitor_clusters) > 1:
-            metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
-            title_prefix = '{} (cluster {})'.format(title_prefix, cluster_idx + 1)
+        for stat_group in stat_groups:
+            latencies = self._kv_latency(operation, percentiles, collector, stat_group, cluster_idx)
+            for percentile, latency in zip(percentiles, latencies):
+                metric_id = '{}_{}{}_{:g}th'.format(
+                    self.test_config.name,
+                    operation,
+                    '_' + stat_group if stat_group != '' else '',
+                    percentile
+                )
+                metric_id = metric_id.replace('.', '')
 
-        title = '{} {}'.format(title_prefix, self._title)
+                title_prefix = '{:g}th percentile {}{}'.format(
+                    percentile,
+                    operation.upper(),
+                    ' (' + stat_group + ')' if stat_group != '' else ''
+                )
 
-        metric_info = self._metric_info(metric_id, title, chirality=-1)
+                if len(self.test.cbmonitor_clusters) > 1:
+                    metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
+                    title_prefix = '{} (cluster {})'.format(title_prefix, cluster_idx + 1)
 
-        latency = self._kv_latency(operation, percentile, collector, cluster_idx)
+                title = '{} {}'.format(title_prefix, self._title)
 
-        return latency, self._snapshots, metric_info
+                metric_info = self._metric_info(metric_id, title, chirality=-1)
+
+                metrics.append((latency, self._snapshots, metric_info))
+
+        return metrics
 
     def _kv_latency(self,
                     operation: str,
-                    percentile: Number,
+                    percentiles: Iterable[Number],
                     collector: str,
-                    cluster_idx: int = 0) -> float:
+                    stat_group: str = '',
+                    cluster_idx: int = 0) -> list[float]:
         timings = []
         metric = 'latency_{}'.format(operation)
         for bucket in self._bucket_names:
+            bucket_group = '{}{}'.format(bucket, '_' + stat_group if stat_group != '' else '')
+
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
                                          collector=collector,
-                                         bucket=bucket)
-            timings += self.store.get_values(db, metric=metric)
+                                         bucket=bucket_group)
 
-        latency = np.percentile(timings, percentile)
-        if latency > 100:
-            return round(latency)
-        return round(latency, 2)
+            if self.store.exists(db, metric):
+                timings += self.store.get_values(db, metric=metric)
+
+        if not timings:
+            logger.warn('No latency data found for operation = {}, collector = {}, stat_group = {}'
+                        .format(operation, collector, stat_group))
+            return []
+
+        latencies = [
+            round(latency) if (latency := np.percentile(timings, p)) > 100 else round(latency, 2)
+            for p in percentiles
+        ]
+
+        return latencies
 
     def observe_latency(self, percentile: Number) -> Metric:
         metric_id = '{}_{:g}th'.format(self.test_config.name, percentile)

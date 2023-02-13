@@ -78,10 +78,10 @@ class CBStatsAll(Collector):
         "mem_used_secondary",
         "ep_magma_total_mem_used",
         "ep_magma_mem_used_diff",
-        "ep_data_blocks_uncompressed_size",
-        "ep_data_blocks_compressed_size",
-        "ep_data_blocks_compression_ratio",
-        "ep_data_blocks_space_reduction_estimate_pct"
+        "ep_magma_data_blocks_uncompressed_size",
+        "ep_magma_data_blocks_compressed_size",
+        "ep_magma_data_blocks_compression_ratio",
+        "ep_magma_data_blocks_space_reduction_estimate_pct"
     )
 
     def __init__(self, settings, test):

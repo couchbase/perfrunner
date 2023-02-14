@@ -59,21 +59,21 @@ Build = namedtuple('Build', ['filename', 'url'])
 
 class OperatorInstaller:
 
-    # ghcr.io/cb-vanilla/
-    CB_VANILLA_REGISTRY_BASE = "registry.gitlab.com/cb-vanilla/"
-
-    def __init__(self, cluster_spec, options):
+    def __init__(self, cluster_spec: ClusterSpec, options):
         self.options = options
         self.cluster_spec = cluster_spec
+        self.registry_base = "ghcr.io/cb-vanilla/"
+        if cluster_spec.cloud_provider == 'openshift':
+            self.registry_base = "ghcr.io/cb-rhcc/"
 
         self.operator_version = self.options.operator_version
         if "-" in self.operator_version:
             self.operator_release = self.operator_version.split("-")[0]
             self.operator_tag = '{}operator:{}' \
-                .format(self.CB_VANILLA_REGISTRY_BASE, self.operator_version)
+                .format(self.registry_base, self.operator_version)
             self.admission_controller_release = self.operator_version.split("-")[0]
             self.admission_controller_tag = '{}admission-controller:{}' \
-                .format(self.CB_VANILLA_REGISTRY_BASE, self.operator_version)
+                .format(self.registry_base, self.operator_version)
         else:
             self.operator_release = self.operator_version
             self.operator_tag = 'couchbase/operator:{}' \
@@ -86,7 +86,7 @@ class OperatorInstaller:
         if "-" in self.couchbase_version:
             self.couchbase_release = self.couchbase_version.split("-")[0]
             self.couchbase_tag = '{}server:{}' \
-                .format(self.CB_VANILLA_REGISTRY_BASE, self.couchbase_version)
+                .format(self.registry_base, self.couchbase_version)
         else:
             self.couchbase_release = self.couchbase_version
             self.couchbase_tag = 'couchbase/server:{}' \
@@ -97,21 +97,21 @@ class OperatorInstaller:
             if "-" in self.operator_backup_version:
                 self.operator_backup_release = self.operator_backup_version.split("-")[0]
                 self.operator_backup_tag = '{}operator-backup:{}' \
-                    .format(self.CB_VANILLA_REGISTRY_BASE, self.operator_backup_version)
+                    .format(self.registry_base, self.operator_backup_version)
             else:
                 self.operator_backup_release = self.operator_backup_version
                 self.operator_backup_tag = 'couchbase/operator-backup/{}' \
                     .format(self.operator_backup_version)
         else:
             self.operator_backup_tag = '{}operator-backup:latest' \
-                .format(self.CB_VANILLA_REGISTRY_BASE)
+                .format(self.registry_base)
 
         self.exporter_version = self.options.exporter_version or self.cluster_spec \
             .infrastructure_settings.get('exporter_version', '1.0.7')  # For now default to 1.0.7
         if "-" in self.exporter_version:
             self.exporter_release = self.exporter_version.split("-")[0]
             self.exporter_tag = '{}exporter:{}' \
-                .format(self.CB_VANILLA_REGISTRY_BASE, self.exporter_version)
+                .format(self.registry_base, self.exporter_version)
         else:
             self.exporter_release = self.exporter_version
             self.exporter_tag = 'couchbase/exporter:{}' \
@@ -358,14 +358,14 @@ class EKSInstaller(KubernetesInstaller):
                             "--set values.global.defaultNodeSelector.'NodeRoles'=utilities -y"
         istio_label_cmd = "label namespace default istio-injection=enabled --overwrite"
         self.operator_installer.remote.istioctl(istio_install_cmd)
-        self.operator_installer.remote.kubectl(istio_label_cmd)
+        self.operator_installer.remote.k8s_client(istio_label_cmd)
 
     def uninstall_istio(self):
         if not self.cluster_spec.istio_enabled('k8s_cluster_1'):
             return
         self.operator_installer.remote.istioctl("x uninstall --purge -y")
         self.operator_installer.remote.delete_namespace("istio-system")
-        self.operator_installer.remote.kubectl("label namespace default istio-injection-")
+        self.operator_installer.remote.k8s_client("label namespace default istio-injection-")
 
     def install_kubernetes_dashboard(self):
         pass
@@ -676,7 +676,7 @@ def main():
     if cluster_spec.cloud_infrastructure:
         if cluster_spec.kubernetes_infrastructure:
             infra_provider = cluster_spec.infrastructure_settings['provider']
-            if infra_provider == 'aws':
+            if infra_provider == 'aws' or infra_provider == 'openshift':
                 installer = EKSInstaller(cluster_spec, args)
             elif infra_provider == 'azure':
                 installer = AKSInstaller(cluster_spec, args)

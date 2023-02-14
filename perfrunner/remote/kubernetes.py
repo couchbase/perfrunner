@@ -11,11 +11,12 @@ import yaml
 import perfrunner.helpers.misc as misc
 from logger import logger
 from perfrunner.remote import Remote
+from perfrunner.settings import ClusterSpec
 
 
 class RemoteKubernetes(Remote):
 
-    def __init__(self, cluster_spec, os):
+    def __init__(self, cluster_spec: ClusterSpec, os):
         super().__init__(cluster_spec, os)
         self.kube_config_path = "cloud/infrastructure/generated/kube_configs/k8s_cluster_1"
         self.base_path = 'cloud/operator'
@@ -29,6 +30,12 @@ class RemoteKubernetes(Remote):
         self.autoscaler_file = 'autoscaler.yaml'
         self.operator_version = None
 
+        if cluster_spec.cloud_provider == 'openshift':
+            self.k8s_client = self._oc
+            self._oc_login()
+        else:
+            self.k8s_client = self._kubectl
+
     @property
     def _git_access_token(self):
         return os.environ.get('GITHUB_ACCESS_TOKEN', None)
@@ -37,16 +44,8 @@ class RemoteKubernetes(Remote):
     def _git_username(self):
         return os.environ.get('GITHUB_USERNAME', None)
 
-    def kubectl(self, params, kube_config=None, split_lines=True, max_attempts=3):
-        if not kube_config:
-            kube_config = self.kube_config_path
-        params = params.split()
-        if params[0] == 'exec':
-            params = params[0:5] + [" ".join(params[5::])]
-        params = ['kubectl', '--kubeconfig', kube_config] + params
-
+    def run_subprocess(self, params, split_lines=True, max_attempts=3):
         attempt = 1
-
         while attempt <= max_attempts:
             if attempt > 1:
                 time.sleep(1)
@@ -66,71 +65,79 @@ class RemoteKubernetes(Remote):
                 attempt += 1
         raise Exception("max attempts exceeded")
 
+    # kubectl client
+    def _kubectl(self, params, split_lines=True, max_attempts=3):
+        """Kubectl client helper. Do not use directly. Use {k8s_client} instead."""
+        params = params.split()
+        if params[0] == 'exec':
+            params = params[0:5] + [" ".join(params[5::])]
+        params = ['kubectl', '--kubeconfig', self.kube_config_path] + params
+        return self.run_subprocess(params, split_lines=split_lines, max_attempts=max_attempts)
+
+    # openshift client (oc)
+    def _oc(self, params, split_lines=True, max_attempts=3):
+        """Openshift client helper. Do not use directly. Use {k8s_client} instead."""
+        params = ['oc'] + params.split()
+        return self.run_subprocess(params, split_lines=split_lines, max_attempts=max_attempts)
+
     def kubectl_exec(self, pod, params):
-        return self.kubectl("exec {} -- bash -c {}".format(pod, params),
-                            kube_config=self.kube_config_path)
+        return self.k8s_client("exec {} -- bash -c {}".format(pod, params))
+
+    def _oc_login(self):
+        return self.k8s_client('login -u {} -p {} {}'
+                               .format(self.cluster_spec.ssh_credentials[0],
+                                       self.cluster_spec.ssh_credentials[1],
+                                       self.cluster_spec.infrastructure_settings.get('domain')))
 
     def create_namespace(self, name):
-        self.kubectl(
-            "create namespace {}".format(name),
-            kube_config=self.kube_config_path
-        )
+        self.k8s_client("create namespace {}".format(name))
 
     def delete_namespace(self, name):
-        self.kubectl(
-            "delete namespace {}".format(name),
-            kube_config=self.kube_config_path
-        )
+        self.k8s_client("delete namespace {}".format(name))
 
     def get_pods(self, namespace="default"):
-        raw_pods = self.kubectl(
+        raw_pods = self.k8s_client(
             "get pods -o json -n {}".format(namespace),
-            kube_config=self.kube_config_path,
             split_lines=False
         )
         pods = json.loads(raw_pods.decode('utf8'))
         return pods["items"]
 
     def get_services(self, namespace="default"):
-        raw_svcs = self.kubectl(
+        raw_svcs = self.k8s_client(
             "get svc -o json -n {}".format(namespace),
-            kube_config=self.kube_config_path,
             split_lines=False
         )
         svcs = json.loads(raw_svcs.decode('utf8'))
         return svcs["items"]
 
     def get_nodes(self):
-        raw_nodes = self.kubectl(
+        raw_nodes = self.k8s_client(
             "get nodes -o json",
-            kube_config=self.kube_config_path,
             split_lines=False
         )
         nodes = json.loads(raw_nodes.decode('utf8'))
         return nodes["items"]
 
     def get_storage_classes(self):
-        raw_sc = self.kubectl(
+        raw_sc = self.k8s_client(
             "get sc -o json",
-            kube_config=self.kube_config_path,
             split_lines=False
         )
         sc = json.loads(raw_sc.decode('utf8'))
         return sc
 
     def get_jobs(self):
-        raw_jobs = self.kubectl(
+        raw_jobs = self.k8s_client(
             "get jobs -o json",
-            kube_config=self.kube_config_path,
             split_lines=False
         )
         jobs = json.loads(raw_jobs.decode('utf8'))
         return jobs
 
     def get_cronjobs(self):
-        raw_cronjobs = self.kubectl(
+        raw_cronjobs = self.k8s_client(
             "get cronjobs -o json",
-            kube_config=self.kube_config_path,
             split_lines=False
         )
         cronjobs = json.loads(raw_cronjobs.decode('utf8'))
@@ -138,8 +145,7 @@ class RemoteKubernetes(Remote):
 
     def delete_storage_class(self, storage_class, ignore_errors=True):
         try:
-            self.kubectl("delete sc {}".format(storage_class),
-                         kube_config=self.kube_config_path)
+            self.k8s_client("delete sc {}".format(storage_class))
         except Exception as ex:
             if not ignore_errors:
                 raise ex
@@ -169,12 +175,12 @@ class RemoteKubernetes(Remote):
                   .format(secret_name, self._git_username, self._git_access_token)
         else:
             raise Exception('unknown secret type')
-        self.kubectl(cmd, kube_config=self.kube_config_path)
+        self.k8s_client(cmd)
 
     def create_docker_secret(self, docker_config_path):
         self.create_secret(
             "regcred",
-            "docker",
+            "docker-registry",
             docker_config_path)
 
     def create_operator_tls_secret(self, certificate_authority_path):
@@ -214,8 +220,7 @@ class RemoteKubernetes(Remote):
 
     def delete_secret(self, secret_name, ignore_errors=True):
         try:
-            self.kubectl("delete secret {}".format(secret_name),
-                         kube_config=self.kube_config_path)
+            self.k8s_client("delete secret {}".format(secret_name))
         except Exception as ex:
             if not ignore_errors:
                 raise ex
@@ -225,13 +230,11 @@ class RemoteKubernetes(Remote):
             self.delete_secret(secret)
 
     def create_from_file(self, file_path):
-        self.kubectl("{} -f {}".format('create', file_path),
-                     kube_config=self.kube_config_path)
+        self.k8s_client("{} -f {}".format('create', file_path))
 
     def delete_from_file(self, file_path, ignore_errors=True):
         try:
-            self.kubectl("{} -f {}".format('delete', file_path),
-                         kube_config=self.kube_config_path)
+            self.k8s_client("{} -f {}".format('delete', file_path))
         except Exception as ex:
             if not ignore_errors:
                 raise ex
@@ -242,8 +245,7 @@ class RemoteKubernetes(Remote):
 
     def delete_cluster(self, ignore_errors=True):
         try:
-            self.kubectl("delete cbc cb-example-perf",
-                         kube_config=self.kube_config_path)
+            self.k8s_client("delete cbc cb-example-perf")
         except Exception as ex:
             if not ignore_errors:
                 raise ex
@@ -253,37 +255,29 @@ class RemoteKubernetes(Remote):
         self.create_from_file(cluster_path)
 
     def describe_cluster(self):
-        ret = self.kubectl('describe cbc',
-                           kube_config=self.kube_config_path,
-                           split_lines=False)
+        ret = self.k8s_client('describe cbc', split_lines=False)
         return yaml.safe_load(ret)
 
     def get_cluster(self):
-        raw_cluster = self.kubectl("get cbc cb-example-perf -o json",
-                                   kube_config=self.kube_config_path,
-                                   split_lines=False)
+        raw_cluster = self.k8s_client("get cbc cb-example-perf -o json", split_lines=False)
         cluster = json.loads(raw_cluster.decode('utf8'))
         return cluster
 
     def get_backups(self):
-        raw_backups = self.kubectl("get couchbasebackups -o json",
-                                   kube_config=self.kube_config_path,
-                                   split_lines=False)
+        raw_backups = self.k8s_client("get couchbasebackups -o json", split_lines=False)
         backups = json.loads(raw_backups.decode('utf8'))
         return backups
 
     def get_backup(self, backup_name):
-        raw_backup = self.kubectl(
+        raw_backup = self.k8s_client(
             "get couchbasebackup {} -o json".format(backup_name),
-            kube_config=self.kube_config_path,
             split_lines=False)
         backup = json.loads(raw_backup.decode('utf8'))
         return backup
 
     def get_restore(self, restore_name):
-        raw_restore = self.kubectl(
+        raw_restore = self.k8s_client(
             "get couchbasebackuprestore {} -o json".format(restore_name),
-            kube_config=self.kube_config_path,
             split_lines=False,
             max_attempts=1
         )
@@ -291,9 +285,7 @@ class RemoteKubernetes(Remote):
         return backup
 
     def get_bucket(self):
-        raw_cluster = self.kubectl("get cbc cb-example-perf -o json",
-                                   kube_config=self.kube_config_path,
-                                   split_lines=False)
+        raw_cluster = self.k8s_client("get cbc cb-example-perf -o json", split_lines=False)
         cluster = json.loads(raw_cluster.decode('utf8'))
         return cluster
 
@@ -350,9 +342,7 @@ class RemoteKubernetes(Remote):
             logger.info("Updating existing cluster config")
             cluster['metadata'] = self.sanitize_meta(cluster['metadata'])
             self.dump_config_to_yaml_file(cluster, cluster_path)
-            self.kubectl(
-                'replace -f {}'.format(cluster_path),
-                kube_config=self.kube_config_path)
+            self.k8s_client('replace -f {}'.format(cluster_path))
             self.wait_for_cluster_ready(timeout=timeout)
 
     def update_bucket_config(self, bucket, timeout=1200):
@@ -360,8 +350,7 @@ class RemoteKubernetes(Remote):
         bucket['metadata'] = self.sanitize_meta(bucket['metadata'])
         bucket_path = "cloud/operator/2/1/{}.yaml".format(bucket['metadata']['name'])
         self.dump_config_to_yaml_file(bucket, bucket_path)
-        self.kubectl('replace -f {}'.format(cluster_path),
-                     kube_config=self.kube_config_path)
+        self.k8s_client('replace -f {}'.format(cluster_path))
         self.wait_for_cluster_ready(timeout=timeout)
 
     def create_bucket(self, bucket_name, mem_quota, bucket_config, timeout=30):
@@ -385,27 +374,25 @@ class RemoteKubernetes(Remote):
         }
         bucket['metadata'] = self.sanitize_meta(bucket['metadata'])
         self.dump_config_to_yaml_file(bucket, bucket_path)
-        self.kubectl('create -f {}'.format(bucket_path),
-                     kube_config=self.kube_config_path)
+        self.k8s_client('create -f {}'.format(bucket_path))
         self.wait_for_cluster_ready(timeout=timeout)
 
     def delete_all_buckets(self, timeout=1200):
-        self.kubectl('delete couchbasebuckets --all',
-                     kube_config=self.kube_config_path)
+        self.k8s_client('delete couchbasebuckets --all')
         self.wait_for_cluster_ready(timeout=timeout)
 
     def delete_all_pvc(self):
-        self.kubectl('delete pvc --all', kube_config=self.kube_config_path)
+        self.k8s_client('delete pvc --all')
 
     def delete_all_backups(self, ignore_errors=True):
         try:
-            self.kubectl('delete couchbasebackups --all', kube_config=self.kube_config_path)
+            self.k8s_client('delete couchbasebackups --all')
         except Exception as ex:
             if not ignore_errors:
                 raise ex
 
     def delete_all_pods(self):
-        self.kubectl('delete pods --all', kube_config=self.kube_config_path)
+        self.k8s_client('delete pods --all')
 
     def wait_for(self, condition_func, condition_params=None, timeout=1200):
         start_time = time.time()
@@ -519,30 +506,25 @@ class RemoteKubernetes(Remote):
         return True
 
     def get_broker_urls(self):
-        ret = self.kubectl(
-            "get secret rabbitmq-rabbitmq-default-user -o jsonpath='{.data.username}'",
-            kube_config=self.kube_config_path)
+        ret = self.k8s_client(
+            "get secret rabbitmq-rabbitmq-default-user -o jsonpath='{.data.username}'")
         b64_username = ret[0].decode("utf-8")
         username = base64.b64decode(b64_username).decode("utf-8")
-        ret = self.kubectl(
-            "get secret rabbitmq-rabbitmq-default-user -o jsonpath='{.data.password}'",
-            kube_config=self.kube_config_path)
+        ret = self.k8s_client(
+            "get secret rabbitmq-rabbitmq-default-user -o jsonpath='{.data.password}'")
         b64_password = ret[0].decode("utf-8")
         password = base64.b64decode(b64_password).decode("utf-8")
-        ret = self.kubectl("get pods -o wide",
-                           kube_config=self.kube_config_path)
+        ret = self.k8s_client("get pods -o wide")
         for line in ret:
             line = line.decode("utf-8")
             if "rabbitmq-rabbitmq-server" in line:
                 node = line.split()[6]
-        ret = self.kubectl("get nodes -o wide",
-                           kube_config=self.kube_config_path)
+        ret = self.k8s_client("get nodes -o wide")
         for line in ret:
             line = line.decode("utf-8")
             if node in line:
                 ip = line.split()[6]
-        ret = self.kubectl("get svc -o wide",
-                           kube_config=self.kube_config_path)
+        ret = self.k8s_client("get svc -o wide")
         for line in ret:
             line = line.decode("utf-8")
             if "rabbitmq-rabbitmq-client" in line:
@@ -571,7 +553,7 @@ class RemoteKubernetes(Remote):
                                 username_password.split(":")[1]))
 
     def init_ycsb(self, repo: str, branch: str, worker_home: str, sdk_version: None):
-        ret = self.kubectl("get pods", kube_config=self.kube_config_path)
+        ret = self.k8s_client("get pods")
         for line in ret:
             line = line.decode("utf-8")
             if "worker" in line:
@@ -592,7 +574,7 @@ class RemoteKubernetes(Remote):
                     self.kubectl_exec(worker_name, 'cd YCSB; {}'.format(cmd))
 
     def build_ycsb(self, worker_home: str, ycsb_client: str):
-        ret = self.kubectl("get pods", kube_config=self.kube_config_path)
+        ret = self.k8s_client("get pods")
         for line in ret:
             line = line.decode("utf-8")
             if "worker" in line:
@@ -617,7 +599,7 @@ class RemoteKubernetes(Remote):
         for worker in self.get_worker_pods():
             cmd = "cp default/{0}:worker_{0}.log celery/worker_{0}.log" \
                 .format(worker)
-            self.kubectl(cmd, kube_config=self.kube_config_path)
+            self.k8s_client(cmd)
 
     def get_export_files(self, worker_home: str):
         logger.info('Collecting YCSB export files')
@@ -628,7 +610,7 @@ class RemoteKubernetes(Remote):
                     if 'ycsb' in member and '.log' in member:
                         cmd = "cp default/{0}:YCSB/{1} YCSB/{1}" \
                             .format(worker, member)
-                        self.kubectl(cmd, kube_config=self.kube_config_path)
+                        self.k8s_client(cmd)
 
     def yaml_to_json(self, file_path):
         with open(file_path, 'r') as file:

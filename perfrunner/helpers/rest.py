@@ -1967,20 +1967,20 @@ class CapellaRestBase(DefaultRestHelper):
         logger.interrupt(
             'Waiting for logs to upload has timed out after {} mins'.format(timeout_mins))
 
-    def get_log_paths_urls(self, cluster_id: str):
-        log_paths_urls = []
+    def get_node_log_info(self, cluster_id: str) -> dict[list]:
+        log_nodes = {}
         log_info = self.get_log_information(cluster_id)
         for node in log_info['perNode']:
-            log_paths_urls.append((log_info['perNode'][node]['path'],
-                                   log_info['perNode'][node]['url']))
-        return log_paths_urls
+            log_nodes[node] = (log_info['perNode'][node]['path'],
+                               log_info['perNode'][node]['url'])
+        return log_nodes
 
-    def get_all_cluster_log_paths_urls(self):
-        log_paths_urls = []
+    def get_all_cluster_node_logs(self):
+        log_nodes = {}
         for cluster_id in self.cluster_ids:
-            logger.info('Getting log urls from the cluster id: {}'.format(cluster_id))
-            log_paths_urls = log_paths_urls + self.get_log_paths_urls(cluster_id)
-        return log_paths_urls
+            logger.info('Getting node information from the cluster id: {}'.format(cluster_id))
+            log_nodes = log_nodes | self.get_node_log_info(cluster_id)
+        return log_nodes
 
 
 class ProvisionedCapellaRestHelper(CapellaRestBase):

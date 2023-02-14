@@ -76,13 +76,19 @@ def validate_logs(file_name: str):
     return panic_files, crash_files, storage_corrupted
 
 
-def create_s3_bucket_file_key(log_path: str, log_url: str):
+def create_s3_bucket_file_key(log_path: str, log_url: str) -> str:
     date = re.search(r"\d{4}-\d{2}-\d{2}", log_url)
     url_split = log_url.split('/')
     org = re.sub(r'\+', '-', url_split[3].lower())
     log_name = re.split('/', log_path)[-1]
     file_key = '{}/{}/{}'.format(org, date.group(0), log_name.lower())
     return file_key
+
+
+def create_bucket_hostname(node_name: str) -> str:
+    node_name = node_name.split('@')[1].split('.')
+    hostname = '{}.{}'.format(node_name[0], node_name[1])
+    return hostname
 
 
 def check_if_log_file_exists(bucket_name: str, file_key: str):
@@ -104,17 +110,17 @@ def get_capella_cluster_logs(cluster_spec: ClusterSpec, s3_bucket_name: str):
 
     rest.trigger_all_cluster_log_collection()
     rest.wait_until_all_logs_uploaded()
-    log_paths_urls = rest.get_all_cluster_log_paths_urls()
+    node_logs = rest.get_all_cluster_node_logs()
 
-    for log_path, log_url in log_paths_urls:
-        file_key = create_s3_bucket_file_key(log_path, log_url)
+    for node_name, log_info in node_logs.items():
+        file_key = create_s3_bucket_file_key(log_info[0], log_info[1])
         path_name = 's3://{}/{}'.format(s3_bucket_name, file_key)
         check_if_log_file_exists(s3_bucket_name, file_key)
-        for hostname in cluster_spec.servers:
-            if re.search(hostname, log_url) is not None:
-                file_name = '{}.zip'.format(hostname)
 
-        local.download_all_s3_logs(path_name, file_name)
+        hostname = create_bucket_hostname(node_name)
+        if re.search(hostname, log_info[1]) is not None:
+            file_name = '{}.zip'.format(hostname)
+            local.download_all_s3_logs(path_name, file_name)
 
 
 def main():

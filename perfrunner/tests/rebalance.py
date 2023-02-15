@@ -346,6 +346,7 @@ class FailoverTest(RebalanceTest):
     def _failover(self):
         pass
 
+    @with_stats
     def failover(self):
         self.pre_rebalance()
         self._failover()

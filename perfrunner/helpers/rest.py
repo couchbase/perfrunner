@@ -2049,12 +2049,17 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
                       flush: bool = True,
                       durability: str = "none",
                       backend_storage: str = "couchstore",
+                      eviction_policy: str = "nruEviction",
                       ttl_value: int = 0,
                       ttl_unit: str = None):
         cluster_id = self.hostname_to_cluster_id(host)
 
         logger.info('Adding new bucket on cluster {}: {}'.format(cluster_id, name))
 
+        bucket_type = 'couchbase'
+        if self.test_config.bucket.bucket_type == 'ephemeral':
+            bucket_type = 'ephemeral'
+            backend_storage = None
         data = {
             'name': name,
             'bucketConflictResolution': conflict_resolution_type,
@@ -2066,7 +2071,9 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
             'timeToLive': {
                 'unit': ttl_unit,
                 'value': ttl_value
-            }
+            },
+            'type': bucket_type,
+            'evictionPolicy': eviction_policy
         }
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))

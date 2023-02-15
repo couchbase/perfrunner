@@ -335,7 +335,8 @@ class ClusterManager:
                         'replica_number': self.test_config.bucket.replica_number,
                         'conflict_resolution_type':
                             self.test_config.bucket.conflict_resolution_type,
-                        'backend_storage': self.test_config.bucket.backend_storage
+                        'backend_storage': self.test_config.bucket.backend_storage,
+                        'eviction_policy': self.test_config.bucket.eviction_policy,
                     }
                     if self.capella_infra:
                         bucket_params.update({
@@ -348,7 +349,6 @@ class ClusterManager:
                         bucket_params.update({
                             'password': self.test_config.bucket.password,
                             'replica_index': self.test_config.bucket.replica_index,
-                            'eviction_policy': self.test_config.bucket.eviction_policy,
                             'bucket_type': self.test_config.bucket.bucket_type,
                             'compression_mode': self.test_config.bucket.compression_mode,
                             'magma_seq_tree_data_block_size':

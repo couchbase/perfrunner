@@ -626,7 +626,6 @@ class CapellaTerraform(Terraform):
         return cluster_list
 
     def deploy_cluster(self):
-
         specs = self.construct_capella_server_groups(self.infra_spec, self.node_list['clusters'])
         names = ['perf-cluster-{}'.format(self.uuid) for _ in specs]
         if len(names) > 1:
@@ -645,21 +644,21 @@ class CapellaTerraform(Terraform):
                 }[self.infra_spec.capella_backend.lower()],
                 "region": self.region,
                 "singleAZ": True,
-                "server": None,
+                "server": self.options.capella_cb_version,
                 "specs": spec,
                 "package": "enterprise"
             }
 
             logger.info(pretty_dict(config))
 
-            if self.options.capella_cb_version and self.options.capella_ami:
+            if (server := self.options.capella_cb_version) and (ami := self.options.capella_ami):
                 config['overRide'] = {
                     'token': os.getenv('CBC_OVERRIDE_TOKEN'),
-                    'server': self.options.capella_cb_version,
-                    'image': self.options.capella_ami
+                    'server': server,
+                    'image': ami
                 }
                 logger.info('Deploying cluster with custom AMI: {}'
-                            .format(self.options.capella_ami))
+                            .format(ami))
 
             resp = self.api_client.create_cluster_customAMI(self.tenant_id, config)
             raise_for_status(resp)

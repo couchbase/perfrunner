@@ -1,9 +1,10 @@
 from cbagent.collectors.collector import Collector
+from cbagent.settings import CbAgentSettings
 
 
 class MetricsRestApiBase(Collector):
 
-    def __init__(self, settings):
+    def __init__(self, settings: CbAgentSettings):
         super().__init__(settings)
         self.server_processes = settings.server_processes
         self.stats_uri = '/pools/default/stats/range/'
@@ -50,7 +51,7 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
         "sysproc_mem_resident"
     )
 
-    def __init__(self, settings):
+    def __init__(self, settings: CbAgentSettings):
         super().__init__(settings)
         self.stats_data = [
             {
@@ -96,10 +97,8 @@ class MetricsRestApiMetering(MetricsRestApiBase):
         "meter_cu_total"
     )
 
-    def __init__(self, settings):
+    def __init__(self, settings: CbAgentSettings):
         super().__init__(settings)
-        self.server_processes = settings.server_processes
-        self.stats_uri = '/pools/default/stats/range/'
         self.stats_data = [
             {
                 "metric": [
@@ -148,12 +147,12 @@ class MetricsRestApiDeduplication(MetricsRestApiBase):
 
     METRICS = {
         "kv_ep_total_deduplicated": "kv_ep_total_deduplicated_rate",
+        "kv_ep_total_deduplicated_flusher": "kv_ep_total_deduplicated_flusher_rate",  # >=7.2.0-5172
         "kv_ep_total_enqueued": "kv_ep_total_enqueued_rate"
     }
 
-    def __init__(self, settings):
+    def __init__(self, settings: CbAgentSettings):
         super().__init__(settings)
-        self.stats_uri = '/pools/default/stats/range/'
         self.stats_data = [
             {
                 "metric": [

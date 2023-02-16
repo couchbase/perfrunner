@@ -1,0 +1,61 @@
+[test_case]
+test = perfdaily.kv.CombinedLatencyAndRebalanceCDCTest
+
+[showfast]
+title = Latency + Rebalance 3 -> 4, 100M x 1KB items, 100%% RR, 10K ops/sec, 50/50 R/W, s=2 c=150, 50 CDC collections, History=5mins, 0 dedup/sec
+component = KV
+threshold = 15
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 3
+num_buckets = 1
+ipv6 = 1
+
+[collection]
+config = collections/1bucket_2scopes_150collections_history.json
+
+[bucket]
+failover_min = 60
+failover_max = 120
+backend_storage = magma
+eviction_policy = fullEviction
+history_seconds = 300
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+
+[extra_access]
+run_extra_access = true
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+items = 100000000
+ops = 100000000
+workers = 100
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 10000
+items = 100000000
+workers = 25
+time = 600
+latency_percentiles = 50,99
+
+[rebalance]
+nodes_after = 4
+start_after = 180
+stop_after = 180
+
+[clients]
+python_client = 3.2.7

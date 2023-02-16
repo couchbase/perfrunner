@@ -21,7 +21,9 @@
         {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_reads.test"},
         {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_writes.test"},
         {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_mixed_ephemeral.test"},
-        {"cluster": "triton_kv.spec", "test_config": "kv/reb_in_100M.test"}
+        {"cluster": "triton_kv.spec", "test_config": "kv/reb_in_100M.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_reads_s2_c150_cdc_short_history.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_latency_reb_in_100M_s2_c150_cdc_short_history.test"}
     ],
     "N1QL": [
         {"cluster": "triton.spec", "test_config": "n1ql/n1ql_thr_Q1_5M.test"},

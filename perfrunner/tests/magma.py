@@ -566,6 +566,35 @@ class StabilityBootstrap(KVTest):
         self.COLLECTORS["latency"] = True
 
 
+class CDCTest(StabilityBootstrap):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.COLLECTORS['kv_dedup'] = True
+
+    @with_console_stats
+    def load(self):
+        self.custom_load()
+        self.wait_for_persistence()
+
+    def warmup_access_phase(self):
+        # This warmup phase is specifically to fill up the disk history
+        warmup_access_settings = self.test_config.access_settings
+        if (time := self.test_config.bucket.history_seconds) > 0:
+            warmup_access_settings.time = time
+            warmup_access_settings.creates = 0
+            logger.info('Starting warmup access phase')
+            if self.test_config.load_settings.use_backup:
+                PerfTest.access(self, settings=warmup_access_settings,
+                                target_iterator=self.iterator)
+            else:
+                PerfTest.access(self, settings=warmup_access_settings)
+            self.wait_for_persistence()
+            self.reset_kv_stats()
+        else:
+            logger.info('Skipping warmup access phase as history retention time is not set')
+
+
 class ThroughputDGMMagmaTest(StabilityBootstrap):
 
     def _report_kpi(self):
@@ -832,6 +861,40 @@ class PillowFightDGMTest(StabilityBootstrap):
             access_settings.query_workers = 0
             self.access_bg(settings=access_settings)
 
+        self.access()
+
+        self.report_kpi()
+
+
+class PillowFightCDCTest(CDCTest, PillowFightDGMTest):
+
+    @with_stats
+    def warmup_access_phase(self):
+        # This warmup phase is specifically to fill up the disk history
+        warmup_access_settings = self.test_config.access_settings
+        if (time := self.test_config.bucket.history_seconds) > 0:
+            warmup_access_settings.time = time
+            warmup_access_settings.creates = 0
+            logger.info('Starting warmup access phase')
+            PerfTest.access(self, settings=warmup_access_settings, task=pillowfight_task)
+            self.wait_for_persistence()
+            self.reset_kv_stats()
+        else:
+            logger.info('Skipping warmup access phase as history retention time not set')
+
+    @with_stats
+    def load(self):
+        PerfTest.load(self, task=pillowfight_data_load_task)
+
+    def run(self):
+        self.load()
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
+            self.wait_for_persistence()
+            self.wait_for_fragmentation()
+
+        self.reset_kv_stats()
+        self.warmup_access_phase()
         self.access()
 
         self.report_kpi()
@@ -1188,6 +1251,91 @@ class RebalanceKVDGMTest(RebalanceKVTest, StabilityBootstrap):
             StabilityBootstrap.hot_load(self)
             StabilityBootstrap.reset_kv_stats(self)
             self.access_bg()
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
+class RebalanceCDCTest(CDCTest, RebalanceKVDGMTest):
+
+    def __init__(self, *args):
+        CDCTest.__init__(self, *args)
+        RebalanceKVDGMTest.__init__(self, *args)
+        self.access_bg_settings = self.test_config.access_settings
+        self.access_bg_settings.time = 24 * 60 * 60
+
+    def access_background_key_prefix(self, target_iterator):
+        PerfTest.access_bg(self, settings=self.access_bg_settings, target_iterator=target_iterator)
+
+    def access_bg(self):
+        PerfTest.access_bg(self, settings=self.access_bg_settings)
+
+    def run(self):
+        self.iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                       self.test_config.load_settings.key_prefix)
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+            self.warmup_access_phase()
+            self.access_background_key_prefix(target_iterator=self.iterator)
+        else:
+            self.load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
+            self.hot_load()
+            self.reset_kv_stats()
+            self.warmup_access_phase()
+            self.access_bg()
+
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
+class CombinedLatencyAndRebalanceCDCTest(RebalanceCDCTest):
+
+    def report_latency_kpi(self):
+        if self.test_config.stats_settings.enabled:
+            percentiles = self.test_config.access_settings.latency_percentiles
+            for operation in ('get', 'set'):
+                for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                    self.reporter.post(*metric)
+
+    def run(self):
+        self.iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                       self.test_config.load_settings.key_prefix)
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+            self.warmup_access_phase()
+
+            # Latency test access phase
+            self.access_key_prefix(target_iterator=self.iterator)
+            self.report_latency_kpi()
+
+            self.access_background_key_prefix(target_iterator=self.iterator)
+        else:
+            self.load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
+            self.hot_load()
+            self.reset_kv_stats()
+            self.warmup_access_phase()
+
+            # Latency test access phase
+            self.access()
+            self.report_latency_kpi()
+
+            self.access_bg()
+
         self.rebalance()
 
         if self.is_balanced():

@@ -2019,3 +2019,22 @@ class DailyMetricHelper(MetricHelper):
 
     def magma_benchmark_metrics(self, throughput: float, precision: int, benchmark: str) -> Metric:
         return benchmark, round(throughput, precision), self._snapshots
+
+    def kv_latency(self,
+                   operation: str,
+                   percentiles: Iterable[Number] = [99.9],
+                   collector: str = 'spring_latency') -> list[DailyMetric]:
+        metrics = []
+        stat_groups = self.test_config.collection.collection_stat_groups or ['']
+        for stat_group in stat_groups:
+            latencies = self._kv_latency(operation, percentiles, collector, stat_group)
+            for percentile, latency in zip(percentiles, latencies):
+                metric_title = '{}th percentile {}{}'.format(
+                    percentile,
+                    operation.upper(),
+                    ' (' + stat_group + ')' if stat_group != '' else ''
+                )
+
+                metrics.append((metric_title, latency, self._snapshots))
+
+        return metrics

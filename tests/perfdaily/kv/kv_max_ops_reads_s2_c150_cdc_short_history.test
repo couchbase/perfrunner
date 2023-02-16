@@ -1,0 +1,50 @@
+[test_case]
+test = perfdaily.kv.PillowFightCDCTest
+
+[showfast]
+title = Pillowfight, 80/20 R/W, 256B binary items, s=2 c=150, 50 CDC collections, History=5mins
+component = KV
+
+[stats]
+interval = 1
+client_processes = cbc-pillowfight
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+ipv6 = 1
+
+[collection]
+config = collections/1bucket_2scopes_150collections_history.json
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+history_seconds = 300
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+size = 256
+items = 20000000
+workers = 50
+
+[extra_access]
+run_extra_access = true
+items = 20000000
+workers = 50
+batch_size = 1000
+iterations = 20000
+updates = 100
+
+[access]
+items = 20000000
+iterations = 20000
+workers = 50
+updates = 20
+
+[clients]
+libcouchbase = 3.0.7

@@ -29,7 +29,7 @@ class CBAsyncGen3:
         if kwargs["ssl_mode"] == 'n2n' or kwargs["ssl_mode"] == 'capella':
             connection_string = connection_string.replace('couchbase',
                                                           'couchbases')
-            connection_string += '?certpath=root.pem'
+            connection_string += '?certpath=root.pem' + "&sasl_mech_force=PLAIN"
         timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
         options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
         self.cluster = TxCluster(connection_string=connection_string, options=options)
@@ -120,6 +120,7 @@ class CBGen3(CBAsyncGen3):
                 connection_string += '&ssl=no_verify'
             else:
                 connection_string += '&certpath=root.pem'
+            connection_string += '&sasl_mech_force=PLAIN'
 
         connection_string = connection_string.format(host=kwargs['host'],
                                                      params=connstr_params)

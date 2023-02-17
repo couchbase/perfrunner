@@ -37,6 +37,7 @@ from spring.docgen import (
     GroupedDocumentById,
     GSIMultiIndexDocument,
     HashJoinDocument,
+    HighCompressibleDocument,
     HotKey,
     HundredIndexDocument,
     ImportExportDocument,
@@ -363,6 +364,8 @@ class Worker:
             self.docs = UnifiedDocument(self.ws.size,
                                         self.ws.num_replies,
                                         self.ws.item_size)
+        elif self.ws.doc_gen == 'high_compressible':
+            self.docs = HighCompressibleDocument(self.ws.size)
 
     def init_db(self):
         workload_client = CBGen3

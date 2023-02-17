@@ -2313,3 +2313,65 @@ class UnifiedDocument(Document):
         current_size = len(doc_b)
         doc["comment"] = self.build_string(alphabet, self.avg_size - current_size)
         return doc
+
+
+class HighCompressibleDocument(Document):
+
+    @staticmethod
+    def build_rand_string(prefix: str, start: int, end: int) -> str:
+        return prefix + str(random.randint(start, end))
+
+    @staticmethod
+    def build_rand_int(start: int, end: int) -> int:
+        return random.randint(start, end)
+
+    def next(self, key: Key) -> dict:
+
+        return {
+            "first_doc_field": {
+                "second_doc_field": 1234,
+                "third_doc_field": self.build_rand_int(0, 9),
+                "fourth_doc_field": self.build_rand_int(0, 9),
+                "fifth_doc_field": 4321,
+                "sixth_doc_field": "couchbase-server",
+                "seventh_doc_field": "perf.couchbase.com",
+                "eighth_doc_field": self.build_rand_int(1000000000, 9999999999),
+                "ninth_doc_field": "couchbase-client",
+                "tenth_doc_field": "couchbase-component",
+                "eleventh_doc_field": self.build_rand_int(1000000000, 9999999999),
+                "twelfth_doc_field": "query-context",
+                "thirteenth_doc_field": {
+                    "fourteenth_doc_field": {
+                        "fifteenth_doc_field": "987654321",
+                        "sixteenth_doc_field": "CAPELLA-SERVERLESS",
+                        "seventeenth_doc_field": {
+                            "eighteenth_doc_field": {
+                                "nineteenth_doc_field": self.build_rand_int(0, 9)
+                            },
+                            "twentieth_doc_field": 9999999999,
+                            "twenty_first_doc_field": 9999999999,
+                            "twenty_second_doc_field": self.build_rand_int(0, 9)
+                        }
+                    },
+                    "twenty_third_doc_field": {
+                        "twenty_fourth_doc_field": "123456789"
+                    }
+                },
+                "twenty_fifth_doc_field": "Bucket",
+                "twenty_sixth_doc_field":
+                    self.build_rand_string("performance-benchmark-test-case", 10000, 99999)
+            },
+            "twenty_seventh_doc_field": {
+                "twenty_eighth_doc_field": [
+                    self.build_rand_string("collection-", 100000, 999999),
+                    self.build_rand_string("collection-", 100000, 999999),
+                    self.build_rand_string("collection-", 100000, 999999),
+                    self.build_rand_string("collection-", 100000, 999999),
+                    self.build_rand_string("collection-", 100000, 999999)
+                ],
+                "twenty_ninth_doc_field": {
+                    "thirtieth_doc_field": "202302",
+                    "thirty_first_doc_field": "2023-02-16"
+                }
+            }
+        }

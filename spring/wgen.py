@@ -36,6 +36,7 @@ from spring.docgen import (
     GroupedDocumentById,
     GSIMultiIndexDocument,
     HashJoinDocument,
+    HighCompressibleDocument,
     HotKey,
     HundredIndexDocument,
     ImportExportDocument,
@@ -308,6 +309,8 @@ class Worker:
             self.docs = FTSDocument(self.ws.size)
         elif self.ws.doc_gen == 'fts_rebal_doc':
             self.docs = FTSRebalanceDocument(self.ws.size)
+        elif self.ws.doc_gen == 'high_compressible':
+            self.docs = HighCompressibleDocument(self.ws.size)
 
     def init_db(self):
         params = {

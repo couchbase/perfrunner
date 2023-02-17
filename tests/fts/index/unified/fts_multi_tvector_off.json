@@ -19,7 +19,7 @@
     },
     "mapping": {
       "analysis": {},
-      "default_analyzer": "standard",
+      "default_analyzer": "simple",
       "default_datetime_parser": "dateTimeOptional",
       "default_field": "_all",
       "default_mapping": {

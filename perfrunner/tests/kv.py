@@ -206,9 +206,8 @@ class ThroughputDGMCompactedTest(DGMCompactedTest):
     COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.avg_ops()
-        )
+        for metric in self.metrics.avg_ops():
+            self.reporter.post(*metric)
 
 
 class DurabilityTest(KVTest):
@@ -559,9 +558,8 @@ class PillowFightTest(PerfTest):
         PerfTest.access_bg(self, task=pillowfight_task)
 
     def _report_kpi(self, *args):
-        self.reporter.post(
-            *self.metrics.max_ops()
-        )
+        for metric in self.metrics.max_ops():
+            self.reporter.post(*metric)
 
     @with_stats
     def collect_cb(self):

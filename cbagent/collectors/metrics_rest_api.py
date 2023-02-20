@@ -199,3 +199,137 @@ class MetricsRestApiDeduplication(MetricsRestApiBase):
             for bucket, stats in per_bucket_stats.items():
                 bucket = self.serverless_db_names.get(bucket, bucket)
                 self.add_stats(stats, node=node, bucket=bucket)
+
+
+class MetricsRestApiThroughputCollection(MetricsRestApiBase):
+
+    COLLECTOR = "metrics_rest_api_collection_throughput"
+
+    METRIC = "kv_collection_ops"
+
+    def __init__(self, settings: CbAgentSettings):
+        super().__init__(settings)
+
+        self.target_groups_per_bucket = {
+            bucket: {
+                options.get('stat_group')
+                for _, collections in scopes.items()
+                for _, options in collections.items()
+            } - {None}
+            for bucket, scopes in self.collections.items()
+        }
+
+        self.minimal_targets = self.calculate_minimal_targets()
+
+        self.stats_data = []
+        for target in self.minimal_targets:
+            metric = [
+                {"label": label, "value": value}
+                for label, value in zip(['bucket', 'scope', 'collection'], target.split(':'))
+            ]
+            self.stats_data.append({
+                "metric": [{"label": "name", "value": self.METRIC}] + metric,
+                "applyFunctions": ["irate", "sum"],
+                "nodesAggregation": "sum",
+                "step": 1,
+                "start": -1
+            })
+
+    def get_num_collections(self, target_str: str) -> int:
+        """Given a "target" string, return the number of collections that the target refers to.
+
+        The "target" string is of the form <bucket>[.<scope>[.<collection>]]. E.g.:
+
+            - "bucket-1.scope-1.collection-1" -> returns 1
+            - "bucket-1.scope-1"              -> returns number of colls in scope-1
+            - "bucket-1"                      -> returns number of colls in bucket-1
+        """
+        target = dict(zip(['bucket', 'scope', 'collection'], target_str.split(':')))
+
+        if not target or target.get('collection'):
+            return 1
+        elif target and (scope := target.get('scope')):
+            return len(self.collections[target['bucket']][scope])
+
+        return sum(len(colls) for colls in self.collections[target['bucket']].values())
+
+    @staticmethod
+    def bucket_stat_group(bucket: str, group: str) -> str:
+        if group != '':
+            return '{}_{}'.format(bucket, group)
+        return bucket
+
+    def calculate_minimal_targets(self) -> dict[str, str]:
+        """Construct minimal set of "targets" which cover all stat groups.
+
+        The collection config specifies stat groups at a collection-level granularity (highest
+        granularity). The CB server Metrics REST API allows us to get stats at a lower granularity,
+        (scope- or bucket-level) which we may be able to exploit if the stat groups allow for it.
+
+        For example, if all the collections in a scope belong to the same stat group, then we can
+        just query the REST API for the scope-level stats for that scope.
+
+        This method constructs the shortest dictionary of <target>: <stat group> pairs which
+        completely covers all the stat groups.
+        """
+        groups = {}
+        for bucket, scopes in self.collections.items():
+            scope_groups = set()
+            for scope, collections in scopes.items():
+                coll_groups = set()
+                for collection, options in collections.items():
+                    target = '{}:{}:{}'.format(bucket, scope, collection)
+
+                    if g := options.get('stat_group'):
+                        coll_groups.add(g)
+                        scope_groups.add(g)
+
+                        if g not in groups:
+                            groups[g] = [target]
+                        else:
+                            groups[g].append(target)
+
+                if len(coll_groups) == 1:
+                    g = coll_groups.pop()
+                    for _ in collections:
+                        groups[g].pop(-1)
+                    groups[g].append('{}:{}'.format(bucket, scope))
+
+            if len(scope_groups) == 1:
+                g = scope_groups.pop()
+                for _ in scopes:
+                    groups[g].pop(-1)
+                groups[g].append(bucket)
+
+        groups_inversed = {target: group for group, targets in groups.items() for target in targets}
+        return groups_inversed
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+
+        for bucket in self.get_buckets():
+            for group in self.target_groups_per_bucket[bucket]:
+                bucket_group = self.bucket_stat_group(bucket, group)
+                self.mc.add_bucket(bucket_group)
+
+    def get_stats(self) -> dict:
+        samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
+        metrics = {}
+        for data, (target, stat_group) in zip(samples, self.minimal_targets.items()):
+            bucket = target.split(':')[0]
+            value = float(data['data'][0]['values'][-1][1]) / self.get_num_collections(target)
+            if stat_group not in metrics:
+                metrics[stat_group] = {bucket: {self.METRIC: value}}
+            elif bucket not in metrics[stat_group]:
+                metrics[stat_group][bucket] = {self.METRIC: value}
+            else:
+                metrics[stat_group][bucket][self.METRIC] += value
+        return metrics
+
+    def sample(self):
+        current_stats = self.get_stats()
+        for stat_group, per_bucket_stats in current_stats.items():
+            for bucket, stats in per_bucket_stats.items():
+                bucket = self.serverless_db_names.get(bucket, bucket)
+                bucket_group = self.bucket_stat_group(bucket, stat_group)
+                self.add_stats(stats, bucket=bucket_group)

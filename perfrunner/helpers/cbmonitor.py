@@ -33,6 +33,7 @@ from cbagent.collectors import (
     MetricsRestApiDeduplication,
     MetricsRestApiMetering,
     MetricsRestApiProcesses,
+    MetricsRestApiThroughputCollection,
     N1QLStats,
     Net,
     NSServer,
@@ -171,6 +172,10 @@ class CbAgent:
 
         if ns_server:
             self.add_collector(NSServer)
+
+        if self.test.test_config.collection.collection_stat_groups:
+            self.add_collector(MetricsRestApiThroughputCollection)
+
         if active_tasks:
             self.add_collector(ActiveTasks)
 

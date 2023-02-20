@@ -569,9 +569,8 @@ class StabilityBootstrap(KVTest):
 class ThroughputDGMMagmaTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.avg_ops()
-        )
+        for metric in self.metrics.avg_ops():
+            self.reporter.post(*metric)
 
 
 class LoadThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
@@ -809,9 +808,8 @@ class PillowFightDGMTest(StabilityBootstrap):
                         task=pillowfight_task)
 
     def _report_kpi(self, *args):
-        self.reporter.post(
-            *self.metrics.max_ops()
-        )
+        for metric in self.metrics.max_ops():
+            self.reporter.post(*metric)
 
     def run(self):
         self.load()

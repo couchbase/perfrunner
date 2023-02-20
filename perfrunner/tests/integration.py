@@ -168,7 +168,8 @@ class EndToEndThroughputTest(EndToEndLatencyTest):
             logger.warn('KV throughput was throttled. Not reporting KV throughput.')
             return
 
-        self.reporter.post(*self.metrics.avg_ops())
+        for metric in self.metrics.avg_ops():
+            self.reporter.post(*metric)
 
     def report_n1ql_kpi(self):
         if self.test_config.access_settings.n1ql_throughput < float('inf'):
@@ -373,9 +374,9 @@ class EndToEndThroughputWithXDCRTest(EndToEndLatencyWithXDCRTest):
 
     def report_kv_kpi(self):
         for i, _ in enumerate(self.cluster_spec.masters):
-            self.reporter.post(
-                *self.metrics.avg_ops(cluster_idx=i)
-            )
+            for metric in self.metrics.avg_ops(cluster_idx=i):
+                self.reporter.post(*metric)
+
             if not self.test_config.stats_settings.report_for_all_clusters:
                 break
 

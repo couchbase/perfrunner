@@ -243,25 +243,48 @@ class MetricHelper:
                 statistics.stdev(bucket_metric_list)))
         return timings
 
-    def avg_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> Metric:
-        """Generate average total ops/sec metric for a given set of buckets on a given cluster.
+    def _ops_data(self,
+                  buckets: List[str] = [],
+                  cluster_idx: int = 0,
+                  collector: str = 'ns_server',
+                  stat_group: str = '',
+                  metric: str = 'ops') -> List[int]:
+        """Calculate total ops/sec over a given set of buckets on a given cluster.
 
-        Example: with 2 buckets doing steady 1000 ops/sec and steady 2000 ops/sec respectively, the
-        average total ops/sec is 3000.
+         At each time point, sum ops/sec for buckets (to get time series of total ops/sec):
+            [
+                bucket-1 ops/sec at t0 + bucket-2 ops/sec at t0 + ... + bucket-N ops/sec at t0,
+                bucket-1 ops/sec at t1 + bucket-2 ops/sec at t1 + ... + bucket-N ops/sec at t1,
+                ...,
+                bucket-1 ops/sec at tN + bucket-2 ops/sec at tN + ... + bucket-N ops/sec at tN
+            ]
 
         If no buckets are specified, use all buckets (the default).
+
+        If no cluster_idx is specified, use the first cluster (the default).
         """
-        metric_id, title = None, None
-        if len(self.test.cbmonitor_clusters) > 1:
-            metric_id = '{}_cluster{}'.format(self.test_config.name, cluster_idx + 1)
-            title = '{} (cluster {})'.format(self._title, cluster_idx + 1)
+        buckets = buckets or self._bucket_names
+        values = []
+        for bucket in buckets:
+            bucket_group = '{}{}'.format(bucket, '_' + stat_group if stat_group != '' else '')
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
+                                         collector=collector,
+                                         bucket=bucket_group)
+            if self.store.exists(db, metric=metric):
+                return_ops = self.store.get_values(db, metric=metric)
+                if len(values) != 0:
+                    sum_ops = [ops1 + ops2 for ops1, ops2 in zip(values, return_ops)]
+                    values = sum_ops
+                else:
+                    values = return_ops
+        return values
 
-        metric_info = self._metric_info(metric_id, title, chirality=1)
-        throughput = self._avg_ops(buckets, cluster_idx)
-
-        return throughput, self._snapshots, metric_info
-
-    def _avg_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> int:
+    def _avg_ops(self,
+                 buckets: List[str] = [],
+                 cluster_idx: int = 0,
+                 collector: str = 'ns_server',
+                 stat_group: str = '',
+                 metric: str = 'ops') -> int:
         """Calculate average total ops/sec for a given set of buckets on a given cluster.
 
         Calculation:
@@ -275,41 +298,19 @@ class MetricHelper:
          2. Take average ops/sec of this new time series.
 
         If no buckets are specified, use all buckets (the default).
+
+        If no cluster_idx is specified, use the first cluster (the default).
         """
-        buckets = buckets or self._bucket_names
-        values = []
-        for bucket in buckets:
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
-                                         collector='ns_server',
-                                         bucket=bucket)
-            bucket_values = self.store.get_values(db, metric='ops')
-            if values:
-                sum_ops = [ops1 + ops2 for ops1, ops2 in zip(values, bucket_values)]
-                values = sum_ops
-            else:
-                values = bucket_values
+        if values := self._ops_data(buckets, cluster_idx, collector, stat_group, metric):
+            return int(np.average(values))
+        return -1
 
-        return int(np.average(values))
-
-    def max_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> Metric:
-        """Generate P90 total ops/sec metric over a given set of buckets on a given cluster.
-
-        Example: with 5 buckets each doing constant 1000 ops/sec, the P90 total ops/sec according
-        to this function will be ~5000 (subject to how steady the ops/sec are).
-
-        If no buckets are specified, use all buckets (the default).
-        """
-        metric_id, title = None, None
-        if len(self.test.cbmonitor_clusters) > 1:
-            metric_id = '{}_cluster{}'.format(self.test_config.name, cluster_idx + 1)
-            title = '{} (cluster {})'.format(self._title, cluster_idx + 1)
-
-        metric_info = self._metric_info(metric_id, title, chirality=1)
-        throughput = self._max_ops(buckets, cluster_idx)
-
-        return throughput, self._snapshots, metric_info
-
-    def _max_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> int:
+    def _max_ops(self,
+                 buckets: List[str] = [],
+                 cluster_idx: int = 0,
+                 collector: str = 'ns_server',
+                 stat_group: str = '',
+                 metric: str = 'ops') -> int:
         """Calculate P90 total ops/sec over a given set of buckets on a given cluster.
 
         Calculation:
@@ -323,21 +324,99 @@ class MetricHelper:
          2. Take P90 ops/sec of this new time series.
 
         If no buckets are specified, use all buckets (the default).
-        """
-        buckets = buckets or self._bucket_names
-        values = []
-        for bucket in buckets:
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
-                                         collector='ns_server',
-                                         bucket=bucket)
-            return_ops = self.store.get_values(db, metric='ops')
-            if len(values) != 0:
-                sum_ops = [ops1 + ops2 for ops1, ops2 in zip(values, return_ops)]
-                values = sum_ops
-            else:
-                values = return_ops
 
-        return int(np.percentile(values, 90))
+        If no cluster_idx is specified, use the first cluster (the default).
+        """
+        if values := self._ops_data(buckets, cluster_idx, collector, stat_group, metric):
+            return int(np.percentile(values, 90))
+        return -1
+
+    def _construct_ops_metrics(self,
+                               metric_name: str,
+                               overall_throughput: Number,
+                               stat_group_throughputs: dict[str, Number] = {},
+                               cluster_idx: int = 0) -> List[Metric]:
+        if stat_group_throughputs:
+            # Overall throughput first
+            # We do this here to ensure the title is correct when we are using stat groups
+            metric_id = None
+            title = '{}, {}'.format(metric_name, self._title)
+            if len(self.test.cbmonitor_clusters) > 1:
+                metric_id = '{}_cluster{}'.format(self.test_config.name, cluster_idx + 1)
+                title = '{} (cluster {})'.format(title, cluster_idx + 1)
+
+            metric_info = self._metric_info(metric_id, title, chirality=1)
+            metrics = [(overall_throughput, self._snapshots, metric_info)]
+
+            # Per-collection throughputs
+            for stat_group, throughput in stat_group_throughputs.items():
+                metric_id = '{}_{}'.format(self.test_config.name, stat_group)
+                title = '{} per collection ({}), {}'.format(metric_name, stat_group, self._title)
+                if len(self.test.cbmonitor_clusters) > 1:
+                    metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
+                    title = '{} (cluster {})'.format(title, cluster_idx + 1)
+
+                metric_info = self._metric_info(metric_id, title, chirality=1)
+                metrics.append((throughput, self._snapshots, metric_info))
+
+            return metrics
+
+        metric_info = self._metric_info(chirality=0)
+        return [(overall_throughput, self._snapshots, metric_info)]
+
+    def avg_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> List[Metric]:
+        """Generate average total ops/sec metrics for a given set of buckets on a given cluster.
+
+        Generates overall average ops/sec and per-stat-group average ops/sec metrics (if stat
+        groups are being used).
+
+        Example: with 2 buckets doing steady 1000 ops/sec and steady 2000 ops/sec respectively, the
+        overall average total ops/sec is 3000.
+
+        If no buckets are specified, use all buckets (the default).
+
+        If no cluster_idx is specified, use the first cluster (the default).
+        """
+        overall_throughput = self._avg_ops(buckets=buckets, cluster_idx=cluster_idx)
+        stat_group_throughputs = {
+            stat_group: self._avg_ops(buckets=buckets,
+                                      cluster_idx=cluster_idx,
+                                      collector='metrics_rest_api_collection_throughput',
+                                      stat_group=stat_group,
+                                      metric='kv_collection_ops')
+            for stat_group in self.test_config.collection.collection_stat_groups
+        }
+        return self._construct_ops_metrics('Average Throughput (ops/sec)',
+                                           overall_throughput,
+                                           stat_group_throughputs,
+                                           cluster_idx)
+
+    def max_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> List[Metric]:
+        """Generate P90 total ops/sec metrics over a given set of buckets on a given cluster.
+
+        Generates overall P90 ops/sec and per-stat-group P90 ops/sec metrics (if stat groups are
+        being used).
+
+        Example: with 5 buckets each doing constant 1000 ops/sec, the overall P90 total ops/sec
+        according to this function will be ~5000 (subject to how steady the ops/sec are).
+
+        If no buckets are specified, use all buckets (the default).
+
+        If no cluster_idx is specified, use the first cluster (the default).
+        """
+        overall_throughput = self._max_ops(buckets=buckets, cluster_idx=cluster_idx)
+        stat_group_throughputs = {
+            stat_group: self._max_ops(buckets=buckets,
+                                      cluster_idx=cluster_idx,
+                                      collector='metrics_rest_api_collection_throughput',
+                                      stat_group=stat_group,
+                                      metric='kv_collection_ops')
+            for stat_group in self.test_config.collection.collection_stat_groups
+        }
+        return self._construct_ops_metrics('Max Throughput (ops/sec)',
+                                           overall_throughput,
+                                           stat_group_throughputs,
+                                           cluster_idx)
 
     def get_percentile_value_of_node_metric(self, collector, metric, server, percentile):
         values = []
@@ -1878,10 +1957,15 @@ class DailyMetricHelper(MetricHelper):
             self._avg_n1ql_throughput(master_node), \
             self._snapshots
 
-    def max_ops(self) -> DailyMetric:
-        return 'Max Throughput (ops/sec)', \
-            super()._max_ops(), \
-            self._snapshots
+    def max_ops(self) -> list[DailyMetric]:
+        metrics = [('Max Throughput (ops/sec)', self._max_ops(), self._snapshots)]
+        for stat_group in self.test_config.collection.collection_stat_groups:
+            throughput = self._max_ops(collector='metrics_rest_api_collection_throughput',
+                                       stat_group=stat_group,
+                                       metric='kv_collection_ops')
+            metric_title = 'Max throughput per collection (ops/sec) ({})'.format(stat_group)
+            metrics.append((metric_title, throughput, self._snapshots))
+        return metrics
 
     def avg_replication_rate(self, time_elapsed: float) -> DailyMetric:
         return 'Avg XDCR Rate (items/sec)', \

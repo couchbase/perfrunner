@@ -106,7 +106,10 @@ class KVStoreStats(Collector):
         "NMemoryOptimisedCommitBatches",
         "TotalDiskUsage",
         "NonResidentBloomFilterSize",
-        "RecentBloomFilterCacheHitRatio"
+        "RecentBloomFilterCacheHitRatio",
+        "CheckpointOverhead",
+        "ActiveDataSize",
+        "ActiveDiskUsage"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",
@@ -142,7 +145,10 @@ class KVStoreStats(Collector):
         "RecentReadIOAmpSet",
         "CheckpointOverheadPeriod",
         "CheckpointOverheadRatio",
-        "RecentBloomFilterCacheHitRatio"
+        "RecentBloomFilterCacheHitRatio",
+        "CheckpointOverhead",
+        "ActiveDataSize",
+        "ActiveDiskUsage"
     )
 
     def __init__(self, settings, test):

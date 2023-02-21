@@ -23,15 +23,15 @@ def main():
         elif item == "--uninstall":
             _uninstall = True
 
-    if "-" not in _build:
-        base_url = "http://172.23.126.166/builds/releases/mobile/" \
-                   "couchbase-sync-gateway/{}".format(_build)
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
-    elif 'toy' in _build:
+    if 'toy' in _build:
         base_url = "http://172.23.126.166/builds/latestbuilds/sync_gateway/toys/{}"\
             .format(_build.split("/")[7])
-        _build = _build.split("_")[2]
+        _build = "3.2.0-{}".format(_build.split("/")[7])
+        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
+        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
+    elif "-" not in _build:
+        base_url = "http://172.23.126.166/builds/releases/mobile/" \
+                   "couchbase-sync-gateway/{}".format(_build)
         sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
         accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
     else:

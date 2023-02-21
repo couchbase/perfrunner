@@ -326,7 +326,7 @@ class Remote:
         logger.info('Cloning cblite')
         with cd('/tmp/couchbase-mobile-tools/'):
             run('git clone https://github.com/couchbaselabs/couchbase-mobile-tools .')
-            run('git checkout 8434d06aaffd4dc5b2667d2a0a535266c3d941f1')
+            run('git checkout dbfb5f53e57ccdba9bc63693d580a2b7cdc2aa0d')
 
     def build_cblite(self):
         logger.info('Building cblite: updating submodule...')
@@ -363,9 +363,7 @@ class Remote:
     @all_clients_batch
     def cblite_checkout_version(self):
         with cd('/tmp/couchbase-mobile-tools/vendor/couchbase-lite-core'):
-            run('git checkout 6fb3bfc417b100fbc65b6c762f4c2d78b9b6ed6c', quiet=True)
-            run('git cherry-pick e36048607c97ce9c267b38772f034db786b37a25', quiet=True)
-            run('git cherry-pick 57e92f4c517ba5c2e76d3333aad928fa46655e8b', quiet=True)
+            run('git checkout 8b3bb4f1e0942c596a2fe1a3e903e8f778ba9b66', quiet=True)
 
     @all_clients_batch
     def cblite_make_build_dir(self):

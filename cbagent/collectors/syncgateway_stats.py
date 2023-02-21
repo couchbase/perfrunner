@@ -255,6 +255,7 @@ class SyncGatewayStats(Collector):
         self.ssh_password = getattr(settings, 'ssh_password', None)
         self.secondary_statsfile = settings.secondary_statsfile
         self.use_capella = test.cluster_spec.capella_infrastructure
+        self.num_buckets = test.test_config.cluster.num_buckets
 
         self.store = PerfStore(settings.cbmonitor_host)
         self.mc = MetadataClient(settings)
@@ -288,10 +289,12 @@ class SyncGatewayStats(Collector):
             i, j, k, l, m = metric_name.split("__")
             if i in self.sg_stats[host]:
                 if j in self.sg_stats[host][i]:
-                    if k in self.sg_stats[host][i][j]:
-                        if l in self.sg_stats[host][i][j][k]:
-                            if m in self.sg_stats[host][i][j][k][l]:
-                                return self.sg_stats[host][i][j][k][l][m]
+                    for db in range(1, self.num_buckets + 1):
+                        k = "db-{}".format(db)
+                        if k in self.sg_stats[host][i][j]:
+                            if l in self.sg_stats[host][i][j][k]:
+                                if m in self.sg_stats[host][i][j][k][l]:
+                                    return self.sg_stats[host][i][j][k][l][m]
         return 0
 
     def update_metadata(self):

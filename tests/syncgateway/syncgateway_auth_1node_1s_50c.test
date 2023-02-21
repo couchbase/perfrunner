@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGAuthThroughput
+
+[showfast]
+title = , 1 node, 1M users, 10K channel, 50 channels per user, access query, s=1 c=50
+component = syncgateway
+category = query
+sub_category = xattr
+
+[cluster]
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 4
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_50collections_basic.json
+
+[access]
+time = 240
+workers = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 1
+threads = 200
+sg_loader_threads = 200
+clients = 4
+instances_per_client = 5
+workload_path = workloads/syncgateway_coll
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+ycsb_command = syncgateway3
+users = 1000000
+channels = 10000
+channels_per_user = 1
+channels_per_doc = 1
+documents = 10000
+roundtrip_write = true
+read_mode = changes
+feed_reading_mode = withdocs
+feed_mode = longpoll
+insert_mode = byuser
+auth = false
+initusers = false
+grant_access = true
+channels_per_grant = 50
+readproportion=0
+updateproportion=0
+insertproportion=0
+scanproportion=1
+requestdistribution = zipfian
+log_title = sync_gateway_1node_auth
+roundtrip_write_load = true

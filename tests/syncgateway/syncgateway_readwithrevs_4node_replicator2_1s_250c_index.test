@@ -1,0 +1,59 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGRead
+
+[showfast]
+title = +rev, 4 nodes, cache hit 0.5%%, replicator2, basicAuth, s=1 c=250, index creation
+component = syncgateway
+category = read
+sub_category = xattr
+orderby = b21
+
+[cluster]
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 4
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_250collections_basic.json
+
+[access]
+time = 600
+workers = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+indexer.settings.gc_percent = 200
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.build.batch_size = 100
+
+[ycsb]
+branch = tmp-sqw-weekly-updated-c3
+
+[syncgateway]
+nodes = 4
+threads = 800
+clients = 4
+instances_per_client = 5
+workload_path = workloads/syncgateway_coll
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+ycsb_command = syncgateway3
+users = 1000
+channels = 1
+channels_per_user = 1
+channels_per_doc = 1
+documents = 1000000
+roundtrip_write = false
+read_mode = documents_with_revs
+feed_reading_mode = idsonly
+feed_mode = normal
+insert_mode = bykey
+auth = true
+readproportion=1
+updateproportion=0
+insertproportion=0
+requestdistribution = zipfian
+log_title = sync_gateway_1node_reads
+replicator2 = true
+basic_auth = true

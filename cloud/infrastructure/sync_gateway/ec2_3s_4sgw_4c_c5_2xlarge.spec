@@ -64,6 +64,6 @@ aws_key_name = korry
 
 [parameters]
 OS = CentOS 7
-CPU = Data: c5.12xlarge (48 vCPU), syncgateways: c5.2xlarge (8 vCPU)
-Memory = Data: 96 GB, syncgateways: 16 GB
+CPU = Data: m5.4xlarge (16 vCPU), syncgateways: c5.2xlarge (8 vCPU)
+Memory = Data: 64 GB, syncgateways: 16 GB
 Disk = Data: EBS 1TB, syncgateways: 10 GB

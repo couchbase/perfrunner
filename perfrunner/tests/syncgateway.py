@@ -99,6 +99,7 @@ class SGPerfTest(PerfTest):
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.sg_settings = self.test_config.syncgateway_settings
+        self.collections = self.test_config.collection.collection_map
         if self.test_config.collection.collection_map:
             self.collection_map = self.test_config.collection.collection_map
         else:
@@ -154,20 +155,24 @@ class SGPerfTest(PerfTest):
         self.run_sg_phase("start memcached", syncgateway_task_start_memcached,
                           self.settings, None, self.settings.time, False)
 
+    @with_stats
     def load_users(self):
         self.run_sg_phase("load users", syncgateway_task_load_users,
                           self.settings, None, self.settings.time, False)
 
+    @with_stats
     def init_users(self):
         if self.test_config.syncgateway_settings.auth == 'true':
             self.run_sg_phase("init users", syncgateway_task_init_users,
                               self.settings, None, self.settings.time, False)
 
+    @with_stats
     def grant_access(self):
         if self.test_config.syncgateway_settings.grant_access == 'true':
             self.run_sg_phase("grant access to  users", syncgateway_task_grant_access,
                               self.settings, None, self.settings.time, False)
 
+    @with_stats
     def load_docs(self):
         self.run_sg_phase("load docs", syncgateway_task_load_docs,
                           self.settings, None, self.settings.time, False)
@@ -713,7 +718,8 @@ class SGReplicateThroughputTest1(SGPerfTest):
                 "channels": channels
             },
             "continuous": True,
-            "changes_feed_limit": 10000
+            "changes_feed_limit": 10000,
+            "collections_enabled": True if self.collections else False
         }
 
         if self.sg_settings.sg_replication_type == 'push':
@@ -770,8 +776,10 @@ class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
                 "channels": channels
             },
             "continuous": True,
-            "changes_feed_limit": 10000
+            "changes_feed_limit": 10000,
+            "collections_enabled": True if self.collections else False
         }
+
         if self.sg_settings.sg_replication_type == 'push':
             self.rest.start_sg_replication(sg1_master, data)
         elif self.sg_settings.sg_replication_type == 'pull':
@@ -821,8 +829,10 @@ class SGReplicateThroughputTest2(SGPerfTest):
             "query_params": {
                 "channels": channels
             },
-            "continuous": True
+            "continuous": True,
+            "collections_enabled": True if self.collections else False
         }
+
         if self.sg_settings.sg_replication_type == 'push':
             self.rest.start_sg_replication2(sg1_master, data)
         elif self.sg_settings.sg_replication_type == 'pull':
@@ -878,8 +888,10 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
             "query_params": {
                 "channels": channels
             },
-            "continuous": True
+            "continuous": True,
+            "collections_enabled": True if self.collections else False
         }
+
         if self.sg_settings.sg_replication_type == 'push':
             self.rest.start_sg_replication2(sg1_master, data)
         elif self.sg_settings.sg_replication_type == 'pull':
@@ -925,6 +937,7 @@ class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
             },
             "continuous": True,
             "conflict_resolution_type": "default",
+            "collections_enabled": True if self.collections else False
         }
 
         if self.sg_settings.sg_conflict_resolution == 'custom':
@@ -985,8 +998,10 @@ class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
                 "channels": channels
             },
             "continuous": True,
-            "changes_feed_limit": 10000
+            "changes_feed_limit": 10000,
+            "collections_enabled": True if self.collections else False
         }
+
         self.rest.start_sg_replication(sg1_master, data)
 
         data["replication_id"] = "sgr1_pull"
@@ -1028,12 +1043,14 @@ class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
             "replication_id": "sgr2_pushAndPull",
             "remote": sg2,
             "direction": "pushAndPull",
+            "continuous": True,
             "filter": "sync_gateway/bychannel",
             "query_params": {
                 "channels": channels
             },
-            "continuous": True
+            "collections_enabled": True if self.collections else False
         }
+
         self.rest.start_sg_replication2(sg1_master, data)
 
     @with_stats
@@ -1077,7 +1094,8 @@ class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
                 "channels": channels
             },
             "continuous": True,
-            "changes_feed_limit": 10000
+            "changes_feed_limit": 10000,
+            "collections_enabled": True if self.collections else False
         }
 
         if self.sg_settings.sg_replication_type == 'push':
@@ -1141,7 +1159,8 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
             "query_params": {
                 "channels": channels
             },
-            "continuous": True
+            "continuous": True,
+            "collections_enabled": True if self.collections else False
         }
 
         if self.sg_settings.sg_replication_type == 'push':
@@ -2315,7 +2334,13 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 user_id += 1
                 if self.settings.syncgateway_settings.replication_auth:
                     username = "sg-user-{}".format(user_num)
-                    password = "Password123!" if total_users > 1 else "guest"
+                    if total_users > 1:
+                        if self.capella_infra:
+                            password = "Password123!"
+                        else:
+                            password = "password"
+                    else:
+                        password = "guest"
                 else:
                     username = None
                     password = None

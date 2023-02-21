@@ -51,7 +51,7 @@ LOAD_DOCS_CMD = " load {ycsb_command} -s -P {workload} " \
 INIT_USERS_CMD = " run {ycsb_command} -s -P {workload} " \
                  "-p recordcount={total_docs} " \
                  "-p syncgateway.db={db} " \
-                 "-p operationcount=50 " \
+                 "-p operationcount=400 " \
                  "-p maxexecutiontime=36000 " \
                  "-threads {sg_loader_threads} " \
                  "-p syncgateway.host={hosts} " \
@@ -70,9 +70,9 @@ INIT_USERS_CMD = " run {ycsb_command} -s -P {workload} " \
 GRANT_ACCESS_CMD = " run {ycsb_command} -s -P {workload} " \
                    "-p recordcount={total_docs} " \
                    "-p syncgateway.db={db} " \
-                   "-p operationcount=50 " \
+                   "-p operationcount=1000 " \
                    "-p maxexecutiontime=36000 " \
-                   "-threads {sg_loader_threads} " \
+                   "-threads 1 " \
                    "-p syncgateway.host={hosts} " \
                    "-p syncgateway.auth={auth} " \
                    "-p memcached.host={memcached_host} " \

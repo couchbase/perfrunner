@@ -1,0 +1,67 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGReplicateThroughputTest2
+
+[showfast]
+title = Avg Throughput (items/sec), SG Replicate 2.0 Pull, 1 SG node, 1 CB node, 1 Channel, 600K docs, 1K docsize, s=1 c=2
+component = syncgateway
+category = sgreplicate
+sub_category = Pull
+
+[cluster]
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 1 1
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_2collections_basic.json
+
+[load]
+items = 600000
+size = 1024
+workers = 10
+doc_gen = json
+iterations = 1
+worker_instances = 1
+
+[access]
+creates = 1
+reads = 0
+updates = 0
+deletes = 0
+items = 600000
+workers = 10
+worker_instances = 10
+doc_gen = json
+throughput = 150
+time = 120
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 1
+threads = 10
+clients = 1
+instances_per_client = 5
+workload_path = workloads/syncgateway_coll
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+ycsb_command = syncgateway3
+users = 1000
+channels = 1
+channels_per_user = 1
+channels_per_doc = 1
+documents = 600000
+roundtrip_write = true
+read_mode = documents
+feed_reading_mode = idsonly
+feed_mode = normal
+insert_mode = bykey
+auth = true
+readproportion=1
+updateproportion=0
+insertproportion=0
+requestdistribution = zipfian
+log_title = sync_gateway_1node_reads
+sg_replication_type = pull

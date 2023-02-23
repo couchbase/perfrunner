@@ -173,10 +173,11 @@ class FTSTest(JTSTest):
         bucket_name = self.test_config.buckets[0]
         result = self.rest.get_bucket_info(self.fts_nodes[0], bucket_name)
         cb_version = result["nodes"][0]["version"].split("-")[0]
-        logger.info("This is the version {}".format(cb_version))
-        if cb_version >= "7.5.0":
+        cb_build = result["nodes"][0]["version"].split("-")[1]
+        logger.info("This is the version {} and build {}".format(cb_version, cb_build))
+        if cb_version >= "7.5.0" and int(cb_build) < 3699:
             self.fts_index_name_flag = True
-        if cb_version < "7.5.0":
+        else:
             self.fts_index_name_flag = False
 
         logger.info("Creating indexing definitions:")

@@ -4,7 +4,7 @@ import glob
 import os
 import re
 import statistics
-from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -81,17 +81,19 @@ class MetricHelper:
         return self.test_config.cluster.mem_quota
 
     def _metric_info(self,
-                     metric_id: str = None,
-                     title: str = None,
-                     order_by: str = None,
-                     chirality: int = None,
-                     mem_quota: int = None) -> Dict[str, str]:
+                     metric_id: Optional[str] = None,
+                     title: Optional[str] = None,
+                     order_by: Optional[str] = None,
+                     chirality: Optional[int] = None,
+                     mem_quota: Optional[int] = None,
+                     stat_group: str = '') -> Dict[str, str]:
         return {
             'id': metric_id or self.test_config.name,
             'title': title or self._title,
             'orderBy': order_by or self._order_by,
             'chirality': chirality or self._chirality,
-            'memquota': mem_quota or self._mem_quota
+            'memquota': mem_quota or self._mem_quota,
+            'statGroup': stat_group or ''
         }
 
     @property
@@ -650,7 +652,9 @@ class MetricHelper:
 
                 title = '{} {}'.format(title_prefix, self._title)
 
-                metric_info = self._metric_info(metric_id, title, chirality=-1)
+                metric_info = self._metric_info(metric_id, title, chirality=-1,
+                                                stat_group=stat_group)
+                metric_info.update({'percentile': percentile, 'operation': operation})
 
                 metrics.append((latency, self._snapshots, metric_info))
 
@@ -1311,7 +1315,12 @@ class MetricHelper:
         order_by = ''
         for num_nodes in self.test_config.cluster.initial_nodes:
             order_by += '{:03d}'.format(num_nodes)
+
         order_by += '{:018d}'.format(self.test_config.load_settings.items)
+
+        for num_nodes in self.test_config.rebalance_settings.nodes_after:
+            order_by += '{:03d}'.format(num_nodes)
+
         return order_by
 
     def rebalance_time(self, rebalance_time: float, update_category: bool = False) -> Metric:

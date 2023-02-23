@@ -40,21 +40,22 @@ class ShowFastReporter(Reporter):
                       json.dumps(cluster))
 
     def _post_metric(self, metric: JSON):
-        if 'category' not in metric:
-            metric['category'] = self.test_config.showfast.category
-
         cluster = self.cluster_spec.name
         component = self.test_config.showfast.component
-        sub_category = self.test_config.showfast.sub_category
+        category = metric.get('category') or self.test_config.showfast.category
+        sub_category = metric.get('subCategory') or self.test_config.showfast.sub_category
+
         if self.cluster_spec.capella_infrastructure:
             sub_category = sub_category.format(provider=self.cluster_spec.capella_backend.upper())
             if self.cluster_spec.serverless_infrastructure:
                 metric['provider'] = "serverless"
             else:
                 metric['provider'] = self.cluster_spec.cloud_provider.lower()
+
         metric.update({
             'cluster': cluster,
             'component': component,
+            'category': category,
             'subCategory': sub_category,
         })
 

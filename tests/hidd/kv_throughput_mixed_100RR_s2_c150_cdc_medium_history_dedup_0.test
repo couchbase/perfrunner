@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.magma.ThroughputCDCTest
+
+[showfast]
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 100M x 1KB, 100%% RR, s=2 c=150, 50/50 R/W, Uniform distribution, History=60mins, 0 dedup/sec
+component = kv
+category = cdc
+sub_category = Throughput
+orderby = rr100_d0_dd00000_h03600
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+enable_cpu_cores = false
+
+[collection]
+config = collections/1bucket_2scopes_150collections_history.json
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+history_seconds = 3600
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 100000000
+size = 1024
+workers = 128
+doc_gen = large
+
+[extra_access]
+run_extra_access = true
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+items = 100000000
+ops = 100000000
+workers = 100
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+items = 100000000
+workers = 128
+time = 1800
+requestdistribution = uniform
+
+[clients]
+python_client = 3.2.7

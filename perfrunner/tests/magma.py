@@ -570,7 +570,20 @@ class CDCTest(StabilityBootstrap):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.COLLECTORS['kv_dedup'] = True
+        self.COLLECTORS.update({'kv_dedup': True, 'iostat': True})
+
+    def set_latency_metric_order_by(self, metric_info: dict[str, str]) -> dict[str, str]:
+        percentile = metric_info.get('percentile')
+        operation = metric_info.get('operation')
+        if percentile is not None and operation is not None:
+            metric_info['orderBy'] = 'p{}_{}_{}_{}'.format(
+                str(percentile).replace('.', '').ljust(3, '0'),
+                operation,
+                metric_info['statGroup'],
+                metric_info['orderBy']
+            )
+
+        return metric_info
 
     @with_console_stats
     def load(self):
@@ -589,7 +602,6 @@ class CDCTest(StabilityBootstrap):
                                 target_iterator=self.iterator)
             else:
                 PerfTest.access(self, settings=warmup_access_settings)
-            self.wait_for_persistence()
             self.reset_kv_stats()
         else:
             logger.info('Skipping warmup access phase as history retention time is not set')
@@ -600,6 +612,11 @@ class ThroughputDGMMagmaTest(StabilityBootstrap):
     def _report_kpi(self):
         for metric in self.metrics.avg_ops():
             self.reporter.post(*metric)
+
+
+class ThroughputCDCTest(CDCTest, ThroughputDGMMagmaTest):
+
+    pass
 
 
 class LoadThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
@@ -621,7 +638,7 @@ class MixedLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for operation in ('get', 'set'):
+        for operation in ('get', 'set', 'durable_set'):
             for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
                 self.reporter.post(*metric)
 
@@ -630,8 +647,31 @@ class WriteLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for metric in self.metrics.kv_latency(operation='set', percentiles=percentiles):
-            self.reporter.post(*metric)
+        for operation in ('set', 'durable_set'):
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                self.reporter.post(*metric)
+
+
+class MixedLatencyCDCTest(CDCTest):
+
+    def _report_kpi(self):
+        percentiles = self.test_config.access_settings.latency_percentiles
+        for operation in ('get', 'set', 'durable_set'):
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                _, _, metric_info = metric
+                metric_info = self.set_latency_metric_order_by(metric_info)
+                self.reporter.post(*metric)
+
+
+class WriteLatencyCDCTest(CDCTest):
+
+    def _report_kpi(self):
+        percentiles = self.test_config.access_settings.latency_percentiles
+        for operation in ('set', 'durable_set'):
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                _, _, metric_info = metric
+                metric_info = self.set_latency_metric_order_by(metric_info)
+                self.reporter.post(*metric)
 
 
 class CompactionMagmaTest(StabilityBootstrap):
@@ -771,7 +811,7 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
 class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
 
     def _report_kpi(self):
-        for operation in ('get', 'set'):
+        for operation in ('get', 'set', 'durable_set'):
             for metric in self.metrics.kv_latency(operation=operation):
                 self.reporter.post(*metric)
 
@@ -811,8 +851,9 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
 class EnhancedDurabilityLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        for metric in self.metrics.kv_latency(operation='set', percentiles=[50.0, 99.9]):
-            self.reporter.post(*metric)
+        for operation in ('set', 'durable_set'):
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=[50.0, 99.9]):
+                self.reporter.post(*metric)
 
 
 class PillowFightDGMTest(StabilityBootstrap):
@@ -1299,12 +1340,39 @@ class RebalanceCDCTest(CDCTest, RebalanceKVDGMTest):
 
 class CombinedLatencyAndRebalanceCDCTest(RebalanceCDCTest):
 
+    def set_latency_metric_title(self, metric_info: dict[str, str]) -> dict[str, str]:
+        percentile = metric_info.get('percentile')
+        operation = metric_info.get('operation')
+        if percentile is not None and operation is not None:
+            metric_info['title'] = '{:.1f}th percentile {}{} latency (ms), {}'.format(
+                percentile,
+                operation.upper(),
+                ' ({})'.format(stat_group) if (stat_group := metric_info.get('statGroup')) else '',
+                self.test_config.showfast.title
+            )
+
+        return metric_info
+
+    def set_rebalance_metric_title(self, metric_info: dict[str, str]) -> dict[str, str]:
+        metric_info['title'] = 'Rebalance time (mins), {}'.format(metric_info['title'])
+        return metric_info
+
     def report_latency_kpi(self):
         if self.test_config.stats_settings.enabled:
             percentiles = self.test_config.access_settings.latency_percentiles
-            for operation in ('get', 'set'):
+            for operation in ('get', 'set', 'durable_set'):
                 for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                    _, _, metric_info = metric
+                    metric_info = self.set_latency_metric_order_by(metric_info)
+                    metric_info = self.set_latency_metric_title(metric_info)
+                    metric_info['subCategory'] = 'Latency'
                     self.reporter.post(*metric)
+
+    def _report_kpi(self, *args):
+        metric = self.metrics.rebalance_time(self.rebalance_time)
+        _, _, metric_info = metric
+        metric_info = self.set_rebalance_metric_title(metric_info)
+        self.reporter.post(*metric)
 
     def run(self):
         self.iterator = TargetIterator(self.cluster_spec, self.test_config,

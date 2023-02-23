@@ -1,0 +1,32 @@
+{
+    "bucket-1": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "collection-1": {
+                "access": 1,
+                "load": 1,
+                "history": 1,
+                "stat_group": "history_on"
+            }
+        },
+        "scope-2": {
+            "collection-1": {
+                "access": 1,
+                "load": 1,
+                "history": 0,
+                "stat_group": "history_off"
+            },
+            "collection-2": {
+                "access": 1,
+                "load": 1,
+                "history": 0,
+                "stat_group": "history_off"
+            }
+        }
+    }
+}

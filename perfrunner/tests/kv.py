@@ -53,7 +53,7 @@ class MixedLatencyTest(ReadLatencyTest):
 
     def _report_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for operation in ('get', 'set'):
+        for operation in ('get', 'set', 'durable_set'):
             for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
                 self.reporter.post(*metric)
 
@@ -100,8 +100,9 @@ class EnhancedDurabilityLatencyTest(ReadLatencyTest):
     """Enable reporting of SET latency."""
 
     def _report_kpi(self):
-        for metric in self.metrics.kv_latency(operation='set', percentiles=[50.0, 99.9]):
-            self.reporter.post(*metric)
+        for operation in ('set', 'durable_set'):
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=[50.0, 99.9]):
+                self.reporter.post(*metric)
 
     def run(self):
         self.load()

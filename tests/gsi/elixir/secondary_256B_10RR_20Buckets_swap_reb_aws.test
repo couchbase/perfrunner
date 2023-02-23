@@ -4,7 +4,8 @@ test = perfrunner.tests.secondary.SecondaryRebalanceOnlyTest
 [showfast]
 title =  Rebalance time(min), swap 1->1, 20 buckets , 64 vBuckets/bucket, 200 indexes, 256 byte keysize,10%% RR
 component = secondarycloud
-sub_category = PlasmaDGM
+category = rebalance
+sub_category = AWS
 
 [stats]
 server_processes = projector

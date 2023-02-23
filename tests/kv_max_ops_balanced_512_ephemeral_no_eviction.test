@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 50/50 R/W, 512B JSON items, 1K batch size, Ephemeral noEviction
+component = kv
+category = max_ops
+orderby = mixed
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[bucket]
+bucket_type = ephemeral
+eviction_policy = noEviction
+
+[load]
+size = 512
+items = 20000000
+workers = 50
+doc_gen = json
+
+[access]
+items = 20000000
+iterations = 40000
+workers = 50
+updates = 50
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

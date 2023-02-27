@@ -1,0 +1,66 @@
+[test_case]
+test = perfrunner.tests.magma.MixedLatencyCDCTest
+
+[showfast]
+title = latency (ms), 2 nodes, 1 bucket x 1M x 1KB, 1%% RR, 1500 ops/sec, 50/50 R/W, s=2 c=150, 50 CDC collections, History=60mins, 100 dedup/sec
+component = kv
+category = cdc
+sub_category = Latency
+orderby = rr001_d3_dd00100_h03600
+
+[cluster]
+mem_quota = 512
+initial_nodes = 2
+num_buckets = 1
+enable_cpu_cores = false
+
+[collection]
+config = collections/1bucket_2scopes_3collections_history.json
+
+[bucket]
+replica_number = 1
+backend_storage = magma
+eviction_policy = fullEviction
+history_seconds = 3600
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 1000000
+size = 1024
+workers = 128
+doc_gen = large
+
+[extra_access]
+run_extra_access = true
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 1000000
+ops = 1000000
+time = 86400
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+creates = 0
+reads = 1
+updates = 1
+deletes = 0
+throughput = 1500
+items = 1000000
+workers = 128
+power_alpha=1000000
+time = 1800
+durability = 3
+latency_percentiles = 50,99
+
+[clients]
+python_client = 3.2.7

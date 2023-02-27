@@ -593,15 +593,24 @@ class CDCTest(StabilityBootstrap):
     def warmup_access_phase(self):
         # This warmup phase is specifically to fill up the disk history
         warmup_access_settings = self.test_config.access_settings
+        mixed_warmup_access_settings = self.test_config.mixed_access_settings
+
         if (time := self.test_config.bucket.history_seconds) > 0:
             warmup_access_settings.time = time
             warmup_access_settings.creates = 0
+
+            for settings in mixed_warmup_access_settings:
+                settings.time = time
+                settings.creates = 0
+
             logger.info('Starting warmup access phase')
             if self.test_config.load_settings.use_backup:
                 PerfTest.access(self, settings=warmup_access_settings,
+                                mixed_settings=mixed_warmup_access_settings,
                                 target_iterator=self.iterator)
             else:
-                PerfTest.access(self, settings=warmup_access_settings)
+                PerfTest.access(self, settings=warmup_access_settings,
+                                mixed_settings=mixed_warmup_access_settings)
             self.reset_kv_stats()
         else:
             logger.info('Skipping warmup access phase as history retention time is not set')

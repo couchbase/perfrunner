@@ -480,7 +480,7 @@ class PerfTest:
 
         phases = []
 
-        if not settings.workload_mix and mixed_settings is None:
+        if not settings.workload_mix and not mixed_settings:
             # Do non-mixed workload
             if target_iterator is None:
                 target_iterator = self.target_iterator

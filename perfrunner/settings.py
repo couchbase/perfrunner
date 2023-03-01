@@ -2573,8 +2573,8 @@ class TableauSettings:
 
 class SyncgatewaySettings:
     REPO = 'https://github.com/couchbaselabs/YCSB.git'
-    BRANCH = 'syncgateway-weekly'
     YCSB_COMMAND = 'syncgateway'
+    BRANCH = 'tmp-sqw-weekly-updated-c3'
     WORKLOAD = 'workloads/syncgateway_blank'
     USERS = 100
     CHANNELS = 1

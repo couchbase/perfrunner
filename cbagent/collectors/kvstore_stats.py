@@ -105,6 +105,8 @@ class KVStoreStats(Collector):
         "BlockCacheBlockSize",
         "NMemoryOptimisedCommitBatches",
         "TotalDiskUsage",
+        "HistoryDiskUsage",
+        "HistoryDataSize",
         "NonResidentBloomFilterSize",
         "RecentBloomFilterCacheHitRatio",
         "CheckpointOverhead",

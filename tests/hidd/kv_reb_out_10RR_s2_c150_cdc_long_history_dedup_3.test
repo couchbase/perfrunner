@@ -1,0 +1,68 @@
+[test_case]
+test = perfrunner.tests.magma.RebalanceCDCTest
+
+[showfast]
+title = Rebalance-out (min), 4 -> 3, 100M x 1KB items, 10%% RR, 80K ops/sec, 50/50 R/W, s=2 c=150, 50 CDC collections, History=10hrs, 1000 dedup/sec
+component = kv
+category = cdc
+sub_category = Rebalance
+orderby = rr010_d0_dd01000_h36000
+
+[cluster]
+mem_quota = 1800
+initial_nodes = 4
+num_buckets = 1
+enable_cpu_cores = false
+
+[collection]
+config = collections/1bucket_2scopes_150collections_history.json
+
+[bucket]
+failover_min = 60
+failover_max = 120
+backend_storage = magma
+eviction_policy = fullEviction
+history_seconds = 36000
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+
+[extra_access]
+run_extra_access = true
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+items = 100000000
+ops = 100000000
+workers = 100
+
+[hot_load]
+items = 100000000
+workers = 100
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 80000
+items = 100000000
+workers = 100
+power_alpha = 400
+time = 1800
+latency_percentiles = 50,99
+
+[rebalance]
+nodes_after = 3
+start_after = 300
+stop_after = 300
+
+[clients]
+python_client = 3.2.7

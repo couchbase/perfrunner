@@ -665,6 +665,25 @@ class CompressionMagmaTest(CompactionMagmaTest):
         self.report_kpi()
 
 
+class DiskSizeReductionMagmaTest(CompressionMagmaTest):
+
+    def _report_kpi(self):
+        total_disk_size = 0
+        for bucket in self.test_config.buckets:
+            bucket_stats = self.rest.get_bucket_stats(self.master_node, bucket)
+            disk_size = bucket_stats['op']['samples'].get("couch_docs_actual_disk_size")[-1]
+            total_disk_size += disk_size
+
+        number_items = self.test_config.load_settings.items
+        doc_size = self.test_config.load_settings.size
+        number_copies = self.test_config.bucket.replica_number + 1
+        raw_data_size = number_items * doc_size * number_copies
+
+        self.reporter.post(
+            *self.metrics.disk_size_reduction(total_disk_size, raw_data_size)
+        )
+
+
 class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
 
     def restart(self):

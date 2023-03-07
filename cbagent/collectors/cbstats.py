@@ -83,6 +83,10 @@ class CBStatsAll(Collector):
         "ep_magma_data_blocks_compression_ratio",
         "ep_magma_data_blocks_space_reduction_estimate_pct"
     )
+    METRICS_AVERAGE_PER_NODE = (
+        "ep_magma_data_blocks_compression_ratio",
+        "ep_magma_data_blocks_space_reduction_estimate_pct"
+    )
 
     def __init__(self, settings, test):
         super().__init__(settings)
@@ -136,6 +140,9 @@ class CBStatsAll(Collector):
                         stats[st] = temp_stats[st]
 
             if stats:
+                for metric in self.METRICS_AVERAGE_PER_NODE:
+                    if metric in stats:
+                        stats[metric] /= len(self.nodes)
                 self.update_metric_metadata(stats.keys(), bucket=bucket)
                 self.append_to_store(stats, cluster=self.cluster,
                                      bucket=bucket,

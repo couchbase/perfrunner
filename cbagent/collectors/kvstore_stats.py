@@ -111,7 +111,9 @@ class KVStoreStats(Collector):
         "RecentBloomFilterCacheHitRatio",
         "CheckpointOverhead",
         "ActiveDataSize",
-        "ActiveDiskUsage"
+        "ActiveDiskUsage",
+        "CheckpointOverheadKeyIndex",
+        "CheckpointOverheadSeqIndex"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",
@@ -181,11 +183,27 @@ class KVStoreStats(Collector):
                                     stats[metric] += metrics[metric]
                                 else:
                                     stats[metric] = metrics[metric]
-                            if metric == "TxnSizeEstimate" and "walStats" in metrics.keys():
+                            if metric == "TxnSizeEstimate" and \
+                                    "walStats" in metrics.keys() and \
+                                    metric in metrics["walStats"].keys():
                                 if metric in stats:
                                     stats[metric] += metrics["walStats"][metric]
                                 else:
                                     stats[metric] = metrics["walStats"][metric]
+                            if metric == "CheckpointOverheadKeyIndex" and \
+                                    "KeyStats" in metrics.keys() and \
+                                    metric in metrics["KeyStats"].keys():
+                                if metric in stats:
+                                    stats[metric] += metrics["KeyStats"][metric]
+                                else:
+                                    stats[metric] = metrics["KeyStats"][metric]
+                            if metric == "CheckpointOverheadSeqIndex" and \
+                                    "SeqStats" in metrics.keys() and \
+                                    metric in metrics["SeqStats"].keys():
+                                if metric in stats:
+                                    stats[metric] += metrics["SeqStats"][metric]
+                                else:
+                                    stats[metric] = metrics["SeqStats"][metric]
                     break
         except Exception:
             pass

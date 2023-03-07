@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.magma.DiskSizeReductionMagmaTest
+
+[showfast]
+title = 250M, Magma, 4KB block size
+component = hidd
+category = compress
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 5
+num_buckets = 1
+kernel_mem_limit = 60G
+kernel_mem_limit_services = kv
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+magma_seq_tree_data_block_size = 4096
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 250000000
+size = 1450
+workers = 100
+key_fmtr = hex
+doc_gen = high_compressible
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -717,6 +717,15 @@ class MetricHelper:
 
         return size, self._snapshots, metric_info
 
+    def disk_size_reduction(self, disk_size: float, raw_data_size: float) -> Metric:
+
+        metric_id = '{}_disk_size_reduction'.format(self.test_config.name)
+        title = 'Disk Size Reduction (%), {}'.format(self._title)
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+        reduction = round((1.0 - disk_size / raw_data_size) * 100)
+
+        return reduction, self._snapshots, metric_info
+
     def merge_throughput(self,
                          time_elapsed: float,
                          edition: str,

@@ -1136,11 +1136,16 @@ class ServerlessTerraform(CapellaTerraform):
             status = resp.json()['status']['state']
 
             logger.info('Dataplane state: {}'.format(status))
-            if status != 'ready':
+            if status == 'disabled':
+                break
+            elif status != 'ready':
                 sleep(interval_secs)
 
         if status != 'ready':
-            logger.error('Deployment timed out after {} mins.'.format(timeout_mins))
+            if status == 'disabled':
+                logger.error('Deployment failed, dataplane entered disabled state.')
+            else:
+                logger.error('Deployment timed out after {} mins.'.format(timeout_mins))
             logger.error('DataDog link for debugging (filtering by dataplane ID): {}'
                          .format(format_datadog_link(dataplane_id=self.dp_id)))
             logger.error('DataDog link for debugging (filtering by cluster ID): {}'

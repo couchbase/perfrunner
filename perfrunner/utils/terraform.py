@@ -556,7 +556,7 @@ class CapellaTerraform(Terraform):
         return server_group_sizes
 
     @staticmethod
-    def construct_capella_server_groups(infra_spec, node_schemas):
+    def construct_capella_server_groups(infra_spec, node_schemas, enable_disk_autoscaling):
         """Create correct server group objects for deploying clusters using internal API.
 
         Sample server group template:
@@ -614,6 +614,9 @@ class CapellaTerraform(Terraform):
                         if infra_spec.capella_backend != 'azure'
                         else disk_tier,
                         'sizeInGb': int(node_group_config['volume_size']),
+                    },
+                    'diskAutoScaling': {
+                        "enabled": enable_disk_autoscaling
                     }
                 }
 
@@ -627,7 +630,10 @@ class CapellaTerraform(Terraform):
         return cluster_list
 
     def deploy_cluster(self):
-        specs = self.construct_capella_server_groups(self.infra_spec, self.node_list['clusters'])
+        specs = self.construct_capella_server_groups(
+            self.infra_spec,
+            self.node_list['clusters'],
+            self.options.enable_disk_autoscaling)
         names = ['perf-cluster-{}'.format(self.uuid) for _ in specs]
         if len(names) > 1:
             names = ['{}-{}'.format(name, i) for i, name in enumerate(names)]
@@ -1071,7 +1077,9 @@ class ServerlessTerraform(CapellaTerraform):
                         'specs': (
                             specs[0]
                             if (specs := self.construct_capella_server_groups(
-                                self.infra_spec, self.node_list['clusters']
+                                self.infra_spec,
+                                self.node_list['clusters'],
+                                self.options.enable_disk_autoscaling
                             ))
                             else None
                         )
@@ -1788,6 +1796,9 @@ def get_args():
                              'and utilities')
     parser.add_argument('-t', '--tag',
                         help='Global tag for launched instances.')
+    parser.add_argument('--enable-disk-autoscaling',
+                        action='store_true',
+                        help='Enables Capella disk autoscaling')
     parser.add_argument('override',
                         nargs='*',
                         help='custom cluster and/or test settings')

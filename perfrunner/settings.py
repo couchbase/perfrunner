@@ -1129,7 +1129,7 @@ class PhaseSettings:
 
     CONNSTR_PARAMS = "{'ipv6': 'allow', 'enable_tracing': 'false'}"
 
-    YCSB_CLIENT = 'couchbase3'
+    YCSB_CLIENT = 'couchbase2'
 
     DURABILITY = None
 

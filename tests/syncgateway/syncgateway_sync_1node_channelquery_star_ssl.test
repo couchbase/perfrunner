@@ -24,6 +24,7 @@ indexer.settings.storage_mode = memory_optimized
 [syncgateway]
 nodes = 1
 threads = 20
+sg_loader_threads = 100
 clients = 1
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank

@@ -25,6 +25,7 @@ indexer.settings.storage_mode = plasma
 [syncgateway]
 nodes = 4
 threads = 200
+sg_loader_threads = 200
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank

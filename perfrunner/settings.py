@@ -918,7 +918,12 @@ class CollectionSettings:
         }
 
         for bucket_scopes in coll_map.values():
-            bucket_scopes['_default'] = {}
+            bucket_scopes['_default'] = {
+                '_default': {
+                    'access': 0,
+                    'load': 0
+                }
+            }
 
         return coll_map
 

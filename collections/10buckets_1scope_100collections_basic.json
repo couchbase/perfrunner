@@ -1,6 +1,11 @@
 {
   "bucket-1":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -405,7 +410,12 @@
     }
   },
   "bucket-2":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -810,7 +820,12 @@
     }
   },
   "bucket-3":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -1215,7 +1230,12 @@
     }
   },
   "bucket-4":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -1620,7 +1640,12 @@
     }
   },
   "bucket-5":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -2025,7 +2050,12 @@
     }
   },
   "bucket-6":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -2430,7 +2460,12 @@
     }
   },
   "bucket-7":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -2835,7 +2870,12 @@
     }
   },
   "bucket-8":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -3240,7 +3280,12 @@
     }
   },
   "bucket-9":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,
@@ -3645,7 +3690,12 @@
     }
   },
   "bucket-10":{
-    "_default":{},
+    "_default":{
+      "_default": {
+          "access": 0,
+          "load": 0
+      }
+    },
     "scope-1":{
       "collection-1":{
         "access":1,

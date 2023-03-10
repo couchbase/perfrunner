@@ -1,6 +1,9 @@
 [infrastructure]
 provider = capella
 backend = aws
+cbc_env = stage
+cbc_tenant = 5ae82d34-5da8-4313-af5f-90ea4142a4c6
+cbc_project = 8de5c1bf-9647-49d6-a124-c9998ccdc1cd
 
 [clusters]
 couchbase1 =
@@ -29,7 +32,7 @@ storage_class = GP3
 instance_type = c5.4xlarge
 instance_capacity = 5
 volume_size = 500
-iops = 16000
+iops = 12000
 
 [ec2_node_group_2]
 instance_type = c5.24xlarge
@@ -54,4 +57,4 @@ ssh = root:couchbase
 os = Amazon Linux 2
 cpu = 16vCPU
 memory = 32GB
-disk = GP3, 500GB, 16000 IOPS
+disk = GP3, 500GB, 12000 IOPS

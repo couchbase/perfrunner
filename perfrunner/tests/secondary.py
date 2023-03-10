@@ -95,16 +95,14 @@ class SecondaryIndexTest(PerfTest):
             self.remote.client_drop_caches()
 
         self.build = self.rest.get_version(self.master_node)
-        if self.cluster_spec.cloud_infrastructure:
-            self.admin_auth = self.admin_creds(self.master_node)
+        self.admin_auth = self.admin_creds(self.master_node)
 
     def admin_creds(self, host: str):
         admin_credentials = self.cluster_spec.capella_admin_credentials
         username, password = '',  ''
-        if len(admin_credentials) > 0:
-            for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
-                if host in hostnames:
-                    username, password = admin_credentials[i]
+        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
+            if host in hostnames:
+                username, password = admin_credentials[i]
         return username, password
 
     def remove_statsfile(self):

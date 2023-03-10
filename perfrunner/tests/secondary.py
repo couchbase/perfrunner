@@ -97,6 +97,8 @@ class SecondaryIndexTest(PerfTest):
         self.build = self.rest.get_version(self.master_node)
         if self.cluster_spec.cloud_infrastructure:
             self.admin_auth = self.admin_creds(self.master_node)
+        else:
+            self.admin_auth = 'Administrator', 'password'
 
     def admin_creds(self, host: str):
         admin_credentials = self.cluster_spec.capella_admin_credentials

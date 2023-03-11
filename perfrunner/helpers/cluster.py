@@ -1244,7 +1244,7 @@ class ClusterManager:
         command_template = (
             'env/bin/aws ec2 describe-security-groups --region $AWS_REGION '
             '--filters Name=vpc-id,Values={} Name=group-name,Values=default '
-            '--query "SecurityGroups[*].GroupId '
+            '--query "SecurityGroups[*].GroupId" '
             '--output text'
         )
 

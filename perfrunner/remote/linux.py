@@ -58,26 +58,35 @@ class RemoteLinux(Remote):
     def detect_ubuntu_release(self):
         return run('lsb_release -sr').strip()
 
-    def run_cbindex_command(self, options):
+    def run_cbindex_command(self, options,  worker_home='/tmp/perfrunner'):
         cmd = "/opt/couchbase/bin/cbindex {options}".format(options=options)
         logger.info('Running: {}'.format(cmd))
         run(cmd, shell_escape=False, pty=False)
 
-    def build_index(self, index_node, indexes, is_ssl):
+    def run_cbindex_command_cloud(self, options, worker_home='/tmp/perfrunner'):
+        with cd(worker_home), cd('perfrunner'):
+            cmd = "ulimit -n 20000 && opt/couchbase/bin/cbindex {options}".format(options=options)
+            logger.info('Running: {}'.format(cmd))
+            run(cmd, shell_escape=False, pty=False)
+
+    def build_index(self, index_node, indexes, is_ssl, auth):
+        port = 8091
+        if is_ssl:
+            port = 18091
         options = \
-            "-auth=Administrator:password " \
-            "-server {index_node}:8091 " \
+            "-auth='{}:{}' " \
+            "-server {index_node}:{port} " \
             "-type build " \
-            "-indexes {all_indexes}".format(index_node=index_node,
+            "-indexes {all_indexes}".format(auth[0], auth[1], port=port, index_node=index_node,
                                             all_indexes=",".join(indexes))
         if is_ssl:
             put("root.pem", "/root/root.pem")
-            options = options + " -use_tls -cacert ./root.pem"
+            options = options + " -use_tools=true -cacert ./root.pem"
 
         output = self.run_cbindex_command(options)
         logger.info("Output of command {}".format(output))
 
-    def create_index(self, index_nodes, bucket, indexes, storage, is_ssl):
+    def create_index(self, index_nodes, bucket, indexes, storage, is_ssl, auth):
         # Remember what bucket:index was created
         bucket_indexes = []
 
@@ -88,12 +97,15 @@ class RemoteLinux(Remote):
             else:
                 fields = index_def
             fields_list = fields.split(",")
-
+            port = 8091
+            if is_ssl:
+                port = 18091
             options = \
-                "-auth=Administrator:password " \
-                "-server {index_node}:8091 " \
+                "-auth='{}:{}' " \
+                "-server {index_node}:{port} " \
                 "-type create " \
-                "-bucket {bucket} ".format(index_node=index_nodes[0], bucket=bucket)
+                "-bucket {bucket} ".format(auth[0], auth[1], port=port, index_node=index_nodes[0],
+                                           bucket=bucket)
             options += "-fields "
             for field in fields_list:
                 options += "\\\\\\`{}\\\\\\`,".format(field)
@@ -117,63 +129,86 @@ class RemoteLinux(Remote):
             bucket_indexes.append("{}:{}".format(bucket, index))
             if is_ssl:
                 put("root.pem", "/root/root.pem")
-                options = options + " -use_tls -cacert ./root.pem"
+                options = options + " -use_tools=true -cacert ./root.pem"
             self.run_cbindex_command(options)
 
         return bucket_indexes
 
-    def batch_create_index_collection(self, index_nodes, options, is_ssl):
+    def batch_create_index_collection(self, index_nodes, options, is_ssl, auth, is_cloud):
+        port = 8091
+        if is_ssl:
+            port = 18091
         batch_options = \
-            "-auth=Administrator:password " \
-            "-server {index_node}:8091 " \
+            "-auth='{}:{}' " \
+            "-server {index_node}:{port} " \
             "-type batch_process " \
-            "-input /tmp/batch.txt " \
-            "-refresh_settings=true".format(index_node=index_nodes[0])
-        if is_ssl:
-            batch_options = batch_options + " -use_tls -cacert ./root.pem"
+            "-input /tmp/batch.txt ".format(auth[0], auth[1], port=port, index_node=index_nodes[0])
         with open("/tmp/batch.txt", "w+") as bf:
             bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
-        if is_ssl:
+        if is_ssl and not is_cloud:
             put("root.pem", "/root/root.pem")
-        self.run_cbindex_command(batch_options)
+            batch_options = batch_options + " -use_tls -cacert ./root.pem"
+            self.run_cbindex_command(batch_options)
+        elif is_cloud:
+            put("root.pem", "/root/root.pem")
+            batch_options = batch_options + " -use_tools=true -cacert ./root.pem"
+            self.run_cbindex_command_cloud(batch_options)
+        else:
+            self.run_cbindex_command(batch_options)
 
-    def batch_build_index_collection(self, index_nodes, options, is_ssl):
-        batch_options = \
-            "-auth=Administrator:password " \
-            "-server {index_node}:8091 " \
-            "-type batch_build " \
-            "-input /tmp/batch.txt " \
-            "-refresh_settings=true".format(index_node=index_nodes[0])
+    def batch_build_index_collection(self, index_nodes, options, is_ssl, auth, is_cloud):
+        port = 8091
         if is_ssl:
-            batch_options = batch_options + " -use_tls -cacert ./root.pem"
+            port = 18091
+        batch_options = \
+            "-auth='{}:{}' " \
+            "-server {index_node}:{port} " \
+            "-type batch_build " \
+            "-input /tmp/batch.txt ".format(auth[0], auth[1], port=port, index_node=index_nodes[0])
         with open("/tmp/batch.txt", "w+") as bf:
             bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
-        if is_ssl:
+        if is_ssl and not is_cloud:
             put("root.pem", "/root/root.pem")
-        output = self.run_cbindex_command(batch_options)
+            batch_options = batch_options + " -use_tls -cacert ./root.pem"
+        if not is_cloud:
+            output = self.run_cbindex_command(batch_options)
+        else:
+            put("root.pem", "/root/root.pem")
+            batch_options = batch_options + " -use_tools=true -cacert ./root.pem"
+            output = self.run_cbindex_command_cloud(batch_options)
         logger.info("Output of command {}".format(output))
 
     @master_server
-    def build_secondary_index(self, index_nodes, bucket, indexes, storage, is_ssl):
+    def build_secondary_index(self, index_nodes, bucket, indexes, storage, is_ssl, auth):
         logger.info('building secondary indexes')
 
         # Create index but do not build
-        bucket_indexes = self.create_index(index_nodes, bucket, indexes, storage, is_ssl)
+        bucket_indexes = self.create_index(index_nodes, bucket, indexes, storage, is_ssl, auth)
 
         # build indexes
-        self.build_index(index_nodes[0], bucket_indexes, is_ssl)
+        self.build_index(index_nodes[0], bucket_indexes, is_ssl, auth)
 
     @master_server
-    def create_secondary_index_collections(self, index_nodes, options, is_ssl):
+    def create_secondary_index_collections(self, index_nodes, options, is_ssl, auth):
         logger.info('creating secondary indexes')
-        self.batch_create_index_collection(index_nodes, options, is_ssl)
+        self.batch_create_index_collection(index_nodes, options, is_ssl, auth, is_cloud=False)
+
+    @master_client
+    def create_secondary_index_collections_cloud(self, index_nodes, options, is_ssl, auth):
+        logger.info('creating secondary indexes')
+        self.batch_create_index_collection(index_nodes, options, is_ssl, auth, is_cloud=True)
 
     @master_server
-    def build_secondary_index_collections(self, index_nodes, options, is_ssl):
+    def build_secondary_index_collections(self, index_nodes, options, is_ssl, auth):
         logger.info('building secondary indexes')
-        self.batch_build_index_collection(index_nodes, options, is_ssl)
+        self.batch_build_index_collection(index_nodes, options, is_ssl, auth, is_cloud=False)
+
+    @master_client
+    def build_secondary_index_collections_cloud(self, index_nodes, options, is_ssl, auth):
+        logger.info('building secondary indexes')
+        self.batch_build_index_collection(index_nodes, options, is_ssl, auth, is_cloud=True)
 
     @all_servers
     def reset_swap(self):
@@ -710,6 +745,33 @@ class RemoteLinux(Remote):
                 cmdstr += " -cpuprofile cpuprofile.prof -memprofile memprofile.prof "
             if is_ssl:
                 cmdstr += " -use_tls -cacert ./root.pem"
+            if run_in_background:
+                cmdstr += " &"
+            logger.info('To be applied: {}'.format(cmdstr))
+            status = run(cmdstr)
+            return status
+
+    @master_client
+    def run_cbindexperf_cloud(self, path_to_tool: str, node: str,
+                              rest_username: str,
+                              rest_password: str, configfile: str,
+                              worker_home: str,
+                              run_in_background: bool = False,
+                              collect_profile: bool = True,
+                              is_ssl: bool = False):
+        with cd(worker_home), cd('perfrunner'):
+            logger.info('Initiating scan workload')
+            port = 8091
+            if is_ssl:
+                port = 18091
+            cmdstr = "ulimit -n 20000 && {} -cluster {}:{} -auth=\"{}:{}\" -configfile {} " \
+                     "-resultfile result.json " \
+                     "-statsfile /root/statsfile" \
+                .format(path_to_tool, node, port, rest_username, rest_password, configfile)
+            if collect_profile:
+                cmdstr += " -cpuprofile cpuprofile.prof -memprofile memprofile.prof "
+            if is_ssl:
+                cmdstr += " -use_tools=true -cacert ./root.pem"
             if run_in_background:
                 cmdstr += " &"
             logger.info('To be applied: {}'.format(cmdstr))

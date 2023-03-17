@@ -2754,6 +2754,16 @@ class SyncgatewaySettings:
         return str(self.__dict_)
 
 
+class DiagEvalSettings:
+
+    DEFAULT_RESTART_DELAY = 5  # seconds
+
+    def __init__(self, options: dict, enable_nonlocal_diag_eval: bool):
+        self.restart_delay = int(options.get('restart_delay', self.DEFAULT_RESTART_DELAY))
+        self.payloads = options.get('payloads').strip().split('\n')
+        self.enable_nonlocal_diag_eval = enable_nonlocal_diag_eval
+
+
 class TestConfig(Config):
 
     def _configure_phase_settings(method):  # noqa: N805
@@ -2816,6 +2826,25 @@ class TestConfig(Config):
     def users(self) -> UserSettings:
         options = self._get_options_as_dict('users')
         return UserSettings(options)
+
+    @property
+    def diag_eval(self) -> DiagEvalSettings:
+        """Specify arbitrary diag/eval payload to be run during cluster configuration.
+
+        This can be specified as follows
+        ```
+        [diag_eval]
+        payloads =
+                  ns_config:set(option, value).
+                  ns_config:command(option, value).
+        restart_delay = N
+        ```
+        Multiple command can also be specified on one line separated by comma.
+        """
+        # If there are bucket_extras, then nonlocal diag/eval is already enabled
+        enable_nonlocal_diag_eval = False if self.bucket_extras else True
+        diag_evals = self._get_options_as_dict('diag_eval')
+        return DiagEvalSettings(diag_evals, enable_nonlocal_diag_eval)
 
     @property
     def bucket_extras(self) -> dict:

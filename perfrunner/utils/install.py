@@ -118,6 +118,7 @@ class OperatorInstaller:
                 .format(self.exporter_version)
 
         self.node_count = len(self.cluster_spec.infrastructure_clusters['couchbase1'].split())
+        self.refresh_rate = self.cluster_spec.infrastructure_settings.get('refresh_rate', '60')
 
         self.remote = RemoteHelper(cluster_spec)
 
@@ -159,8 +160,8 @@ class OperatorInstaller:
         self.create_config()
         self.wait_for_operator_and_admission()
         self.create_auth()
-        self.create_cluster()
-        self.wait_for_cluster()
+        # At this stage, just prepare the cb cluster config, but dont deploy anything
+        self.create_cluster_config()
 
     def install_celery_broker(self):
         logger.info("installing celery broker")
@@ -215,24 +216,21 @@ class OperatorInstaller:
         logger.info("creating auth")
         self.remote.create_from_file(self.auth_path)
 
-    def create_cluster(self):
-        logger.info("creating couchbase cluster")
-        self.remote.create_couchbase_cluster(
+    def create_cluster_config(self):
+        logger.info("preparing couchbase cluster config")
+        self.remote.create_couchbase_cluster_config(
             self.template_cb_cluster_path,
             self.cb_cluster_path,
             self.couchbase_tag,
             self.operator_backup_tag,
             self.exporter_tag,
-            self.node_count)
+            self.node_count,
+            self.refresh_rate)
 
     def wait_for_operator_and_admission(self):
         logger.info("waiting for operator and admission controller")
         self.remote.wait_for_admission_controller_ready()
         self.remote.wait_for_operator_ready()
-
-    def wait_for_cluster(self):
-        logger.info("waiting for cluster")
-        self.remote.wait_for_couchbase_pods_ready(self.node_count)
 
     def create_rabbitmq_operator(self):
         logger.info("creating rabbitmq operator")
@@ -411,7 +409,7 @@ class CouchbaseInstaller:
             return split[1]
 
     def find_package(self, edition: str,
-                     package: str = None, os_release: str = None) -> [str, str]:
+                     package: str = None, os_release: str = None) -> str:
         for url in self.url_iterator(edition, package, os_release):
             if self.is_exist(url):
                 return url

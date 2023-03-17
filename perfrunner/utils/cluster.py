@@ -72,6 +72,19 @@ def main():
         cm.enable_auto_failover()
         cm.configure_auto_compaction()
         cm.configure_autoscaling()
+
+        # We need to run cluster configuration first before buckets for k8s,
+        # as we dont have a cluster at this point
+        cm.set_index_settings()
+        # Now we have a complete cluster file, with all needed configurations
+        cm.deploy_couchbase_cluster()
+        # Now create buckets and users
+        cm.create_buckets()
+        cm.add_rbac_users()
+
+        cm.wait_until_healthy()
+
+        return  # Nothing todo with k8s after this
     else:
         # Individual nodes
         # cm.serverless_mode()

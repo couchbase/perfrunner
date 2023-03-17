@@ -1656,25 +1656,6 @@ class GCPDeployer(Deployer):
         logger.info("Infrastructure deployment complete.")
 
 
-# Allow setting exporter parameters in K8s spec file.
-def set_operator_yaml_parameters(infra_spec):
-    logger.info("Setting 2.4 exporter parameters")
-    settings = infra_spec.infrastructure_settings
-
-    # Default exporter version and refresh rate if none provided.
-    exporter_version = settings.get('exporter_version', '1.0.7')
-    refresh_rate = settings.get('refresh_rate', '60')
-
-    with open('cloud/operator/2/4/couchbase-cluster_template.yaml', 'r') as file:
-        filedata = file.read()
-
-    filedata = filedata.replace('X.X.X', exporter_version)
-    filedata = filedata.replace('XX', refresh_rate)
-
-    with open('cloud/operator/2/4/couchbase-cluster_template.yaml', 'w') as file:
-        file.write(filedata)
-
-
 def get_args():
     parser = ArgumentParser()
 
@@ -1717,8 +1698,6 @@ def main():
     if infra_spec.cloud_infrastructure:
         infra_provider = infra_spec.infrastructure_settings['provider']
         if infra_provider == 'aws':
-            if infra_spec.infrastructure_settings['type'] == 'kubernetes':
-                set_operator_yaml_parameters(infra_spec)
             deployer = AWSDeployer(infra_spec, args)
         elif infra_provider == 'azure':
             deployer = AzureDeployer(infra_spec, args)

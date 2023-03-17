@@ -32,7 +32,6 @@ class RemoteKubernetes(Remote):
 
         if cluster_spec.cloud_provider == 'openshift':
             self.k8s_client = self._oc
-            self._oc_login()
         else:
             self.k8s_client = self._kubectl
 
@@ -82,12 +81,6 @@ class RemoteKubernetes(Remote):
 
     def kubectl_exec(self, pod, params):
         return self.k8s_client("exec {} -- bash -c {}".format(pod, params))
-
-    def _oc_login(self):
-        return self.k8s_client('login -u {} -p {} {}'
-                               .format(self.cluster_spec.ssh_credentials[0],
-                                       self.cluster_spec.ssh_credentials[1],
-                                       self.cluster_spec.infrastructure_settings.get('domain')))
 
     def create_namespace(self, name):
         self.k8s_client("create namespace {}".format(name))
@@ -201,22 +194,23 @@ class RemoteKubernetes(Remote):
                                 admission_controller_tag)
         self.create_from_file(config_path)
 
-    def create_couchbase_cluster(self,
-                                 template_cb_cluster_path,
-                                 cb_cluster_path,
-                                 couchbase_tag,
-                                 operator_tag,
-                                 exporter_tag,
-                                 node_count):
+    def create_couchbase_cluster_config(self,
+                                        template_cb_cluster_path: str,
+                                        cb_cluster_path: str,
+                                        couchbase_tag: str,
+                                        operator_tag: str,
+                                        exporter_tag: str,
+                                        node_count: str,
+                                        refresh_rate: str):
         misc.copy_template(template_cb_cluster_path,
                            cb_cluster_path)
         misc.inject_cluster_tags(cb_cluster_path,
                                  couchbase_tag,
                                  operator_tag,
-                                 exporter_tag)
+                                 exporter_tag,
+                                 refresh_rate)
         misc.inject_server_count(cb_cluster_path,
                                  node_count)
-        self.create_from_file(cb_cluster_path)
 
     def delete_secret(self, secret_name, ignore_errors=True):
         try:
@@ -262,6 +256,10 @@ class RemoteKubernetes(Remote):
         raw_cluster = self.k8s_client("get cbc cb-example-perf -o json", split_lines=False)
         cluster = json.loads(raw_cluster.decode('utf8'))
         return cluster
+
+    def get_cluster_config(self):
+        with open(self.get_cluster_path()) as file:
+            return yaml.safe_load(file)
 
     def get_backups(self):
         raw_backups = self.k8s_client("get couchbasebackups -o json", split_lines=False)
@@ -327,23 +325,14 @@ class RemoteKubernetes(Remote):
                                     self.operator_version.split(".")[1],
                                     self.bucket_template_file)
 
-    def update_cluster_config(self, cluster, timeout=1200, reboot=False):
+    # This function just updates the local configuration files, no changes are applied to remote
+    def update_cluster_config(self, cluster: dict):
         cluster_path = self.get_cluster_path()
-        if reboot:
-            logger.info("Deleting and recreating the cluster")
-            self.delete_cluster()
-            self.wait_for_pods_deleted('cb-example', timeout=timeout)
-            cluster['metadata'] = {'name': 'cb-example-perf'}
-            cluster.pop('status', None)
-            self.dump_config_to_yaml_file(cluster, cluster_path)
-            self.create_cluster()
-            self.wait_for_cluster_ready(timeout=timeout)
-        else:
-            logger.info("Updating existing cluster config")
-            cluster['metadata'] = self.sanitize_meta(cluster['metadata'])
-            self.dump_config_to_yaml_file(cluster, cluster_path)
-            self.k8s_client('replace -f {}'.format(cluster_path))
-            self.wait_for_cluster_ready(timeout=timeout)
+        self.dump_config_to_yaml_file(cluster, cluster_path)
+
+    def create_couchbase_cluster(self):
+        cluster_path = self.get_cluster_path()
+        self.create_from_file(cluster_path)
 
     def update_bucket_config(self, bucket, timeout=1200):
         cluster_path = self.get_cluster_path()
@@ -709,7 +698,7 @@ class RemoteKubernetes(Remote):
         with open(autoscaler_path, 'r') as file:
             autoscaler = yaml.load(file, Loader=yaml.FullLoader)
 
-        cluster = self.get_cluster()
+        cluster = self.get_cluster_config()
         cluster_name = cluster['metadata']['name']
         autoscaler['spec']['scaleTargetRef']['name'] = "{}.{}".format(server_group, cluster_name)
         autoscaler['spec']['minReplicas'] = min_nodes

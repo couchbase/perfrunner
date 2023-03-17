@@ -791,11 +791,11 @@ class ProvisionedCapellaRestore(ProvisionedCapellaBackup):
         self.rest.flush_bucket(self.master_node, self.test_config.buckets[0])
 
     def backup(self):
-        self.rest.backup(self.master_node)
+        self.rest.backup(self.master_node, self.test_config.buckets[0])
         self.rest.wait_for_backup(self.master_node)
 
     def trigger_restore(self):
-        self.rest.restore(self.master_node)
+        self.rest.restore(self.master_node, self.test_config.buckets[0])
         self.rest.wait_for_restore_initialize(self.master_node, self.test_config.buckets[0])
 
     @with_stats

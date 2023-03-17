@@ -1502,8 +1502,8 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
 
     @with_stats
     @with_profiles
-    def rebalance_indexer(self):
-        self.rebalance(services="index")
+    def rebalance_indexer(self, services="index"):
+        self.rebalance(services)
 
     def _report_kpi(self,
                     percentile_latencies=0,

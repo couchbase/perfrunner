@@ -190,6 +190,15 @@ class CapellaRebalanceKVTest(RebalanceKVTest, CapellaRebalanceTest):
         super().post_rebalance()
         self.worker_manager.abort()
 
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
 
 class RebalanceKVCompactionTest(RebalanceKVTest):
     def run(self):

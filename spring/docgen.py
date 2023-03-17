@@ -3,6 +3,7 @@ import json
 import math
 import random
 import time
+import uuid
 from datetime import date, datetime, timedelta
 from typing import Iterator, List, Tuple
 
@@ -2375,3 +2376,24 @@ class HighCompressibleDocument(Document):
                 }
             }
         }
+
+
+class YuboDoc(Document):
+    def __init__(self, avg_size: int):
+        super().__init__(avg_size)
+        self.fk = Faker()
+        Faker.seed(1000)
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        doc = {
+            "linked_uid": str(uuid.uuid4()) + str(uuid.uuid4()),
+            "count": self.fk.random_int(),
+            "last_seen": str(self.fk.date_time()),
+            "uid": str(uuid.uuid4()) + str(uuid.uuid4()),
+            "swipe_date": str(self.fk.date_time())
+        }
+        doc_b = json.dumps(doc).encode("utf-8")
+        current_size = len(doc_b)
+        doc["comment"] = self.build_string(alphabet, self.avg_size - current_size)
+        return doc

@@ -1,0 +1,49 @@
+[test_case]
+test = perfrunner.tests.secondarycloud.SecondaryRebalanceOnlyTest
+
+[showfast]
+title = Swap-Rebalance (min), 1 -> 1, 1 bucket x 384M x 1KB
+component = secondarycloud
+sub_category = PlasmaDGM
+
+[cluster]
+mem_quota = 12800
+index_mem_quota = 123000
+initial_nodes = 6
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 384000000
+size = 1024
+workers = 80
+key_fmtr = hex
+doc_gen = yubo
+ssl_mode = capella
+
+[rebalance]
+nodes_after = 6
+start_after = 300
+stop_after = 300
+swap = 1
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[index]
+statements =
+    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 }
+    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 }
+    CREATE INDEX `adv_linked_uid_no_count` ON `bucket-1`.`_default`.`_default`(`linked_uid`, `last_seen` DESC,`uid` DESC) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 }
+    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`_default`.`_default`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH { "num_replica":1, "num_partition":8 };
+    CREATE INDEX `swipes_partitioned_linked_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 };
+    CREATE INDEX `swipes_partitioned_uid` ON `bucket-1`.`_default`.`_default`(`uid`) PARTITION BY hash(`uid`) WITH { "num_replica":1, "num_partition":8 };
+
+[clients]
+python_client = 3.2.7

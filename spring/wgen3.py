@@ -76,6 +76,7 @@ from spring.docgen import (
     UniformKey,
     VaryingItemSizePlasmaDocument,
     WorkingSetKey,
+    YuboDoc,
     ZipfKey,
 )
 from spring.querygen3 import N1QLQueryGen3, ViewQueryGen3, ViewQueryGenByType3
@@ -366,6 +367,8 @@ class Worker:
                                         self.ws.item_size)
         elif self.ws.doc_gen == 'high_compressible':
             self.docs = HighCompressibleDocument(self.ws.size)
+        elif self.ws.doc_gen == 'yubo':
+            self.docs = YuboDoc(self.ws.size)
 
     def init_db(self):
         workload_client = CBGen3

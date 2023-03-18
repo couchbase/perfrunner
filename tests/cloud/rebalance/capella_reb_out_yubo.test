@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondarycloud.SecondaryRebalanceOnlyTest
 
 [showfast]
-title = Swap-Rebalance (min), 1 -> 1, 1 bucket x 384M x 1KB
+title = Swap-Rebalance (min), 3 -> 2, 1 bucket x 384M x 1KB
 component = secondarycloud
 sub_category = PlasmaDGM
 
@@ -28,10 +28,9 @@ doc_gen = yubo
 ssl_mode = capella
 
 [rebalance]
-nodes_after = 6
+nodes_after = 5
 start_after = 300
 stop_after = 300
-swap = 1
 
 [secondary]
 indexer.settings.storage_mode = plasma

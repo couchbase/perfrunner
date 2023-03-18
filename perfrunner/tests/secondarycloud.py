@@ -13,7 +13,7 @@ from perfrunner.helpers.local import (
 from perfrunner.helpers.misc import SGPortRange
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
-from perfrunner.tests.secondary import SecondaryRebalanceTest
+from perfrunner.tests.rebalance import CapellaRebalanceTest
 from spring.docgen import decimal_fmtr
 
 
@@ -411,7 +411,7 @@ class SecondaryIndexCloudTest(PerfTest):
         return scansps, rowps
 
 
-class SecondaryRebalanceOnlyTest(SecondaryRebalanceTest):
+class SecondaryRebalanceOnlyTest(CapellaRebalanceTest):
 
     COLLECTORS = {'secondary_stats': True,
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
@@ -419,6 +419,11 @@ class SecondaryRebalanceOnlyTest(SecondaryRebalanceTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
+
+    @with_stats
+    @with_profiles
+    def rebalance_indexer(self, services="index"):
+        self.rebalance(services)
 
     def run(self):
         self.load()

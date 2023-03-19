@@ -37,12 +37,12 @@ indexer.settings.storage_mode = plasma
 
 [index]
 statements =
-    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 }
-    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 }
-    CREATE INDEX `adv_linked_uid_no_count` ON `bucket-1`.`_default`.`_default`(`linked_uid`, `last_seen` DESC,`uid` DESC) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 }
-    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`_default`.`_default`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH { "num_replica":1, "num_partition":8 };
-    CREATE INDEX `swipes_partitioned_linked_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 };
-    CREATE INDEX `swipes_partitioned_uid` ON `bucket-1`.`_default`.`_default`(`uid`) PARTITION BY hash(`uid`) WITH { "num_replica":1, "num_partition":8 };
+    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH { "defer_build": true, "num_replica":1, "num_partition":8 }
+    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH { "defer_build": true, "num_replica":1, "num_partition":8 }
+    CREATE INDEX `adv_linked_uid_no_count` ON `bucket-1`.`_default`.`_default`(`linked_uid`, `last_seen` DESC,`uid` DESC) PARTITION BY hash(`linked_uid`) WITH { "defer_build": true, "num_replica":1, "num_partition":8 }
+    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`_default`.`_default`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH { "defer_build": true, "num_replica":1, "num_partition":8 };
+    CREATE INDEX `swipes_partitioned_linked_uid` ON `bucket-1`.`_default`.`_default`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH { "defer_build": true, "num_replica":1, "num_partition":8 };
+    CREATE INDEX `swipes_partitioned_uid` ON `bucket-1`.`_default`.`_default`(`uid`) PARTITION BY hash(`uid`) WITH { "defer_build": true, "num_replica":1, "num_partition":8 };
 
 [clients]
 python_client = 3.2.7

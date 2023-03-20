@@ -1,6 +1,6 @@
 [infrastructure]
-provider = capella
-backend = gcp
+provider = gcp
+type = gce
 
 [clusters]
 couchbase1 = 
@@ -8,8 +8,6 @@ couchbase1 =
 	gce.gce_cluster_1.gce_node_group_1.2:kv
 	gce.gce_cluster_1.gce_node_group_1.3:kv
 	gce.gce_cluster_1.gce_node_group_2.1:index,n1ql
-	gce.gce_cluster_1.gce_node_group_2.2:index,n1ql
-	gce.gce_cluster_1.gce_node_group_2.3:index,n1ql
 
 [clients]
 workers1 = 
@@ -33,7 +31,7 @@ volume_type = pd-ssd
 
 [gce_node_group_2]
 instance_type = n2-highmem-32
-instance_capacity = 3
+instance_capacity = 1
 volume_size = 1000
 volume_type = pd-ssd
 
@@ -53,7 +51,7 @@ data = /data
 backup = gs://perftest-gcp-backup
 
 [credentials]
-rest = Administrator:Password123!
+rest = Administrator:password
 ssh = root:couchbase
 
 [parameters]
@@ -61,4 +59,3 @@ OS = CentOS 7
 CPU = 8vCPU
 Memory = 64GB
 Disk = pd-ssd 1TB 21000 IOPS
-

@@ -1,10 +1,11 @@
 import copy
 import json
 import subprocess
+import threading
 import time
 
 from logger import logger
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import (
     get_indexer_heap_profile,
     read_aws_credential,
@@ -411,7 +412,7 @@ class SecondaryIndexCloudTest(PerfTest):
         return scansps, rowps
 
 
-class SecondaryRebalanceOnlyTest(CapellaRebalanceTest):
+class CapellaSecondaryRebalanceOnlyTest(CapellaRebalanceTest):
 
     COLLECTORS = {'secondary_stats': True,
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
@@ -419,6 +420,74 @@ class SecondaryRebalanceOnlyTest(CapellaRebalanceTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
+
+    @timeit
+    def _rebalance(self, services):
+        master = self.master_node
+        rebalance_config = self.rebalance_settings.rebalance_config
+
+        new_cluster_config = {
+            'specs': json.load(rebalance_config)
+        }
+
+        self.rest.update_cluster_configuration(master, new_cluster_config)
+        self.monitor.wait_for_rebalance_to_begin(master)
+        self.monitor_progress(master)
+
+    def create_indexes(self):
+        logger.info('Creating and building indexes')
+        if not self.test_config.index_settings.couchbase_fts_index_name:
+            create_statements = []
+            build_statements = []
+
+            for statement in self.test_config.index_settings.statements:
+                check_stmt = statement.replace(" ", "").upper()
+                if 'CREATEINDEX' in check_stmt \
+                        or 'CREATEPRIMARYINDEX' in check_stmt:
+                    create_statements.append(statement)
+                elif 'BUILDINDEX' in check_stmt:
+                    build_statements.append(statement)
+
+            queries = []
+            for statement in create_statements:
+                logger.info('Creating index: ' + statement)
+                queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+
+            for query in queries:
+                query.start()
+
+            for query in queries:
+                query.join()
+
+            queries = []
+            for statement in build_statements:
+                logger.info('Building index: ' + statement)
+                queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+
+            for query in queries:
+                query.start()
+
+            for query in queries:
+                query.join()
+
+            logger.info('Index Create and Build Complete')
+        else:
+            self.create_fts_index_n1ql()
+
+    def execute_index(self, statement):
+        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+        cont = False
+        while not cont:
+            building = 0
+            index_status = self.rest.get_index_status(self.index_nodes[0])
+            index_list = index_status['status']
+            for index in index_list:
+                if index['status'] != "Ready" and index['status'] != "Created":
+                    building += 1
+            if building < 10:
+                cont = True
+            else:
+                time.sleep(10)
 
     @with_stats
     @with_profiles
@@ -431,14 +500,6 @@ class SecondaryRebalanceOnlyTest(CapellaRebalanceTest):
 
         self.create_indexes()
         self.wait_for_indexing()
-        for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
-
         self.rebalance_indexer(services="index,n1ql")
-        logger.info("Indexes after rebalance")
         logger.info("Rebalance time: {}".format(self.rebalance_time))
-        for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
         self.report_kpi(rebalance_time=True)

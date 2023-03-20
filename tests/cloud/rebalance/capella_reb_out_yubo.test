@@ -1,13 +1,13 @@
 [test_case]
-test = perfrunner.tests.secondarycloud.SecondaryRebalanceOnlyTest
+test = perfrunner.tests.secondarycloud.CapellaSecondaryRebalanceOnlyTest
 
 [showfast]
-title = Swap-Rebalance (min), 3 -> 2, 1 bucket x 384M x 1KB
+title = Swap-Rebalance (min), 3 -> 3, 1 bucket x 1.6B x 230B
 component = secondarycloud
 sub_category = PlasmaDGM
 
 [cluster]
-mem_quota = 61440
+mem_quota = 54000
 index_mem_quota = 123000
 initial_nodes = 6
 num_buckets = 1
@@ -34,20 +34,18 @@ ssl_mode = capella
 nodes_after = 5
 start_after = 300
 stop_after = 300
+rebalance_config = tests/gsi/elixir/rebalance_config/disk_scaling.json
 
 [secondary]
 indexer.settings.storage_mode = plasma
 
 [index]
 statements =
-    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` ON `bucket-1`.`users`.`swipes`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8 };
-    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` ON `bucket-1`.`users`.`views`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {  "defer_build":true, "num_replica":1, "num_partition":8 };
-    CREATE INDEX `adv_linked_uid_no_count` ON `bucket-1`.`users`.`views`(`linked_uid`, `last_seen` DESC,`uid` DESC) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 };
-    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`users`.`swipes`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH { "num_replica":1, "num_partition":8 };
-    CREATE INDEX `swipes_partitioned_linked_uid` ON `bucket-1`.`users`.`swipes`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH {  "defer_build":true, "num_replica":1, "num_partition":8 };
-    CREATE INDEX `swipes_partitioned_uid` ON `bucket-1`.`users`.`swipes`(`uid`) PARTITION BY hash(`uid`) WITH { "num_replica":1, "num_partition":8 };
-    CREATE INDEX `views_partitioned_linked_uid` ON `bucket-1`.`users`.`views`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH { "num_replica":1, "num_partition":8 };
-    CREATE INDEX `views_partitioned_uid` ON `bucket-1`.`users`.`views`(`uid`) PARTITION BY hash(`uid`) WITH {  "num_replica":1, "num_partition":8 };
+    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` ON `bucket-1`.`users`.`swipes`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":3 };
+    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` ON `bucket-1`.`users`.`views`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {  "defer_build":true, "num_replica":1, "num_partition":3 };
+    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`users`.`swipes`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH { "num_replica":1, "num_partition":3 };
+    BUILD INDEX on `bucket-1`.`users`.`swipes`(adv_linked_uidDESC_swipe_dateDESC_uid,adv_uid_swipe_dateDESC_linked_uidDESC)
+    BUILD INDEX on `bucket-1`.`users`.`views`(adv_linked_uid_countDESC_last_seenDESC_uid)
 
 [clients]
 python_client = 3.2.7

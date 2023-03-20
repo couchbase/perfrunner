@@ -70,6 +70,7 @@ from spring.docgen import (
     SmallPlasmaDocument,
     SmallPlasmaGroupedDocument,
     String,
+    TimeSeriesDocument,
     TimestampDocument,
     TpcDsDocument,
     UniformKey,
@@ -314,6 +315,14 @@ class Worker:
             self.docs = HighCompressibleDocument(self.ws.size)
         elif self.ws.doc_gen == 'time_stamp_doc':
             self.docs = TimestampDocument(self.ws.size)
+        elif self.ws.doc_gen == 'time_series':
+            self.docs = TimeSeriesDocument(self.ws.size,
+                                           self.ws.timeseries_regular,
+                                           self.ws.timeseries_start,
+                                           self.ws.timeseries_hours_per_doc,
+                                           self.ws.timeseries_docs_per_device,
+                                           self.ws.timeseries_total_days,
+                                           self.ws.timeseries_enable)
 
     def init_db(self):
         params = {

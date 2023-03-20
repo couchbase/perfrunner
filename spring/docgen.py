@@ -2416,3 +2416,60 @@ class TimestampDocument(PlasmaDocument):
         return {
             'time': round(time.time())
         }
+
+
+class TimeSeriesDocument(Document):
+
+    def __init__(self, avg_size: int, timeseries_regular: bool, timeseries_start: int,
+                 timeseries_hours_per_doc: int, timeseries_docs_per_device: int,
+                 timeseries_total_days: int, timeseries_enable: bool):
+        super().__init__(avg_size)
+        self.timeseries_regular = timeseries_regular
+        self.timeseries_start = timeseries_start
+        self.timeseries_hours_per_doc = timeseries_hours_per_doc
+        self.timeseries_docs_per_device = timeseries_docs_per_device
+        self.timeseries_total_days = timeseries_total_days
+        self.timeseries_enable = timeseries_enable
+
+    def next(self, key: Key) -> dict:
+        current_item = int(key.string.split('-')[1])
+        device_id = "Device-" + str(int(current_item / self.timeseries_docs_per_device))
+        timeseries_id = current_item % self.timeseries_docs_per_device
+
+        if self.timeseries_enable:
+            milliseconds_per_doc = 3600000 * self.timeseries_hours_per_doc
+            ts_start = self.timeseries_start + timeseries_id * milliseconds_per_doc
+            ts_end = self.timeseries_start + (timeseries_id + 1) * milliseconds_per_doc - 1000
+
+            doc = {
+                "ts_start": ts_start,
+                "ts_end": ts_end,
+                "device": device_id,
+                "ts_data": []
+            }
+
+            if self.timeseries_regular:
+                doc["ts_interval"] = 1000
+                for i in range(3600 * self.timeseries_hours_per_doc):
+                    doc["ts_data"].append([round(random.uniform(0, 50), 2),
+                                           round(random.uniform(50, 100), 2),
+                                           round(random.uniform(100, 150), 2)])
+            else:
+                doc["ts_interval"] = 0
+                for i in range(3600 * self.timeseries_hours_per_doc):
+                    timestamp = ts_start + i * 1000
+                    doc["ts_data"].append([timestamp,
+                                           round(random.uniform(0, 50), 2),
+                                           round(random.uniform(50, 100), 2),
+                                           round(random.uniform(100, 150), 2)])
+        else:
+            timestamp = self.timeseries_start + timeseries_id * 1000
+            doc = {
+                "_t": timestamp,
+                "device": device_id,
+                "_v0": round(random.uniform(0, 50), 2),
+                "_v1": round(random.uniform(50, 100), 2),
+                "_v2": round(random.uniform(100, 150), 2)
+            }
+
+        return doc

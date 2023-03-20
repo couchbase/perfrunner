@@ -1,3 +1,4 @@
+import ast
 import re
 from itertools import cycle
 from typing import List, Tuple
@@ -236,7 +237,8 @@ class N1QLQueryGen3:
                 n1ql_queries.append((query['statement'], query['args'],
                                      query.get('scan_consistency'), query.get('ad_hoc'),
                                      query.get('total_batches'),
-                                     query.get('qualified_batches')))
+                                     query.get('qualified_batches'),
+                                     query.get('ts_config')))
         if 'total_batches' in queries[0].keys():
             random.shuffle(n1ql_queries)
         self.queries = cycle(n1ql_queries)
@@ -254,8 +256,8 @@ class N1QLQueryGen3:
 
     def next(self, key: str, doc: dict, replace_targets: dict = None,
              use_query_context: bool = False) -> Tuple[str, QueryOptions]:
-        statement, args, scan_consistency, ad_hoc, total_batches, qualified_batches = \
-            next(self.queries)
+        statement, args, scan_consistency, ad_hoc, total_batches, qualified_batches,\
+            ts_config = next(self.queries)
         query_context = None
         if replace_targets:
             if "TARGET_BUCKET" in statement:
@@ -285,6 +287,22 @@ class N1QLQueryGen3:
             start = random.randint(0, int(total_batches) - int(qualified_batches))
             end = start + int(qualified_batches) - 1
             args = [start, end]
+        elif 'timeseries' in args:
+            ts_config = ast.literal_eval(ts_config)
+            device_start_range = ts_config['total_devices'] - 1 - ts_config['device_range']
+            device_start_id = random.randint(0, device_start_range)
+            device1 = "Device-" + str(device_start_id)
+            device2 = "Device-" + str(device_start_id + ts_config['device_range'])
+            if ts_config['ts_range'] >= 24:
+                # if ts_range is more than 24 hours, ts_start will start at 00:00
+                ts_start_range = int((ts_config['total_ts_range'] - ts_config['ts_range'])/24) - 1
+                ts_start = ts_config['ts_start'] + random.randint(0, ts_start_range) * 86400000
+            else:
+                ts_start_range = ts_config['total_ts_range'] - 1 - ts_config['ts_range']
+                ts_start = ts_config['ts_start'] + random.randint(0, ts_start_range) * 3600000
+            ts_end = ts_start + int(ts_config['ts_range']) * 3600000 - 1000
+            ts_ranges = [ts_start, ts_end]
+            args = [ts_ranges, device1, device2, ts_start, ts_end]
         else:
             args = args.format(**doc)
             args = eval(args)

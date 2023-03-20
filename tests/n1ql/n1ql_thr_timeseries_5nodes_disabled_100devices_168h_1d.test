@@ -1,0 +1,62 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLTimeSeriesThroughputTest
+
+[showfast]
+title = non-Timeseries, 1 bucket x 90K x 1KB, 100 devices, 24 hours data points per doc, 7 days moving average of 1 device
+component = n1ql
+
+[cluster]
+mem_quota = 32768
+index_mem_quota = 10240
+initial_nodes = 5
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+
+[load]
+items = 777600000
+size = 1024
+workers = 100
+doc_gen = time_series
+timeseries_start = 1672531200000
+timeseries_docs_per_device = 7776000
+timeseries_total_days = 90
+timeseries_enable = false
+
+[index]
+statements =
+    create index ix1 on `bucket-1`(device, _t) partition by hash (device);
+
+[access]
+creates = 0
+reads = 0
+updates = 0
+deletes = 0
+throughput = 0
+items = 777600000
+workers = 0
+time = 1200
+n1ql_queries = timeseries
+n1ql_workers = 80
+workload_instances = 1
+timeseries_start = 1672531200000
+timeseries_docs_per_device = 7776000
+timeseries_total_days = 90
+timeseries_enable = false
+
+[n1ql-timeseries]
+statement = SELECT MILLIS_TO_TZ(day*86400000,"UTC") AS day, dayavg, AVG(dayavg) OVER (ORDER BY day ROWS 7 PRECEDING) AS sevendaymovavg FROM `bucket-1` AS d WHERE d.device = $2 AND d._t BETWEEN $4 AND $5 GROUP BY IDIV(d._t,86400000) AS day LETTING dayavg = AVG(d._v0);
+scan_consistency = not_bound
+args = ["timeseries"]
+ts_config = {'total_devices': 100, 'device_range': 0, 'total_ts_range': 2160, 'ts_range': 168, 'ts_start': 1672531200000}

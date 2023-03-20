@@ -1047,6 +1047,13 @@ class PhaseSettings:
     HOT_READS = False
     SEQ_UPSERTS = False
 
+    TIMESERIES_REGULAR = 'false'
+    TIMESERIES_ENABLE = 'true'
+    TIMESERIES_START = 0
+    TIMESERIES_HOURS_PER_DOC = 1
+    TIMESERIES_DOCS_PER_DEVICE = 1
+    TIMESERIES_TOTAL_DAYS = 1
+
     BATCH_SIZE = 1000
     BATCHES = 1
     SPRING_BATCH_SIZE = 100
@@ -1238,6 +1245,18 @@ class PhaseSettings:
 
         self.hot_reads = self.HOT_READS
         self.seq_upserts = self.SEQ_UPSERTS
+
+        self.timeseries_regular = maybe_atoi(options.get('timeseries_regular',
+                                                         self.TIMESERIES_REGULAR))
+        self.timeseries_enable = maybe_atoi(options.get('timeseries_enable',
+                                                        self.TIMESERIES_ENABLE))
+        self.timeseries_start = int(options.get('timeseries_start', self.TIMESERIES_START))
+        self.timeseries_hours_per_doc = int(options.get('timeseries_hours_per_doc',
+                                                        self.TIMESERIES_HOURS_PER_DOC))
+        self.timeseries_docs_per_device = int(options.get('timeseries_docs_per_device',
+                                                          self.TIMESERIES_DOCS_PER_DEVICE))
+        self.timeseries_total_days = int(options.get('timeseries_total_days',
+                                                     self.TIMESERIES_TOTAL_DAYS))
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 

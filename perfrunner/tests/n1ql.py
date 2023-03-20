@@ -1150,3 +1150,61 @@ class TpcDsLatencyShutdownTest(TpcDsShutdownTest, N1QLLatencyShutdownTest):
 class TpcDsThroughputShutdownTest(TpcDsShutdownTest, N1QLThroughputShutdownTest):
 
     pass
+
+
+class N1QLTimeSeriesThroughputTest(N1QLThroughputTest):
+
+    def load(self):
+        self.iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                       self.test_config.load_settings.key_prefix)
+        load_settings = self.test_config.load_settings
+        PerfTest.load(self, settings=load_settings, target_iterator=self.iterator)
+
+    @with_stats
+    @with_profiles
+    def access(self, *args):
+        self.iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                       self.test_config.load_settings.key_prefix)
+        self.download_certificate()
+
+        access_settings = self.test_config.access_settings
+        access_settings.workers = 0
+        PerfTest.access(self, settings=access_settings, target_iterator=self.iterator)
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        self.access()
+
+        self.report_kpi()
+
+
+class N1QLTimeSeriesThroughputLoadTest(N1QLTimeSeriesThroughputTest):
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+
+class N1QLTimeSeriesThroughputAccessTest(N1QLTimeSeriesThroughputTest):
+
+    def run(self):
+        self.enable_stats()
+        self.access()
+
+        self.report_kpi()

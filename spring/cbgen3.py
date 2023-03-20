@@ -1,3 +1,5 @@
+import time
+from ctypes import CDLL
 from datetime import timedelta
 from urllib import parse
 
@@ -205,6 +207,8 @@ class CBGen3(CBAsyncGen3):
     @quiet
     @timeit
     def n1ql_query(self, n1ql_query: str, options: QueryOptions):
+        libc = CDLL("libc.so.6")
+        libc.srand(int(time.time_ns()))
         tuple(self.cluster.query(n1ql_query, options))
 
     def create_user_manager(self):

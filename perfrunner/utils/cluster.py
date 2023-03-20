@@ -112,7 +112,6 @@ def main():
         cm.add_rbac_users()
 
     cm.restart_with_alternative_bucket_options()
-    cm.configure_ns_server()
     cm.set_index_settings()
     cm.set_query_settings()
     cm.set_analytics_settings()

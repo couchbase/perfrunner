@@ -1,5 +1,6 @@
 import random
 import re
+import time
 from typing import Iterable, List
 from uuid import uuid4
 
@@ -599,15 +600,42 @@ class ClusterManager:
                     self.rest.run_diag_eval(master, diag_eval)
 
         if self.test_config.bucket_extras:
-            self.disable_auto_failover()
-            self.remote.restart()
-            self.wait_until_healthy()
-            self.enable_auto_failover()
+            self._restart_clusters()
 
         if self.test_config.magma_settings.storage_quota_percentage:
             magma_quota = self.test_config.magma_settings.storage_quota_percentage
             for bucket in self.test_config.buckets:
                 self.remote.set_magma_quota(bucket, magma_quota)
+
+    def _restart_clusters(self):
+        self.disable_auto_failover()
+        self.remote.restart()
+        self.wait_until_healthy()
+        self.enable_auto_failover()
+
+    def configure_ns_server(self):
+        """Configure ns_server using diag/eval.
+
+        Tune ns_server settings with specified Erlang code using  "/diag/eval"
+        and restart the cluster after a specified delay.
+        """
+        diag_eval_settings = self.test_config.diag_eval
+        if self.dynamic_infra or self.capella_infra or not diag_eval_settings.payloads:
+            return
+
+        if diag_eval_settings.enable_nonlocal_diag_eval:
+            self.remote.enable_nonlocal_diag_eval()
+
+        for master in self.cluster_spec.masters:
+            for payload in diag_eval_settings.payloads:
+                payload = payload.strip('\'')
+                logger.info("Running diag/eval: '{}' on {}".format(payload, master))
+                self.rest.run_diag_eval(master, '{}'.format(payload))
+
+        # Some config may be replicated to other nodes asynchronously.
+        # Allow configurable delay before restart
+        time.sleep(diag_eval_settings.restart_delay)
+        self._restart_clusters()
 
     def tune_logging(self):
         if self.dynamic_infra or self.capella_infra:

@@ -668,13 +668,16 @@ class CapellaTerraform(Terraform):
                 }
                 logger.info('Deploying cluster with custom AMI: {}'
                             .format(ami))
+            if releaseId := self.options.release_id:
+                config['overRide'].update({'releaseId': releaseId})
 
             resp = self.api_client.create_cluster_customAMI(self.tenant_id, config)
             raise_for_status(resp)
             cluster_id = resp.json().get('id')
             self.cluster_ids.append(cluster_id)
 
-            logger.info('Initialised cluster deployment for cluster {}'.format(cluster_id))
+            logger.info('Initialised cluster deployment for cluster {} \n  config: {}'.
+                        format(cluster_id, config))
             logger.info('Saving cluster ID to spec file.')
             self.infra_spec.config.set('infrastructure', 'cbc_cluster',
                                        '\n'.join(self.cluster_ids))
@@ -1755,6 +1758,8 @@ def get_args():
                         help='custom AMI to use for Capella deployment')
     parser.add_argument('--capella-sgw-ami',
                         help='custom AMI to use for App Services Capella Deployment')
+    parser.add_argument('--release-id',
+                        help='release id for managing releases')
     parser.add_argument('--dapi-ami',
                         help='AMI to use for Data API deployment (serverless)')
     parser.add_argument('--dapi-override-count',

@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 from argparse import ArgumentParser
 from multiprocessing import set_start_method
 
@@ -383,6 +384,17 @@ class GCPDestroyer(Destroyer):
         logger.info("Destroy complete")
 
 
+class OpenshiftDestoryer(Destroyer):
+
+    OPENSHIFT_PATH = "cloud/infrastructure/generated/openshift"
+
+    def __init__(self, infra_spec: ClusterSpec, options):
+        super().__init__(infra_spec, options)
+
+    def destroy(self):
+        os.system("./openshift-install destroy cluster --dir={}".format(self.OPENSHIFT_PATH))
+
+
 def get_args():
     parser = ArgumentParser()
 
@@ -400,10 +412,12 @@ def main():
     args = get_args()
     infra_spec = ClusterSpec()
     infra_spec.parse(fname=args.cluster)
-    infra_provider = infra_spec.infrastructure_settings['provider']
     if infra_spec.cloud_infrastructure:
+        infra_provider = infra_spec.cloud_provider
         if infra_provider == 'aws':
             destroyer = AWSDestroyer(infra_spec, args)
+        elif infra_provider == 'openshift':
+            destroyer = OpenshiftDestoryer(infra_spec, args)
         elif infra_provider == 'azure':
             destroyer = AzureDestroyer(infra_spec, args)
         elif infra_provider == 'gcp':

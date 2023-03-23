@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from argparse import ArgumentParser
 from copy import deepcopy
@@ -998,6 +999,99 @@ class AWSDeployer(Deployer):
         logger.info("Infrastructure deployment complete")
 
 
+class OpenshiftDeployer(AWSDeployer):
+
+    OPENSHIFT_PATH = 'cloud/infrastructure/generated/openshift'
+
+    def __init__(self, infra_spec: ClusterSpec, options):
+        super().__init__(infra_spec, options)
+        self.yaml_path = '{}/oc.yaml'.format(self.OPENSHIFT_PATH)
+        self.pull_secret = os.environ['OPENSHIFT_PULL_SECRET']
+        # make the base url a bit shorter which are in the form of *.cluster_name.domain
+        self.cluster_name = options.tag.replace('jenkins-', '').lower()
+        self.desired_infra['region'] = options.region
+        self.openshift_version = self.infra_spec.infrastructure_section('k8s_cluster_1') \
+            .get('version', '4.11')
+        self.remote = RemoteHelper(self.infra_spec)
+
+    def deploy(self):
+        self.get_oc_binary()
+        self.get_desired_infra()
+        self.populate_yaml()
+        self.create_cluster()
+        self.update_labels()
+
+    def get_oc_binary(self):
+        os.system('wget -q https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-{}'
+                  '/openshift-install-linux.tar.gz && '
+                  'tar xfv openshift-install-linux.tar.gz'.format(self.openshift_version))
+
+    def populate_yaml(self):
+        self.find_and_replace(self.yaml_path, 'CLUSTER_NAME', self.cluster_name)
+        self.find_and_replace(self.yaml_path, 'INSTANCE_TYPE', self.desired_infra['instance_type'])
+        self.find_and_replace(self.yaml_path, 'NODE_COUNT',
+                              str(self.desired_infra['instance_count']))
+        self.find_and_replace(self.yaml_path, 'REGION', self.desired_infra['region'])
+        self.find_and_replace(self.yaml_path, 'PULL_SECRET', '\'{}\''.format(self.pull_secret))
+
+    def update_labels(self):
+        nodes = iter(self.remote.get_nodes(selector='node-role.kubernetes.io/worker'))
+        # cluster machines will be labelled with cluster and service labels
+        for k, v in self.infra_spec.infrastructure_clusters.items():
+            if 'couchbase' in k:
+                for host in v.split():
+                    labels = 'NodeRoles={} '.format(k)
+                    node = next(nodes)['metadata']['name']
+                    _, services = host.split(":")
+                    for service in services.split(','):
+                        labels = '{} {}_enabled=true'.format(labels, service)
+                    self.remote.add_node_label(node, labels)
+
+        # client machines are either 'workers' or 'backups' machines
+        if not self.infra_spec.external_client:
+            for k, v in self.infra_spec.infrastructure_clients.items():
+                if 'workers' in k or 'backups' in k:
+                    for host in v.split():
+                        node = next(nodes)['metadata']['name']
+                        labels = 'NodeRoles={} '.format(k)
+                        self.remote.add_node_label(node, labels)
+
+        # utilities we only need broker nodes
+        if not self.infra_spec.external_client:
+            for k, v in self.infra_spec.infrastructure_utilities.items():
+                if 'brokers' in k:
+                    for host in v.split():
+                        node = next(nodes)['metadata']['name']
+                        self.remote.add_node_label(node, 'NodeRoles=utilities ')
+
+    def find_and_replace(self, path, find, replace):
+        with open(path, 'r') as file:
+            file_data = file.read()
+        file_data = file_data.replace(find, replace)
+        with open(path, 'w') as file:
+            file.write(file_data)
+
+    def get_desired_infra(self):
+        # For external clients, only deploy server infrastructure in the Openshift cluster
+        instance_count = len(self.infra_spec.servers)
+        if not self.infra_spec.external_client:
+            instance_count = instance_count + len(self.infra_spec.clients) + \
+                len(self.infra_spec.utilities)
+        self.desired_infra['instance_count'] = instance_count
+        # Node instance types can't be varied in openshift.
+        # Will use k8s_node_group_1 type for everything when we work with internal clients
+        self.desired_infra['instance_type'] = self.infra_spec.config.get(
+            'k8s_node_group_1', 'instance_type')
+
+    def create_cluster(self):
+        os.system('cp {} {}/install-config.yaml'.format(self.yaml_path, self.OPENSHIFT_PATH))
+        os.system('./openshift-install create cluster --dir={}'.format(self.OPENSHIFT_PATH))
+        os.system(
+            'cp {}/auth/kubeconfig cloud/infrastructure/generated/kube_configs/k8s_cluster_1'
+            .format(self.OPENSHIFT_PATH))
+
+
+
 class AzureDeployer(Deployer):
 
     def deploy(self):
@@ -1724,9 +1818,11 @@ def main():
     infra_spec = ClusterSpec()
     infra_spec.parse(fname=args.cluster, override=args.override)
     if infra_spec.cloud_infrastructure:
-        infra_provider = infra_spec.infrastructure_settings['provider']
+        infra_provider = infra_spec.cloud_provider
         if infra_provider == 'aws':
             deployer = AWSDeployer(infra_spec, args)
+        elif infra_provider == 'openshift':
+            deployer = OpenshiftDeployer(infra_spec, args)
         elif infra_provider == 'azure':
             deployer = AzureDeployer(infra_spec, args)
         elif infra_provider == 'gcp':

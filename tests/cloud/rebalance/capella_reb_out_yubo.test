@@ -7,7 +7,7 @@ component = secondarycloud
 sub_category = PlasmaDGM
 
 [cluster]
-mem_quota = 12800
+mem_quota = 61440
 index_mem_quota = 123000
 initial_nodes = 6
 num_buckets = 1
@@ -20,7 +20,7 @@ eviction_policy = fullEviction
 backend_storage = magma
 
 [load]
-items = 384000000
+items = 614400000
 size = 1024
 workers = 80
 key_fmtr = hex

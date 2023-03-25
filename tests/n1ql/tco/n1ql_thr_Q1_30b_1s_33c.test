@@ -17,7 +17,7 @@ num_buckets = 2
 db_percentage = 100
 
 [collection]
-config = collections/30buckets_1scope_33collections_basic.json
+config = collections/2buckets_1scope_20collections_basic.json
 
 [load]
 items = 2000000

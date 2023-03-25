@@ -28,7 +28,7 @@ doc_gen = reverse_lookup
 [access]
 items = 2000000
 workers = 0
-n1ql_queries = q01, q02
+n1ql_queries = q01,q02
 n1ql_workers = 240
 workload_instances = 2
 time = 1200

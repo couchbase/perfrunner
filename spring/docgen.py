@@ -2387,10 +2387,10 @@ class YuboDoc(Document):
     def next(self, key: Key) -> dict:
         alphabet = self.build_alphabet(key.string)
         doc = {
-            "linked_uid": str(uuid.uuid4()) + str(uuid.uuid4()),
+            "linked_uid": str(uuid.uuid4()),
             "count": self.fk.random_int(),
             "last_seen": str(self.fk.date_time()),
-            "uid": str(uuid.uuid4()) + str(uuid.uuid4()),
+            "uid": str(uuid.uuid4()),
             "swipe_date": str(self.fk.date_time()),
             "name": self.fk.name(),
             "email": self.fk.email(),

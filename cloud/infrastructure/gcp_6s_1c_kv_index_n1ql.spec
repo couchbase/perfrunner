@@ -38,7 +38,7 @@ volume_size = 1000
 volume_type = pd-ssd
 
 [gce_node_group_3]
-instance_type = n2-standard-64
+instance_type = n2-standard-32
 instance_capacity = 1
 volume_size = 1000
 volume_type = pd-extreme

@@ -2378,7 +2378,7 @@ class HighCompressibleDocument(Document):
         }
 
 
-class YuboDoc(Document):
+class YuboDoc(UnifiedDocument):
     def __init__(self, avg_size: int):
         super().__init__(avg_size)
         self.fk = Faker()
@@ -2396,10 +2396,15 @@ class YuboDoc(Document):
             "email": self.fk.email(),
             "sentences": self.fk.text(),
             "address": self.fk.address(),
-            "paragraphs": self.fk.paragraphs()
+            "paragraphs": self.fk.paragraphs(),
+            "num": self.fk.pyint(100000000000, 1000000000000000),
+            "location": {"lat": float(self.fk.latlng()[0]), "lon": float(self.fk.latlng()[1])},
+            "date": self.fk.date(),
+            "index_field": self.build_index_md5(key.string, 256)
         }
         doc_b = json.dumps(doc).encode("utf-8")
         current_size = len(doc_b)
         size = self.avg_size - current_size
-        doc["comment"] = self.build_string(alphabet, size/2) + self.build_string(alphabet, size/2)
+        doc["comment"] = \
+            self.build_index_md5(alphabet, size/2) + self.build_string(alphabet, size/2)
         return doc

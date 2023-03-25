@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q1, Key-Value Lookup, b30, s=1 c=33
+title = Q1, Key-Value Lookup, b30, s=1 c=33, idle
 component = n1ql
 category = Q1_Q3
 sub_category = KV
@@ -20,15 +20,15 @@ db_percentage = 100
 config = collections/30buckets_1scope_33collections_basic.json
 
 [load]
-items = 2000000
+items = 1999998
 size = 1024
 workers = 80
 doc_gen = reverse_lookup
 
 [access]
-items = 2000000
+items = 1999998
 workers = 0
-n1ql_queries = q01, q02, q03, q04, q05, q06, q07, q08, q09, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28, q29, q30
+n1ql_queries = q01,q02,q03,q04,q05,q06,q07,q08,q09,q10,q11,q12,q13,q14,q15,q16,q17,q18,q19,q20,q21,q22,q23,q24,q25,q26,q27,q28,q29,q30
 n1ql_workers = 1
 workload_instances = 3
 time = 1200

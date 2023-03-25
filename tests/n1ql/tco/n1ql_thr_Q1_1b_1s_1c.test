@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q1, Key-Value Lookup, idle
+title = Q1, Key-Value Lookup, b1, s=1 c=1
 component = n1ql
 category = Q1_Q3
 sub_category = KV
@@ -16,6 +16,9 @@ num_buckets = 1
 [compaction]
 db_percentage = 100
 
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
 [load]
 items = 20000000
 size = 1024
@@ -25,15 +28,12 @@ doc_gen = reverse_lookup
 [access]
 items = 20000000
 workers = 0
-n1ql_queries = key-value-lookup
-n1ql_workers = 1
-workload_instances = 3
+n1ql_queries = q01
+n1ql_workers = 240
+workload_instances = 2
 time = 1200
 
-[n1ql-key-value-lookup]
+[n1ql-q01]
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

@@ -2378,11 +2378,19 @@ class HighCompressibleDocument(Document):
         }
 
 
-class YuboDoc(UnifiedDocument):
+class YuboDoc(Document):
     def __init__(self, avg_size: int):
         super().__init__(avg_size)
         self.fk = Faker()
         Faker.seed(1000)
+
+    @staticmethod
+    def build_index_md5(key: str, item_size: int) -> str:
+        md5_string = hashlib.md5(key.encode()).hexdigest() + \
+                     hashlib.md5(key[::-1].encode()).hexdigest()
+        num_slices = int(math.ceil(item_size / len(md5_string)))
+        body = num_slices * md5_string
+        return body[:item_size]
 
     def next(self, key: Key) -> dict:
         alphabet = self.build_alphabet(key.string)

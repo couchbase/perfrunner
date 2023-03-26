@@ -2414,5 +2414,5 @@ class YuboDoc(Document):
         current_size = len(doc_b)
         size = self.avg_size - current_size
         doc["comment"] = \
-            self.build_index_md5(alphabet, size/2) + self.build_string(alphabet, size/2)
+            self.build_index_md5(alphabet, int(size/2)) + self.build_string(alphabet, int(size/2))
         return doc

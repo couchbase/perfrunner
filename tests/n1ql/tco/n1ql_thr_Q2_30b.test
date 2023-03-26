@@ -1,0 +1,195 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
+title = Q2, Singleton Unique Lookup, MOI, not_bounded, 30 buckets
+component = n1ql
+category = Q1_Q3
+sub_category = MOI
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 30
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+items = 1999998
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+
+[index]
+statements =
+    CREATE INDEX by_email ON `bucket-1`(email);
+
+[access]
+items = 1999998
+workers = 0
+time = 1200
+n1ql_queries = q01,q02,q03,a04,q05,q06,q07,q08,q09,q10,q11,q12,q13,q14,q15,q16,q17,q18,q19,q20,q21,q22,q23,q24,q25,q26,q27,q28,q29,q30
+n1ql_workers = 8
+workload_instances = 2
+
+[n1ql-q01]
+statement = SELECT * FROM `bucket-1` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q02]
+statement = SELECT * FROM `bucket-2` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q03]
+statement = SELECT * FROM `bucket-3` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q04]
+statement = SELECT * FROM `bucket-4` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q05]
+statement = SELECT * FROM `bucket-5` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q06]
+statement = SELECT * FROM `bucket-6` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q07]
+statement = SELECT * FROM `bucket-7` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q08]
+statement = SELECT * FROM `bucket-8` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q09]
+statement = SELECT * FROM `bucket-9` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q10]
+statement = SELECT * FROM `bucket-10` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q11]
+statement = SELECT * FROM `bucket-11` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q12]
+statement = SELECT * FROM `bucket-12` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q13]
+statement = SELECT * FROM `bucket-13` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q14]
+statement = SELECT * FROM `bucket-14` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q15]
+statement = SELECT * FROM `bucket-15` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q16]
+statement = SELECT * FROM `bucket-16` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q17]
+statement = SELECT * FROM `bucket-17` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q18]
+statement = SELECT * FROM `bucket-18` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q19]
+statement = SELECT * FROM `bucket-19` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q20]
+statement = SELECT * FROM `bucket-20` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q21]
+statement = SELECT * FROM `bucket-21` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q22]
+statement = SELECT * FROM `bucket-22` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q23]
+statement = SELECT * FROM `bucket-23` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q24]
+statement = SELECT * FROM `bucket-24` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q25]
+statement = SELECT * FROM `bucket-25` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q26]
+statement = SELECT * FROM `bucket-26` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q27]
+statement = SELECT * FROM `bucket-27` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q28]
+statement = SELECT * FROM `bucket-28` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q29]
+statement = SELECT * FROM `bucket-29` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[n1ql-q30]
+statement = SELECT * FROM `bucket-30` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

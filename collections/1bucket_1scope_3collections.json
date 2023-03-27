@@ -1,0 +1,22 @@
+{
+  "bucket-1": {
+    "_default": {},
+    "users": {
+      "views": {
+        "load": 1,
+        "access": 1,
+        "ratio": 119
+      },
+      "swipes": {
+        "load": 1,
+        "access": 1,
+        "ratio": 280
+      },
+      "notifications": {
+        "load": 1,
+        "access": 1,
+        "ratio": 1
+      }
+    }
+  }
+}

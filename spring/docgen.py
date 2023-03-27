@@ -2400,19 +2400,11 @@ class YuboDoc(Document):
             "last_seen": str(self.fk.date_time()),
             "uid": str(uuid.uuid4()),
             "swipe_date": str(self.fk.date_time()),
-            "name": self.fk.name(),
-            "email": self.fk.email(),
-            "sentences": self.fk.text(),
-            "address": self.fk.address(),
-            "paragraphs": self.fk.paragraphs(),
-            "num": self.fk.pyint(100000000000, 1000000000000000),
-            "location": {"lat": float(self.fk.latlng()[0]), "lon": float(self.fk.latlng()[1])},
-            "date": self.fk.date(),
-            "index_field": self.build_index_md5(key.string, 256)
+            "name": self.fk.name()
         }
         doc_b = json.dumps(doc).encode("utf-8")
         current_size = len(doc_b)
         size = self.avg_size - current_size
         doc["comment"] = \
-            self.build_index_md5(alphabet, int(size/2)) + self.build_string(alphabet, int(size/2))
+            self.build_index_md5(alphabet, int(size))
         return doc

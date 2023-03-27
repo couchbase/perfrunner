@@ -30,7 +30,37 @@ doc_gen = reverse_lookup
 
 [index]
 statements =
+
     CREATE INDEX by_email ON `bucket-1`(email);
+    CREATE INDEX by_email ON `bucket-2`(email);
+    CREATE INDEX by_email ON `bucket-3`(email);
+    CREATE INDEX by_email ON `bucket-4`(email);
+    CREATE INDEX by_email ON `bucket-5`(email);
+    CREATE INDEX by_email ON `bucket-6`(email);
+    CREATE INDEX by_email ON `bucket-7`(email);
+    CREATE INDEX by_email ON `bucket-8`(email);
+    CREATE INDEX by_email ON `bucket-9`(email);
+    CREATE INDEX by_email ON `bucket-10`(email);
+    CREATE INDEX by_email ON `bucket-11`(email);
+    CREATE INDEX by_email ON `bucket-12`(email);
+    CREATE INDEX by_email ON `bucket-13`(email);
+    CREATE INDEX by_email ON `bucket-14`(email);
+    CREATE INDEX by_email ON `bucket-15`(email);
+    CREATE INDEX by_email ON `bucket-16`(email);
+    CREATE INDEX by_email ON `bucket-17`(email);
+    CREATE INDEX by_email ON `bucket-18`(email);
+    CREATE INDEX by_email ON `bucket-19`(email);
+    CREATE INDEX by_email ON `bucket-20`(email);
+    CREATE INDEX by_email ON `bucket-21`(email);
+    CREATE INDEX by_email ON `bucket-22`(email);
+    CREATE INDEX by_email ON `bucket-23`(email);
+    CREATE INDEX by_email ON `bucket-24`(email);
+    CREATE INDEX by_email ON `bucket-25`(email);
+    CREATE INDEX by_email ON `bucket-26`(email);
+    CREATE INDEX by_email ON `bucket-27`(email);
+    CREATE INDEX by_email ON `bucket-28`(email);
+    CREATE INDEX by_email ON `bucket-29`(email);
+    CREATE INDEX by_email ON `bucket-30`(email);
 
 [access]
 items = 1999998

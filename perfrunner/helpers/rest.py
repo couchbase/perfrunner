@@ -3,9 +3,8 @@ import json
 import os
 import time
 from collections import namedtuple
-from contextlib import contextmanager
 from json import JSONDecodeError
-from typing import Callable, Dict, Iterator, List, Optional
+from typing import Callable, Dict, Iterator, List, Optional, Tuple
 
 import requests
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
@@ -79,24 +78,28 @@ class RestBase:
 
     @retry
     def get(self, **kwargs) -> requests.Response:
-        return requests.get(auth=self.auth, verify=False, **kwargs)
+        auth = kwargs.pop('auth', self.auth)
+        return requests.get(auth=auth, verify=False, **kwargs)
 
     def _post(self, **kwargs) -> requests.Response:
-        return requests.post(auth=self.auth, verify=False, **kwargs)
+        auth = kwargs.pop('auth', self.auth)
+        return requests.post(auth=auth, verify=False, **kwargs)
 
     @retry
     def post(self, **kwargs) -> requests.Response:
         return self._post(**kwargs)
 
     def _put(self, **kwargs) -> requests.Response:
-        return requests.put(auth=self.auth, verify=False, **kwargs)
+        auth = kwargs.pop('auth', self.auth)
+        return requests.put(auth=auth, verify=False, **kwargs)
 
     @retry
     def put(self, **kwargs) -> requests.Response:
         return self._put(**kwargs)
 
     def _delete(self, **kwargs) -> requests.Response:
-        return requests.delete(auth=self.auth, verify=False, **kwargs)
+        auth = kwargs.pop('auth', self.auth)
+        return requests.delete(auth=auth, verify=False, **kwargs)
 
     def delete(self, **kwargs) -> requests.Response:
         return self._delete(**kwargs)
@@ -1974,17 +1977,12 @@ class CapellaRestBase(DefaultRestHelper):
         )
         self.admin_credentials = self.cluster_spec.capella_admin_credentials
 
-    @contextmanager
-    def _admin_creds(self, host: str):
+    def _admin_creds(self, host: str) -> Tuple[str, str]:
         for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
             if host in hostnames:
                 username, password = self.admin_credentials[i]
-                self.auth = username, password
-
-        try:
-            yield
-        finally:
-            self.auth = self.rest_username, self.rest_password
+                return (username, password)
+        return (self.rest_username, self.rest_password)
 
     @property
     def _cbc_user(self):
@@ -2043,7 +2041,7 @@ class CapellaRestBase(DefaultRestHelper):
 
         while (time.time() - t0) < timeout_mins * 60:
             cluster_ids_not_uploaded = \
-                 self._check_if_given_clusters_are_uploaded(cluster_ids_not_uploaded)
+                self._check_if_given_clusters_are_uploaded(cluster_ids_not_uploaded)
             if not cluster_ids_not_uploaded:
                 logger.info('All cluster logs have been successfully uploaded')
                 return
@@ -2083,8 +2081,8 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
     def get_remote_clusters(self, host: str) -> List[Dict]:
         logger.info('Getting remote clusters')
         api = 'https://{}:18091/pools/default/remoteClusters'.format(host)
-        with self._admin_creds(host):
-            response = self.get(url=api)
+        auth = self._admin_creds(host)
+        response = self.get(url=api, auth=auth)
         return response.json()
 
     def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
@@ -2301,21 +2299,14 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
 
 class ServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
-        DefaultRestHelper.__init__(self, cluster_spec=cluster_spec, test_config=test_config)
+        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
         self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
             self.cluster_spec.infrastructure_settings['cbc_env']
         )
-        self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
-        self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
         self.dp_id = self.cluster_spec.infrastructure_settings['cbc_dataplane']
-        self.cluster_ids = self.cluster_spec.infrastructure_settings['cbc_cluster'].split()
-        self.dedicated_client = CapellaAPIDedicated(
-            self.base_url, None, None, self._cbc_user, self._cbc_pwd, self._cbc_token
-        )
         self.serverless_client = CapellaAPIServerless(
             self.base_url, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
-        self.admin_credentials = self.cluster_spec.capella_admin_credentials
 
     def get_db_info(self, db_id):
         logger.info('Getting debug info for DB {}'.format(db_id))
@@ -2412,17 +2403,6 @@ class ServerlessRestHelper(CapellaRestBase):
                 intermediates = certs['intermediates']
                 return first_cert + intermediates
 
-    @contextmanager
-    def _bucket_creds(self, bucket: str):
-        access = self.test_config.serverless_db.db_map[bucket]['access']
-        secret = self.test_config.serverless_db.db_map[bucket]['secret']
-        self.auth = access, secret
-
-        try:
-            yield
-        finally:
-            self.auth = self.rest_username, self.rest_password
-
     def create_fts_index(self, host: str, index: str, definition: dict):
         logger.info('Creating a new FTS index: {}'.format(index))
         if self.test_config.cluster.enable_n2n_encryption:
@@ -2432,16 +2412,16 @@ class ServerlessRestHelper(CapellaRestBase):
         headers = {'Content-Type': 'application/json'}
         data = json.dumps(definition, ensure_ascii=False)
         bucket = definition['sourceName']
-        with self._bucket_creds(bucket):
-            self.put(url=api, data=data, headers=headers)
+        auth = self.test_config.serverless_db.bucket_creds(bucket)
+        self.put(url=api, data=data, headers=headers, auth=auth)
 
     def get_fts_doc_count(self, host: str, index: str, bucket: str) -> int:
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18094/api/index/{}/count'.format(host, index)
         else:
             api = 'http://{}:8094/api/index/{}/count'.format(host, index)
-        with self._bucket_creds(bucket):
-            response = self.get(url=api).json()
+        auth = self.test_config.serverless_db.bucket_creds(bucket)
+        response = self.get(url=api, auth=auth).json()
         return response['count']
 
     def exec_n1ql_statement(self, host: str, statement: str, query_context: str) -> dict:
@@ -2453,9 +2433,8 @@ class ServerlessRestHelper(CapellaRestBase):
         }
 
         bucket = query_context.removeprefix('default:').split('.')[0].strip('`')
-
-        with self._bucket_creds(bucket):
-            response = self.post(url=api, data=data)
+        auth = self.test_config.serverless_db.bucket_creds(bucket)
+        response = self.post(url=api, data=data, auth=auth)
 
         return response.json()
 
@@ -2473,27 +2452,15 @@ class ServerlessRestHelper(CapellaRestBase):
             api = 'https://{}:18094/api/nsstats/index/{}'.format(host, index)
         else:
             api = 'http://{}:8094/api/nsstats/index/{}'.format(host, index)
-        with self._bucket_creds(bucket):
-            response = self.get(url=api)
+        auth = self.test_config.serverless_db.bucket_creds(bucket)
+        response = self.get(url=api, auth=auth)
         return response.json()
-
-    @contextmanager
-    def _admin_creds(self, host: str):
-        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
-            if host in hostnames:
-                username, password = self.admin_credentials[i]
-                self.auth = username, password
-
-        try:
-            yield
-        finally:
-            self.auth = self.rest_username, self.rest_password
 
     def get_fts_stats(self, host: str) -> dict:
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18094/api/nsstats'.format(host)
         else:
             api = 'http://{}:8094/api/nsstats'.format(host)
-        with self._admin_creds(host):
-            response = self.get(url=api)
+        auth = self._admin_creds(host)
+        response = self.get(url=api, auth=auth)
         return response.json()

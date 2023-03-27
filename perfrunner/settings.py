@@ -948,6 +948,11 @@ class ServerlessDBSettings:
                 except json.JSONDecodeError:
                     self.db_map = {}
 
+    def bucket_creds(self, bucket: str) -> Tuple[str, str]:
+        access = self.db_map[bucket]['access']
+        secret = self.db_map[bucket]['secret']
+        return (access, secret)
+
     def update_db_map(self, db_map):
         with open(self.config, 'w') as f:
             json.dump(db_map, f, indent=4)

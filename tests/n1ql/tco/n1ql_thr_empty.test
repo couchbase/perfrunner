@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
+title = dummy request
+component = n1ql
+category = Q1_Q3
+sub_category = KV
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 0
+
+[access]
+items = 0
+workers = 0
+n1ql_queries = empty
+n1ql_workers = 240
+workload_instances = 3
+time = 1200
+
+[n1ql-empty]
+statement = SELECT 1;
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

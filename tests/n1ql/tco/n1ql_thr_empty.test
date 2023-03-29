@@ -17,10 +17,13 @@ num_buckets = 1
 db_percentage = 100
 
 [load]
-items = 0
+items = 100
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
 
 [access]
-items = 0
+items = 100
 workers = 0
 n1ql_queries = empty
 n1ql_workers = 240

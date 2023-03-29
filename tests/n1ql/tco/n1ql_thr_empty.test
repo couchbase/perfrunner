@@ -17,21 +17,22 @@ num_buckets = 1
 db_percentage = 100
 
 [load]
-items = 100
+items = 1999998
 size = 1024
 workers = 80
 doc_gen = reverse_lookup
 
 [access]
-items = 100
+items = 1999998
 workers = 0
-n1ql_queries = empty
+n1ql_queries = q01
 n1ql_workers = 240
 workload_instances = 3
 time = 1200
 
-[n1ql-empty]
-statement = SELECT 1;
+[n1ql-q01]
+statement = SELECT $1;
+args = ["{key}"]
 
 [clients]
 libcouchbase = 2.9.3

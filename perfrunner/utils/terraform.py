@@ -556,7 +556,9 @@ class CapellaTerraform(Terraform):
         return server_group_sizes
 
     @staticmethod
-    def construct_capella_server_groups(infra_spec, node_schemas, enable_disk_autoscaling):
+    def construct_capella_server_groups(infra_spec,
+                                        node_schemas,
+                                        enable_disk_autoscaling: bool = False):
         """Create correct server group objects for deploying clusters using internal API.
 
         Sample server group template:
@@ -1798,6 +1800,7 @@ def get_args():
                         help='Global tag for launched instances.')
     parser.add_argument('--enable-disk-autoscaling',
                         action='store_true',
+                        default=False,
                         help='Enables Capella disk autoscaling')
     parser.add_argument('override',
                         nargs='*',

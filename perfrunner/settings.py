@@ -1228,8 +1228,9 @@ class PhaseSettings:
 
     LATENCY_PERCENTILES = [99.9]
 
-    WORKLOAD_MIX = None
-    NUM_BUCKETS = 0
+    WORKLOAD_MIX = []
+    NUM_BUCKETS = []
+
     NEBULA_MODE = 'none'  # options: none, nebula, dapi
 
     DAPI_REQUEST_META = 'false'
@@ -1496,11 +1497,21 @@ class PhaseSettings:
                                                   self.SPLIT_WORKLOAD_WORKERS)
         self.n1ql_shutdown_type = options.get('n1ql_shutdown_type', self.N1QL_SHUTDOWN_TYPE)
 
-        self.workload_mix = []
-        workload_mix = options.get('workload_mix', self.WORKLOAD_MIX)
-        if workload_mix:
+        self.workload_mix = self.WORKLOAD_MIX
+        if workload_mix := options.get('workload_mix'):
             self.workload_mix = workload_mix.split(',')
-        self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
+        self.workload_name = ''
+
+        self.num_buckets = self.NUM_BUCKETS
+        if bucket_numbers := options.get('num_buckets'):
+            self.num_buckets = []
+            for b in bucket_numbers.split(','):
+                if '-' not in b:
+                    self.num_buckets.append(int(b))
+                else:
+                    start, end = b.split('-')
+                    self.num_buckets.extend(range(int(start), int(end) + 1))
+
         self.nebula_mode = options.get('nebula_mode', self.NEBULA_MODE)
 
         self.dapi_request_meta = maybe_atoi(
@@ -1515,6 +1526,15 @@ class PhaseSettings:
 
     def __str__(self) -> str:
         return str(self.__dict__)
+
+    def configure_bucket_list(self, buckets):
+        for b_id in self.num_buckets:
+            if not 1 <= b_id <= len(buckets):
+                raise ValueError('Bucket number out of range: {}. '
+                                 'Bucket numbers should be in range [1, no. of buckets]. '
+                                 'Current no. of buckets: {}'.format(b_id, len(buckets)))
+
+        self.bucket_list = [buckets[i-1] for i in self.num_buckets] or buckets
 
     def configure_doc_settings(self, load_settings):
         self.doc_gen = load_settings.doc_gen
@@ -1599,7 +1619,7 @@ class LoadSettings(PhaseSettings):
     def configure(self, test_config):
         self.configure_client_settings(test_config.client_settings)
         self.configure_collection_settings(test_config.collection)
-        self.bucket_list = test_config.buckets
+        self.configure_bucket_list(test_config.buckets)
 
 
 class JTSAccessSettings(PhaseSettings):
@@ -1704,7 +1724,7 @@ class HotLoadSettings(PhaseSettings):
         self.configure_doc_settings(test_config.load_settings)
         self.configure_client_settings(test_config.client_settings)
         self.configure_collection_settings(test_config.collection)
-        self.bucket_list = test_config.buckets
+        self.configure_bucket_list(test_config.buckets)
 
 
 class XattrLoadSettings(PhaseSettings):
@@ -1712,7 +1732,7 @@ class XattrLoadSettings(PhaseSettings):
     SEQ_UPSERTS = True
 
     def configure(self, test_config):
-        self.bucket_list = test_config.buckets
+        self.configure_bucket_list(test_config.buckets)
 
 
 class RestoreSettings:
@@ -2130,7 +2150,7 @@ class AccessSettings(PhaseSettings):
         if hasattr(self, 'n1ql_queries'):
             self.define_queries(test_config)
 
-        self.bucket_list = test_config.buckets
+        self.configure_bucket_list(test_config.buckets)
 
 
 class ExtraAccessSettings(PhaseSettings):
@@ -2148,7 +2168,7 @@ class ExtraAccessSettings(PhaseSettings):
         self.doc_groups = load_settings.doc_groups
         self.range_distance = load_settings.range_distance
 
-        self.bucket_list = test_config.buckets
+        self.configure_bucket_list(test_config.buckets)
 
 
 class BackupSettings:
@@ -3240,17 +3260,13 @@ class TestConfig(Config):
         settings_cls = type(base_settings)
         mix = []
 
-        bucket_offset = 0
         for section in base_settings.workload_mix:
             phase_options = self._get_options_as_dict(base_section)
             override_options = self._get_options_as_dict('{}-{}'.format(base_section, section))
             phase_options.update(override_options)
             phase = settings_cls(phase_options)
             phase.configure(self)
-            if bucket_offset >= len(self.buckets):
-                break
-            phase.bucket_list = self.buckets[bucket_offset:bucket_offset + phase.num_buckets]
-            bucket_offset += phase.num_buckets
+            phase.workload_name = section
             mix.append(phase)
 
         return mix

@@ -61,7 +61,7 @@ item_size = 73
 workload_mix = a1,a2
 creates = 0
 reads = 0
-updates = 100    
+updates = 100
 deletes = 0
 throughput = 5000
 items = 1000000
@@ -70,10 +70,10 @@ time = 600
 doc_gen = unified
 
 [access-a1]
-num_buckets = 4
+num_buckets = 1-4
 throughput = 5000
 
 [access-a2]
-num_buckets = 19
+num_buckets = 5-20
 throughput = 0
 

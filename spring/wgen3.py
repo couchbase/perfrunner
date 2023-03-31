@@ -457,6 +457,8 @@ class Worker:
         stat_dir = Path('./spring_latency/master_{}/'.format(self.ts.node))
         stat_dir.mkdir(parents=True, exist_ok=True)
         stat_filename = '{}-{}-{}-{}'.format(self.NAME, self.workload_id, self.sid, self.ts.bucket)
+        if wn := self.ws.workload_name:
+            stat_filename += '-{}'.format(wn)
         self.reservoir.dump(filename=stat_dir / stat_filename)
 
 
@@ -518,7 +520,7 @@ class KVWorker(Worker):
         doc = self.docs.next(key)
         if self.ws.durability:
             args = target, key.string, doc, self.ws.durability, self.ws.ttl
-            return [('set', cb.update_durable, args)]
+            return [('durable_set', cb.update_durable, args)]
         else:
             args = target, key.string, doc, self.ws.persist_to, self.ws.replicate_to, self.ws.ttl
             return [('set', cb.update, args)]

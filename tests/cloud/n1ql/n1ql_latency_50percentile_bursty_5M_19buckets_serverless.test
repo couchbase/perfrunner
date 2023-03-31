@@ -59,37 +59,37 @@ ssl_mode = nebula
 nebula_mode = nebula
 
 [access-a1]
-num_buckets = 2
+num_buckets = 1,2
 throughput = 100
 n1ql_throughput = 1
 n1ql_query_weight = 0,5,2,2,0,1,0,0,0,0
 
 [access-a2]
-num_buckets = 10
+num_buckets = 3-12
 throughput = 300
 n1ql_throughput = 3
 n1ql_query_weight = 0,10,7,5,0,5,2,1,0,0
 
 [access-a3]
-num_buckets = 3
+num_buckets = 13-15
 throughput = 600
 n1ql_throughput = 6
 n1ql_query_weight = 0,18,12,10,1,9,5,3,1,1
 
 [access-a4]
-num_buckets = 2
+num_buckets = 16,17
 throughput = 600
 n1ql_throughput = 12
 n1ql_query_weight = 0,18,12,10,1,9,5,3,1,1
 
 [access-a5]
-num_buckets = 1
+num_buckets = 18
 throughput = 1200
 n1ql_throughput = 11
 n1ql_query_weight = 0,57,45,35,4,36,22,13,4,4
 
 [access-a6]
-num_buckets = 1
+num_buckets = 19
 throughput = 1200
 n1ql_throughput = 22
 n1ql_query_weight = 0,57,45,35,4,36,22,13,4,4

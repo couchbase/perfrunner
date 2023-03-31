@@ -71,19 +71,19 @@ n1ql_workers = 1
 workload_instances = 1
 
 [access-a1]
-num_buckets = 4
+num_buckets = 1-4
 throughput = 300
 n1ql_throughput = 3
 n1ql_query_weight = 0,10,7,5,0,5,2,1,0,0
 
 [access-a2]
-num_buckets = 10
+num_buckets = 5-14
 throughput = 600
 n1ql_throughput = 6
 n1ql_query_weight = 0,18,12,10,1,9,5,3,1,1
 
 [access-a3]
-num_buckets = 5
+num_buckets = 15-19
 throughput = 1200
 n1ql_throughput = 11
 n1ql_query_weight = 0,57,45,35,4,36,22,13,4,4

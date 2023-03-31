@@ -37,7 +37,8 @@ class KVLatency(Latency):
 
     COLLECTOR = "spring_latency"
 
-    METRICS = "latency_get", "latency_set", "latency_total_get", "latency_total_set"
+    METRICS = ["latency_get", "latency_set", "latency_durable_set",
+               "latency_total_get", "latency_total_set", "latency_total_durable_set"]
 
     PATTERN = '*kv-worker-*'
 

@@ -74,6 +74,6 @@ num_buckets = 1
 throughput = 5000
 
 [access-a2]
-num_buckets = 19
+num_buckets = 2-20
 throughput = 0
 

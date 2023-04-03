@@ -71,6 +71,7 @@ from spring.docgen import (
     SmallPlasmaDocument,
     SmallPlasmaGroupedDocument,
     String,
+    TimestampDocument,
     TpcDsDocument,
     UnifiedDocument,
     UniformKey,
@@ -369,6 +370,8 @@ class Worker:
             self.docs = HighCompressibleDocument(self.ws.size)
         elif self.ws.doc_gen == 'yubo':
             self.docs = YuboDoc(self.ws.size)
+        elif self.ws.doc_gen == 'time_stamp_doc':
+            self.docs = TimestampDocument(self.ws.size)
 
     def init_db(self):
         workload_client = CBGen3

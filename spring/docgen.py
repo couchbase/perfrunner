@@ -2408,3 +2408,11 @@ class YuboDoc(Document):
         doc["comment"] = \
             self.build_index_md5(alphabet, int(size))
         return doc
+
+
+class TimestampDocument(PlasmaDocument):
+
+    def next(self, key: Key) -> dict:
+        return {
+            'time': round(time.time())
+        }

@@ -337,13 +337,14 @@ class ClusterManager:
                             self.test_config.bucket.conflict_resolution_type,
                         'backend_storage': self.test_config.bucket.backend_storage,
                         'eviction_policy': self.test_config.bucket.eviction_policy,
+                        'max_ttl': self.test_config.bucket.max_ttl
                     }
                     if self.capella_infra:
                         bucket_params.update({
                             'flush': self.test_config.bucket.flush,
                             'durability': self.test_config.bucket.min_durability,
-                            'ttl_value': 0,
-                            'ttl_unit': None
+                            'ttl_value': self.test_config.bucket.doc_ttl_value,
+                            'ttl_unit': self.test_config.bucket.doc_ttl_unit
                         })
                     else:
                         bucket_params.update({

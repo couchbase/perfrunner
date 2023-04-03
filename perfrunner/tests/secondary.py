@@ -123,8 +123,12 @@ class SecondaryIndexTest(PerfTest):
                                 configs = configs + '"{}":{},'.format(config, value)
 
                             if index_config["num_partition"] > 1:
-                                partition_keys = " --scheme KEY" \
-                                                 " --partitionKeys `{}` ".format(index_def)
+                                if "meta()" in index_def:
+                                    partition_keys = " --scheme KEY" \
+                                                 " --partitionKeys {} ".format(index_def)
+                                else:
+                                    partition_keys = " --scheme KEY" \
+                                                     " --partitionKeys `{}` ".format(index_def)
                         else:
                             index_def = index_config
 
@@ -145,7 +149,10 @@ class SecondaryIndexTest(PerfTest):
 
                         options += "-fields "
                         for field in fields_list:
-                            options += "`{}`,".format(field)
+                            if "meta()" in field:
+                                options += "{},".format(field)
+                            else:
+                                options += "`{}`,".format(field)
 
                         options = options.rstrip(",")
                         options = options + " "
@@ -2155,3 +2162,52 @@ class SecondaryRebalanceOnlyTest(SecondaryRebalanceTest):
                                                  self.rest.indexes_instances_per_node(server)))
         self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(rebalance_time=True)
+
+
+class SecondaryHoleCleanerTest(SecondaryIndexingScanTest):
+
+    def run(self):
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        percentile_latencies = self.calculate_scan_latencies()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(percentile_latencies, scan_thr, 0)
+        self.validate_num_connections()
+
+
+class InitialSecondaryIndexExpiryTest(InitialSecondaryIndexTest):
+
+    """Measures time it takes to build index for the first time."""
+
+    @with_stats
+    def measure_resource_during_expiry(self):
+        target_iterator = self.target_iterator
+        for target in target_iterator:
+            self.monitor.monitor_num_items(target.node, target.bucket, num_items=0, max_retry=3600)
+
+    @with_stats
+    @timeit
+    def wait_for_indexing(self):
+        numitems = self.test_config.load_settings.items
+        self.monitor.wait_for_secindex_incr_build_collections(
+            self.index_nodes,
+            self.indexes,
+            numitems)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        time_elapsed = self.build_secondaryindex()
+        self.report_kpi(time_elapsed, 'Initial')
+        self.print_index_disk_usage()
+        self.measure_resource_during_expiry()
+        incremental_time = self.wait_for_indexing()
+        self.report_kpi(incremental_time, 'Incremental')

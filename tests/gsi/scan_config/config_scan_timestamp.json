@@ -1,0 +1,24 @@
+{
+       "Concurrency" : 128,
+       "Clients" : 5,
+       "ScanSpecs" : [
+          {
+             "Limit" : 1,
+             "Low" : [
+                1649008451
+             ],
+             "Repeat" : 149999999,
+             "Type" : "Range",
+             "Bucket" : "bucket-1",
+             "Collection": "collection-1",
+             "Scope": "scope-1",
+             "High" : [
+                1743702851
+             ],
+             "Id" : 1,
+             "Inclusion" : 3,
+             "Index" : "index0",
+             "NInterval" : 100
+           }
+       ]
+}

@@ -1,0 +1,527 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "index1-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-10": {
+                "index10-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-2": {
+                "index2-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-3": {
+                "index3-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-4": {
+                "index4-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-5": {
+                "index5-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-6": {
+                "index6-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-7": {
+                "index7-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-8": {
+                "index8-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            },
+            "collection-9": {
+                "index9-1": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-10": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-2": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-3": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-4": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-5": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-6": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-7": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-8": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-9": {
+                    "field": "meta().`id`",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            }
+        }
+    }
+}

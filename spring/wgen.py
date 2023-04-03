@@ -70,6 +70,7 @@ from spring.docgen import (
     SmallPlasmaDocument,
     SmallPlasmaGroupedDocument,
     String,
+    TimestampDocument,
     TpcDsDocument,
     UniformKey,
     VaryingItemSizePlasmaDocument,
@@ -311,6 +312,8 @@ class Worker:
             self.docs = FTSRebalanceDocument(self.ws.size)
         elif self.ws.doc_gen == 'high_compressible':
             self.docs = HighCompressibleDocument(self.ws.size)
+        elif self.ws.doc_gen == 'time_stamp_doc':
+            self.docs = TimestampDocument(self.ws.size)
 
     def init_db(self):
         params = {

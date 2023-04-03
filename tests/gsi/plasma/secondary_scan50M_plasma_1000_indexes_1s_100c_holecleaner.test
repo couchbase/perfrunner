@@ -1,0 +1,58 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryHoleCleanerTest
+
+[showfast]
+title = 1 bucket x 50M x 1KB, 10K KV ops/sec, 1 index, Plasma, s=1 c=1, 128 Concurrency
+component = secondary
+category = lat
+sub_category = Plasma
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 460000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+max_ttl=600
+
+[bucket_extras]
+exp_pager_stime = 300
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[load]
+items = 50000000
+size = 1024
+workers = 100
+doc_gen = time_stamp_doc
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_1collection_1_index_expiration.json
+cbindexperf_configfile = tests/gsi/scan_config/config_scan_timestamp.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+queryport.client.usePlanner = false
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
+indexer.settings.build.batch_size = 100
+cbindexperf_repeat = 149999999
+
+[access]
+creates = 100
+items = 250000000
+throughput = 10000
+workers = 20
+

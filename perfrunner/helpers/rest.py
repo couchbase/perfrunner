@@ -433,7 +433,8 @@ class DefaultRestHelper(RestBase):
                       conflict_resolution_type: Optional[str] = None,
                       compression_mode: Optional[str] = None,
                       history_seconds: int = 0,
-                      history_bytes: int = 0) -> requests.Response:
+                      history_bytes: int = 0,
+                      max_ttl: int = 0) -> requests.Response:
         logger.info('Adding new bucket: {}'.format(name))
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18091/pools/default/buckets'.format(host)
@@ -469,6 +470,9 @@ class DefaultRestHelper(RestBase):
 
         if history_bytes:
             data['historyRetentionBytes'] = history_bytes
+
+        if max_ttl:
+            data['maxTTL'] = max_ttl
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 

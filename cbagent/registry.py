@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from logger import logger
+from perfrunner.helpers.local import CB_TOOLS_DIR, cb_tools_available
 from perfrunner.tests import PerfTest
 
 
@@ -62,6 +64,12 @@ class CollectorRegistry:
 
         ``prometheus_only`` additionally restricts to collectors that push custom metrics.
         One instance is created per cluster in ``cluster_map`` via ``create_instances``.
+
+        Collectors that declare ``REQUIRES_CB_TOOLS`` need tools out of ./opt/couchbase/bin,
+        which only exist when the install downloaded a local package. Dropping them here
+        rather than letting them sample is the difference between one warning and one
+        "command not found" per sample, and the registry is the one choke point both entry
+        points share -- an override of ``create_instances`` would bypass a hook placed there.
         """
         # Import so every collector class is registered (via RegistryMeta) before we
         # iterate ``_registry``. Relies on ``cbagent/collectors/__init__.py`` importing
@@ -69,15 +77,33 @@ class CollectorRegistry:
         import cbagent.collectors  # noqa: F401
 
         collectors = []
+        classes_missing_cb_tools = []
+        cb_tools_are_available = cb_tools_available()
         for cls in self._registry.values():
+            if not cls.should_collect(test, merged_flags):
+                continue
+
             if prometheus_only and not cls.PROMETHEUS_CUSTOM:
                 continue
+
             # RECONSTRUCT_ONLY needs lifecycle only PrometheusAgent provides, so opting
             # one in without Prometheus must no-op rather than crash in CbAgent.
             if not prometheus_only and cls.RECONSTRUCT_ONLY:
                 continue
-            if cls.should_collect(test, merged_flags):
-                collectors.extend(cls.create_instances(test, cluster_map))
+
+            if not cb_tools_are_available and cls.REQUIRES_CB_TOOLS:
+                classes_missing_cb_tools.append(cls.__name__)
+                continue
+
+            collectors.extend(cls.create_instances(test, cluster_map))
+
+        if classes_missing_cb_tools:
+            logger.warning(
+                f"{CB_TOOLS_DIR} is missing, so these collectors cannot run and are being "
+                f"skipped: {', '.join(classes_missing_cb_tools)}. "
+                "The tools come from the package env/bin/install downloads with --local-copy."
+            )
+
         return collectors
 
     def get_active_collectors(self, test: PerfTest, cluster_map: dict, **collector_flags):

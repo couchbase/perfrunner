@@ -20,8 +20,8 @@ class BackupRestoreTest(PerfTest):
         super().__init__(*args, **kwargs)
         self.edition = "CE" if self.is_community else "EE"
 
-    def extract_tools(self):
-        local.extract_cb_any(filename='couchbase')
+    def require_cb_tools(self):
+        local.require_cb_tools()
 
     def flush_buckets(self, master_node: Optional[str] = None):
         for i in range(self.test_config.cluster.num_buckets):
@@ -104,7 +104,7 @@ class BackupRestoreTest(PerfTest):
         local.cb_tool_version('cbexport')
 
     def run(self):
-        self.extract_tools()
+        self.require_cb_tools()
 
         if self.test_config.backup_settings.use_tls or \
            self.test_config.restore_settings.use_tls:
@@ -165,7 +165,7 @@ class BackupTest(BackupRestoreTest):
 class BackupXATTRTest(BackupTest):
 
     def run(self):
-        self.extract_tools()
+        self.require_cb_tools()
 
         if self.test_config.backup_settings.use_tls or \
            self.test_config.restore_settings.use_tls:
@@ -308,7 +308,7 @@ class BackupIncrementalTest(BackupRestoreTest):
             )
 
     def run(self):
-        self.extract_tools()
+        self.require_cb_tools()
 
         if self.test_config.backup_settings.use_tls or self.test_config.restore_settings.use_tls:
             self.download_certificate()
@@ -381,7 +381,7 @@ class MergeTest(BackupRestoreTest):
         )
 
     def run(self):
-        self.extract_tools()
+        self.require_cb_tools()
 
         self.get_tool_versions()
 
@@ -479,7 +479,7 @@ class RestoreTest(BackupRestoreTest):
 class RestoreXATTRTest(RestoreTest):
 
     def run(self):
-        self.extract_tools()
+        self.require_cb_tools()
 
         if self.test_config.backup_settings.use_tls or \
            self.test_config.restore_settings.use_tls:
@@ -623,7 +623,7 @@ class ImportSampleDataTest(ImportTest):
         )
 
     def run(self):
-        self.extract_tools()
+        self.require_cb_tools()
         self.get_tool_versions()
         time_elapsed = self.import_data()
 
@@ -848,8 +848,7 @@ class CloudBackupRestoreTest(BackupRestoreTest):
         )
 
     def setup_run(self):
-        self.remote.extract_cb_any(filename='couchbase',
-                                   worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
 
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
@@ -893,8 +892,8 @@ class CloudBackupTest(CloudBackupRestoreTest):
         except Exception as e:
             logger.error(e)
         finally:
-            self.extract_tools()
-            self.collectlogs()
+            if local.cb_tools_available():
+                self.collectlogs()
 
         self.report_kpi(time_elapsed)
 
@@ -954,8 +953,8 @@ class CloudRestoreTest(CloudBackupRestoreTest):
         except Exception as e:
             logger.error(e)
         finally:
-            self.extract_tools()
-            self.collectlogs()
+            if local.cb_tools_available():
+                self.collectlogs()
 
         self.report_kpi(time_elapsed)
 

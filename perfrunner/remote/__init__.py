@@ -1,10 +1,17 @@
 import os
 import shutil
+from pathlib import Path
 from typing import Optional
 from uuid import uuid4
 
 from logger import logger
-from perfrunner.helpers.local import _resolve_repo_url, _sanitize_repo_url
+from perfrunner.helpers.local import (
+    CB_EXTRACT_CMDS,
+    CB_TOOLS_DIR,
+    _resolve_repo_url,
+    _sanitize_repo_url,
+    cb_package_candidates,
+)
 from perfrunner.helpers.misc import get_python_sdk_installation
 from perfrunner.remote.api import cd, env, get, hide, run, settings, shell_env
 from perfrunner.remote.context import (
@@ -241,17 +248,41 @@ class Remote:
                 get('/root/statsfile', local_path='/root/')
 
     @master_client
-    def extract_cb_any(self, filename: str, worker_home: str):
-        logger.info('Extracting couchbase archive')
-        with cd(worker_home), cd('perfrunner'):
-            r = run(f"stat {filename}.deb", quiet=True)
-            if not r.return_code:
-                logger.info('Extracting couchbase.deb')
+    def extract_cb(self, worker_home: str, filename: str = "couchbase", force: bool = False):
+        with cd(worker_home), cd("perfrunner"):
+            if not force and not run(f"stat {CB_TOOLS_DIR}", quiet=True).return_code:
+                logger.info(f"Couchbase tools are already extracted on {env.host_string}; skipping")
+                return
+
+            candidates = cb_package_candidates(filename)
+            if not candidates:
+                logger.warning(
+                    f"Cannot extract the Couchbase tools from '{filename}' on {env.host_string}: "
+                    "unsupported file type"
+                )
+                return
+
+            for package in candidates:
+                if run(f"stat {package}", quiet=True).return_code:
+                    continue
+
+                logger.info(f"Extracting {package} on {env.host_string}")
+                cmd = CB_EXTRACT_CMDS[Path(package).suffix].format(package=package)
                 with settings(shell='/bin/bash -l -c'):  # Ignore pipefails for this command
-                    run(f"ar p {filename}.deb data.tar.xz | unxz | tar x")
-            else:
-                logger.info('Extracting couchbase.rpm')
-                run(f"rpm2cpio ./{filename}.rpm | cpio -idm", quiet=True)
+                    run(cmd)
+
+                # A clean extraction is no proof this was the right package: a
+                # debuginfo/dbgsym .deb unpacks happily under ./usr and returns zero.
+                if run(f"stat {CB_TOOLS_DIR}", quiet=True).return_code:
+                    logger.warning(
+                        f"Failed to extract the Couchbase tools from {package} on {env.host_string}"
+                    )
+                return
+
+            logger.warning(
+                "Cannot extract the Couchbase tools: found none of "
+                f"{', '.join(candidates)} in {worker_home}/perfrunner on {env.host_string}"
+            )
 
     @all_clients
     def get_ch2_logfile(self, worker_home: str, logfile: str):

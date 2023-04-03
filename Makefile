@@ -34,7 +34,7 @@ all:
 	$(build_env)
 
 clean:
-	rm -fr build perfrunner.egg-info dist cachestat dcptest kvgen cbindexperf rachell loader *.db *.log .coverage *.pid celery
+	rm -fr opt build perfrunner.egg-info dist cachestat dcptest kvgen cbindexperf rachell loader *.db *.log .coverage *.pid celery
 	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:

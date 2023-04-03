@@ -1043,7 +1043,7 @@ class N1QLAiQGThroughputTest(N1QLThroughputTest):
             )
 
     def run(self):
-        local.extract_cb_any(filename='couchbase')
+        local.require_cb_tools()
         self.enable_stats()
         self.enable_query_awr()
         self.import_data()
@@ -1367,9 +1367,7 @@ class TpcDsTest(N1QLTest):
     }
 
     def restore_remote(self):
-        self.remote.extract_cb_any(
-            filename="couchbase", worker_home=self.worker_manager.WORKER_HOME
-        )
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
@@ -1907,8 +1905,7 @@ class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
         self.index_type = str(self.test_config.gsi_settings.vector_index_type).lower()
 
     def cloud_restore(self):
-        self.remote.extract_cb_any(filename='couchbase',
-                                   worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         credential = local.read_aws_credential(

@@ -23,6 +23,7 @@ pip-log.txt
 *.log
 
 # Local testing
+opt/
 *.db
 *.pem
 *.key

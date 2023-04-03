@@ -865,7 +865,7 @@ class UniDirXdcrInitRestoreTest(RestoreTest, UniDirXdcrInitTest):
 
     def run(self):
 
-        self.extract_tools()
+        self.require_cb_tools()
 
         if self.test_config.backup_settings.use_tls or \
            self.test_config.restore_settings.use_tls:

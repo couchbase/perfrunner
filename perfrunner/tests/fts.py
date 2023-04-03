@@ -533,8 +533,7 @@ class FTSTest(JTSTest):
         self.wait_for_persistence()
 
     def cloud_restore(self):
-        self.remote.extract_cb_any(filename='couchbase',
-                                   worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         credential = local.read_aws_credential(

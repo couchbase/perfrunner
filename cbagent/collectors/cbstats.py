@@ -1,15 +1,14 @@
 import json
-from typing import Optional
 
 from cbagent.collectors.collector import CouchbaseCollector
 from logger import logger
-from perfrunner.helpers.local import extract_cb_any, run_cbstats
-from perfrunner.tests import PerfTest
+from perfrunner.helpers.local import run_cbstats
 
 
 class CBStatsMemory(CouchbaseCollector):
     COLLECTOR = "cbstats_memory"
     COLLECTOR_FLAG = "cbstats_memory"
+    REQUIRES_CB_TOOLS = True
     SKIP_ON_DYNAMIC = True
     REQUIRES_ON_PREM = True
     REQUIRES_NON_CYGWIN = True
@@ -17,10 +16,6 @@ class CBStatsMemory(CouchbaseCollector):
     METRICS = (
         "ep_mem_used_primary"
     )
-
-    def __init__(self, settings, test: Optional[PerfTest] = None):
-        super().__init__(settings)
-        extract_cb_any(filename="couchbase")
 
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
@@ -77,6 +72,7 @@ class CBStatsMemory(CouchbaseCollector):
 class CBStatsAll(CouchbaseCollector):
     COLLECTOR = "cbstats_all"
     COLLECTOR_FLAG = "cbstats_all"
+    REQUIRES_CB_TOOLS = True
     SKIP_ON_DYNAMIC = True
     REQUIRES_ON_PREM = True
     REQUIRES_NON_CYGWIN = True
@@ -94,10 +90,6 @@ class CBStatsAll(CouchbaseCollector):
         "ep_magma_data_blocks_compression_ratio",
         "ep_magma_data_blocks_space_reduction_estimate_pct"
     )
-
-    def __init__(self, settings, test: Optional[PerfTest] = None):
-        super().__init__(settings)
-        extract_cb_any(filename="couchbase")
 
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}

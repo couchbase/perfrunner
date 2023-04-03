@@ -13,7 +13,7 @@ from cbagent.histogram import (
 )
 from cbagent.settings import CbAgentSettings
 from logger import logger
-from perfrunner.helpers.local import extract_cb_any, run_mcstat
+from perfrunner.helpers.local import run_mcstat
 from perfrunner.tests import PerfTest
 
 BUCKET_SEP = re.compile(r"^\*+\n", flags=re.MULTILINE)
@@ -22,6 +22,7 @@ BUCKET_SEP = re.compile(r"^\*+\n", flags=re.MULTILINE)
 class KVStoreStats(CouchbaseCollector):
     COLLECTOR = "kvstore_stats"
     COLLECTOR_FLAG = "kvstore"
+    REQUIRES_CB_TOOLS = True
     SKIP_ON_DYNAMIC = True
     REQUIRES_NON_CYGWIN = True
 
@@ -219,7 +220,6 @@ class KVStoreStats(CouchbaseCollector):
 
     def __init__(self, settings: CbAgentSettings, test: PerfTest):
         super().__init__(settings, test)
-        extract_cb_any(filename="couchbase")
         self.collect_per_server_stats = test.test_config.magma_settings.collect_per_server_stats
         self.cluster_spec = test.cluster_spec
 

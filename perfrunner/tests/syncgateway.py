@@ -2706,8 +2706,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 raise Exception("failed to load docs")
 
     def cloud_restore(self):
-        self.remote.extract_cb_any(filename='couchbase',
-                                   worker_home="/tmp")
+        self.remote.extract_cb(worker_home="/tmp")
         self.remote.cbbackupmgr_version(worker_home="/tmp")
 
         credential = local.read_aws_credential(

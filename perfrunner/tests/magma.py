@@ -322,7 +322,6 @@ class KVTest(PerfTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-        local.extract_cb_any(filename='couchbase')
         self.disk_stats = {}
         self.memcached_stats = {}
         self.disk_ops = {}
@@ -1381,7 +1380,7 @@ class CombinedLatencyAndRebalanceCDCTest(RebalanceCDCTest):
 class BackupTestDGM(BackupTest, StabilityBootstrap):
 
     def run(self):
-        self.extract_tools()
+        self.require_cb_tools()
 
         if self.test_config.load_settings.use_backup:
             self.copy_data_from_backup()
@@ -1468,10 +1467,6 @@ class UniDirXdcrInitHiDDTest(UniDirXdcrInitTest):
 
     COLLECTORS = {'disk': True, 'kvstore': True, 'vmstat': True, 'xdcr_stats': True}
     CB_STATS_PORT = 11209
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        local.extract_cb_any(filename="couchbase")
 
     def run(self):
         self.load()
@@ -1661,7 +1656,6 @@ class N1QLThroughputHiDDTest(N1QLThroughputTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-        local.extract_cb_any(filename="couchbase")
 
         self.kv_iterator = TargetIterator(
             self.cluster_spec, self.test_config, self.test_config.load_settings.key_prefix

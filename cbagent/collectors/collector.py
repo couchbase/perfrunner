@@ -49,6 +49,11 @@ class Collector(metaclass=RegistryMeta):
     # Metric-name namespace for this collector's samples. None means the store default.
     METRICS_PREFIX: Optional[str] = None
 
+    # Set to True on subclasses whose sample loop runs a tool out of ./opt/couchbase/bin.
+    # CollectorRegistry drops these when the tools were never extracted, so no collector
+    # has to check for them -- or extract them -- in its own __init__.
+    REQUIRES_CB_TOOLS: bool = False
+
     # Environment guards — set to True to restrict where the collector runs.
     SKIP_ON_DYNAMIC: bool = False  # Skip when the cluster is on K8S
     REQUIRES_ON_PREM: bool = False  # Skip when the cluster is on Capella

@@ -11,7 +11,6 @@ import numpy
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import (
-    extract_cb_deb,
     get_indexer_heap_profile,
     kill_process,
     read_aws_credential,
@@ -65,7 +64,6 @@ class SecondaryIndexTest(PerfTest):
 
         self.bucket = self.test_config.buckets[0]
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "gsi")
-        extract_cb_deb(filename='couchbase.deb')
 
         self.cbindexperf_concurrency = self.test_config.gsi_settings.cbindexperf_concurrency
         self.cbindexperf_gcpercent = self.test_config.gsi_settings.cbindexperf_gcpercent
@@ -124,7 +122,7 @@ class SecondaryIndexTest(PerfTest):
             self.download_certificate()
             self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE,
                                               self.worker_manager.WORKER_HOME)
-            self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+            self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
             self.admin_auth = self.admin_creds(self.master_node)
         else:
             self.admin_auth = 'Administrator', 'password'
@@ -152,8 +150,7 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Existing 2i latency stats file removed')
 
     def cloud_restore(self):
-        self.remote.extract_cb_any(filename='couchbase',
-                                   worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         credential = read_aws_credential(
@@ -653,7 +650,7 @@ class CloudInitialandIncrementalSecondaryIndexTest(InitialandIncrementalSecondar
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
 
     def print_index_disk_usage(self, text=""):
         self.print_average_rr()
@@ -953,7 +950,7 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
 
     def _report_kpi(self, percentile_latencies, scan_thr: float = 0, time_elapsed: float = 0):
 
@@ -1765,7 +1762,7 @@ class CapellaSecondaryRebalanceTest(SecondaryRebalanceTest, CapellaRebalanceTest
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
 
     @with_stats
     def rebalance_indexer(self, services="index"):
@@ -2271,7 +2268,7 @@ class InitialOSOIndexTest(InitialandIncrementalSecondaryIndexTest):
 class InitialScanThroughputLatencyCloudTest(SecondaryIndexingThroughputTest):
     def __init__(self, *args):
         super().__init__(*args)
-        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
 
     def remove_resultfile(self):
         rmfile = "rm -f {}".format("result.json")
@@ -2352,7 +2349,7 @@ class InitialScanThroughputLatencyCloudTest(SecondaryIndexingThroughputTest):
 class ThroughputLatencyMutationScanCloudTest(SecondaryIndexingThroughputTest):
     def __init__(self, *args):
         super().__init__(*args)
-        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
 
     def remove_resultfile(self):
         rmfile = "rm -f {}".format("result.json")
@@ -2462,7 +2459,7 @@ class CloudSecondaryInitialBuildTest(CloudSecondaryIndexingScanTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
 
     def run(self):
         self.download_certificate()
@@ -2532,7 +2529,7 @@ class InitialSecondaryIndexExpiryTest(InitialSecondaryIndexTest):
 class RebalanceThroughputLatencyMutationScanCloudTest(SecondaryRebalanceTest):
     def __init__(self, *args):
         super().__init__(*args)
-        self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
 
     def run(self):
         self.load()

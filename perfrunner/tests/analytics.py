@@ -1164,9 +1164,7 @@ class AnalyticsTest(PerfTest):
 
     def _restore_remote(self):
         if not self.have_already_restored_data:
-            self.remote.extract_cb_any(
-                filename="couchbase", worker_home=self.worker_manager.WORKER_HOME
-            )
+            self.remote.extract_cb(worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         archive = self.test_config.restore_settings.backup_storage
@@ -1204,7 +1202,7 @@ class AnalyticsTest(PerfTest):
         if (wm := getattr(self, "worker_manager", None)) and wm.is_remote:
             self._restore_remote()
         else:
-            self.restore_local(extract_archive=not self.have_already_restored_data)
+            self.restore_local()
 
         restore_include_data = self.test_config.restore_settings.include_data
         if restore_include_data:

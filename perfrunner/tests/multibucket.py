@@ -277,7 +277,7 @@ class HighBucketDensityTest(RebalanceKVTest,
         super().backup(mode)
 
     def back_up(self):
-        self.extract_tools()
+        self.require_cb_tools()
         time_elapsed = self.backup()
         logger.info(f"Backup time: {time_elapsed / 60} min")
 

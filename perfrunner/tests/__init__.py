@@ -357,10 +357,9 @@ class PerfTest:
         self.remote.export_data(num_collections, collection_prefix, scope_prefix,
                                 scope, name_of_backup)
 
-    def restore_local(self, extract_archive: bool = True):
+    def restore_local(self):
         logger.info('Restoring data')
-        if extract_archive:
-            local.extract_cb_any(filename="couchbase")
+        local.require_cb_tools()
         local.purge_restore_progress(
             self.cluster_spec,
             archive=self.test_config.restore_settings.backup_storage,
@@ -491,8 +490,10 @@ class PerfTest:
         if not self.test_config.stats_settings.collect_mctimings:
             return
 
-        logger.info("Extracting couchbase tools for mctimings")
-        local.extract_cb_any(filename='couchbase')
+        if not local.cb_tools_available():
+            logger.warning("Couchbase tools are unavailable; skipping mctimings latencies")
+            return
+
         logger.info("Posting mctimings latency metrics")
         mctimings_data = self.collect_and_log_mctimings(operations=operations)
         if not mctimings_data:

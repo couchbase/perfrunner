@@ -30,23 +30,76 @@ YCSB_ENV = {
     "MAVEN_OPTS": "-Dcheckstyle.skip=true -Xss16m",
 }
 
-def extract_cb(filename: str):
-    cmd = f"rpm2cpio ./{filename} | cpio -idm"
-    with quiet():
-        local(cmd)
+
+CB_TOOLS_DIR = "./opt/couchbase/bin"
+CB_EXTRACT_CMDS = {
+    ".deb": "ar p ./{package} data.tar.xz | unxz | tar x",
+    ".rpm": "rpm2cpio ./{package} | cpio -idm",
+}
 
 
-def extract_cb_deb(filename: str):
-    cmd = f"ar p {filename} data.tar.xz | unxz | tar x"
-    with quiet():
-        local(cmd)
+def cb_package_candidates(filename: str) -> list[str]:
+    """Return the Couchbase Server package names to look for, in order.
+
+    Empty when the filename has an extension we cannot extract.
+    """
+    if suffix := Path(filename).suffix:
+        if suffix not in CB_EXTRACT_CMDS:
+            return []
+        return [filename]
+
+    return [filename + ext for ext in CB_EXTRACT_CMDS]
 
 
-def extract_cb_any(filename: str):
-    if os.path.exists(f"{filename}.deb"):
-        extract_cb_deb(f"{filename}.deb")
-    else:
-        extract_cb(f"{filename}.rpm")
+def cb_tools_available() -> bool:
+    """Whether the Couchbase Server tools have been extracted into ./opt/couchbase/bin."""
+    return Path(CB_TOOLS_DIR).is_dir()
+
+
+def require_cb_tools():
+    """Abort unless the Couchbase Server tools are available locally.
+
+    For callers that go on to run one: "No such file or directory" out of a shell is a poor
+    way to learn that env/bin/install ran without --local-copy (or --remote-copy if its a cloud
+    test).
+    """
+    if not cb_tools_available():
+        logger.interrupt(
+            f"The Couchbase tools are not available under {CB_TOOLS_DIR}. They are extracted "
+            "from the package that env/bin/install downloads with --local-copy "
+            "(or --remote-copy for a cloud test)."
+        )
+
+
+def extract_cb(package: str) -> bool:
+    """Extract the Couchbase Server tools from the given .deb/.rpm into ./opt.
+
+    Returns whether ./opt/couchbase/bin ended up there. Failure warns rather than aborts:
+    installing the server is the caller's actual job, and the consumers of the tools decide
+    for themselves what a missing ./opt means for them.
+    """
+    path = Path(package)
+    if path.suffix not in CB_EXTRACT_CMDS:
+        logger.warning(f"Cannot extract the Couchbase tools from {package}: unsupported file type")
+        return False
+
+    if not path.is_file():
+        logger.warning(f"Cannot extract the Couchbase tools: {package} is not in {os.getcwd()}")
+        return False
+
+    logger.info(f"Extracting {package}")
+    _, _, returncode = run_local_shell_command(
+        CB_EXTRACT_CMDS[path.suffix].format(package=path.name),
+        err_msg=f"Failed to extract {package}",
+    )
+
+    # A clean extraction is no proof this was the right package: a debuginfo/dbgsym .deb
+    # unpacks happily under ./usr and returns zero.
+    if returncode or not cb_tools_available():
+        logger.warning(f"Failed to extract the Couchbase tools from {package}")
+        return False
+
+    return True
 
 
 def extract_any(filename: str, to_path: str = None, remove_after: bool = True):

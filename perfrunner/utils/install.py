@@ -22,6 +22,7 @@ from perfrunner.helpers.local import (
     check_if_remote_branch_exists,
     clone_git_repo,
     extract_any,
+    extract_cb,
     generate_server_x509_cert,
     run_custom_cmd,
 )
@@ -675,14 +676,17 @@ class CouchbaseInstaller:
             )
 
     def download_local(self, local_copy_url: Optional[str] = None):
-        """Download and save a copy of the specified package."""
+        """Download a copy of the package and extract the Couchbase tools from it."""
+        url = local_copy_url or self.url
+        package = f"couchbase.{self.remote.package_type}"
+        logger.info(f"Saving a local copy of {url}")
         try:
-            url = local_copy_url or self.url
-            logger.info(f'Saving a local copy of {url}')
-            download_file(url, f"couchbase.{self.remote.package_type}")
+            download_file(url, package)
+        except Exception:
+            logger.warning(f"Failed to download {url}; the Couchbase tools will be unavailable")
+            return
 
-        except (Exception, BaseException):
-            logger.info("Saving local copy for ubuntu failed, package may not present")
+        extract_cb(package)
 
     def download_remote(self):
         """Download and save a copy of the specified package on a remote client."""
@@ -789,6 +793,7 @@ class CloudInstaller(CouchbaseInstaller):
 
             client_package_name = f"couchbase.{client_package_url.rsplit('.', 1)[-1]}"
             download_file(client_package_url, client_package_name)
+            extract_cb(client_package_name)
 
             uploads = []
             for client in self.cluster_spec.workers:
@@ -868,6 +873,7 @@ class ClientUploader(CouchbaseInstaller):
 
         logger.info(f'Saving a local copy of {self.url}')
         download_file(self.url, package_name)
+        extract_cb(package_name)
 
         self.upload(package_name)
 

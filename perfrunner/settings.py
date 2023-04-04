@@ -704,11 +704,7 @@ class ClusterSettings:
                                     'searchThrottleLimit': int(options.get('search_throttle',
                                                                            0)),
                                     'queryThrottleLimit': int(options.get('query_throttle',
-                                                                          0)),
-                                    'sgwReadThrottleLimit': int(options.get('sgwread_throttle',
-                                                                            0)),
-                                    'sgwWriteThrottleLimit': int(options.get('sgwwrite_throttle',
-                                                                             0))}
+                                                                          0))}
 
         kernel_mem_limit_services = options.get('kernel_mem_limit_services')
         if kernel_mem_limit_services:

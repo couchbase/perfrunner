@@ -902,9 +902,7 @@ class DefaultRestHelper(RestBase):
         serverless_throttle = {'dataThrottleLimit': 5000,
                                'indexThrottleLimit': 5000,
                                'searchThrottleLimit': 5000,
-                               'queryThrottleLimit': 5000,
-                               'sgwReadThrottleLimit': 5000,
-                               'sgwWriteThrottleLimit': 5000}
+                               'queryThrottleLimit': 5000}
         for service, limit in serverless_throttle.items():
             data = {service: limit}
             logger.info('Setting throttle limit: {}'.format(data))

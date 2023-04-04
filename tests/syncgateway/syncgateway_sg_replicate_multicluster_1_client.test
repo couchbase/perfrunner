@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGReplicateMultiCluster
+test = perfrunner.tests.syncgateway.SGReplicateMultiClusterPull
 
 [showfast]
 title = , Central cluster (1 sgnode + 4 cbnode), 200K docs, 1 edge cluster1 (simulated), BLIP, pull replication

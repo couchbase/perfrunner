@@ -1425,6 +1425,26 @@ def run_blackholepuller_adv(url_str, clients, timeout, stderr_file_name, log_fil
                                                     log_file_name))
 
 
+def run_blackholepuller_users(host, clients, timeout, users_file_name, stderr_file_name,
+                              log_file_name):
+    local('./blackholePuller -url http://sg-user-0:password@{}:4984/db-1 -clients {}'
+          ' -timeout {}s -userPasswordFilepath {} 2>{}.log 1>{}.json'.format(host, clients,
+                                                                             timeout,
+                                                                             users_file_name,
+                                                                             stderr_file_name,
+                                                                             log_file_name))
+
+
+def run_blackholepuller_users_adv(url_str, clients, timeout, users_file_name, stderr_file_name,
+                                  log_file_name):
+    local('./blackholePuller -url {} -clients {}'
+          ' -timeout {}s -userPasswordFilepath {} 2>{}.log 1>{}.json'.format(url_str, clients,
+                                                                             timeout,
+                                                                             users_file_name,
+                                                                             stderr_file_name,
+                                                                             log_file_name))
+
+
 def run_newdocpusher(host, changebatchset, clients, timeout, stderr_file_name,
                      log_file_name, doc_id_prefix, doc_size):
 

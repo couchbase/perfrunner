@@ -1214,18 +1214,6 @@ class RemoteLinux(Remote):
         cmd = 'chmod +x blackholePuller-linux-x64'
         run(cmd)
 
-    @all_clients
-    def execute_blockholepuller(self, clients, timeout, result_path):
-        cmd = './blackholePuller -url http://demo:password@localhost:4984/db1 ' \
-              '-clients {} -timeout {}s > {}'.format(clients, timeout, result_path)
-        run(cmd)
-
-    @all_clients
-    def execute_newdocpush(self, clients, timeout, result_path):
-        cmd = './newDocPusher -url http://demo:password@localhost:4984/db1 ' \
-              '-clients {} -timeout {}s > {}'.format(clients, timeout, result_path)
-        run(cmd)
-
     def nebula_init_ssh(self):
         if not (self.cluster_spec.serverless_infrastructure and
                 self.cluster_spec.capella_backend == 'aws'):

@@ -2,7 +2,7 @@
 test = perfrunner.tests.syncgateway.SGReplicateMultiClusterPull
 
 [showfast]
-title = , Central cluster (4 sgnode + 4 cbnode), 200K docs, 3000 edge clusters (simulated), BLIP, pull replication, 10 sg databases
+title = , Central cluster (4 sgnode + 4 cbnode), 200K docs, multiple users, 3000 edge clusters (simulated), pull replication
 component = syncgateway
 category = sgreplicate
 sub_category = Multi-cluster
@@ -11,7 +11,7 @@ sub_category = Multi-cluster
 mem_quota = 25000
 index_mem_quota = 25000
 initial_nodes = 4
-num_buckets = 10
+num_buckets = 1
 
 
 [access]
@@ -25,11 +25,11 @@ indexer.settings.storage_mode = memory_optimized
 nodes = 4
 threads = 50
 clients = 6
-instances_per_client = 1
+instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = tmp-sqw-weekly-updated-c3
-users = 1000
+users = 3000
 channels = 100
 channels_per_user = 10
 channels_per_doc = 10
@@ -47,3 +47,4 @@ log_title = sync_gateway_1node_writes
 roundtrip_write_load = true
 sg_blackholepuller_timeout = 600
 sg_blackholepuller_client = 500
+sg_blackholepuller_users = 3000

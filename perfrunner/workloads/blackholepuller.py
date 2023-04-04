@@ -1,7 +1,12 @@
+import csv
+import random
+
 from logger import logger
 from perfrunner.helpers.local import (
     run_blackholepuller,
     run_blackholepuller_adv,
+    run_blackholepuller_users,
+    run_blackholepuller_users_adv,
     run_newdocpusher,
     run_newdocpusher_adv,
 )
@@ -27,6 +32,14 @@ def build_multihost_url(cluster, workload_settings):
     return url_string[:-1]
 
 
+def generate_csv_file(clients: int, users: int, users_file_name: str):
+    with open(users_file_name, 'w') as fh:
+        writer = csv.writer(fh)
+        for user in range(0, clients):
+            current_user = "sg-user-{}".format(random.randint(0, users))
+            writer.writerow([current_user, "password"])
+
+
 def blackholepuller_runtest(workload_settings: PhaseSettings, target: TargetSettings,
                             timer: int, worker_id: int, cluster: ClusterSpec):
 
@@ -37,19 +50,42 @@ def blackholepuller_runtest(workload_settings: PhaseSettings, target: TargetSett
 
     stderr_log_file_name = 'sg_stderr_blackholepuller_{}'.format(worker_id)
 
+    users_file_name = 'sg_bhp_users.csv'
+
     if int(workload_settings.syncgateway_settings.nodes) > 1:
-        run_blackholepuller_adv(url_str=build_multihost_url(cluster, workload_settings),
+        if sgs.sg_blackholepuller_users == 0:
+            run_blackholepuller_adv(url_str=build_multihost_url(cluster, workload_settings),
+                                    clients=sgs.sg_blackholepuller_client,
+                                    timeout=sgs.sg_blackholepuller_timeout,
+                                    stderr_file_name=stderr_log_file_name,
+                                    log_file_name=log_file_name)
+        else:
+            generate_csv_file(int(sgs.sg_blackholepuller_client),
+                              int(sgs.sg_blackholepuller_users),
+                              users_file_name)
+            run_blackholepuller_users_adv(url_str=build_multihost_url(cluster, workload_settings),
+                                          clients=sgs.sg_blackholepuller_client,
+                                          timeout=sgs.sg_blackholepuller_timeout,
+                                          users_file_name=users_file_name,
+                                          stderr_file_name=stderr_log_file_name,
+                                          log_file_name=log_file_name)
+
+    else:
+        if sgs.sg_blackholepuller_users == 0:
+            run_blackholepuller(host=get_host(cluster, workload_settings),
                                 clients=sgs.sg_blackholepuller_client,
                                 timeout=sgs.sg_blackholepuller_timeout,
                                 stderr_file_name=stderr_log_file_name,
                                 log_file_name=log_file_name)
-
-    else:
-        run_blackholepuller(host=get_host(cluster, workload_settings),
-                            clients=sgs.sg_blackholepuller_client,
-                            timeout=sgs.sg_blackholepuller_timeout,
-                            stderr_file_name=stderr_log_file_name,
-                            log_file_name=log_file_name)
+        else:
+            generate_csv_file(sgs.sg_blackholepuller_client, sgs.sg_blackholepuller_users,
+                              users_file_name)
+            run_blackholepuller_users(host=get_host(cluster, workload_settings),
+                                      clients=sgs.sg_blackholepuller_client,
+                                      timeout=sgs.sg_blackholepuller_timeout,
+                                      users_file_name=users_file_name,
+                                      stderr_file_name=stderr_log_file_name,
+                                      log_file_name=log_file_name)
 
 
 def newdocpusher_runtest(workload_settings: PhaseSettings, target: TargetSettings,
@@ -65,9 +101,6 @@ def newdocpusher_runtest(workload_settings: PhaseSettings, target: TargetSetting
     doc_id_prefix = 'perf' + str(worker_id)
 
     if int(workload_settings.syncgateway_settings.nodes) > 1:
-
-        logger.info('entered run_newdocpusher_adv method')
-        logger.info('urls: {}'.format(build_multihost_url(cluster, workload_settings)))
 
         run_newdocpusher_adv(url_str=build_multihost_url(cluster, workload_settings),
                              clients=sgs.sg_blackholepuller_client,

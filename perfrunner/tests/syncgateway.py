@@ -1187,7 +1187,7 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
         self.report_kpi(time_elapsed, items_in_range)
 
 
-class SGReplicateMultiCluster(SGPerfTest):
+class SGReplicateMultiClusterPull(SGPerfTest):
 
     def download_blockholepuller_tool(self):
         if self.worker_manager.is_remote:
@@ -1196,12 +1196,6 @@ class SGReplicateMultiCluster(SGPerfTest):
             self.remote.download_blackholepuller(worker_home=self.worker_manager.WORKER_HOME)
         else:
             local.download_blockholepuller()
-
-    def execute_multicluster_pull(self, clinets, timeout):
-        result_path = "/tmp/perfrunner/perfrunner/results.json"
-        self.remote.execute_blockholepuller(clients=clinets,
-                                            timeout=timeout,
-                                            result_path=result_path)
 
     def collect_execution_logs(self):
         if self.worker_manager.is_remote:
@@ -1247,6 +1241,13 @@ class SGReplicateMultiCluster(SGPerfTest):
                                                   duration=duration)
         )
 
+        self.reporter.post(
+            *self.metrics.sg_bp_num_replications(title="Number of replications executed",
+                                                 documents=int(self.test_config.
+                                                               syncgateway_settings.
+                                                               documents))
+        )
+
     def run(self):
 
         self.remote.remove_sglogs()
@@ -1270,12 +1271,6 @@ class SGReplicateMultiClusterPush(SGPerfTest):
             self.remote.download_newdocpusher(worker_home=self.worker_manager.WORKER_HOME)
         else:
             local.download_newdocpusher()
-
-    def execute_newdocpush(self, clinets, timeout):
-        result_path = "/tmp/perfrunner/perfrunner/results.json"
-        self.remote.execute_blockholepuller(clients=clinets,
-                                            timeout=timeout,
-                                            result_path=result_path)
 
     def collect_execution_logs(self):
         if self.worker_manager.is_remote:

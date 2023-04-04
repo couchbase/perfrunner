@@ -251,22 +251,22 @@ class Remote:
 
     @all_clients
     def download_blackholepuller(self, worker_home: str):
-        logger.info("downloading blackhole puller")
-        with cd('/root/sg_dev_tools/replicator/blackholePuller'):
+        logger.info("downloading blackholepuller")
+        with cd('/root/sg_dev_tools_new/replicator/blackholePuller'):
             run('cp blackholePuller /tmp/perfrunner/perfrunner/')
             run('chmod +x /tmp/perfrunner/perfrunner/blackholePuller')
 
     @all_clients
     def download_newdocpusher(self, worker_home: str):
-        logger.info('downloading new doc pusher')
-        with cd('/root/sg_dev_tools/replicator/newDocPusher'):
+        logger.info('downloading newdocpusher')
+        with cd('/root/sg_dev_tools_new/replicator/newDocPusher'):
             run('cp newDocPusher /tmp/perfrunner/perfrunner/')
             run('chmod +x /tmp/perfrunner/perfrunner/newDocPusher')
 
     @all_clients
     def get_sg_blackholepuller_logs(self, worker_home, sgs):
         pattern = "*{}*".format('_blackholepuller_')
-        logger.info('Collecting SG Blackhole Puller logs')
+        logger.info('Collecting SG blackholepuller logs')
         with cd(worker_home), cd('perfrunner'):
             r = run('stat {}'.format(pattern), quiet=True)
             if not r.return_code:
@@ -283,7 +283,7 @@ class Remote:
     @all_clients
     def get_sg_newdocpusher_logs(self, worker_home, sgs):
         pattern = "*{}*".format('_newdocpusher_')
-        logger.info('Collecting SG Blackhole Puller logs')
+        logger.info('Collecting SG newdocpusher logs')
         with cd(worker_home), cd('perfrunner'):
             r = run('stat {}'.format(pattern), quiet=True)
             if not r.return_code:
@@ -291,7 +291,7 @@ class Remote:
 
     @all_clients
     def get_newdocpusher_result_files(self):
-        logger.info('Collecting blackholepuller result files')
+        logger.info('Collecting newdocpusher result files')
         with cd('/tmp/perfrunner'), cd('perfrunner'):
             r = run('stat sg_newdocpusher_result*.log', quiet=True)
             if not r.return_code:

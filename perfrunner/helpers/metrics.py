@@ -1520,6 +1520,20 @@ class MetricHelper:
         throughput = sum_doc_per_sec / fc
         return throughput
 
+    def _get_num_replications(self, documents: int) -> int:
+        num_replications = 0
+        total_docs = 0
+        for filename in glob.glob("sg_stats_blackholepuller_*.json"):
+            total_docs_pulled_per_file = 0
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+                for i in content_lines:
+                    if "docs_pulled" in i:
+                        total_docs_pulled_per_file += int(i.split(':')[1].split(',')[0])
+            total_docs += total_docs_pulled_per_file
+        num_replications = round(total_docs / documents)
+        return num_replications
+
     def _parse_newdocpush_throughput(self) -> int:
         throughput = 0
         fc = 0
@@ -1599,6 +1613,13 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id, metric_title)
         docs_pulled_per_sec = round(self._sg_bp_total_docs_pushed() / duration)
         return docs_pulled_per_sec, self._snapshots, metric_info
+
+    def sg_bp_num_replications(self, title, documents: int) -> Metric:
+        metric_id = '{}_num_replications'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        num_replications = self._get_num_replications(documents)
+        return num_replications, self._snapshots, metric_info
 
     def sg_latency(self, metric_name, title) -> Metric:
         metric_id = '{}_latency'.format(self.test_config.name)

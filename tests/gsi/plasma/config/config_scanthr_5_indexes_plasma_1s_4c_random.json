@@ -31,27 +31,6 @@
             ],
             "Id": 1,
             "Inclusion": 3,
-            "Index": "index1-10",
-            "Limit": 1,
-            "Low": [
-                15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-1",
-            "High": [
-                28
-            ],
-            "Id": 1,
-            "Inclusion": 3,
             "Index": "index1-2",
             "Limit": 1,
             "Low": [
@@ -130,90 +109,6 @@
         },
         {
             "Bucket": "bucket-1",
-            "Collection": "collection-1",
-            "High": [
-                0.4
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index1-6",
-            "Limit": 1,
-            "Low": [
-                0.21
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-1",
-            "High": [
-                2
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index1-7",
-            "Limit": 1,
-            "Low": [
-                1
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-1",
-            "High": [
-                28
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index1-8",
-            "Limit": 1,
-            "Low": [
-                15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-1",
-            "High": [
-                1987
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index1-9",
-            "Limit": 1,
-            "Low": [
-                1986
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
             "Collection": "collection-2",
             "High": [
                 28
@@ -221,27 +116,6 @@
             "Id": 1,
             "Inclusion": 3,
             "Index": "index2-1",
-            "Limit": 1,
-            "Low": [
-                15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-2",
-            "High": [
-                28
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index2-10",
             "Limit": 1,
             "Low": [
                 15
@@ -340,90 +214,6 @@
         },
         {
             "Bucket": "bucket-1",
-            "Collection": "collection-2",
-            "High": [
-                0.4
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index2-6",
-            "Limit": 1,
-            "Low": [
-                0.21
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-2",
-            "High": [
-                2
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index2-7",
-            "Limit": 1,
-            "Low": [
-                1
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-2",
-            "High": [
-                28
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index2-8",
-            "Limit": 1,
-            "Low": [
-                15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-2",
-            "High": [
-                1987
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index2-9",
-            "Limit": 1,
-            "Low": [
-                1986
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
             "Collection": "collection-3",
             "High": [
                 28
@@ -431,27 +221,6 @@
             "Id": 1,
             "Inclusion": 3,
             "Index": "index3-1",
-            "Limit": 1,
-            "Low": [
-                15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-3",
-            "High": [
-                28
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index3-10",
             "Limit": 1,
             "Low": [
                 15
@@ -550,90 +319,6 @@
         },
         {
             "Bucket": "bucket-1",
-            "Collection": "collection-3",
-            "High": [
-                0.4
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index3-6",
-            "Limit": 1,
-            "Low": [
-                0.21
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-3",
-            "High": [
-                2
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index3-7",
-            "Limit": 1,
-            "Low": [
-                1
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-3",
-            "High": [
-                28
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index3-8",
-            "Limit": 1,
-            "Low": [
-                15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-3",
-            "High": [
-                1987
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index3-9",
-            "Limit": 1,
-            "Low": [
-                1986
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
             "Collection": "collection-4",
             "High": [
                 28
@@ -641,27 +326,6 @@
             "Id": 1,
             "Inclusion": 3,
             "Index": "index4-1",
-            "Limit": 1,
-            "Low": [
-                15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-4",
-            "High": [
-                28
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index4-10",
             "Limit": 1,
             "Low": [
                 15
@@ -749,90 +413,6 @@
             "Limit": 1,
             "Low": [
                 15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-4",
-            "High": [
-                0.4
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index4-6",
-            "Limit": 1,
-            "Low": [
-                0.21
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-4",
-            "High": [
-                2
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index4-7",
-            "Limit": 1,
-            "Low": [
-                1
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-4",
-            "High": [
-                28
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index4-8",
-            "Limit": 1,
-            "Low": [
-                15
-            ],
-            "NInterval": 100,
-            "Repeat": 199999,
-            "Scope": "scope-1",
-            "Type": "Range",
-            "TestSpec": {
-                "RandomKeyLen": 6
-            }
-        },
-        {
-            "Bucket": "bucket-1",
-            "Collection": "collection-4",
-            "High": [
-                1987
-            ],
-            "Id": 1,
-            "Inclusion": 3,
-            "Index": "index4-9",
-            "Limit": 1,
-            "Low": [
-                1986
             ],
             "NInterval": 100,
             "Repeat": 199999,

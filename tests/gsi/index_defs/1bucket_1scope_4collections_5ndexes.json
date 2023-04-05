@@ -1,0 +1,35 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "index1-1": "name",
+                "index1-2": "email",
+                "index1-3": "alt_email",
+                "index1-4": "city",
+                "index1-5": "realm"
+            },
+            "collection-2": {
+                "index2-1": "name",
+                "index2-2": "email",
+                "index2-3": "alt_email",
+                "index2-4": "city",
+                "index2-5": "realm"
+            },
+            "collection-3": {
+                "index3-1": "name",
+                "index3-2": "email",
+                "index3-3": "alt_email",
+                "index3-4": "city",
+                "index3-5": "realm"
+            },
+            "collection-4": {
+                "index4-1": "name",
+                "index4-2": "email",
+                "index4-3": "alt_email",
+                "index4-4": "city",
+                "index4-5": "realm"
+            }
+        }
+    }
+}

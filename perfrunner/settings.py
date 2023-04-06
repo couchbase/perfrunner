@@ -1511,6 +1511,18 @@ class LoadSettings(PhaseSettings):
     CREATES = 100
     SEQ_UPSERTS = True
 
+    UNIFORM_COLLECTION_LOAD_TIME = 0
+    CONCURRENT_COLLECTION_LOAD = 0
+
+    def __init__(self, options: dict):
+        super().__init__(options)
+        self.uniform_collection_load_time = int(options.get('uniform_collection_load_time',
+                                                            self.UNIFORM_COLLECTION_LOAD_TIME))
+        self.concurrent_collection_load = (
+            self.uniform_collection_load_time or
+            int(options.get('concurrent_collection_load', self.CONCURRENT_COLLECTION_LOAD))
+        )
+
     def configure(self, test_config):
         self.configure_client_settings(test_config.client_settings)
         self.configure_collection_settings(test_config.collection)

@@ -135,31 +135,37 @@ class Worker:
     def init_load_targets(self):
         self.load_targets = []
         self.load_map = {}
+        self.load_ratios = {}
         num_ratio = 0
         if self.ws.collections is not None:
             target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1:
-                        self.load_targets += [scope+":"+collection]
-                        if target_scope_collections[scope][collection].get('ratio'):
-                            num_ratio += target_scope_collections[scope][collection].get('ratio')
+            for scope, collections in target_scope_collections.items():
+                for collection, options in collections.items():
+                    if options['load'] == 1:
+                        self.load_targets.append(scope + ":" + collection)
+                        if ratio := options.get('ratio'):
+                            num_ratio += ratio
         else:
             self.load_targets = ["_default:_default"]
+
         self.num_load_targets = len(self.load_targets)
+
         if num_ratio > 0:
             base_items = self.ws.items // num_ratio
             target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1:
-                        self.load_targets += [scope+":"+collection]
-                        if target_scope_collections[scope][collection].get('ratio'):
-                            ratio = target_scope_collections[scope][collection].get('ratio')
-                            self.load_map[scope + ":" + collection] = ratio * base_items
+            for scope, collections in target_scope_collections.items():
+                for collection, options in collections.items():
+                    if options['load'] == 1:
+                        target = scope + ":" + collection
+                        self.load_targets.append(target)
+                        if ratio := options.get('ratio'):
+                            self.load_map[target] = ratio * base_items
+                            self.load_ratios[target] = ratio
         else:
             for target in self.load_targets:
                 self.load_map[target] = self.ws.items // self.num_load_targets
+                self.load_ratios[target] = 1
+
         logger.info(f"load map {self.load_map}")
 
     def init_access_targets(self):
@@ -739,15 +745,59 @@ class SeqUpsertsWorker(Worker):
 
     def run(self, sid, *args):
         logger.info("running SeqUpsertsWorker")
+        self.cb.connect_collections(self.load_targets)
+
+        if self.ws.uniform_collection_load_time or self.ws.concurrent_collection_load:
+            self.concurrent_collection_load(sid)
+        else:
+            self.default_load(sid)
+
+    def default_load(self, sid):
         ws = copy.deepcopy(self.ws)
         period = 1 / ws.throughput
-        self.cb.connect_collections(self.load_targets)
         for target in self.load_targets:
             ws.items = self.load_map[target]
             for key in SequentialKey(sid, ws, self.ts.prefix):
                 doc = self.docs.next(key)
                 self.cb.update(target, key.string, doc)
                 time.sleep(period)
+
+    def concurrent_collection_load(self, sid):
+        # Create key iterators for each collection
+        # Its possible for us to load different no. of docs into different collections so we
+        # need a separate iterator for each collection
+        target_key_iterators = []
+        for target in self.load_targets:
+            ws = copy.deepcopy(self.ws)
+            ws.items = self.load_map[target]
+            ratio = self.load_ratios[target] if self.ws.uniform_collection_load_time else 1
+            target_key_iterators.append(
+                (
+                    target,
+                    iter(SequentialKey(sid, ws, self.ts.prefix)),
+                    ratio
+                )
+            )
+
+        # Until we've exhausted the key iterator for each collection, loop over the collections
+        # and upsert the next document
+        while target_key_iterators:
+            # Keep track of finished key iterators
+            finished_key_iters = []
+            for i, (target, key_gen, ratio) in enumerate(target_key_iterators):
+                try:
+                    for _ in range(ratio):
+                        key = next(key_gen)
+                        doc = self.docs.next(key)
+                        self.cb.update(target, key.string, doc)
+                except StopIteration:
+                    finished_key_iters.append(i)
+                    continue
+
+            # Discard finished key iterators
+            if finished_key_iters:
+                target_key_iterators = [x for i, x in enumerate(target_key_iterators)
+                                        if i not in finished_key_iters]
 
 
 class FTSDataSpreadWorker(Worker):

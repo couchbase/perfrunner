@@ -1,0 +1,23 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "index1-1": "name",
+                "index1-2": "email"
+            },
+            "collection-2": {
+                "index2-1": "name",
+                "index2-2": "email"
+            },
+            "collection-3": {
+                "index3-1": "name",
+                "index3-2": "email"
+            },
+            "collection-4": {
+                "index4-1": "name",
+                "index4-2": "email"
+            }
+        }
+    }
+}

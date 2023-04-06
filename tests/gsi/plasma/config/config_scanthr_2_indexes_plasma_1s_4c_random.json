@@ -1,0 +1,174 @@
+{
+    "Clients": 5,
+    "Concurrency": 128,
+    "ScanSpecs": [
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-1",
+            "High": [
+                28
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index1-1",
+            "Limit": 1,
+            "Low": [
+                15
+            ],
+            "NInterval": 100,
+            "Repeat": 199999,
+            "Scope": "scope-1",
+            "Type": "Range",
+            "TestSpec": {
+                "RandomKeyLen": 6
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-1",
+            "High": [
+                28
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index1-2",
+            "Limit": 1,
+            "Low": [
+                15
+            ],
+            "NInterval": 100,
+            "Repeat": 199999,
+            "Scope": "scope-1",
+            "Type": "Range",
+            "TestSpec": {
+                "RandomKeyLen": 6
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-2",
+            "High": [
+                28
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index2-1",
+            "Limit": 1,
+            "Low": [
+                15
+            ],
+            "NInterval": 100,
+            "Repeat": 199999,
+            "Scope": "scope-1",
+            "Type": "Range",
+            "TestSpec": {
+                "RandomKeyLen": 6
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-2",
+            "High": [
+                28
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index2-2",
+            "Limit": 1,
+            "Low": [
+                15
+            ],
+            "NInterval": 100,
+            "Repeat": 199999,
+            "Scope": "scope-1",
+            "Type": "Range",
+            "TestSpec": {
+                "RandomKeyLen": 6
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-3",
+            "High": [
+                28
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index3-1",
+            "Limit": 1,
+            "Low": [
+                15
+            ],
+            "NInterval": 100,
+            "Repeat": 199999,
+            "Scope": "scope-1",
+            "Type": "Range",
+            "TestSpec": {
+                "RandomKeyLen": 6
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-3",
+            "High": [
+                28
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index3-2",
+            "Limit": 1,
+            "Low": [
+                15
+            ],
+            "NInterval": 100,
+            "Repeat": 199999,
+            "Scope": "scope-1",
+            "Type": "Range",
+            "TestSpec": {
+                "RandomKeyLen": 6
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-4",
+            "High": [
+                28
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index4-1",
+            "Limit": 1,
+            "Low": [
+                15
+            ],
+            "NInterval": 100,
+            "Repeat": 199999,
+            "Scope": "scope-1",
+            "Type": "Range",
+            "TestSpec": {
+                "RandomKeyLen": 6
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-4",
+            "High": [
+                28
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index4-2",
+            "Limit": 1,
+            "Low": [
+                15
+            ],
+            "NInterval": 100,
+            "Repeat": 199999,
+            "Scope": "scope-1",
+            "Type": "Range",
+            "TestSpec": {
+                "RandomKeyLen": 6
+            }
+        }
+    ]
+}

@@ -879,7 +879,7 @@ class BucketSettings:
 
         self.history_bytes = int(options.get('history_bytes', self.HISTORY_BYTES))
 
-        self.max_ttl = options.get('max_ttl', self.MAX_TTL)
+        self.max_ttl = int(options.get('max_ttl', self.MAX_TTL))
 
 
 class CollectionSettings:

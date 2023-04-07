@@ -336,8 +336,7 @@ class ClusterManager:
                         'conflict_resolution_type':
                             self.test_config.bucket.conflict_resolution_type,
                         'backend_storage': self.test_config.bucket.backend_storage,
-                        'eviction_policy': self.test_config.bucket.eviction_policy,
-                        'max_ttl': self.test_config.bucket.max_ttl
+                        'eviction_policy': self.test_config.bucket.eviction_policy
                     }
                     if self.capella_infra:
                         bucket_params.update({
@@ -355,7 +354,8 @@ class ClusterManager:
                             'magma_seq_tree_data_block_size':
                                 self.test_config.bucket.magma_seq_tree_data_block_size,
                             'history_seconds': self.test_config.bucket.history_seconds,
-                            'history_bytes': self.test_config.bucket.history_bytes
+                            'history_bytes': self.test_config.bucket.history_bytes,
+                            'max_ttl': self.test_config.bucket.max_ttl
                         })
 
                     self.rest.create_bucket(**bucket_params)

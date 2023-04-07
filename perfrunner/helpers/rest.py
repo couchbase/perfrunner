@@ -428,13 +428,13 @@ class DefaultRestHelper(RestBase):
                       replica_index: int,
                       eviction_policy: str,
                       bucket_type: str,
+                      max_ttl: int,
                       magma_seq_tree_data_block_size: int = 0,
                       backend_storage: Optional[str] = None,
                       conflict_resolution_type: Optional[str] = None,
                       compression_mode: Optional[str] = None,
                       history_seconds: int = 0,
-                      history_bytes: int = 0,
-                      max_ttl: int = 0) -> requests.Response:
+                      history_bytes: int = 0) -> requests.Response:
         logger.info('Adding new bucket: {}'.format(name))
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18091/pools/default/buckets'.format(host)

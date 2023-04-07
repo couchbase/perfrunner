@@ -4,7 +4,7 @@ test = perfrunner.tests.ycsb.YCSBN1QLLatencyTest
 [showfast]
 title = Latency (ms), Workload E, 5 nodes, 1 bucket x 5M x 1KB, 4K queries/sec
 component = n1qlcloud
-category = ycsb
+category = lat
 sub_category = {provider}
 orderby = 5m_l
 

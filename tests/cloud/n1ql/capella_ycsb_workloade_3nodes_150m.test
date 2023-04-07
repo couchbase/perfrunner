@@ -4,7 +4,7 @@ test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 [showfast]
 title = Avg Throughput (queries/sec), Workload E, 5 nodes, 1 bucket x 150M x 1KB
 component = n1qlcloud
-category = ycsb
+category = thr
 sub_category = {provider}
 orderby = 150m_t
 

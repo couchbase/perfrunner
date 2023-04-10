@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.secondary.CloudSecondaryIndexingScanTest
+
+[showfast]
+title = 3 Index Nodes, Stale = False, 1 bucket x 350M x 1KB, 1K KV ops/sec, 10 indexes, Plasma, s=1 c=5, 128 Concurrency
+component = secondarycloud
+category = lat
+sub_category = AWS
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 8738
+index_mem_quota = 8738
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[collection]
+config = collections/1bucket_1scope_5collections_basic.json
+
+[load]
+items = 350000000
+size = 1024
+workers = 80
+doc_gen = grouped
+doc_groups = 1
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_5collections_2indexes.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_10_indexes_plasma_1s_5c_random.json
+indexer.settings.storage_mode = plasma
+disable_perindex_stats = True
+cbindexperf_concurrency = 128
+cbindexperf_repeat = 5400000
+report_initial_build_time = 1
+
+[access]
+updates = 100
+items = 350000000
+throughput = 1000
+workers = 20

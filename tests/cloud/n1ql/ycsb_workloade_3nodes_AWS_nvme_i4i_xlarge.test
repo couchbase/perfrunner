@@ -1,0 +1,53 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+
+[showfast]
+title = Avg Throughput (queries/sec), Workload E, 3 nodes, 1 bucket x 150M x 1KB, NVMe, i4i.xlarge
+component = n1qlcloud
+category = thr
+sub_category = AWS
+orderby = nvme
+
+[cluster]
+mem_quota = 8738
+index_mem_quota = 8738
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[index]
+statements =
+    CREATE PRIMARY INDEX primary_idx ON `bucket-1` WITH {"num_replica": 1};
+
+[load]
+workload_path = workloads/workloade
+ycsb_client = couchbase3
+items = 150000000
+workers = 100
+ssl_mode = data
+
+[access]
+workload_path = workloads/workloade
+ycsb_client = couchbase3
+items = 150000000
+ops = 1000000000
+time = 1200
+workers = 400
+workload_instances = 2
+kv_endpoints = 16
+ssl_mode = capella
+
+[ycsb]
+branch = couchbase3
+
+[stats]
+client_processes = java

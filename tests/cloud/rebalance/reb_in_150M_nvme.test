@@ -1,0 +1,55 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
+title = Rebalance-in (min), 3 -> 4, 1 bucket x 150M x 1KB, 4K ops/sec (90/10 R/W), 10%% cache miss rate, NVMe
+component = rebcloud
+category = kv
+sub_category = aws
+
+[cluster]
+mem_quota = 8738
+index_mem_quota = 8738
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 150000000
+size = 1024
+workers = 40
+key_fmtr = hex
+doc_gen = large
+ssl_mode = data
+
+[hot_load]
+items = 150000000
+workers = 40
+working_set = 5
+ssl_mode = data
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+throughput = 4000
+items = 150000000
+workers = 20
+working_set = 5
+working_set_access = 90
+ssl_mode = data
+
+[rebalance]
+nodes_after = 4
+start_after = 300
+stop_after = 300
+
+[clients]
+python_client = 3.2.7

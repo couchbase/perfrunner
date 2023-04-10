@@ -524,7 +524,7 @@ class CloudInstaller(CouchbaseInstaller):
 
         def upload_couchbase(to_host, to_user, to_password, package):
             client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.WarningPolicy())
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             client.connect(to_host, username=to_user, password=to_password)
             sftp = client.open_sftp()
             sftp.put(package, "/tmp/{}".format(package))
@@ -608,7 +608,7 @@ class ClientUploader(CouchbaseInstaller):
 
             def upload_couchbase(to_host, to_user, to_password, package):
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.WarningPolicy())
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(to_host, username=to_user, password=to_password)
                 sftp = client.open_sftp()
                 sftp.put(package, "/tmp/{}".format(package))

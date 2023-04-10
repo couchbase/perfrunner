@@ -436,43 +436,40 @@ class CapellaSecondaryRebalanceOnlyTest(CapellaRebalanceTest):
 
     def create_indexes(self):
         logger.info('Creating and building indexes')
-        if not self.test_config.index_settings.couchbase_fts_index_name:
-            create_statements = []
-            build_statements = []
+        create_statements = []
+        build_statements = []
 
-            for statement in self.test_config.index_settings.statements:
-                check_stmt = statement.replace(" ", "").upper()
-                if 'CREATEINDEX' in check_stmt \
-                        or 'CREATEPRIMARYINDEX' in check_stmt:
-                    create_statements.append(statement)
-                elif 'BUILDINDEX' in check_stmt:
-                    build_statements.append(statement)
+        for statement in self.test_config.index_settings.statements:
+            check_stmt = statement.replace(" ", "").upper()
+            if 'CREATEINDEX' in check_stmt \
+                    or 'CREATEPRIMARYINDEX' in check_stmt:
+                create_statements.append(statement)
+            elif 'BUILDINDEX' in check_stmt:
+                build_statements.append(statement)
 
-            queries = []
-            for statement in create_statements:
-                logger.info('Creating index: ' + statement)
-                queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+        queries = []
+        for statement in create_statements:
+            logger.info('Creating index: ' + statement)
+            queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
 
-            for query in queries:
-                query.start()
+        for query in queries:
+            query.start()
 
-            for query in queries:
-                query.join()
+        for query in queries:
+            query.join()
 
-            queries = []
-            for statement in build_statements:
-                logger.info('Building index: ' + statement)
-                queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+        queries = []
+        for statement in build_statements:
+            logger.info('Building index: ' + statement)
+            queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
 
-            for query in queries:
-                query.start()
+        for query in queries:
+            query.start()
 
-            for query in queries:
-                query.join()
+        for query in queries:
+            query.join()
 
-            logger.info('Index Create and Build Complete')
-        else:
-            self.create_fts_index_n1ql()
+        logger.info('Index Create and Build Complete')
 
     def execute_index(self, statement):
         self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
@@ -503,3 +500,28 @@ class CapellaSecondaryRebalanceOnlyTest(CapellaRebalanceTest):
         self.rebalance_indexer(services="index,n1ql")
         logger.info("Rebalance time: {}".format(self.rebalance_time))
         self.report_kpi(rebalance_time=True)
+
+
+class CloudSecondaryInitalBuildTest(CapellaSecondaryRebalanceOnlyTest):
+
+    @timeit
+    @with_stats
+    @with_profiles
+    def build_index(self):
+        self.create_indexes()
+        self.wait_for_indexing()
+
+    def _report_kpi(self, time_elapsed, index_type, unit="min"):
+        self.reporter.post(
+            *self.metrics.get_indexing_meta(value=time_elapsed,
+                                            index_type=index_type,
+                                            unit=unit,
+                                            update_category=False)
+        )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        build_time = self.build_index()
+        logger.info("index build time: {}".format(build_time))
+        self.report_kpi(build_time, 'Initial')

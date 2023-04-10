@@ -1,15 +1,15 @@
 [test_case]
-test = perfrunner.tests.secondarycloud.CapellaSecondaryRebalanceOnlyTest
+test = perfrunner.tests.secondarycloud.CloudSecondaryInitalBuildTest
 
 [showfast]
-title = Swap-Rebalance (min), 3 -> 3, 1 bucket x 1.6B x 230B
+title = inital build (min), 3 -> 3, 1 bucket x 1.6B x 230B , 3 index, 18 index instances
 component = secondarycloud
 sub_category = PlasmaDGM
 
 [cluster]
 mem_quota = 54000
 index_mem_quota = 123000
-initial_nodes = 6
+initial_nodes = 5
 num_buckets = 1
 enable_cpu_cores = false
 ui_http = disabled
@@ -29,12 +29,6 @@ workers = 80
 key_fmtr = hash
 doc_gen = yubo
 ssl_mode = capella
-
-[rebalance]
-nodes_after = 5
-start_after = 300
-stop_after = 300
-rebalance_config = tests/gsi/elixir/rebalance_config/disk_scaling.json
 
 [secondary]
 indexer.settings.storage_mode = plasma

@@ -331,9 +331,9 @@ class RemoteWorkerManager:
             result_serializer='pickle',
             task_serializer='pickle',
             task_protocol=1,
-            broker_connection_timeout=5,
+            broker_connection_timeout=60,
             broker_connection_retry=True,
-            broker_connection_max_retries=2)
+            broker_connection_max_retries=100)
         self.workers = cycle(self.cluster_spec.workers)
         self.terminate()
         self.start()
@@ -413,7 +413,10 @@ class RemoteWorkerManager:
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')
         for async_result in self.async_results:
-            async_result.get()
+            try:
+                async_result.get()
+            except Exception as e:
+                logger.info("Exception while getting result {}".format(e))
         logger.info('All tasks are done')
 
     def download_celery_logs(self):

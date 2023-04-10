@@ -1,0 +1,75 @@
+---
+- hosts: couchbase_servers
+  vars:
+    data_dir: /data
+    ebs: /dev/sdb
+    lvm: /dev/nvme0n1
+
+  tasks:
+  - name: memory available
+    shell: free -m
+    register: memory_output
+  - debug:
+       var: memory_output.stdout_lines
+
+  - name: Install lvm2 dependency
+    package:
+      name: lvm2
+      state: present
+
+  - name: list block
+    shell: lsblk
+    register: command_output
+  - debug:
+          var: command_output.stdout_lines
+
+  - name: "Create PV from instance store"
+    command: pvcreate {{ lvm }}
+
+  - name: "Create PV from EBS volums"
+    command: pvcreate {{ ebs }}
+
+  - name: "Create volume group ‘vg’ containing both"
+    command: vgcreate vg {{ lvm }} {{ ebs }}
+    ignore_errors: yes
+
+  - name: "Create LV from origin EBS volume"
+    command: lvcreate --extents 100%PVS -n cb_data_ebs vg {{ ebs }}
+
+  - name: "Create cache-pool LV from instance storage"
+    command: lvcreate --type cache-pool --extents 100%PVS -n cb_data_cache_pool vg {{ lvm }}
+
+  - name: "Create a cached logical volume by associating the cache pool with EBS"
+    command: lvconvert --yes --type cache --cachepool cb_data_cache_pool vg/cb_data_ebs
+
+  - name: "Create filesystem on cached volume"
+    command: mkfs.xfs /dev/vg/cb_data_ebs
+
+  - name: "creating new 'couchbase' group"
+    group: name=couchbase
+
+  - name: "creating new 'couchbase' user"
+    user: name=couchbase group=couchbase
+
+  - name: "create /data dir if not available"
+    file:
+        path: /data
+        state: directory
+
+  - name: ensuring ownership of "{{ data_dir }}" directory
+    file: path={{ data_dir }} owner=couchbase group=couchbase
+
+  - name: "mount partition"
+    command: mount /dev/vg/cb_data_ebs {{ data_dir }}
+
+  - name: list block
+    shell: lsblk
+    register: command_output2
+  - debug:
+        var: command_output2.stdout_lines
+
+  - name: LVM setup
+    shell: lvs -a
+    register: command_output3
+  - debug:
+        var: command_output3.stdout_lines

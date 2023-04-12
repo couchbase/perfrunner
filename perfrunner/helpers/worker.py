@@ -370,7 +370,7 @@ class RemoteWorkerManager:
     def start_kubernetes_workers(self):
         num_workers = len(self.cluster_spec.workers)
         k8s = self.cluster_spec.infrastructure_section('k8s')
-        mem_limit = "{}Gi".format(k8s.get('worker_mem_limit', '128Gi'))
+        mem_limit = "{}Gi".format(k8s.get('worker_mem_limit', '128'))
         cpu_limit = k8s.get('worker_cpu_limit', 80)  # Gb
 
         misc.inject_workers_spec(num_workers,

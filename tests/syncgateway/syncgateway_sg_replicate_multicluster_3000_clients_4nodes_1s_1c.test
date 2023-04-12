@@ -2,7 +2,7 @@
 test = perfrunner.tests.syncgateway.SGReplicateMultiCluster
 
 [showfast]
-title = , Central cluster (4 sgnode + 4 cbnode), 200K docs, 3000 edge clusters (simulated), pull replication, s=1 c=1
+title = , Central cluster (4 sgnode + 4 cbnode), 200K docs, 3000 edge clusters (simulated), BLIP, pull replication, s=1 c=1
 component = syncgateway
 category = sgreplicate
 sub_category = Multi-cluster

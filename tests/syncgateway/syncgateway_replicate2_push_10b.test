@@ -2,7 +2,7 @@
 test = perfrunner.tests.syncgateway.SGReplicateThroughputTest2
 
 [showfast]
-title = Avg Throughput (items/sec), SG Replicate 2.0 Push, 1 SG node, 1 CB node, 1 Channel, 600K docs, 1K docsize, 10 sg databases
+title = Avg Throughput (items/sec), SG Replicate 2.0 Push, ISGR/BLIP, 1 SG node, 1 CB node, 1 Channel, 600K docs, 1K docsize, 10 sg databases
 component = syncgateway
 category = sgreplicate
 sub_category = Push

@@ -63,6 +63,7 @@ class SecondaryIndexTest(PerfTest):
         self.is_ssl = False
         if self.test_config.cluster.enable_n2n_encryption:
             self.is_ssl = True
+            self.download_certificate()
 
         if self.configfile:
             with open(self.configfile, 'r') as f:
@@ -96,8 +97,12 @@ class SecondaryIndexTest(PerfTest):
 
         self.build = self.rest.get_version(self.master_node)
         self.is_cloud = False
-        if self.cluster_spec.cloud_infrastructure:
+        if self.cluster_spec.cloud_infrastructure and self.is_ssl:
             self.is_cloud = True
+            self.download_certificate()
+            self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE,
+                                              self.worker_manager.WORKER_HOME)
+            self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
             self.admin_auth = self.admin_creds(self.master_node)
         else:
             self.admin_auth = 'Administrator', 'password'

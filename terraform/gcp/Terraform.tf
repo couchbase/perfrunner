@@ -182,6 +182,9 @@ resource "google_compute_disk" "cluster-disk" {
     type             = lower(each.value.storage_class)
     size             = each.value.volume_size
     provisioned_iops = each.value.iops > 0 ? each.value.iops : null
+    labels = {
+      deployment = var.global_tag != "" ? var.global_tag : null
+    }
 }
 
 resource "google_compute_instance" "client_instance" {
@@ -193,7 +196,7 @@ resource "google_compute_instance" "client_instance" {
     tags = ["client"]
 
     labels = {
-      role       = "cluster"
+      role       = "client"
       node_group = replace(each.value.node_group, ".", "-")
       deployment = var.global_tag != "" ? var.global_tag : null
     }
@@ -230,6 +233,9 @@ resource "google_compute_disk" "client-disk" {
     type             = lower(each.value.storage_class)
     size             = each.value.volume_size
     provisioned_iops = each.value.iops > 0 ? each.value.iops : null
+    labels = {
+      deployment = var.global_tag != "" ? var.global_tag : null
+    }
 }
 
 resource "google_compute_instance" "utility_instance" {
@@ -241,7 +247,7 @@ resource "google_compute_instance" "utility_instance" {
     tags = ["utility"]
 
     labels = {
-      role       = "cluster"
+      role       = "utility"
       node_group = replace(each.value.node_group, ".", "-")
       deployment = var.global_tag != "" ? var.global_tag : null
     }
@@ -281,6 +287,9 @@ resource "google_compute_disk" "utility-disk" {
     type             = lower(each.value.storage_class)
     size             = each.value.volume_size
     provisioned_iops = each.value.iops > 0 ? each.value.iops : null
+    labels = {
+      deployment = var.global_tag != "" ? var.global_tag : null
+    }
 }
 
 resource "google_compute_instance" "syncgateway_instance" {
@@ -292,7 +301,7 @@ resource "google_compute_instance" "syncgateway_instance" {
     tags = ["syncgateway"]
 
     labels = {
-      role       = "cluster"
+      role       = "syncgateway"
       node_group = replace(each.value.node_group, ".", "-")
       deployment = var.global_tag != "" ? var.global_tag : null
     }
@@ -329,6 +338,9 @@ resource "google_compute_disk" "syncgateway-disk" {
     type             = lower(each.value.storage_class)
     size             = each.value.volume_size
     provisioned_iops = each.value.iops > 0 ? each.value.iops : null
+    labels = {
+      deployment = var.global_tag != "" ? var.global_tag : null
+    }
 }
 
 resource "google_storage_bucket" "perf-storage-bucket" {

@@ -214,6 +214,10 @@ class Terraform:
 
     def populate_tfvars(self):
         cloud_provider = self.backend if self.provider == 'capella' else self.provider
+        global_tag = self.options.tag if self.options.tag else ''
+        if cloud_provider.lower() == 'gcp':
+            # GCP doesn't allow uppercase letters in tags
+            global_tag = global_tag.lower()
 
         tfvar_nodes = self.create_tfvar_nodes()
 
@@ -224,7 +228,7 @@ class Terraform:
             '<UTILITY_NODES>': tfvar_nodes['utilities'],
             '<SYNCGATEWAY_NODES>': tfvar_nodes['syncgateways'],
             '<CLOUD_STORAGE>': self.cloud_storage,
-            '<GLOBAL_TAG>': self.options.tag if self.options.tag else ""
+            '<GLOBAL_TAG>': global_tag
         }
 
         if self.uuid:

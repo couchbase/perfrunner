@@ -1,0 +1,10 @@
+apiVersion: couchbase.com/v2
+kind: CouchbaseUser
+metadata:
+  name: bucket-1
+  labels:
+    cluster: cb-example-perf
+spec:
+  fullName: "bucket-1"
+  authDomain: local
+  authSecret: user-password-secret

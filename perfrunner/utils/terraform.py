@@ -219,6 +219,7 @@ class Terraform:
         return tfvar_nodes
 
     def populate_tfvars(self):
+        logger.info('Setting tfvars')
         cloud_provider = self.backend if self.provider == 'capella' else self.provider
         global_tag = self.options.tag if self.options.tag else ''
         if cloud_provider.lower() == 'gcp':
@@ -254,10 +255,13 @@ class Terraform:
 
     # Initializes terraform environment.
     def terraform_init(self, provider):
+        logger.info('Initializating Terraform (terraform init)')
         local('cd terraform/{} && terraform init >> terraform.log'.format(provider))
 
     # Apply and output terraform deployment.
     def terraform_apply(self, provider):
+        logger.info('Building and executing Terraform deployment plan '
+                    '(terraform plan, terraform apply)')
         local('cd terraform/{} && '
               'terraform plan -out tfplan.out >> terraform.log && '
               'terraform apply -auto-approve tfplan.out'
@@ -270,6 +274,8 @@ class Terraform:
         return output
 
     def terraform_destroy(self, provider):
+        logger.info('Building and executing Terraform destruction plan '
+                    '(terraform plan -destroy, terraform apply)')
         local('cd terraform/{} && '
               'terraform plan -destroy -out tfplan_destroy.out >> terraform.log && '
               'terraform apply -auto-approve tfplan_destroy.out'
@@ -461,14 +467,15 @@ class CapellaTerraform(Terraform):
         if not self.project_id:
             self.create_project()
 
-        # Configure terraform
-        self.populate_tfvars()
-        self.terraform_init(self.backend)
+        if not self.options.capella_only:
+            # Configure terraform
+            self.populate_tfvars()
+            self.terraform_init(self.backend)
 
-        # Deploy non-capella resources
-        self.terraform_apply(self.backend)
-        non_capella_output = self.terraform_output(self.backend)
-        Terraform.update_spec(self, non_capella_output)
+            # Deploy non-capella resources
+            self.terraform_apply(self.backend)
+            non_capella_output = self.terraform_output(self.backend)
+            Terraform.update_spec(self, non_capella_output)
 
         # Deploy capella cluster
         self.deploy_cluster()
@@ -479,8 +486,8 @@ class CapellaTerraform(Terraform):
         # Update cluster spec file
         self.update_spec()
 
-        # Do VPC peering
-        if self.options.vpc_peering:
+        if not self.options.capella_only and self.options.vpc_peering:
+            # Do VPC peering
             network_info = non_capella_output['network']['value']
             self.peer_vpc(network_info, self.cluster_ids[0])
 
@@ -1042,19 +1049,28 @@ class ServerlessTerraform(CapellaTerraform):
         return tenant_id
 
     def deploy(self):
-        # Configure terraform
-        Terraform.populate_tfvars(self)
-        self.terraform_init(self.backend)
+        if not self.options.capella_only:
+            logger.info('Deploying non-Capella resources')
+            # Configure terraform
+            Terraform.populate_tfvars(self)
+            self.terraform_init(self.backend)
 
-        # Deploy non-capella resources
-        self.terraform_apply(self.backend)
-        non_capella_output = self.terraform_output(self.backend)
-        Terraform.update_spec(self, non_capella_output)
+            # Deploy non-capella resources
+            self.terraform_apply(self.backend)
+            non_capella_output = self.terraform_output(self.backend)
+            Terraform.update_spec(self, non_capella_output)
+        else:
+            logger.info('Skipping deploying non-Capella resources as --capella-only flag is set')
 
         # Deploy serverless dataplane + databases
         self.deploy_serverless_dataplane()
-        self.create_project()
-        self.create_serverless_dbs()
+
+        if not self.options.no_serverless_dbs:
+            self.create_project()
+            self.create_serverless_dbs()
+        else:
+            logger.info('Skipping deploying serverless dbs as --no-serverless-dbs flag is set')
+
         self.update_spec()
 
     def destroy(self):
@@ -1078,6 +1094,7 @@ class ServerlessTerraform(CapellaTerraform):
 
     def deploy_serverless_dataplane(self):
         if not self.dp_id:
+            logger.info('Deploying serverless dataplane')
             # If no dataplane ID given (which is normal) then we deploy a new one
             nebula_config = self.infra_spec.direct_nebula
             dapi_config = self.infra_spec.data_api
@@ -1134,7 +1151,8 @@ class ServerlessTerraform(CapellaTerraform):
             self.infra_spec.config.set('infrastructure', 'cbc_dataplane', self.dp_id)
             self.infra_spec.update_spec_file()
         else:
-            logger.info('Existing dataplane specified: {}'.format(self.dp_id))
+            logger.info('Skipping serverless dataplane deployment as existing dataplane specified: '
+                        '{}'.format(self.dp_id))
             logger.info('Verifying existing dataplane deployment')
 
         # Whether we have just deployed a dataplane or not, we will confirm the deployment
@@ -1273,18 +1291,15 @@ class ServerlessTerraform(CapellaTerraform):
             logger.info('All serverless DBs deployed')
 
     def update_spec(self):
-        db_id = self.test_config.buckets[0]
-        resp = self.serverless_client.get_database_debug_info(db_id)
+        resp = self.serverless_client.get_serverless_dataplane_info(self.dp_id)
         raise_for_status(resp)
         dp_info = resp.json()
-
-        logger.info('Dataplane config: {}'.format(pretty_dict(dp_info['dataplane'])))
 
         resp = self.serverless_client.get_access_to_serverless_dataplane_nodes(self.dp_id)
         raise_for_status(resp)
         dp_creds = resp.json()
 
-        hostname = dp_info['dataplane']['couchbase']['nodes'][0]['hostname']
+        hostname = dp_info['couchbase']['nodes'][0]['hostname']
         auth = (
             dp_creds['couchbaseCreds']['username'],
             dp_creds['couchbaseCreds']['password']
@@ -1737,7 +1752,7 @@ def get_args():
                         choices=[
                            'us-central1-a',
                            'us-central1-b',
-                           'us-central1-c'
+                           'us-central1-c',
                            'us-central1-f',
                            'us-west1-a',
                            'us-west1-b',
@@ -1811,6 +1826,13 @@ def get_args():
                         action='store_true',
                         help='Don\'t destroy cluster or serverless dataplane, only the clients '
                              'and utilities')
+    parser.add_argument('--no-serverless-dbs',
+                        action='store_true',
+                        help='Don\'t deploy serverless databases, only deploy serverless dataplane')
+    parser.add_argument('--capella-only',
+                        action='store_true',
+                        help='Only deploy Capella resources (provisioned cluster or serverless '
+                             'dataplane). Will not deploy perf client or utility nodes.')
     parser.add_argument('-t', '--tag',
                         help='Global tag for launched instances.')
     parser.add_argument('--enable-disk-autoscaling',

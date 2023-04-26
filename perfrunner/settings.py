@@ -7,10 +7,13 @@ from itertools import chain, combinations, permutations
 from typing import Dict, Iterable, Iterator, List, Tuple
 
 from decorator import decorator
-from fabric.api import local
 
 from logger import logger
-from perfrunner.helpers.misc import maybe_atoi, target_hash
+from perfrunner.helpers.misc import (
+    maybe_atoi,
+    run_local_shell_command,
+    target_hash,
+)
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
@@ -511,14 +514,13 @@ class ClusterSpec(Config):
         return server_grp_map
 
     def get_aws_iid(self, hostname: str, region: str) -> str:
-        iid = local(
+        iid, _, _ = run_local_shell_command(
             (
                 "env/bin/aws ec2 describe-instances --region {} "
                 "--filter \"Name=ip-address,Values=$(dig +short {})\" "
                 "--query \"Reservations[].Instances[].InstanceId\" "
                 "--output text"
-            ).format(region, hostname),
-            capture=True
+            ).format(region, hostname)
         )
         return iid.strip()
 
@@ -557,17 +559,13 @@ class ClusterSpec(Config):
                 "--output text"
             ).format(region, self.infrastructure_settings['cbc_dataplane'])
 
-            dn_iids = local(
-                query.format('couchbase-cloud-nebula'),
-                capture=True
-            ).strip().split()
+            stdout, _, _ = run_local_shell_command(query.format('couchbase-cloud-nebula'))
+            dn_iids = stdout.strip().split()
             logger.info('Found DN instance IDs: {}'.format(', '.join(dn_iids)))
             self.config.set('nebula_instance_ids', 'direct_nebula', '\n' + '\n'.join(dn_iids))
 
-            dapi_iids = local(
-                query.format('couchbase-cloud-data-api'),
-                capture=True
-            ).strip().split()
+            stdout, _, _ = run_local_shell_command(query.format('couchbase-cloud-data-api'))
+            dapi_iids = stdout.strip().split()
             logger.info('Found DAPI instance IDs: {}'.format(', '.join(dapi_iids)))
             self.config.set('nebula_instance_ids', 'dapi', '\n' + '\n'.join(dapi_iids))
 
@@ -579,7 +577,7 @@ class ClusterSpec(Config):
 
         if self.capella_backend == 'aws':
             region = os.environ.get('AWS_REGION', 'us-east-1')
-            sgids = local(
+            stdout, _, _ = run_local_shell_command(
                 (
                     "env/bin/aws ec2 describe-instances --region {} "
                     "--filters \"Name=tag-key,Values=couchbase-cloud-syncgateway-id\" "
@@ -587,8 +585,8 @@ class ClusterSpec(Config):
                     "--query \"Reservations[].Instances[].InstanceId\" "
                     "--output text"
                 ).format(region, self.infrastructure_settings['cbc_cluster']),
-                capture=True
-            ).strip().split()
+            )
+            sgids = stdout.strip().split()
             logger.info("Found Instance IDs for sgw: {}".format(', '.join(sgids)))
             self.config.set('sgw_instance_ids', 'sync_gateways', '\n', + '\n'.join(sgids))
             self.update_spec_file()

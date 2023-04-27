@@ -888,9 +888,9 @@ class DefaultRestHelper(RestBase):
 
     def set_serverless_throttle(self, node, values):
         if self.test_config.cluster.enable_n2n_encryption:
-            api = 'https://{}:18091/internalSettings'.format(node)
+            api = 'https://{}:18091/settings/serverless'.format(node)
         else:
-            api = 'http://{}:8091/internalSettings'.format(node)
+            api = 'http://{}:8091/settings/serverless'.format(node)
         for key in values:
             limit = values[key]
             if limit != 0:
@@ -900,9 +900,9 @@ class DefaultRestHelper(RestBase):
 
     def reset_serverless_throttle(self, node):
         if self.test_config.cluster.enable_n2n_encryption:
-            api = 'https://{}:18091/internalSettings'.format(node)
+            api = 'https://{}:18091/settings/serverless'.format(node)
         else:
-            api = 'http://{}:8091/internalSettings'.format(node)
+            api = 'http://{}:8091/settings/serverless'.format(node)
         serverless_throttle = {'dataThrottleLimit': 5000,
                                'indexThrottleLimit': 5000,
                                'searchThrottleLimit': 5000,

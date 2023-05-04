@@ -1,4 +1,5 @@
 import re
+import threading
 import time
 
 from logger import logger
@@ -7,6 +8,8 @@ from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.tests.rebalance import CapellaRebalanceTest
+from perfrunner.utils.terraform import CapellaTerraform
 
 
 class N1QLTest(PerfTest):
@@ -180,6 +183,137 @@ class N1QLLatencyTest(N1QLTest):
         self.reporter.post(
             *self.metrics.query_latency(percentile=90)
         )
+
+
+class N1QLLatencyRawStatementTest(N1QLLatencyTest):
+
+    def _report_kpi(self):
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            self.reporter.post(
+                *self.metrics.query_latency(percentile=percentile)
+            )
+
+    def load(self):
+        PerfTest.load(self)
+
+    def create_indexes(self):
+        logger.info('Creating and building indexes')
+        create_statements = []
+        build_statements = []
+
+        for statement in self.test_config.index_settings.statements:
+            check_stmt = statement.replace(" ", "").upper()
+            if 'CREATEINDEX' in check_stmt \
+                    or 'CREATEPRIMARYINDEX' in check_stmt:
+                create_statements.append(statement)
+            elif 'BUILDINDEX' in check_stmt:
+                build_statements.append(statement)
+
+        queries = []
+        for statement in create_statements:
+            logger.info('Creating index: ' + statement)
+            queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+
+        for query in queries:
+            query.start()
+
+        for query in queries:
+            query.join()
+
+        queries = []
+        for statement in build_statements:
+            logger.info('Building index: ' + statement)
+            queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+
+        for query in queries:
+            query.start()
+
+        for query in queries:
+            query.join()
+
+        logger.info('Index Create and Build Complete')
+
+    def execute_index(self, statement):
+        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+        cont = False
+        while not cont:
+            building = 0
+            index_status = self.rest.get_index_status(self.index_nodes[0])
+            index_list = index_status['status']
+            for index in index_list:
+                if index['status'] != "Ready" and index['status'] != "Created":
+                    building += 1
+            if building < 10:
+                cont = True
+            else:
+                time.sleep(10)
+
+    def store_plans(self):
+        logger.info('Storing query plans')
+        for i, query in enumerate(self.test_config.access_settings.n1ql_queries):
+            query_statement = query['statement']
+            replace_target = "RAW_QUERY "
+            query_statement = query_statement.replace(replace_target, "")
+            query_context = None
+            if self.test_config.collection.collection_map:
+                for bucket in self.test_config.buckets:
+                    if bucket in query_statement:
+                        bucket_replaced = False
+                        bucket_scopes = self.test_config.collection.collection_map[bucket]
+                        for scope in bucket_scopes.keys():
+                            if scope in query_statement:
+                                for collection in bucket_scopes[scope].keys():
+                                    if collection in query_statement:
+                                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                                        bucket_replaced = True
+                                        break
+                                if bucket_replaced:
+                                    break
+                        if bucket_replaced:
+                            break
+                        else:
+                            raise Exception('No access target for bucket: {}'.format(bucket))
+                logger.info("Grabbing plan for query: {}".format(query_statement))
+                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
+                                                        query_context)
+            else:
+                if self.test_config.cluster.serverless_mode == 'enabled':
+                    bucket = re.search(r' FROM ([^\s]+)', query['statement']).group(1)
+                    query_context = 'default:{}.`_default`'.format(bucket)
+                else:
+                    query_context = None
+                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
+                                                        query_context)
+            with open('query_plan_{}.json'.format(i), 'w') as fh:
+                fh.write(pretty_dict(plan))
+
+    def access_bg(self, *args):
+        access_settings = self.test_config.access_settings
+        access_settings.n1ql_workers = 0
+        PerfTest.access_bg(self, settings=access_settings)
+
+    @with_stats
+    @with_profiles
+    def access(self, *args):
+        self.download_certificate()
+        access_settings = self.test_config.access_settings
+        access_settings.workers = 0
+        PerfTest.access(self, settings=access_settings)
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
 
 
 class N1QLLatencyRebalanceTest(N1QLLatencyTest):
@@ -1241,6 +1375,50 @@ class N1QLTimeSeriesThroughputAccessTest(N1QLTimeSeriesThroughputTest):
 
     def run(self):
         self.enable_stats()
+        self.access()
+
+        self.report_kpi()
+
+
+class N1QLLatencyRebalanceRawStatementTest(N1QLLatencyRawStatementTest, CapellaRebalanceTest):
+
+    @timeit
+    def _rebalance(self, services):
+        masters = self.cluster_spec.masters
+        clusters_schemas = self.cluster_spec.clusters_schemas
+        initial_nodes = self.test_config.cluster.initial_nodes
+        nodes_after = self.rebalance_settings.nodes_after
+        swap = self.rebalance_settings.swap
+
+        if swap:
+            logger.info('Swap rebalance not available for Capella tests. Ignoring.')
+
+        for master, (_, schemas), initial_nodes, nodes_after in zip(masters, clusters_schemas,
+                                                                    initial_nodes, nodes_after):
+            if initial_nodes != nodes_after:
+                nodes_after_rebalance = schemas[:nodes_after]
+
+                new_cluster_config = {
+                    'specs': CapellaTerraform.construct_capella_server_groups(
+                        self.cluster_spec, nodes_after_rebalance
+                    )[0]
+                }
+
+                self.rest.update_cluster_configuration(master, new_cluster_config)
+                self.monitor.wait_for_rebalance_to_begin(master)
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        self.access_bg()
+        self.rebalance(services="index,n1ql")
         self.access()
 
         self.report_kpi()

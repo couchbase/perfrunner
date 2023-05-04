@@ -1,0 +1,108 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLLatencyRawStatementTest
+
+[showfast]
+title = Latency (ms), 7 nodes, 1 bucket x 1.6B x 230B, 300 queries/sec
+component = n1qlcloud
+category = lat
+sub_category = {provider}
+
+[cluster]
+mem_quota = 54000
+index_mem_quota = 123000
+initial_nodes = 7
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[collection]
+config = collections/1bucket_1scope_3collections.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[index]
+statements =
+    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` ON `bucket-1`.`users`.`swipes`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` ON `bucket-1`.`users`.`views`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `adv_linked_uid_no_count` ON `bucket-1`.`users`.`views`(`linked_uid`, `last_seen` DESC,`uid` DESC) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`users`.`swipes`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `swipes_partitioned_linked_uid` ON `bucket-1`.`users`.`swipes`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `swipes_partitioned_uid` ON `bucket-1`.`users`.`swipes`(`uid`) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `views_partitioned_linked_uid` ON `bucket-1`.`users`.`views`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `views_partitioned_uid` ON `bucket-1`.`users`.`views`(`uid`) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    BUILD INDEX ON `bucket-1`.`users`.`swipes`(`adv_linked_uidDESC_swipe_dateDESC_uid`, `adv_uid_swipe_dateDESC_linked_uidDESC`, `swipes_partitioned_linked_uid`, `swipes_partitioned_uid`);
+    BUILD INDEX ON `bucket-1`.`users`.`views`(`adv_linked_uid_countDESC_last_seenDESC_uid`, `adv_linked_uid_no_count`, `views_partitioned_linked_uid`, `views_partitioned_uid`);
+
+[load]
+items = 1600000000
+size = 230
+workers = 80
+key_fmtr = hash
+doc_gen = yubo
+ssl_mode = capella
+
+[access]
+creates = 25
+reads = 25
+updates = 25
+deletes = 25
+throughput = 10000
+items = 1600000000
+workers = 40
+doc_gen = yubo
+time = 1200
+latency_percentiles = 50,90,95,98,99
+n1ql_queries = q00,q01,q02,q03,q04,q05,q06,q07
+n1ql_workers = 20
+n1ql_throughput = 300
+workload_instances = 1
+ssl_mode = capella
+
+[n1ql-q00]
+statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`swipes` AS b WHERE linked_uid >= $1 ORDER BY linked_uid DESC, swipe_date DESC LIMIT 15;
+scan_consistency = not_bound
+args = ["{linked_uid}"]
+
+[n1ql-q01]
+statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`views` AS b WHERE linked_uid >= $1 ORDER BY linked_uid, `count` DESC LIMIT 125;
+scan_consistency = not_bound
+args = ["{linked_uid}"]
+
+[n1ql-q02]
+statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`views` AS b WHERE linked_uid >= $1 ORDER BY linked_uid, last_seen DESC LIMIT 125;
+scan_consistency = not_bound
+args = ["{uid}"]
+
+[n1ql-q03]
+statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`swipes` AS b WHERE uid >= $1 ORDER BY uid, swipe_date DESC LIMIT 15;
+scan_consistency = not_bound
+args = ["{linked_uid}"]
+
+[n1ql-q04]
+statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`swipes` AS b WHERE linked_uid >= $1 LIMIT 60;
+scan_consistency = not_bound
+args = ["{linked_uid}"]
+
+[n1ql-q05]
+statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`swipes` AS b WHERE uid >= $1 LIMIT 60;
+scan_consistency = not_bound
+args = ["{uid}"]
+
+[n1ql-q06]
+statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`views` AS b WHERE linked_uid >= $1 LIMIT 90;
+scan_consistency = not_bound
+args = ["{linked_uid}"]
+
+[n1ql-q07]
+statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`views` AS b WHERE uid >= $1 LIMIT 9;
+scan_consistency = not_bound
+args = ["{uid}"]
+
+[clients]
+python_client = 3.2.7

@@ -83,9 +83,14 @@ class KVLatency(Latency):
     def reconstruct(self):
         if self.remote_workers:
             self.get_remote_stat_files()
-        loop = asyncio.get_event_loop()
+
+        # Create a new event loop if the current one is closed
+        if (loop := asyncio.get_event_loop()).is_closed():
+            loop = asyncio.new_event_loop()
+
         for bucket in self.get_buckets():
             loop.run_until_complete(self.post_results(bucket))
+
         loop.close()
 
 

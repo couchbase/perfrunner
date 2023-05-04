@@ -269,6 +269,13 @@ class N1QLQueryGen3:
                         statement = statement.replace("`TARGET_BUCKET`", replace_target)
                         replace_target = "`{}`.`{}`".format(bucket, scope)
                         statement = statement.replace("`TARGET_SCOPE`", replace_target)
+            elif "RAW_QUERY" in statement:
+                for bucket in replace_targets.keys():
+                    scope, collection, target = replace_targets[bucket][0].split(":")
+                    if bucket in statement and scope in statement:
+                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                        break
+                statement = statement.replace("RAW_QUERY ", "")
             else:
                 for bucket in replace_targets.keys():
                     bucket_substring = "`{}`".format(bucket)

@@ -16,25 +16,22 @@
       - libffi-dev
       - libsnappy-dev
       - libssl-dev
+      - liblzma-dev
+      - libbz2-dev
+      - libreadline-dev
+      - libsqlite3-dev
+      - libncursesw5-dev
       - linux-tools-generic
       - maven
       - nvi
       - openjdk-8-jdk
-      - python-pip
-      - python-virtualenv
+      - python3-pip
+      - python3-virtualenv
       - python3-dev
       - sshpass
       - rpm2cpio
       - memcached
-  - name: adding Couchbase repository
-    apt: deb=https://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-amd64.deb
-  - name: installing libcouchbase
-    apt:
-     update_cache: yes
-     name:
-      - build-essential
-      - libcouchbase-dev
-      - libcouchbase2-bin
-      - libcouchbase2-libevent
+      - cmake
+      - libicu-dev
   - name: disabling scheduled fstrim jobs
     file: path=/etc/cron.weekly/fstrim state=absent

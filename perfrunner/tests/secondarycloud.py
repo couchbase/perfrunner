@@ -374,8 +374,8 @@ class SecondaryIndexCloudTest(PerfTest):
         working_set = self.test_config.access_settings.working_set / 100
         num_hot_items = int(self.test_config.access_settings.items * working_set)
 
-        with open(self.configfile, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(self.configfile, "r") as json_file:
+            data = json.load(json_file)
 
         if iteration == 0:
             old_start = num_hot_items
@@ -392,8 +392,8 @@ class SecondaryIndexCloudTest(PerfTest):
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
-        with open(self.configfile, "w") as jsonFile:
-            jsonFile.write(json.dumps(data))
+        with open(self.configfile, "w") as json_file:
+            json_file.write(json.dumps(data))
 
     def read_scanresults(self):
         with open('{}'.format(self.configfile)) as config_file:

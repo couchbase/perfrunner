@@ -212,7 +212,7 @@ class CbAgent:
 
         if not self.test.dynamic_infra:
             if not self.test.capella_infra:
-                if self.test.remote.os != 'Cygwin':
+                if self.test.remote.PLATFORM != 'cygwin':
                     self.add_collector(PS)
                     self.add_collector(Sysdig)
                     if memory:

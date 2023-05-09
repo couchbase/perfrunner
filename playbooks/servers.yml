@@ -2,9 +2,10 @@
 - hosts: kv:index:n1ql:analytics:eventing:fts
   tasks:
   - name: upgrading packages on the system
-    yum: state=latest name=epel-release
+    apt: upgrade=dist
   - name: installing additional packages
-    yum:
+    apt:
+     update_cache: yes
      state: latest
      name:
       - atop
@@ -14,9 +15,8 @@
       - htop
       - iotop
       - iperf
-      - kernel-devel
-      - kernel-headers
-      - java-1.8.0-openjdk
+      - linux-headers-generic
+      - openjdk-8-jre
       - lsof
       - moreutils
       - net-tools
@@ -27,7 +27,8 @@
       - tree
       - vim
       - wget
-      - perf
+      - linux-tools-common
+      - linux-tools-generic
       - zip
   - name: disable thp
     shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"

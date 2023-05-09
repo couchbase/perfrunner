@@ -259,7 +259,7 @@ class SGPerfTest(PerfTest):
             self.compress_sg_logs()
             self.get_sg_logs()
 
-        if(self.settings.syncgateway_settings.collect_sgw_console):
+        if self.settings.syncgateway_settings.collect_sgw_console:
             self.get_sg_console()
 
 
@@ -1477,7 +1477,7 @@ class DeltaSync(SGPerfTest):
             self.compress_sg_logs()
             self.get_sg_logs()
 
-        if(self.settings.syncgateway_settings.collect_sgw_console):
+        if self.settings.syncgateway_settings.collect_sgw_console:
             self.get_sg_console()
 
 
@@ -1616,7 +1616,7 @@ class DeltaSyncParallel(DeltaSync):
             self.compress_sg_logs()
             self.get_sg_logs()
 
-        if(self.settings.syncgateway_settings.collect_sgw_console):
+        if self.settings.syncgateway_settings.collect_sgw_console:
             self.get_sg_console()
 
 
@@ -1897,7 +1897,7 @@ class EndToEndSingleCBLPushTest(EndToEndSingleCBLTest):
             self.compress_sg_logs()
             self.get_sg_logs()
 
-        if(self.settings.syncgateway_settings.collect_sgw_console):
+        if self.settings.syncgateway_settings.collect_sgw_console:
             self.get_sg_console()
 
 
@@ -1945,7 +1945,7 @@ class EndToEndSingleCBLPullTest(EndToEndSingleCBLTest):
             self.compress_sg_logs()
             self.get_sg_logs()
 
-        if(self.settings.syncgateway_settings.collect_sgw_console):
+        if self.settings.syncgateway_settings.collect_sgw_console:
             self.get_sg_console()
 
 

@@ -1,9 +1,8 @@
 import os
-import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from collections import namedtuple
 from multiprocessing import Process, set_start_method
-from typing import Iterator
+from typing import Iterator, Optional
 
 import paramiko
 import requests
@@ -12,7 +11,6 @@ from fabric.api import cd, run
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.local import detect_ubuntu_release
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.context import master_client
 from perfrunner.settings import ClusterSpec
@@ -387,7 +385,7 @@ class GKEInstaller(KubernetesInstaller):
 
 class CouchbaseInstaller:
 
-    def __init__(self, cluster_spec, options):
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
         self.remote = RemoteHelper(cluster_spec, options.verbose)
         self.options = options
         self.cluster_spec = cluster_spec
@@ -409,30 +407,27 @@ class CouchbaseInstaller:
         if len(split) > 1:
             return split[1]
 
-    def find_package(self, edition: str,
-                     package: str = None, os_release: str = None) -> str:
+    def find_package(self, edition: str, package: Optional[str] = None,
+                     os_release: Optional[str] = None) -> Optional[str]:
         for url in self.url_iterator(edition, package, os_release):
             if self.is_exist(url):
                 return url
         logger.interrupt('Target build not found')
 
-    def url_iterator(self, edition: str,
-                     package: str = None, os_release: str = None) -> Iterator[str]:
+    def url_iterator(self, edition: str, package: Optional[str] = None,
+                     os_release: Optional[str] = None) -> Iterator[str]:
         if package is None:
-            if self.remote.package == 'rpm':
+            package = self.remote.package  # package type based on server OS
+
+            if self.remote.PLATFORM == 'linux':
+                os_release = self.remote.distro_version
+
                 if self.cluster_spec.cloud_infrastructure:
                     os_arch = self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
                     if os_arch == 'arm':
                         os_release = 'amzn2.aarch64'
                     elif os_arch == 'al2':
                         os_release = 'amzn2.x86_64'
-                    else:
-                        os_release = self.remote.detect_centos_release()
-                else:
-                    os_release = self.remote.detect_centos_release()
-            elif self.remote.package == 'deb':
-                os_release = self.remote.detect_ubuntu_release()
-            package = self.remote.package
 
         for pkg_pattern in PKG_PATTERNS[package]:
             for loc_pattern in LOCATIONS:
@@ -441,39 +436,27 @@ class CouchbaseInstaller:
                                  edition=edition, os=os_release)
 
     @staticmethod
-    def is_exist(url):
+    def is_exist(url: str) -> bool:
         try:
             status_code = requests.head(url).status_code
         except ConnectionError:
             return False
-        if status_code == 200:
-            return True
-        return False
 
-    def download(self):
-        """Download and save a copy of the specified package."""
-        if self.remote.package == 'rpm':
-            logger.info('Saving a local copy of {}'.format(self.url))
-            with open('couchbase.rpm', 'wb') as fh:
-                resp = requests.get(self.url)
-                fh.write(resp.content)
-        else:
-            logger.interrupt('Unsupported package format')
+        return status_code == 200
 
-    def download_local(self, local_copy_url: str = None):
+    def download_local(self, local_copy_url: Optional[str] = None):
         """Download and save a copy of the specified package."""
         try:
             if local_copy_url:
                 url = local_copy_url
-            elif RemoteHelper.detect_server_os("127.0.0.1", self.cluster_spec).\
-                    upper() in ('UBUNTU', 'DEBIAN'):
-                os_release = detect_ubuntu_release()
-                url = self.find_package(edition=self.options.edition,
-                                        package="deb", os_release=os_release)
+            else:
+                url = self.url
+
             logger.info('Saving a local copy of {}'.format(url))
-            with open('couchbase.deb', 'wb') as fh:
+            with open('couchbase.{}'.format(self.remote.package), 'wb') as fh:
                 resp = requests.get(url)
                 fh.write(resp.content)
+
         except (Exception, BaseException):
             logger.info("Saving local copy for ubuntu failed, package may not present")
 
@@ -486,7 +469,7 @@ class CouchbaseInstaller:
             logger.interrupt('Unsupported package format')
 
     @master_client
-    def wget(self, url):
+    def wget(self, url: str):
         logger.info('Fetching {}'.format(url))
         with cd('/tmp'):
             run('wget -nc "{}"'.format(url))
@@ -714,9 +697,8 @@ def main():
         installer.check_for_serverless(args.serverless_profile)
         installer.install()
         if args.local_copy:
-            installer.download()
             installer.download_local(args.local_copy_url)
-        if '--remote-copy' in sys.argv:
+        if args.remote_copy:
             logger.info('Saving a remote copy')
             installer.download_remote()
 

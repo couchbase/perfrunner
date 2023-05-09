@@ -35,21 +35,44 @@
       - 9105
       - 9999
 
-  - name: uninstalling the database packages
-    yum:
-     state: absent
-     name:
-      - 'couchbase*'
-      - 'mongodb*'
-      - 'MariaDB*'
+  - name: check if mongodb is installed
+    shell: "dpkg -l | grep mongodb*"
+    register: found_mongodb
+    ignore_errors: yes
+
+  - name: uninstalling mongodb (if installed)
+    apt:
+      state: absent
+      name: 'mongodb*'
+    when: found_mongodb is succeeded
+
+  - name: check if MariaDB is installed
+    shell: "dpkg -l | grep MariaDB*"
+    register: found_mariadb
+    ignore_errors: yes
+
+  - name: uninstalling MariaDB (if installed)
+    apt:
+      state: absent
+      name: 'MariaDB*'
+    when: found_mariadb is succeeded
+
+  - name: check if couchbase is installed
+    shell: "dpkg -l | grep couchbase*"
+    register: found_couchbase
+    ignore_errors: yes
+
+  - name: uninstalling couchbase (if installed)
+    apt:
+      state: absent
+      name: 'couchbase*'
+    when: found_couchbase is succeeded
 
   - name: removing Couchbase Server files
     file: path={{ couchbase_home }} state=absent
 
   - name: removing the files remaining in the "{{ data_dir }}" directory
     shell: rm -fr {{ data_dir }}/*
-    args:
-      warn: no
 
   - stat: path={{ index_dir }}
     register: index
@@ -57,13 +80,9 @@
   - name: removing the files remaining in the "{{ index_dir }}" directory
     shell: rm -fr {{ index_dir }}/*
     when: index.stat.exists
-    args:
-      warn: no
 
   - name: removing MySQL installation (if any)
     shell: rm -fr /var/lib/mysql
-    args:
-      warn: no
 
   - name: set vm.swappiness to 0
     shell: "echo 0 > /proc/sys/vm/swappiness"

@@ -17,8 +17,7 @@ class Remote:
 
     CLIENT_PROCESSES = 'celery', 'cbc-pillowfight', 'memcached', 'cblite'
 
-    def __init__(self, cluster_spec, os):
-        self.os = os
+    def __init__(self, cluster_spec):
         self.cluster_spec = cluster_spec
 
     @staticmethod
@@ -85,7 +84,7 @@ class Remote:
 
     @all_clients
     def build_ycsb(self, worker_home: str, ycsb_client: str):
-        cmd = 'pyenv local system && bin/ycsb build {}'.format(ycsb_client)
+        cmd = 'pyenv local 2 && bin/ycsb build {}'.format(ycsb_client)
 
         logger.info('Running: {}'.format(cmd))
         with cd(worker_home), cd('perfrunner'), cd('YCSB'):

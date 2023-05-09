@@ -689,8 +689,8 @@ class CapellaTerraform(Terraform):
                 }
                 logger.info('Deploying cluster with custom AMI: {}'
                             .format(ami))
-            if releaseId := self.options.release_id:
-                config['overRide'].update({'releaseId': releaseId})
+            if release_id := self.options.release_id:
+                config['overRide'].update({'releaseId': release_id})
 
             resp = self.api_client.create_cluster_customAMI(self.tenant_id, config)
             raise_for_status(resp)

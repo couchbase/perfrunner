@@ -551,7 +551,7 @@ def run_kvgen(hostname: str, num_docs: int, prefix: str):
 
 
 def build_ycsb(ycsb_client: str):
-    cmd = 'pyenv local system && bin/ycsb build {}'.format(ycsb_client)
+    cmd = 'pyenv local 2 && bin/ycsb build {}'.format(ycsb_client)
 
     logger.info('Running: {}'.format(cmd))
     with lcd('YCSB'):
@@ -629,7 +629,7 @@ def run_ycsb(host: str,
           '-p couchbase.retryUpper={retry_upper} ' \
           '-p couchbase.retryFactor={retry_factor} '
 
-    cmd = 'pyenv local system && ' + cmd
+    cmd = 'pyenv local 2 && ' + cmd
 
     if durability is None:
         cmd += '-p couchbase.persistTo={persist_to} '

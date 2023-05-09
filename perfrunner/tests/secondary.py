@@ -410,8 +410,8 @@ class SecondaryIndexTest(PerfTest):
         working_set = self.test_config.access_settings.working_set / 100
         num_hot_items = int(self.test_config.access_settings.items * working_set)
 
-        with open(self.configfile, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(self.configfile, "r") as json_file:
+            data = json.load(json_file)
 
         if iteration == 0:
             old_start = num_hot_items
@@ -428,8 +428,8 @@ class SecondaryIndexTest(PerfTest):
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
-        with open(self.configfile, "w") as jsonFile:
-            jsonFile.write(json.dumps(data))
+        with open(self.configfile, "w") as json_file:
+            json_file.write(json.dumps(data))
 
     def read_scanresults(self):
         with open('{}'.format(self.configfile)) as config_file:
@@ -1670,8 +1670,8 @@ class InitialIncrementalMovingScanLatencyTestColdScans(InitialIncrementalMovingS
         working_set = self.test_config.access_settings.working_set / 100
         num_hot_items = int(self.test_config.access_settings.items * working_set)
 
-        with open(self.configfile, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(self.configfile, "r") as json_file:
+            data = json.load(json_file)
 
         if iteration == 0:
             old_start = num_hot_items * 2
@@ -1688,8 +1688,8 @@ class InitialIncrementalMovingScanLatencyTestColdScans(InitialIncrementalMovingS
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
-        with open(self.configfile, "w") as jsonFile:
-            jsonFile.write(json.dumps(data))
+        with open(self.configfile, "w") as json_file:
+            json_file.write(json.dumps(data))
 
     def run(self):
         self.load_and_build_initial_index()
@@ -1715,8 +1715,8 @@ class InitialIncrementalMovingScanLatencyTestMixedScans \
         moving_docs = self.test_config.access_settings.working_set_moving_docs * iteration
         offset = num_hot_items + moving_docs
 
-        with open(self.configfile, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(self.configfile, "r") as json_file:
+            data = json.load(json_file)
 
         if iteration == 0:
             old_start = num_hot_items
@@ -1736,8 +1736,8 @@ class InitialIncrementalMovingScanLatencyTestMixedScans \
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
-        with open(self.configfile, "w") as jsonFile:
-            jsonFile.write(json.dumps(data))
+        with open(self.configfile, "w") as json_file:
+            json_file.write(json.dumps(data))
 
 
 class MovingScanThroughputTestColdScan(InitialIncrementalMovingScanThroughputTest):
@@ -1746,8 +1746,8 @@ class MovingScanThroughputTestColdScan(InitialIncrementalMovingScanThroughputTes
         working_set = self.test_config.access_settings.working_set / 100
         num_hot_items = int(self.test_config.access_settings.items * working_set)
 
-        with open(self.configfile, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(self.configfile, "r") as json_file:
+            data = json.load(json_file)
 
         if iteration == 0:
             old_start = num_hot_items * 2
@@ -1764,8 +1764,8 @@ class MovingScanThroughputTestColdScan(InitialIncrementalMovingScanThroughputTes
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
-        with open(self.configfile, "w") as jsonFile:
-            jsonFile.write(json.dumps(data))
+        with open(self.configfile, "w") as json_file:
+            json_file.write(json.dumps(data))
 
     def run(self):
         self.remove_statsfile()
@@ -1787,8 +1787,8 @@ class MovingScanThroughputTestMixScan(MovingScanThroughputTestColdScan):
         moving_docs = self.test_config.access_settings.working_set_moving_docs * iteration
         offset = num_hot_items + moving_docs
 
-        with open(self.configfile, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(self.configfile, "r") as json_file:
+            data = json.load(json_file)
 
         if iteration == 0:
             old_start = num_hot_items
@@ -1808,8 +1808,8 @@ class MovingScanThroughputTestMixScan(MovingScanThroughputTestColdScan):
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
-        with open(self.configfile, "w") as jsonFile:
-            jsonFile.write(json.dumps(data))
+        with open(self.configfile, "w") as json_file:
+            json_file.write(json.dumps(data))
 
 
 class SecondaryIndexingThroughputNoAccessTest(SecondaryIndexingThroughputTest):
@@ -1884,12 +1884,12 @@ class SecondaryIndexingThroughputNoAccessTest(SecondaryIndexingThroughputTest):
 
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.remove_resultfile()
-        with open(self.configfile, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(self.configfile, "r") as json_file:
+            data = json.load(json_file)
         for spec in data["ScanSpecs"]:
             spec["Repeat"] = spec["Repeat"] * 5
-        with open(self.configfile, "w") as jsonFile:
-            jsonFile.write(json.dumps(data))
+        with open(self.configfile, "w") as json_file:
+            json_file.write(json.dumps(data))
         logger.info("updated cbindexperf config file: \n {}".format(data))
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
@@ -1973,12 +1973,12 @@ class InMemoryCompressionTest(SecondaryIndexingThroughputTest):
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.remove_resultfile()
-        with open(self.configfile, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(self.configfile, "r") as json_file:
+            data = json.load(json_file)
         for spec in data["ScanSpecs"]:
             spec["Repeat"] = spec["Repeat"]*5
-        with open(self.configfile, "w") as jsonFile:
-            jsonFile.write(json.dumps(data))
+        with open(self.configfile, "w") as json_file:
+            json_file.write(json.dumps(data))
         logger.info("updated cbindexperf config file: \n {}".format(data))
         self.scan_time = self.scan_time*5
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")

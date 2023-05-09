@@ -1,7 +1,7 @@
 import os
 import time
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from fabric.api import cd, get, put, quiet, run, settings
@@ -25,6 +25,8 @@ from perfrunner.settings import ClusterSpec
 
 class RemoteLinux(Remote):
 
+    PLATFORM = 'linux'
+
     CB_DIR = '/opt/couchbase'
 
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'indexer',
@@ -37,28 +39,27 @@ class RemoteLinux(Remote):
 
     LINUX_PERF_DELAY = 30
 
+    def __init__(self, cluster_spec: ClusterSpec):
+        super().__init__(cluster_spec)
+        self.distro, self.distro_version = self.detect_distro()
+
     @property
     def package(self):
-        if self.os.upper() in ('UBUNTU', 'DEBIAN'):
+        if self.distro.upper() in ('UBUNTU', 'DEBIAN'):
             return 'deb'
         else:
             return 'rpm'
 
     @master_server
-    def detect_centos_release(self) -> str:
-        """Detect CentOS release (e.g., 6 or 7).
+    def detect_distro(self) -> Tuple[str, str]:
+        logger.info('Detecting Linux distribution on master node')
+        cmd = 'grep ^{}= /etc/os-release | cut -d= -f2 | tr -d \'"\''
+        distro_id = run(cmd.format('ID'))
+        distro_version = run(cmd.format('VERSION_ID'))
+        logger.info('Detected Linux distribution: {} {}'.format(distro_id, distro_version))
+        return distro_id, distro_version
 
-        Possible values:
-        - CentOS release 6.x (Final)
-        - CentOS Linux release 7.2.1511 (Core)
-        """
-        return run('cat /etc/redhat-release').split()[-2][0]
-
-    @master_server
-    def detect_ubuntu_release(self):
-        return run('lsb_release -sr').strip()
-
-    def run_cbindex_command(self, options,  worker_home='/tmp/perfrunner'):
+    def run_cbindex_command(self, options, worker_home='/tmp/perfrunner'):
         cmd = "/opt/couchbase/bin/cbindex {options}".format(options=options)
         logger.info('Running: {}'.format(cmd))
         run(cmd, shell_escape=False, pty=False)
@@ -341,7 +342,7 @@ class RemoteLinux(Remote):
         logger.info('Installing Couchbase Server')
         if self.package == 'deb':
             run('yes | apt-get install gdebi')
-            run('yes | apt install -y ./tmp/{}'.format(filename))
+            run('yes | apt install -y /tmp/{}'.format(filename))
         else:
             run('yes | yum localinstall -y /tmp/{}'.format(filename))
 
@@ -1030,9 +1031,14 @@ class RemoteLinux(Remote):
             run(cmd)
 
     @all_servers
-    def install_cb_debug_rpm(self, url):
-        logger.info('Installing Couchbase Debug rpm on all servers')
-        run('rpm -iv {}'.format(url), quiet=True)
+    def install_cb_debug_package(self, url):
+        logger.info('Installing Couchbase Debug package on all servers')
+        if url.endswith('deb'):
+            cmd = 'dpkg -i {}'.format(url)
+        else:
+            cmd = 'rpm -iv {}'.format(url)
+
+        run(cmd, quiet=True)
 
     @all_servers
     def generate_linux_perf_script(self):

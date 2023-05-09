@@ -16,8 +16,10 @@ from perfrunner.settings import ClusterSpec
 
 class RemoteKubernetes(Remote):
 
-    def __init__(self, cluster_spec: ClusterSpec, os):
-        super().__init__(cluster_spec, os)
+    PLATFORM = 'kubernetes'
+
+    def __init__(self, cluster_spec: ClusterSpec):
+        super().__init__(cluster_spec)
         self.kube_config_path = "cloud/infrastructure/generated/kube_configs/k8s_cluster_1"
         self.base_path = 'cloud/operator'
         self.cluster_file = 'couchbase-cluster.yaml'
@@ -568,7 +570,7 @@ class RemoteKubernetes(Remote):
             line = line.decode("utf-8")
             if "worker" in line:
                 worker_name = line.split()[0]
-                cmd = 'pyenv local system && bin/ycsb build {}'.format(ycsb_client)
+                cmd = 'pyenv local 2 && bin/ycsb build {}'.format(ycsb_client)
 
                 logger.info('Running: {}'.format(cmd))
                 self.kubectl_exec(worker_name, 'cd YCSB; {}'.format(cmd))

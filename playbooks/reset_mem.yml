@@ -1,8 +1,8 @@
 ---
 - hosts: kv:index:analytics:eventing:fts
   vars:
-    grub_cfg: /boot/grub2/grub.cfg
-    grub_cfg2: /boot/efi/EFI/centos/grub.cfg
+    grub_cfg: /boot/grub/grub.cfg
+    grub_cfg2: /boot/efi/EFI/ubuntu/grub.cfg
     grub_defaults: /etc/default/grub
 
   tasks:
@@ -16,7 +16,7 @@
     when: grep.stdout
 
   - name: applying new GRUB settings
-    shell: grub2-mkconfig -o {{ grub_cfg }} && grub2-mkconfig -o {{ grub_cfg2 }}
+    shell: grub-mkconfig -o {{ grub_cfg }} && grub-mkconfig -o {{ grub_cfg2 }}
     ignore_errors: yes
     when: grep.stdout
 

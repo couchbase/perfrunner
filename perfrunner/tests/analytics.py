@@ -13,6 +13,8 @@ from perfrunner.workloads.bigfun.driver import bigfun
 from perfrunner.workloads.bigfun.query_gen import Query
 from perfrunner.workloads.tpcdsfun.driver import tpcds
 
+QueryLatencyPair = Tuple[Query, int]
+
 
 class BigFunTest(PerfTest):
 
@@ -47,8 +49,8 @@ class BigFunTest(PerfTest):
     def create_datasets_collections(self, bucket: str):
         self.disconnect_link()
         logger.info('Creating datasets')
-        with open(self.config_file, "r") as jsonFile:
-            analytics_config = json.load(jsonFile)
+        with open(self.config_file, "r") as json_file:
+            analytics_config = json.load(json_file)
         dataset_list = analytics_config["Analytics"]
         if analytics_config["DefaultCollection"]:
             for dataset in dataset_list:
@@ -75,8 +77,8 @@ class BigFunTest(PerfTest):
 
     def create_index_collections(self):
         logger.info('Creating indexes')
-        with open(self.config_file, "r") as jsonFile:
-            analytics_config = json.load(jsonFile)
+        with open(self.config_file, "r") as json_file:
+            analytics_config = json.load(json_file)
         index_list = analytics_config["Analytics"]
 
         for index in index_list:
@@ -306,7 +308,7 @@ class BigFunQueryTest(BigFunTest):
         super().__init__(*args, **kwargs)
         self.QUERIES = self.analytics_settings.queries
 
-    def warmup(self, nodes: list = []) -> List[Tuple[Query, int]]:
+    def warmup(self, nodes: list = []) -> List[QueryLatencyPair]:
         if len(nodes) == 0:
             analytics_nodes = self.analytics_nodes
         else:
@@ -321,7 +323,7 @@ class BigFunQueryTest(BigFunTest):
         return [(query, latency) for query, latency in results]
 
     @with_stats
-    def access(self, nodes: list = [], *args, **kwargs) -> List[Tuple[Query, int]]:
+    def access(self, nodes: list = [], *args, **kwargs) -> List[QueryLatencyPair]:
         if len(nodes) == 0:
             analytics_nodes = self.analytics_nodes
         else:
@@ -334,7 +336,7 @@ class BigFunQueryTest(BigFunTest):
                          query_set=self.QUERIES)
         return [(query, latency) for query, latency in results]
 
-    def _report_kpi(self, results: List[Tuple[Query, int]]):
+    def _report_kpi(self, results: List[QueryLatencyPair]):
         for query, latency in results:
             self.reporter.post(
                 *self.metrics.analytics_latency(query, latency)
@@ -411,8 +413,8 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
 
     def create_external_datasets(self):
         logger.info('Creating external datasets')
-        with open(self.config_file, "r") as jsonFile:
-            analytics_config = json.load(jsonFile)
+        with open(self.config_file, "r") as json_file:
+            analytics_config = json.load(json_file)
         dataset_list = analytics_config["Analytics"]
         external_bucket = self.analytics_settings.external_bucket
         file_format = self.analytics_settings.external_file_format
@@ -426,7 +428,7 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
             self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     @with_stats
-    def access(self, nodes: list = [], *args, **kwargs) -> List[Tuple[Query, int]]:
+    def access(self, nodes: list = [], *args, **kwargs) -> List[QueryLatencyPair]:
         if len(nodes) == 0:
             analytics_nodes = self.analytics_nodes
         else:
@@ -784,7 +786,8 @@ class TPCDSQueryTest(TPCDSTest):
     QUERIES = 'perfrunner/workloads/tpcdsfun/queries.json'
 
     @with_stats
-    def access(self, *args, **kwargs) -> (List[Tuple[Query, int]], List[Tuple[Query, int]]):
+    def access(self, *args, **kwargs) -> Tuple[List[QueryLatencyPair], List[QueryLatencyPair],
+                                               List[QueryLatencyPair], List[QueryLatencyPair]]:
 
         logger.info('Running COUNT queries without primary key index')
         results = tpcds(self.rest,
@@ -832,7 +835,7 @@ class TPCDSQueryTest(TPCDSTest):
             without_index_results, \
             with_index_results
 
-    def _report_kpi(self, results: List[Tuple[Query, int]], with_index: bool):
+    def _report_kpi(self, results: List[QueryLatencyPair], with_index: bool):
         for query, latency in results:
             self.reporter.post(
                 *self.metrics.analytics_volume_latency(query, latency, with_index)

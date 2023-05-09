@@ -913,7 +913,7 @@ class ClusterManager:
                 cluster['spec']['servers'] = updated_server_groups
                 self.remote.update_cluster_config(cluster)
         else:
-            if self.remote.os == 'Cygwin':
+            if self.remote.PLATFORM == 'cygwin':
                 return
 
             if self.test_config.cluster.enable_cpu_cores:
@@ -1045,9 +1045,13 @@ class ClusterManager:
             check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
             logger.info('new tls version: {}'.format(check_tls_version))
 
-    def get_debug_rpm_url(self):
+    def get_debug_package_url(self):
         release, build_number = self.build.split('-')
-        if self.build_tuple > (7, 2, 0, 0):
+        if self.build_tuple > (8, 0, 0, 0):
+            release = 'morpheus'
+        elif self.build_tuple > (7, 6, 0, 0):
+            release = 'trinity'
+        elif (7, 2, 0, 0) < self.build_tuple <= (7, 2, 0, 2228) or self.build_tuple > (7, 5, 0, 0):
             release = 'elixir'
         elif self.build_tuple > (7, 1, 0, 0):
             release = 'neo'
@@ -1057,16 +1061,21 @@ class ClusterManager:
             release = 'mad-hatter'
         elif self.build_tuple < (6, 5, 0, 0):
             release = 'alice'
-        centos_version = self.remote.detect_centos_release()
 
-        rpm_url = 'http://latestbuilds.service.couchbase.com/builds/' \
-                  'latestbuilds/couchbase-server/{}/{}/' \
-                  'couchbase-server-enterprise-debuginfo-{}-centos{}.x86_64.rpm' \
-                  ''.format(release, build_number, self.build, centos_version)
-        return rpm_url
+        if self.remote.distro.upper() in ['UBUNTU', 'DEBIAN']:
+            package_name = 'couchbase-server-enterprise-dbg_{{}}-{{}}{{}}_amd64.deb'
+        else:
+            package_name = 'couchbase-server-enterprise-debuginfo-{{}}-{{}}{{}}.x86_64.rpm'
 
-    def install_cb_debug_rpm(self):
-        self.remote.install_cb_debug_rpm(url=self.get_debug_rpm_url())
+        package_name = package_name.format(self.build, self.remote.distro,
+                                           self.remote.distro_version)
+        return (
+            'http://latestbuilds.service.couchbase.com/'
+            'builds/latestbuilds/couchbase-server/{}/{}/{}'
+        ).format(release, build_number, package_name)
+
+    def install_cb_debug_package(self):
+        self.remote.install_cb_debug_package(url=self.get_debug_package_url())
 
     def enable_developer_preview(self):
         if self.build_tuple > (7, 0, 0, 4698) or self.build_tuple < (1, 0, 0, 0):

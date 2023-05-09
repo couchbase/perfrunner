@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy
 
 from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
@@ -17,7 +19,7 @@ class PCStat(RemoteStats):
             percents.append(float(percent))
         return numpy.average(percents)
 
-    def get_cachestat(self) -> [float, float]:
+    def get_cachestat(self) -> Tuple[float, float]:
         stdout = self.run('cachestat')
         total_hits, hit_ratio = stdout.split()
         return float(total_hits), float(hit_ratio)

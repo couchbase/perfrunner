@@ -1019,6 +1019,7 @@ class DefaultMonitor(DefaultRestHelper):
     def _wait_for_sg_import_start(self, host: str):
         logger.info('Checking if import process started')
 
+        start_time = time.time()
         import_docs = 0
         while True:
             time.sleep(self.POLLING_INTERVAL)
@@ -1026,6 +1027,8 @@ class DefaultMonitor(DefaultRestHelper):
             if import_docs >= 1:
                 logger.info('importing docs has started')
                 return import_docs, time.time()
+            if time.time() - start_time > 300:
+                raise Exception("timeout of 300 seconds exceeded")
 
     def _wait_for_sg_import_complete(self, host: str, expected_docs: int, start_time):
         expected_docs = expected_docs
@@ -1042,8 +1045,8 @@ class DefaultMonitor(DefaultRestHelper):
                 end_time = time.time()
                 time_taken = end_time - start_time
                 return time_taken
-            if time.time() - start_time > 1800:
-                raise Exception("timeout of 1800 seconds exceeded")
+            if time.time() - start_time > 2400:
+                raise Exception("timeout of 2400 seconds exceeded")
 
     def monitor_sgreplicate(self, host, expected_docs, replicate_id, version):
         logger.info('Monitoring SGReplicate items:')
@@ -1229,11 +1232,11 @@ class DefaultMonitor(DefaultRestHelper):
                     int(sgw_stats['syncgateway']['per_db'][db]
                                  ['cbl_replication_pull']['rev_send_count'])
         else:
-            stat = sgw_stats.find("sgw_shared_bucket_import_import_count")
+            stat = sgw_stats.find("sgw_replication_pull_rev_send_count")
             stat_list = []
             while stat != -1:
                 stat_list.append(stat)
-                stat = sgw_stats.find("sgw_shared_bucket_import_import_count", stat + 1)
+                stat = sgw_stats.find("sgw_replication_pull_rev_send_count", stat + 1)
             last = sgw_stats.find("# HELP", stat_list[-1] + 1)
             stat_list.append(last)
             for i in range(2, len(stat_list) - 1):

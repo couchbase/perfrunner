@@ -1700,11 +1700,11 @@ class EndToEndTest(SGPerfTest):
                         int(sgw_stats['syncgateway']['per_db'][db]
                                      ['cbl_replication_push']['doc_push_count'])
             else:
-                stat = sgw_stats.find("sgw_shared_bucket_import_import_count")
+                stat = sgw_stats.find("sgw_replication_pull_rev_send_count")
                 stat_list = []
                 while stat != -1:
                     stat_list.append(stat)
-                    stat = sgw_stats.find("sgw_shared_bucket_import_import_count", stat + 1)
+                    stat = sgw_stats.find("sgw_replication_pull_rev_send_count", stat + 1)
                 last = sgw_stats.find("# HELP", stat_list[-1] + 1)
                 stat_list.append(last)
                 for i in range(2, len(stat_list) - 1):

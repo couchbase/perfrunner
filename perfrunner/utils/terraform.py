@@ -1474,70 +1474,71 @@ class AppServicesTerraform(Terraform):
         logger.info("Deploying sgw backend")
         sgw_cluster_id = self.deploy_cluster_internal_api()
 
-        # Create sgw database(app endpoint)
-        logger.info("Deploying sgw database")
-        sgw_db_id, sgw_db_name = self.deploy_sgw_db(sgw_cluster_id)
+        for bucket_name in self.test_config.buckets:
+            # Create sgw database(app endpoint)
+            logger.info("Deploying sgw database")
+            sgw_db_id, sgw_db_name = self.deploy_sgw_db(sgw_cluster_id, bucket_name)
 
-        # Set sync function
-        logger.info("Setting sync function")
-        sync_function = "function (doc) { channel(doc.channels); }"
-        self.api_client.update_sync_function_sgw(self.tenant_id, self.project_id,
-                                                 self.cluster_id, sgw_cluster_id,
-                                                 sgw_db_name, sync_function)
+            # Set sync function
+            logger.info("Setting sync function")
+            sync_function = "function (doc) { channel(doc.channels); }"
+            self.api_client.update_sync_function_sgw(self.tenant_id, self.project_id,
+                                                     self.cluster_id, sgw_cluster_id,
+                                                     sgw_db_name, sync_function)
 
-        # Resume sgw database
-        logger.info("Resuming sgw database")
-        self.api_client.resume_sgw_database(self.tenant_id, self.project_id,
-                                            self.cluster_id, sgw_cluster_id,
-                                            sgw_db_name)
+            # Resume sgw database
+            logger.info("Resuming sgw database")
+            self.api_client.resume_sgw_database(self.tenant_id, self.project_id,
+                                                self.cluster_id, sgw_cluster_id,
+                                                sgw_db_name)
 
-        # Allow my IP
-        logger.info("Whitelisting own IP on sgw backend")
-        self.api_client.allow_my_ip_sgw(self.tenant_id, self.project_id,
-                                        self.cluster_id, sgw_cluster_id)
+            # Allow my IP
+            logger.info("Whitelisting own IP on sgw backend")
+            self.api_client.allow_my_ip_sgw(self.tenant_id, self.project_id,
+                                            self.cluster_id, sgw_cluster_id)
 
-        # Add allowed IPs
-        logger.info("Whitelisting IPs")
-        client_ips = self.infra_spec.clients
-        logger.info("The client list is: {}".format(client_ips))
-        if self.infra_spec.capella_backend == 'aws':
-            client_ips = [
-                dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
-            ]
-        logger.info("The client list is: {}".format(client_ips))
-        for client_ip in client_ips:
-            self.api_client.add_allowed_ip_sgw(self.tenant_id, self.project_id,
-                                               sgw_cluster_id, self.cluster_id,
-                                               client_ip)
+            # Add allowed IPs
+            logger.info("Whitelisting IPs")
+            client_ips = self.infra_spec.clients
+            logger.info("The client list is: {}".format(client_ips))
+            if self.infra_spec.capella_backend == 'aws':
+                client_ips = [
+                    dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
+                ]
+            logger.info("The client list is: {}".format(client_ips))
+            for client_ip in client_ips:
+                self.api_client.add_allowed_ip_sgw(self.tenant_id, self.project_id,
+                                                   sgw_cluster_id, self.cluster_id,
+                                                   client_ip)
 
-        # Add app roles
-        logger.info("Adding app roles")
-        app_role = {"name": "moderator", "admin_channels": []}
-        self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
+            # Add app roles
+            logger.info("Adding app roles")
+            app_role = {"name": "moderator", "admin_channels": []}
+            self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
+                                             self.cluster_id, sgw_cluster_id,
+                                             sgw_db_name, app_role)
+            app_role = {"name": "admin", "admin_channels": []}
+            self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
+                                             self.cluster_id, sgw_cluster_id,
+                                             sgw_db_name, app_role)
+
+            # Add user
+            logger.info("Adding user")
+            user = {"email": "", "password": "Password123!", "name": "guest",
+                    "disabled": False, "admin_channels": ["*"], "admin_roles": []}
+            self.api_client.add_user_sgw(self.tenant_id, self.project_id,
                                          self.cluster_id, sgw_cluster_id,
-                                         sgw_db_name, app_role)
-        app_role = {"name": "admin", "admin_channels": []}
-        self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
-                                         self.cluster_id, sgw_cluster_id,
-                                         sgw_db_name, app_role)
+                                         sgw_db_name, user)
 
-        # Add user
-        logger.info("Adding user")
-        user = {"email": "", "password": "Password123!", "name": "guest",
-                "disabled": False, "admin_channels": ["*"], "admin_roles": []}
-        self.api_client.add_user_sgw(self.tenant_id, self.project_id,
-                                     self.cluster_id, sgw_cluster_id,
-                                     sgw_db_name, user)
+            # Add admin user
+            logger.info("Adding admin user")
+            admin_user = {"name": "Administrator", "password": "Password123!"}
+            self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
+                                               self.cluster_id, sgw_cluster_id,
+                                               sgw_db_name, admin_user)
 
-        # Add admin user
-        logger.info("Adding admin user")
-        admin_user = {"name": "Administrator", "password": "Password123!"}
-        self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
-                                           self.cluster_id, sgw_cluster_id,
-                                           sgw_db_name, admin_user)
-
-        # Update cluster spec file
-        self.update_spec(sgw_cluster_id, sgw_db_name)
+            # Update cluster spec file
+            self.update_spec(sgw_cluster_id, sgw_db_name)
 
     def destroy(self):
         # Destroy capella cluster
@@ -1653,7 +1654,7 @@ class AppServicesTerraform(Terraform):
 
         return sgw_cluster_id
 
-    def deploy_sgw_db(self, sgw_cluster_id):
+    def deploy_sgw_db(self, sgw_cluster_id, bucket_name):
         """Sample config.
 
         {
@@ -1664,25 +1665,86 @@ class AppServicesTerraform(Terraform):
             "import_filter": ""
         }
         """
-        sgw_db_name = "db-1"
+        sgw_db_name = "db-{}".format(bucket_name.split("-")[1])
+        logger.info("The sgw db name is: {}".format(sgw_db_name))
         config = {
-            "name": "db-1",
-            "sync": "",
-            "bucket": "bucket-1",
+            "name": sgw_db_name,
+            "bucket": bucket_name,
             "delta_sync": False,
-            "import_filter": ""
         }
-        logger.info(config)
+        collections_map = self.test_config.collection.collection_map
+        logger.info("The collections map is: {}".format(collections_map))
+        if collections_map:
+            """Add collection parameters
+            "scopes": {
+                "scope-1": {
+                    "collections": {
+                        "collection-1": {
+                            "sync": "function(doc1){channel(doc1.channels);}",
+                            "import_filter": "function(doc1){return true;}"
+                        }
+                    }
+                }
+            }
+            """
+
+            bucket = bucket_name
+            target_scope_collections = collections_map[bucket]
+            target_scopes = set()
+            target_collections = set()
+
+            for scope, collections in target_scope_collections.items():
+                for collection, options in collections.items():
+                    if options['load'] == 1 and options['access'] == 1:
+                        target_scopes.add(scope)
+                        target_collections.add(collection)
+
+            scope_count = len(target_scopes)
+            collection_count = len(target_collections)
+
+            logger.info("The number of scopes is: {}".format(scope_count))
+
+            logger.info("The number of collections is: {}".format(collection_count))
+            config["scopes"] = {}
+            scopes = {}
+            for scope in target_scopes:
+                logger.info("The current scope is: {}".format(scope))
+                collections = {}
+                for collection in target_collections:
+                    collections[collection] = {
+                        "import_filter": "function(doc) {return true}",
+                        "sync": "function (doc) { channel(doc.channels); }"
+                    }
+                scopes[scope] = collections
+            config["scopes"] = scopes
+        logger.info("The configuration is: {}".format(config))
 
         resp = self.api_client.create_sgw_database(self.tenant_id, self.project_id,
                                                    self.cluster_id, sgw_cluster_id, config)
-        raise_for_status(resp)
+        # raise_for_status(resp)
         sgw_db_id = resp.json().get('id')
         logger.info('Initialised sgw database deployment {}'.format(sgw_db_id))
         logger.info('Saving sgw db ID to spec file.')
 
-        sleep(10)
+        num_sgw = 0
+        count = 0
+        while num_sgw != self.test_config.cluster.num_buckets:
+            sleep(30)
+            resp = self.api_client.get_sgw_databases(self.tenant_id, self.project_id,
+                                                     self.cluster_id, sgw_cluster_id).json()
+            logger.info("The response_data is: {}".format(resp))
+            new_resp = resp.get('data')
+            logger.info("The new resp is: {}".format(new_resp))
+            if new_resp is not None:
+                num_sgw = 0
+                for resp_bit in new_resp:
+                    logger.info(resp_bit)
+                    num_sgw += 1
+            count += 1
+            if count > 25:
+                break
 
+        logger.info("SGW databases successfully created")
         return sgw_db_id, sgw_db_name
 
     def destroy_cluster_internal_api(self, sgw_cluster_id):

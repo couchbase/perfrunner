@@ -2783,6 +2783,7 @@ class SyncgatewaySettings:
     CBL_TARGET = "127.0.0.1"
     RAMDISK_SIZE = 0
     CBL_THROUGHPUT = 0
+    SG_LOAD_THROUGHPUT = 0
     COLLECT_CBL_LOGS = 0
     CBL_VERBOSE_LOGGING = 0
     TROUBLEMAKER = None
@@ -2884,6 +2885,7 @@ class SyncgatewaySettings:
         self.cbl_target = self.CBL_TARGET
         self.ramdisk_size = int(options.get('ramdisk_size', self.RAMDISK_SIZE))
         self.cbl_throughput = int(options.get('cbl_throughput', self.CBL_THROUGHPUT))
+        self.sg_load_throughput = int(options.get('sg_load_throughput', self.SG_LOAD_THROUGHPUT))
         self.collect_cbl_logs = int(options.get('collect_cbl_logs', self.COLLECT_CBL_LOGS))
         self.cbl_verbose_logging = int(options.get('cbl_verbose_logging', self.CBL_VERBOSE_LOGGING))
         self.troublemaker = options.get('troublemaker', self.TROUBLEMAKER)

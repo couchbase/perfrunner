@@ -373,7 +373,7 @@ class Remote:
     @all_clients_batch
     def cblite_build_cmake(self):
         with cd('/tmp/couchbase-mobile-tools/cblite/build_cmake'):
-            run('/snap/bin/cmake ..', quiet=True)
+            run('/usr/bin/cmake ..', quiet=True)
 
     @all_clients_batch
     def cblite_build_make(self):

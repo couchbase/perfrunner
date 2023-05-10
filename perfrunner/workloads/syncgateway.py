@@ -32,7 +32,7 @@ LOAD_DOCS_CMD = " load {ycsb_command} -s -P {workload} " \
                 "-p fieldlength={fieldlength} " \
                 "-p syncgateway.host={hosts} " \
                 "-p syncgateway.auth=false " \
-                "-target {cbl_throughput} " \
+                "-target {sg_load_throughput} " \
                 "-p syncgateway.basic_auth={basic_auth} " \
                 "-p syncgateway.feedmode={feedmode} " \
                 "-p syncgateway.replicator2={replicator2} " \
@@ -524,7 +524,7 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
                                   fieldcount=sgs.fieldcount,
                                   memcached_host=get_memcached_host(cluster, workload_settings),
                                   total_users=sgs.users,
-                                  cbl_throughput=sgs.cbl_throughput,
+                                  sg_load_throughput=sgs.sg_load_throughput,
                                   sg_docloader_thread=sgs.sg_docloader_thread,
                                   roundtrip=sgs.roundtrip_write_load,
                                   feedmode=sgs.feed_mode,

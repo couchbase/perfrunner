@@ -70,3 +70,6 @@
 
   - name: disable thp
     shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
+
+  - name: reset vbucket count
+    shell: "systemctl unset-environment COUCHBASE_NUM_VBUCKETS"

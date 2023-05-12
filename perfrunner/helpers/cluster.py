@@ -315,13 +315,23 @@ class ClusterManager:
 
     def create_buckets(self):
         mem_quota = self.test_config.cluster.mem_quota
+
+        if mem_quota == 0 and self.capella_infra:
+            logger.info('No memory quota provided for buckets on provisioned Capella cluster. '
+                        'Getting free memory available for buckets...')
+            mem_info = self.rest.get_bucket_mem_available(next(self.cluster_spec.masters))
+            mem_quota = mem_info['free']
+            logger.info('Free memory for buckets (per node): {}MB'.format(mem_quota))
+
         if self.test_config.cluster.num_buckets > 7:
             self.increase_bucket_limit(self.test_config.cluster.num_buckets + 3)
 
         if self.test_config.cluster.eventing_metadata_bucket_mem_quota:
             mem_quota -= (self.test_config.cluster.eventing_metadata_bucket_mem_quota +
                           self.test_config.cluster.eventing_bucket_mem_quota)
+
         per_bucket_quota = mem_quota // self.test_config.cluster.num_buckets
+
         if self.dynamic_infra:
             self.remote.delete_all_buckets()
             for bucket_name in self.test_config.buckets:

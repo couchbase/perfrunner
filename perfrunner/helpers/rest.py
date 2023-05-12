@@ -2102,6 +2102,14 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
                                                     username, password)
         return resp
 
+    def get_bucket_mem_available(self, host: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.get_buckets(self.tenant_id, self.project_id, cluster_id)
+        return {
+            'free': resp.json()['freeMemoryInMb'],
+            'total': resp.json()['totalMemoryInMb']
+        }
+
     @retry
     def create_bucket(self, host: str,
                       name: str,

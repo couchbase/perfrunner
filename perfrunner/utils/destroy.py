@@ -46,7 +46,7 @@ class AWSDestroyer(Destroyer):
 
     def delete_eks_node_groups(self):
         logger.info("Deleting eks node groups...")
-        eks_clusters = self.deployed_infra['vpc'].get('eks_clusters', {})
+        eks_clusters = self.deployed_infra.get('vpc', {}).get('eks_clusters', {})
         for eks_cluster_name, eks_cluster_config in eks_clusters.items():
             node_groups = eks_cluster_config.get('node_groups', {})
             for node_group_name, node_group_config in node_groups.items():
@@ -59,7 +59,7 @@ class AWSDestroyer(Destroyer):
 
     def wait_node_groups_deleted(self):
         logger.info("Waiting for eks node groups deletion to complete...")
-        eks_clusters = self.deployed_infra['vpc'].get('eks_clusters', {})
+        eks_clusters = self.deployed_infra.get('vpc', {}).get('eks_clusters', {})
         for eks_cluster_name, eks_cluster_config in eks_clusters.items():
             node_groups = eks_cluster_config.get('node_groups', {})
             for node_group_name, node_group_config in node_groups.items():
@@ -74,7 +74,7 @@ class AWSDestroyer(Destroyer):
 
     def delete_eks_clusters(self):
         logger.info("Deleting eks clusters...")
-        eks_clusters = self.deployed_infra['vpc'].get('eks_clusters', {})
+        eks_clusters = self.deployed_infra.get('vpc', {}).get('eks_clusters', {})
         for eks_cluster_name, _ in eks_clusters.items():
             try:
                 self.eksclient.delete_cluster(name=eks_cluster_name)
@@ -83,7 +83,7 @@ class AWSDestroyer(Destroyer):
 
     def wait_eks_clusters_deleted(self):
         logger.info("Waiting for eks clusters deletion...")
-        eks_clusters = self.deployed_infra['vpc'].get('eks_clusters', {})
+        eks_clusters = self.deployed_infra.get('vpc', {}).get('eks_clusters', {})
         for eks_cluster_name, _ in eks_clusters.items():
             waiter = self.eksclient.get_waiter('cluster_deleted')
             try:
@@ -95,7 +95,7 @@ class AWSDestroyer(Destroyer):
     def delete_ec2s(self):
         logger.info("Deleting ec2s...")
         instance_list = []
-        for ec2_group_name, ec2_dict in self.deployed_infra['vpc'].get('ec2', {}).items():
+        for ec2_group_name, ec2_dict in self.deployed_infra.get('vpc', {}).get('ec2', {}).items():
             instance_list += list(ec2_dict.keys())
         if len(instance_list) > 0:
             self.ec2client.terminate_instances(
@@ -104,7 +104,7 @@ class AWSDestroyer(Destroyer):
     def wait_ec2s_deleted(self):
         logger.info("Waiting for ec2s deletion...")
         instance_list = []
-        for ec2_group_name, ec2_dict in self.deployed_infra['vpc'].get('ec2', {}).items():
+        for ec2_group_name, ec2_dict in self.deployed_infra.get('vpc', {}).get('ec2', {}).items():
             instance_list += list(ec2_dict.keys())
         if len(instance_list) > 0:
             waiter = self.ec2client.get_waiter('instance_terminated')
@@ -117,15 +117,15 @@ class AWSDestroyer(Destroyer):
         logger.info("Deleting VPC...")
         try:
             self.ec2client.delete_vpc(
-                VpcId=self.deployed_infra['vpc']['VpcId'], DryRun=False)
+                VpcId=self.deployed_infra.get('vpc', {})['VpcId'], DryRun=False)
         except Exception as ex:
             logger.info(ex)
 
     def delete_subnets(self):
         logger.info('Deleting subnets...')
-        if not self.deployed_infra['vpc'].get('subnets', None):
+        if not self.deployed_infra.get('vpc', {}).get('subnets', None):
             return
-        for subnet in self.deployed_infra['vpc']['subnets'].keys():
+        for subnet in self.deployed_infra.get('vpc', {})['subnets'].keys():
             try:
                 self.ec2client.delete_subnet(
                     SubnetId=subnet, DryRun=False)
@@ -134,10 +134,10 @@ class AWSDestroyer(Destroyer):
 
     def delete_internet_gateway(self):
         logger.info('Deleting internet gateway')
-        vpc_id = self.deployed_infra['vpc']['VpcId']
-        if not self.deployed_infra['vpc'].get('internet_gateway', None):
+        vpc_id = self.deployed_infra.get('vpc', {}).get('VpcId')
+        if not self.deployed_infra.get('vpc', {}).get('internet_gateway', None):
             return
-        igw_id = self.deployed_infra['vpc']['internet_gateway']['InternetGatewayId']
+        igw_id = self.deployed_infra.get('vpc', {})['internet_gateway']['InternetGatewayId']
         try:
             self.ec2client.detach_internet_gateway(
                 DryRun=False,
@@ -175,21 +175,21 @@ class AWSDestroyer(Destroyer):
 
         try:
             self.iamclient.detach_role_policy(
-                RoleName=self.deployed_infra['vpc']['eks_node_role_iam_arn'].split("/")[1],
-                PolicyArn=self.deployed_infra['vpc']['ebs_csi_policy_arn']
+                RoleName=self.deployed_infra.get('vpc', {})['eks_node_role_iam_arn'].split("/")[1],
+                PolicyArn=self.deployed_infra.get('vpc', {})['ebs_csi_policy_arn']
             )
         except Exception as ex:
             logger.info(ex)
         try:
             self.iamclient.delete_policy(
-                PolicyArn=self.deployed_infra['vpc']['ebs_csi_policy_arn']
+                PolicyArn=self.deployed_infra.get('vpc', {})['ebs_csi_policy_arn']
             )
         except Exception as ex:
             logger.info(ex)
 
     def delete_volumes(self):
         logger.info("Deleting persistent volumes...")
-        eks_clusters = self.deployed_infra['vpc'].get('eks_clusters', {})
+        eks_clusters = self.deployed_infra.get('vpc', {}).get('eks_clusters', {})
         response = self.ec2client.describe_volumes(
             Filters=[{'Name': 'tag-key',
                       'Values':
@@ -289,7 +289,7 @@ class GCPDestroyer(Destroyer):
     def delete_gce_instances(self):
         logger.info('Deleting instances...')
         ops = []
-        for _, instances in self.deployed_infra['vpc']['gce'].items():
+        for _, instances in self.deployed_infra.get('vpc', {})['gce'].items():
             for instance in instances.keys():
                 op = self.instance_client.delete_unary(
                     project=self.project,
@@ -305,7 +305,7 @@ class GCPDestroyer(Destroyer):
         op = self.subnet_client.delete_unary(
             project=self.project,
             region=self.region,
-            subnetwork=self.deployed_infra['vpc']['primary_subnet']['name']
+            subnetwork=self.deployed_infra.get('vpc', {})['primary_subnet']['name']
         )
         self._wait_for_operations([op])
         logger.info('Subnetwork deleted.')
@@ -313,7 +313,7 @@ class GCPDestroyer(Destroyer):
     def delete_firewalls(self):
         logger.info('Deleting firewall rules...')
         ops = []
-        for firewall in self.deployed_infra['vpc']['firewalls']:
+        for firewall in self.deployed_infra.get('vpc', {})['firewalls']:
             op = self.firewall_client.delete_unary(
                 project=self.project,
                 firewall=firewall['name']
@@ -326,7 +326,7 @@ class GCPDestroyer(Destroyer):
         logger.info('Deleting VPC...')
         op = self.network_client.delete_unary(
             project=self.project,
-            network=self.deployed_infra['vpc']['name']
+            network=self.deployed_infra.get('vpc', {})['name']
         )
         self._wait_for_operations([op])
         logger.info('VPC deleted.')
@@ -396,6 +396,9 @@ class OpenshiftDestoryer(Destroyer):
 
     def destroy(self):
         os.system("./openshift-install destroy cluster --dir={}".format(self.OPENSHIFT_PATH))
+        if self.infra_spec.external_client:
+            logger.info('Destroying external resources')
+            AWSDestroyer(self.infra_spec, self.options).destroy()
 
 
 def get_args():

@@ -172,7 +172,8 @@ class OperatorInstaller:
 
     def install(self):
         self.install_operator()
-        self.install_celery_broker()
+        if not self.cluster_spec.external_client:
+            self.install_celery_broker()
 
     def prepare_operator_files(self):
         source = "internal" if "-" in self.operator_version else "release"
@@ -215,8 +216,9 @@ class OperatorInstaller:
 
     def uninstall(self):
         self.uninstall_operator()
-        self.uninstall_celery_broker()
-        self.uninstall_workers()
+        if not self.cluster_spec.external_client:
+            self.uninstall_celery_broker()
+            self.uninstall_workers()
         self.delete_artifacts()
 
     def uninstall_operator(self):

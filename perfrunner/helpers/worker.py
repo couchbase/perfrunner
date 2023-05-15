@@ -325,9 +325,14 @@ class RemoteWorkerManager:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.broker_url = 'amqp://couchbase:couchbase@172.23.96.202:5672/broker'
-        self.remote = RemoteHelper(cluster_spec, verbose)
+        self.remote = RemoteHelper(
+            cluster_spec, verbose, external_client=self.cluster_spec.external_client
+        )
         if self.cluster_spec.cloud_infrastructure:
-            if self.cluster_spec.kubernetes_infrastructure:
+            if (
+                self.cluster_spec.kubernetes_infrastructure
+                and not self.cluster_spec.external_client
+            ):
                 self.WORKER_HOME = '/opt/perfrunner'
                 self.broker_url = self.remote.get_broker_urls()[0]
                 with CAOWorkerFile(self.cluster_spec) as worker_config:
@@ -376,7 +381,7 @@ class RemoteWorkerManager:
         if self.test_config.client_settings.cherrypick:
             logger.info(f"Using patch on workers: '{self.test_config.client_settings.cherrypick}'")
 
-        if self.cluster_spec.kubernetes_infrastructure:
+        if self.cluster_spec.kubernetes_infrastructure and not self.cluster_spec.external_client:
             self.start_kubernetes_workers()
         else:
             self.start_remote_workers()
@@ -477,7 +482,7 @@ class RemoteWorkerManager:
 
     def terminate(self):
         logger.info('Terminating Celery workers')
-        if self.cluster_spec.kubernetes_infrastructure:
+        if self.cluster_spec.kubernetes_infrastructure and not self.cluster_spec.external_client:
             self.remote.terminate_client_pods(self.worker_path)
         else:
             self.remote.terminate_client_processes()

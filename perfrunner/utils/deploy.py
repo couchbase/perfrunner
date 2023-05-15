@@ -42,7 +42,7 @@ class Deployer:
 
 class AWSDeployer(Deployer):
 
-    def __init__(self, infra_spec, options):
+    def __init__(self, infra_spec: ClusterSpec, options):
         super().__init__(infra_spec, options)
         self.desired_infra = self.gen_desired_infrastructure_config()
         self.deployed_infra = {}
@@ -432,6 +432,7 @@ class AWSDeployer(Deployer):
             cluster_infra = self.deployed_infra["vpc"]["eks_clusters"][deployed_cluster_name]
             cluster_infra['node_groups'] = {}
             eks_subnets = []
+
             for subnet_id, subnet_info in self.deployed_infra['vpc']['subnets'].items():
                 for tag in subnet_info['Tags']:
                     if tag["Key"] == "Role" and tag["Value"] == deployed_cluster_name:
@@ -574,7 +575,7 @@ class AWSDeployer(Deployer):
                     block_device = '/dev/sda1'
                     if "workers" in node_role:  # perf client ami
                         if self.region == 'us-east-1':
-                            ami = 'ami-045e0aa97a8f1242f'
+                            ami = 'ami-0d9789eef66732b62'
                             logger.info("Client AMI: " + str(ami))
                         else:
                             ami = 'ami-0045ddecdcfa4a45c'
@@ -808,11 +809,11 @@ class AWSDeployer(Deployer):
         clients = self.infra_spec.infrastructure_clients
         sgws = self.infra_spec.infrastructure_syncgateways
         utilities = self.infra_spec.infrastructure_utilities
-        if self.infra_spec.infrastructure_settings['type'] == 'kubernetes':
-            remote = RemoteHelper(self.infra_spec)
+        with open(self.generated_cloud_config_path) as f:
+            self.deployed_infra = json.load(f)
 
-            with open(self.generated_cloud_config_path) as f:
-                self.deployed_infra = json.load(f)
+        if self.infra_spec.dynamic_infrastructure:
+            remote = RemoteHelper(self.infra_spec)
 
             k8_nodes = {
                 node_dict['metadata']['name']:
@@ -891,17 +892,19 @@ class AWSDeployer(Deployer):
                     for replace_pair in address_replace_list:
                         s = s.replace(replace_pair[0], replace_pair[1], 1)
                     f.write(s)
-        else:
-            with open(self.generated_cloud_config_path) as f:
-                self.deployed_infra = json.load(f)
+
+        if self.infra_spec.external_client or not self.infra_spec.dynamic_infrastructure:
             backup = self.infra_spec.backup
             node_group_ips = {}
             for node_group_name, ec2_dict in self.deployed_infra['vpc']['ec2'].items():
                 ips = []
-                for instance, instance_ips in ec2_dict.items():
+                for _, instance_ips in ec2_dict.items():
                     ips.append(instance_ips['public_dns'])
                 node_group_ips[node_group_name] = ips
+
             for cluster, hosts in clusters.items():
+                if self.infra_spec.external_client:
+                    break  # If external client, it is a k8s cluster
                 address_replace_list = []
                 for host in hosts.split():
                     address, services = host.split(":")
@@ -1064,6 +1067,14 @@ class OpenshiftDeployer(AWSDeployer):
         self.populate_yaml()
         self.create_cluster()
         self.update_labels()
+
+        # Deploy non Openshift resources
+        if self.infra_spec.external_client:
+            logger.info("Deploying external resources")
+            # Purge any k8s resources from desired infra
+            self.desired_infra['k8s'] = {}
+            logger.info(self.infra_spec)
+            super().deploy()
 
     def get_oc_binary(self):
         os.system('wget -q https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-{}'

@@ -184,6 +184,14 @@ class ClusterSpec(Config):
             return {k: v for k, v in self.config.items('kafka_clusters')}
         return {}
 
+    @property
+    def external_client(self) -> bool:
+        return self.infrastructure_settings.get('external_client', 'false') == 'true'
+
+    @property
+    def is_openshift(self) -> bool:
+        return self.cloud_provider == 'openshift'
+
     def kubernetes_version(self, cluster_name):
         return self.infrastructure_section(cluster_name)\
             .get('version', '1.17')
@@ -481,7 +489,7 @@ class ClusterSpec(Config):
     @property
     def workers(self) -> list[str]:
         if self.cloud_infrastructure:
-            if self.kubernetes_infrastructure:
+            if self.kubernetes_infrastructure and not self.external_client:
                 client_map = self.infrastructure_clients
                 clients = []
                 for k, v in client_map.items():
@@ -521,7 +529,7 @@ class ClusterSpec(Config):
     @property
     def brokers(self) -> list[str]:
         if self.cloud_infrastructure:
-            if not self.kubernetes_infrastructure:
+            if not self.kubernetes_infrastructure or self.external_client:
                 util_map = self.infrastructure_utilities
                 brokers = []
                 for k, v in util_map.items():

@@ -12,17 +12,17 @@ from perfrunner.settings import ClusterSpec
 
 class RemoteHelper:
 
-    def __new__(cls, cluster_spec: ClusterSpec, verbose: bool = False):
+    def __new__(cls, cluster_spec: ClusterSpec, verbose: bool = False, external_client=False):
         if not cluster_spec.ssh_credentials:
             return None
-        if cluster_spec.dynamic_infrastructure:
+        if cluster_spec.dynamic_infrastructure and not external_client:
             return RemoteKubernetes(cluster_spec)
 
         state.env.user, state.env.password = cluster_spec.ssh_credentials
         state.output.running = verbose
         state.output.stdout = verbose
 
-        if cluster_spec.capella_infrastructure:
+        if cluster_spec.capella_infrastructure or external_client:
             state.env.use_ssh_config = True
             return RemoteLinux(cluster_spec)
 

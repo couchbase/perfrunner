@@ -308,7 +308,7 @@ E2E_MULTI_RUN_TEST_CMD = " run {ycsb_command} -s -P {workload} " \
                         "-p syncgateway.retrydelay={retry_interval} " \
                         "-p syncgateway.grantaccessinscan={grant_access_in_scan}"
 
-E2E_CB_MULTI_LOAD_DOCS_CMD = " load couchbase2 -s -P workloads/syncgateway_blank " \
+E2E_CB_MULTI_LOAD_DOCS_CMD = " load {ycsb_command} -s -P {workload} " \
                              "-p requestdistribution=sequential " \
                              "-p recordcount={total_docs} " \
                              "-p dataintegrity={data_integrity} " \
@@ -338,7 +338,7 @@ E2E_CB_MULTI_LOAD_DOCS_CMD = " load couchbase2 -s -P workloads/syncgateway_blank
                              "-p core_workload_insertion_retry_interval={retry_interval} " \
                              "-p exportfile={exportfile}"
 
-E2E_CB_MULTI_RUN_TEST_CMD = " run couchbase2 -s -P workloads/syncgateway_blank " \
+E2E_CB_MULTI_RUN_TEST_CMD = " run {ycsb_command} -s -P {workload} " \
                              "-p requestdistribution=sequential " \
                              "-p operationcount={operations} " \
                              "-p recordcount={total_docs} " \
@@ -1039,7 +1039,8 @@ def syncgateway_e2e_multi_cb_load_docs(
         total_docs += docs
         insert_offset += docs
     params = E2E_CB_MULTI_LOAD_DOCS_CMD.format(
-        workload=sgs.workload,
+        ycsb_command=workload_settings.ycsb_client,
+        workload=workload_settings.workload_path,
         host=cluster.servers[0],
         bucket=target.bucket,
         threads=sgs.threads_per_instance,
@@ -1085,7 +1086,8 @@ def syncgateway_e2e_multi_cb_run_test(
         total_docs += docs
         insert_offset += docs
     params = E2E_CB_MULTI_RUN_TEST_CMD.format(
-        workload=sgs.workload,
+        ycsb_command=workload_settings.ycsb_client,
+        workload=workload_settings.workload_path,
         host=cluster.servers[0],
         bucket=target.bucket,
         threads=sgs.threads_per_instance,

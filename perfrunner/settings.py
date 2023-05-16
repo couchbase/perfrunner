@@ -1143,6 +1143,7 @@ class PhaseSettings:
     CONNSTR_PARAMS = "{'ipv6': 'allow', 'enable_tracing': 'false'}"
 
     YCSB_CLIENT = 'couchbase2'
+    YCSB_DEFAULT_WORKLOAD_PATH = 'workloads/workloada'
 
     DURABILITY = None
 
@@ -1329,7 +1330,7 @@ class PhaseSettings:
         self.syncgateway_settings = None
 
         # YCSB settings
-        self.workload_path = options.get('workload_path')
+        self.workload_path = options.get('workload_path', self.YCSB_DEFAULT_WORKLOAD_PATH)
         self.recorded_load_cache_size = int(options.get('recorded_load_cache_size',
                                                         self.RECORDED_LOAD_CACHE_SIZE))
         self.inserts_per_workerinstance = int(options.get('inserts_per_workerinstance',

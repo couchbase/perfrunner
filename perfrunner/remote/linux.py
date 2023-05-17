@@ -823,10 +823,8 @@ class RemoteLinux(Remote):
 
     @all_servers
     def enable_serverless_mode(self):
-        # Enable profile, sleep to allow server to fully restart.
-        run('systemctl set-environment CB_FORCE_PROFILE=serverless'
-            ' && systemctl restart couchbase-server'
-            ' && sleep 10')
+        # Enable serverless profile.
+        run('systemctl set-environment CB_FORCE_PROFILE=serverless')
 
     @all_servers
     def disable_serverless_mode(self):

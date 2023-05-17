@@ -508,6 +508,15 @@ class CouchbaseInstaller:
         self.remote.upload_iss_files(self.release)
         self.remote.install_couchbase(self.url)
 
+    def check_for_serverless(self, serverless_enabled: bool):
+        logger.info("Checking for Serverless mode")
+        if serverless_enabled:
+            logger.info("Enabling Serverless mode")
+            self.remote.enable_serverless_mode()
+        else:
+            logger.info("Disabling Serverless profile")
+            self.remote.disable_serverless_mode()
+
     def install(self):
         self.kill_processes()
         self.uninstall_package()
@@ -666,6 +675,10 @@ def get_args():
     parser.add_argument('-u', '--uninstall',
                         action='store_true',
                         help='the path to a cluster specification file')
+    parser.add_argument('--serverless-profile',
+                        default=False,
+                        help='use to convert the cb-server profile to \
+                        serverless on non-capella machines')
     return parser.parse_args()
 
 
@@ -695,9 +708,11 @@ def main():
         if args.uninstall:
             installer.uninstall()
         else:
+            installer.check_for_serverless(args.serverless_profile)
             installer.install()
     else:
         installer = CouchbaseInstaller(cluster_spec, args)
+        installer.check_for_serverless(args.serverless_profile)
         installer.install()
         if args.local_copy:
             installer.download()

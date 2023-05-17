@@ -66,7 +66,7 @@ resource "azurerm_virtual_network" "perf-vn" {
   resource_group_name = "perf-resources-eastus"
 
   tags = {
-  deployment = var.global_tag != "" ? var.global_tag : null
+    deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
 

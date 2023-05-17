@@ -293,9 +293,11 @@ resource "aws_instance" "cluster_instance" {
   subnet_id         = aws_subnet.public.id
   ami               = data.aws_ami.cluster_ami[each.key].id
   instance_type     = each.value.instance_type
+
   root_block_device {
     volume_size = 32
   }
+
   ebs_block_device {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size
@@ -303,6 +305,7 @@ resource "aws_instance" "cluster_instance" {
     throughput  = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
     iops        = each.value.iops > 0 ? each.value.iops : null
   }
+
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "ClusterNode${each.key}"
     role       = "cluster"
@@ -317,6 +320,7 @@ resource "aws_instance" "client_instance" {
   subnet_id         = aws_subnet.public.id
   ami               = data.aws_ami.client_ami[each.key].id
   instance_type     = each.value.instance_type
+
   ebs_block_device {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size
@@ -324,6 +328,7 @@ resource "aws_instance" "client_instance" {
     throughput  = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
     iops        = each.value.iops > 0 ? each.value.iops : null
   }
+
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "ClientNode${each.key}"
     role       = "client"
@@ -338,6 +343,7 @@ resource "aws_instance" "utility_instance" {
   subnet_id         = aws_subnet.public.id
   ami               = data.aws_ami.utility_ami[each.key].id
   instance_type     = each.value.instance_type
+
   ebs_block_device {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size
@@ -345,6 +351,7 @@ resource "aws_instance" "utility_instance" {
     throughput  = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
     iops        = each.value.iops > 0 ? each.value.iops : null
   }
+
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "UtilityNode${each.key}"
     role       = "utility"
@@ -359,6 +366,7 @@ resource "aws_instance" "syncgateway_instance" {
   subnet_id         = aws_subnet.public.id
   ami               = data.aws_ami.syncgateway_ami[each.key].id
   instance_type     = each.value.instance_type
+
   ebs_block_device {
     device_name = "/dev/sdb"
     volume_size = each.value.volume_size
@@ -366,6 +374,7 @@ resource "aws_instance" "syncgateway_instance" {
     throughput  = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
     iops        = each.value.iops > 0 ? each.value.iops : null
   }
+
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "SyncGatewayNode${each.key}"
     role       = "syncgateway"

@@ -4,6 +4,7 @@ import os
 from argparse import ArgumentParser
 from collections import Counter
 from time import sleep, time
+from typing import Dict
 from uuid import uuid4
 
 import requests
@@ -49,7 +50,7 @@ def raise_for_status(resp: requests.Response):
         resp.raise_for_status()
     except HTTPError as e:
         logger.error('HTTP Error {}: response content: {}'.format(resp.status_code, resp.content))
-        raise(e)
+        raise e
 
 
 def format_datadog_link(cluster_id: str = None, dataplane_id: str = None,
@@ -151,7 +152,7 @@ class Terraform:
     def destroy(self):
         self.terraform_destroy(self.provider)
 
-    def create_tfvar_nodes(self):
+    def create_tfvar_nodes(self) -> Dict[str, Dict]:
         tfvar_nodes = {
             'clusters': {},
             'clients': {},
@@ -189,6 +190,7 @@ class Terraform:
 
                 parameters['image'] = image
 
+                # Set disk size and type
                 parameters['volume_size'] = int(parameters.get('volume_size', 0))
 
                 storage_class = parameters.get('storage_class', parameters.get('volume_type', None))
@@ -197,14 +199,18 @@ class Terraform:
                     storage_class = node_cluster_config.get('storage_class')
                 parameters['storage_class'] = storage_class
 
-                if 'disk_tier' not in parameters and cloud_provider == 'azure':
-                    parameters['disk_tier'] = ""
-
-                if cloud_provider in ('aws', 'gcp'):
+                # Set CSP-specific options
+                if cloud_provider == 'azure':
+                    parameters['disk_tier'] = parameters.get('disk_tier', '')
+                else:
+                    # AWS and GCP
                     parameters['iops'] = int(parameters.get('iops', 0))
                     if cloud_provider == 'aws':
                         parameters['volume_throughput'] = int(parameters.get('volume_throughput',
                                                                              0))
+                    else:
+                        # GCP
+                        parameters['local_nvmes'] = int(parameters.get('local_nvmes', 0))
 
                 del parameters['instance_capacity']
 

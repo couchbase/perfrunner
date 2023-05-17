@@ -1471,6 +1471,8 @@ class CreateBackupandRestoreIndexTestWithRebalance(CreateBackupandRestoreIndexTe
 
 class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
 
+    ALL_HOSTNAMES = True
+
     """Measure rebalance time for indexer with scan and access workload."""
 
     COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,

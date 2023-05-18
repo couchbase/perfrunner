@@ -373,14 +373,17 @@ class RemoteWorkerManager:
 
     def start(self):
         logger.info('Initializing remote worker environment')
+        if self.test_config.client_settings.cherrypick:
+            logger.info(f"Using patch on workers: '{self.test_config.client_settings.cherrypick}'")
+
         if self.cluster_spec.kubernetes_infrastructure:
             self.start_kubernetes_workers()
         else:
             self.start_remote_workers()
 
     def start_remote_workers(self):
-        perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
-        self.remote.init_repo(self.WORKER_HOME)
+        perfrunner_home = os.path.join(self.WORKER_HOME, "perfrunner")
+        self.remote.init_repo(self.WORKER_HOME, self.test_config.client_settings.cherrypick)
         need_pymongo = (self.cluster_spec.goldfish_infrastructure and
                         self.test_config.goldfish_kafka_links_settings.link_source == 'MONGODB')
         self.remote.install_clients(perfrunner_home,
@@ -396,9 +399,8 @@ class RemoteWorkerManager:
         num_workers = len(self.cluster_spec.workers)
         self.remote.create_from_file(self.worker_path)
         self.remote.wait_for_pods_ready("worker", num_workers)
-        # Keep the function here so it is known when to pull changes to remote workers
-        # i.e before starting celery workers on pods
-        self.remote.pull_perfrunner_patch()
+        # Pull changes to remote workers before starting celery workers on pods
+        self.remote.pull_perfrunner_patch(self.test_config.client_settings.cherrypick)
         worker_idx = 0
         for pod in self.remote.get_pods():
             worker_name = pod.get("metadata", {}).get("name", "")

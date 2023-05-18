@@ -1,5 +1,6 @@
 import os
 import shutil
+from typing import Optional
 
 from fabric.api import cd, get, run, settings, shell_env
 
@@ -34,13 +35,15 @@ class Remote:
         run('killall -9 {}'.format(' '.join(self.CLIENT_PROCESSES)), quiet=True)
 
     @all_clients
-    def init_repo(self, worker_home: str):
+    def init_repo(self, worker_home: str, cherrypick: Optional[str] = None):
         run('rm -fr {}'.format(worker_home))
         run('mkdir -p {}'.format(worker_home))
 
         with cd(worker_home):
-            run('git clone -q {}'.format(REPO))
+            run(f"git clone -q {REPO}")
             with cd("perfrunner"):
+                if cherrypick:
+                    run(cherrypick)
                 run('make')
 
     @all_clients

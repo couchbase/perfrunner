@@ -2728,6 +2728,7 @@ class ClientSettings:
         self.go_client = options.get('go_client', None)
         self.dotnet_client = options.get('dotnet_client', None)
         self.tableau_connector = options.get('tableau_connector', self.TABLEAU_CONNECTOR)
+        self.cherrypick = options.get("cherrypick")
 
         # Provide an easy way to figure out the sdk version for code that dont care which
         # SDK it is interacting with

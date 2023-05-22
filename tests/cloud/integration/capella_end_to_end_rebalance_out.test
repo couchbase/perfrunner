@@ -1,0 +1,118 @@
+[test_case]
+test = perfrunner.tests.integration.EndToEndRebalanceLatencyTest
+
+[showfast]
+title = Latency (ms), 3 nodes, 1 bucket x 5M x 1Kb, 300 queries/sec
+component = n1qlcloud
+category = lat
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 4
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 50000000
+size = 1024
+workers = 40
+doc_gen = unified
+num_replies = 100
+item_size = 73
+ssl_mode = capella
+
+[rebalance]
+nodes_after = 3
+start_after = 300
+stop_after = 300
+
+[index]
+replicas = 1
+statements =
+    CREATE INDEX ix_c0_cid IF NOT EXISTS ON `TARGET_BUCKET`(c0, cid, index_field) WITH {'defer_build': true};
+    CREATE INDEX ix_apos_ac0_aid IF NOT EXISTS ON `TARGET_BUCKET`(ALL ARRAY FLATTEN_KEYS(v.apos, v.ac0, v.aid) FOR v IN a1 END) WITH {'defer_build': true};
+
+[access]
+creates = 0
+reads = 80
+updates = 20
+deletes = 0
+throughput = 5000
+items = 50000000
+workers = 1
+doc_gen = unified
+num_replies = 100
+item_size = 73
+latency_percentiles = 50,90,95,98,99
+n1ql_queries = q01,q02,q03,q04,q05,q06,q07
+n1ql_workers = 10
+n1ql_throughput = 200
+workload_instances = 1
+ssl_mode = capella
+
+[n1ql-q01]
+statement = SELECT META(d).id, d.index_field, d.xxx FROM `TARGET_BUCKET` AS d WHERE d.c0 BETWEEN $1 AND $2 AND d.cid BETWEEN 0 AND 99;
+scan_consistency = not_bound
+args = ["start_qualified_batches"]
+total_batches = 500000
+qualified_batches = 1
+
+[n1ql-q02]
+statement = SELECT META(d).id, d.index_field, d.xxx FROM `TARGET_BUCKET` AS d WHERE d.c0 BETWEEN $1 AND $2 AND d.cid BETWEEN 0 AND 99 ORDER BY d.c0 DESC LIMIT 20;
+scan_consistency = not_bound
+args = ["start_qualified_batches"]
+total_batches = 500000
+qualified_batches = 1
+
+[n1ql-q03]
+statement = SELECT META(l).id, l.index_field, l.xxx, r.yyy FROM `TARGET_BUCKET` AS l JOIN `TARGET_BUCKET` AS r USE HASH(BUILD) ON l.id = r.id WHERE l.c0 BETWEEN $1 AND $2 AND r.c0 BETWEEN $1 AND $2 AND l.cid BETWEEN 0 AND 99 AND r.cid BETWEEN 0 AND 99;
+scan_consistency = not_bound
+args = ["start_qualified_batches"]
+total_batches = 500000
+qualified_batches = 1
+
+[n1ql-q04]
+statement = SELECT g1, COUNT(1) AS cnt FROM `TARGET_BUCKET` AS d WHERE d.c0 BETWEEN $1 AND $2 AND d.cid BETWEEN 0 AND 99 GROUP BY IMOD(d.id,10) AS g1 ORDER BY g1;
+scan_consistency = not_bound
+args = ["start_qualified_batches"]
+total_batches = 500000
+qualified_batches = 1
+
+[n1ql-q05]
+statement = SELECT META(d).id, d.index_field, d.xxx FROM `TARGET_BUCKET` AS d WHERE ANY v IN d.a1 SATISFIES v.ac0 BETWEEN $1 AND $2 AND v.apos = 2 AND v.aid BETWEEN 0 AND 99 END;
+scan_consistency = not_bound
+args = ["start_qualified_batches"]
+total_batches = 500000
+qualified_batches = 1
+
+[n1ql-q06]
+statement = WITH cte AS (SELECT RAW t FROM `TARGET_BUCKET` AS t WHERE t.c0 BETWEEN $1 AND $2 AND t.cid BETWEEN 0 AND 99) SELECT META(l).id, l.index_field, l.xxx, r.yyy FROM `TARGET_BUCKET` AS l JOIN cte AS r ON l.id = r.id WHERE l.c0 BETWEEN $1 AND $2 AND r.c0 BETWEEN $1 AND $2 AND l.cid BETWEEN 0 AND 99 AND r.cid BETWEEN 0 AND 99;
+scan_consistency = not_bound
+args = ["start_qualified_batches"]
+total_batches = 500000
+qualified_batches = 1
+
+[n1ql-q07]
+statement = SELECT META(d).id, d.index_field, d.xxx FROM `TARGET_BUCKET` AS d UNNEST d.a1 AS u WHERE u.ac0 BETWEEN $1 AND $2 AND u.apos = 1 AND u.aid BETWEEN 0 AND 99;
+scan_consistency = not_bound
+args = ["start_qualified_batches"]
+total_batches = 500000
+qualified_batches = 1
+
+[stats]
+server_processes = projector
+
+[clients]
+python_client = 3.2.7

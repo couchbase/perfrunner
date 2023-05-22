@@ -581,13 +581,21 @@ class ClientUploader(CouchbaseInstaller):
 
     def download(self):
         logger.info('Saving a local copy of {}'.format(self.url))
-        with open('couchbase.deb', 'wb') as fh:
-            resp = requests.get(self.url)
-            fh.write(resp.content)
+        if self.url.endswith(".rpm"):
+            with open('couchbase.rpm', 'wb') as fh:
+                resp = requests.get(self.url)
+                fh.write(resp.content)
+        else:
+            with open('couchbase.deb', 'wb') as fh:
+                resp = requests.get(self.url)
+                fh.write(resp.content)
 
     def upload(self):
         logger.info('Using this URL: {}'.format(self.url))
-        package_name = 'couchbase.deb'
+        if self.url.endswith(".rpm"):
+            package_name = 'couchbase.rpm'
+        else:
+            package_name = 'couchbase.deb'
 
         logger.info('Uploading {} to clients'.format(package_name))
         uploads = []

@@ -1012,6 +1012,7 @@ class RebalanceSettings:
 
         self.start_after = int(options.get('start_after', self.START_AFTER))
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
+        self.services = options.get('services', 'kv')
         self.rebalance_config = options.get('rebalance_config', None)
 
         # The reblance settings for FTS

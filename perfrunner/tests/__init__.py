@@ -682,3 +682,14 @@ class PerfTest:
                     + int(stats['vb_pending_ops_update'])
                 ret_stats[server]["set_ops"] = sets
         return ret_stats
+
+    def get_rebalance_timings(self):
+        logger.info("getting rebalance report")
+        rebalance_report = self.rest.get_rebalance_report(self.master_node)
+        time_map = dict()
+        time_map["total_time"] = rebalance_report["timeTaken"]/1000
+        stage_info = rebalance_report["stageInfo"]
+        for service, progress in stage_info.items():
+            time_map[service] = progress["timeTaken"] / 1000
+        logger.info("rebalance timing(s): {}".format(pretty_dict(time_map)))
+        return time_map

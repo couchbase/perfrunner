@@ -1118,9 +1118,15 @@ class MetricHelper:
         order_by += '{:018d}'.format(self.test_config.load_settings.items)
         return order_by
 
-    def rebalance_time(self, rebalance_time: float) -> Metric:
+    def rebalance_time(self, rebalance_time: float, update_category: False) -> Metric:
         metric = self.elapsed_time(rebalance_time)
         metric[-1]['orderBy'] = self.rebalance_order_by + self._order_by
+        if update_category:
+            metric[-1]['category'] = "rebalance"
+        if "Rebalance" not in metric[-1]['title']:
+            title_split = metric[-1]['title'].split(sep=",", maxsplit=1)
+            title = "Rebalance Time(min)," + title_split[1]
+            metric[-1]['title'] = title
         return metric
 
     def failover_time(self, delta: float) -> Metric:

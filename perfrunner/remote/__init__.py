@@ -59,7 +59,10 @@ class Remote:
         with cd(worker_home):
             with cd('perfrunner'):
                 logger.info('move couchbase package to perfrunner')
-                run('mv /tmp/couchbase.rpm ./')
+                if os.path.isfile('/tmp/couchbase.rpm'):
+                    run('mv /tmp/couchbase.rpm ./')
+                else:
+                    run('mv /tmp/couchbase.deb ./')
 
     def start_celery_worker(self, worker, worker_home, broker_url):
         with settings(host_string=worker):

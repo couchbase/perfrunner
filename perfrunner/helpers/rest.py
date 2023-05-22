@@ -2067,6 +2067,15 @@ class CapellaRestBase(DefaultRestHelper):
             log_nodes = log_nodes | self.get_node_log_info(cluster_id)
         return log_nodes
 
+    def get_rebalance_report(self, host: str) -> dict:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/logs/rebalanceReport'.format(host)
+        else:
+            api = 'http://{}:8091/logs/rebalanceReport'.format(host)
+        auth = self._admin_creds(host)
+        resp = self.get(url=api, auth=auth)
+        return resp.json()
+
 
 class ProvisionedCapellaRestHelper(CapellaRestBase):
 

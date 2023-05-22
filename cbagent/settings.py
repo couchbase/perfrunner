@@ -5,7 +5,7 @@ from perfrunner.tests import PerfTest
 class CbAgentSettings:
 
     def __init__(self, test: PerfTest):
-        if hasattr(test, 'ALL_BUCKETS'):
+        if hasattr(test, 'ALL_BUCKETS') and getattr(test, 'ALL_BUCKETS'):
             buckets = None
         else:
             buckets = test.test_config.buckets +\

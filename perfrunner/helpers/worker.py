@@ -331,7 +331,7 @@ class RemoteWorkerManager:
             result_serializer='pickle',
             task_serializer='pickle',
             task_protocol=1,
-            broker_connection_timeout=60,
+            broker_connection_timeout=1500,
             broker_connection_retry=True,
             broker_connection_max_retries=100)
         self.workers = cycle(self.cluster_spec.workers)
@@ -408,7 +408,6 @@ class RemoteWorkerManager:
             logger.info('Running task on {}'.format(worker))
             async_result = sig.apply_async()
             self.async_results.append(async_result)
-            time.sleep(5)
 
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')

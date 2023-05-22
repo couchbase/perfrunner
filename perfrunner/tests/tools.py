@@ -29,7 +29,9 @@ class BackupRestoreTest(PerfTest):
             sink_type=self.test_config.backup_settings.sink_type,
             shards=self.test_config.backup_settings.shards,
             include_data=self.test_config.backup_settings.include_data,
-            use_tls=self.test_config.backup_settings.use_tls
+            use_tls=self.test_config.backup_settings.use_tls,
+            encrypted=self.test_config.backup_settings.encrypted,
+            passphrase=self.test_config.backup_settings.passphrase
         )
 
     def compact(self):
@@ -57,7 +59,9 @@ class BackupRestoreTest(PerfTest):
                       threads=self.test_config.restore_settings.threads,
                       wrapper=self.rest.is_community(self.master_node),
                       include_data=self.test_config.backup_settings.include_data,
-                      use_tls=self.test_config.restore_settings.use_tls)
+                      use_tls=self.test_config.restore_settings.use_tls,
+                      encrypted=self.test_config.backup_settings.encrypted,
+                      passphrase=self.test_config.backup_settings.passphrase)
 
     def backup_list(self):
         snapshots = local.get_backup_snapshots(self.cluster_spec)
@@ -592,7 +596,9 @@ class CloudBackupRestoreTest(BackupRestoreTest):
             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
             obj_region=self.test_config.backup_settings.obj_region,
             obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
-            use_tls=self.test_config.backup_settings.use_tls
+            use_tls=self.test_config.backup_settings.use_tls,
+            encrypted=self.test_config.backup_settings.encrypted,
+            passphrase=self.test_config.backup_settings.passphrase
         )
 
     def restore(self, master_node=None):
@@ -605,7 +611,9 @@ class CloudBackupRestoreTest(BackupRestoreTest):
                             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
                             obj_region=self.test_config.backup_settings.obj_region,
                             obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
-                            use_tls=self.test_config.restore_settings.use_tls)
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            encrypted=self.test_config.backup_settings.encrypted,
+                            passphrase=self.test_config.backup_settings.passphrase)
 
     def collectlogs(self):
         staging_dir = './stage'

@@ -622,7 +622,9 @@ class FTSLatencyCloudBackupTest(FTSLatencyTest):
                             obj_region=self.test_config.backup_settings.obj_region,
                             obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
                             use_tls=self.test_config.restore_settings.use_tls,
-                            map_data=self.test_config.restore_settings.map_data)
+                            map_data=self.test_config.restore_settings.map_data,
+                            encrypted=self.test_config.restore_settings.encrypted,
+                            passphrase=self.test_config.restore_settings.passphrase)
         self.wait_for_persistence()
         if self.test_config.collection.collection_map:
             self.spread_data()

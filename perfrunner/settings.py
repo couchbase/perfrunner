@@ -1680,6 +1680,8 @@ class RestoreSettings:
     USE_TLS = False
     SHOW_TLS_VERSION = False
     MIN_TLS_VERSION = None
+    ENCRYPTED = False
+    PASSPHRASE = 'couchbase'
     CLOUD = None
 
     def __init__(self, options):
@@ -1693,6 +1695,8 @@ class RestoreSettings:
         self.use_tls = int(options.get('use_tls', self.USE_TLS))
         self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
         self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
+        self.encrypted = int(options.get('encrypted', self.ENCRYPTED))
+        self.passphrase = options.get('passphrase', self.PASSPHRASE)
 
         self.cloud = self.CLOUD
         if self.backup_storage:
@@ -2107,6 +2111,8 @@ class BackupSettings:
     USE_TLS = False
     SHOW_TLS_VERSION = False
     MIN_TLS_VERSION = None
+    ENCRYPTED = False
+    PASSPHRASE = 'couchbase'
 
     # Undefined test parameters will use backup's default
     THREADS = None
@@ -2136,6 +2142,8 @@ class BackupSettings:
         self.use_tls = int(options.get('use_tls', self.USE_TLS))
         self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
         self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
+        self.encrypted = int(options.get('encrypted', self.ENCRYPTED))
+        self.passphrase = options.get('passphrase', self.PASSPHRASE)
 
         self.cloud = self.CLOUD
         if self.backup_directory:

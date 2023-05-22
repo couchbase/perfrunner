@@ -1,7 +1,7 @@
 import os
 import time
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 from fabric.api import cd, get, put, quiet, run, settings
@@ -877,17 +877,19 @@ class RemoteLinux(Remote):
 
     @master_client
     def backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,
-               compression: bool = False, storage_type: str = None, sink_type: str = None,
-               shards: int = None, obj_staging_dir: str = None, obj_region: str = None,
-               obj_access_key_id: str = None, use_tls: bool = False):
+               compression: bool = False, storage_type: Optional[str] = None,
+               sink_type: Optional[str] = None, shards: Optional[int] = None,
+               obj_staging_dir: Optional[str] = None, obj_region: Optional[str] = None,
+               obj_access_key_id: Optional[str] = None, use_tls: bool = False,
+               encrypted: bool = False, passphrase: str = 'couchbase'):
         logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
         self.cbbackupmgr_config(cluster_spec, worker_home, obj_staging_dir, obj_region,
-                                obj_access_key_id)
+                                obj_access_key_id, encrypted, passphrase)
 
         self.cbbackupmgr_backup(master_node, cluster_spec, threads, compression, storage_type,
                                 sink_type, shards, worker_home, obj_staging_dir, obj_region,
-                                obj_access_key_id, use_tls)
+                                obj_access_key_id, use_tls, encrypted, passphrase)
 
     @master_client
     def cleanup(self, backup_dir: str):
@@ -925,15 +927,17 @@ class RemoteLinux(Remote):
 
     @master_client
     def cbbackupmgr_config(self, cluster_spec: ClusterSpec, worker_home: str,
-                           obj_staging_dir: str = None, obj_region: str = None,
-                           obj_access_key_id: str = None):
+                           obj_staging_dir: Optional[str] = None, obj_region: Optional[str] = None,
+                           obj_access_key_id: Optional[str] = None, encrypted: bool = False,
+                           passphrase: str = 'couchbase'):
         with cd(worker_home), cd('perfrunner'):
             flags = [
                 '--archive {}'.format(cluster_spec.backup),
                 '--repo default',
                 '--obj-region {}'.format(obj_region) if obj_region else None,
                 '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-                '--obj-access-key-id {}'.format(obj_access_key_id)if obj_access_key_id else None
+                '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
+                '--encrypted --passphrase {}'.format(passphrase) if encrypted else None
             ]
 
             cmd = './opt/couchbase/bin/cbbackupmgr config {}'.format(
@@ -945,8 +949,10 @@ class RemoteLinux(Remote):
     @master_client
     def cbbackupmgr_backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
                            compression: bool, storage_type: str, sink_type: str, shards: int,
-                           worker_home: str, obj_staging_dir: str = None, obj_region: str = None,
-                           obj_access_key_id: str = None, use_tls: bool = False):
+                           worker_home: str, obj_staging_dir: Optional[str] = None,
+                           obj_region: Optional[str] = None,
+                           obj_access_key_id: Optional[str] = None, use_tls: bool = False,
+                           encrypted: bool = False, passphrase: str = 'couchbase'):
         with cd(worker_home), cd('perfrunner'):
             flags = [
                 '--archive {}'.format(cluster_spec.backup),
@@ -963,6 +969,7 @@ class RemoteLinux(Remote):
                 '--obj-region {}'.format(obj_region) if obj_region else None,
                 '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
                 '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
+                '--passphrase {}'.format(passphrase) if encrypted else None,
                 '--no-progress-bar'
             ]
 
@@ -979,21 +986,23 @@ class RemoteLinux(Remote):
 
     @master_client
     def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,
-                archive: str = '', repo: str = 'default', obj_staging_dir: str = None,
-                obj_region: str = None, obj_access_key_id: str = None, use_tls: bool = False,
-                map_data: str = None):
+                archive: str = '', repo: str = 'default', obj_staging_dir: Optional[str] = None,
+                obj_region: Optional[str] = None, obj_access_key_id: Optional[str] = None,
+                use_tls: bool = False, map_data: str = None, encrypted: bool = False,
+                passphrase: str = 'couchbase'):
         logger.info('Restore from {}'.format(archive or cluster_spec.backup))
 
         self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home,
                                  archive, repo, obj_staging_dir, obj_region, obj_access_key_id,
-                                 use_tls, map_data)
+                                 use_tls, map_data, encrypted, passphrase)
 
     @master_client
-    def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec,
-                            threads: int, worker_home: str, archive: str = '',
-                            repo: str = 'default', obj_staging_dir: str = None,
-                            obj_region: str = None, obj_access_key_id: str = None,
-                            use_tls: bool = False, map_data: str = None):
+    def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
+                            worker_home: str, archive: str = '', repo: str = 'default',
+                            obj_staging_dir: Optional[str] = None, obj_region: Optional[str] = None,
+                            obj_access_key_id: Optional[str] = None, use_tls: bool = False,
+                            map_data: Optional[str] = None, encrypted: bool = False,
+                            passphrase: str = 'couchbase'):
         restore_to_capella = cluster_spec.capella_infrastructure
 
         with cd(worker_home), cd('perfrunner'):
@@ -1010,6 +1019,7 @@ class RemoteLinux(Remote):
                 '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
                 '--map-data {}'.format(map_data) if map_data else None,
                 '--disable-analytics --disable-cluster-analytics' if restore_to_capella else None,
+                '--passphrase {}'.format(passphrase) if encrypted else None,
                 '--no-progress-bar'
             ]
 

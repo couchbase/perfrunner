@@ -6,12 +6,13 @@ import urllib.parse
 from datetime import date
 from glob import glob
 from sys import platform
-from typing import List
+from typing import List, Optional
 
 from fabric.api import hide, lcd, local, quiet, settings, shell_env
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
+from perfrunner.helpers.misc import run_local_shell_command
 from perfrunner.settings import ClusterSpec
 
 
@@ -52,10 +53,11 @@ def drop_caches():
     local('sync && echo 3 > /proc/sys/vm/drop_caches')
 
 
-def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int,
-           wrapper: bool = False, mode: str = None, compression: bool = False,
-           storage_type: str = None, sink_type: str = None,
-           shards: int = None, include_data: str = None, use_tls: bool = False):
+def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int, wrapper: bool = False,
+           mode: Optional[str] = None, compression: bool = False,
+           storage_type: Optional[str] = None, sink_type: Optional[str] = None,
+           shards: Optional[int] = None, include_data: Optional[str] = None, use_tls: bool = False,
+           encrypted: bool = False, passphrase: str = 'couchbase'):
     logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
     if not mode:
@@ -64,8 +66,8 @@ def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int,
     if wrapper:
         cbbackupwrapper(master_node, cluster_spec, 16, mode)
     else:
-        cbbackupmgr_backup(master_node, cluster_spec, threads, mode,
-                           compression, storage_type, sink_type, shards, include_data, use_tls)
+        cbbackupmgr_backup(master_node, cluster_spec, threads, mode, compression, storage_type,
+                           sink_type, shards, include_data, use_tls, encrypted, passphrase)
 
 
 def compact(cluster_spec: ClusterSpec,
@@ -103,26 +105,19 @@ def cbbackupmgr_version():
     logger.info(result)
 
 
-def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
-                       threads: int, mode: str, compression: bool,
-                       storage_type: str, sink_type: str, shards: int, include_data: str,
-                       use_tls: bool):
+def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec, threads: int, mode: str,
+                       compression: bool, storage_type: str, sink_type: str, shards: int,
+                       include_data: str, use_tls: bool = False, encrypted: bool = False,
+                       passphrase: str = 'couchbase'):
     if not mode:
-        if include_data:
+        flags = ['--archive {}'.format(cluster_spec.backup),
+                 '--repo default',
+                 '--include-data {}'.format(include_data) if include_data else None,
+                 '--encrypted --passphrase {}'.format(passphrase) if encrypted else None]
 
-            logger.info('running ./opt/couchbase/bin/cbbackupmgr config '
-                        '--archive {} --repo default --include-data {}'.format(cluster_spec.backup,
-                                                                               include_data))
-
-            local('./opt/couchbase/bin/cbbackupmgr config '
-                  '--archive {} --repo default --include-data {}'.format(cluster_spec.backup,
-                                                                         include_data))
-
-        else:
-            logger.info('running ./opt/couchbase/bin/cbbackupmgr config '
-                        '--archive {} --repo default'.format(cluster_spec.backup))
-            local('./opt/couchbase/bin/cbbackupmgr config '
-                  '--archive {} --repo default'.format(cluster_spec.backup))
+        cmd = './opt/couchbase/bin/cbbackupmgr config {}'.format(' '.join(filter(None, flags)))
+        logger.info('Running: {}'.format(cmd))
+        run_local_shell_command(cmd)
 
     flags = ['--archive {}'.format(cluster_spec.backup),
              '--repo default',
@@ -134,13 +129,13 @@ def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
              '--storage {}'.format(storage_type) if storage_type else None,
              '--sink {}'.format(sink_type) if sink_type else None,
              '--value-compression compressed' if compression else '--value-compression unchanged'
-             '--shards {}'.format(shards) if shards else None]
+             '--shards {}'.format(shards) if shards else None,
+             '--passphrase {}'.format(passphrase) if encrypted else None]
 
-    cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(
-        ' '.join(filter(None, flags)))
+    cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(' '.join(filter(None, flags)))
 
     logger.info('Running: {}'.format(cmd))
-    local(cmd)
+    run_local_shell_command(cmd)
 
 
 def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
@@ -225,8 +220,9 @@ def calc_backup_size(cluster_spec: ClusterSpec,
     return round(backup_size, 2) if rounded else backup_size
 
 
-def restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
-            wrapper: bool = False, include_data: str = None, use_tls: bool = False):
+def restore(master_node: str, cluster_spec: ClusterSpec, threads: int, wrapper: bool = False,
+            include_data: Optional[str] = None, use_tls: bool = False, encrypted: bool = False,
+            passphrase: str = 'couchbase'):
 
     logger.info('Restore from {}'.format(cluster_spec.backup))
 
@@ -235,7 +231,8 @@ def restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
     if wrapper:
         cbrestorewrapper(master_node, cluster_spec)
     else:
-        cbbackupmgr_restore(master_node, cluster_spec, threads, include_data, use_tls=use_tls)
+        cbbackupmgr_restore(master_node, cluster_spec, threads, include_data, use_tls=use_tls,
+                            encrypted=encrypted, passphrase=passphrase)
 
 
 def purge_restore_progress(cluster_spec: ClusterSpec, archive: str = '',
@@ -260,9 +257,10 @@ def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
         local(cmd)
 
 
-def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec,
-                        threads: int, include_data: str, archive: str = '',
-                        repo: str = 'default', map_data: str = None, use_tls: bool = False):
+def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
+                        include_data: str, archive: str = '', repo: str = 'default',
+                        map_data: Optional[str] = None, use_tls: bool = False,
+                        encrypted: bool = False, passphrase: str = 'couchbase'):
 
     flags = ['--archive {}'.format(archive or cluster_spec.backup),
              '--repo {}'.format(repo),
@@ -272,13 +270,14 @@ def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec,
              '--cacert root.pem' if use_tls else None,
              '--username {}'.format(cluster_spec.rest_credentials[0]),
              '--password {}'.format(cluster_spec.rest_credentials[1]),
-             '--map-data {}'.format(map_data) if map_data else None]
+             '--map-data {}'.format(map_data) if map_data else None,
+             '--passphrase {}'.format(passphrase) if encrypted else None]
 
     cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
         ' '.join(filter(None, flags)))
 
     logger.info('Running: {}'.format(cmd))
-    local(cmd)
+    run_local_shell_command(cmd)
 
 
 def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: List[str],

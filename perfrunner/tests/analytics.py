@@ -903,6 +903,7 @@ class CH2Test(PerfTest):
         self.data_node = self.master_node
         self.analytics_node = self.analytics_nodes[0]
         self.analytics_statements = self.test_config.ch2_settings.analytics_statements
+        self.storage_format = self.test_config.analytics_settings.storage_format
 
     def _report_kpi(self):
         measure_time = self.test_config.ch2_settings.duration - \
@@ -930,8 +931,13 @@ class CH2Test(PerfTest):
     def create_datasets(self):
         logger.info('Creating datasets')
         for dataset in self.CH2_DATASETS:
-            statement = "CREATE DATASET `{}` ON bench.ch2.{};" \
-                .format(dataset, dataset)
+            if self.storage_format:
+                statement = 'CREATE DATASET `{}` WITH {{"storage-format": {{"format": "{}"}}}} ' \
+                            'ON bench.ch2.{};' \
+                    .format(dataset, self.storage_format, dataset)
+            else:
+                statement = "CREATE DATASET `{}` ON bench.ch2.{};" \
+                    .format(dataset, dataset)
             logger.info('Running: {}'.format(statement))
             res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))

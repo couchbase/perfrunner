@@ -2254,6 +2254,7 @@ class AnalyticsSettings:
     EXTERNAL_FILE_FORMAT = 'json'
     EXTERNAL_FILE_INCLUDE = 'json'
     AWS_CREDENTIAL_PATH = None
+    STORAGE_FORMAT = ""
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.get('num_io_devices',
@@ -2279,6 +2280,7 @@ class AnalyticsSettings:
         self.external_file_include = options.get("external_file_include",
                                                  self.EXTERNAL_FILE_INCLUDE)
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
+        self.storage_format = options.get('storage_format', self.STORAGE_FORMAT)
 
 
 class AuditSettings:

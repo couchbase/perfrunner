@@ -74,7 +74,7 @@ def main():
         cm.configure_autoscaling()
     else:
         # Individual nodes
-        # cm.serverless_mode()
+        cm.serverless_mode()
         cm.disable_wan()
         cm.clear_login_history()
         cm.tune_memory_settings()

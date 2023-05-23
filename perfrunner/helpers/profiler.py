@@ -155,6 +155,11 @@ class Profiler:
                 response = requests.get(url=url)
                 self.save(host, service, profile, response.content)
 
+            if profile == 'sg_fgprof':
+                url = 'http://{}:4985/_debug/fgprof'.format(host)
+                response = requests.get(url=url)
+                self.save(host, service, profile, response.content)
+
             self.copy_profiles(host=host)
 
         else:

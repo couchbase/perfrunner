@@ -135,7 +135,11 @@ class Terraform:
             self.region = self.zone.rsplit('-', 1)[0]
         else:
             self.zone = None
-            self.region = self.options.region
+            if self.provider == 'aws' or \
+               (self.provider == 'capella' and self.infra_spec.capella_backend == 'aws'):
+                self.region = self.options.aws_region
+            else:
+                self.region = self.options.azure_region
 
     def deploy(self):
         # Configure terraform
@@ -1727,7 +1731,6 @@ def get_args():
                             'uksouth'
                         ],
                         default='eastus',
-                        dest='region',
                         help='the cloud region (Azure)')
     parser.add_argument('-r', '--aws-region',
                         choices=[
@@ -1746,7 +1749,6 @@ def get_args():
                             'sa-east-1'
                         ],
                         default='us-east-1',
-                        dest='region',
                         help='the cloud region (AWS)')
     parser.add_argument('-z', '--gcp-zone',
                         choices=[

@@ -34,6 +34,7 @@ EVENTING_PORT_SSH = 18096
 @decorator
 def retry(method: Callable, *args, **kwargs):
     r = namedtuple('request', ['url'])('')
+    url = kwargs.get('url')
     for _ in range(MAX_RETRY):
         try:
             r = method(*args, **kwargs)
@@ -48,7 +49,7 @@ def retry(method: Callable, *args, **kwargs):
             logger.warn('Retrying {}'.format(r.url))
             time.sleep(RETRY_DELAY)
     logger.interrupt('Request {} failed after {} attempts'.format(
-        r.url, MAX_RETRY
+        url, MAX_RETRY
     ))
 
 

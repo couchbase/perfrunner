@@ -196,6 +196,112 @@ class YCSBLatencyTest(YCSBTest):
                     )
 
 
+class YCSBLatencyWithWarmupTest(YCSBLatencyTest):
+
+    def warmup_access_phase(self):
+        self.build_ycsb(self.test_config.access_settings.ycsb_client)
+        access_settings = self.test_config.access_settings
+        access_settings.time = 500
+        access_settings.creates = 0
+        self.COLLECTORS["latency"] = False
+        logger.info("Starting warmup access phase")
+        if self.test_config.load_settings.use_backup:
+            PerfTest.access(self, settings=access_settings,
+                            target_iterator=self.iterator, task=ycsb_task)
+        else:
+            PerfTest.access(self, settings=access_settings, task=ycsb_task)
+        self.wait_for_persistence()
+        self.COLLECTORS["latency"] = True
+        self.reset_kv_stats()
+
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.load()
+        if self.dynamic_infra:
+            time.sleep(30)
+        else:
+            self.wait_for_persistence()
+            self.check_num_items()
+
+        self.warmup_access_phase()
+
+        if self.test_config.access_settings.cbcollect:
+            self.access_bg()
+            self.collect_cb()
+        else:
+            self.access()
+
+        self.report_kpi()
+
+
+class YCSBThroughputWithWarmupTest(YCSBThroughputTest):
+
+    def warmup_access_phase(self):
+        self.build_ycsb(self.test_config.access_settings.ycsb_client)
+        access_settings = self.test_config.access_settings
+        access_settings.time = 700  # For KV Throughput
+        access_settings.creates = 0
+        self.COLLECTORS["disk"] = False
+        self.COLLECTORS["net"] = False
+        logger.info("Starting warmup access phase")
+        if self.test_config.load_settings.use_backup:
+            PerfTest.access(self, settings=access_settings,
+                            target_iterator=self.iterator, task=ycsb_task)
+        else:
+            PerfTest.access(self, settings=access_settings, task=ycsb_task)
+        self.wait_for_persistence()
+        self.COLLECTORS["disk"] = True
+        self.COLLECTORS["net"] = True
+        self.reset_kv_stats()
+
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.load()
+        if self.dynamic_infra:
+            time.sleep(30)
+        else:
+            self.wait_for_persistence()
+            self.check_num_items()
+
+        self.warmup_access_phase()
+
+        if self.test_config.access_settings.cbcollect:
+            self.access_bg()
+            self.collect_cb()
+        else:
+            self.access()
+
+        self.report_kpi()
+
+
+class YCSBThroughputWithWarmupShorterTest(YCSBThroughputWithWarmupTest):
+    def warmup_access_phase(self):
+        self.build_ycsb(self.test_config.access_settings.ycsb_client)
+        access_settings = self.test_config.access_settings
+        access_settings.time = 300  # For KV Throughput
+        access_settings.creates = 0
+        self.COLLECTORS["disk"] = False
+        self.COLLECTORS["net"] = False
+        logger.info("Starting warmup access phase")
+        if self.test_config.load_settings.use_backup:
+            PerfTest.access(self, settings=access_settings,
+                            target_iterator=self.iterator, task=ycsb_task)
+        else:
+            PerfTest.access(self, settings=access_settings, task=ycsb_task)
+        self.wait_for_persistence()
+        self.COLLECTORS["disk"] = True
+        self.COLLECTORS["net"] = True
+        self.reset_kv_stats()
+
+
 class YCSBSOETest(YCSBThroughputTest, N1QLTest):
 
     def run(self):
@@ -238,11 +344,79 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
         self.report_kpi()
 
 
+class YCSBN1QLWarmupTest(YCSBN1QLTest):
+
+    def warmup_access_phase(self):
+        pass
+
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.wait_for_indexing()
+
+        self.warmup_access_phase()
+
+        if self.test_config.access_settings.cbcollect:
+            self.access_bg()
+            self.collect_cb()
+        else:
+            self.access()
+
+        self.report_kpi()
+
+
 class YCSBN1QLLatencyTest(YCSBN1QLTest, YCSBLatencyTest):
 
     pass
 
 
+class YCSBN1QLWarmupLatencyTest(YCSBN1QLWarmupTest, YCSBLatencyTest):
+    def warmup_access_phase(self):
+        self.build_ycsb(self.test_config.access_settings.ycsb_client)
+        access_settings = self.test_config.access_settings
+        access_settings.time = 300
+        access_settings.creates = 0
+        self.COLLECTORS["latency"] = False
+        logger.info("Starting warmup access phase")
+        if self.test_config.load_settings.use_backup:
+            PerfTest.access(self, settings=access_settings,
+                            target_iterator=self.iterator, task=ycsb_task)
+        else:
+            PerfTest.access(self, settings=access_settings, task=ycsb_task)
+        self.wait_for_persistence()
+        self.COLLECTORS["latency"] = True
+        self.reset_kv_stats()
+
+
 class YCSBN1QLThroughputTest(YCSBN1QLTest, YCSBThroughputTest):
 
     pass
+
+
+class YCSBN1QLWarmupThroughputTest(YCSBN1QLWarmupTest, YCSBThroughputTest):
+    def warmup_access_phase(self):
+        self.build_ycsb(self.test_config.access_settings.ycsb_client)
+        access_settings = self.test_config.access_settings
+        access_settings.time = 700
+        access_settings.creates = 0
+        self.COLLECTORS["disk"] = False
+        self.COLLECTORS["net"] = False
+        logger.info("Starting warmup access phase")
+        if self.test_config.load_settings.use_backup:
+            PerfTest.access(self, settings=access_settings,
+                            target_iterator=self.iterator, task=ycsb_task)
+        else:
+            PerfTest.access(self, settings=access_settings, task=ycsb_task)
+        self.wait_for_persistence()
+        self.COLLECTORS["disk"] = True
+        self.COLLECTORS["net"] = True
+        self.reset_kv_stats()

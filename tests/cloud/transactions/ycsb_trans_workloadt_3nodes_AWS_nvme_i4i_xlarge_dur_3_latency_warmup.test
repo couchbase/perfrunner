@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBLatencyTest
+test = perfrunner.tests.ycsb.YCSBLatencyWithWarmupTest
 
 [showfast]
 title = Avg Latency (sec), Workload T, 3 nodes, Persist_Majority, 1 bucket x 100M x 1KB, NVMe, 50 ops/sec, i4i.xlarge

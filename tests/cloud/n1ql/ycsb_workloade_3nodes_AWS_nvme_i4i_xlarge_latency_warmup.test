@@ -1,0 +1,57 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBN1QLWarmupLatencyTest
+
+[showfast]
+title = Latency (sec), Workload E, 3 nodes, 1 bucket x 150M x 1KB, NVMe, 100 queries/sec, i4i.xlarge
+component = n1qlcloud
+category = ycsb
+sub_category = AWS
+orderby = nvme
+
+[cluster]
+mem_quota = 8738
+index_mem_quota = 8738
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[index]
+statements =
+    CREATE PRIMARY INDEX primary_idx ON `bucket-1` WITH {"num_replica": 1};
+
+[load]
+workload_path = workloads/workloade
+ycsb_client = couchbase3
+items = 150000000
+workers = 50
+ssl_mode = data
+
+[access]
+workload_path = workloads/workloade
+ycsb_client = couchbase3
+items = 150000000
+target = 100
+ops = 0
+time = 1200
+workers = 200
+workload_instances = 1
+timeseries = 1
+kv_endpoints = 16
+ssl_mode = data
+
+[ycsb]
+branch = couchbase3
+latency_percentiles = 99
+average_latency = 1
+
+[stats]
+client_processes = java

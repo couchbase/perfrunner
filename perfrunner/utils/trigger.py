@@ -23,6 +23,7 @@ RELEASES = {
     'cheshire-cat': '7.0.0',
     'neo': '7.1.0',
     'elixir': '7.2.0',
+    'trinity': '7.6.0',
     'morpheus': '8.0.0'
 }
 

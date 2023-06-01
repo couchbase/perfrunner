@@ -4,7 +4,7 @@ test = perfrunner.tests.secondarycloud.CloudSecondaryInitalBuildTest
 [showfast]
 title = inital build (min), 3 -> 3, 1 bucket x 1.6B x 230B , 3 index, 18 index instances
 component = secondarycloud
-sub_category = PlasmaDGM
+sub_category = AWS
 
 [cluster]
 mem_quota = 54000

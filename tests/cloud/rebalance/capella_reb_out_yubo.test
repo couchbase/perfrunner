@@ -4,7 +4,7 @@ test = perfrunner.tests.secondarycloud.CapellaSecondaryRebalanceOnlyTest
 [showfast]
 title = Swap-Rebalance (min), 3 -> 3, 1 bucket x 1.6B x 230B
 component = secondarycloud
-sub_category = PlasmaDGM
+sub_category = AWS
 
 [cluster]
 mem_quota = 54000

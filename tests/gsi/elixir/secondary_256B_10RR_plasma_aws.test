@@ -4,7 +4,7 @@ test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 [showfast]
 title = 1 bucket x 360M ,single index, 256 byte keysize,10%% RR, no mutations during initial build only, PLASMA
 component = secondarycloud
-sub_category = PlasmaDGM
+sub_category = AWS
 
 [stats]
 server_processes = projectors

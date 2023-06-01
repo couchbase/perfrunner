@@ -4,7 +4,7 @@ test = perfrunner.tests.secondary.InitialScanThroughputLatencyCloudTest
 [showfast]
 title = 20 buckets , 64 vBuckets/bucket, 200 indexes, 256 byte keysize,10%% RR , no incrememtal mutations, 20/80 scans, concurrency = 64
 component = secondarycloud
-sub_category = PlasmaDGM
+sub_category = AWS
 
 [stats]
 server_processes = projector

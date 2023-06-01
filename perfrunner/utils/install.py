@@ -20,6 +20,7 @@ from perfrunner.settings import ClusterSpec
 set_start_method("fork")
 
 LOCATIONS = (
+    'http://172.23.126.166/builds/latestbuilds/couchbase-server/trinity/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/elixir/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/morpheus/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/neo/{build}/',

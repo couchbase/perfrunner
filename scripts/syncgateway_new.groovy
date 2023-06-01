@@ -174,6 +174,12 @@ pipeline {
                         buildComponentSGReplicateMultiCluster('SGReplicateMulti', testCases)
                     }
                 }
+                stage('E2E') {
+                    when { expression { return params.E2E } }
+                    steps {
+                        buildComponent('E2E', testCases)
+                    }
+                }
                 stage('ReadOnDemand') {
                     when { expression { return params.ReadOnDemand } }
                     steps {

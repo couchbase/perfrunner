@@ -279,7 +279,7 @@ class EventingTest(PerfTest):
             logger.info("Function {} is resumed.".format(name))
         return time_to_resume
 
-    def validate_failures(self):
+    def validate_failures(self) -> str:
         ignore_failures = ["uv_try_write_failure_counter",
                            "bucket_op_exception_count", "timestamp",
                            "bkt_ops_cas_mismatch_count", "bucket_op_cache_miss_count",
@@ -297,16 +297,14 @@ class EventingTest(PerfTest):
                 # Validate Execution stats
                 for stat, value in execution_stats.items():
                     if "failure" in stat and value != 0 and stat not in ignore_failures:
-                        raise Exception(
-                            '{function}: {node}: {stat} is not zero'.format(
-                                function=function_stats["function_name"], node=node, stat=stat))
+                        return '{function}: {node}: {stat} is not zero'.format(
+                                    function=function_stats["function_name"], node=node, stat=stat)
 
                 # Validate Failure stats
                 for stat, value in failure_stats.items():
                     if value != 0 and stat not in ignore_failures:
-                        raise Exception(
-                            '{function}: {node}: {stat} is not zero'.format(
-                                function=function_stats["function_name"], node=node, stat=stat))
+                        return '{function}: {node}: {stat} is not zero'.format(
+                                function=function_stats["function_name"], node=node, stat=stat)
 
     def print_max_rss_values(self):
         for node in self.eventing_nodes:
@@ -323,8 +321,8 @@ class EventingTest(PerfTest):
 
     def debug(self):
         self.print_max_rss_values()
-        self.validate_failures()
-        return super().debug()
+        failure = self.validate_failures()
+        return failure or super().debug()
 
     def run(self):
         self.set_functions()

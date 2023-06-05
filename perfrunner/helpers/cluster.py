@@ -11,6 +11,7 @@ from perfrunner.helpers.config_files import (
     CAOCouchbaseBucketFile,
     CAOCouchbaseClusterFile,
     CAOSyncgatewayDeploymentFile,
+    LoadBalancerControllerFile,
 )
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import (
@@ -1201,6 +1202,7 @@ class KubernetesClusterManager:
             cm.set_auto_failover()
             cm.configure_auto_compaction()
             cm.configure_upgrade()
+            cm.configure_networking()
             self.cluster_file = cm.dest_file
             logger.info(f"Cluster config stored at {self.cluster_file}")
 
@@ -1223,6 +1225,32 @@ class KubernetesClusterManager:
             )
 
     def deploy_couchbase_cluster(self):
+        # Check if LBC and external DNS are needed
+        load_balancer_settings = self.test_config.load_balancer_settings
+        if load_balancer_settings.lb_type:
+            # Download the LBC spec
+            lbc_version = load_balancer_settings.lbc_config.get("lbc")
+
+            url = (
+                "https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/"
+                f"download/v{lbc_version}/v{lbc_version.replace('.', '_')}_full.yaml"
+            )
+            local(f'wget -nc "{url}" -P cloud/operator/templates/ -O lbc_template.yaml')
+            # Configure the LBC spec
+            with LoadBalancerControllerFile() as lbc:
+                lbc.configure_lbc(self.remote.k8s_cluster_name)
+                lbc_file = lbc.dest_file
+
+            self.remote.setup_lb_controller(
+                load_balancer_settings.lbc_config.get("cert-manager"), lbc_file
+            )
+
+        if self.cluster_spec.external_client:
+            logger.info("Creating ingress")
+            self.remote.create_ingresses(
+                load_balancer_settings.lb_scheme, self.test_config.cluster.cng_enabled
+            )
+
         logger.info('Creating couchbase cluster')
         self.remote.create_from_file(self.cluster_file)
         logger.info('Waiting for cluster')

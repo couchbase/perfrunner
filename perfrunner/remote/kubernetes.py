@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import time
+from typing import Optional
 
 import requests
 import yaml
@@ -12,6 +13,7 @@ from logger import logger
 from perfrunner.helpers.config_files import (
     CAOCouchbaseBackupFile,
     CAOHorizontalAutoscalerFile,
+    IngressFile,
 )
 from perfrunner.remote import Remote
 from perfrunner.settings import ClusterSpec, SyncgatewaySettings
@@ -23,14 +25,16 @@ class RemoteKubernetes(Remote):
 
     def __init__(self, cluster_spec: ClusterSpec):
         super().__init__(cluster_spec)
-        if cluster_spec.cloud_provider == 'openshift':
+        if cluster_spec.is_openshift:
             self.k8s_client = self._oc
         else:
             self.k8s_client = self._kubectl
 
         self.kube_config_path = "cloud/infrastructure/generated/kube_configs/k8s_cluster_1"
         with open(cluster_spec.generated_cloud_config_path) as f:
-            self.kube_config_path = json.load(f).get("kubeconfigs", [self.kube_config_path])[0]
+            infra_config = json.load(f)
+            self.kube_config_path = infra_config.get("kubeconfigs", [self.kube_config_path])[0]
+            self.k8s_cluster_name = infra_config.get("cluster_map").get("k8s_cluster_1")
 
     @property
     def _git_access_token(self):
@@ -39,6 +43,10 @@ class RemoteKubernetes(Remote):
     @property
     def _git_username(self):
         return os.environ.get('GITHUB_USERNAME', None)
+
+    @property
+    def _certificate_arn(self):
+        return os.environ.get('CERTIFICATE_ARN', None)
 
     def run_subprocess(self, params, split_lines=True, max_attempts=3):
         attempt = 1
@@ -73,7 +81,10 @@ class RemoteKubernetes(Remote):
     # openshift client (oc)
     def _oc(self, params, split_lines=True, max_attempts=3):
         """Openshift client helper. Do not use directly. Use {k8s_client} instead."""
-        params = ['oc'] + params.split()
+        params = params.split()
+        if params[0] == 'exec':
+            params = params[0:5] + [" ".join(params[5::])]
+        params = ['oc'] + params
         return self.run_subprocess(params, split_lines=split_lines, max_attempts=max_attempts)
 
     def kubectl_exec(self, pod, params):
@@ -120,11 +131,9 @@ class RemoteKubernetes(Remote):
         svcs = json.loads(raw_svcs.decode('utf8'))
         return svcs["items"]
 
-    def get_nodes(self):
-        raw_nodes = self.k8s_client(
-            "get nodes -o json",
-            split_lines=False
-        )
+    def get_nodes(self, selector: Optional[str] = None):
+        node_filter = f"-l {selector}" if selector else ""
+        raw_nodes = self.k8s_client(f"get nodes {node_filter} -o json", split_lines=False)
         nodes = json.loads(raw_nodes.decode('utf8'))
         return nodes["items"]
 
@@ -159,6 +168,15 @@ class RemoteKubernetes(Remote):
             if not ignore_errors:
                 raise ex
 
+    def make_storage_class_non_default(self, storage_class: str):
+        patch = {
+            "metadata": {
+                "annotations": {"storageclass.kubernetes.io/is-default-class": "false"}
+            }
+        }
+        cmd = f"patch sc {storage_class} -p {json.dumps(patch, separators=(',', ':'))}"
+        self.k8s_client(cmd)
+
     def get_worker_pods(self):
         return [
             pod["metadata"]["name"]
@@ -174,8 +192,8 @@ class RemoteKubernetes(Remote):
             cmd = "create secret generic {} " \
                   "--from-file={}".format(secret_name, file)
         elif secret_type == 'tls':
-            cmd = "create secret tls {} " \
-                  "--from-file={}".format(secret_name, file)
+            cert, key = file
+            cmd = f"create secret tls {secret_name} --cert={cert} --key={key}"
         elif secret_type == 'docker-registry':
             cmd = "create secret docker-registry {} " \
                   "--docker-server=ghcr.io " \
@@ -192,11 +210,15 @@ class RemoteKubernetes(Remote):
             "docker-registry",
             docker_config_path)
 
-    def create_operator_tls_secret(self, certificate_authority_path):
+    def create_certificate_secrets(self):
+        cert_dir = "certificates/inbox"
+        self.create_secret("couchbase-operator-tls", "generic", f"{cert_dir}/ca.pem")
         self.create_secret(
-            "couchbase-operator-tls",
-            "generic",
-            certificate_authority_path)
+            "couchbase-server-ca", "tls", (f"{cert_dir}/ca.pem", f"{cert_dir}/ca_key.key")
+        )
+        self.create_secret(
+            "couchbase-server-tls", "tls", (f"{cert_dir}/chain.pem", f"{cert_dir}/pkey.key")
+        )
 
     def delete_secret(self, secret_name, ignore_errors=True):
         try:
@@ -209,8 +231,8 @@ class RemoteKubernetes(Remote):
         for secret in secrets:
             self.delete_secret(secret)
 
-    def create_from_file(self, file_path):
-        self.k8s_client("{} -f {}".format('create', file_path))
+    def create_from_file(self, file_path: str, command: str = "create", options: str = ""):
+        self.k8s_client(f"{command} {options} -f {file_path}")
 
     def delete_from_file(self, file_path, ignore_errors=True):
         try:
@@ -440,6 +462,13 @@ class RemoteKubernetes(Remote):
             "get secret rabbitmq-rabbitmq-default-user -o jsonpath='{.data.password}'")
         b64_password = ret[0].decode("utf-8")
         password = base64.b64decode(b64_password).decode("utf-8")
+
+        if self.cluster_spec.is_openshift:
+            return self._get_broker_route_urls(username, password)
+        else:
+            return self._get_broker_node_port_urls(username, password)
+
+    def _get_broker_node_port_urls(self, username: str, password: str) -> tuple[str, str]:
         ret = self.k8s_client("get pods -o wide")
         for line in ret:
             line = line.decode("utf-8")
@@ -464,6 +493,19 @@ class RemoteKubernetes(Remote):
                         ui_port = port[1]
         broker_ui_url = "amqp://{}:{}@{}:{}".format(username, password, ip, ui_port)
         broker_url = "amqp://{}:{}@{}:{}/broker".format(username, password, ip, mapped_port)
+        return broker_url, broker_ui_url
+
+    def _get_broker_route_urls(self, username: str, password: str) -> tuple[str, str]:
+        routes = self.k8s_client(
+            "get routes --no-headers -o custom-columns=:metadata.name,:spec.host"
+        )
+        for route in routes:
+            route = route.decode("utf-8")
+            if "rabbitmq-amqp" in route:
+                broker_url = f"amqp://{username}:{password}@{route.split()[1]}/broker"
+            elif 'rabbitmq-mgmt' in route:
+                broker_ui_url = f"amqp://{username}:{password}@{route.split()[1]}"
+
         return broker_url, broker_ui_url
 
     def upload_rabbitmq_config(self):
@@ -617,14 +659,11 @@ class RemoteKubernetes(Remote):
         self.create_from_file(autoscaler_path)
 
     def get_logs(self, pod_name: str, container: str = None, options: str = '') -> str:
-        # Get from all pod's containers if none is specified,
-        # useful for our usecase here
-        if not container:
-            container = '--all-containers=true'
-        else:
-            container = '-c {}'.format(container)
-        return self.k8s_client("logs {} {} {}".format(pod_name, container, options),
-                               split_lines=False).decode('utf8')
+        # Get from all pod's containers if none is specified, useful for our usecase here
+        c_flag = f"-c {container}" if container else "--all-containers=true"
+        return self.k8s_client(f"logs {pod_name} {c_flag} {options}", split_lines=False).decode(
+            "utf8"
+        )
 
     def collect_k8s_logs(self):
         # Collect operator and backup pods logs if one exists
@@ -801,3 +840,41 @@ class RemoteKubernetes(Remote):
     def drain_a_node(self, node: str):
         logger.info(f"Draining node {node}")
         self.k8s_client(f"drain --ignore-daemonsets --delete-emptydir-data {node}")
+
+    def cloud_put_certificate(self, cert, worker_home):
+        for worker in self.get_worker_pods():
+            self.k8s_client(f"cp {cert} default/{worker}:{worker_home}/")
+
+    def generate_ssl_keystore(self, root_certificate, keystore_file, storepass, worker_home):
+        pass
+
+    # Networking and load balancing
+    def setup_lb_controller(self, cert_manager_version: str, lbc_file: str):
+        # Install cert-manager
+        self.create_from_file(
+            f"https://github.com/cert-manager/cert-manager/releases/download/v{cert_manager_version}/cert-manager.yaml",
+            command="apply",
+            options="--validate=false",
+        )
+        self.wait_for_pods_ready("cert-manager", 1, namespace="cert-manager", timeout=300)
+        self.wait_for_pods_ready("cert-manager-webhook", 1, namespace="cert-manager", timeout=300)
+
+        # Install load-balancer controller
+        self.create_from_file(lbc_file, command="apply")
+        self.wait_for_pods_ready(
+            "aws-load-balancer-controller", 1, namespace="kube-system", timeout=300
+        )
+
+    def create_ingresses(self, lb_scheme: str, cng_enabled: bool = False):
+        with IngressFile() as ingress:
+            ingress.configure_ingress(cng_enabled, lb_scheme, self._certificate_arn)
+            ingress_file = ingress.dest_file
+
+        self.create_from_file(ingress_file)
+
+    def get_external_service_dns(self) -> str:
+        return self.k8s_client(
+            "get service cb-example-perf-ui "
+            "-o jsonpath={.status.loadBalancer.ingress[0].hostname}",
+            split_lines=False,
+        ).decode("utf8")

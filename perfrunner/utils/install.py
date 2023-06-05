@@ -19,6 +19,7 @@ from perfrunner.helpers.config_files import CAOConfigFile, CAOCouchbaseClusterFi
 from perfrunner.helpers.local import (
     check_if_remote_branch_exists,
     clone_git_repo,
+    create_x509_certificates,
     extract_any,
     run_custom_cmd,
 )
@@ -120,7 +121,7 @@ class OperatorInstaller:
     def __init__(self, cluster_spec: ClusterSpec, options):
         self.cluster_spec = cluster_spec
         self.registry_base = "ghcr.io/cb-vanilla/"
-        if cluster_spec.cloud_provider == 'openshift':
+        if cluster_spec.is_openshift:
             self.registry_base = "ghcr.io/cb-rhcc/"
 
         self.operator_version = options.operator_version
@@ -146,6 +147,9 @@ class OperatorInstaller:
             options.exporter_version or cluster_spec.infrastructure_settings.get("exporter_version")
         )
         _, self.exporter_tag = self._get_image_tag_for("exporter", self.exporter_version)
+
+        # CNG image tag
+        _, self.cng_tag = self._get_image_tag_for("cloud-native-gateway", options.cng_version)
 
         self.refresh_rate = int(cluster_spec.infrastructure_settings.get("refresh_rate", "60"))
 
@@ -239,6 +243,32 @@ class OperatorInstaller:
 
     def create_secrets(self):
         logger.info("creating secrets")
+        # In the future we may need to only add available addresses to the certificate.
+        # For now add all of our possible adresses
+        addresses = {
+            'localhost',
+            'cbperfoc.com',
+            'cluster-1.cbperfoc.com',
+            '*.cluster-1.cbperfoc.com',
+            '*.cbperfoc.com',
+            'elb.us-east-1.amazonaws.com',
+            'host.elb.us-east-1.amazonaws.com',
+            '*.elb.us-east-1.amazonaws.com',
+            '*.cb-example-perf',
+            '*.cb-example-perf.default',
+            '*.cb-example-perf.default.svc',
+            '*.cb-example-perf.default.svc.cluster.local',
+            'cb-example-perf-srv',
+            'cb-example-perf-srv.default',
+            'cb-example-perf-srv.default.svc',
+            '*.cb-example-perf-srv.default.svc.cluster.local',
+            'cb-example-perf-cloud-native-gateway-service',
+            'cb-example-perf-cloud-native-gateway-service.default',
+            'cb-example-perf-cloud-native-gateway-service.default.svc',
+            '*.cb-example-perf-cloud-native-gateway-service.default.svc.cluster.local'
+        }
+        create_x509_certificates(addresses)
+        self.remote.create_certificate_secrets()
         self.remote.create_docker_secret(self.docker_config_path)
 
     def create_crd(self):
@@ -265,6 +295,8 @@ class OperatorInstaller:
             cb_config.set_server_spec(self.couchbase_tag)
             cb_config.set_backup(self.operator_backup_tag)
             cb_config.set_exporter(self.exporter_tag, self.refresh_rate)
+            if self.cng_tag:
+                cb_config.set_cng_version(self.cng_tag)
 
     def wait_for_operator_and_admission(self):
         logger.info("waiting for operator and admission controller")
@@ -346,6 +378,14 @@ class OperatorInstaller:
         self.remote.delete_all_pods()
         self.remote.delete_all_pvc()
 
+    def delete_or_edit_storage_class(self, sc_name: str):
+        # Deleting provider managed storage classes will trigger storage class operator
+        # to recreate them https://access.redhat.com/solutions/5240851. Make them non-default
+        if self.cluster_spec.is_openshift:
+            self.remote.make_storage_class_non_default(sc_name)
+        else:
+            self.remote.delete_storage_class(sc_name)
+
 
 class KubernetesInstaller:
 
@@ -390,7 +430,7 @@ class EKSInstaller(KubernetesInstaller):
         scs = self.operator_installer.remote.get_storage_classes()
         for sc in scs['items']:
             sc_name = sc['metadata']['name']
-            self.operator_installer.remote.delete_storage_class(sc_name)
+            self.operator_installer.delete_or_edit_storage_class(sc_name)
         for cluster in self.cluster_spec.kubernetes_clusters():
             sc = self.cluster_spec.kubernetes_storage_class(cluster)
             if self.STORAGE_CLASSES[sc]:
@@ -808,6 +848,10 @@ def get_args():
                         dest='exporter_version',
                         default=None,
                         help='the build version for the couchbase prometheus exporter')
+    parser.add_argument('--cng-version',
+                        dest='cng_version',
+                        default=None,
+                        help='the build version for the couchbase CNG')
     parser.add_argument('-obv', '--operator-backup-version',
                         dest='operator_backup_version',
                         help='the build version for the couchbase operator')

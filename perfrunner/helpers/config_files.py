@@ -1,12 +1,13 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 import yaml
 from decorator import decorator
 
 from logger import logger
+from perfrunner.helpers.misc import create_build_tuple
 from perfrunner.settings import BucketSettings, ClusterSpec, Config, TestConfig
 
 
@@ -14,7 +15,7 @@ from perfrunner.settings import BucketSettings, ClusterSpec, Config, TestConfig
 def supported_for(
     method: Callable, since: tuple = None, upto: tuple = None, feature: str = None, *args, **kwargs
 ):
-    version = args[0].version or (0, 0, 0)
+    version = create_build_tuple(args[0].version or "1.0.0")
     if not since or since <= version:
         if not upto or upto >= version:
             return method(*args, **kwargs)
@@ -348,7 +349,10 @@ class CAOCouchbaseClusterFile(CAOFiles):
         )
 
     @supported_for(since=(2, 6, 0), feature="CNG")
-    def set_cng_version(self, cng_tag: str):
+    def set_cng_version(self, cng_tag: Optional[str]):
+        if not cng_tag:
+            return
+
         self.config["spec"]["networking"].update(
             {
                 "cloudNativeGateway": {
@@ -356,6 +360,46 @@ class CAOCouchbaseClusterFile(CAOFiles):
                 }
             }
         )
+
+    def configure_networking(self, domain: str = "cbperfoc.com"):
+        # Setup basic tls support
+        external_client = self.cluster_spec.external_client
+        ssl_enabled_modes = ("data", "auth")
+        ssl_enabled = (
+            external_client
+            or self.test_config.cluster.enable_n2n_encryption
+            or self.test_config.load_settings.ssl_mode in ssl_enabled_modes
+            or self.test_config.access_settings.ssl_mode in ssl_enabled_modes
+        )
+        if ssl_enabled:
+            self.config["spec"]["networking"].update(
+                {
+                    "tls": {
+                        "rootCAs": ["couchbase-server-ca"],
+                        "secretSource": {"serverSecretName": "couchbase-server-tls"},
+                    }
+                }
+            )
+
+        if external_client:
+            lb_scheme = self.test_config.load_balancer_settings.lb_scheme
+            template = {
+                "metadata": {
+                    "annotations": {
+                        "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type": "ip",
+                        "service.beta.kubernetes.io/aws-load-balancer-scheme": lb_scheme,
+                    }
+                },
+                "spec": {"type": "LoadBalancer"},
+            }
+
+            self.config["spec"]["networking"].update(
+                {
+                    "adminConsoleServiceTemplate": template,
+                    "exposedFeatureServiceTemplate": template,
+                    "dns": {"domain": domain},
+                }
+            )
 
 
 class CAOCouchbaseBucketFile(CAOFiles):
@@ -466,6 +510,45 @@ class CAOSyncgatewayDeploymentFile(CAOFiles):
                     "image"
                 ] = self.syncgateway_image
                 config["spec"]["replicas"] = self.node_count
+
+
+class LoadBalancerControllerFile(CAOFiles):
+    """Apply deployed cluster name to the LBC controller spec."""
+
+    def __init__(self):
+        super().__init__("lbc_template", "")
+
+    def configure_lbc(self, cluster_name: str):
+        # Replace the deployment args with the current deployed EKS cluster name
+        for config in self.all_configs:
+            if config["kind"] == "Deployment":
+                config["spec"]["template"]["spec"]["containers"][0]["args"].update([
+                    f"--cluster-name={cluster_name}"
+                ])
+
+class IngressFile(CAOFiles):
+    """Configure ingress with correct scheme and target backend."""
+
+    def __init__(self):
+        super().__init__("ingress_template", "")
+
+    def configure_ingress(self, is_cng: bool, lb_scheme: str, cert_arn: str):
+        self.config["metadata"]["annotations"].update(
+            {
+                "alb.ingress.kubernetes.io/certificate-arn": cert_arn,
+                "alb.ingress.kubernetes.io/scheme": lb_scheme,
+            }
+        )
+        if is_cng:
+            self.config["metadata"]["annotations"].update(
+                {
+                    "alb.ingress.kubernetes.io/backend-protocol-version": "GRPC",
+                }
+            )
+            self.config["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"].update({
+                "name": "cb-example-perf-cloud-native-gateway-service",
+                "port": {"number": 443},
+            })
 
 
 class TimeTrackingFile(ConfigFile):

@@ -45,20 +45,23 @@ class Collector:
         self.metrics = set()
         self.updater = None
 
+    def _get_url(self, server: str, port: str, path: str) -> str:
+        scheme = "http"
+        if self.n2n_enabled:
+            port = int(f"1{port}")
+            scheme = "https"
+
+        if self.cloud.get("dynamic", False):
+            server, port = self.session.translate_host_and_port(server, port)
+        return f"{scheme}://{server}:{port}{path}"
+
     def get_http(self, path: str, server: Optional[str] = None, port: int = 8091,
                  json: bool = True) -> Union[dict, str]:
         server = server or self.master_node
-        url_template = "http://{}:{}{}"
 
         try:
-            if self.cloud.get('dynamic', False):
-                server, port = self.session.translate_host_and_port(server, port)
-            elif self.n2n_enabled:
-                port = int(str(1) + str(port))
-                url_template = url_template.replace('http', 'https')
-
-            url = url_template.format(server, port, path)
-            params = {'url': url}
+            url = self._get_url(server, port, path)
+            params = {"url": url}
 
             if not self.cloud_enabled:
                 # When we are on cloud, self.session is a RestHelper so we shouldn't add auth
@@ -83,15 +86,9 @@ class Collector:
     def post_http(self, path: str, server: Optional[str] = None, port: int = 8091,
                   json_out: bool = True, json_data: Optional[dict] = None) -> Union[dict, str]:
         server = server or self.master_node
-        url_template = "http://{}:{}{}"
-        try:
-            if self.cloud.get('dynamic', False):
-                server, port = self.session.translate_host_and_port(server, port)
-            elif self.n2n_enabled:
-                port = int(str(1) + str(port))
-                url_template = url_template.replace('http', 'https')
 
-            url = url_template.format(server, port, path)
+        try:
+            url = self._get_url(server, port, path)
             params = {'url': url, 'json': json_data}
 
             if not self.cloud_enabled:

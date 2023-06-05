@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, SSL
+component = operator
+category = cng
+orderby = a10
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+online_cores = 6
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+workers = 160
+ssl_mode = capella
+
+[access]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+ops = 1000000000
+time = 1200
+boost = 12
+workers = 600
+workload_instances = 6
+kv_endpoints = 16
+ssl_mode = capella
+
+[ycsb]
+branch = couchbase3
+sdk_version = 3.7.4
+
+[stats]
+client_processes = java

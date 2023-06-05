@@ -28,6 +28,9 @@ Resources:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSClusterPolicy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/ElasticLoadBalancingFullAccess"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AWSWAFConsoleReadOnlyAccess"
       Path: /
 
 Outputs:

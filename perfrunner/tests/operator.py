@@ -3,6 +3,7 @@ import time
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.settings import ClusterSpec, TargetIterator, TestConfig
 from perfrunner.tests import PerfTest
 from perfrunner.tests.ycsb import YCSBTest
 
@@ -244,3 +245,29 @@ class OperatorUpgradeTest(YCSBTest):
                     statement = statement_template.format(indx, bucket)
                     logger.info("Creating index: " + statement)
                     self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
+
+class CNGOperatorTest(YCSBTest):
+
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
+        super().__init__(cluster_spec, test_config, verbose)
+        svc_host = self._get_service_host()
+        logger.info(f"Using service address: {svc_host}")
+        self.target_iterator = TargetIterator(cluster_spec, test_config, target_svc=svc_host)
+
+    def _get_service_host(self):
+        svc_host = "cb-example-perf"
+        scheme = "couchbase2" if self.test_config.cng else "couchbases"
+        if self.cluster_spec.external_client:
+            svc_host = f"{scheme}://{self.remote.get_external_service_dns()}"
+
+        return svc_host
+
+
+class CNGThroughputTest (CNGOperatorTest):
+    def _report_kpi(self):
+        self.collect_export_files()
+
+        self.reporter.post(
+            *self.metrics.ycsb_throughput()
+        )

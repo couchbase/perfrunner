@@ -872,6 +872,7 @@ class ClusterSettings:
     DISABLE_UI_HTTP = None
     SERVERLESS_MODE = None
     SHOW_CP_VERSION = None
+    CNG_ENABLED = "false"
 
     IPv6 = 0
 
@@ -934,6 +935,8 @@ class ClusterSettings:
 
         self.cloud_server_groups = options.get('bucket_name', self.BUCKET_NAME)
         self.enable_cgroups = options.get('enable_cgroups', False)
+
+        self.cng_enabled = maybe_atoi(options.get("cng_enabled", self.CNG_ENABLED))
 
 
 class DirectNebulaSettings:
@@ -3472,6 +3475,24 @@ class VectorDBBenchSettings(PhaseSettings):
         return str(self.__dict__)
 
 
+class LoadBalancerSettings:
+    """Provides setting to control deployment of application and network load balancer."""
+
+    DEFAULT_LB_SCHEME = "internal"  # alt: internet-facing
+    DEFAULT_LBC_CONFIG = {"lbc": "2.9.0", "cert-manager": "1.12.3"}
+
+    def __init__(self, options: dict):
+        # A lodbalancer type: nlb | alb. If None, a LB will not be deployed
+        self.lb_type = options.get("type")
+        self.lb_scheme = options.get("scheme", self.DEFAULT_LB_SCHEME)
+        # Certificate manager and load-balancer controller versions to install
+        lbc_config = options.get("lbc_config")
+        if lbc_config:
+            self.lbc_config = json.loads(lbc_config)
+        else:
+            self.lbc_config = self.DEFAULT_LBC_CONFIG
+
+
 class TestConfig(Config):
 
     def _configure_phase_settings(method):  # noqa: N805
@@ -3892,6 +3913,10 @@ class TestConfig(Config):
 
         return mix
 
+    @property
+    def load_balancer_settings (self) -> LoadBalancerSettings:
+        options = self._get_options_as_dict("load_balancer")
+        return LoadBalancerSettings(options)
 
 class TargetSettings:
 
@@ -3915,16 +3940,19 @@ class TargetSettings:
 
 
 class TargetIterator(Iterable):
-
-    def __init__(self,
-                 cluster_spec: ClusterSpec,
-                 test_config: TestConfig,
-                 prefix: str = None,
-                 buckets: Iterable[str] = None):
+    def __init__(
+        self,
+        cluster_spec: ClusterSpec,
+        test_config: TestConfig,
+        prefix: str = None,
+        buckets: Iterable[str] = None,
+        target_svc: str = "cb-example-perf",
+    ):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.prefix = prefix
         self.buckets = list(buckets) if buckets else self.test_config.buckets
+        self.target_svc = target_svc
 
     def __iter__(self) -> Iterator[TargetSettings]:
         username = self.cluster_spec.rest_credentials[0]
@@ -3964,7 +3992,7 @@ class TargetIterator(Iterable):
                     cloud = {}
 
                     if self.cluster_spec.dynamic_infrastructure:
-                        cloud = {'cluster_svc': 'cb-example-perf'}
+                        cloud = {'cluster_svc': self.target_svc}
                     elif self.test_config.cluster.serverless_mode == 'enabled':
                         cloud = {'serverless': True}
 

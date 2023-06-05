@@ -155,24 +155,28 @@ class AWSDeployer(Deployer):
         logger.info("Creating subnets...")
         subnets = 0
         self.deployed_infra['vpc']['subnets'] = {}
-        for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
+        # When using external clients, deploy two extra subnets for LB (one in each AZ)
+        needed_subnets = 2 if self.infra_spec.external_client else 1
+        for i in range(1, len(self.desired_infra['k8s'].keys()) + needed_subnets):
             cluster_name = f"{self.k8s_cluster_name}_{i}"
             if self.region == 'us-east-1':
                 availability_zones = ['us-east-1a', 'us-east-1b']
             else:
                 availability_zones = ['us-west-2a', 'us-west-2b']
+
+            tags = [
+                {"Key": "Use", "Value": "CloudPerfTesting"},
+                {"Key": "Role", "Value": cluster_name},
+                {"Key": f"kubernetes.io/cluster/{cluster_name}", "Value": "shared"},
+                {"Key": "Name", "Value": self.options.tag},
+            ]
+            if self.infra_spec.external_client:
+                tags.append({'Key': 'kubernetes.io/role/internal-elb', 'Value': '1'})
             for az in availability_zones:
                 response = self.ec2client.create_subnet(
                     TagSpecifications=[
                         {'ResourceType': 'subnet',
-                         'Tags': [
-                             {'Key': 'Use',
-                              'Value': 'CloudPerfTesting'},
-                             {'Key': 'Role',
-                              'Value': cluster_name},
-                             {'Key': 'kubernetes.io/cluster/{}'.format(cluster_name),
-                              'Value': 'shared'},
-                             {'Key': 'Name', 'Value': self.options.tag}]}],
+                         'Tags': tags}],
                     AvailabilityZone=az,
                     CidrBlock='10.{}.{}.0/24'.format(self.vpc_int, subnets+1),
                     VpcId=self.deployed_infra['vpc']['VpcId'],
@@ -1155,7 +1159,7 @@ class AzureDeployer(Deployer):
 
 class GCPDeployer(Deployer):
 
-    def __init__(self, infra_spec, options):
+    def __init__(self, infra_spec: ClusterSpec, options):
         super().__init__(infra_spec, options)
         self.desired_infra = self.gen_desired_infrastructure_config()
         self.deployed_infra = {'zone': self.zone}

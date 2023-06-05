@@ -18,18 +18,19 @@ class YCSBTest(PerfTest):
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
-            self.remote.init_ycsb(
-                    repo=self.test_config.ycsb_settings.repo,
-                    branch=self.test_config.ycsb_settings.branch,
-                    worker_home=self.worker_manager.WORKER_HOME,
-                    sdk_version=self.test_config.ycsb_settings.sdk_version)
+            self.worker_manager.remote.init_ycsb(
+                repo=self.test_config.ycsb_settings.repo,
+                branch=self.test_config.ycsb_settings.branch,
+                worker_home=self.worker_manager.WORKER_HOME,
+                sdk_version=self.test_config.ycsb_settings.sdk_version,
+            )
         else:
             local.clone_git_repo(repo=self.test_config.ycsb_settings.repo,
                                  branch=self.test_config.ycsb_settings.branch)
 
     def build_ycsb(self, ycsb_client):
         if self.worker_manager.is_remote:
-            self.remote.build_ycsb(self.worker_manager.WORKER_HOME, ycsb_client)
+            self.worker_manager.remote.build_ycsb(self.worker_manager.WORKER_HOME, ycsb_client)
         else:
             local.build_ycsb(ycsb_client)
 
@@ -37,7 +38,7 @@ class YCSBTest(PerfTest):
         if self.worker_manager.is_remote:
             shutil.rmtree("YCSB", ignore_errors=True)
             os.mkdir('YCSB')
-            self.remote.get_export_files(self.worker_manager.WORKER_HOME)
+            self.worker_manager.remote.get_export_files(self.worker_manager.WORKER_HOME)
 
     def load(self, *args, **kwargs):
         self.build_ycsb(self.test_config.load_settings.ycsb_client)
@@ -71,12 +72,12 @@ class YCSBTest(PerfTest):
 
     def generate_keystore(self):
         if self.worker_manager.is_remote:
-            self.remote.generate_ssl_keystore(self.ROOT_CERTIFICATE,
-                                              self.test_config.access_settings
-                                              .ssl_keystore_file,
-                                              self.test_config.access_settings
-                                              .ssl_keystore_password,
-                                              self.worker_manager.WORKER_HOME)
+            self.worker_manager.remote.generate_ssl_keystore(
+                self.ROOT_CERTIFICATE,
+                self.test_config.access_settings.ssl_keystore_file,
+                self.test_config.access_settings.ssl_keystore_password,
+                self.worker_manager.WORKER_HOME,
+            )
         else:
             local.generate_ssl_keystore(self.ROOT_CERTIFICATE,
                                         self.test_config.access_settings.ssl_keystore_file,

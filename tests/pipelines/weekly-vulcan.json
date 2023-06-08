@@ -72,14 +72,14 @@
     "GSI": [],
     "GSI-DGM": [],
     "KV": [
-        {"job": "ares",     "cluster": "ares.spec", "test_config": "kv_max_ops_writes_512_snappy.test"},
-        {"job": "ares",     "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512_snappy.test"}
+        {"job": "ares",     "cluster": "ares.spec", "test_config": "kv_max_ops_writes_512_snappy.test", "groups": "P1"},
+        {"job": "ares",     "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512_snappy.test", "groups": "P1"}
     ],
     "KV-Athena":[
-        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_250M_compressed.test"},
-        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_250M_uncompressed.test"},
-        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_4n_1B_compressed.test"},
-        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_4n_1B_uncompressed.test"}
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_250M_compressed.test", "groups": "P0"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_250M_uncompressed.test", "groups": "P0"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_4n_1B_compressed.test", "groups": "P1"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_4n_1B_uncompressed.test", "groups": "P1"}
     ],
     "KV-Windows":[],
     "KV-DGM": [],

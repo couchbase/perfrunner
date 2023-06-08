@@ -26,15 +26,15 @@
         {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_scanthr_250M_80res_50kops_random.test"}
     ],
     "KV": [
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_ephemeral.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_cpu_ephemeral.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B_ephemeral.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_nru_ephemeral.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_xattr_20M.test"}
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_ephemeral.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_cpu_ephemeral.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B_ephemeral.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_nru_ephemeral.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_xattr_20M.test", "groups": "P1"}
 
     ],
     "KV-Windows":[
-        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_balanced_512_ephemeral.test"}
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_balanced_512_ephemeral.test", "groups": "P0"}
     ],
     "KV-DGM": [],
     "KV-Athena": [],

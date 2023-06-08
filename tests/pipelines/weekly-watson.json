@@ -7,41 +7,41 @@
     ],
     "GSI-DGM": [],
     "KV": [
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512_cpu.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_cpu.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_writes_512.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512_tls.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M_durability.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_subdoc_20M.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_pathoGen_frozen.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_5M.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_keyFragger_frozen.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B_norepl.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_256B.test"}
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512_cpu.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_cpu.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_writes_512.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512_tls.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M_durability.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_subdoc_20M.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_pathoGen_frozen.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_5M.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_keyFragger_frozen.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B_norepl.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_256B.test", "groups": "P1"}
     ],
     "KV-Windows":[
-        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_fragmentation_pathoGen_frozen.test"},
-        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_fragmentation_5M.test"},
-        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_reads_512.test"},
-        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_balanced_512.test"},
-        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_writes_512.test"}
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_fragmentation_pathoGen_frozen.test", "groups": "P0"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_fragmentation_5M.test", "groups": "P0"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_reads_512.test", "groups": "P0"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_balanced_512.test", "groups": "P0"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_writes_512.test", "groups": "P0"}
     ],
     "KV-DGM": [
-        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M_compacted.test"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M.test", "groups": "P0"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M_compacted.test", "groups": "P1"},
 
-        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_write_queue_init_1000M_fe.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_write_queue_1000M.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_thr_1000M_5cm_fe_read_comp.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_thr_1000M_rand.test"}
+        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_write_queue_init_1000M_fe.test", "groups": "P0"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_write_queue_1000M.test", "groups": "P0"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_thr_1000M_5cm_fe_read_comp.test", "groups": "P0"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_thr_1000M_rand.test", "groups": "P0"}
     ],
     "KV-Athena": [
-        {"job": "athena", "cluster": "athena.spec", "test_config": "kv_compact_1000M_fe.test"},
-        {"job": "athena", "cluster": "athena.spec", "test_config": "kv_warmup_500M_dgm.test"}
+        {"job": "athena", "cluster": "athena.spec", "test_config": "kv_compact_1000M_fe.test", "groups": "P1"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "kv_warmup_500M_dgm.test", "groups": "P1"}
     ],
     "KV-Hercules": [],
     "N1QL-OnDemand": [

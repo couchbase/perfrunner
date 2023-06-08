@@ -21,9 +21,9 @@
     "KV-DGM": [],
     "KV-Hercules": [],
     "KV-Athena": [
-        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_100M_compressed_warmup_resident_100.test"},
-        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_100M_compressed_warmup_resident_50.test"},
-        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_200M_compressed_warmup_resident_50.test"}
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_100M_compressed_warmup_resident_100.test", "groups": "P0"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_100M_compressed_warmup_resident_50.test", "groups": "P0"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_200M_compressed_warmup_resident_50.test", "groups": "P0"}
     ],
     "KV-Windows":[],
     "N1QL-OnDemand": [],

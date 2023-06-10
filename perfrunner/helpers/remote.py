@@ -24,6 +24,7 @@ class RemoteHelper:
 
         if cluster_spec.capella_infrastructure:
             state.env.use_ssh_config = True
+            return RemoteLinux(cluster_spec)
 
         os_platform = cls.detect_os_platform(cluster_spec.servers[0], cluster_spec.ssh_credentials)
 

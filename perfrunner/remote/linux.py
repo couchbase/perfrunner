@@ -41,7 +41,8 @@ class RemoteLinux(Remote):
 
     def __init__(self, cluster_spec: ClusterSpec):
         super().__init__(cluster_spec)
-        self.distro, self.distro_version = self.detect_distro()
+        if not cluster_spec.capella_infrastructure:
+            self.distro, self.distro_version = self.detect_distro()
 
     @property
     def package(self):

@@ -4,7 +4,7 @@ from logger import logger
 from perfrunner.helpers.local import restart_memcached, run_cmd
 from perfrunner.settings import ClusterSpec, PhaseSettings, TargetSettings
 
-BINARY_NAME = "pyenv local 2 && bin/ycsb"
+BINARY_NAME = "pyenv local 2.7.18 && bin/ycsb"
 BINARY_PATH = "YCSB"
 
 LOAD_USERS_CMD = " load {ycsb_command} -s -P {workload} " \

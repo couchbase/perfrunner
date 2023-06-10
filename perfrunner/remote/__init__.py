@@ -84,7 +84,7 @@ class Remote:
 
     @all_clients
     def build_ycsb(self, worker_home: str, ycsb_client: str):
-        cmd = 'pyenv local 2 && bin/ycsb build {}'.format(ycsb_client)
+        cmd = 'pyenv local 2.7.18 && bin/ycsb build {}'.format(ycsb_client)
 
         logger.info('Running: {}'.format(cmd))
         with cd(worker_home), cd('perfrunner'), cd('YCSB'):

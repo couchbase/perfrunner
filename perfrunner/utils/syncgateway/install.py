@@ -22,19 +22,19 @@ def main():
     if "-" not in _build:
         base_url = "http://172.23.126.166/builds/releases/mobile/" \
                    "couchbase-sync-gateway/{}".format(_build)
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
+        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
+        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
     elif 'toy' in _build:
         base_url = "http://172.23.126.166/builds/latestbuilds/sync_gateway/toys/{}"\
             .format(_build.split("/")[7])
         _build = _build.split("_")[2]
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
+        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
+        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
     else:
         v, b = _build.split("-")
         base_url = "http://172.23.126.166/builds/latestbuilds/sync_gateway/{}/{}".format(v, b)
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
+        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
+        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
 
     _cluster_full_path = os.path.abspath(_cluster_path)
     _config_full_path = os.path.abspath(_config_path)

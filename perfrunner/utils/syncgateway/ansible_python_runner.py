@@ -128,7 +128,7 @@ class Runner(object):
                                         ask_pass=self.options.ask_pass,
                                         timeout=self.options.timeout,
                                         poll_interval=self.options.poll_interval,
-                                        force_handlers=self.options.poll_interval,
+                                        force_handlers=self.options.force_handlers,
                                         check=False,
                                         start_at_task=None)
 

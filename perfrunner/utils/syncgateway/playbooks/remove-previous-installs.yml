@@ -8,17 +8,15 @@
   # Remove sync_gateway
   - include: tasks/remove-sync-gateway.yml
 
-  # Remove sync_gateway
-  - include: tasks/remove-sg-accel.yml
-
   # Remove nginx
   - include: tasks/remove-nginx.yml
 
-  # Delete sync_gateway and sg_accel uses
-  - include: tasks/clean-users.yml
+  # # Delete sync_gateway uses
+  - name: SYNC GATEWAY | Remove sync_gateway user
+    user: name=sync_gateway state=absent remove=yes force=yes
 
   # Check no syncgateways or accels running
-  - name: ALL | verify no sg_accel or sgs are running on 4985
+  - name: ALL | verify no sgs is running on 4985
     wait_for: port=4985 delay=1 state=stopped
 
   # Check no servers are running

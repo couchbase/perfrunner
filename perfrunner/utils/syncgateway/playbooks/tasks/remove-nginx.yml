@@ -4,6 +4,6 @@
   ignore_errors: yes
 
 - name: NGINX | Remove nginx package
-  yum: pkg=nginx state=absent
+  apt: pkg=nginx state=absent
 
 

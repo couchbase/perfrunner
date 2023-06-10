@@ -3,7 +3,7 @@ from pathlib import Path
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.local import extract_cb
+from perfrunner.helpers.local import extract_cb_any
 from perfrunner.helpers.tableau import TableauRestHelper, TableauTerminalHelper
 from perfrunner.tests.analytics import CH2Test
 
@@ -56,7 +56,7 @@ class AnalyticsConnectorTest(CH2Test):
         )
 
     def setup_run(self):
-        extract_cb(filename='couchbase.rpm')
+        extract_cb_any(filename='couchbase')
         self.restore_local()
         self.wait_for_persistence()
         self.restart()

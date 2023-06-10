@@ -10,7 +10,7 @@ from perfrunner.tests import PerfTest
 class BackupRestoreTest(PerfTest):
 
     def extract_tools(self):
-        local.extract_cb(filename='couchbase.rpm')
+        local.extract_cb_any(filename='couchbase')
 
     def flush_buckets(self):
         for i in range(self.test_config.cluster.num_buckets):
@@ -626,8 +626,8 @@ class CloudBackupRestoreTest(BackupRestoreTest):
         )
 
     def setup_run(self):
-        self.remote.extract_cb(filename='couchbase.rpm',
-                               worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb_any(filename='couchbase',
+                                   worker_home=self.worker_manager.WORKER_HOME)
 
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 

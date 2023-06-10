@@ -47,7 +47,7 @@ class SecondaryIndexCloudTest(PerfTest):
 
         self.bucket = self.test_config.buckets[0]
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "gsi")
-        self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
 
         self.cbindexperf_concurrency = self.test_config.gsi_settings.cbindexperf_concurrency
         self.cbindexperf_gcpercent = self.test_config.gsi_settings.cbindexperf_gcpercent

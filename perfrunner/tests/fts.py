@@ -600,8 +600,8 @@ class FTSLatencyCloudTest(FTSLatencyTest):
 class FTSLatencyCloudBackupTest(FTSLatencyTest):
 
     def restore(self):
-        self.remote.extract_cb(filename='couchbase.rpm',
-                               worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb_any(filename='couchbase',
+                                   worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
         if self.cluster_spec.capella_infrastructure:
             backend = self.cluster_spec.capella_backend

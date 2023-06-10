@@ -238,7 +238,7 @@ class PerfTest:
 
     def restore_local(self):
         logger.info('Restoring data')
-        local.extract_cb(filename='couchbase.rpm')
+        local.extract_cb_any(filename='couchbase')
         local.purge_restore_progress(
             self.cluster_spec,
             archive=self.test_config.restore_settings.backup_storage,

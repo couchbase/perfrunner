@@ -462,7 +462,7 @@ class CouchbaseInstaller:
 
     def download_remote(self):
         """Download and save a copy of the specified package on a remote client."""
-        if self.remote.package == 'rpm':
+        if self.remote.package == 'deb':
             logger.info('Saving a remote copy of {}'.format(self.url))
             self.wget(url=self.url)
         else:
@@ -474,7 +474,7 @@ class CouchbaseInstaller:
         with cd('/tmp'):
             run('wget -nc "{}"'.format(url))
             package = url.split('/')[-1]
-            run('mv {} couchbase.rpm'.format(package))
+            run('mv {} couchbase.deb'.format(package))
 
     def kill_processes(self):
         self.remote.kill_processes()
@@ -576,18 +576,18 @@ class ClientUploader(CouchbaseInstaller):
             return self.options.local_copy_url
         else:
             return self.find_package(edition=self.options.edition,
-                                     package='rpm',
-                                     os_release='7')
+                                     package='deb',
+                                     os_release='20.04')
 
     def download(self):
         logger.info('Saving a local copy of {}'.format(self.url))
-        with open('couchbase.rpm', 'wb') as fh:
+        with open('couchbase.deb', 'wb') as fh:
             resp = requests.get(self.url)
             fh.write(resp.content)
 
     def upload(self):
         logger.info('Using this URL: {}'.format(self.url))
-        package_name = 'couchbase.rpm'
+        package_name = 'couchbase.deb'
 
         logger.info('Uploading {} to clients'.format(package_name))
         uploads = []

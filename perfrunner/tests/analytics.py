@@ -156,8 +156,8 @@ class BigFunTest(PerfTest):
         return result['results'][0]['$1']
 
     def restore_remote_storage(self):
-        self.remote.extract_cb(filename='couchbase.rpm',
-                               worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.extract_cb_any(filename='couchbase',
+                                   worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         if self.cluster_spec.capella_infrastructure:
@@ -1161,8 +1161,8 @@ class CH2CloudTest(CH2Test):
                              worker_home=self.worker_manager.WORKER_HOME)
 
         if self.test_config.ch2_settings.use_backup:
-            self.remote.extract_cb(filename='couchbase.rpm',
-                                   worker_home=self.worker_manager.WORKER_HOME)
+            self.remote.extract_cb_any(filename='couchbase',
+                                       worker_home=self.worker_manager.WORKER_HOME)
             self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
             self.restore()
         else:

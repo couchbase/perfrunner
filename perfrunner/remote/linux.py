@@ -625,8 +625,8 @@ class RemoteLinux(Remote):
 
     def grub_config(self):
         logger.info('Changing GRUB configuration')
-        run('grub2-mkconfig -o /boot/grub2/grub.cfg')
-        run('grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg', warn_only=True)
+        run('grub-mkconfig -o /boot/grub/grub.cfg')
+        run('grub-mkconfig -o /boot/efi/EFI/ubuntu/grub.cfg', warn_only=True)
 
     def reboot(self):
         logger.info('Rebooting the node')

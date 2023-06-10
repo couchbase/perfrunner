@@ -626,8 +626,9 @@ class RemoteLinux(Remote):
 
     def grub_config(self):
         logger.info('Changing GRUB configuration')
-        run('grub2-mkconfig -o /boot/grub2/grub.cfg')
-        run('grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg', warn_only=True)
+        run('update-grub')  # This is for BIOS mode
+        run('grub-mkconfig -o /boot/efi/EFI/ubuntu/grub.cfg', warn_only=True)
+        # This line cover the machine running in EFI mode
 
     def reboot(self):
         logger.info('Rebooting the node')
@@ -636,15 +637,16 @@ class RemoteLinux(Remote):
     def tune_memory_settings(self, host_string: str, size: str):
         logger.info('Changing kernel memory to {} on {}'.format(size, host_string))
         with settings(host_string=host_string):
-            run("sed -ir 's/ mem=[0-9]*[kmgKMG]//g' /etc/default/grub")
-            run("sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size))
+            run("sed -ir 's/mem=[0-9]*[kmgKMG]//g' /etc/default/grub")
+            run("sed -i 's/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"mem={}\"/'\
+                 /etc/default/grub".format(size))
             self.grub_config()
             self.reboot()
 
     def reset_memory_settings(self, host_string: str):
         logger.info('Resetting kernel memory settings')
         with settings(host_string=host_string):
-            run("sed -ir 's/ mem=[0-9]*[kmgKMG]//' /etc/default/grub")
+            run("sed -ir 's/mem=[0-9]*[kmgKMG]//' /etc/default/grub")
             self.grub_config()
             self.reboot()
 
@@ -1052,7 +1054,7 @@ class RemoteLinux(Remote):
             fname = filename.split('/')[-1]
             if fname != '*_perf.data':
                 cmd_perf_script = 'perf script -i {}' \
-                                ' --no-inline > {}.txt'.format(filename, filename)
+                    ' --no-inline > {}.txt'.format(filename, filename)
 
                 logger.info('Generating linux script data : {}'.format(cmd_perf_script))
                 try:

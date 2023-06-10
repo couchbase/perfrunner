@@ -7,16 +7,16 @@
 
   tasks:
   - name: checking if there are custom memory settings
-    shell: grep -E ' mem=[0-9]+[kmgKMG]' {{ grub_defaults }}
+    shell: grep -E 'mem=[0-9]+[kmgKMG]' {{ grub_defaults }}
     register: grep
     ignore_errors: yes
 
   - name: changing the GRUB configation
-    shell: sed -ir -E 's/ mem=[0-9]+[kmgKMG]//g' {{ grub_defaults }}
+    shell: sed -ir -E 's/mem=[0-9]*[kmgKMG]//g' {{ grub_defaults }}
     when: grep.stdout
 
   - name: applying new GRUB settings
-    shell: grub-mkconfig -o {{ grub_cfg }} && grub-mkconfig -o {{ grub_cfg2 }}
+    shell: update-grub && grub-mkconfig -o {{ grub_cfg2 }}
     ignore_errors: yes
     when: grep.stdout
 

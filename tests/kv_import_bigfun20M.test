@@ -16,5 +16,4 @@ backup_repo = bigfun20M
 threads = 16
 
 [clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+python_client = 3.0.8

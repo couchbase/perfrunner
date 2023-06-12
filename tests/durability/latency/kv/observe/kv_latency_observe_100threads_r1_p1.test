@@ -35,5 +35,4 @@ persist_to = 1
 connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.02}
 
 [clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+python_client = 3.0.8

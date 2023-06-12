@@ -26,5 +26,4 @@ updates = 20
 ssl_mode = data
 
 [clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+libcouchbase = 3.0.7

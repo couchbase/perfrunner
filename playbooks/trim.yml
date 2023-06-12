@@ -2,21 +2,27 @@
 - hosts: kv:index:n1ql:analytics
   vars:
     data_dir: /data
-    disk: /dev/sdb1
     opts: ""
     to_trim: 1
   tasks:
+  - name: get the device name for the data dir
+    shell: "df -P {{ data_dir }} | awk 'END{ print $1 }'"
+    register: get_data_dir_device
+
+  - set_fact:
+      data_dir_device: "{{ get_data_dir_device.stdout }}"
+
   - name: umounting data parition
     mount:
       name: "{{ data_dir }}"
       state: unmounted
-      src: "{{ disk }}"
+      src: "{{ data_dir_device }}"
       fstype: "{{ fstype | default('ext4') }}"
 
   - name: re-creating filesystem
     filesystem:
       fstype: "{{ fstype | default('ext4') }}"
-      dev: "{{ disk }}"
+      dev: "{{ data_dir_device }}"
       opts: "{{ opts }}"
       force: yes
 
@@ -24,7 +30,7 @@
     mount:
       name: "{{ data_dir }}"
       state: mounted
-      src: "{{ disk }}"
+      src: "{{ data_dir_device }}"
       fstype: "{{ fstype | default('ext4') }}"
 
   - name: discarding unused blocks

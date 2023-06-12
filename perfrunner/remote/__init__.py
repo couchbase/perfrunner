@@ -59,10 +59,7 @@ class Remote:
         with cd(worker_home):
             with cd('perfrunner'):
                 logger.info('move couchbase package to perfrunner')
-                if os.path.isfile('/tmp/couchbase.rpm'):
-                    run('mv /tmp/couchbase.rpm ./')
-                else:
-                    run('mv /tmp/couchbase.deb ./')
+                run('mv /tmp/couchbase.deb ./ || mv /tmp/couchbase.rpm ./')
 
     def start_celery_worker(self, worker, worker_home, broker_url):
         with settings(host_string=worker):
@@ -181,10 +178,11 @@ class Remote:
             r = run('stat {}.deb'.format(filename), quiet=True)
             if not r.return_code:
                 logger.info('Extracting couchbase.deb')
-                run('ar p {}.deb data.tar.xz | unxz | tar x'.format(filename))
+                with settings(shell='/bin/bash -l -c'):  # Ignore pipefails for this command
+                    run('ar p {}.deb data.tar.xz | unxz | tar x'.format(filename))
             else:
                 logger.info('Extracting couchbase.rpm')
-                run('rpm2cpio ./{}.rpm | cpio -idm'.format(filename))
+                run('rpm2cpio ./{}.rpm | cpio -idm'.format(filename), quiet=True)
 
     @master_client
     def get_ch2_logfile(self, worker_home: str, logfile: str):

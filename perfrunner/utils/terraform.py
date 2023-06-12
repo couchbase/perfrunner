@@ -78,32 +78,28 @@ class Terraform:
     #  Backup spec update,
     #  Add support for multiple clusters.
 
-    AZURE_IMAGE_URL_PREFIX = '/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/' \
-                             'perf-resources-eastus/providers/Microsoft.Compute/galleries' \
-                             '/perf_vm_images/images'
-
     IMAGE_MAP = {
         'aws': {
             'clusters': {
-                'x86_64': 'perf-server-2022-03-us-east',  # ami-005bce54f0c4e2248
-                'arm': 'perf-server-arm-us-east',  # ami-0f249abfe3dd01b30
+                'x86_64': 'perf-server-x86-ubuntu20-2023-06-v2',  # ami-057fb7d25d590b7cf
+                'arm': 'perf-server-arm-ubuntu20-2023-06-v2',  # ami-012b74add446da775
                 'al2': 'perf-server-al_x86-2022-03-us-east',  # ami-060e286353d227c32
             },
-            'clients': 'perf-client-sgw-cblite',  # ami-01b36cb3330d38ac5
+            'clients': 'perf-client-x86-ubuntu20-2023-06-v3',  # ami-0d9789eef66732b62
             'utilities': 'perf-broker-us-east',  # ami-0d9e5ee360aa02d94
-            'syncgateways': 'perf-server-2022-03-us-east',  # ami-005bce54f0c4e2248
+            'syncgateways': 'perf-server-x86-ubuntu20-2023-06-v2',  # ami-057fb7d25d590b7cf
         },
         'gcp': {
-            'clusters': 'perftest-server-disk-image-1',
-            'clients': 'perf-client-cblite-disk-image-3',
+            'clusters': 'perftest-server-x86-ubuntu20-2023-06-v2',
+            'clients': 'perftest-client-x86-ubuntu20-2023-06-v3',
             'utilities': 'perftest-broker-disk-image',
-            'syncgateways': 'perftest-server-disk-image-1'
+            'syncgateways': 'perftest-server-x86-ubuntu20-2023-06-v2'
         },
         'azure': {
-            'clusters': '{}/perf-server-image-def'.format(AZURE_IMAGE_URL_PREFIX),
-            'clients': '{}/perf-client-image-def'.format(AZURE_IMAGE_URL_PREFIX),
-            'utilities': '{}/perf-broker-image-def'.format(AZURE_IMAGE_URL_PREFIX),
-            'syncgateways': '{}/perf-server-image-def'.format(AZURE_IMAGE_URL_PREFIX)
+            'clusters': 'perf-server-x86-ubuntu20-image-def',
+            'clients': 'perf-client-x86-ubuntu20-image-def',
+            'utilities': 'perf-broker-image-def',
+            'syncgateways': 'perf-server-x86-ubuntu20-image-def'
         }
     }
 

@@ -58,6 +58,42 @@ variable "global_tag" {
   type = string
 }
 
+data "azurerm_shared_image_version" "cluster-image" {
+  for_each = var.cluster_nodes
+
+  name                = "latest"
+  image_name          = each.value.image
+  gallery_name        = "perf_vm_images"
+  resource_group_name = "perf-resources-eastus"
+}
+
+data "azurerm_shared_image_version" "client-image" {
+  for_each = var.client_nodes
+
+  name                = "latest"
+  image_name          = each.value.image
+  gallery_name        = "perf_vm_images"
+  resource_group_name = "perf-resources-eastus"
+}
+
+data "azurerm_shared_image_version" "utility-image" {
+  for_each = var.utility_nodes
+
+  name                = "latest"
+  image_name          = each.value.image
+  gallery_name        = "perf_vm_images"
+  resource_group_name = "perf-resources-eastus"
+}
+
+data "azurerm_shared_image_version" "syncgateway-image" {
+  for_each = var.syncgateway_nodes
+
+  name                = "latest"
+  image_name          = each.value.image
+  gallery_name        = "perf_vm_images"
+  resource_group_name = "perf-resources-eastus"
+}
+
 # Create virtual network.
 resource "azurerm_virtual_network" "perf-vn" {
   name                = "perf-vn-${var.uuid}"
@@ -226,11 +262,189 @@ resource "azurerm_network_interface" "perf-syncgateway-ni" {
   }
 }
 
-# Config and create cluster disk(s).
-resource "azurerm_managed_disk" "perf-cluster-disk" {
+resource "azurerm_application_security_group" "cluster-asg" {
+  name                = "perf-cluster-asg-${var.uuid}"
+  location            = "East US"
+  resource_group_name = "perf-resources-eastus"
+
+  tags = {
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+resource "azurerm_application_security_group" "utility-asg" {
+  name                = "perf-utility-asg-${var.uuid}"
+  location            = "East US"
+  resource_group_name = "perf-resources-eastus"
+
+  tags = {
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+resource "azurerm_application_security_group" "syncgateway-asg" {
+  name                = "perf-syncgateway-asg-${var.uuid}"
+  location            = "East US"
+  resource_group_name = "perf-resources-eastus"
+
+  tags = {
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+resource "azurerm_network_interface_application_security_group_association" "cluster-asg-association" {
   for_each = var.cluster_nodes
 
-  name                 = "perf-cluster-disk-${each.key}-${var.uuid}"
+  network_interface_id          = azurerm_network_interface.perf-cluster-ni[each.key].id
+  application_security_group_id = azurerm_application_security_group.cluster-asg.id
+}
+
+resource "azurerm_network_interface_application_security_group_association" "utility-asg-association" {
+  for_each = var.utility_nodes
+
+  network_interface_id          = azurerm_network_interface.perf-utility-ni[each.key].id
+  application_security_group_id = azurerm_application_security_group.utility-asg.id
+}
+
+resource "azurerm_network_interface_application_security_group_association" "syncgateway-asg-association" {
+  for_each = var.syncgateway_nodes
+
+  network_interface_id          = azurerm_network_interface.perf-syncgateway-ni[each.key].id
+  application_security_group_id = azurerm_application_security_group.syncgateway-asg.id
+}
+
+# Create network security group.
+resource "azurerm_network_security_group" "perf-nsg" {
+  name                = "perf-nsg-${var.uuid}"
+  location            = "East US"
+  resource_group_name = "perf-resources-eastus"
+
+  security_rule {
+    name                       = "perf-nsg-allow-ssh"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "perf-nsg-allow-broker"
+    priority                   = 1002
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5672"
+    source_address_prefix      = "*"
+    destination_application_security_group_ids = [azurerm_application_security_group.utility-asg.id]
+  }
+
+  security_rule {
+    name                       = "perf-nsg-allow-couchbase"
+    priority                   = 1003
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["8091-8096", "9102", "9110", "18091-18096", "19102", "19110", "11209-11210","11207"]
+    source_address_prefix      = "*"
+    destination_application_security_group_ids = [azurerm_application_security_group.cluster-asg.id]
+  }
+
+  security_rule {
+    name                       = "perf-nsg-allow-syncgateway"
+    priority                   = 1004
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "4984-5025"
+    source_address_prefix      = "*"
+    destination_application_security_group_ids = [azurerm_application_security_group.syncgateway-asg.id]
+  }
+
+  tags = {
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+# Config and create cluster OS disks.
+resource "azurerm_managed_disk" "perf-cluster-os-disk" {
+  for_each = var.cluster_nodes
+
+  name                       = "perf-cluster-os-disk-${each.key}-${var.uuid}"
+  location                   = "East US"
+  resource_group_name        = "perf-resources-eastus"
+  storage_account_type       = "Premium_LRS"
+  create_option              = "FromImage"
+  gallery_image_reference_id = data.azurerm_shared_image_version.cluster-image[each.key].id
+
+  tags = {
+    role       = "cluster"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+# Config and create client OS disks.
+resource "azurerm_managed_disk" "perf-client-os-disk" {
+  for_each = var.client_nodes
+
+  name                       = "perf-client-os-disk-${each.key}-${var.uuid}"
+  location                   = "East US"
+  resource_group_name        = "perf-resources-eastus"
+  storage_account_type       = "Premium_LRS"
+  create_option              = "FromImage"
+  gallery_image_reference_id = data.azurerm_shared_image_version.client-image[each.key].id
+
+  tags = {
+    role       = "client"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+# Config and create utility OS disks.
+resource "azurerm_managed_disk" "perf-utility-os-disk" {
+  for_each = var.utility_nodes
+
+  name                       = "perf-utility-os-disk-${each.key}-${var.uuid}"
+  location                   = "East US"
+  resource_group_name        = "perf-resources-eastus"
+  storage_account_type       = "Premium_LRS"
+  create_option              = "FromImage"
+  gallery_image_reference_id = data.azurerm_shared_image_version.utility-image[each.key].id
+
+  tags = {
+    role       = "utility"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+# Config and create syncgateway OS disks.
+resource "azurerm_managed_disk" "perf-syncgateway-os-disk" {
+  for_each = var.syncgateway_nodes
+
+  name                       = "perf-syncgateway-os-disk-${each.key}-${var.uuid}"
+  location                   = "East US"
+  resource_group_name        = "perf-resources-eastus"
+  storage_account_type       = "Premium_LRS"
+  create_option              = "FromImage"
+  gallery_image_reference_id = data.azurerm_shared_image_version.syncgateway-image[each.key].id
+
+  tags = {
+    role       = "sync_gateway"
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+# Config and create cluster data disks.
+resource "azurerm_managed_disk" "perf-cluster-data-disk" {
+  for_each = var.cluster_nodes
+
+  name                 = "perf-cluster-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
   resource_group_name  = "perf-resources-eastus"
   storage_account_type = each.value.storage_class
@@ -244,11 +458,11 @@ resource "azurerm_managed_disk" "perf-cluster-disk" {
   }
 }
 
-# Config and create client disk(s).
-resource "azurerm_managed_disk" "perf-client-disk" {
+# Config and create client data disks.
+resource "azurerm_managed_disk" "perf-client-data-disk" {
   for_each = var.client_nodes
 
-  name                 = "perf-client-disk-${each.key}-${var.uuid}"
+  name                 = "perf-client-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
   resource_group_name  = "perf-resources-eastus"
   storage_account_type = each.value.storage_class
@@ -262,11 +476,11 @@ resource "azurerm_managed_disk" "perf-client-disk" {
   }
 }
 
-# Config and create utility disk(s).
-resource "azurerm_managed_disk" "perf-utility-disk" {
+# Config and create utility data disks.
+resource "azurerm_managed_disk" "perf-utility-data-disk" {
   for_each = var.utility_nodes
 
-  name                 = "perf-utility-disk-${each.key}-${var.uuid}"
+  name                 = "perf-utility-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
   resource_group_name  = "perf-resources-eastus"
   storage_account_type = each.value.storage_class
@@ -280,11 +494,11 @@ resource "azurerm_managed_disk" "perf-utility-disk" {
   }
 }
 
-# Config and create sync gateway disk(s).
-resource "azurerm_managed_disk" "perf-syncgateway-disk" {
+# Config and create syncgateway data disks.
+resource "azurerm_managed_disk" "perf-syncgateway-data-disk" {
   for_each = var.syncgateway_nodes
 
-  name                 = "perf-syncgateway-disk-${each.key}-${var.uuid}"
+  name                 = "perf-syncgateway-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
   resource_group_name  = "perf-resources-eastus"
   storage_account_type = each.value.storage_class
@@ -293,7 +507,7 @@ resource "azurerm_managed_disk" "perf-syncgateway-disk" {
   tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
 
   tags = {
-    role       = "sync_gateway"
+    role       = "syncgateway"
     deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
@@ -308,28 +522,25 @@ resource "azurerm_virtual_machine" "perf-cluster-vm" {
   network_interface_ids = [azurerm_network_interface.perf-cluster-ni[each.key].id]
   vm_size               = each.value.instance_type
 
-  storage_image_reference {
-    id = each.value.image
-  }
-
   identity {
     type = "UserAssigned"
     identity_ids = ["/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/perfrunner-mi"]
   }
 
   storage_os_disk {
-    name                 = "perf-cluster-os-disk-${each.key}-${var.uuid}"
+    name                 = azurerm_managed_disk.perf-cluster-os-disk[each.key].name
+    managed_disk_id      = azurerm_managed_disk.perf-cluster-os-disk[each.key].id
+    create_option        = "Attach"
     caching              = "ReadWrite"
-    managed_disk_type    = "Premium_LRS"
-    create_option        = "FromImage"
+    os_type              = "Linux"
   }
 
   storage_data_disk {
-    name            = azurerm_managed_disk.perf-cluster-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-cluster-disk[each.key].id
+    name            = azurerm_managed_disk.perf-cluster-data-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-cluster-data-disk[each.key].id
     create_option   = "Attach"
     lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-cluster-disk[each.key].disk_size_gb
+    disk_size_gb    = azurerm_managed_disk.perf-cluster-data-disk[each.key].disk_size_gb
     caching         = "ReadWrite"
   }
 
@@ -353,28 +564,25 @@ resource "azurerm_virtual_machine" "perf-client-vm" {
   network_interface_ids = [azurerm_network_interface.perf-client-ni[each.key].id]
   vm_size               = each.value.instance_type
 
-  storage_image_reference {
-    id = each.value.image
-  }
-
   identity {
     type = "UserAssigned"
     identity_ids = ["/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/perfrunner-mi"]
   }
 
   storage_os_disk {
-    name                 = "perf-client-os-disk-${each.key}-${var.uuid}"
+    name                 = azurerm_managed_disk.perf-client-os-disk[each.key].name
+    managed_disk_id      = azurerm_managed_disk.perf-client-os-disk[each.key].id
+    create_option        = "Attach"
     caching              = "ReadWrite"
-    managed_disk_type    = "Premium_LRS"
-    create_option        = "FromImage"
+    os_type              = "Linux"
   }
 
   storage_data_disk {
-    name            = azurerm_managed_disk.perf-client-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-client-disk[each.key].id
+    name            = azurerm_managed_disk.perf-client-data-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-client-data-disk[each.key].id
     create_option   = "Attach"
     lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-client-disk[each.key].disk_size_gb
+    disk_size_gb    = azurerm_managed_disk.perf-client-data-disk[each.key].disk_size_gb
     caching         = "ReadWrite"
   }
 
@@ -398,23 +606,20 @@ resource "azurerm_virtual_machine" "perf-utility-vm" {
   network_interface_ids = [azurerm_network_interface.perf-utility-ni[each.key].id]
   vm_size               = each.value.instance_type
 
-  storage_image_reference {
-    id = each.value.image
-  }
-
   storage_os_disk {
-    name                 = "perf-utility-os-disk-${each.key}-${var.uuid}"
+    name                 = azurerm_managed_disk.perf-utility-os-disk[each.key].name
+    managed_disk_id      = azurerm_managed_disk.perf-utility-os-disk[each.key].id
+    create_option        = "Attach"
     caching              = "ReadWrite"
-    managed_disk_type    = "Premium_LRS"
-    create_option        = "FromImage"
+    os_type              = "Linux"
   }
 
   storage_data_disk {
-    name            = azurerm_managed_disk.perf-utility-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-utility-disk[each.key].id
+    name            = azurerm_managed_disk.perf-utility-data-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-utility-data-disk[each.key].id
     create_option   = "Attach"
     lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-utility-disk[each.key].disk_size_gb
+    disk_size_gb    = azurerm_managed_disk.perf-utility-data-disk[each.key].disk_size_gb
     caching         = "ReadWrite"
   }
 
@@ -438,23 +643,20 @@ resource "azurerm_virtual_machine" "perf-syncgateway-vm" {
   network_interface_ids = [azurerm_network_interface.perf-syncgateway-ni[each.key].id]
   vm_size               = each.value.instance_type
 
-  storage_image_reference {
-    id = each.value.image
-  }
-
   storage_os_disk {
-    name                 = "perf-syncgateway-os-disk-${each.key}-${var.uuid}"
+    name                 = azurerm_managed_disk.perf-syncgateway-os-disk[each.key].name
+    managed_disk_id      = azurerm_managed_disk.perf-syncgateway-os-disk[each.key].id
+    create_option        = "Attach"
     caching              = "ReadWrite"
-    managed_disk_type    = "Premium_LRS"
-    create_option        = "FromImage"
+    os_type              = "Linux"
   }
 
   storage_data_disk {
-    name            = azurerm_managed_disk.perf-syncgateway-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-syncgateway-disk[each.key].id
+    name            = azurerm_managed_disk.perf-syncgateway-data-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-syncgateway-data-disk[each.key].id
     create_option   = "Attach"
     lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-syncgateway-disk[each.key].disk_size_gb
+    disk_size_gb    = azurerm_managed_disk.perf-syncgateway-data-disk[each.key].disk_size_gb
     caching         = "ReadWrite"
   }
 

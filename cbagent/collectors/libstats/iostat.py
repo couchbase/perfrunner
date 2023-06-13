@@ -19,9 +19,9 @@ class IOStat(RemoteStats):
                           quiet=True)
         if not stdout.return_code:
             name = stdout.split()[0]
-            if name.startswith('/dev/mapper/'):  # LVM
-                return name.split('/dev/mapper/')[1], True
-            elif name.startswith('/dev/md'):  # Software RAID
+            if name.startswith('/dev/mapper/') or name.startswith('/dev/md'):
+                # LVM devices are named /dev/mapper/<vg>-<lv>
+                # Software RAID devices are named /dev/md<id>
                 return name, True
             else:
                 return name, False

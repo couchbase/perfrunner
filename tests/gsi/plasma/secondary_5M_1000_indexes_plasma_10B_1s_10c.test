@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+
+[showfast]
+title = 10 bucket x 5M x 1KB, 1000 indexes, 5K KV ops/sec/bucket, no mutations during initial build only, Plasma, B=10 s=1 c=10
+component = secondary
+sub_category = Plasma
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 84000
+index_mem_quota = 84000
+initial_nodes = 6
+num_buckets = 10
+kernel_mem_limit = 120000M
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+scopes_per_bucket = 1
+collections_per_scope = 10
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 5000000
+size = 1024
+workers = 100
+size_variation_min = 2
+size_variation_max = 128
+doc_gen = varying_all_item_plasma
+
+[secondary]
+indexes = tests/gsi/index_defs/10bucket_1scope_10collections_1000_indexes.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+queryport.client.usePlanner = false
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
+disable_perindex_stats = True
+indexer.settings.build.batch_size = 100
+
+[access]
+updates = 100
+items = 5000000
+throughput = 500
+workers = 10
+ops = 250000
+doc_gen = varying_all_item_plasma
+

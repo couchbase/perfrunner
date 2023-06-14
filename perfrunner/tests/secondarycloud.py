@@ -120,7 +120,7 @@ class SecondaryIndexCloudTest(PerfTest):
                             for config, value in index_config.items():
                                 configs = configs + '"{}":{},'.format(config, value)
 
-                            if index_config["num_partition"] > 1:
+                            if index_config.get("num_partition", 0) > 1:
                                 partition_keys = " --scheme KEY" \
                                                  " --partitionKeys `{}` ".format(index_def)
                         else:

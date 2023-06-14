@@ -138,7 +138,7 @@ class SecondaryIndexTest(PerfTest):
                             for config, value in index_config.items():
                                 configs = configs + '"{}":{},'.format(config, value)
 
-                            if index_config["num_partition"] > 1:
+                            if index_config.get("num_partition", 0) > 1:
                                 if "meta()" in index_def:
                                     partition_keys = " --scheme KEY" \
                                                  " --partitionKeys {} ".format(index_def)
@@ -572,12 +572,17 @@ class CloudInitialandIncrementalSecondaryIndexTest(InitialandIncrementalSecondar
                                             update_category=False)
         )
 
+    def load_and_build_initial_index(self):
+        self.load()
+        self.wait_for_persistence()
+        time_elapsed = self.build_secondaryindex()
+        if not self.incremental_only:
+            self.report_kpi(time_elapsed, 'Initial')
+        self.print_average_rr()
+
     def run(self):
         self.download_certificate()
         self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
-        if self.cluster_spec.capella_infrastructure:
-            # Open ports for cbindex and cbindexperf
-            self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
         self.load_and_build_initial_index()
         time_elapsed = self.build_incrindex()
         self.report_kpi(time_elapsed, 'Incremental')

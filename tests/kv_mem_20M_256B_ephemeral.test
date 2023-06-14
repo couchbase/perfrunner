@@ -27,4 +27,4 @@ workers = 10
 time = 300
 
 [clients]
-python_client = 3.0.8
+libcouchbase = 3.0.7

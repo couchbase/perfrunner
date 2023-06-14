@@ -178,10 +178,10 @@ class Remote:
             r = run('stat {}.deb'.format(filename), quiet=True)
             if not r.return_code:
                 logger.info('Extracting couchbase.deb')
-                run('ar p {} data.tar.xz | unxz | tar x'.format(filename))
+                run('ar p {}.deb data.tar.xz | unxz | tar x'.format(filename))
             else:
                 logger.info('Extracting couchbase.rpm')
-                run('rpm2cpio ./{} | cpio -idm'.format(filename))
+                run('rpm2cpio ./{}.rpm | cpio -idm'.format(filename))
 
     @master_client
     def get_ch2_logfile(self, worker_home: str, logfile: str):

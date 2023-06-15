@@ -3,6 +3,7 @@
   tasks:
   - name: upgrading packages on the system
     apt: upgrade=dist
+
   - name: installing additional packages
     apt:
      update_cache: yes
@@ -33,5 +34,16 @@
       - memcached
       - cmake
       - libicu-dev
+
   - name: disabling scheduled fstrim jobs
     file: path=/etc/cron.weekly/fstrim state=absent
+
+  - name: configure unattended-upgrades to disable auto-updates
+    debconf:
+      name: unattended-upgrades
+      question: unattended-upgrades/enable_auto_updates
+      value: false
+      vtype: boolean
+
+  - name: apply unattended-upgrades configuration
+    shell: dpkg-reconfigure -f noninteractive unattended-upgrades

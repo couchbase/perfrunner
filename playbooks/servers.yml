@@ -3,6 +3,7 @@
   tasks:
   - name: upgrading packages on the system
     apt: upgrade=dist
+
   - name: installing additional packages
     apt:
      update_cache: yes
@@ -30,7 +31,19 @@
       - linux-tools-common
       - linux-tools-generic
       - zip
+
   - name: disable thp
     shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
+
   - name: disable thp defrag
     shell: "echo never > /sys/kernel/mm/transparent_hugepage/defrag"
+
+  - name: configure unattended-upgrades to disable auto-updates
+    debconf:
+      name: unattended-upgrades
+      question: unattended-upgrades/enable_auto_updates
+      value: false
+      vtype: boolean
+
+  - name: apply unattended-upgrades configuration
+    shell: dpkg-reconfigure -f noninteractive unattended-upgrades

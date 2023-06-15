@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.integration.EndToEndLatencyTest
+test = perfrunner.tests.integration.EndToEndThroughTest
 
 [showfast]
-title = Latency (ms), 3 nodes, 1 bucket x 5M x 1Kb, 300 queries/sec
+title = Avg. Throughput (queries/sec), 3 nodes, 1 bucket x 5M x 1Kb
 component = n1qlcloud
 category = lat
 sub_category = {provider}
@@ -27,7 +27,7 @@ indexer.settings.storage_mode = plasma
 [load]
 items = 50000000
 size = 1024
-workers = 40
+workers = 60
 doc_gen = unified
 num_replies = 100
 item_size = 73
@@ -44,7 +44,6 @@ creates = 0
 reads = 80
 updates = 20
 deletes = 0
-throughput = 5000
 items = 50000000
 workers = 1
 doc_gen = unified
@@ -54,7 +53,6 @@ time = 600
 latency_percentiles = 50,90,95,98,99
 n1ql_queries = q01,q02,q03,q04,q05,q06,q07
 n1ql_workers = 10
-n1ql_throughput = 200
 workload_instances = 1
 ssl_mode = capella
 

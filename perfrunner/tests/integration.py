@@ -2,6 +2,7 @@ import time
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSLatencyLoadTest
 from perfrunner.tests.n1ql import N1QLElixirThroughputTest
@@ -64,7 +65,10 @@ class EndToEndLatencyTest(N1QLElixirThroughputTest):
 
     @with_stats
     def access_bg_with_stats(self):
-        self.access_bg()
+        access_settings = self.test_config.access_settings
+        access_settings.n1ql_workers = 0
+        access_settings.time = 86400
+        PerfTest.access_bg(self, settings=access_settings)
 
     def run(self):
         self.load_with_stats()
@@ -83,7 +87,30 @@ class EndToEndLatencyTest(N1QLElixirThroughputTest):
         # self.report_kv_kpi()
 
 
+class EndToEndThroughTest(EndToEndLatencyTest):
+    def _report_kpi(self, index=None, n1ql=False):
+        if index:
+            self.reporter.post(
+                *self.metrics.get_indexing_meta(value=index["time"],
+                                                index_type=index["type"],
+                                                unit=index["unit"])
+            )
+        if n1ql:
+            self.reporter.post(
+                *self.metrics.avg_n1ql_throughput(self.master_node)
+            )
+
+
 class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
+
+    @with_stats
+    @with_profiles
+    def access(self, *args):
+        self.download_certificate()
+
+        access_settings = self.test_config.access_settings
+        access_settings.workers = 0
+        PerfTest.access_bg(self, settings=access_settings)
 
     @timeit
     def _rebalance(self, services):
@@ -134,6 +161,15 @@ class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
 
 
 class EndToEndRebalanceThroughputTest(EndToEndLatencyTest, CapellaRebalanceTest):
+
+    @with_stats
+    @with_profiles
+    def access(self, *args):
+        self.download_certificate()
+
+        access_settings = self.test_config.access_settings
+        access_settings.workers = 0
+        PerfTest.access_bg(self, settings=access_settings)
 
     def _report_kpi(self, index=None, n1ql=False):
         if index:

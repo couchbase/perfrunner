@@ -55,7 +55,7 @@ class EndToEndLatencyTest(N1QLElixirThroughputTest):
     def load_with_stats(self):
         self.load()
         self.wait_for_persistence()
-        # self.check_num_items()
+        self.check_num_items()
 
     @with_stats
     @timeit
@@ -318,5 +318,5 @@ class EndToEndFTSLatencyTest(EndToEndLatencyTest, FTSLatencyLoadTest):
         logger.info("Sleeping for 300 seconds to finish all tasks")
         time.sleep(300)
         self._report_kpi(n1ql=True)
-        self.report_kv_kpi()
+        # self.report_kv_kpi()
         self.report_fts_kpi()

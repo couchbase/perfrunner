@@ -312,15 +312,16 @@ class PerfTest:
                     )
         elif getattr(self.test_config.load_settings, 'collections', None):
             for target in target_iterator:
-                num_load_targets = 0
+                total_load_distribution_ratio = 0
                 target_scope_collections = self.test_config.load_settings.collections[target.bucket]
                 for scope in target_scope_collections.keys():
-                    for collection in target_scope_collections[scope].keys():
-                        if target_scope_collections[scope][collection]['load'] == 1:
-                            num_load_targets += 1
+                    for options in target_scope_collections[scope].values():
+                        if options['load'] == 1:
+                            total_load_distribution_ratio += options.get('ratio', 1)
+                            # assuming if ratio is not specified default ratio is 1:1
                 num_items = \
-                    (self.test_config.load_settings.items // num_load_targets) * \
-                    num_load_targets * \
+                    (self.test_config.load_settings.items // total_load_distribution_ratio) * \
+                    total_load_distribution_ratio * \
                     (1 + self.test_config.bucket.replica_number)
                 self.monitor.monitor_num_items(target.node, target.bucket,
                                                num_items, max_retry=max_retry)

@@ -1118,7 +1118,7 @@ class MetricHelper:
         order_by += '{:018d}'.format(self.test_config.load_settings.items)
         return order_by
 
-    def rebalance_time(self, rebalance_time: float, update_category: False) -> Metric:
+    def rebalance_time(self, rebalance_time: float, update_category: bool = False) -> Metric:
         metric = self.elapsed_time(rebalance_time)
         metric[-1]['orderBy'] = self.rebalance_order_by + self._order_by
         if update_category:

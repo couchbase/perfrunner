@@ -683,6 +683,7 @@ class CapellaTerraform(Terraform):
                     'server': server,
                     'image': ami
                 }
+                config.pop('server')
                 logger.info('Deploying cluster with custom AMI: {}'
                             .format(ami))
             if release_id := self.options.release_id:

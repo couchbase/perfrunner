@@ -743,6 +743,7 @@ class StatsSettings:
 
     CLIENT_PROCESSES = []
     SERVER_PROCESSES = ['beam.smp',
+                        'ns_server',  # For metrics REST API collector
                         'cbft',
                         'cbq-engine',
                         'indexer',

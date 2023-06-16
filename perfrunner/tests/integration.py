@@ -1,7 +1,9 @@
+import re
 import time
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSLatencyLoadTest
@@ -16,11 +18,58 @@ class EndToEndLatencyTest(N1QLElixirThroughputTest):
     COLLECTORS = {
         'iostat': False,
         'memory': False,
-        'n1ql_latency': False,
+        'n1ql_latency': True,
         'n1ql_stats': True,
         'ns_server_system': True,
         'latency': True
     }
+
+    def create_indexes_with_statement_only(self):
+        logger.info('Creating and building indexes uing N1ql statements only')
+
+        create_statements = []
+        build_statements = []
+        for statement in self.test_config.index_settings.statements:
+            if statement.split()[0].upper() == 'CREATE':
+                create_statements.append(statement)
+            elif statement.split()[0].upper() == 'BUILD':
+                build_statements.append(statement)
+            else:
+                logger.info("Something is wrong with {}".format(statement))
+
+        for statement in create_statements:
+            logger.info('Creating index: ' + statement)
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            cont = False
+            while not cont:
+                building = 0
+                index_status = self.rest.get_index_status(self.index_node)
+                index_list = index_status['status']
+                for index in index_list:
+                    if index['status'] != "Ready" and index['status'] != "Created":
+                        building += 1
+                if building < 10:
+                    cont = True
+                else:
+                    time.sleep(10)
+
+        for statement in build_statements:
+            logger.info('Building index: ' + statement)
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            cont = False
+            while not cont:
+                building = 0
+                index_status = self.rest.get_index_status(self.index_node)
+                index_list = index_status['status']
+                for index in index_list:
+                    if index['status'] != "Ready" and index['status'] != "Created":
+                        building += 1
+                if building < 10:
+                    cont = True
+                else:
+                    time.sleep(10)
+
+        logger.info('Index Create and Build Complete')
 
     def _report_kpi(self, index=None, n1ql=False):
         if index:
@@ -63,7 +112,6 @@ class EndToEndLatencyTest(N1QLElixirThroughputTest):
         self.create_indexes()
         self.wait_for_indexing()
 
-    @with_stats
     def access_bg_with_stats(self):
         access_settings = self.test_config.access_settings
         access_settings.n1ql_workers = 0
@@ -103,8 +151,6 @@ class EndToEndThroughTest(EndToEndLatencyTest):
 
 class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
 
-    @with_stats
-    @with_profiles
     def access(self, *args):
         self.download_certificate()
 
@@ -137,6 +183,60 @@ class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
                 self.rest.update_cluster_configuration(master, new_cluster_config)
                 self.monitor.wait_for_rebalance_to_begin(master)
 
+    def store_plans(self):
+        logger.info('Storing query plans')
+        for i, query in enumerate(self.test_config.access_settings.n1ql_queries):
+            query_statement = query['statement']
+            replace_target = "RAW_QUERY "
+            query_statement = query_statement.replace(replace_target, "")
+            query_context = None
+            if self.test_config.collection.collection_map:
+                for bucket in self.test_config.buckets:
+                    if bucket in query_statement:
+                        bucket_replaced = False
+                        bucket_scopes = self.test_config.collection.collection_map[bucket]
+                        for scope in bucket_scopes.keys():
+                            if scope in query_statement:
+                                for collection in bucket_scopes[scope].keys():
+                                    if collection in query_statement:
+                                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                                        bucket_replaced = True
+                                        break
+                                if bucket_replaced:
+                                    break
+                        if bucket_replaced:
+                            break
+                        else:
+                            raise Exception('No access target for bucket: {}'.format(bucket))
+                logger.info("Grabbing plan for query: {}".format(query_statement))
+                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
+                                                        query_context)
+            else:
+                if self.test_config.cluster.serverless_mode == 'enabled':
+                    bucket = re.search(r' FROM ([^\s]+)', query['statement']).group(1)
+                    query_context = 'default:{}.`_default`'.format(bucket)
+                else:
+                    query_context = None
+                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
+                                                        query_context)
+            with open('query_plan_{}.json'.format(i), 'w') as fh:
+                fh.write(pretty_dict(plan))
+
+    def rebalance(self, services=None):
+        self.pre_rebalance()
+        self.rebalance_time = self._rebalance(services)
+
+    @with_stats
+    @with_profiles
+    def rebalance_with_bg_task_and_stats(self):
+        self.access_bg_with_stats()
+        self.rebalance(services=self.rebalance_settings.services)
+        self.access()
+        self.monitor_progress(self.cluster_spec.servers[0])
+        self.post_rebalance()
+        logger.info("All the worker task are {}".format(self.worker_manager.async_results))
+        self.worker_manager.wait_for_workers()
+
     def run(self):
         self.load_with_stats()
 
@@ -147,10 +247,7 @@ class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
         self.enable_stats()
         self.store_plans()
         # self.reset_kv_stats()
-        self.access_bg_with_stats()
-        self.rebalance(services=self.rebalance_settings.services)
-        self.access()
-        self.monitor_progress(self.cluster_spec.servers[0])
+        self.rebalance_with_bg_task_and_stats()
         rebalance_time = self.get_rebalance_timings()
         logger.info("rebalance completed in {} sec".format(rebalance_time["total_time"]))
         self.report_kpi(n1ql=True)
@@ -162,8 +259,6 @@ class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
 
 class EndToEndRebalanceThroughputTest(EndToEndLatencyTest, CapellaRebalanceTest):
 
-    @with_stats
-    @with_profiles
     def access(self, *args):
         self.download_certificate()
 
@@ -320,3 +415,12 @@ class EndToEndFTSLatencyTest(EndToEndLatencyTest, FTSLatencyLoadTest):
         self._report_kpi(n1ql=True)
         # self.report_kv_kpi()
         self.report_fts_kpi()
+
+
+class EndToEndRebalanceLatencyTestWithStatementsOnly(EndToEndRebalanceLatencyTest):
+
+    @with_stats
+    @timeit
+    def create_indexes_with_stats(self):
+        self.create_indexes_with_statement_only()
+        self.wait_for_indexing()

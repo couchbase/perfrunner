@@ -408,6 +408,7 @@ class RemoteWorkerManager:
             logger.info('Running task on {}'.format(worker))
             async_result = sig.apply_async()
             self.async_results.append(async_result)
+        logger.info('task results {}'.format(self.async_results))
 
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')

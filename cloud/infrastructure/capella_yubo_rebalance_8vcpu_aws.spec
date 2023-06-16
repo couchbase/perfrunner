@@ -28,7 +28,7 @@ node_groups = ec2_node_group_1,ec2_node_group_2,ec2_node_group_3,ec2_node_group_
 storage_class = gp3
 
 [ec2_node_group_1]
-instance_type = r5.4xlarge
+instance_type = r5.2xlarge
 instance_capacity = 4
 volume_size = 1000
 volume_type = gp3

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.integration.EndToEndRebalanceLatencyTest
+test = perfrunner.tests.integration.EndToEndRebalanceLatencyTestWithStatementsOnly
 
 [showfast]
 title = Latency (ms), 3 -> 3, 1 bucket x 1.6B x 230B
@@ -40,14 +40,14 @@ services = index,n1ql
 
 [index]
 statements =
-    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` ON `bucket-1`.`users`.`swipes`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
-    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` ON `bucket-1`.`users`.`views`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
-    CREATE INDEX `adv_linked_uid_no_count` ON `bucket-1`.`users`.`views`(`linked_uid`, `last_seen` DESC,`uid` DESC) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
-    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`users`.`swipes`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
-    CREATE INDEX `swipes_partitioned_linked_uid` ON `bucket-1`.`users`.`swipes`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
-    CREATE INDEX `swipes_partitioned_uid` ON `bucket-1`.`users`.`swipes`(`uid`) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
-    CREATE INDEX `views_partitioned_linked_uid` ON `bucket-1`.`users`.`views`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
-    CREATE INDEX `views_partitioned_uid` ON `bucket-1`.`users`.`views`(`uid`) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `adv_linked_uidDESC_swipe_dateDESC_uid` IF NOT EXISTS ON `bucket-1`.`users`.`swipes`(`linked_uid` DESC,`swipe_date` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `adv_linked_uid_countDESC_last_seenDESC_uid` IF NOT EXISTS ON `bucket-1`.`users`.`views`(`linked_uid`, `count` DESC,`last_seen` DESC,`uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `adv_linked_uid_no_count` IF NOT EXISTS ON `bucket-1`.`users`.`views`(`linked_uid`, `last_seen` DESC,`uid` DESC) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` IF NOT EXISTS ON `bucket-1`.`users`.`swipes`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `swipes_partitioned_linked_uid` IF NOT EXISTS ON `bucket-1`.`users`.`swipes`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `swipes_partitioned_uid` IF NOT EXISTS ON `bucket-1`.`users`.`swipes`(`uid`) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `views_partitioned_linked_uid` IF NOT EXISTS ON `bucket-1`.`users`.`views`(`linked_uid`) PARTITION BY hash(`linked_uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
+    CREATE INDEX `views_partitioned_uid` IF NOT EXISTS ON `bucket-1`.`users`.`views`(`uid`) PARTITION BY hash(`uid`) WITH {"defer_build":true, "num_replica":1, "num_partition":8};
     BUILD INDEX ON `bucket-1`.`users`.`swipes`(`adv_linked_uidDESC_swipe_dateDESC_uid`, `adv_uid_swipe_dateDESC_linked_uidDESC`, `swipes_partitioned_linked_uid`, `swipes_partitioned_uid`);
     BUILD INDEX ON `bucket-1`.`users`.`views`(`adv_linked_uid_countDESC_last_seenDESC_uid`, `adv_linked_uid_no_count`, `views_partitioned_linked_uid`, `views_partitioned_uid`);
 

@@ -28,7 +28,7 @@ node_groups = azurerm_node_group_1,azurerm_node_group_2,azurerm_node_group_3,azu
 storage_class = Premium_LRS
 
 [azurerm_node_group_1]
-instance_type = Standard_E16s_v5
+instance_type = Standard_E8s_v5
 instance_capacity = 4
 disk_tier = P60
 volume_size = 1000

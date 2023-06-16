@@ -36,7 +36,7 @@ volume_type = pd-ssd
 [gce_node_group_2]
 instance_type = n2-highmem-32
 instance_capacity = 4
-volume_size = 1500
+volume_size = 2000
 volume_type = pd-ssd
 
 [gce_node_group_3]

@@ -1156,7 +1156,7 @@ def pytpcc_load_data(warehouse: int, client_threads: int,
         for node in range(1, nodes_length):
             multi_query_url = multi_query_url + ',' + nodes[node] + ':' + port
 
-        cmd = './tpcc.py --warehouses {}' \
+        cmd = '../../env/bin/python3 ./tpcc.py --warehouses {}' \
               ' --clients {} {} --no-execute --query-url {}:{}' \
               ' --multi-query-url {}' \
               ' --userid {} --password {}'.format(warehouse, client_threads, driver,
@@ -1167,7 +1167,7 @@ def pytpcc_load_data(warehouse: int, client_threads: int,
                                                   cluster_spec.rest_credentials[1])
     else:
 
-        cmd = './tpcc.py --warehouses {}' \
+        cmd = '../../env/bin/python3 ./tpcc.py --warehouses {}' \
               ' --clients {} {} --no-execute --query-url {}:{}' \
               ' --userid {} --password {}'.format(warehouse, client_threads, driver,
                                                   master_node,
@@ -1195,7 +1195,7 @@ def pytpcc_run_task(warehouse: int, duration: int, client_threads: int,
         for node in range(1, nodes_length):
             multi_query_url = multi_query_url + ',' + nodes[node] + ':' + port
 
-        cmd = './tpcc.py --warehouses {} --duration {} ' \
+        cmd = '../../env/bin/python3 ./tpcc.py --warehouses {} --duration {} ' \
               '--clients {} {} --query-url {}:{} ' \
               '--multi-query-url {} --userid {} --no-load --durability_level {} ' \
               '--password {} --scan_consistency {}' \
@@ -1210,7 +1210,7 @@ def pytpcc_run_task(warehouse: int, duration: int, client_threads: int,
                                                                scan_consistency, txtimeout)
 
     else:
-        cmd = './tpcc.py --warehouses {} --duration {} ' \
+        cmd = '../../env/bin/python3 ./tpcc.py --warehouses {} --duration {} ' \
               '--clients {} {} --query-url {}:{} ' \
               '--no-load --userid {} --password {} --durability_level {} ' \
               '--scan_consistency {} ' \

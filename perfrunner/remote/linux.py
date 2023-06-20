@@ -342,7 +342,6 @@ class RemoteLinux(Remote):
 
         logger.info('Installing Couchbase Server')
         if self.package == 'deb':
-            run('yes | apt-get install gdebi')
             run('yes | apt install -y /tmp/{}'.format(filename))
         else:
             run('yes | yum localinstall -y /tmp/{}'.format(filename))
@@ -351,7 +350,6 @@ class RemoteLinux(Remote):
     def install_uploaded_couchbase(self, filename: str):
         logger.info('Installing Couchbase Server')
         if self.package == 'deb':
-            run('yes | apt-get install gdebi')
             run('yes | apt install -y /tmp/{}'.format(filename))
         else:
             run('yes | yum localinstall -y /tmp/{}'.format(filename))

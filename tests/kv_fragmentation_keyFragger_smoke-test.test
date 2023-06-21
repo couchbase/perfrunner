@@ -22,4 +22,5 @@ workers = 10
 iterations = 4
 
 [clients]
-python_client = 3.0.8
+python_client = 2.5.0
+libcouchbase = 2.9.3

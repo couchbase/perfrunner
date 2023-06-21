@@ -669,7 +669,7 @@ class CapellaTerraform(Terraform):
                     'azure': 'hostedAzure'
                 }[self.infra_spec.capella_backend.lower()],
                 "region": self.region,
-                "singleAZ": True,
+                "singleAZ": not self.options.multi_az,
                 "server": self.options.capella_cb_version,
                 "specs": spec,
                 "package": "enterprise"
@@ -1837,6 +1837,10 @@ def get_args():
                         action='store_true',
                         default=False,
                         help='Enables Capella disk autoscaling')
+    parser.add_argument('--multi-az',
+                        action="store_true",
+                        default=False,
+                        help="Deploy Capella cluster to multiple Availability Zones")
     parser.add_argument('override',
                         nargs='*',
                         help='custom cluster and/or test settings')

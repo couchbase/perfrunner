@@ -39,7 +39,7 @@ class RemoteHelper:
         logger.info('Detecting OS platform on host {} using Python'.format(host))
 
         with settings(host_string=host):
-            platform = run('python3 -c "import platform; print(platform.system())"', warn_only=True)
+            platform = run('python3 -c "import platform; print(platform.system())"', quiet=True)
             if platform.return_code != 0:
                 platform = run('python -c "import platform; print platform.system()"',
                                warn_only=True)

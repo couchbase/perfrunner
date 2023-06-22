@@ -1,48 +1,11 @@
 ---
-- hosts: clients
+- hosts: all
   vars:
     unattended_upgrades_config: /var/lib/dpkg/info/unattended-upgrades.config
   tasks:
-  - name: upgrading packages on the system
-    apt: upgrade=dist
-
   - name: gather package facts
     package_facts:
       manager: auto
-
-  - name: installing additional packages
-    apt:
-     update_cache: yes
-     name:
-      - atop
-      - cpufrequtils
-      - git
-      - golang-go
-      - htop
-      - libcurl4-gnutls-dev
-      - libffi-dev
-      - libsnappy-dev
-      - libssl-dev
-      - liblzma-dev
-      - libbz2-dev
-      - libreadline-dev
-      - libsqlite3-dev
-      - libncursesw5-dev
-      - linux-tools-generic
-      - maven
-      - nvi
-      - openjdk-8-jdk
-      - python3-pip
-      - python3-virtualenv
-      - python3-dev
-      - sshpass
-      - rpm2cpio
-      - memcached
-      - cmake
-      - libicu-dev
-
-  - name: disabling scheduled fstrim jobs
-    file: path=/etc/cron.weekly/fstrim state=absent
 
   - name: disable auto upgrades if unattended-upgrades is installed
     block:
@@ -65,4 +28,11 @@
       command: mv {{ unattended_upgrades_config }}.ignore {{ unattended_upgrades_config }}
       args:
         creates: "{{ unattended_upgrades_config }}"
+
+    - name: print auto-upgrade status
+      shell: apt-config dump APT::Periodic::Unattended-Upgrade
+      register: auto_upgrade_status
+
+    - debug:
+        var: auto_upgrade_status.stdout_lines
     when: "'unattended-upgrades' in ansible_facts.packages"

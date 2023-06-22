@@ -1,8 +1,14 @@
 ---
 - hosts: kv:index:n1ql:analytics:eventing:fts
+  vars:
+    unattended_upgrades_config: /var/lib/dpkg/info/unattended-upgrades.config
   tasks:
   - name: upgrading packages on the system
     apt: upgrade=dist
+
+  - name: gather package facts
+    package_facts:
+      manager: auto
 
   - name: installing additional packages
     apt:
@@ -38,12 +44,25 @@
   - name: disable thp defrag
     shell: "echo never > /sys/kernel/mm/transparent_hugepage/defrag"
 
-  - name: configure unattended-upgrades to disable auto-updates
-    debconf:
-      name: unattended-upgrades
-      question: unattended-upgrades/enable_auto_updates
-      value: false
-      vtype: boolean
+  - name: disable auto upgrades if unattended-upgrades is installed
+    block:
+    - name: configure unattended-upgrades to disable auto-updates
+      debconf:
+        name: unattended-upgrades
+        question: unattended-upgrades/enable_auto_updates
+        value: false
+        vtype: boolean
 
-  - name: apply unattended-upgrades configuration
-    shell: dpkg-reconfigure -f noninteractive unattended-upgrades
+    - name: rename unattended-upgrades config file so that it is ignored
+      command: mv {{ unattended_upgrades_config }} {{ unattended_upgrades_config }}.ignore
+      args:
+        creates: "{{ unattended_upgrades_config }}.ignore"
+
+    - name: apply unattended-upgrades configuration
+      shell: dpkg-reconfigure -f noninteractive unattended-upgrades
+
+    - name: restore unattended-upgrades config file to original name
+      command: mv {{ unattended_upgrades_config }}.ignore {{ unattended_upgrades_config }}
+      args:
+        creates: "{{ unattended_upgrades_config }}"
+    when: "'unattended-upgrades' in ansible_facts.packages"

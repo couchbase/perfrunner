@@ -6,7 +6,7 @@ database_url = 'sqlite:///results.db'
 task_serializer = 'pickle'
 result_serializer = 'pickle'
 accept_content = {'pickle', 'json', 'application/json', 'application/data', 'application/text'}
-task_protocol = 1
+task_protocol = 2
 
 registry.enable('json')
 registry.enable('application/json')

@@ -91,7 +91,7 @@ else:
                             'application/json',
                             'application/data',
                             'application/text'},
-            task_protocol=1)
+            task_protocol=2)
     elif worker_type == 'remote':
         celery.conf.update(
             broker_url=broker_url,
@@ -107,7 +107,7 @@ else:
                             'application/text'],
             result_serializer='pickle',
             task_serializer='pickle',
-            task_protocol=1,
+            task_protocol=2,
             broker_connection_timeout=30,
             broker_connection_retry=True,
             broker_connection_max_retries=10)
@@ -305,7 +305,7 @@ class RemoteWorkerManager:
                  verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.broker_url = 'amqp://couchbase:couchbase@172.23.97.73:5672/broker'
+        self.broker_url = 'amqp://couchbase:couchbase@172.23.96.202:5672/broker'
         self.remote = RemoteHelper(cluster_spec, verbose)
         if self.cluster_spec.cloud_infrastructure:
             if self.cluster_spec.kubernetes_infrastructure:
@@ -330,7 +330,7 @@ class RemoteWorkerManager:
                             'application/text'],
             result_serializer='pickle',
             task_serializer='pickle',
-            task_protocol=1,
+            task_protocol=2,
             broker_connection_timeout=1500,
             broker_connection_retry=True,
             broker_connection_max_retries=100)

@@ -418,7 +418,6 @@ class CouchbaseInstaller:
                      os_release: Optional[str] = None) -> Iterator[str]:
         if package is None:
             package = self.remote.package  # package type based on server OS
-
             if self.remote.PLATFORM == 'linux':
                 os_release = self.remote.distro_version
 
@@ -490,14 +489,15 @@ class CouchbaseInstaller:
         self.remote.upload_iss_files(self.release)
         self.remote.install_couchbase(self.url)
 
-    def check_for_serverless(self, serverless_enabled: bool):
-        logger.info("Checking for Serverless mode")
-        if serverless_enabled:
+    def check_for_serverless(self, serverless_enabled: str):
+        if serverless_enabled.lower() == 'true':
             logger.info("Enabling Serverless mode")
             self.remote.enable_serverless_mode()
-        else:
+        elif serverless_enabled.lower() == 'false':
             logger.info("Disabling Serverless profile")
             self.remote.disable_serverless_mode()
+        else:
+            logger.info("Unrecongnisable Serverless profile")
 
     def install(self):
         self.kill_processes()

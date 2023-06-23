@@ -82,7 +82,7 @@ class Terraform:
         'aws': {
             'clusters': {
                 'x86_64': 'perf-server-x86-ubuntu20-2023-06-v2',  # ami-057fb7d25d590b7cf
-                'arm': 'perf-server-arm-ubuntu20-2023-06-v2',  # ami-012b74add446da775
+                'arm': 'perf-server-arm-us-east',  # ami-0f249abfe3dd01b30
                 'al2': 'perf-server-al_x86-2022-03-us-east',  # ami-060e286353d227c32
             },
             'clients': 'perf-client-x86-ubuntu20-2023-06-v3',  # ami-0d9789eef66732b62

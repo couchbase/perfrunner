@@ -46,8 +46,7 @@ class RemoteLinux(Remote):
 
     @property
     def package(self):
-        if self.distro.upper() in ('UBUNTU', 'DEBIAN') and \
-                not self.cluster_spec.cloud_infrastructure:
+        if self.distro.upper() in ('UBUNTU', 'DEBIAN'):
             return 'deb'
         else:
             return 'rpm'

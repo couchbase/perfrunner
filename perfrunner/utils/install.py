@@ -418,6 +418,7 @@ class CouchbaseInstaller:
                      os_release: Optional[str] = None) -> Iterator[str]:
         if package is None:
             package = self.remote.package  # package type based on server OS
+
             if self.remote.PLATFORM == 'linux':
                 os_release = self.remote.distro_version
 

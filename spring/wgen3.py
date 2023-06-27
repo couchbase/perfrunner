@@ -158,7 +158,6 @@ class Worker:
                 for collection, options in collections.items():
                     if options['load'] == 1:
                         target = scope + ":" + collection
-                        self.load_targets.append(target)
                         if ratio := options.get('ratio'):
                             self.load_map[target] = ratio * base_items
                             self.load_ratios[target] = ratio

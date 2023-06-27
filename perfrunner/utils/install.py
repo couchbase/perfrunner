@@ -490,14 +490,12 @@ class CouchbaseInstaller:
         self.remote.install_couchbase(self.url)
 
     def check_for_serverless(self, serverless_enabled: str):
-        if serverless_enabled.lower() == 'true':
+        if str(serverless_enabled).lower() == 'true':
             logger.info("Enabling Serverless mode")
             self.remote.enable_serverless_mode()
-        elif serverless_enabled.lower() == 'false':
+        else:
             logger.info("Disabling Serverless profile")
             self.remote.disable_serverless_mode()
-        else:
-            logger.info("Unrecongnisable Serverless profile")
 
     def install(self):
         self.kill_processes()

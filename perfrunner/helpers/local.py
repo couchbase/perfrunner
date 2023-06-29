@@ -12,7 +12,7 @@ from fabric.api import hide, lcd, local, quiet, settings, shell_env
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
-from perfrunner.helpers.misc import run_local_shell_command
+from perfrunner.helpers.misc import SSLCertificate, run_local_shell_command
 from perfrunner.settings import ClusterSpec
 
 
@@ -1640,3 +1640,8 @@ def create_javascript_udf(node, udflib, user, password, security):
         cmd = cmd.replace("8093", "18093")
     cmd = cmd + " -d 'function udf(id) { return id}'"
     local(cmd)
+
+
+def create_x509_certificates(nodes: list[str]):
+    ssl = SSLCertificate(nodes)
+    ssl.generate()

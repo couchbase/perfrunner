@@ -1,4 +1,6 @@
+import datetime
 import fileinput
+import ipaddress
 import json
 import shutil
 import subprocess
@@ -9,6 +11,32 @@ from typing import Any, Union
 from uuid import uuid4
 
 import yaml
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric.rsa import (
+    RSAPrivateKey,
+    generate_private_key,
+)
+from cryptography.x509 import (
+    AuthorityKeyIdentifier,
+    BasicConstraints,
+    Certificate,
+    CertificateBuilder,
+    CertificateSigningRequest,
+    CertificateSigningRequestBuilder,
+    DirectoryName,
+    DNSName,
+    ExtendedKeyUsage,
+    ExtendedKeyUsageOID,
+    GeneralName,
+    IPAddress,
+    KeyUsage,
+    Name,
+    NameAttribute,
+    SubjectAlternativeName,
+    SubjectKeyIdentifier,
+    random_serial_number,
+)
+from cryptography.x509.oid import NameOID
 
 from logger import logger
 
@@ -256,3 +284,139 @@ def set_azure_capella_subscription(capella_env: str) -> int:
         sub = 'capellanonprod-rcm'
 
     return set_azure_subscription(sub, 'capella')
+
+
+class SSLCertificate:
+
+    """Generate a self signed CA and node certificate with SAN including cluster nodes IPs.
+
+    Calling `generate()` will create new CA, signed certificate and store them
+    in the `INBOX` directory.
+    """
+
+    INBOX = 'certificates/inbox/'
+
+    def __init__(self, hosts: list[str] = {'127.0.0.1'}):
+        self.hosts = hosts
+        self.not_valid_before = datetime.datetime.now(datetime.timezone.utc)
+        self.not_valid_after = self.not_valid_before + datetime.timedelta(days=60)
+
+    def generate(self):
+        """Generate CA and use it to sign a new certificate and store both and key to `INBOX`."""
+        logger.info('Generating certificates')
+        # Generate CA first
+        ca_key, ca = self.generate_ca()
+
+        # Certificate signing request
+        request_key, req = self.generate_signing_request(ca)
+
+        # Node certificate
+        cert = CertificateBuilder(
+            issuer_name=ca.subject,
+            subject_name=req.subject,
+            public_key=req.public_key(),
+            serial_number=random_serial_number(),
+            not_valid_before=self.not_valid_before,
+            not_valid_after=self.not_valid_after,
+            extensions=req.extensions
+        ).sign(ca_key, hashes.SHA256())
+
+        # Store key/chain using appropriate names
+        self._store_key('pkey', request_key)
+        self._store_cert('chain', cert)
+
+    def generate_ca(self) -> tuple[RSAPrivateKey, Certificate]:
+        """Generate a certificate that can be used as a Certificate Authority (CA)."""
+        ca_key_pair = self._make_key_pair()
+        subject = self._get_subject('Couchbase Root CA')
+        ca = CertificateBuilder(
+            issuer_name=subject,
+            subject_name=subject,
+            public_key=ca_key_pair.public_key(),
+            serial_number=random_serial_number(),
+            not_valid_before=self.not_valid_before,
+            not_valid_after=self.not_valid_after
+        ).add_extension(
+            BasicConstraints(ca=True, path_length=None),
+            critical=True
+        ).add_extension(
+            KeyUsage(digital_signature=True, content_commitment=False,
+                     key_encipherment=True, data_encipherment=False,
+                     key_agreement=False, key_cert_sign=True,
+                     crl_sign=False, encipher_only=False, decipher_only=False),
+            critical=True
+        ).sign(ca_key_pair, hashes.SHA256())
+
+        # Store CA
+        self._store_cert('ca', ca)
+        return ca_key_pair, ca
+
+    def generate_signing_request(self, ca: Certificate
+                                 ) -> tuple[RSAPrivateKey, CertificateSigningRequest]:
+        """Generate a CSR and a private key that can be used to generate a certificate."""
+        pkey = self._make_key_pair()
+        san_list = [self._get_general_name(host) for host in self.hosts]
+
+        req = CertificateSigningRequestBuilder().subject_name(
+            self._get_subject('Couchbase Cluster')
+        ).add_extension(
+            BasicConstraints(ca=False, path_length=None),
+            critical=True
+        ).add_extension(
+            SubjectKeyIdentifier(b'hash'),
+            critical=False
+        ).add_extension(
+            AuthorityKeyIdentifier(None,
+                                   authority_cert_issuer=[DirectoryName(ca.issuer)],
+                                   authority_cert_serial_number=ca.serial_number),
+            critical=False
+        ).add_extension(
+            KeyUsage(digital_signature=True, content_commitment=False,
+                     key_encipherment=True, data_encipherment=False,
+                     key_agreement=False, key_cert_sign=False,
+                     crl_sign=False, encipher_only=False, decipher_only=False),
+            critical=True
+        ).add_extension(
+            SubjectAlternativeName(san_list),
+            critical=False
+        ).add_extension(
+            ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
+            critical=False
+        ).sign(pkey, hashes.SHA256())
+
+        return pkey, req
+
+    def _get_subject(self, common_name: str) -> Name:
+        return Name([
+            NameAttribute(NameOID.COUNTRY_NAME, 'US'),
+            NameAttribute(NameOID.ORGANIZATION_NAME, 'Couchbase'),
+            NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, 'Perf Team'),
+            NameAttribute(NameOID.COMMON_NAME, common_name),
+        ])
+
+    def _make_key_pair(self) -> RSAPrivateKey:
+        """Generate an RSA public/private key pair."""
+        return generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+
+    def _store_key(self, key_name: str, key: RSAPrivateKey):
+        with open('{}{}.key'.format(self.INBOX, key_name), 'wb') as file:
+            file.write(key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption()
+            ))
+
+    def _store_cert(self, cert_name: str, cert: Certificate):
+        with open('{}{}.pem'.format(self.INBOX, cert_name), 'wb') as file:
+            file.write(cert.public_bytes(serialization.Encoding.PEM))
+
+    def _get_general_name(self, host: str) -> GeneralName:
+        # If the host address can pass as an IP v4 or v6 mark it as an IPAddress,
+        # DNS name otherwise
+        try:
+            return IPAddress(ipaddress.ip_address(host))
+        except Exception:
+            return DNSName(host)

@@ -1397,8 +1397,13 @@ class DefaultRestHelper(RestBase):
     def enable_certificate_auth(self, node: str):
         logger.info("Enabling certificate-based client auth on {}".format(node))
         api = 'http://{}:8091/settings/clientCertAuth'.format(node)
-        data = open('./certificates/inbox/config.json', 'rb').read()
-        self.post(url=api, data=data)
+        data = {
+            'state': 'enable',
+            'prefixes': [
+                {'path': 'subject.cn', 'prefix': '', 'delimiter': ''}
+            ]
+        }
+        self.post(url=api, json=data)
 
     def get_minimum_tls_version(self, node: str):
         # Because tlsv1.3 cannot be the global tls min version (unlike previous tls versions),

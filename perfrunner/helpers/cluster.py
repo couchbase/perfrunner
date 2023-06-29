@@ -1018,6 +1018,7 @@ class ClusterManager:
         if self.dynamic_infra or self.capella_infra:
             return
         if self.test_config.access_settings.ssl_mode == "auth":
+            local.create_x509_certificates(self.cluster_spec.servers)
             self.remote.allow_non_local_ca_upload()
             self.remote.setup_x509()
             self.rest.upload_cluster_certificate(self.cluster_spec.servers[0])

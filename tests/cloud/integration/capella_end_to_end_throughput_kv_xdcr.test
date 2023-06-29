@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.integration.EndToEndThroughputWithXDCRTest
+
+[showfast]
+title = Avg. throughput (ops/sec), 7 -> 7 nodes, 5 buckets x 150M x 1KB, 10%% RR, KV+XDCR
+component = kvcloud
+category = max_ops
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 7 7
+num_buckets = 5
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[collection]
+config = collections/5buckets_1scope_2collections_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 150000000
+size = 1024
+workers = 40
+doc_gen = unified
+num_replies = 100
+item_size = 73
+uniform_collection_load_time = 1
+ssl_mode = capella
+
+[access]
+creates = 0
+reads = 80
+updates = 20
+deletes = 0
+items = 150000000
+workers = 60
+doc_gen = unified
+time = 600
+latency_percentiles = 50,90,95,98,99
+workload_instances = 1
+ssl_mode = capella
+
+[stats]
+server_processes = goxdcr
+
+[clients]
+python_client = 3.2.7

@@ -1,14 +1,14 @@
 [test_case]
-test = perfrunner.tests.integration.EndToEndThroughputTest
+test = perfrunner.tests.integration.EndToEndRebalanceThroughputTest
 
 [showfast]
-title = Avg. Throughput (queries/sec), 7 nodes, 5 buckets x 150M x 1KB
+title = Avg. Throughput during Index Rebalance, 7 -> 8 nodes, 5 buckets x 75M x 1KB
 component = n1qlcloud
 category = thr
 sub_category = {provider}
 
 [cluster]
-initial_nodes = 7
+initial_nodes = 8
 num_buckets = 5
 enable_cpu_cores = false
 enable_n2n_encryption = all
@@ -33,6 +33,11 @@ num_replies = 100
 item_size = 5
 ssl_mode = capella
 
+[rebalance]
+nodes_after = 7
+start_after = 300
+stop_after = 300
+
 [index]
 replicas = 1
 statements =
@@ -48,12 +53,12 @@ workers = 80
 doc_gen = unified
 num_replies = 100
 item_size = 5
-time = 600
 latency_percentiles = 50,90,95,98,99
 n1ql_queries = q01,q02,q03,q04,q05
 n1ql_workers = 80
 workload_instances = 1
 ssl_mode = capella
+time = 3600
 
 [n1ql-q01]
 statement = SELECT META(d).id, d.index_field, d.xxx FROM `TARGET_BUCKET` AS d WHERE d.c0 BETWEEN $1 AND $2 AND d.cid BETWEEN 0 AND 99;
@@ -89,6 +94,7 @@ scan_consistency = not_bound
 args = ["start_qualified_batches"]
 total_batches = 500000
 qualified_batches = 1
+
 
 [stats]
 server_processes = projector

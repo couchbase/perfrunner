@@ -1,0 +1,55 @@
+[test_case]
+test = perfrunner.tests.integration.EndToEndRebalanceLatencyTest
+
+[showfast]
+title = Latency (ms), 7 -> 8 nodes, 5 buckets x 150M x 1KB, 10%% RR, KV+KV Rebalance, 3000 ops/sec
+component = kvcloud
+category = lat
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 7
+num_buckets = 5
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[collection]
+config = collections/5buckets_1scope_2collections_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[rebalance]
+nodes_after = 8
+start_after = 300
+stop_after = 300
+
+[load]
+items = 150000000
+size = 1024
+workers = 40
+doc_gen = unified
+num_replies = 100
+item_size = 73
+ssl_mode = capella
+
+[access]
+creates = 0
+reads = 80
+updates = 20
+deletes = 0
+throughput = 3000
+items = 150000000
+workers = 10
+doc_gen = unified
+latency_percentiles = 50,90,95,98,99
+workload_instances = 1
+ssl_mode = capella
+
+[clients]
+python_client = 3.2.7

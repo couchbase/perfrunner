@@ -1,6 +1,7 @@
 import re
 import threading
 import time
+from typing import Optional
 
 from logger import logger
 from perfrunner.helpers import local
@@ -196,8 +197,12 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
     def load(self):
         PerfTest.load(self)
 
-    def create_indexes(self):
+    def create_indexes(self, query_node: Optional[str] = None, index_node: Optional[str] = None):
         logger.info('Creating and building indexes')
+
+        query_node = query_node or self.query_nodes[0]
+        index_node = index_node or self.index_nodes[0]
+
         create_statements = []
         build_statements = []
 
@@ -212,7 +217,8 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
         queries = []
         for statement in create_statements:
             logger.info('Creating index: ' + statement)
-            queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+            queries.append(threading.Thread(target=self.execute_index,
+                                            args=(statement, query_node, index_node)))
 
         for query in queries:
             query.start()
@@ -223,7 +229,8 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
         queries = []
         for statement in build_statements:
             logger.info('Building index: ' + statement)
-            queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+            queries.append(threading.Thread(target=self.execute_index,
+                                            args=(statement, query_node, index_node)))
 
         for query in queries:
             query.start()
@@ -233,12 +240,16 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
 
         logger.info('Index Create and Build Complete')
 
-    def execute_index(self, statement):
-        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+    def execute_index(self, statement: str, query_node: Optional[str] = None,
+                      index_node: Optional[str] = None):
+        query_node = query_node or self.query_nodes[0]
+        index_node = index_node or self.index_nodes[0]
+
+        self.rest.exec_n1ql_statement(query_node, statement)
         cont = False
         while not cont:
             building = 0
-            index_status = self.rest.get_index_status(self.index_nodes[0])
+            index_status = self.rest.get_index_status(index_node)
             index_list = index_status['status']
             for index in index_list:
                 if index['status'] != "Ready" and index['status'] != "Created":
@@ -416,8 +427,12 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
         access_settings.workers = 0
         PerfTest.access(self, settings=access_settings)
 
-    def create_indexes(self):
+    def create_indexes(self, query_node: Optional[str] = None, index_node: Optional[str] = None):
         logger.info('Creating and building indexes')
+
+        query_node = query_node or self.query_nodes[0]
+        index_node = index_node or self.index_node
+
         index_replicas = str(self.test_config.index_settings.replicas)
         bmap = {}
         mlen = 0
@@ -474,11 +489,11 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
 
         for statement, query_context in zip(create_statements, query_contexts):
             logger.info('Creating index: ' + statement)
-            self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
+            self.rest.exec_n1ql_statement(query_node, statement, query_context)
             cont = False
             while not cont:
                 building = 0
-                index_status = self.rest.get_index_status(self.index_node)
+                index_status = self.rest.get_index_status(index_node)
                 index_list = index_status['status']
                 for index in index_list:
                     if index['status'] != "Ready" and index['status'] != "Created":
@@ -490,11 +505,11 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
 
         for statement, query_context in zip(build_statements, build_query_contexts):
             logger.info('Building index: ' + statement)
-            self.rest.exec_n1ql_statement(self.query_nodes[0], statement, query_context)
+            self.rest.exec_n1ql_statement(query_node, statement, query_context)
             cont = False
             while not cont:
                 building = 0
-                index_status = self.rest.get_index_status(self.index_node)
+                index_status = self.rest.get_index_status(index_node)
                 index_list = index_status['status']
                 for index in index_list:
                     if index['status'] != "Ready" and index['status'] != "Created":

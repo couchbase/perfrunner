@@ -291,9 +291,10 @@ class PerfTest:
             self.monitor.monitor_dcp_queues(target.node, target.bucket)
             self.monitor.monitor_replica_count(target.node, target.bucket)
 
-    def wait_for_indexing(self):
+    def wait_for_indexing(self, index_nodes: List[str] = []):
+        index_nodes = index_nodes or self.index_nodes
         if self.test_config.index_settings.statements:
-            for server in self.index_nodes:
+            for server in index_nodes:
                 self.monitor.monitor_indexing(server)
 
     def check_num_items(self, bucket_items: dict = None, max_retry: int = None,
@@ -344,8 +345,10 @@ class PerfTest:
                     port = self.rest.get_memcached_port(server)
                     self.memcached.reset_stats(server, port, bucket)
 
-    def create_indexes(self):
+    def create_indexes(self, query_node: Optional[str] = None):
         logger.info('Creating and building indexes')
+        query_node = query_node or self.query_nodes[0]
+
         if not self.test_config.index_settings.couchbase_fts_index_name:
             create_statements = []
             build_statements = []
@@ -360,7 +363,7 @@ class PerfTest:
 
             for statement in create_statements:
                 logger.info('Creating index: ' + statement)
-                self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+                self.rest.exec_n1ql_statement(query_node, statement)
                 cont = False
                 while not cont:
                     building = 0
@@ -376,7 +379,7 @@ class PerfTest:
 
             for statement in build_statements:
                 logger.info('Building index: ' + statement)
-                self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+                self.rest.exec_n1ql_statement(query_node, statement)
                 cont = False
                 while not cont:
                     building = 0

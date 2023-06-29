@@ -1,3 +1,4 @@
+import random
 from time import sleep, time
 
 import numpy
@@ -50,7 +51,15 @@ class XdcrLag(Latency):
                                     password=settings.bucket_password,
                                     timeout=self.TIMEOUT,
                                     secure=settings.is_n2n)
-            self.clients.append((bucket, src_client, dst_client))
+
+            target_collections = []
+            if self.collections:
+                for scope, collections in self.collections[bucket].items():
+                    for collection, options in collections.items():
+                        if options.get('access', 0):
+                            target_collections.append((scope, collection))
+
+            self.clients.append((bucket, src_client, dst_client, target_collections))
 
         self.new_docs = Document(workload.size)
 
@@ -85,7 +94,13 @@ class XdcrLag(Latency):
         return {'xdcr_lag': (t1 - t0) * 1000}  # s -> ms
 
     def sample(self):
-        for bucket, src_client, dst_client in self.clients:
+        for bucket, src_client, dst_client, target_collections in self.clients:
+
+            if target_collections:
+                scope, collection = random.choice(target_collections)
+                src_client = src_client.scope(scope).collection(collection)
+                dst_client = dst_client.scope(scope).collection(collection)
+
             lags = self.measure(src_client, dst_client)
             self.append_to_store(lags,
                                  cluster=self.cluster,

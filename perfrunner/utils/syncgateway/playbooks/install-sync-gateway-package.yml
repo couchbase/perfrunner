@@ -52,4 +52,4 @@
     shell: systemctl start sync_gateway
 
   - name: SYNC GATEWAY | wait until sync gateway to listen on port
-    wait_for: port=4985 timeout=600
+    wait_for: port=4985 timeout=900

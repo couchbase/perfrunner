@@ -76,6 +76,7 @@ from spring.docgen import (
     TpcDsDocument,
     UnifiedDocument,
     UniformKey,
+    VaryingAllItemSizePlasmaDocument,
     VaryingItemSizePlasmaDocument,
     WorkingSetKey,
     YuboDoc,
@@ -175,7 +176,7 @@ class Worker:
             for scope in target_scope_collections.keys():
                 for collection in target_scope_collections[scope].keys():
                     if target_scope_collections[scope][collection]['load'] == 1 and \
-                                    target_scope_collections[scope][collection]['access'] == 1:
+                            target_scope_collections[scope][collection]['access'] == 1:
                         self.access_targets += [scope+":"+collection]
         else:
             self.access_targets = ["_default:_default"]
@@ -386,6 +387,10 @@ class Worker:
                                            self.ws.timeseries_docs_per_device,
                                            self.ws.timeseries_total_days,
                                            self.ws.timeseries_enable)
+        elif self.ws.doc_gen == 'varying_all_item_plasma':
+            self.docs = VaryingAllItemSizePlasmaDocument(ws.size,
+                                                         ws.size_variation_min,
+                                                         ws.size_variation_max)
 
     def init_db(self):
         workload_client = CBGen3
@@ -421,7 +426,7 @@ class Worker:
 
     def report_progress(self, curr_ops):  # only first worker
         if not self.sid and self.ws.ops < float('inf') and \
-                        curr_ops > self.next_report * self.ws.ops:
+                curr_ops > self.next_report * self.ws.ops:
             progress = 100.0 * curr_ops / self.ws.ops
             self.next_report += 0.05
             logger.info('Current progress: {:.2f} %'.format(progress))
@@ -609,7 +614,7 @@ class KVWorker(Worker):
 
         if self.ws.throughput < float('inf'):
             self.target_time = float(self.batch_size) * self.ws.workers / \
-                               self.ws.throughput
+                self.ws.throughput
         else:
             self.target_time = None
         self.seed()
@@ -719,7 +724,7 @@ class AsyncKVWorker(KVWorker):
 
         if self.ws.throughput < float('inf'):
             self.target_time = float(self.batch_size) * self.ws.workers / \
-                               self.ws.throughput
+                self.ws.throughput
         else:
             self.target_time = None
 
@@ -961,7 +966,7 @@ class UserModWorker(AuxillaryWorker):
         self.seed()
         if self.ws.user_mod_throughput < float('inf'):
             self.target_time = self.ws.user_mod_workers / \
-                               self.ws.user_mod_throughput
+                self.ws.user_mod_throughput
         else:
             self.target_time = None
 
@@ -1023,7 +1028,7 @@ class CollectionModWorker(AuxillaryWorker):
             for scope in target_scope_collections.keys():
                 for collection in target_scope_collections[scope].keys():
                     if target_scope_collections[scope][collection]['load'] == 1 and \
-                                    target_scope_collections[scope][collection]['access'] == 1:
+                            target_scope_collections[scope][collection]['access'] == 1:
                         self.target_scopes += [scope]
                         break
         else:
@@ -1031,7 +1036,7 @@ class CollectionModWorker(AuxillaryWorker):
 
         if self.ws.collection_mod_throughput < float('inf'):
             self.target_time = self.ws.collection_mod_workers / \
-                               self.ws.collection_mod_throughput
+                self.ws.collection_mod_throughput
         else:
             self.target_time = None
 
@@ -1178,7 +1183,7 @@ class N1QLWorker(Worker):
                     collections = scopes[scope]
                     for collection in collections.keys():
                         if collections[collection]['load'] == 1 and \
-                                        collections[collection]['access'] == 1:
+                                collections[collection]['access'] == 1:
                             targets += [":".join([scope, collection])]
             else:
                 targets = [":".join(['_default', '_default'])]
@@ -1311,7 +1316,7 @@ class N1QLWorker(Worker):
 
         if self.ws.n1ql_throughput < float('inf'):
             self.target_time = self.ws.n1ql_batch_size * self.ws.n1ql_workers / \
-                               float(self.ws.n1ql_throughput)
+                float(self.ws.n1ql_throughput)
         else:
             self.target_time = None
 
@@ -1380,7 +1385,7 @@ class ViewWorker(Worker):
             current_hot_load_start=None, timer_elapse=None):
         if self.ws.query_throughput < float('inf'):
             self.target_time = float(self.ws.spring_batch_size) * self.ws.query_workers / \
-                               self.ws.query_throughput
+                self.ws.query_throughput
         else:
             self.target_time = None
 

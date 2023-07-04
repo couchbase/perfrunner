@@ -1482,6 +1482,8 @@ class PhaseSettings:
         self.num_replies = load_settings.num_replies
         self.size = load_settings.size
         self.key_fmtr = load_settings.key_fmtr
+        self.size_variation_max = load_settings.size_variation_max
+        self.size_variation_min = load_settings.size_variation_min
 
     def configure_client_settings(self, client_settings):
         if hasattr(client_settings, "pillowfight"):
@@ -1839,6 +1841,7 @@ class GSISettings:
         self.disable_perindex_stats = options.get('disable_perindex_stats',
                                                   self.DISABLE_PERINDEX_STATS)
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
+        self.cbindex_replica = options.get('cbindex_replica', self.CBINDEX_REPLICA)
 
         self.settings = {}
         for option in options:

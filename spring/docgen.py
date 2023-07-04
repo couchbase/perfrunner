@@ -1861,6 +1861,36 @@ class VaryingItemSizePlasmaDocument(PlasmaDocument):
         }
 
 
+class VaryingAllItemSizePlasmaDocument(PlasmaDocument):
+
+    def __init__(self, avg_size: int, size_variation_min: int,
+                 size_variation_max: int):
+        super().__init__(avg_size)
+        self.size_variation_min = size_variation_min
+        self.size_variation_max = size_variation_max
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        # size = self._size()
+        length = random.randint(self.size_variation_min, self.size_variation_max)
+
+        doc = {
+            'name': self.build_item(alphabet=alphabet, size=length),
+            'email': self.build_item(alphabet=alphabet, size=length),
+            'alt_email': self.build_item(alphabet=alphabet, size=length),
+            'city': self.build_item(alphabet=alphabet, size=length),
+            'realm': self.build_item(alphabet=alphabet, size=length),
+            'coins': self.build_item(alphabet=alphabet, size=length),
+            'category': self.build_item(alphabet=alphabet, size=length),
+            'achievements': self.build_item(alphabet=alphabet, size=length),
+            'body': self.build_item(alphabet=alphabet, size=length),
+        }
+        doc_b = json.dumps(doc).encode("utf-8")
+        current_size = len(doc_b)
+        doc["comment"] = self.build_string(alphabet, self.avg_size - current_size)
+        return doc
+
+
 class HundredIndexDocument(PlasmaDocument):
 
     def __init__(self, avg_size: int, size_variation_min: int,

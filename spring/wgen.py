@@ -74,6 +74,7 @@ from spring.docgen import (
     TimestampDocument,
     TpcDsDocument,
     UniformKey,
+    VaryingAllItemSizePlasmaDocument,
     VaryingItemSizePlasmaDocument,
     WorkingSetKey,
     ZipfKey,
@@ -323,6 +324,10 @@ class Worker:
                                            self.ws.timeseries_docs_per_device,
                                            self.ws.timeseries_total_days,
                                            self.ws.timeseries_enable)
+        elif self.ws.doc_gen == 'varying_all_item_plasma':
+            self.docs = VaryingAllItemSizePlasmaDocument(self.ws.size,
+                                                         self.ws.size_variation_min,
+                                                         self.ws.size_variation_max)
 
     def init_db(self):
         params = {

@@ -1841,7 +1841,6 @@ class GSISettings:
         self.disable_perindex_stats = options.get('disable_perindex_stats',
                                                   self.DISABLE_PERINDEX_STATS)
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
-        self.cbindex_replica = options.get('cbindex_replica', self.CBINDEX_REPLICA)
 
         self.settings = {}
         for option in options:

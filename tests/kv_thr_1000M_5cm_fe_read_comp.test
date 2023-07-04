@@ -39,4 +39,5 @@ time = 3600
 async = 1
 
 [clients]
-python_client = 3.0.8
+libcouchbase = 2.9.3
+python_client = 2.5.0

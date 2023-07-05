@@ -28,8 +28,8 @@
     "KV": [
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_ephemeral.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_cpu_ephemeral.test", "groups": "P1"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B_ephemeral.test", "groups": "P1"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_nru_ephemeral.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B_ephemeral.test", "groups": "P0"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_nru_ephemeral.test", "groups": "P0"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_xattr_20M.test", "groups": "P1"}
 
     ],

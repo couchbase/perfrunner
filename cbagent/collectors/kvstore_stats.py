@@ -17,6 +17,8 @@ class KVStoreStats(Collector):
         "BytesIncoming",
         "BytesOutgoing",
         "BytesPerRead",
+        "FSReadBytes",
+        "FSWriteBytes",
         "IndexBlocksSize",
         "MemoryQuota",
         "NCommitBatches",

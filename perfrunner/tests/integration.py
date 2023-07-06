@@ -1,9 +1,7 @@
-import re
 import time
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSLatencyLoadTest
@@ -183,45 +181,6 @@ class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
                 self.rest.update_cluster_configuration(master, new_cluster_config)
                 self.monitor.wait_for_rebalance_to_begin(master)
 
-    def store_plans(self):
-        logger.info('Storing query plans')
-        for i, query in enumerate(self.test_config.access_settings.n1ql_queries):
-            query_statement = query['statement']
-            replace_target = "RAW_QUERY "
-            query_statement = query_statement.replace(replace_target, "")
-            query_context = None
-            if self.test_config.collection.collection_map:
-                for bucket in self.test_config.buckets:
-                    if bucket in query_statement:
-                        bucket_replaced = False
-                        bucket_scopes = self.test_config.collection.collection_map[bucket]
-                        for scope in bucket_scopes.keys():
-                            if scope in query_statement:
-                                for collection in bucket_scopes[scope].keys():
-                                    if collection in query_statement:
-                                        query_context = "default:`{}`.`{}`".format(bucket, scope)
-                                        bucket_replaced = True
-                                        break
-                                if bucket_replaced:
-                                    break
-                        if bucket_replaced:
-                            break
-                        else:
-                            raise Exception('No access target for bucket: {}'.format(bucket))
-                logger.info("Grabbing plan for query: {}".format(query_statement))
-                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
-                                                        query_context)
-            else:
-                if self.test_config.cluster.serverless_mode == 'enabled':
-                    bucket = re.search(r' FROM ([^\s]+)', query['statement']).group(1)
-                    query_context = 'default:{}.`_default`'.format(bucket)
-                else:
-                    query_context = None
-                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
-                                                        query_context)
-            with open('query_plan_{}.json'.format(i), 'w') as fh:
-                fh.write(pretty_dict(plan))
-
     def rebalance(self, services=None):
         self.pre_rebalance()
         self.rebalance_time = self._rebalance(services)
@@ -235,7 +194,7 @@ class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
         self.monitor_progress(self.cluster_spec.servers[0])
         self.post_rebalance()
         logger.info("All the worker task are {}".format(self.worker_manager.async_results))
-        self.worker_manager.wait_for_workers()
+        self.worker_manager.terminate()
 
     def run(self):
         self.load_with_stats()

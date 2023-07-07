@@ -1,0 +1,38 @@
+---
+- hosts: kv:index:n1ql:analytics:eventing:fts
+  vars:
+     grub_var: GRUB_CMDLINE_LINUX_DEFAULT
+     boot_param: "systemd.unified_cgroup_hierarchy"
+     grub_config: /etc/default/grub
+  tasks:
+    - name: Set kernel boot params if nothing is set (case 1)
+      command: sed -i 's/{{ grub_var }}=""/{{ grub_var }}="{{ boot_param }}=1"/' {{ grub_config }}
+
+    - name: Add systemd.unified_cgroup_hierarchy to kernel boot params if not present (case 2)
+      command: perl -i.bak -pne 's/^{{ grub_var }}="(((?!{{ boot_param }}=\d).)*)"/{{ grub_var }}="\1 {{ boot_param }}=1"/' {{ grub_config }}
+
+    - name: Set systemd.unified_cgroup_hierarchy=1 if not already (case 3)
+      command: sed -i 's/{{ boot_param }}=[^1]/{{ boot_param }}=1/' {{ grub_config }}
+
+    - name: Update grub (BIOS systems)
+      command: update-grub
+
+    - name: Check whether EFI is supported
+      stat:
+        path: /sys/firmware/efi
+      register: efi
+
+    - name: Update grub (EFI systems)
+      command: grub-mkconfig -o /boot/efi/EFI/ubuntu/grub.cfg
+      when: efi.stat.exists
+
+    - name: Reboot
+      reboot:
+        reboot_timeout: 900
+
+    - name: Print kernel cmdline invocation (should have systemd.unified_cgroup_hierarchy=1)
+      command: cat /proc/cmdline
+      register: kernel_cmdline
+
+    - debug:
+        var: kernel_cmdline.stdout

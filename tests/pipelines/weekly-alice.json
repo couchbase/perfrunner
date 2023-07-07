@@ -1,6 +1,5 @@
 {
     "Analytics": [],
-    "Analytics-OnDemand": [],
     "Eventing": [
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_bktop.test", "groups": "P1"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_timer_bktop_512bytes_context.test", "groups": "P1"},
@@ -26,38 +25,27 @@
         {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_200M_compressed_warmup_resident_50.test", "groups": "P0"}
     ],
     "KV-Windows":[],
-    "N1QL-OnDemand": [],
     "N1QL": [],
-    "N1QL-Arke-OnDemand": [],
     "N1QL-Arke": [],
     "N1QL-Windows": [],
     "Rebalance": [],
     "Rebalance-C1": [
-        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "reb_in_200M_nondgm_loadonly_kv.test"},
-        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "reb_out_200M_nondgm_loadonly_kv.test"}
+        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "reb_in_200M_nondgm_loadonly_kv.test", "groups": "P0"},
+        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "reb_out_200M_nondgm_loadonly_kv.test", "groups": "P0"}
     ],
     "Rebalance-C2": [
-        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "reb_swap_200M_nondgm_loadonly_kv.test"}
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "reb_swap_200M_nondgm_loadonly_kv.test", "groups": "P0"}
     ],
     "Rebalance-Large-Scale": [],
     "Rebalance-Large-Scale-C1": [],
     "Rebalance-Large-Scale-C2": [],
     "Rebalance-Hestia": [],
-    "Rebalance-C1-OnDemand": [],
-    "Rebalance-C2-OnDemand": [],
-    "Rebalance-OnDemand": [],
-    "Rebalance-Hestia-OnDemand": [],
     "Tools": [],
     "Views": [],
     "XDCR": [],
-    "XDCR-OnDemand": [],
     "XDCR-C1": [],
-    "XDCR-C1-OnDemand": [],
     "XDCR-C2": [],
-    "XDCR-C2-OnDemand": [],
     "XDCR-Windows": [],
-    "YCSB-OnDemand": [],
     "YCSB": [],
-    "YCSB-Hebe-OnDemand": [],
     "YCSB-Hebe": []
 }

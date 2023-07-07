@@ -1,6 +1,5 @@
 {
     "Analytics": [],
-    "Analytics-OnDemand": [],
     "Eventing": [],
     "FTS": [],
     "GSI": [
@@ -38,109 +37,94 @@
     ],
     "KV-DGM": [],
     "KV-Athena": [],
-    "N1QL-OnDemand": [
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_ok.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_plasma_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_plasma_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_plasma_false.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_plasma_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_plasma_ok.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_plasma_ok.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_150M_gsi_plasma_dgm_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_150M_gsi_plasma_dgm_ok.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_150M_30Kops_8KQops_gsi_plasma_dgm_ok.test"}
-
-    ],
     "N1QL": [
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_150M_30Kops_450Qops_gsi_plasma_dgm_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_plasma_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_plasma_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_plasma_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_150M_gsi_plasma_dgm_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_150M_gsi_plasma_dgm_false.test"}
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_ok.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_plasma_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_plasma_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_plasma_false.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_plasma_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_plasma_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_plasma_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_plasma_ok.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_plasma_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_plasma_ok.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_150M_gsi_plasma_dgm_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_150M_gsi_plasma_dgm_ok.test", "groups": "P1"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_150M_30Kops_8KQops_gsi_plasma_dgm_ok.test", "groups": "P1"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_150M_30Kops_450Qops_gsi_plasma_dgm_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_plasma_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_plasma_ok.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_plasma_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_plasma_ok.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_plasma_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_150M_gsi_plasma_dgm_ok.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_150M_gsi_plasma_dgm_false.test", "groups": "P0"}
     ],
     "N1QL-Windows": [
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_false.test"},
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_ok.test"},
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_false.test"},
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_ok.test"}
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_false.test", "groups": "P0"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_ok.test", "groups": "P0"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_false.test", "groups": "P0"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_ok.test", "groups": "P0"}
     ],
-    "N1QL-Arke-OnDemand": [],
     "N1QL-Arke": [],
     "Rebalance": [],
     "Rebalance-C1": [],
     "Rebalance-C2": [],
     "Rebalance-Large-Scale": [
-        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv.test"},
-        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv_ephemeral.test"}
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv.test", "groups": "P0"},
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv_ephemeral.test", "groups": "P0"}
     ],
     "Rebalance-Large-Scale-C1": [],
     "Rebalance-Large-Scale-C2": [],
     "Rebalance-Hestia": [],
-    "Rebalance-C1-OnDemand": [],
-    "Rebalance-C2-OnDemand": [],
-    "Rebalance-OnDemand": [],
-    "Rebalance-Hestia-OnDemand": [],
     "Tools": [],
     "Views": [],
     "XDCR": [],
-    "XDCR-OnDemand": [],
     "XDCR-C1": [
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_ephemeral.test"}
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_ephemeral.test", "groups": "P0"}
     ],
-    "XDCR-C1-OnDemand": [],
     "XDCR-C2": [
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_limit.test"}
-    ],
-    "XDCR-C2-OnDemand": [
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_2x2_unidir_100M_ephemeral.test"}
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_limit.test", "groups": "P0"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_2x2_unidir_100M_ephemeral.test", "groups": "P1"}
     ],
     "XDCR-Windows": [],
     "KV-Hercules": [
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_rt1.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_pt1.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_x509.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_ssl.test"}
-    ],
-    "YCSB-OnDemand": [
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_plasma.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_latency.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_latency_plasma.test"}
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_rt1.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_pt1.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_x509.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_ssl.test", "groups": "P0"}
     ],
     "YCSB": [
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_ssl.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_x509.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_plasma.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency_plasma.test"}
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_plasma.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_latency.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_latency_plasma.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_ssl.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_x509.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_plasma.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency_plasma.test", "groups": "P0"}
     ],
-    "YCSB-Hebe-OnDemand": [],
     "YCSB-Hebe": [
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadse_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsg2_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsg_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsh2_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsh_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsi_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsj_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsk_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsl1_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsl2_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsmix2_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsmix_4nodecluster.test"}
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadse_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsg2_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsg_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsh2_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsh_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsi_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsj_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsk_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsl1_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsl2_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsmix2_4nodecluster.test", "groups": "P0"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsmix_4nodecluster.test", "groups": "P0"}
     ]
 }

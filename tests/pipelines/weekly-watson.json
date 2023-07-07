@@ -1,6 +1,5 @@
 {
     "Analytics": [],
-    "Analytics-OnDemand": [],
     "Eventing": [],
     "FTS": [],
     "GSI": [
@@ -44,110 +43,102 @@
         {"job": "athena", "cluster": "athena.spec", "test_config": "kv_warmup_500M_dgm.test", "groups": "P1"}
     ],
     "KV-Hercules": [],
-    "N1QL-OnDemand": [
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI3_20M_gsi_moi_ok.test"},
-
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q1_20M_10KQops.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_20M_30Kops_450Qops_gsi_moi_false.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_20M_30Kops_8KQops_gsi_moi_ok.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q3_20M_30Kops_960Qops_gsi_moi_ok.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q5_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI6_20M_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI6_20M_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q7_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q7_20M_gsi_moi_ok.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_moi_ok.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_Q2_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_Q2_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_Q3_20M_between_gsi_moi_ok.test"},
-
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_bulk_DL10_20M_moi.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_bulk_UP10_20M_moi.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_UP3_20M.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_UP4_20M_gsi_moi_false.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q14_20M_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q14_20M_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q15_20M_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q15_20M_moi_ok.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q13_20M_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_moi_ok.test"},
-
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q16_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q21_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q21_20M_gsi_moi_ok.test"}
-    ],
     "N1QL": [
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_tls.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q3_20M_18Kops_200Qops_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI3_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q5_20M_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_Q3_20M_between_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_UP4_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q13_20M_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_moi_false.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_moi_ok.test"}
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI3_20M_gsi_moi_ok.test", "groups": "P1"},
+
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q1_20M_10KQops.test", "groups": "P1"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_20M_30Kops_450Qops_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q2_20M_30Kops_8KQops_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q3_20M_30Kops_960Qops_gsi_moi_ok.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q5_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI6_20M_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI6_20M_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q7_20M_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q7_20M_gsi_moi_ok.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_moi_ok.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_Q2_20M_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_Q2_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_Q3_20M_between_gsi_moi_ok.test", "groups": "P1"},
+
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_bulk_DL10_20M_moi.test", "groups": "P1"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_bulk_UP10_20M_moi.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_UP3_20M.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_UP4_20M_gsi_moi_false.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q14_20M_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q14_20M_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q15_20M_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q15_20M_moi_ok.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q13_20M_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q17_20M_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_moi_ok.test", "groups": "P1"},
+
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q16_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q19_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI19_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q21_20M_gsi_moi_false.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q21_20M_gsi_moi_ok.test", "groups": "P1"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_tls.test", "groups": "P0"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_Q3_20M_18Kops_200Qops_gsi_moi_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI3_20M_gsi_moi_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q5_20M_gsi_moi_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_Q3_20M_between_gsi_moi_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_UP4_20M_gsi_moi_ok.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_10K_moi_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q20_100M_1K_moi_ok.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q13_20M_moi_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_CI18_20M_1K_gsi_moi_false.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q18_20M_1K_gsi_moi_ok.test", "groups": "P0"}
     ],
     "N1QL-Windows":[
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_1workload_inst.test"},
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false.test"},
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok.test"},
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_false.test"},
-        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_ok.test"}
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_1workload_inst.test", "groups": "P0"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false.test", "groups": "P0"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok.test", "groups": "P0"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_false.test", "groups": "P0"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_ok.test", "groups": "P0"}
     ],
-    "N1QL-Arke-OnDemand": [],
     "N1QL-Arke": [],
-    "Rebalance": [],
-    "Rebalance-C1": [],
-    "Rebalance-C2": [],
     "Rebalance-Hestia": [
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv_delta.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv_delta_graceful.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv_graceful.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_graceful.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_hard.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_auto.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_in_100M_dgm_views.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_swap_100M_dgm_views.test"}
-    ],
-    "Rebalance-Hestia-OnDemand": [
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_in_100M_dgm_kv.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_out_100M_dgm_kv.test"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_swap_100M_dgm_kv.test"}
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv_delta.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv_delta_graceful.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv_graceful.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_graceful.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_hard.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_auto.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_in_100M_dgm_views.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_swap_100M_dgm_views.test", "groups": "P0"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_in_100M_dgm_kv.test", "groups": "P1"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_out_100M_dgm_kv.test", "groups": "P1"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_swap_100M_dgm_kv.test", "groups": "P1"}
     ],
     "Rebalance-Large-Scale": [],
     "Rebalance-Large-Scale-C1": [],
     "Rebalance-Large-Scale-C2": [],
-    "Rebalance-OnDemand": [
-        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_kv.test"}
+    "Rebalance": [
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_kv.test", "groups": "P1"}
     ],
-    "Rebalance-C1-OnDemand": [
-        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "reb_in_1B_4nodes_kv.test"}
+    "Rebalance-C1": [
+        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "reb_in_1B_4nodes_kv.test", "groups": "P1"}
     ],
-    "Rebalance-C2-OnDemand": [
-        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "reb_swap_1B_4nodes_kv.test"},
-        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "reb_out_1B_4nodes_kv.test"}
+    "Rebalance-C2": [
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "reb_swap_1B_4nodes_kv.test", "groups": "P1"},
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "reb_out_1B_4nodes_kv.test", "groups": "P1"}
     ],
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_blackhole.test", "groups": "P1"},
@@ -180,35 +171,30 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_range.test"}
     ],
     "XDCR": [
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_5x5_unidir_250M.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_5x5_unidir_1G_dgm_comp.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_500M_dgm_2b.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm_wan.test"}
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_5x5_unidir_250M.test", "groups": "P0"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_5x5_unidir_1G_dgm_comp.test", "groups": "P0"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm.test", "groups": "P0"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_500M_dgm_2b.test", "groups": "P0"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm_wan.test", "groups": "P0"}
     ],
-    "XDCR-OnDemand": [],
     "XDCR-C1": [
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M.test"},
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt.test"},
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_with_filter.test"},
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_filter.test"},
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_ssl.test"}
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M.test", "groups": "P0"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt.test", "groups": "P0"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_with_filter.test", "groups": "P0"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_filter.test", "groups": "P0"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_ssl.test", "groups": "P0"}
     ],
-    "XDCR-C1-OnDemand": [],
     "XDCR-C2": [
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_wan.test"},
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_lww.test"},
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_lww.test"},
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_2x2_unidir_100M.test"},
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_reb_22_12_unidir_200M_dgm.test"},
-        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_reb_12_22_unidir_200M_dgm.test"}
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_wan.test", "groups": "P0"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_lww.test", "groups": "P0"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_lww.test", "groups": "P0"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_2x2_unidir_100M.test", "groups": "P0"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_reb_22_12_unidir_200M_dgm.test", "groups": "P0"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_reb_12_22_unidir_200M_dgm.test", "groups": "P0"}
     ],
-    "XDCR-C2-OnDemand": [],
     "XDCR-Windows":[
-        {"job": "zeus",  "cluster": "zeus_2x2.spec",  "test_config": "xdcr_init_2x2_unidir_25M.test"}
+        {"job": "zeus",  "cluster": "zeus_2x2.spec",  "test_config": "xdcr_init_2x2_unidir_25M.test", "groups": "P0"}
     ],
-    "YCSB-OnDemand": [],
     "YCSB": [],
-    "YCSB-Hebe-OnDemand": [],
     "YCSB-Hebe": []
 }

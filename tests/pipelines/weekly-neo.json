@@ -1,27 +1,25 @@
 {
     "Analytics": [
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_99c_1replica.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica_failover.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c_1replica.test"},
-        {"job": "oceanus", "cluster": "oceanus_benchmark.spec",     "test_config": "volume/ch2_mixed_2n_array_index.test"}
-    ],
-    "N1QL-PYTPCC-OnDemand": [
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_1node_pytpcc_16core_100warehouse_40clients_replica1_dur_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_maj_scancons_requestplus_udf.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_udf.test"}
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_99c_1replica.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica_failover.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c_1replica.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus_benchmark.spec",     "test_config": "volume/ch2_mixed_2n_array_index.test", "groups": "P0"}
     ],
     "N1QL-PYTPCC": [
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_1node_pytpcc_16core_100warehouse_40clients_replica1_dur_maj_scancons_requestplus_udf.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_pers_to_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_maj_scancons_requestplus_magma.test"},
-        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma_udf.test"}
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_1node_pytpcc_16core_100warehouse_40clients_replica1_dur_maj_scancons_requestplus_magma.test", "groups": "P1"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_maj_scancons_requestplus_magma.test", "groups": "P1"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_maj_scancons_requestplus_magma.test", "groups": "P1"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test", "groups": "P1"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test", "groups": "P1"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_maj_scancons_requestplus_udf.test", "groups": "P1"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_udf.test", "groups": "P1"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_1node_pytpcc_16core_100warehouse_40clients_replica1_dur_maj_scancons_requestplus_udf.test", "groups": "P0"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_pers_to_maj_scancons_requestplus_magma.test", "groups": "P0"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test", "groups": "P0"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_maj_scancons_requestplus_magma.test", "groups": "P0"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_maj_scancons_requestplus_magma.test", "groups": "P0"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma_udf.test", "groups": "P0"}
     ],
     "GSI-Compression": [
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_80_20.test"},
@@ -46,18 +44,15 @@
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/ycsb_workloadt_4nodes_1B_magma_TR1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/ycsb_latency_workloadt_4nodes_1B_magma_TR1.test"}
     ],
-    "N1QL-OnDemand": [
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q4_20M_overlap_gsi_moi_ok_1s_1c_1i.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_flatten_unique_gsi_moi_ok_1s_1c_1i.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_overlap_gsi_moi_ok_1s_1c_1i.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_CI6_20M_moi_ok_indexer_throttle_95_1s_1c_1i.test"}
-    ],
     "N1QL": [
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q4_20M_unique_gsi_moi_ok_1s_1c_1i.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_flatten_overlap_gsi_moi_ok_1s_1c_1i.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_unique_gsi_moi_ok_1s_1c_1i.test"}
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q4_20M_overlap_gsi_moi_ok_1s_1c_1i.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_flatten_unique_gsi_moi_ok_1s_1c_1i.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_overlap_gsi_moi_ok_1s_1c_1i.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_CI6_20M_moi_ok_indexer_throttle_95_1s_1c_1i.test", "groups": "P1"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q4_20M_unique_gsi_moi_ok_1s_1c_1i.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_flatten_overlap_gsi_moi_ok_1s_1c_1i.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_unique_gsi_moi_ok_1s_1c_1i.test", "groups": "P0"}
     ],
-    "N1QL-Arke-OnDemand": [],
     "GSI-Rebalance": [
         {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_20RR_1s_10c_2irebalance_out_partitioned.test"},
         {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_20RR_1s_10c_2irebalance_in_partitioned.test"},

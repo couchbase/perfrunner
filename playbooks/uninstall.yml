@@ -45,6 +45,7 @@
       state: absent
       name: 'mongodb*'
     when: found_mongodb is succeeded
+    timeout: 300
 
   - name: check if MariaDB is installed
     shell: "dpkg -l | grep MariaDB*"
@@ -56,6 +57,7 @@
       state: absent
       name: 'MariaDB*'
     when: found_mariadb is succeeded
+    timeout: 300
 
   - name: check if couchbase is installed
     shell: "dpkg -l | grep couchbase*"
@@ -67,6 +69,7 @@
       state: absent
       name: 'couchbase*'
     when: found_couchbase is succeeded
+    timeout: 300
 
   - name: removing Couchbase Server files
     file: path={{ couchbase_home }} state=absent

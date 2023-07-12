@@ -531,8 +531,8 @@ class KVWorker(Worker):
             logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
         else:
             logger.info('Finished: {}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
-
-        self.dump_stats()
+        finally:
+            self.dump_stats()
 
 
 class SubDocWorker(KVWorker):
@@ -785,8 +785,8 @@ class ViewWorker(Worker):
             logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
-
-        self.dump_stats()
+        finally:
+            self.dump_stats()
 
 
 class N1QLWorkerFactory:
@@ -907,8 +907,8 @@ class N1QLWorker(Worker):
             logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
-
-        self.dump_stats()
+        finally:
+            self.dump_stats()
 
 
 class WorkloadGen:
@@ -933,7 +933,7 @@ class WorkloadGen:
         locks = [batch_lock, gen_lock]
         worker_type, total_workers = worker_factory(self.ws)
         for sid in range(total_workers):
-            shutdown_event = self.time and Event() or None
+            shutdown_event = Event()
             self.shutdown_events.append(shutdown_event)
             args = (sid, locks, curr_ops, curr_items, deleted_items,
                     current_hot_load_start, timer_elapse, worker_type,
@@ -960,6 +960,7 @@ class WorkloadGen:
 
     def abort(self, *args):
         """Triggers the shutdown event."""
+        logger.info('Aborting workers')
         for shutdown_event in self.shutdown_events:
             if shutdown_event:
                 shutdown_event.set()

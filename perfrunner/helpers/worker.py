@@ -402,7 +402,6 @@ class RemoteWorkerManager:
     def run_tasks(self, phase):
         if self.test_config.test_case.reset_workers:
             self.reset_workers()
-        self.async_results = []
         sigs, sig_workers = phase.task_sigs(self.workers)
         for sig, worker in zip(sigs, sig_workers):
             logger.info('Running task on {}'.format(worker))
@@ -417,6 +416,7 @@ class RemoteWorkerManager:
                 async_result.get()
             except Exception as e:
                 logger.info("Exception while getting result {}".format(e))
+        self.async_results = []
         logger.info('All tasks are done')
 
     def download_celery_logs(self):
@@ -425,7 +425,11 @@ class RemoteWorkerManager:
         self.remote.get_celery_logs(self.WORKER_HOME)
 
     def abort(self):
-        pass
+        for result in self.async_results:
+            logger.info('Terminating Celery task (SIGTERM): {}'.format(result))
+            result.revoke(terminate=True, signal='SIGTERM')
+        logger.info('All Celery tasks have been sent SIGTERM')
+        self.wait_for_workers()
 
     def terminate(self):
         logger.info('Terminating Celery workers')
@@ -534,6 +538,7 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.tune_sqlite()
         self.start()
         self.wait_until_workers_are_ready()
+        self.async_results = []
 
     @property
     def is_remote(self) -> bool:

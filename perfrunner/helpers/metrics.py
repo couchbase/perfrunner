@@ -394,9 +394,11 @@ class MetricHelper:
         return couch_views_ops, self._snapshots, metric_info
 
     def query_latency(self, percentile: Number) -> Metric:
-        metric_id = self.test_config.name
-        title = '{}th percentile query latency (ms), {}'.format(percentile,
-                                                                self._title)
+        metric_id = '{}_query_{:g}th'.format(self.test_config.name, percentile)
+        metric_id = metric_id.replace('.', '')
+
+        title = '{:g}th percentile query latency (ms), {}'.format(percentile,
+                                                                  self._title)
         metric_info = self._metric_info(metric_id, title,
                                         order_by=self.query_id, chirality=-1)
 
@@ -418,13 +420,13 @@ class MetricHelper:
         return int(query_latency)
 
     def secondary_scan_latency(self, percentile: Number, title: str = None) -> Metric:
-        metric_id = "{}_{}th".format(self.test_config.name, percentile)
+        metric_id = "{}_{:g}th".format(self.test_config.name, percentile)
         if title is None:
-            title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
-                                                                             self._title)
+            title = '{:g}th percentile secondary scan latency (ms), {}'.format(percentile,
+                                                                               self._title)
         else:
-            title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
-                                                                             title)
+            title = '{:g}th percentile secondary scan latency (ms), {}'.format(percentile,
+                                                                               title)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
         metric_info['category'] = "lat"
 
@@ -446,9 +448,9 @@ class MetricHelper:
     def secondary_scan_latency_value(self, scan_latency,
                                      percentile: Number, title: str = None,
                                      update_category: bool = True) -> Metric:
-        metric_id = "{}_{}th".format(self.test_config.name, percentile)
-        title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
-                                                                         title)
+        metric_id = "{}_{:g}th".format(self.test_config.name, percentile)
+        title = '{:g}th percentile secondary scan latency (ms), {}'.format(percentile,
+                                                                           title)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
         if update_category:
             metric_info['category'] = "lat"
@@ -462,13 +464,13 @@ class MetricHelper:
                    operation: str,
                    percentile: Number = 99.9,
                    collector: str = 'spring_latency') -> Metric:
-        metric_id = '{}_{}_{}th'.format(self.test_config.name,
-                                        operation,
-                                        percentile)
+        metric_id = '{}_{}_{:g}th'.format(self.test_config.name,
+                                          operation,
+                                          percentile)
         metric_id = metric_id.replace('.', '')
-        title = '{}th percentile {} {}'.format(percentile,
-                                               operation.upper(),
-                                               self._title)
+        title = '{:g}th percentile {} {}'.format(percentile,
+                                                 operation.upper(),
+                                                 self._title)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
 
         latency = self._kv_latency(operation, percentile, collector)
@@ -493,8 +495,8 @@ class MetricHelper:
         return round(latency, 2)
 
     def observe_latency(self, percentile: Number) -> Metric:
-        metric_id = '{}_{}th'.format(self.test_config.name, percentile)
-        title = '{}th percentile {}'.format(percentile, self._title)
+        metric_id = '{}_{:g}th'.format(self.test_config.name, percentile)
+        title = '{:g}th percentile {}'.format(percentile, self._title)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
 
         timings = []

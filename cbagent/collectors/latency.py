@@ -33,7 +33,7 @@ class KVLatency(Latency):
 
     METRICS = "latency_get", "latency_set", "latency_total_get", "latency_total_set"
 
-    PATTERN = '*-worker-*'
+    PATTERN = '*kv-worker-*'
 
     def collect(self):
         pass

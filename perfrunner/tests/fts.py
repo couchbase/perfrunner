@@ -175,7 +175,7 @@ class FTSTest(JTSTest):
         cb_version = result["nodes"][0]["version"].split("-")[0]
         cb_build = result["nodes"][0]["version"].split("-")[1]
         logger.info("This is the version {} and build {}".format(cb_version, cb_build))
-        if cb_version >= "7.5.0" and int(cb_build) < 3699:
+        if cb_version == "7.5.0" and int(cb_build) < 3699:
             self.fts_index_name_flag = True
         else:
             self.fts_index_name_flag = False

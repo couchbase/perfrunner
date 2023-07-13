@@ -264,7 +264,7 @@ class SyncGatewayStats(Collector):
 
         self.cg_settings = test.settings.syncgateway_settings
         if test.cluster_spec.infrastructure_syncgateways:
-            self.hosts = test.cluster_spec.sgw_servers
+            self.hosts = test.cluster_spec.sgw_servers[:int(self.cg_settings.nodes)]
         else:
             self.hosts = test.cluster_spec.servers[:int(self.cg_settings.nodes)]
         self.rest = rest.RestHelper(test.cluster_spec, test.test_config)

@@ -127,7 +127,7 @@ class SGPerfTest(PerfTest):
                 shutil.rmtree(self.CBLITE_LOG_DIR, ignore_errors=True)
             os.makedirs(self.CBLITE_LOG_DIR)
             for client in self.cluster_spec.workers[:int(
-                                                     self.settings.syncgateway_settings.clients)]:
+                    self.settings.syncgateway_settings.clients)]:
                 for instance_id in range(int(
                                          self.settings.syncgateway_settings.instances_per_client)):
                     self.remote.get_cblite_logs(client, instance_id, self.CBLITE_LOG_DIR)
@@ -1434,28 +1434,30 @@ class DeltaSync(SGPerfTest):
         self.download_ycsb()
 
         if self.test_config.syncgateway_settings.deltasync_cachehit_ratio == '100':
-            self.start_cblite(port='4985', db_name='db1')
-            self.start_cblite(port='4986', db_name='db2')
+            self.start_cblite(port='4985', db_name='db-1')
+            self.start_cblite(port='4986', db_name='db-2')
         else:
-            self.start_cblite(port='4985', db_name='db')
+            self.start_cblite(port='4985', db_name='db-1')
         self.start_memcached()
         self.load_docs()
         sleep(20)
         if self.test_config.syncgateway_settings.deltasync_cachehit_ratio == '100':
-            self.cblite_replicate(cblite_db='db1')
-            self.cblite_replicate(cblite_db='db2')
+            self.cblite_replicate(cblite_db='db-1')
+            self.cblite_replicate(cblite_db='db-2')
         else:
-            self.cblite_replicate(cblite_db='db')
+            self.cblite_replicate(cblite_db='db-1')
         self.post_deltastats()
         self.run_test()
 
         if self.test_config.syncgateway_settings.deltasync_cachehit_ratio == '100':
-            self.cblite_replicate(cblite_db='db1')
+            self.cblite_replicate(cblite_db='db-1')
             bytes_transferred_1 = self.get_bytes_transfer()
-            replication_time, docs_replicated, success_code = self.cblite_replicate(cblite_db='db2')
+            replication_time, docs_replicated, success_code = self.cblite_replicate(
+                cblite_db='db-2')
         else:
             bytes_transferred_1 = self.get_bytes_transfer()
-            replication_time, docs_replicated, success_code = self.cblite_replicate(cblite_db='db')
+            replication_time, docs_replicated, success_code = self.cblite_replicate(
+                cblite_db='db-1')
 
         if success_code == 'SUCCESS':
             self.post_deltastats()
@@ -2188,7 +2190,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             if sgw_push_load_time and sgw_push_load_docs and sgw_pull_load_time and \
                     sgw_pull_load_docs:
                 return sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, \
-                       sgw_pull_load_docs
+                    sgw_pull_load_docs
             else:
                 logger.info("PUSH time: {}, PUSH docs: {}, PULL time: {}, PULL docs: {}".format(
                     sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, sgw_pull_load_docs
@@ -2377,8 +2379,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
         self.remote.modify_tcp_settings()
         self.download_ycsb()
         self.remote.build_syncgateway_ycsb(
-           worker_home=self.worker_manager.WORKER_HOME,
-           ycsb_instances=int(self.test_config.syncgateway_settings.instances_per_client))
+            worker_home=self.worker_manager.WORKER_HOME,
+            ycsb_instances=int(self.test_config.syncgateway_settings.instances_per_client))
         self.setup_cblite()
         self.start_memcached()
         self.load_users()

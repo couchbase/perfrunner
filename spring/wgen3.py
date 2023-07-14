@@ -3,6 +3,7 @@ import os
 import signal
 import time
 from multiprocessing import Event, Lock, Manager, Process, Value
+from pathlib import Path
 from threading import Timer
 from typing import Callable, List, Tuple, Union
 
@@ -121,10 +122,11 @@ class Worker:
 
     NAME = 'worker'
 
-    def __init__(self, workload_settings, target_settings, shutdown_event=None):
+    def __init__(self, workload_settings, target_settings, shutdown_event=None, workload_id=0):
         self.ws = workload_settings
         self.ts = target_settings
         self.shutdown_event = shutdown_event
+        self.workload_id = workload_id
         self.sid = 0
 
         self.next_report = 0.05  # report after every 5% of completion
@@ -439,7 +441,10 @@ class Worker:
         random.seed(seed=self.sid * 9901)
 
     def dump_stats(self):
-        self.reservoir.dump(filename='{}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
+        stat_dir = Path('./spring_latency/master_{}/'.format(self.ts.node))
+        stat_dir.mkdir(parents=True, exist_ok=True)
+        stat_filename = '{}-{}-{}-{}'.format(self.NAME, self.workload_id, self.sid, self.ts.bucket)
+        self.reservoir.dump(filename=stat_dir / stat_filename)
 
 
 class KVWorker(Worker):
@@ -890,10 +895,11 @@ class AuxillaryWorker:
 
     NAME = 'aux-worker'
 
-    def __init__(self, workload_settings, target_settings, shutdown_event=None):
+    def __init__(self, workload_settings, target_settings, shutdown_event=None, workload_id=0):
         self.ws = workload_settings
         self.ts = target_settings
         self.shutdown_event = shutdown_event
+        self.workload_id = workload_id
         self.sid = 0
         self.next_report = 0.05  # report after every 5% of completion
         self.init_db()
@@ -1054,8 +1060,8 @@ class N1QLWorker(Worker):
 
     NAME = 'query-worker'
 
-    def __init__(self, workload_settings, target_settings, shutdown_event=None):
-        super().__init__(workload_settings, target_settings, shutdown_event)
+    def __init__(self, workload_settings, target_settings, shutdown_event=None, workload_id=0):
+        super().__init__(workload_settings, target_settings, shutdown_event, workload_id)
         self.new_queries = N1QLQueryGen3(workload_settings.n1ql_queries,
                                          workload_settings.n1ql_query_weight)
         self.reservoir = Reservoir(num_workers=self.ws.n1ql_workers)
@@ -1339,8 +1345,8 @@ class ViewWorker(Worker):
 
     NAME = 'query-worker'
 
-    def __init__(self, workload_settings, target_settings, shutdown_event):
-        super().__init__(workload_settings, target_settings, shutdown_event)
+    def __init__(self, workload_settings, target_settings, shutdown_event, workload_id=0):
+        super().__init__(workload_settings, target_settings, shutdown_event, workload_id)
         self.delta = 0.0
         self.op_delay = 0.0
         self.batch_duration = 0.0
@@ -1451,13 +1457,14 @@ class ViewWorkerFactory:
 
 class WorkloadGen:
 
-    def __init__(self, workload_settings, target_settings, timer=None, *args):
+    def __init__(self, workload_settings, target_settings, timer=None, instance=0):
         self.ws = workload_settings
         self.ts = target_settings
         self.time = timer
         self.timer = self.time and Timer(self.time, self.abort) or None
         self.shutdown_events = []
         self.worker_processes = []
+        self.workload_id = instance
 
     def start_workers(self,
                       worker_factory,
@@ -1474,12 +1481,12 @@ class WorkloadGen:
             self.shutdown_events.append(shutdown_event)
             args = (sid, locks, curr_ops, shared_dict,
                     current_hot_load_start, timer_elapse, worker_type,
-                    self.ws, self.ts, shutdown_event)
+                    self.ws, self.ts, shutdown_event, self.workload_id)
 
             def run_worker(sid, locks, curr_ops, shared_dict,
                            current_hot_load_start, timer_elapse, worker_type,
-                           ws, ts, shutdown_event):
-                worker = worker_type(ws, ts, shutdown_event)
+                           ws, ts, shutdown_event, wid):
+                worker = worker_type(ws, ts, shutdown_event, wid)
                 worker.run(sid, locks, curr_ops, shared_dict, current_hot_load_start, timer_elapse)
 
             worker_process = Process(target=run_worker, args=args)

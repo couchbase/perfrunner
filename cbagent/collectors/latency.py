@@ -1,6 +1,6 @@
 import asyncio
 import csv
-import glob
+from pathlib import Path
 from typing import Iterator
 
 from aiohttp import ClientSession, TCPConnector
@@ -14,6 +14,10 @@ class Latency(Collector):
     COLLECTOR = "latency"
 
     METRICS = ()
+
+    def __init__(self, settings):
+        super().__init__(settings)
+        self.stat_dir = 'spring_latency/master_{}'.format(self.master_node)
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -39,11 +43,14 @@ class KVLatency(Latency):
         pass
 
     def get_remote_stat_files(self):
+        Path(self.stat_dir).mkdir(parents=True, exist_ok=True)
+
         def task():
             with cd(self.remote_worker_home), cd('perfrunner'):
-                r = run('stat {}'.format(self.PATTERN), quiet=True)
+                pattern = '{}/{}'.format(self.stat_dir, self.PATTERN)
+                r = run('stat {}'.format(pattern), quiet=True)
                 if not r.return_code:
-                    get(self.PATTERN, local_path='./')
+                    get(pattern, local_path='./{}'.format(self.stat_dir))
 
         execute(parallel(task), hosts=self.workers)
 
@@ -80,7 +87,7 @@ class KVLatency(Latency):
             await asyncio.gather(*[
                 self.post_results(fn, bucket)
                 for bucket in self.get_buckets()
-                for fn in glob.glob(self.PATTERN + bucket)
+                for fn in Path(self.stat_dir).glob(self.PATTERN + bucket)
             ])
 
     def reconstruct(self):

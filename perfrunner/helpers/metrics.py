@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import glob
 import os
 import statistics
-from typing import Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 import numpy as np
 
 from cbagent.stores import PerfStore
 from logger import logger
-from perfrunner.settings import CBMONITOR_HOST
+from perfrunner.settings import CBMONITOR_HOST, ClusterSpec, TestConfig
 from perfrunner.workloads.bigfun.query_gen import Query
+
+if TYPE_CHECKING:
+    from perfrunner.tests import PerfTest
 
 Number = Union[float, int]
 
@@ -38,10 +43,10 @@ def strip(s: str) -> str:
 
 class MetricHelper:
 
-    def __init__(self, test):
+    def __init__(self, test: PerfTest):
         self.test = test
-        self.test_config = test.test_config
-        self.cluster_spec = test.cluster_spec
+        self.test_config: TestConfig = test.test_config
+        self.cluster_spec: ClusterSpec = test.cluster_spec
         if self.test.dynamic_infra:
             self.store = None
         else:
@@ -237,21 +242,26 @@ class MetricHelper:
                 statistics.stdev(bucket_metric_list)))
         return timings
 
-    def avg_ops(self, buckets: List[str] = []) -> Metric:
-        """Generate average total ops/sec metric for a given set of buckets.
+    def avg_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> Metric:
+        """Generate average total ops/sec metric for a given set of buckets on a given cluster.
 
         Example: with 2 buckets doing steady 1000 ops/sec and steady 2000 ops/sec respectively, the
         average total ops/sec is 3000.
 
         If no buckets are specified, use all buckets (the default).
         """
-        metric_info = self._metric_info(chirality=1)
-        throughput = self._avg_ops(buckets)
+        metric_id, title = None, None
+        if len(self.test.cbmonitor_clusters) > 1:
+            metric_id = '{}_cluster{}'.format(self.test_config.name, cluster_idx + 1)
+            title = '{} (cluster {})'.format(self._title, cluster_idx + 1)
+
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+        throughput = self._avg_ops(buckets, cluster_idx)
 
         return throughput, self._snapshots, metric_info
 
-    def _avg_ops(self, buckets: List[str] = []) -> int:
-        """Calculate average total ops/sec for a given set of buckets.
+    def _avg_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> int:
+        """Calculate average total ops/sec for a given set of buckets on a given cluster.
 
         Calculation:
          1. At each time point, sum ops/sec for buckets (to get time series of total ops/sec):
@@ -268,7 +278,7 @@ class MetricHelper:
         buckets = buckets or self._bucket_names
         values = []
         for bucket in buckets:
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
                                          collector='ns_server',
                                          bucket=bucket)
             bucket_values = self.store.get_values(db, metric='ops')
@@ -280,21 +290,26 @@ class MetricHelper:
 
         return int(np.average(values))
 
-    def max_ops(self, buckets: List[str] = []) -> Metric:
-        """Generate P90 total ops/sec metric over a given set of buckets.
+    def max_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> Metric:
+        """Generate P90 total ops/sec metric over a given set of buckets on a given cluster.
 
         Example: with 5 buckets each doing constant 1000 ops/sec, the P90 total ops/sec according
         to this function will be ~5000 (subject to how steady the ops/sec are).
 
         If no buckets are specified, use all buckets (the default).
         """
-        metric_info = self._metric_info(chirality=1)
-        throughput = self._max_ops(buckets)
+        metric_id, title = None, None
+        if len(self.test.cbmonitor_clusters) > 1:
+            metric_id = '{}_cluster{}'.format(self.test_config.name, cluster_idx + 1)
+            title = '{} (cluster {})'.format(self._title, cluster_idx + 1)
+
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+        throughput = self._max_ops(buckets, cluster_idx)
 
         return throughput, self._snapshots, metric_info
 
-    def _max_ops(self, buckets: List[str] = []) -> int:
-        """Calculate P90 total ops/sec over a given set of buckets.
+    def _max_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> int:
+        """Calculate P90 total ops/sec over a given set of buckets on a given cluster.
 
         Calculation:
          1. At each time point, sum ops/sec for buckets (to get time series of total ops/sec):
@@ -311,7 +326,7 @@ class MetricHelper:
         buckets = buckets or self._bucket_names
         values = []
         for bucket in buckets:
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
                                          collector='ns_server',
                                          bucket=bucket)
             return_ops = self.store.get_values(db, metric='ops')
@@ -449,23 +464,29 @@ class MetricHelper:
 
         return couch_views_ops, self._snapshots, metric_info
 
-    def query_latency(self, percentile: Number) -> Metric:
+    def query_latency(self, percentile: Number, cluster_idx: int = 0) -> Metric:
         metric_id = '{}_query_{:g}th'.format(self.test_config.name, percentile)
         metric_id = metric_id.replace('.', '')
 
-        title = '{:g}th percentile query latency (ms), {}'.format(percentile,
-                                                                  self._title)
+        title_prefix = '{:g}th percentile query latency (ms)'.format(percentile)
+
+        if len(self.test.cbmonitor_clusters) > 1:
+            metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
+            title_prefix = '{} (cluster {})'.format(title_prefix, cluster_idx + 1)
+
+        title = '{}, {}'.format(title_prefix, self._title)
+
         metric_info = self._metric_info(metric_id, title,
                                         order_by=self.query_id, chirality=-1)
 
-        latency = self._query_latency(percentile)
+        latency = self._query_latency(percentile, cluster_idx)
 
         return latency, self._snapshots, metric_info
 
-    def _query_latency(self, percentile: Number) -> float:
+    def _query_latency(self, percentile: Number, cluster_idx: int = 0) -> float:
         values = []
         for bucket in self._bucket_names:
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
                                          collector='spring_query_latency',
                                          bucket=bucket)
             values += self.store.get_values(db, metric='latency_query')
@@ -519,28 +540,36 @@ class MetricHelper:
     def kv_latency(self,
                    operation: str,
                    percentile: Number = 99.9,
-                   collector: str = 'spring_latency') -> Metric:
+                   collector: str = 'spring_latency',
+                   cluster_idx: int = 0) -> Metric:
         metric_id = '{}_{}_{:g}th'.format(self.test_config.name,
                                           operation,
                                           percentile)
         metric_id = metric_id.replace('.', '')
-        title = '{:g}th percentile {} {}'.format(percentile,
-                                                 operation.upper(),
-                                                 self._title)
+
+        title_prefix = '{:g}th percentile {}'.format(percentile, operation.upper())
+
+        if len(self.test.cbmonitor_clusters) > 1:
+            metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
+            title_prefix = '{} (cluster {})'.format(title_prefix, cluster_idx + 1)
+
+        title = '{} {}'.format(title_prefix, self._title)
+
         metric_info = self._metric_info(metric_id, title, chirality=-1)
 
-        latency = self._kv_latency(operation, percentile, collector)
+        latency = self._kv_latency(operation, percentile, collector, cluster_idx)
 
         return latency, self._snapshots, metric_info
 
     def _kv_latency(self,
                     operation: str,
                     percentile: Number,
-                    collector: str) -> float:
+                    collector: str,
+                    cluster_idx: int = 0) -> float:
         timings = []
         metric = 'latency_{}'.format(operation)
         for bucket in self._bucket_names:
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
                                          collector=collector,
                                          bucket=bucket)
             timings += self.store.get_values(db, metric=metric)

@@ -11,7 +11,6 @@ couchbase1 =
         ec2.ec2_cluster_1.ec2_node_group_2.2:index
         ec2.ec2_cluster_1.ec2_node_group_2.3:n1ql
         ec2.ec2_cluster_1.ec2_node_group_2.4:n1ql
-        ec2.ec2_cluster_1.ec2_node_group_2.5:index
 
 [clients]
 workers1 =
@@ -35,7 +34,7 @@ iops = 16000
 
 [ec2_node_group_2]
 instance_type = c5.2xlarge
-instance_capacity = 5
+instance_capacity = 4
 volume_size = 1000
 iops = 16000
 
@@ -58,6 +57,6 @@ ssh = root:couchbase
 
 [parameters]
 OS = Amazon Linux 2
-CPU = Data: m5.2xlarge (8 vCPU), Analytics: c5.2xlarge (8 vCPU)
-Memory = Data: 32GB, Index/N1ql: 16GB
-Disk = EBS gp3, 300GB, 16000 IOPS
+CPU = Data: m5.2xlarge (8 vCPU), Index/Query: c5.2xlarge (8 vCPU)
+Memory = Data: 32GB, Index/Query: 16GB
+Disk = EBS gp3, 1000GB, 16000 IOPS

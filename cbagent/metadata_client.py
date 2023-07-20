@@ -36,7 +36,7 @@ class RestClient:
 
     @interrupt
     def get(self, url, params):
-        r = self.session.get(url=url, params=params)
+        r = self.session.get(url=url, params=params, stream=True)
         if r.status_code == 500:
             raise InternalServerError(url)
         return r.json()
@@ -80,9 +80,6 @@ class MetadataClient(RestClient):
         return self.get(url, params)
 
     def add_cluster(self):
-        if self.settings.cluster in self.get_clusters():
-            return
-
         url = self.base_url + "/add_cluster/"
         data = {"name": self.settings.cluster}
 

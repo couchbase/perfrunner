@@ -1,0 +1,46 @@
+[test_case]
+test = perfrunner.tests.rebalance.FailureDetectionTest
+
+[showfast]
+title = Failure detection time (s), 10 -> 9, 30 bucket x 3.3M x 2KB, 120K ops/sec
+component = reb
+category = failover
+orderby = 00020
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 10
+online_cores = 6
+num_buckets = 30
+
+[bucket]
+failover_min = 1
+
+[load]
+items = 3333333
+size = 2048
+workers = 5
+
+[hot_load]
+items = 3333333
+workers = 5
+working_set = 5
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 4000
+items = 3333333
+workers = 24
+working_set = 5
+working_set_access = 98
+
+[rebalance]
+failed_nodes = 1
+start_after = 300
+stop_after = 300
+
+[clients]
+python_client = 3.2.1

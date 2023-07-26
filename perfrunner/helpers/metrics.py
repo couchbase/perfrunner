@@ -119,6 +119,7 @@ class MetricHelper:
             return query_id
 
     def avg_n1ql_throughput(self, master_node: str) -> Metric:
+        """Generate cluster total query throughput metric."""
         metric_id = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
 
@@ -128,6 +129,12 @@ class MetricHelper:
         return throughput, self._snapshots, metric_info
 
     def _avg_n1ql_throughput(self, master_node: str) -> int:
+        """Calculate cluster total queries/sec.
+
+        Calculation:
+         1. Sum up total query requests over all query nodes.
+         2. Divide by access phase time.
+        """
         test_time = self.test_config.access_settings.time
         total_requests = 0
         for query_node in self.test.rest.get_active_nodes_by_role(master_node, 'n1ql'):
@@ -230,31 +237,80 @@ class MetricHelper:
                 statistics.stdev(bucket_metric_list)))
         return timings
 
-    def avg_ops(self) -> Metric:
+    def avg_ops(self, buckets: List[str] = []) -> Metric:
+        """Generate average total ops/sec metric for a given set of buckets.
+
+        Example: with 2 buckets doing steady 1000 ops/sec and steady 2000 ops/sec respectively, the
+        average total ops/sec is 3000.
+
+        If no buckets are specified, use all buckets (the default).
+        """
         metric_info = self._metric_info(chirality=1)
-        throughput = self._avg_ops()
+        throughput = self._avg_ops(buckets)
 
         return throughput, self._snapshots, metric_info
 
-    def _avg_ops(self) -> int:
+    def _avg_ops(self, buckets: List[str] = []) -> int:
+        """Calculate average total ops/sec for a given set of buckets.
+
+        Calculation:
+         1. At each time point, sum ops/sec for buckets (to get time series of total ops/sec):
+            [
+                bucket-1 ops/sec at t0 + bucket-2 ops/sec at t0 + ... + bucket-N ops/sec at t0,
+                bucket-1 ops/sec at t1 + bucket-2 ops/sec at t1 + ... + bucket-N ops/sec at t1,
+                ...,
+                bucket-1 ops/sec at tN + bucket-2 ops/sec at tN + ... + bucket-N ops/sec at tN
+            ]
+         2. Take average ops/sec of this new time series.
+
+        If no buckets are specified, use all buckets (the default).
+        """
+        buckets = buckets or self._bucket_names
         values = []
-        for bucket in self._bucket_names:
+        for bucket in buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
-            values += self.store.get_values(db, metric='ops')
+            bucket_values = self.store.get_values(db, metric='ops')
+            if values:
+                sum_ops = [ops1 + ops2 for ops1, ops2 in zip(values, bucket_values)]
+                values = sum_ops
+            else:
+                values = bucket_values
 
         return int(np.average(values))
 
-    def max_ops(self) -> Metric:
+    def max_ops(self, buckets: List[str] = []) -> Metric:
+        """Generate P90 total ops/sec metric over a given set of buckets.
+
+        Example: with 5 buckets each doing constant 1000 ops/sec, the P90 total ops/sec according
+        to this function will be ~5000 (subject to how steady the ops/sec are).
+
+        If no buckets are specified, use all buckets (the default).
+        """
         metric_info = self._metric_info(chirality=1)
-        throughput = self._max_ops()
+        throughput = self._max_ops(buckets)
 
         return throughput, self._snapshots, metric_info
 
-    def _max_ops(self) -> int:
+    def _max_ops(self, buckets: List[str] = []) -> int:
+        """Calculate P90 total ops/sec over a given set of buckets.
+
+        Calculation:
+         1. At each time point, sum ops/sec for buckets (to get time series of total ops/sec):
+            [
+                bucket-1 ops/sec at t0 + bucket-2 ops/sec at t0 + ... + bucket-N ops/sec at t0,
+                bucket-1 ops/sec at t1 + bucket-2 ops/sec at t1 + ... + bucket-N ops/sec at t1,
+                ...,
+                bucket-1 ops/sec at tN + bucket-2 ops/sec at tN + ... + bucket-N ops/sec at tN
+            ]
+         2. Take P90 ops/sec of this new time series.
+
+        If no buckets are specified, use all buckets (the default).
+        """
+        buckets = buckets or self._bucket_names
         values = []
-        for bucket in self._bucket_names:
+        for bucket in buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
@@ -841,7 +897,8 @@ class MetricHelper:
                             executed = line.split()[1]
         return int(executed)
 
-    def _ycsb_perc_calc(self, _temp: [], io_type: str, percentile: str, lat_dic: {}, _fc: int):
+    def _ycsb_perc_calc(self, _temp: List[Number], io_type: str, percentile: Number,
+                        lat_dic: Dict[str, Number], _fc: int) -> Dict[str, Number]:
         pio_type = '{}th Percentile {}'.format(percentile, io_type)
         p_lat = round(np.percentile(_temp, percentile) / 1000, 3)
         if _fc > 1:
@@ -849,7 +906,8 @@ class MetricHelper:
         lat_dic.update({pio_type: p_lat})
         return lat_dic
 
-    def _ycsb_avg_calc(self, _temp: [], io_type: str, lat_dic: {}, _fc: int):
+    def _ycsb_avg_calc(self, _temp: List[Number], io_type: str, lat_dic: Dict[str, Number],
+                       _fc: int) -> Dict[str, Number]:
         aio_type = 'Average {}'.format(io_type)
         a_lat = round((sum(_temp) / len(_temp)) / 1000, 3)
         if _fc > 1:

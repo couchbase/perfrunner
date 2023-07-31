@@ -737,7 +737,8 @@ class CapellaTerraform(Terraform):
             logger.info('Capella cluster successfully queued for deletion.')
 
     def get_available_cidr(self):
-        resp = self.api_client.get_deployment_options(self.tenant_id)
+        resp = self.api_client.get_deployment_options(self.tenant_id,
+                                                      self.infra_spec.capella_backend.lower())
         return resp.json().get('suggestedCidr')
 
     def get_deployed_cidr(self, cluster_id):

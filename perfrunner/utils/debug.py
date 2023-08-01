@@ -101,7 +101,7 @@ def check_if_log_file_exists(bucket_name: str, file_key: str):
         if returncode == 0:
             return
         retries -= 1
-    logger.interupt('Log file not found due to the following error: {}'.format(stdout))
+    logger.interrupt('Log file not found due to the following error: {}'.format(stdout))
 
 
 def get_capella_cluster_logs(cluster_spec: ClusterSpec, s3_bucket_name: str):

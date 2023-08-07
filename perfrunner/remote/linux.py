@@ -303,14 +303,20 @@ class RemoteLinux(Remote):
         for pattern in self.PROCESS_PATTERNS:
             run('pkill -9 -f {}'.format(pattern), quiet=True)
 
-        logger.info('Killing processes: {}'.format(', '.join(self.PROCESSES)))
-        run('killall -9 {}'.format(' '.join(self.PROCESSES)), quiet=True)
+        self._killall(self.PROCESSES)
 
     def shutdown(self, host):
         with settings(host_string=host):
-            logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
-            run('killall -9 {}'.format(' '.join(self.PROCESSES)),
-                warn_only=True, quiet=True)
+            self._killall(self.PROCESSES)
+
+    def kill_memcached(self, host: str):
+        # Kill memcached with SIGSTOP to ensure it doesnt get restarted before the failover
+        with settings(host_string=host):
+            self._killall(('memcached',), signal='SIGSTOP')
+
+    def _killall(self, processes, signal: str = 'SIGKILL'):
+        logger.info('Killing {}'.format(', '.join(processes)))
+        run('killall -{} {}'.format(signal, ' '.join(processes)), warn_only=True, quiet=True)
 
     def set_write_permissions(self, mask: str, host: str, path: str):
         with settings(host_string=host):

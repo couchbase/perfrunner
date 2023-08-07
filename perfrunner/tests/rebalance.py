@@ -539,6 +539,22 @@ class DiskFailureDetectionTest(FailureDetectionTest):
         super().__exit__(exc_type, exc_val, exc_tb)
 
 
+class MemcachedFailureDetectionTest(AutoFailoverAndFailureDetectionTest):
+
+    def _failover(self, *args):
+        clusters = self.cluster_spec.clusters
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
+            self.t_failure = time.time()
+            for node in failed:
+                self.remote.kill_memcached(node)
+
+
 class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
 
     def access_bg(self, *args):

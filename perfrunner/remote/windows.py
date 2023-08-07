@@ -74,18 +74,23 @@ class RemoteWindows(Remote):
 
     @all_servers
     def kill_processes(self):
-        logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
-        run('taskkill /F /T /IM {}'.format(' /IM '.join(self.PROCESSES)),
-            warn_only=True, quiet=True)
+        self._taskkill(self.PROCESSES)
 
     def shutdown(self, host):
         with settings(host_string=host):
-            logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
-            run('taskkill /F /T /IM {}'.format(' /IM '.join(self.PROCESSES)),
-                warn_only=True, quiet=True)
+            self._taskkill(self.PROCESSES)
 
     def kill_installer(self):
-        run('taskkill /F /T /IM setup.exe', warn_only=True, quiet=True)
+        self._taskkill(('setup.exe',))
+
+    def kill_memcached(self, host: str):
+        with settings(host_string=host):
+            self._taskkill(('memcached',))
+
+    def _taskkill(self, processes):
+        logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
+        run('taskkill /F /T /IM {}'.format(' /IM '.join(self.PROCESSES)),
+            warn_only=True, quiet=True)
 
     def uninstall_exe(self, local_ip: str):
         script = './setup.exe -s -f1"C:\\uninstall.iss"'

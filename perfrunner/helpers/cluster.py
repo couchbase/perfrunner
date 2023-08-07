@@ -654,8 +654,7 @@ class ClusterManager:
 
     def enable_auto_failover(self):
         enabled = self.test_config.bucket.autofailover_enabled
-        failover_min = self.test_config.bucket.failover_min
-        failover_max = self.test_config.bucket.failover_max
+        failover_timeouts = self.test_config.bucket.failover_timeouts
         if self.capella_infra:
             return
         if self.dynamic_infra:
@@ -667,16 +666,15 @@ class ClusterManager:
             cluster['spec']['cluster']['autoFailoverOnDataDiskIssuesTimePeriod'] = \
                 '{}s'.format(10)
             cluster['spec']['cluster']['autoFailoverTimeout'] = \
-                '{}s'.format(failover_max)
+                '{}s'.format(failover_timeouts[-1])
             self.remote.update_cluster_config(cluster)
         else:
             for master in self.cluster_spec.masters:
-                self.rest.set_auto_failover(master, enabled, failover_min, failover_max)
+                self.rest.set_auto_failover(master, enabled, failover_timeouts)
 
     def disable_auto_failover(self):
         enabled = 'false'
-        failover_min = self.test_config.bucket.failover_min
-        failover_max = self.test_config.bucket.failover_max
+        failover_timeouts = self.test_config.bucket.failover_timeouts
         if self.capella_infra:
             return
         if self.dynamic_infra:
@@ -687,11 +685,11 @@ class ClusterManager:
             cluster['spec']['cluster']['autoFailoverOnDataDiskIssuesTimePeriod'] = \
                 '{}s'.format(10)
             cluster['spec']['cluster']['autoFailoverTimeout'] = \
-                '{}s'.format(failover_max)
+                '{}s'.format(failover_timeouts[-1])
             self.remote.update_cluster_config(cluster)
         else:
             for master in self.cluster_spec.masters:
-                self.rest.set_auto_failover(master, enabled, failover_min, failover_max)
+                self.rest.set_auto_failover(master, enabled, failover_timeouts)
 
     def wait_until_warmed_up(self):
         if self.test_config.bucket.bucket_type in ('ephemeral', 'memcached'):

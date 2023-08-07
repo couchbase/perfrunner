@@ -18,7 +18,6 @@ enable_cpu_cores = false
 eviction_policy = fullEviction
 backend_storage = magma
 failover_min = 120
-failover_max = 600
 
 [bucket_extras]
 num_reader_threads = 64

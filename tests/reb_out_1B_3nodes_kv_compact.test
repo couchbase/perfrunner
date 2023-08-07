@@ -15,7 +15,6 @@ num_buckets = 1
 [bucket]
 eviction_policy = fullEviction
 failover_min = 120
-failover_max = 600
 
 [load]
 items = 150000000

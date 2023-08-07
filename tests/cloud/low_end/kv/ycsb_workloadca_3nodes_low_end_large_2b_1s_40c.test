@@ -21,7 +21,6 @@ config = collections/2buckets_1scope_20collections_basic.json
 [bucket]
 replica_number = 1
 failover_min = 120
-failover_max = 600
 
 [secondary]
 indexer.settings.storage_mode = plasma

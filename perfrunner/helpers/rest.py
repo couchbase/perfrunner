@@ -730,15 +730,14 @@ class DefaultRestHelper(RestBase):
             api = 'http://{}:8091/diag/eval'.format(host)
         self.post(url=api, data=cmd)
 
-    def set_auto_failover(self, host: str, enabled: str,
-                          failover_min: int, failover_max: int):
+    def set_auto_failover(self, host: str, enabled: str, failover_timeouts: list[int]):
         logger.info('Setting auto-failover to: {}'.format(enabled))
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18091/settings/autoFailover'.format(host)
         else:
             api = 'http://{}:8091/settings/autoFailover'.format(host)
 
-        for timeout in failover_min, failover_max:
+        for timeout in failover_timeouts:
             data = {'enabled': enabled,
                     'timeout': timeout,
                     'failoverOnDataDiskIssues[enabled]': enabled,
@@ -747,6 +746,8 @@ class DefaultRestHelper(RestBase):
             r = self._post(url=api, data=data)
             if r.status_code == 200:
                 break
+            else:
+                logger.warn('Timeout rejected: {}, Reason: {}'.format(timeout, r.reason))
 
     def get_certificate(self, host: str) -> str:
         logger.info('Getting remote certificate')

@@ -14,7 +14,6 @@ ipv6 = 1
 
 [bucket]
 failover_min = 60
-failover_max = 120
 
 [load]
 items = 100000000

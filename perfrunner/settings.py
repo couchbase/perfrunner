@@ -823,8 +823,7 @@ class BucketSettings:
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
     BUCKET_TYPE = 'membase'  # alt: ephemeral
     AUTOFAILOVER_ENABLED = 'true'
-    FAILOVER_MIN = 5
-    FAILOVER_MAX = 30
+    DEFAULT_FAILOVER_MIN_TIMEOUTS = [1, 5, 30]  # sec
     BACKEND_STORAGE = None
     CONFLICT_RESOLUTION_TYPE = 'seqno'
     FLUSH = True
@@ -852,14 +851,15 @@ class BucketSettings:
 
         self.compression_mode = options.get('compression_mode')
 
-        if options.get('autofailover_enabled', self.AUTOFAILOVER_ENABLED).lower() == "false":
-            self.autofailover_enabled = 'false'
+        self.autofailover_enabled = options.get('autofailover_enabled',
+                                                self.AUTOFAILOVER_ENABLED).lower()
+
+        failover_min = options.get('failover_min')
+        if failover_min:
+            self.failover_timeouts = [int(failover_min)]
+            self.failover_timeouts.extend(self.DEFAULT_FAILOVER_MIN_TIMEOUTS)
         else:
-            self.autofailover_enabled = 'true'
-
-        self.failover_min = int(options.get('failover_min', self.FAILOVER_MIN))
-
-        self.failover_max = int(options.get('failover_max', self.FAILOVER_MAX))
+            self.failover_timeouts = self.DEFAULT_FAILOVER_MIN_TIMEOUTS
 
         self.backend_storage = options.get('backend_storage', self.BACKEND_STORAGE)
 

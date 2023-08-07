@@ -17,7 +17,6 @@ enable_cpu_cores = false
 [bucket]
 eviction_policy = fullEviction
 failover_min = 120
-failover_max = 600
 
 [bucket_extras]
 num_reader_threads = 64

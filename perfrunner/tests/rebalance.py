@@ -638,3 +638,72 @@ class RebalanceMultiBucketKVTest(RebalanceKVTest):
         'memory': True,
         'ns_server_system': True,
         'latency': True}
+
+
+class OnlineMigrationWithRebalanceTest(RebalanceKVTest):
+
+    """Do only a single node migration to monitor isolated migration Metrics."""
+
+    def pre_rebalance(self):
+        # Update storage backend for each bucket to magma or couchstore based
+        # on the initial set storage backend
+        current_storage_backend = self.test_config.bucket.backend_storage
+        new_storage_backend = 'magma'
+        if current_storage_backend and current_storage_backend == 'magma':
+            new_storage_backend = 'couchstore'
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                logger.info('Storage backend before migration: {}'.format(
+                    self.rest.get_bucket_storage_backend_info(master, bucket)))
+                self.rest.update_bucket_storage_backend(master, bucket, new_storage_backend)
+        return super().pre_rebalance()
+
+    def post_rebalance(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                logger.info('Storage backend after rebalance: {}'.format(
+                    self.rest.get_bucket_storage_backend_info(master, bucket)))
+        return super().post_rebalance()
+
+    @with_stats
+    @with_profiles
+    def rebalance(self, services=None):
+        self.pre_rebalance()
+        self.rebalance_time = self._rebalance(services)
+        self.post_rebalance()
+
+    def _report_kpi(self, *args):
+        self.reporter.post(
+            *self.metrics.elapsed_time(self.rebalance_time)
+        )
+
+
+class OnlineMigrationDurabilityTest(OnlineMigrationWithRebalanceTest):
+
+    ALL_HOSTNAMES = True
+
+    COLLECTORS = {'latency': True}
+
+    def _report_kpi(self, *args):
+        for operation in ('set', 'durable_set'):
+            for metric in self.metrics.kv_latency(operation=operation, percentiles=[50.0, 99.9]):
+                self.reporter.post(*metric)
+
+    @with_stats
+    @with_profiles
+    def rebalance(self, services=None):
+        self.access_bg()
+        self.pre_rebalance()
+        self.rebalance_time = self._rebalance(services)
+        self.post_rebalance()
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.hot_load()
+        self.reset_kv_stats()
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()

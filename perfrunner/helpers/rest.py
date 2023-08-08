@@ -894,6 +894,25 @@ class DefaultRestHelper(RestBase):
         }
         return self.post(url=api, data=data)
 
+    def update_bucket_storage_backend(self, host: str, bucket: str, mode: str):
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/buckets/{}'.format(host, bucket)
+        else:
+            api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
+        data = {
+            'storageBackend': mode
+        }
+        response = self.post(url=api, data=data)
+        response.raise_for_status()
+
+    def get_bucket_storage_backend_info(self, host: str, bucket: str) -> dict:
+        bucket_info = self.get_bucket_info(host, bucket)
+        storage_backend_info = {
+            'storageBackend': bucket_info['storageBackend'],
+            'nodes': {node['otpNode']: node.get('storageBackend') for node in bucket_info['nodes']}
+        }
+        return storage_backend_info
+
     def exec_n1ql_statement(self, host: str, statement: str, query_context: str = None) -> dict:
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18093/query/service'.format(host)

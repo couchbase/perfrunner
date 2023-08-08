@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.rebalance.OnlineMigrationDurabilityTest
+
+[showfast]
+title = Online Migration (min), Couchstore -> Magma, 4 Nodes, 20M x 512B, Unlimited Ops (0/100 R/W), Durability Majority
+component = reb
+category = migration
+orderby = 000004
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 2
+backend_storage = couchstore
+failover_min = 120
+
+[load]
+items = 20000000
+size = 512
+workers = 128
+doc_gen = large
+durability = 0
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+items = 20000000
+workers = 128
+durability = 1
+
+[rebalance]
+nodes_after = 4
+start_after = 300
+stop_after = 300
+swap = 1
+
+[clients]
+python_client = 4.1.9

@@ -339,7 +339,8 @@ class DefaultMonitor(DefaultRestHelper):
         else:
             curr_items = stats['op']['samples'].get('curr_items')
         if curr_items:
-            return curr_items[-1]
+            return self._ignore_system_collection_items(host=host,
+                                                        bucket=bucket, curr_items=curr_items[-1])
         return 0
 
     def _get_num_items_scope_and_collection(self, host: str, bucket: str, scope: str,
@@ -359,19 +360,12 @@ class DefaultMonitor(DefaultRestHelper):
     def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int = None):
         logger.info('Checking the number of items in {}'.format(bucket))
 
-        if (ignore_sys_coll := self.cluster_spec.serverless_infrastructure):
-            logger.info('Serverless infrastructure is being used. '
-                        'Ignoring documents in _system collection.')
-
         if not max_retry:
             max_retry = self.MAX_RETRY
 
         retries = 0
         while retries < max_retry:
             curr_items = self._get_num_items(host, bucket, total=True)
-            if ignore_sys_coll:
-                curr_items = self._ignore_system_collection_items(host, bucket, curr_items)
-
             if curr_items == num_items:
                 break
             else:
@@ -381,24 +375,15 @@ class DefaultMonitor(DefaultRestHelper):
             retries += 1
         else:
             actual_items = self._get_num_items(host, bucket, total=True)
-            if ignore_sys_coll:
-                actual_items = self._ignore_system_collection_items(host, bucket, actual_items)
-
             raise Exception('Mismatch in the number of items: {}'
                             .format(actual_items))
 
     def monitor_num_backfill_items(self, host: str, bucket: str, num_items: int):
         logger.info('Checking the number of items in {}'.format(bucket))
 
-        if (ignore_sys_coll := self.cluster_spec.serverless_infrastructure):
-            logger.info('Serverless infrastructure is being used. '
-                        'Ignoring documents in _system collection.')
-
         t0 = time.time()
         while True:
             curr_items = self._get_num_items(host, bucket, total=True)
-            if ignore_sys_coll:
-                curr_items = self._ignore_system_collection_items(host, bucket, curr_items)
 
             if curr_items == num_items:
                 t1 = time.time()

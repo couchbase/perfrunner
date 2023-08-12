@@ -141,7 +141,7 @@ class SecondaryIndexTest(PerfTest):
                             if index_config.get("num_partition", 0) > 1:
                                 if "meta()" in index_def:
                                     partition_keys = " --scheme KEY" \
-                                                 " --partitionKeys {} ".format(index_def)
+                                        " --partitionKeys {} ".format(index_def)
                                 else:
                                     partition_keys = " --scheme KEY" \
                                                      " --partitionKeys `{}` ".format(index_def)
@@ -294,7 +294,6 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Scan workload applied')
 
     @with_stats
-    @with_profiles
     def cloud_apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
                                  run_in_background=False, is_ssl=False):
         rest_username, rest_password = self.cluster_spec.rest_credentials
@@ -306,14 +305,14 @@ class SecondaryIndexTest(PerfTest):
         if not self.test_config.gsi_settings.disable_perindex_stats:
             logger.info("cbindexperf config file: \n" + config_file_content)
         self.remote.cloud_put_scanfile(self.configfile, self.worker_manager.WORKER_HOME)
-        status = str(self.remote.run_cbindexperf_cloud(path_to_tool, self.index_nodes[0],
-                                                       rest_username, rest_password,
-                                                       self.configfile,
-                                                       self.worker_manager.WORKER_HOME,
-                                                       run_in_background, is_ssl=is_ssl))
+        status = self.remote.run_cbindexperf_cloud(path_to_tool, self.index_nodes[0],
+                                                   rest_username, rest_password,
+                                                   self.configfile,
+                                                   self.worker_manager.WORKER_HOME,
+                                                   run_in_background, is_ssl=is_ssl)
 
         logger.info("scan status {}".format(status))
-        if "Log Level = error" not in status:
+        if status != 0:
             raise Exception('Scan workload could not be applied: ' + str(status))
         else:
             logger.info('Scan workload applied')
@@ -345,7 +344,7 @@ class SecondaryIndexTest(PerfTest):
 
         for index in storage_stats:
             total_num_rec_compressed += index["Stats"]["MainStore"]["num_rec_compressed"] + \
-                                        index["Stats"]["BackStore"]["num_rec_compressed"]
+                index["Stats"]["BackStore"]["num_rec_compressed"]
             total_num_rec_allocs += index["Stats"]["MainStore"]["num_rec_allocs"] + \
                 index["Stats"]["BackStore"]["num_rec_allocs"]
             total_num_rec_frees += index["Stats"]["MainStore"]["num_rec_frees"] + \
@@ -658,7 +657,7 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
     @with_stats
     def build_incrindex_multiple_times(self, num_times):
         numitems = self.test_config.load_settings.items + \
-                   self.test_config.access_settings.items
+            self.test_config.access_settings.items
 
         for i in range(1, num_times + 1):
             self.access()
@@ -1514,7 +1513,7 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         for server in self.index_nodes:
             logger.info("{} : {} Indexes".format(server,
                                                  self.rest.indexes_instances_per_node(server)))
-
+        self.print_index_disk_usage()
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
                                 run_in_background=True)
@@ -1711,7 +1710,7 @@ class InitialIncrementalMovingScanLatencyTestColdScans(InitialIncrementalMovingS
 
 
 class InitialIncrementalMovingScanLatencyTestMixedScans \
-            (InitialIncrementalMovingScanLatencyTestColdScans):
+        (InitialIncrementalMovingScanLatencyTestColdScans):
 
     def change_scan_range(self, iteration):
         working_set = self.test_config.access_settings.working_set / 100

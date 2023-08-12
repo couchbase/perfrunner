@@ -1,4 +1,5 @@
 import copy
+import csv
 import json
 import subprocess
 import threading
@@ -11,10 +12,11 @@ from perfrunner.helpers.local import (
     read_aws_credential,
     run_cbindexperf,
 )
-from perfrunner.helpers.misc import SGPortRange
+from perfrunner.helpers.misc import SGPortRange, pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import CapellaRebalanceTest
+from perfrunner.tests.secondary import SecondaryIndexingScanTest
 from spring.docgen import decimal_fmtr
 
 
@@ -525,3 +527,138 @@ class CloudSecondaryInitalBuildTest(CapellaSecondaryRebalanceOnlyTest):
         build_time = self.build_index()
         logger.info("index build time: {}".format(build_time))
         self.report_kpi(build_time, 'Initial')
+
+
+class CloudSecondaryRebalanceTest(SecondaryIndexingScanTest, CapellaRebalanceTest):
+
+    ALL_HOSTNAMES = True
+
+    """Measure rebalance time for indexer with scan and access workload."""
+
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+
+    def get_config(self):
+        with open('{}'.format(self.configfile)) as config_file:
+            config_data = json.load(config_file)
+        return config_data['ScanSpecs'][0]['NInterval'], config_data['Concurrency']
+
+    def get_throughput(self) -> float:
+        duration = 0
+        lines = 0
+        with open(self.SECONDARY_STATS_FILE, 'r') as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=',')
+            for row in csv_reader:
+                duration += int(row[2].split(":")[1])
+                lines += 1
+        interval, concurrency = self.get_config()
+        logger.info("interval: {}, concurrency: {}, duration: {}".format(interval, concurrency,
+                                                                         duration))
+        return lines * interval / (duration / 1000000000 / concurrency)
+
+    def run(self):
+        self.download_certificate()
+        self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.print_average_rr()
+        self.access_bg()
+        self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
+                                      run_in_background=True, is_ssl=self.is_ssl)
+        if self.test_config.gsi_settings.excludeNode:
+            planner_settings = {"excludeNode": self.test_config.gsi_settings.excludeNode}
+            nodes = self.rest.get_active_nodes_by_role(self.master_node, 'index')
+            for node in nodes:
+                logger.info(f"setting planner settings {planner_settings}")
+                self.rest.set_planner_settings(node, planner_settings)
+                meta = self.rest.get_index_metadata(node)
+                logger.info('Index Metadata: {}'.format(pretty_dict(meta['localSettings'])))
+
+        self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.report_kpi(rebalance_time=True)
+        self.remote.kill_client_process("cbindexperf")
+        self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
+        scan_thr = self.get_throughput()
+        percentile_latencies = self.calculate_scan_latencies()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        self.print_average_rr()
+        self.report_kpi(percentile_latencies, scan_thr)
+
+    @with_stats
+    def rebalance_indexer(self, services="index"):
+        self.rebalance(services)
+
+    def _report_kpi(self,
+                    percentile_latencies=0,
+                    scan_thr: float = 0,
+                    rebalance_time: bool = False):
+
+        if rebalance_time:
+            self.reporter.post(
+                *self.metrics.rebalance_time(self.rebalance_time)
+            )
+        else:
+            title = "Secondary Scan Throughput (scanps) {}" \
+                .format(str(self.test_config.showfast.title).strip())
+            self.reporter.post(
+                *self.metrics.scan_throughput(scan_thr,
+                                              metric_id_append_str="thr",
+                                              title=title)
+            )
+            title = str(self.test_config.showfast.title).strip()
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                           percentile=90,
+                                                           title=title))
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                           percentile=95,
+                                                           title=title))
+
+
+class CloudSecondaryRebalanceTestWithoutScan(CloudSecondaryRebalanceTest):
+
+    def run(self):
+        self.download_certificate()
+        self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.print_average_rr()
+        self.access_bg()
+        if self.test_config.gsi_settings.excludeNode:
+            planner_settings = {"excludeNode": self.test_config.gsi_settings.excludeNode}
+            nodes = self.rest.get_active_nodes_by_role(self.master_node, 'index')
+            for node in nodes:
+                logger.info(f"setting planner settings {planner_settings}")
+                self.rest.set_planner_settings(node, planner_settings)
+                meta = self.rest.get_index_metadata(node)
+                logger.info('Index Metadata: {}'.format(pretty_dict(meta['localSettings'])))
+
+        self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
+        self.print_average_rr()
+        self.report_kpi(rebalance_time=True)

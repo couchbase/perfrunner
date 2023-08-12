@@ -756,6 +756,12 @@ class RemoteLinux(Remote):
             return status
 
     @master_client
+    def kill_client_process(self, process: str):
+        logger.info('Killing the following process: {}'.format(process))
+        with quiet():
+            run("killall -9 {}".format(process))
+
+    @master_client
     def run_cbindexperf_cloud(self, path_to_tool: str, node: str,
                               rest_username: str,
                               rest_password: str, configfile: str,
@@ -768,7 +774,8 @@ class RemoteLinux(Remote):
             port = 8091
             if is_ssl:
                 port = 18091
-            cmdstr = "ulimit -n 20000 && {} -cluster {}:{} -auth=\"{}:{}\" -configfile {} " \
+            ulimitcmdstr = "ulimit -n 20000 && "
+            cmdstr = "{} -cluster {}:{} -auth='{}:{}' -configfile {} " \
                      "-resultfile result.json " \
                      "-statsfile /root/statsfile" \
                 .format(path_to_tool, node, port, rest_username, rest_password, configfile)
@@ -777,14 +784,16 @@ class RemoteLinux(Remote):
             if is_ssl:
                 cmdstr += " -use_tools=true -cacert ./root.pem"
             if run_in_background:
-                cmdstr += " &"
+                cmdstr = ulimitcmdstr + "nohup " + \
+                        cmdstr + " > /tmp/cbindexperf.log < /tmp/cbindexperf.log & sleep 5"
+            else:
+                cmdstr = ulimitcmdstr + cmdstr
             logger.info('To be applied: {}'.format(cmdstr))
             status = run(cmdstr)
-            return status
+            return status.return_code
 
     @master_client
     def get_indexer_heap_profile(self, indexer: str):
-        logger.info('I get here.')
         cmd = 'export GOPATH=$HOME/go; ' \
               'export GOROOT=/usr/local/go; ' \
               'export PATH=$PATH:$GOROOT/bin; ' \

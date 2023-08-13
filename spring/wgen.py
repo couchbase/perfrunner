@@ -2,6 +2,7 @@ import os
 import signal
 import time
 from multiprocessing import Event, Lock, Process, Value
+from pathlib import Path
 from threading import Timer
 from typing import Callable, List, Tuple, Union
 
@@ -118,11 +119,12 @@ class Worker:
 
     NAME = 'worker'
 
-    def __init__(self, workload_settings, target_settings, shutdown_event=None):
+    def __init__(self, workload_settings, target_settings, shutdown_event=None, workload_id=0):
         self.ws = workload_settings
         self.ts = target_settings
         self.shutdown_event = shutdown_event
         self.sid = 0
+        self.workload_id = workload_id
 
         self.next_report = 0.05  # report after every 5% of completion
         self.init_keys()
@@ -365,7 +367,10 @@ class Worker:
         random.seed(seed=self.sid * 9901)
 
     def dump_stats(self):
-        self.reservoir.dump(filename='{}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
+        stat_dir = Path('./spring_latency/master_{}/'.format(self.ts.node))
+        stat_dir.mkdir(parents=True, exist_ok=True)
+        stat_filename = '{}-{}-{}-{}'.format(self.NAME, self.workload_id, self.sid, self.ts.bucket)
+        self.reservoir.dump(filename=stat_dir / stat_filename)
 
 
 class KVWorker(Worker):

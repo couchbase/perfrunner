@@ -486,6 +486,31 @@ class FailureDetectionTest(FailoverTest):
                 self.remote.shutdown(node)
 
 
+class AutoFailoverAndFailureDetectionTest(FailoverTest):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.t_failure = None
+
+    def _report_kpi(self, *args):
+        # Failover time
+        time_map = self.get_rebalance_timings()
+        failover_time = time_map.get('failover')  # Make sure the report measured failover
+        if failover_time and (total_time := time_map.get('total_time')):
+            self.reporter.post(
+                *self.metrics.autofailover_time(total_time * 1000)  # ms
+            )
+
+        # Failure detection time
+        t_failure_detection = self.remote.detect_auto_failover(self.master_node)
+        if t_failure_detection and self.t_failure:
+            t_failure_detection = self.convert_time(t_failure_detection)
+            failure_detection_delta = round(t_failure_detection - self.t_failure, 1)  # sec
+            self.reporter.post(
+                *self.metrics.failure_detection_time(failure_detection_delta)
+            )
+
+
 class DiskFailureDetectionTest(FailureDetectionTest):
 
     def _failover(self, *args):

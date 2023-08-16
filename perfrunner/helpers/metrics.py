@@ -1223,6 +1223,22 @@ class MetricHelper:
 
         return delta, self._snapshots, metric_info
 
+    def failure_detection_time(self, delta: float) -> Metric:
+        title_split = self._title.split(sep=",", maxsplit=1)
+        title = "[{}] Failure detection time (s),{}".format(title_split[0], title_split[1])
+        metric_id = '{}_detection_time'.format(self.test_config.name)
+        metric_info = self._metric_info(metric_id=metric_id, title=title, chirality=-1)
+
+        return delta, self._snapshots, metric_info
+
+    def autofailover_time(self, delta: float) -> Metric:
+        title_split = self._title.split(sep=",", maxsplit=1)
+        title = "[{}] Auto failover time (ms),{}".format(title_split[0], title_split[1])
+        metric_id = '{}_failover_time'.format(self.test_config.name)
+        metric_info = self._metric_info(metric_id=metric_id, title=title, chirality=-1)
+
+        return delta, self._snapshots, metric_info
+
     def scan_throughput(self, throughput: float, metric_id_append_str: str = None,
                         title: str = None, update_category: bool = True) -> Metric:
         metric_info = self._metric_info()

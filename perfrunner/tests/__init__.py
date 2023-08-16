@@ -688,6 +688,7 @@ class PerfTest:
         return ret_stats
 
     def get_rebalance_timings(self):
+        """Get times in seconds for the last successful rebalance/failover task."""
         logger.info("getting rebalance report")
         rebalance_report = self.rest.get_rebalance_report(self.master_node)
         time_map = dict()

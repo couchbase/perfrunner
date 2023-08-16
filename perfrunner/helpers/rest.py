@@ -1882,6 +1882,14 @@ class DefaultRestHelper(RestBase):
         resp = self.post(url=api, json=data)
         return resp.json()
 
+    def get_rebalance_report(self, host: str) -> dict:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/logs/rebalanceReport'.format(host)
+        else:
+            api = 'http://{}:8091/logs/rebalanceReport'.format(host)
+        resp = self.get(url=api)
+        return resp.json()
+
 
 class KubernetesRestHelper(RestBase):
 

@@ -43,6 +43,7 @@ stop_after = 180
 indexes = tests/gsi/index_defs/1bucket_1scope_10collections_100_indexes_partitioned.json
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_sessionconsistent_100_indexes_1s_10c_partitioned.json
 indexer.settings.rebalance.redistribute_indexes = True
+indexer.rebalance.enableEmptyNodeBatching = true
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 indexer.settings.gc_percent = 200

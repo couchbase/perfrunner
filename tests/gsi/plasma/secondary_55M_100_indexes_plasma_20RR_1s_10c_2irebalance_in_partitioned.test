@@ -47,6 +47,7 @@ indexer.settings.rebalance.redistribute_indexes = True
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 indexer.settings.gc_percent = 200
+indexer.rebalance.enableEmptyNodeBatching = true
 queryport.client.usePlanner = false
 queryport.client.log_level = Warn
 projector.backChanSize = 500000

@@ -651,7 +651,9 @@ class RemoteLinux(Remote):
     def is_up(self, host_string: str) -> bool:
         with settings(host_string=host_string):
             try:
-                result = run(":")
+                logger.info('checking {}'.format(host_string))
+                result = run(":", timeout=30)
+                logger.info('done {}'.format(host_string))
                 return result.return_code == 0  # 0 means success
             except NetworkError:
                 return False

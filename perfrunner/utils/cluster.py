@@ -17,6 +17,9 @@ def get_args():
     parser.add_argument('-t', '--test', dest='test_config_fname',
                         required=True,
                         help='path to test test configuration file')
+    parser.add_argument('--cluster-name', dest='cluster_name',
+                        help='if there are multiple clusters in the cluster spec, this lets you '
+                             'name just one of them to set up (default: all clusters)')
     parser.add_argument('--verbose', dest='verbose',
                         action='store_true',
                         help='enable verbose logging')
@@ -32,6 +35,8 @@ def main():
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(args.cluster_spec_fname, override=args.override)
+    if args.cluster_name:
+        cluster_spec.keep_one_cluster(args.cluster_name)
     test_config = TestConfig()
     test_config.parse(args.test_config_fname, override=args.override)
 
@@ -87,7 +92,10 @@ def main():
         return  # Nothing todo with k8s after this
     else:
         # Individual nodes
-        # cm.serverless_mode()
+        if cluster_spec.goldfish_infrastructure:
+            cm.set_goldfish_s3_bucket()
+            cm.add_aws_credential()
+
         cm.disable_wan()
         cm.clear_login_history()
         cm.tune_memory_settings()

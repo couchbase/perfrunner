@@ -1054,7 +1054,7 @@ def read_aws_credential(credential_path: str):
     return credential
 
 
-def get_aws_credential(credential_path: str):
+def get_aws_credential(credential_path: str, delete_file: bool = True):
     logger.info("Reading AWS credential")
     with open('{}/aws_credential'.format(credential_path)) as f:
         lines = f.read().splitlines()
@@ -1065,8 +1065,11 @@ def get_aws_credential(credential_path: str):
             aws_access_key_id = line.replace(" ", "").split("=")[-1]
         if 'aws_secret_access_key' in line:
             aws_secret_access_key = line.replace(" ", "").split("=")[-1]
-    cmd = 'rm {}/aws_credential'.format(credential_path)
-    local(cmd)
+
+    if delete_file:
+        cmd = 'rm {}/aws_credential'.format(credential_path)
+        local(cmd)
+
     if aws_access_key_id and aws_secret_access_key:
         return aws_access_key_id, aws_secret_access_key
     else:

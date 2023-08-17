@@ -112,6 +112,12 @@ class ClusterSpec(Config):
             self.infrastructure_settings.get('capella_arch', 'dedicated') == 'serverless'
 
     @property
+    def goldfish_infrastructure(self):
+        if self.cloud_infrastructure:
+            return self.infrastructure_settings.get("service", "") == "goldfish"
+        return False
+
+    @property
     def generated_cloud_config_path(self):
         if self.cloud_infrastructure:
             return "cloud/infrastructure/generated/infrastructure_config.json"
@@ -347,6 +353,13 @@ class ClusterSpec(Config):
                     if role in roles:
                         has_service.append(self.instance_ids_per_cluster[cluster_name][i])
         return has_service
+
+    def cluster_servers(self, node: str) -> List[str]:
+        """Return all servers from the same cluster as the given node."""
+        for _, servers in self.clusters:
+            if node in servers:
+                return servers
+        return []
 
     def servers_by_role(self, role: str) -> List[str]:
         has_service = []
@@ -598,6 +611,16 @@ class ClusterSpec(Config):
     @property
     def data_api(self) -> dict:
         return self._get_options_as_dict('data_api')
+
+    def keep_one_cluster(self, cluster_name: str):
+        if self.config.has_option('clusters', cluster_name):
+            logger.info('Only keeping cluster {} in cluster spec'.format(cluster_name))
+            for cluster in self.config.options('clusters'):
+                if cluster != cluster_name:
+                    self.config.remove_option('clusters', cluster)
+        else:
+            logger.warn('Cluster {} not found in cluster spec, keeping all clusters'
+                        .format(cluster_name))
 
 
 class TestCaseSettings:
@@ -2510,6 +2533,7 @@ class CH2:
     USE_BACKUP = 'true'
     LOAD_TCLIENTS = 0
     LOAD_MODE = 'datasvc-bulkload'
+    CREATE_GSI_INDEX = 'true'
 
     def __init__(self, options: dict):
         self.repo = options.get('repo', self.REPO)
@@ -2527,6 +2551,7 @@ class CH2:
         self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
         self.raw_analytics_statements = options.get('analytics_statements',
                                                     self.ANALYTICS_STATEMENTS)
+        self.create_gsi_index = maybe_atoi(options.get('create_gsi_index', self.CREATE_GSI_INDEX))
         if self.raw_analytics_statements:
             self.analytics_statements = self.raw_analytics_statements.strip().split('\n')
         else:

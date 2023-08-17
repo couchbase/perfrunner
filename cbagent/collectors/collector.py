@@ -153,6 +153,8 @@ class Collector:
 
     def get_nodes(self):
         if self.cloud_enabled and not self.cloud['dynamic']:
+            # Can't get nodes from /pools/default because depending on the cloud provider,
+            # pools/default will return private IPs instead of public IPs or DNS names
             for hostname in self.hostnames:
                 yield hostname
         else:

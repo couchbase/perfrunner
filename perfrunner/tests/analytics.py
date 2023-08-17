@@ -9,6 +9,7 @@ from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.worker import tpcds_initial_data_load_task
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
+from perfrunner.tests.xdcr import SrcTargetIterator
 from perfrunner.workloads.bigfun.driver import bigfun
 from perfrunner.workloads.bigfun.query_gen import Query
 from perfrunner.workloads.tpcdsfun.driver import tpcds
@@ -938,11 +939,11 @@ class CH2Test(PerfTest):
         for dataset in self.CH2_DATASETS:
             if self.storage_format:
                 statement = 'CREATE DATASET `{}` WITH {{"storage-format": {{"format": "{}"}}}} ' \
-                            'ON bench.ch2.{};' \
-                    .format(dataset, self.storage_format, dataset)
+                            'ON bench.ch2.{} AT `{}`;' \
+                    .format(dataset, self.storage_format, dataset, self.analytics_link)
             else:
-                statement = "CREATE DATASET `{}` ON bench.ch2.{};" \
-                    .format(dataset, dataset)
+                statement = "CREATE DATASET `{}` ON bench.ch2.{} AT `{}`;" \
+                    .format(dataset, dataset, self.analytics_link)
             logger.info('Running: {}'.format(statement))
             res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))
@@ -1171,7 +1172,107 @@ class CH2CloudTest(CH2Test):
         self.wait_for_persistence()
         self.restart()
         self.sync()
-        self.create_indexes()
+        if (self.test_config.ch2_settings.create_gsi_index and
+                not self.cluster_spec.goldfish_infrastructure):
+            self.create_indexes()
+
+        self.run_ch2()
+        self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
+                                    logfile=self.test_config.ch2_settings.workload)
+        if self.test_config.ch2_settings.workload != 'ch2_analytics':
+            self.report_kpi()
+
+
+class CH2CloudRemoteLinkTest(CH2CloudTest):
+
+    def __init__(self, *args, **kwargs):
+        PerfTest.__init__(self, *args, **kwargs)
+
+        self.num_items = 0
+        self.analytics_link = self.test_config.analytics_settings.analytics_link
+        self.data_node, self.analytics_node = self.cluster_spec.masters
+        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
+        self.storage_format = self.test_config.analytics_settings.storage_format
+        self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+
+    @property
+    def data_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.data_node, 'kv')
+
+    @property
+    def query_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.data_node, 'n1ql')
+
+    @property
+    def analytics_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.analytics_node, 'cbas')
+
+    def restart(self):
+        self.remote.stop_server()
+        self.remote.drop_caches()
+        self.remote.start_server()
+        for bucket in self.test_config.buckets:
+            self.monitor.monitor_warmup(self.memcached, self.data_node, bucket)
+        self.monitor.monitor_analytics_node_active(self.analytics_node)
+
+    def restore(self):
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.data_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            archive=self.test_config.restore_settings.backup_storage,
+                            repo=self.test_config.restore_settings.backup_repo,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            map_data=self.test_config.restore_settings.map_data,
+                            encrypted=self.test_config.restore_settings.encrypted,
+                            passphrase=self.test_config.restore_settings.passphrase)
+
+    @with_stats
+    @timeit
+    def sync(self):
+        super().sync()
+
+    def report_sync_kpi(self, sync_time: int):
+        logger.info('Sync time: {}s'.format(sync_time))
+        self.reporter.post(
+            *self.metrics.avg_ingestion_rate(self.num_items, sync_time)
+        )
+
+    def run(self):
+        self.remote.init_ch2(repo=self.test_config.ch2_settings.repo,
+                             branch=self.test_config.ch2_settings.branch,
+                             worker_home=self.worker_manager.WORKER_HOME)
+
+        if self.test_config.ch2_settings.use_backup:
+            self.remote.extract_cb_any(filename='couchbase',
+                                       worker_home=self.worker_manager.WORKER_HOME)
+            self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+            # Restore to KV cluster
+            self.restore()
+        else:
+            # Load into KV cluster
+            self.load_ch2()
+
+        # Only wait for and restart the KV cluster
+        self.wait_for_persistence()
+        self.restart()
+
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
+                                 rest_username, rest_password)
+
+        sync_time = self.sync()
+        self.report_sync_kpi(sync_time)
+
+        if (self.test_config.ch2_settings.create_gsi_index and
+                not self.cluster_spec.goldfish_infrastructure):
+            self.create_indexes()
 
         self.run_ch2()
         self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,

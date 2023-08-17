@@ -1,3 +1,4 @@
+import os
 import random
 import re
 import time
@@ -5,6 +6,7 @@ from typing import Iterable, List
 from uuid import uuid4
 
 from logger import logger
+from perfrunner.helpers import local
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import (
     SGPortRange,
@@ -557,12 +559,6 @@ class ClusterManager:
             return
         if self.test_config.cluster.ui_http == 'disabled':
             self.remote.ui_http_off(self.cluster_spec.servers[0])
-
-    def serverless_mode(self):
-        if self.test_config.cluster.serverless_mode == 'enabled':
-            self.remote.enable_serverless_mode()
-        else:
-            self.remote.disable_serverless_mode()
 
     def serverless_throttle(self):
         if not all(value == 0 for value in self.test_config.cluster.serverless_throttle.values()):
@@ -1330,3 +1326,13 @@ class ClusterManager:
     def clear_system_limit_config(self):
         self.remote.clear_system_limit_config()
         self.remote.restart()
+
+    def set_goldfish_s3_bucket(self):
+        region = os.environ.get('AWS_REGION', 'us-east-1')
+        s3_bucket_name = self.cluster_spec.backup.split('://')[1]
+        self.remote.configure_analytics_s3_bucket(region=region, s3_bucket=s3_bucket_name)
+
+    def add_aws_credential(self):
+        access_key_id, secret_access_key = \
+            local.get_aws_credential(self.test_config.backup_settings.aws_credential_path, False)
+        self.remote.add_aws_credential(access_key_id, secret_access_key)

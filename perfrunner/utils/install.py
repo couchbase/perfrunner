@@ -499,7 +499,8 @@ class CouchbaseInstaller:
         self.remote.install_couchbase(self.url)
 
     def check_for_serverless(self, serverless_enabled: str):
-        if str(serverless_enabled).lower() == 'true':
+        if (str(serverless_enabled).lower() == 'true' or
+                self.cluster_spec.goldfish_infrastructure):
             logger.info("Enabling Serverless mode")
             self.remote.enable_serverless_mode()
         else:
@@ -646,6 +647,9 @@ def get_args():
     parser.add_argument('-c', '--cluster',
                         required=True,
                         help='the path to a cluster specification file')
+    parser.add_argument('--cluster-name', dest='cluster_name',
+                        help='if there are multiple clusters in the cluster spec, this lets you '
+                             'name just one of them to set up (default: all clusters)')
     parser.add_argument('-e', '--edition',
                         choices=['enterprise', 'community'],
                         default='enterprise',
@@ -679,6 +683,9 @@ def get_args():
                         default=False,
                         help='use to convert the cb-server profile to \
                         serverless on non-capella machines')
+    parser.add_argument('override',
+                        nargs='*',
+                        help='custom cluster settings')
     return parser.parse_args()
 
 
@@ -686,7 +693,9 @@ def main():
     args = get_args()
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(fname=args.cluster)
+    cluster_spec.parse(fname=args.cluster, override=args.override)
+    if args.cluster_name:
+        cluster_spec.keep_one_cluster(args.cluster_name)
 
     if cluster_spec.cloud_infrastructure:
         if cluster_spec.kubernetes_infrastructure:

@@ -290,6 +290,8 @@ class CbAgent:
             settings = copy(self.settings)
             settings.cluster = cluster_id
             settings.master_node = master_node
+            if settings.cloud.get('enabled') and not settings.cloud.get('dynamic', False):
+                settings.hostnames = self.test.cluster_spec.cluster_servers(master_node)
             collector = cls(settings, *args)
             self.collectors.append(collector)
 

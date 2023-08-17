@@ -1,0 +1,32 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2CloudRemoteLinkTest
+
+[showfast]
+title = CH2 Queries, 2A, c=11, analytics only, AWS, Goldfish (remote link)
+component = analyticscloud
+category = ch2
+sub_category = {provider}
+
+[cluster]
+mem_quota = 12800
+initial_nodes = 2
+num_buckets = 1
+bucket_name = bench
+
+[collection]
+config = collections/1bucket_1scope_11collections_analytics_ch2.json
+
+[bucket]
+eviction_policy = fullEviction
+replica_index = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket_extras]
+num_writer_threads = 64
+num_reader_threads = 32
+max_num_shards = 64
+
+[clients]
+python_client = 4.0.2

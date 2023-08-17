@@ -1314,3 +1314,43 @@ class RemoteLinux(Remote):
         logger.info("Clear system_limits.conf")
         run("rm -rf /etc/systemd/system/couchbase-server.service.d")
         run('systemctl daemon-reload')
+
+    @master_server
+    def configure_analytics_s3_bucket(self, region: str = 'us-east-1',
+                                      s3_bucket: str = 'cb-perf-goldfish'):
+        logger.info('Configuring Analytics S3 bucket. Bucket name: {}, region: {}'
+                    .format(s3_bucket, region))
+        command = ("curl --request POST --url http://localhost:8091/settings/analytics " +
+                   "--header 'Content-Type: application/x-www-form-urlencoded' " +
+                   "--data blobStorageRegion={} " +
+                   "--data blobStoragePrefix= " +
+                   "--data blobStorageBucket={} " +
+                   "--data blobStorageScheme=s3").format(region, s3_bucket)
+        run(command)
+
+    @all_servers
+    def add_aws_credential(self, access_key_id: str, secret_access_key: str):
+        access_key_url = \
+            "http://localhost:8091/_metakv/cbas/debug/settings/blob_storage_access_key_id"
+        secret_access_key_url = \
+            "http://localhost:8091/_metakv/cbas/debug/settings/blob_storage_secret_access_key"
+
+        logger.info('Add AWS access key')
+        command = ("curl -v -X PUT {} --data-urlencode value={}"
+                   .format(access_key_url, access_key_id))
+
+        retries = 4
+        while retries > 0 and not (output := run(command, warn_only=True)).succeeded:
+            logger.warn('Error while adding AWS access key: {}'.format(output))
+            logger.info('Waiting 5 seconds and retrying ({} retries left)'.format(retries))
+            retries -= 1
+            time.sleep(5)
+
+        if retries == 0:
+            logger.interrupt('Failed to add AWS access key')
+            return
+
+        logger.info('Add AWS secret access key')
+        command = ("curl -v -X PUT {} --data-urlencode value={}"
+                   .format(secret_access_key_url, secret_access_key))
+        run(command)

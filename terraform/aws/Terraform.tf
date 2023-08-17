@@ -123,7 +123,12 @@ data "aws_ami" "syncgateway_ami" {
 }
 
 resource "random_shuffle" "az" {
-  input        = distinct(data.aws_ec2_instance_type_offerings.available.locations)
+  input = setintersection([
+    for instance_type in distinct(data.aws_ec2_instance_type_offerings.available.instance_types) : [
+      for idx, loc in data.aws_ec2_instance_type_offerings.available.locations : loc
+        if data.aws_ec2_instance_type_offerings.available.instance_types[idx] == instance_type
+    ]
+  ]...)
   result_count = 1
 }
 

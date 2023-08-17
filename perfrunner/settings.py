@@ -1174,6 +1174,9 @@ class PhaseSettings:
     YCSB_OUT_OF_ORDER = 0
     YCSB_SPLIT_WORKLOAD = 0
 
+    RANGE_SCAN_SAMPLING = "false"
+    PREFIX_SCAN = "false"
+
     TRANSACTIONSENABLED = 0
 
     NUM_ATRS = 1024
@@ -1364,6 +1367,9 @@ class PhaseSettings:
         self.ycsb_out_of_order = int(options.get('out_of_order', self.YCSB_OUT_OF_ORDER))
         self.insertstart = int(options.get('insertstart', self.YCSB_INSERTSTART))
         self.ycsb_split_workload = int(options.get('ycsb_split_workload', self.YCSB_SPLIT_WORKLOAD))
+
+        self.range_scan_sampling = options.get('range_scan_sampling', self.RANGE_SCAN_SAMPLING)
+        self.prefix_scan = options.get('prefix_scan', self.PREFIX_SCAN)
 
         # trasnsaction settings
         self.transactionsenabled = int(options.get('transactionsenabled',

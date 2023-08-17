@@ -597,6 +597,8 @@ def run_ycsb(host: str,
              retry_lower: int = 1,
              retry_upper: int = 500,
              retry_factor: int = 2,
+             range_scan_sampling: bool = None,
+             prefix_scan: bool = None,
              ycsb_jvm_args: str = None,
              collections_map: dict = None,
              out_of_order: int = 0,
@@ -627,7 +629,9 @@ def run_ycsb(host: str,
           '-p couchbase.retryStrategy={retry_strategy} ' \
           '-p couchbase.retryLower={retry_lower} ' \
           '-p couchbase.retryUpper={retry_upper} ' \
-          '-p couchbase.retryFactor={retry_factor} '
+          '-p couchbase.retryFactor={retry_factor} ' \
+          '-p couchbase.rangeScanSampling={range_scan_sampling} ' \
+          '-p couchbase.prefixScan={prefix_scan} '
 
     cmd = 'pyenv local 2.7.18 && ' + cmd
 
@@ -692,6 +696,8 @@ def run_ycsb(host: str,
                      retry_lower=retry_lower,
                      retry_upper=retry_upper,
                      retry_factor=retry_factor,
+                     range_scan_sampling=range_scan_sampling,
+                     prefix_scan=prefix_scan,
                      ycsb_jvm_args=ycsb_jvm_args)
 
     if soe_params is None:

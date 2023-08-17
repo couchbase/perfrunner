@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import glob
 import os
+import re
 import statistics
 from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
@@ -964,7 +965,7 @@ class MetricHelper:
             _c = 0
             for x in range(_l1_len - 1):
                 line = fh.readline()
-                if line.find('], 1000,') >= 1:
+                if re.search('], (.*?)000,', line):
                     io_type = line.split('[')[1].split(']')[0]
                     _n = 0
                     while (line.startswith('[{}]'.format(io_type))):

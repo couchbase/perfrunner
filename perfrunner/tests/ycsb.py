@@ -420,3 +420,33 @@ class YCSBN1QLWarmupThroughputTest(YCSBN1QLWarmupTest, YCSBThroughputTest):
         self.COLLECTORS["disk"] = True
         self.COLLECTORS["net"] = True
         self.reset_kv_stats()
+
+
+class YCSBN1QLSequentialScanTest(YCSBTest, N1QLTest):
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        if self.test_config.access_settings.cbcollect:
+            self.access_bg()
+            self.collect_cb()
+        else:
+            self.access()
+
+        self.report_kpi()
+
+
+class YCSBN1QLSequentialScanLatencyTest(YCSBN1QLSequentialScanTest, YCSBLatencyTest):
+
+    pass
+
+
+class YCSBN1QLSequentialScanThroughputTest(YCSBN1QLSequentialScanTest, YCSBThroughputTest):
+
+    pass

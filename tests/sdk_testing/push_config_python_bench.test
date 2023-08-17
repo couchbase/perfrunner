@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.rebalance.FailoverSDKConfigPushTest
+
+[showfast]
+title = Config push - Write Availability time (s) , Python SDK, 1 bucket x 200K x 512B
+component = sdk
+category = java
+sub_category = neo
+
+[cluster]
+mem_quota = 51200
+num_buckets = 1
+initial_nodes = 4
+
+[bucket]
+failover_min = 1
+
+[load]
+size = 512
+items = 200000
+workers = 50
+doc_gen = basic
+
+[access]
+items = 10
+workers = 1
+
+[sdktesting]
+enable_sdktest = 1
+sdk_timeout = 10
+sdk_type = python
+bench_name = config_push
+
+[rebalance]
+failed_nodes = 1
+start_after = 60
+stop_after = 180
+
+[clients]
+python_client = 4.1.9
+
+[stats]
+client_processes = python

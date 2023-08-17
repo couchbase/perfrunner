@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.rebalance.FailoverSDKConfigPushTest
+
+[showfast]
+title = Config push - Write Availability time (s) , .Net SDK, 1 bucket x 200K x 512B
+component = sdk
+category = dotnet
+sub_category = neo
+
+[cluster]
+mem_quota = 51200
+num_buckets = 1
+initial_nodes = 4
+
+[bucket]
+failover_min = 1
+
+[load]
+size = 512
+items = 200000
+workers = 50
+doc_gen = json
+
+[access]
+items = 10
+workers = 1
+
+[sdktesting]
+enable_sdktest = 1
+sdk_timeout = 10
+sdk_type = dotnet
+bench_name = config_push
+
+[rebalance]
+failed_nodes = 1
+start_after = 60
+stop_after = 180
+
+[clients]
+dotnet_client = 3.4.12
+libcouchbase = 3.3.9
+
+[stats]
+client_processes = dotnet

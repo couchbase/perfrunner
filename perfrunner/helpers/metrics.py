@@ -1934,6 +1934,58 @@ class MetricHelper:
         metric_info = self._metric_info(title=title, metric_id=metric_id)
         return round(throughput), self._snapshots, metric_info
 
+    def sdk_bench_config_push_time(self, failure_time: tuple, benchmark_name: str,
+                                   time_func) -> Metric:
+        sdk_type = self.test_config.sdktesting_settings.sdk_type[-1]
+        filename = 'sdks/{}/{}_stdout.log'.format(sdk_type, benchmark_name)
+        write_unavailable_time = self._parse_sdk_benchmark_logs(filename, failure_time, time_func)
+        return write_unavailable_time, self._snapshots, self._metric_info()
+
+    def _parse_sdk_benchmark_logs(self, filename: str, failure_time: tuple, time_func) -> float:
+        # Process:
+        # 1. Find the first FAILURE log line after failure initiation. This is the start of the
+        # logs were interested in.
+        # 2. From there find the first SUCCESS
+        first_failure_time = 0
+        failure_start_found = False
+        lines = []
+        with open(filename) as file:
+            lines = file.readlines()
+
+        # Ignore any temporary errors that occurred before the actual failure and then
+        # followed by a success. Here we have no way of knowing which timeout was actually applied,
+        # but assume the first one is the minimum possible padding we can add.
+        if len(lines) <= 5:
+            # In some testing we avoided using logging for better performance, and only recorded
+            # the processed times
+            logger.info(lines)
+            first_failure_time = int(lines[0].strip().split()[-1])
+            if first_failure_time < failure_time[1]:
+                logger.warn('Failure happened before failover time')
+                return 0
+            return lines[2].strip().split()[-1]
+        else:
+            # Here we are dealing with raw logs, which can be huge, avoid printing and
+            # only process the necessary part
+            for line in lines:
+                try:
+                    log_time = time_func(line.split(',')[0])
+                except Exception:
+                    continue
+                log_msg = line.split(',')[1].strip()
+                if not failure_start_found and log_time > failure_time[0] \
+                        and log_msg.startswith('[FAILURE]'):
+                    failure_start_found = True
+                    first_failure_time = log_time
+                    logger.info('Failure start: "{}"'.format(line.rstrip()))
+                elif failure_start_found and log_msg.startswith('[SUCCESS] Store') \
+                    and log_time > failure_time[0]:
+                    logger.info('Write success start: "{}"'.format(line.rstrip()))
+                    return round(log_time - failure_time[0], 2)
+
+        logger.warn('Benchmark didnot recover from failure' if failure_start_found else
+                    'No failures found, either no failover happened or timout is too large')
+
 
 class DailyMetricHelper(MetricHelper):
 

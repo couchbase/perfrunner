@@ -74,11 +74,11 @@ class ShowFastReporter(Reporter):
             self.sdk_type = self.test_config.sdktesting_settings.sdk_type[-1]
 
             if self.sdk_type == 'java':
-                self.sdk_version = self.test_config.ycsb_settings.sdk_version
-            elif self.sdk_type == 'libc':
-                self.sdk_version = self.test_config.client_settings.libcouchbase
-            elif self.sdk_type == 'python':
-                self.sdk_version = self.test_config.client_settings.python_client
+                # YCSB tests supply the Java SDK version in ycsb setting, use that if provided
+                self.sdk_version = self.test_config.ycsb_settings.sdk_version or \
+                    self.test_config.client_settings.sdk_version
+            else:
+                self.sdk_version = self.test_config.client_settings.sdk_version
 
             build_str = self.sdk_version + ' : ' + build_str
 

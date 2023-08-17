@@ -32,6 +32,7 @@ from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
     pillowfight_workload,
 )
+from perfrunner.workloads.sdks_bench import sdks_benchmark_workload
 from perfrunner.workloads.syncgateway import (
     syncgateway_delta_sync_load_docs,
     syncgateway_delta_sync_run_test,
@@ -252,6 +253,11 @@ def syncgateway_e2e_multi_cb_task_load_docs(*args):
 @celery.task
 def syncgateway_e2e_multi_cb_task_run_test(*args):
     syncgateway_e2e_multi_cb_run_test(*args)
+
+
+@celery.task
+def sdks_benchmark_task(*args):
+    sdks_benchmark_workload(*args)
 
 
 class WorkloadPhase:

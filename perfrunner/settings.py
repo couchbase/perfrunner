@@ -2458,10 +2458,16 @@ class SDKTestingSettings:
 
     ENABLE_SDKTEST = 0
     SDK_TYPE = ['java', 'libc', 'python']
+    SDK_TIMEOUT_DEFAULT = 2500  # ms
+    SDK_CONFIG_POLL_INTERVAL_DEFAULT = 2500  # ms
 
     def __init__(self, options: dict):
         self.enable_sdktest = int(options.get('enable_sdktest', self.ENABLE_SDKTEST))
         self.sdk_type = self.SDK_TYPE + options.get('sdk_type', '').split()
+        self.sdk_timeout = int(options.get('sdk_timeout', self.SDK_TIMEOUT_DEFAULT))
+        self.config_poll_interval = int(options.get('config_poll_interval',
+                                                    self.SDK_CONFIG_POLL_INTERVAL_DEFAULT))
+        self.benchmark_name = options.get('bench_name')
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -2476,7 +2482,15 @@ class ClientSettings:
     def __init__(self, options: dict):
         self.libcouchbase = options.get('libcouchbase', self.LIBCOUCHBASE)
         self.python_client = options.get('python_client', self.PYTHON_CLIENT)
+        self.java_client = options.get('java_client', None)
+        self.go_client = options.get('go_client', None)
+        self.dotnet_client = options.get('dotnet_client', None)
         self.tableau_connector = options.get('tableau_connector', self.TABLEAU_CONNECTOR)
+
+        # Provide an easy way to figure out the sdk version for code that dont care which
+        # SDK it is interacting with
+        self.sdk_version = self.dotnet_client or self.go_client or self.java_client \
+            or self.python_client or self.libcouchbase  # libcouchbase should always be last
 
     def __str__(self) -> str:
         return str(self.__dict__)

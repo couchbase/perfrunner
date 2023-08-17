@@ -1966,6 +1966,22 @@ class DefaultRestHelper(RestBase):
         except Exception:
             return host
 
+    def get_random_local_key(self, host: str, bucket: str,
+                             scope: str = '_default', collection: str = '_default',
+                             keys_count: int = 1) -> list[str]:
+        """Get a list of random key(s) local to the vBuckets in this node."""
+        keys = []
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091'.format(host)
+        else:
+            api = 'http://{}:8091'.format(host)
+        api = '{}/pools/default/buckets/{}/scopes/{}/collections/{}/localRandomKey'.format(
+            api, bucket, scope, collection)
+        for _ in range(0, keys_count):
+            resp = self.get(url=api)
+            keys.append(resp.json().get('key'))
+        return keys
+
 
 class KubernetesRestHelper(RestBase):
 

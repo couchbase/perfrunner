@@ -4,13 +4,19 @@ import dateutil.parser
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.local import build_sdk_benchmark
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
+from perfrunner.helpers.worker import (
+    pillowfight_data_load_task,
+    sdks_benchmark_task,
+)
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import DestTargetIterator, UniDirXdcrInitTest
 from perfrunner.utils.terraform import CapellaTerraform
+from perfrunner.workloads.sdks_bench import get_sdk_build_command
 
 
 class RebalanceTest(PerfTest):
@@ -709,6 +715,102 @@ class OnlineMigrationDurabilityTest(OnlineMigrationWithRebalanceTest):
         self.hot_load()
         self.reset_kv_stats()
         self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
+class FailoverSDKConfigPushTest(FailoverTest):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sdk_type = self.test_config.sdktesting_settings.sdk_type[-1]
+        self.benchmark_name = self.test_config.sdktesting_settings.benchmark_name
+        self.sdk_version = self.test_config.client_settings.sdk_version
+
+    def get_keys_from_node_to_fail(self) -> str:
+        """Return a string of keys separated by comma from the nodes to be failed."""
+        keys = []
+        key_count = self.test_config.access_settings.items // len(self.nodes_to_fail)
+        for node in self.nodes_to_fail:
+            node_keys = self.rest.get_random_local_key(node, self.test_config.buckets[0],
+                                                       keys_count=key_count)
+            logger.info('Node: {} keys: "{}"'.format(node, node_keys))
+            keys.extend(node_keys)
+        return ','.join(keys)
+
+    def setup_benchmark(self):
+        """Perform any necessary build of the benchmarks as needed."""
+        build_cmd = get_sdk_build_command(self.benchmark_name, self.sdk_type, self.sdk_version)
+        build_sdk_benchmark(self.benchmark_name, self.sdk_type, build_cmd)
+
+    def _failover(self, *args):
+        for node in self.nodes_to_fail:
+            logger.info('Failing node: {}'.format(node))
+            self.remote.shutdown(node)
+        # Fof this usecase start the failure time after the shutdown command is sent.
+        # Works for single-node failure tests, need improvements for multi-node failure tests.
+        # Also keep a record of epoch and ns times, the later used by Python SDK runs
+        self.t_failure = (time.time(), time.perf_counter_ns())
+
+    def _get_nodes_to_fail(self):
+        clusters = self.cluster_spec.clusters
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+        self.nodes_to_fail = []
+
+        for (_, servers), initial_nodes in zip(clusters, initial_nodes):
+            self.nodes_to_fail.extend(servers[initial_nodes - failed_nodes:initial_nodes])
+
+    def _report_kpi(self, *args):
+        # Failover time
+        failover_time = None
+        time_map = self.get_rebalance_timings()
+        if time_map.get('failover'):  # Make sure the report measured failover
+            failover_time = round(time_map.get('total_time'), 2)  # sec
+
+        # Failure detection time
+        failure_detection_time = None
+        t_failure_detection = self.remote.detect_auto_failover(self.master_node)
+        if t_failure_detection:
+            t_failure_detection = self.convert_time(t_failure_detection)
+            failure_detection_time = round(t_failure_detection - self.t_failure[0], 2)  # sec
+
+        logger.info('Failover time: {}s Failure detection time: {}s'.format(
+            failover_time, failure_detection_time))
+
+        # SDK write unavailable time
+        self.reporter.post(
+            *self.metrics.sdk_bench_config_push_time(self.t_failure, self.benchmark_name,
+                                                     self.convert_time)
+        )
+
+    def access_bg(self):
+        # Add custom configuration from different settings
+        workload_setting = self.test_config.access_settings
+        workload_setting.benchmark_name = self.benchmark_name
+        workload_setting.sdk_type = self.sdk_type
+        workload_setting.sdk_timeout = self.test_config.sdktesting_settings.sdk_timeout
+        workload_setting.config_poll_interval = \
+            self.test_config.sdktesting_settings.config_poll_interval
+        workload_setting.keys = self.get_keys_from_node_to_fail()
+        workload_setting.time = self.rebalance_settings.start_after \
+            + self.rebalance_settings.stop_after
+        return super().access_bg(task=sdks_benchmark_task, settings=workload_setting)
+
+    def run(self):
+        if self.sdk_type == 'python':
+            self.load()  # We dont want to install pillowfight, so use spring to load data
+        else:
+            self.load(task=pillowfight_data_load_task)
+        self.wait_for_persistence()
+
+        self.setup_benchmark()
+        # For this test we need to know the node we will be failing before hand
+        # so we can access local vBuckets and documents
+        self._get_nodes_to_fail()
+        self.access_bg()
+        self.failover()
 
         if self.is_balanced():
             self.report_kpi()

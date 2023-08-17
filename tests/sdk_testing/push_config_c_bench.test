@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.rebalance.FailoverSDKConfigPushTest
+
+[showfast]
+title = Config push - Write Availability time (s) , C SDK, 1 bucket x 200K x 512B
+component = sdk
+category = libc
+sub_category = neo
+
+[cluster]
+mem_quota = 51200
+num_buckets = 1
+initial_nodes = 4
+
+[bucket]
+failover_min = 1
+
+[load]
+size = 512
+items = 200000
+workers = 50
+doc_gen = json
+
+[access]
+items = 10
+workers = 1
+
+[sdktesting]
+enable_sdktest = 1
+sdk_timeout = 10
+sdk_type = libc
+bench_name = config_push
+
+[rebalance]
+failed_nodes = 1
+start_after = 300
+stop_after = 300
+
+[clients]
+libcouchbase = 3.3.8
+
+[stats]
+client_processes = config_push

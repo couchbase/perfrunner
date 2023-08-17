@@ -32,7 +32,7 @@ storage_class = GP3
 instance_type = c5.4xlarge
 instance_capacity = 5
 volume_size = 500
-iops = 3000
+iops = 16000
 
 [ec2_node_group_2]
 instance_type = c5.24xlarge

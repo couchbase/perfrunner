@@ -30,12 +30,13 @@ start_after = 300
 stop_after = 300
 
 [load]
-items = 150000000
+items = 75000000
 size = 1024
-workers = 40
+workers = 60
 doc_gen = unified
 num_replies = 100
-item_size = 73
+item_size = 5
+uniform_collection_load_time = 1
 ssl_mode = capella
 
 [access]
@@ -43,7 +44,7 @@ creates = 0
 reads = 80
 updates = 20
 deletes = 0
-items = 150000000
+items = 75000000
 workers = 60
 doc_gen = unified
 latency_percentiles = 50,90,95,98,99

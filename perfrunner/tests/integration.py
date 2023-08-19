@@ -293,21 +293,33 @@ class EndToEndLatencyWithXDCRTest(EndToEndLatencyTest, CapellaXdcrTest):
     def load(self):
         PerfTest.load(self, target_iterator=self.load_target_iterator)
 
-    def report_kv_kpi(self):
-        for i, _ in enumerate(self.cluster_spec.masters):
-            for operation in ('get', 'set'):
-                for percentile in self.test_config.access_settings.latency_percentiles:
-                    self.reporter.post(
-                        *self.metrics.kv_latency(operation=operation, percentile=percentile,
-                                                 cluster_idx=i)
-                    )
+    @with_stats
+    def access(self, kv: bool, n1ql: bool):
+        if kv:
+            # If N1QL is not enabled, start KV in foreground, otherwise start in background
+            kv_access_method = PerfTest.access_bg if n1ql else PerfTest.access
+            kv_settings = self.test_config.access_settings
+            kv_settings.n1ql_workers = 0
+            kv_access_method(self, settings=kv_settings, target_iterator=self.load_target_iterator)
 
-    def report_n1ql_kpi(self):
-        for i, _ in enumerate(self.cluster_spec.masters):
+        if n1ql:
+            # Start N1QL in foreground
+            n1ql_settings = self.test_config.access_settings
+            n1ql_settings.workers = 0
+            PerfTest.access(self, settings=n1ql_settings, target_iterator=self.load_target_iterator)
+
+    def report_kv_kpi(self):
+        for operation in ('get', 'set'):
             for percentile in self.test_config.access_settings.latency_percentiles:
                 self.reporter.post(
-                    *self.metrics.query_latency(percentile=percentile, cluster_idx=i)
+                    *self.metrics.kv_latency(operation=operation, percentile=percentile)
                 )
+
+    def report_n1ql_kpi(self):
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            self.reporter.post(
+                *self.metrics.query_latency(percentile=percentile)
+            )
 
     def report_xdcr_kpi(self):
         self.reporter.post(*self.metrics.xdcr_lag())

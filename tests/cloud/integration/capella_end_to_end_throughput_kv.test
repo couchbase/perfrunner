@@ -25,7 +25,7 @@ config = collections/5buckets_1scope_2collections_basic.json
 indexer.settings.storage_mode = plasma
 
 [load]
-items = 150000000
+items = 75000000
 size = 1024
 workers = 40
 doc_gen = unified

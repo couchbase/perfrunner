@@ -30,12 +30,12 @@ start_after = 300
 stop_after = 300
 
 [load]
-items = 150000000
+items = 75000000
 size = 1024
-workers = 40
+workers = 60
 doc_gen = unified
 num_replies = 100
-item_size = 73
+item_size = 5
 uniform_collection_load_time = 1
 ssl_mode = capella
 
@@ -43,23 +43,23 @@ ssl_mode = capella
 replicas = 1
 statements =
     CREATE INDEX ix_c0_cid IF NOT EXISTS ON `TARGET_BUCKET`(c0, cid, index_field) WITH {'defer_build': true};
-    CREATE INDEX ix_apos_ac0_aid IF NOT EXISTS ON `TARGET_BUCKET`(ALL ARRAY FLATTEN_KEYS(v.apos, v.ac0, v.aid) FOR v IN a1 END) WITH {'defer_build': true};
 
 [access]
 creates = 0
 reads = 80
 updates = 20
 deletes = 0
-throughput = 3000
-items = 150000000
-workers = 10
+throughput = 10000
+items = 75000000
+workers = 5
 doc_gen = unified
 num_replies = 100
-item_size = 73
+item_size = 5
+time = 600
 latency_percentiles = 50,90,95,98,99
-n1ql_queries = q01,q02,q03,q04,q05,q06,q07
+n1ql_queries = q01,q02,q03,q04,q05
 n1ql_workers = 10
-n1ql_throughput = 200
+n1ql_throughput = 300
 workload_instances = 1
 ssl_mode = capella
 
@@ -92,28 +92,7 @@ total_batches = 500000
 qualified_batches = 1
 
 [n1ql-q05]
-statement = SELECT META(d).id, d.index_field, d.xxx FROM `TARGET_BUCKET` AS d WHERE ANY v IN d.a1 SATISFIES v.ac0 BETWEEN $1 AND $2 AND v.apos = 2 AND v.aid BETWEEN 0 AND 99 END;
-scan_consistency = not_bound
-args = ["start_qualified_batches"]
-total_batches = 500000
-qualified_batches = 1
-
-[n1ql-q06]
 statement = WITH cte AS (SELECT RAW t FROM `TARGET_BUCKET` AS t WHERE t.c0 BETWEEN $1 AND $2 AND t.cid BETWEEN 0 AND 99) SELECT META(l).id, l.index_field, l.xxx, r.yyy FROM `TARGET_BUCKET` AS l JOIN cte AS r ON l.id = r.id WHERE l.c0 BETWEEN $1 AND $2 AND r.c0 BETWEEN $1 AND $2 AND l.cid BETWEEN 0 AND 99 AND r.cid BETWEEN 0 AND 99;
-scan_consistency = not_bound
-args = ["start_qualified_batches"]
-total_batches = 500000
-qualified_batches = 1
-
-[n1ql-q07]
-statement = SELECT META(d).id, d.index_field, d.xxx FROM `TARGET_BUCKET` AS d UNNEST d.a1 AS u WHERE u.ac0 BETWEEN $1 AND $2 AND u.apos = 1 AND u.aid BETWEEN 0 AND 99;
-scan_consistency = not_bound
-args = ["start_qualified_batches"]
-total_batches = 500000
-qualified_batches = 1
-
-[n1ql-q08]
-statement = UPDATE `TARGET_BUCKET` AS d SET d.comment = d.comment WHERE d.c0 BETWEEN $1 AND $2 AND d.cid BETWEEN 0 AND 99;
 scan_consistency = not_bound
 args = ["start_qualified_batches"]
 total_batches = 500000

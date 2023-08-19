@@ -2,7 +2,7 @@
 test = perfrunner.tests.integration.EndToEndLatencyTest
 
 [showfast]
-title = Latency (ms), 7 nodes, 5 buckets x 150M x 1KB, 10%% RR, KV+N1QL, 10000 ops/sec, 300 queries/sec
+title = Latency (ms), 7 nodes, 5 buckets x 75M x 1KB, 10%% RR, KV+N1QL, 10000 ops/sec, 300 queries/sec
 component = n1qlcloud
 category = lat
 sub_category = {provider}
@@ -31,13 +31,14 @@ workers = 60
 doc_gen = unified
 num_replies = 100
 item_size = 5
+uniform_collection_load_time = 1
 ssl_mode = capella
 
 [index]
 replicas = 1
 statements =
     CREATE INDEX ix_c0_cid IF NOT EXISTS ON `TARGET_BUCKET`(c0, cid, index_field) WITH {'defer_build': true};
-    
+
 [access]
 creates = 0
 reads = 80
@@ -93,7 +94,7 @@ total_batches = 500000
 qualified_batches = 1
 
 [stats]
-server_processes = projector
+server_processes = projector,goxdcr
 
 [clients]
 python_client = 3.2.7

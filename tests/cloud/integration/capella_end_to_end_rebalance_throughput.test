@@ -31,6 +31,7 @@ workers = 60
 doc_gen = unified
 num_replies = 100
 item_size = 5
+uniform_collection_load_time = 1
 ssl_mode = capella
 
 [rebalance]
@@ -94,7 +95,6 @@ scan_consistency = not_bound
 args = ["start_qualified_batches"]
 total_batches = 500000
 qualified_batches = 1
-
 
 [stats]
 server_processes = projector

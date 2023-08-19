@@ -1,10 +1,10 @@
 [test_case]
-test = perfrunner.tests.integration.EndToEndLatencyWithXDCRTest
+test = perfrunner.tests.integration.EndToEndThroughputWithXDCRTest
 
 [showfast]
-title = Latency (ms), 7 -> 7 nodes, 5 buckets x 75M x 1KB, 20%% RR, KV+N1QL+XDCR, 10000 ops/sec, 300 queries/sec
+title = 7 -> 8 nodes, 5 buckets x 150M x 1KB, 10%% RR, KV+KV Rebalance
 component = n1qlcloud
-category = lat
+category = thr
 sub_category = {provider}
 
 [cluster]
@@ -23,6 +23,11 @@ config = collections/5buckets_1scope_2collections_basic.json
 
 [secondary]
 indexer.settings.storage_mode = plasma
+
+[rebalance]
+nodes_after = 8 7
+start_after = 300
+stop_after = 300
 
 [load]
 items = 75000000
@@ -44,19 +49,17 @@ creates = 0
 reads = 80
 updates = 20
 deletes = 0
-throughput = 10000
 items = 75000000
-workers = 5
+workers = 80
 doc_gen = unified
 num_replies = 100
 item_size = 5
-time = 600
 latency_percentiles = 50,90,95,98,99
 n1ql_queries = q01,q02,q03,q04,q05
-n1ql_workers = 10
-n1ql_throughput = 300
+n1ql_workers = 80
 workload_instances = 1
 ssl_mode = capella
+time = 3600
 
 [n1ql-q01]
 statement = SELECT META(d).id, d.index_field, d.xxx FROM `TARGET_BUCKET` AS d WHERE d.c0 BETWEEN $1 AND $2 AND d.cid BETWEEN 0 AND 99;
@@ -98,3 +101,4 @@ server_processes = projector,goxdcr
 
 [clients]
 python_client = 3.2.7
+

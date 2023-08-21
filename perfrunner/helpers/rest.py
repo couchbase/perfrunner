@@ -563,6 +563,15 @@ class DefaultRestHelper(RestBase):
                 format(host, bucket)
         return self.get(url=api).json()
 
+    def get_xdcr_changes_left_total(self, host: str, bucket: str) -> dict:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/stats/range/xdcr_changes_left_total?' \
+                  'sourceBucketName={}&pipelineType=Main'.format(host, bucket)
+        else:
+            api = 'http://{}:8091/pools/default/stats/range/xdcr_changes_left_total?' \
+                  'sourceBucketName={}&pipelineType=Main'.format(host, bucket)
+        return self.get(url=api).json()
+
     def add_remote_cluster(self,
                            local_host: str,
                            remote_host: str,

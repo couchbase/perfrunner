@@ -308,8 +308,25 @@ class DefaultMonitor(DefaultRestHelper):
         self._wait_for_xdcr_to_start(host)
         # adding temporary delay to make sure replication_changes_left stats arrives
         time.sleep(20)
-        self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
-                                    self.get_xdcr_stats)
+        if self.build_version_number < (7, 6, 0, 0):
+            self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
+                                        self.get_xdcr_stats)
+        else:
+            self._wait_for_empty_xdcr_queues(host, bucket)
+
+    def _wait_for_empty_xdcr_queues(self, host: str, bucket: str):
+        start_time = time.time()
+        while True:
+            xdcr_changes_left_total = self.get_xdcr_changes_left_total(host, bucket)
+            value = int(xdcr_changes_left_total["data"][0]["values"][-1][1])
+            if value:
+                logger.info('xdcr_changes_left_total = {:,}'.format(value))
+            elif value == 0:
+                logger.info('xdcr_changes_left_total reached 0')
+                break
+            time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('Monitoring got stuck')
 
     def monitor_xdcr_changes_left(self, host: str, bucket: str, xdcrlink1: str, xdcrlink2: str):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))

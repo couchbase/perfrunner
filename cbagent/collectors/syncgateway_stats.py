@@ -238,7 +238,18 @@ class SyncGatewayStats(Collector):
 
         "sgw_gsi_views_access_count",
         "sgw_gsi_views_roleAccess_count",
-        "sgw_gsi_views_channels_count"
+        "sgw_gsi_views_channels_count",
+
+        # Log streaming metrics (Fluentbit)
+        "fluentbit_output_proc_records_total",
+        "fluentbit_output_proc_bytes_total",
+        "fluentbit_output_dropped_records_total",
+        "fluentbit_output_retried_records_total",
+        "fluentbit_output_retries_failed_total",
+        "fluentbit_output_errors_total",
+        "fluentbit_input_records_total",
+        "fluentbit_input_bytes_total"
+
     )
 
     def __init__(self, settings, test):

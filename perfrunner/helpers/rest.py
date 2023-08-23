@@ -2393,6 +2393,98 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
                                                               .get('sync_gateway_version')
         return build
 
+    def create_or_override_log_streaming_config(self, config: dict):
+        logger.info("Creating log streaming: {}".format(config))
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client \
+            .create_or_override_log_streaming_config(self.tenant_id, self.project_id,
+                                                     cluster_id, sgw_cluster_id, config)
+        resp.raise_for_status()
+
+    def enable_log_streaming(self):
+        logger.info("Enabling log streaming")
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.enable_sgw_logstreaming(self.tenant_id, self.project_id,
+                                                             cluster_id, sgw_cluster_id)
+        resp.raise_for_status()
+
+    def disable_log_streaming(self):
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.disable_sgw_logstreaming(self.tenant_id, self.project_id,
+                                                              cluster_id, sgw_cluster_id)
+        resp.raise_for_status()
+
+    def create_log_streaming_config(self, config: dict):
+        logger.info("Creating log streaming config")
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.create_sgw_logstreaming_config(self.tenant_id, self.project_id,
+                                                                    cluster_id, sgw_cluster_id,
+                                                                    config)
+        resp.raise_for_status()
+
+    def get_log_streaming_config(self) -> dict:
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        return self.dedicated_client.get_sgw_logstreaming_config(self.tenant_id,
+                                                                 self.project_id,
+                                                                 cluster_id,
+                                                                 sgw_cluster_id).json()
+
+    def get_log_streaming_options(self) -> dict:
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        return self.dedicated_client.get_sgw_logstreaming_collector_options(self.tenant_id,
+                                                                            self.project_id,
+                                                                            cluster_id,
+                                                                            sgw_cluster_id).json()
+
+    def get_log_streaming_selected_options(self) -> dict:
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        return self.dedicated_client \
+            .get_sgw_logstreaming_collector_option_selected(self.tenant_id, self.project_id,
+                                                            cluster_id, sgw_cluster_id).json()
+
+    def get_logging_options(self) -> dict:
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        return self.dedicated_client.get_logging_options(self.tenant_id,
+                                                         self.project_id,
+                                                         cluster_id,
+                                                         sgw_cluster_id).json()
+
+    def get_logging_config(self) -> dict:
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        return self.dedicated_client.get_logging_config(self.tenant_id,
+                                                        self.project_id,
+                                                        cluster_id,
+                                                        sgw_cluster_id,
+                                                        "db-1").json()
+
+    def update_logging_config(self, config: dict):
+        logger.info("Updating logging config")
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.update_logging_config(self.tenant_id, self.project_id,
+                                                           cluster_id, sgw_cluster_id,
+                                                           "db-1", config)
+        resp.raise_for_status()
+
 
 class ServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):

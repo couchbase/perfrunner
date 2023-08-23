@@ -105,6 +105,50 @@ class SGPerfTest(PerfTest):
         else:
             self.collection_map = {}
 
+    def enable_log_streaming(self, collector: str):
+
+        if not self.capella_infra:
+            return
+
+        # Enable and set config for log streaming
+        config = {
+            'output_type': collector,
+            'url': self._get_collector_url(collector)
+        }
+        if collector != 'generic_http':
+            config.update(
+                {'api_key': self._get_collector_api_key()}
+            )
+
+        # Initialise and enable log streaming with the provided config
+        self.rest.create_or_override_log_streaming_config(config)
+
+        # Get the log streaming options
+        options = self.rest.get_log_streaming_options()
+        logger.info("The log streaming options are: {}".format(options))
+
+        # Get logging options
+        log_options = self.rest.get_logging_options()
+        logger.info("The logging options are: {}".format(log_options))
+
+        # Get logging config for the db
+        log_config = self.rest.get_logging_config()
+        logger.info("The deployed logging config for this db is: {}" .format(log_config))
+
+    def disable_log_streaming(self):
+
+        if not self.capella_infra:
+            return
+
+        logger.info('Disabling log-streaming')
+        self.rest.disable_log_streaming()
+
+    def _get_collector_url(self, collector: str) -> str:
+        return os.getenv('COLLECTOR_URL_{}'.format(collector.upper()))
+
+    def _get_collector_api_key(self, collector: str) -> str:
+        return os.getenv('COLLECTOR_API_KEY_{}'.format(collector.upper()))
+
     def download_ycsb(self):
         if self.worker_manager.is_remote:
             self.remote.clone_ycsb(repo=self.test_config.syncgateway_settings.repo,
@@ -234,6 +278,8 @@ class SGPerfTest(PerfTest):
     def run(self):
         self.remote.remove_sglogs()
         self.download_ycsb()
+        if collector := self.settings.syncgateway_settings.log_streaming:
+            self.enable_log_streaming(collector)
         self.start_memcached()
         self.load_users()
         self.load_docs()
@@ -2669,3 +2715,42 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
             logger.warn('BIDI access phase failed: {}'.format(ex))
 
         self.collect_execution_logs()
+
+
+class LogStreamingTest(SGWrite):
+
+    def access_with_log_streaming(self, collector: str):
+        self.enable_log_streaming(collector)
+        self.monitor.wait_sgw_log_streaming_status('enabled')
+        logger.info('Running access phase with log-streaming enabled')
+        self.run_test()
+        self.disable_log_streaming()
+        self.monitor.wait_sgw_log_streaming_status('disabled')
+
+    def run(self):
+        self.remote.remove_sglogs()
+        self.download_ycsb()
+        self.start_memcached()
+        self.load_users()
+        self.load_docs()
+        self.init_users()
+        # Run without log-streaming
+        logger.info('Running access phase without log-streaming')
+        self.run_test()
+        self.report_kpi()
+
+        # Run with log streaming
+        if collector := self.settings.syncgateway_settings.log_streaming:
+            self.access_with_log_streaming(collector)
+            self.report_kpi()
+
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_throughput("Throughput (req/sec),")
+        )

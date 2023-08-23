@@ -2873,6 +2873,7 @@ class SyncgatewaySettings:
     IMPORT_NODES = 1
     SSL_MODE_SGW = 'none'
     ROUNDTRIP_WRITE_LOAD = "false"
+    LOG_STREAMING_TYPE = None
     SG_REPLICATION_TYPE = "push"
     SG_CONFLICT_RESOLUTION = "default"
     SG_READ_LIMIT = 1
@@ -2965,6 +2966,8 @@ class SyncgatewaySettings:
         self.ssl_mode_sgw = (options.get('ssl_mode_sgw', self.SSL_MODE_SGW))
 
         self.roundtrip_write_load = options.get('roundtrip_write_load', self.ROUNDTRIP_WRITE_LOAD)
+        # possible options: datadog, sumologic, generic_http
+        self.log_streaming = options.get('log_streaming', self.LOG_STREAMING_TYPE)
         self.sg_replication_type = options.get('sg_replication_type', self.SG_REPLICATION_TYPE)
         self.sg_conflict_resolution = options.get('sg_conflict_resolution',
                                                   self.SG_CONFLICT_RESOLUTION)

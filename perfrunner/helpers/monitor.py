@@ -6,6 +6,7 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import (
     DefaultRestHelper,
     KubernetesRestHelper,
+    ProvisionedCapellaRestHelper,
     ServerlessRestHelper,
 )
 from perfrunner.settings import ClusterSpec, TestConfig
@@ -41,6 +42,7 @@ class DefaultMonitor(DefaultRestHelper):
     POLLING_INTERVAL_EVENTING = 1
     POLLING_INTERVAL_FRAGMENTATION = 10
     POLLING_INTERVAL_SGW = 1
+    POLLING_INTERVAL_SGW_LOGSTREAMING = 5
 
     REBALANCE_TIMEOUT = 3600 * 6
     TIMEOUT = 3600 * 12
@@ -1393,6 +1395,25 @@ class DefaultMonitor(DefaultRestHelper):
                 verify_count = 0
             last_push_count = push_count
             time.sleep(self.POLLING_INTERVAL_SGW)
+
+    def wait_sgw_log_streaming_status(self, desired_status: str):
+        self.rest = ProvisionedCapellaRestHelper(cluster_spec=self.cluster_spec,
+                                                 test_config=self.test_config)
+        retries = 0
+        max_retries = 180
+        logger.info('Waiting for \'{}\' log-streaming status'.format(desired_status))
+        while True:
+            current_status = self.rest.get_log_streaming_config().get('data', {}).get('status')
+            if current_status == desired_status:
+                return
+            retries += 1
+            if retries >= max_retries:
+                raise Exception(
+                    "Desired ({}) log-streaming status not reached after {}s. Status: {}".format(
+                        desired_status, max_retries*self.POLLING_INTERVAL_SGW_LOGSTREAMING,
+                        current_status)
+                )
+            time.sleep(self.POLLING_INTERVAL_SGW_LOGSTREAMING)
 
 
 class KubernetesMonitor(KubernetesRestHelper):

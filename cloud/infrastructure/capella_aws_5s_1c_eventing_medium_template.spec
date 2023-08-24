@@ -1,9 +1,6 @@
 [infrastructure]
 provider = capella
 backend = aws
-cbc_env = stage
-cbc_tenant = 5ae82d34-5da8-4313-af5f-90ea4142a4c6
-cbc_project = 8de5c1bf-9647-49d6-a124-c9998ccdc1cd
 
 [clusters]
 couchbase1 =

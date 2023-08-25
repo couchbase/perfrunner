@@ -753,6 +753,8 @@ class StatsSettings:
 
     SECONDARY_STATSFILE = '/root/statsfile'
 
+    REPORT_FOR_ALL_CLUSTERS = 0
+
     def __init__(self, options: dict):
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
@@ -768,6 +770,11 @@ class StatsSettings:
             options.get('traced_processes', '').split()
         self.secondary_statsfile = options.get('secondary_statsfile',
                                                self.SECONDARY_STATSFILE)
+
+        # Not used by all test classes, but can be used to decide whether to report KPIs for all
+        # clusters or just the first (the default)
+        self.report_for_all_clusters = maybe_atoi(options.get('report_for_all_clusters',
+                                                              str(self.REPORT_FOR_ALL_CLUSTERS)))
 
 
 class ProfilingSettings:

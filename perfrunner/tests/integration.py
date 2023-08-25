@@ -309,17 +309,24 @@ class EndToEndLatencyWithXDCRTest(EndToEndLatencyTest, CapellaXdcrTest):
             PerfTest.access(self, settings=n1ql_settings, target_iterator=self.load_target_iterator)
 
     def report_kv_kpi(self):
-        for operation in ('get', 'set'):
-            for percentile in self.test_config.access_settings.latency_percentiles:
-                self.reporter.post(
-                    *self.metrics.kv_latency(operation=operation, percentile=percentile)
-                )
+        for i, _ in enumerate(self.cluster_spec.masters):
+            for operation in ('get', 'set'):
+                for percentile in self.test_config.access_settings.latency_percentiles:
+                    self.reporter.post(
+                        *self.metrics.kv_latency(operation=operation, percentile=percentile,
+                                                 cluster_idx=i)
+                    )
+            if not self.test_config.stats_settings.report_for_all_clusters:
+                break
 
     def report_n1ql_kpi(self):
-        for percentile in self.test_config.access_settings.latency_percentiles:
-            self.reporter.post(
-                *self.metrics.query_latency(percentile=percentile)
-            )
+        for i, _ in enumerate(self.cluster_spec.masters):
+            for percentile in self.test_config.access_settings.latency_percentiles:
+                self.reporter.post(
+                    *self.metrics.query_latency(percentile=percentile, cluster_idx=i)
+                )
+            if not self.test_config.stats_settings.report_for_all_clusters:
+                break
 
     def report_xdcr_kpi(self):
         self.reporter.post(*self.metrics.xdcr_lag())
@@ -369,12 +376,16 @@ class EndToEndThroughputWithXDCRTest(EndToEndLatencyWithXDCRTest):
             self.reporter.post(
                 *self.metrics.avg_ops(cluster_idx=i)
             )
+            if not self.test_config.stats_settings.report_for_all_clusters:
+                break
 
     def report_n1ql_kpi(self):
         for master in self.cluster_spec.masters:
             self.reporter.post(
                 *self.metrics.avg_n1ql_throughput(master_node=master)
             )
+            if not self.test_config.stats_settings.report_for_all_clusters:
+                break
 
 
 class EndToEndRebalanceLatencyWithXDCRTest(EndToEndLatencyWithXDCRTest,

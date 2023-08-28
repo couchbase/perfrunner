@@ -37,7 +37,7 @@ functions = perf-test1:tests/eventing/code/n1ql_curl.js
 worker_count = 24
 cpp_worker_thread_count = 2
 config_file = tests/eventing/config/function_curl.json
-request_url = https://172.23.99.247/cgi-bin/text/1kb_text_200ms.py
+request_url = https://172.23.99.247:8443/cgi-bin/text/1kb_text_200ms
 
 [access]
 updates = 100

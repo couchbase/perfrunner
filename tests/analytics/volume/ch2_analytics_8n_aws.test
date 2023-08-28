@@ -48,7 +48,7 @@ aws_credential_path = /root/.ssh
 backup_storage = s3://analytics-ch2-1000w
 backup_repo = ch2
 threads = 8
-map_data = bench.ch2.customer=bench.ch2.customer,bench.ch2.district=bench.ch2.district,bench.ch2.history=bench.ch2.history,bench.ch2.item=bench.ch2.item,bench.ch2.neworder=bench.ch2.neworder,bench.ch2.orders=bench.ch2.orders,bench.ch2.stock=bench.ch2.stock,bench.ch2.warehouse=bench.ch2.warehouse,bench.ch2.supplier=bench.ch2.supplier,bench.ch2.nation=bench.ch2.nation,bench.ch2.region=bench.ch2.region,bench._default._default=bench._default._default
+map_data = bench.ch2=bench.ch2
 
 [ch2]
 warehouses = 1000

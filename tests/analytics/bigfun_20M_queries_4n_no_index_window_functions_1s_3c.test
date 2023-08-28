@@ -30,10 +30,10 @@ analytics_config_file = tests/analytics/config/3_datasets_collection_config.json
 eviction_policy = fullEviction
 
 [restore]
-backup_storage = /data2/backup/3collections/
+backup_storage = /data2/backup/3collections_new/
 backup_repo = default
 threads = 8
-map_data = bucket-1.scope-1.GleambookUsers=bucket-1.scope-1.GleambookUsers-1,bucket-1.scope-1.GleambookMessages=bucket-1.scope-1.GleambookMessages-1,bucket-1.scope-1.ChirpMessages=bucket-1.scope-1.ChirpMessages-1
+map_data = bucket-1.scope-1=bucket-1.scope-1
 
 [access]
 analytics_warmup_ops = 10

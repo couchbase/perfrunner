@@ -40,7 +40,7 @@ indexer.settings.storage_mode = plasma
 backup_storage = /data3/backup/ch3_w1000_magma/
 backup_repo = ch3
 threads = 8
-map_data = bench.ch3.customer=bench.ch3.customer,bench.ch3.district=bench.ch3.district,bench.ch3.history=bench.ch3.history,bench.ch3.item=bench.ch3.item,bench.ch3.neworder=bench.ch3.neworder,bench.ch3.orders=bench.ch3.orders,bench.ch3.stock=bench.ch3.stock,bench.ch3.warehouse=bench.ch3.warehouse,bench.ch3.supplier=bench.ch3.supplier,bench.ch3.nation=bench.ch3.nation,bench.ch3.region=bench.ch3.region,bench._default._default=bench._default._default
+map_data = bench.ch3=bench.ch3
 
 [ch3]
 warehouses = 1000

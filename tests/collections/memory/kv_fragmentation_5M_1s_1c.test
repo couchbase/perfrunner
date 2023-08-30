@@ -22,4 +22,4 @@ items = 5000000
 
 [clients]
 libcouchbase = 3.2.2
-python_client = 3.2.1
+python_client = 4.1.2

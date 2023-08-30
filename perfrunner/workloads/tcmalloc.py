@@ -2,19 +2,26 @@ import random
 from hashlib import md5
 
 import pkg_resources
-from twisted.internet import reactor
 
 from logger import logger
 
 cb_version = pkg_resources.get_distribution("couchbase").version
 if cb_version[0] == '2':
     from couchbase import experimental
+    from twisted.internet import reactor
     from txcouchbase.connection import Connection
     experimental.enable()
 elif cb_version[0] == '3':
     from couchbase.cluster import ClusterOptions
     from couchbase_core.cluster import PasswordAuthenticator
+    from twisted.internet import reactor
     from txcouchbase.cluster import TxCluster
+elif cb_version[0] == '4':
+    import txcouchbase
+    import txcouchbase.cluster
+    from couchbase.auth import PasswordAuthenticator
+    from couchbase.options import ClusterOptions
+    from twisted.internet import reactor
 
 
 class SmallIterator:
@@ -144,6 +151,15 @@ class WorkloadGen:
                                      options=ClusterOptions(pass_auth))
             self.bucket = self.cluster.bucket(bucket)
             self.collection = self.bucket.scope("scope-1").collection("collection-1")
+        elif cb_version[0] == '4':
+            connection_string = 'couchbase://{host}?password={password}'
+            connection_string = connection_string.format(host=host,
+                                                         password=password)
+            pass_auth = PasswordAuthenticator(bucket, password)
+            self.cluster = txcouchbase.cluster.TxCluster(connection_string,
+                                                         ClusterOptions(pass_auth))
+            self.bucket = self.cluster.bucket(bucket)
+            self.collection = self.bucket.scope("scope-1").collection("collection-1")
 
         self.fraction = 1
         self.iteration = 0
@@ -194,7 +210,10 @@ class WorkloadGen:
 
     def _on_get(self, rv, f, key=None):
         if self.use_collection:
-            v = rv.content
+            if cb_version[0] == '4':
+                v = rv.content_as[lambda x: x]
+            else:
+                v = rv.content
             v.append(f)
             d = self.collection.upsert(key, v)
             d.addCallback(self._on_append)

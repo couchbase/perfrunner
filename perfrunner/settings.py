@@ -831,6 +831,7 @@ class BucketSettings:
     BUCKET_TYPE = 'membase'  # alt: ephemeral
     AUTOFAILOVER_ENABLED = 'true'
     DEFAULT_FAILOVER_MIN_TIMEOUTS = [1, 5, 30]  # sec
+    DEFAULT_DATA_DISK_FAILURE_TIMEOUT = 10  # sec
     BACKEND_STORAGE = None
     CONFLICT_RESOLUTION_TYPE = 'seqno'
     FLUSH = True
@@ -867,6 +868,10 @@ class BucketSettings:
             self.failover_timeouts.extend(self.DEFAULT_FAILOVER_MIN_TIMEOUTS)
         else:
             self.failover_timeouts = self.DEFAULT_FAILOVER_MIN_TIMEOUTS
+
+        # failoverOnDataDiskIssues[timePeriod]
+        self.disk_failover_timeout = int(options.get('disk_failover_timeout',
+                                                     self.DEFAULT_DATA_DISK_FAILURE_TIMEOUT))
 
         self.backend_storage = options.get('backend_storage', self.BACKEND_STORAGE)
 

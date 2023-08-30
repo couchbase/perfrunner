@@ -655,6 +655,8 @@ class ClusterManager:
     def enable_auto_failover(self):
         enabled = self.test_config.bucket.autofailover_enabled
         failover_timeouts = self.test_config.bucket.failover_timeouts
+        disk_failover_timeout = self.test_config.bucket.disk_failover_timeout
+
         if self.capella_infra:
             return
         if self.dynamic_infra:
@@ -664,17 +666,20 @@ class ClusterManager:
             cluster['spec']['cluster']['autoFailoverServerGroup'] = bool(enabled)
             cluster['spec']['cluster']['autoFailoverOnDataDiskIssues'] = bool(enabled)
             cluster['spec']['cluster']['autoFailoverOnDataDiskIssuesTimePeriod'] = \
-                '{}s'.format(10)
+                '{}s'.format(disk_failover_timeout)
             cluster['spec']['cluster']['autoFailoverTimeout'] = \
                 '{}s'.format(failover_timeouts[-1])
             self.remote.update_cluster_config(cluster)
         else:
             for master in self.cluster_spec.masters:
-                self.rest.set_auto_failover(master, enabled, failover_timeouts)
+                self.rest.set_auto_failover(master, enabled, failover_timeouts,
+                                            disk_failover_timeout)
 
     def disable_auto_failover(self):
         enabled = 'false'
         failover_timeouts = self.test_config.bucket.failover_timeouts
+        disk_failover_timeout = self.test_config.bucket.disk_failover_timeout
+
         if self.capella_infra:
             return
         if self.dynamic_infra:
@@ -683,13 +688,14 @@ class ClusterManager:
             cluster['spec']['cluster']['autoFailoverServerGroup'] = bool(enabled)
             cluster['spec']['cluster']['autoFailoverOnDataDiskIssues'] = bool(enabled)
             cluster['spec']['cluster']['autoFailoverOnDataDiskIssuesTimePeriod'] = \
-                '{}s'.format(10)
+                '{}s'.format(disk_failover_timeout)
             cluster['spec']['cluster']['autoFailoverTimeout'] = \
                 '{}s'.format(failover_timeouts[-1])
             self.remote.update_cluster_config(cluster)
         else:
             for master in self.cluster_spec.masters:
-                self.rest.set_auto_failover(master, enabled, failover_timeouts)
+                self.rest.set_auto_failover(master, enabled, failover_timeouts,
+                                            disk_failover_timeout)
 
     def wait_until_warmed_up(self):
         if self.test_config.bucket.bucket_type in ('ephemeral', 'memcached'):

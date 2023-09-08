@@ -422,7 +422,7 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
         file_include = self.analytics_settings.external_file_include
         for dataset in dataset_list:
             statement = "CREATE EXTERNAL DATASET `{}` ON `{}` AT `external_link` " \
-                        "Using '{}' WITH {{ 'format': '{}', 'include': '*.{}' }};"\
+                        "USING '{}' WITH {{ 'format': '{}', 'include': '*.{}' }};"\
                 .format(dataset["Dataset"], external_bucket, dataset["Collection"],
                         file_format, file_include)
             logger.info("statement: {}".format(statement))
@@ -451,6 +451,52 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
         logger.info('Running access phase')
         results = self.access()
 
+        self.report_kpi(results)
+
+
+class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
+
+    def create_standalone_datasets(self):
+        logger.info('Creating standalone datasets')
+        with open(self.config_file, "r") as json_file:
+            analytics_config = json.load(json_file)
+        dataset_list = analytics_config["Analytics"]
+        for dataset in dataset_list:
+            statement = "CREATE DATASET `{}` PRIMARY KEY (`key`: string)".format(dataset["Dataset"])
+            logger.info("statement: {}".format(statement))
+            self.rest.exec_analytics_statement(self.analytics_node, statement)
+
+    @with_stats
+    @timeit
+    def ingest_data(self):
+        logger.info('Ingesting data from S3 using COPY FROM')
+        with open(self.config_file, "r") as json_file:
+            analytics_config = json.load(json_file)
+        dataset_list = analytics_config["Analytics"]
+        external_bucket = self.analytics_settings.external_bucket
+        file_format = self.analytics_settings.external_file_format
+        file_include = self.analytics_settings.external_file_include
+        for dataset in dataset_list:
+            statement = "COPY INTO `{}` FROM `{}` AT `external_link` " \
+                        "USING '{}' WITH {{ 'format': '{}', 'include': '*.{}' }};"\
+                .format(dataset["Dataset"], external_bucket, dataset["Collection"],
+                        file_format, file_include)
+            logger.info("statement: {}".format(statement))
+
+            t0 = time.time()
+            self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info('Statement execution time: {}'.format(time.time() - t0))
+
+    def run(self):
+        random.seed(8095)
+
+        self.set_up_s3_link()
+        self.create_standalone_datasets()
+
+        copy_from_time = self.ingest_data()
+        logger.info('Total data ingestion time using COPY FROM: {}'.format(copy_from_time))
+
+        results = self.access()
         self.report_kpi(results)
 
 

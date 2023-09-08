@@ -6,6 +6,7 @@ from typing import Iterator, List
 
 import numpy
 
+from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.workloads.bigfun.query_gen import Query, new_queries
@@ -65,6 +66,12 @@ def bigfun(rest: RestHelper,
            num_requests: int,
            query_set: str,
            external_storage: bool = False) -> Iterator:
+    logger.info('Running BigFun queries')
+
+    if not num_requests > 0:
+        logger.info('No BigFun queries to run')
+        return
+
     for query in new_queries(query_set):
         timings = run_concurrent_queries(rest,
                                          nodes,

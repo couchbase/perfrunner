@@ -376,6 +376,7 @@ class DefaultRestHelper(RestBase):
         return self.get(url=api).json()['counters']
 
     def is_not_balanced(self, host: str) -> int:
+        logger.info('Checking if cluster is balanced using rebalance counters ({})'.format(host))
         counters = self.get_counters(host)
         logger.info(f"counters : {counters}")
         if not counters.get('rebalance_start') and counters.get('rebalance_success'):
@@ -384,6 +385,7 @@ class DefaultRestHelper(RestBase):
             return False
 
     def get_failover_counter(self, host: str) -> int:
+        logger.info('Checking failover counter ({})'.format(host))
         counters = self.get_counters(host)
         return counters.get('failover_node')
 
@@ -1302,6 +1304,24 @@ class DefaultRestHelper(RestBase):
         else:
             api = 'http://{}:8091/pools/default/stats/range/cbas_incoming_records_count?' \
                   'nodesAggregation=sum'.format(host)
+        return self.get(url=api).json()
+
+    def pause_analytics_cluster(self, analytics_node: str):
+        path = 'analytics/cluster/pause'
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18095/{}'.format(analytics_node, path)
+        else:
+            api = 'http://{}:8095/{}'.format(analytics_node, path)
+
+        self.post(url=api)
+
+    def get_analytics_pause_status(self, analytics_node: str) -> dict:
+        path = 'analytics/cluster/pause/status'
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18095/{}'.format(analytics_node, path)
+        else:
+            api = 'http://{}:8095/{}'.format(analytics_node, path)
+
         return self.get(url=api).json()
 
     def deploy_function(self, node: str, func: dict, name: str):

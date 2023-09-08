@@ -20,7 +20,7 @@ from perfrunner.remote.context import (
     servers_by_role,
     syncgateway_servers,
 )
-from perfrunner.settings import ClusterSpec
+from perfrunner.settings import CH2, CH2ConnectionSettings, ClusterSpec
 
 
 class RemoteLinux(Remote):
@@ -439,6 +439,7 @@ class RemoteLinux(Remote):
     @all_servers
     def detect_core_dumps(self):
         # Based on kernel.core_pattern = /data/core-%e-%p
+        logger.info('Detecting core dumps')
         target_dir = '/data' if not self.cluster_spec.capella_infrastructure else '/var/cb/data'
         r = run('ls {}/core*'.format(target_dir), quiet=True)
         if not r.return_code:
@@ -1164,59 +1165,44 @@ class RemoteLinux(Remote):
         run('rm -rf /data/*')
 
     @master_client
-    def ch2_run_task(self, cluster_spec: ClusterSpec, worker_home: str, warehouses: int,
-                     aclients: int = 0, tclients: int = 0, duration: int = 0,
-                     iterations: int = 0, warmup_iterations: int = 0, warmup_duration: int = 0,
-                     query_url: str = None, multi_query_url: str = None,
-                     analytics_url: str = None, log_file: str = 'ch2_mixed'):
-
-        flags = ['--warehouses {}'.format(warehouses),
-                 '--aclients {}'.format(aclients) if aclients else None,
-                 '--tclients {}'.format(tclients) if tclients else None,
-                 '--duration {}'.format(duration) if duration else None,
-                 '--warmup-duration {}'.format(warmup_duration) if warmup_duration else None,
-                 '--query-iterations {}'.format(iterations) if iterations else None,
-                 '--warmup-query-iterations {}'.format(warmup_iterations)
-                 if warmup_iterations else None,
-                 'nestcollections',
-                 '--query-url {}'.format(query_url) if tclients else None,
-                 '--multi-query-url {}'.format(multi_query_url) if tclients else None,
-                 '--analytics-url {}'.format(analytics_url) if aclients else None,
-                 '--userid {}'.format(cluster_spec.rest_credentials[0]),
-                 '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 '--no-load > ../../../{}.log'.format(log_file)]
-
-        cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(
-            ' '.join(filter(None, flags)))
+    def ch2_run_task(
+        self,
+        conn_settings: CH2ConnectionSettings,
+        task_settings: CH2,
+        worker_home: str,
+        driver: str = 'nestcollections',
+        log_file: str = 'ch2_mixed'
+    ):
+        cmd = '../../../env/bin/python3 ./tpcc.py {} {} {} > ../../../{}.log'.format(
+            driver,
+            conn_settings.cli_args_str_run(task_settings.tclients, task_settings.aclients),
+            task_settings.cli_args_str_run(),
+            log_file
+        )
 
         with cd(worker_home), cd('perfrunner'), cd('ch2/ch2driver/pytpcc/'):
             logger.info('Running: {}'.format(cmd))
             run(cmd)
 
     @master_client
-    def ch2_load_task(self, cluster_spec: ClusterSpec, worker_home: str, warehouses: int,
-                      load_tclients: int, data_url: str, multi_data_url: str, query_url: str,
-                      multi_query_url: str, load_mode: str):
-        if load_mode == "qrysvc-load":
-            qrysvc_mode = True
+    def ch2_load_task(
+        self,
+        conn_settings: CH2ConnectionSettings,
+        task_settings: CH2,
+        worker_home: str,
+        driver: str = 'nestcollections'
+    ):
+        if task_settings.load_mode == "qrysvc-load":
+            output_dest = '/dev/null 2>&1'
         else:
-            qrysvc_mode = False
+            output_dest = '../../../ch2_load.log'
 
-        flags = ['--warehouses {}'.format(warehouses),
-                 '--tclients {}'.format(load_tclients),
-                 'nestcollections',
-                 '--data-url {}'.format(data_url) if not qrysvc_mode else None,
-                 '--multi-data-url {}'.format(multi_data_url) if not qrysvc_mode else None,
-                 '--query-url {}'.format(query_url) if qrysvc_mode else None,
-                 '--multi-query-url {}'.format(multi_query_url) if qrysvc_mode else None,
-                 '--userid {}'.format(cluster_spec.rest_credentials[0]),
-                 '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 '--no-execute',
-                 '--{} > ../../../ch2_load.log'.format(load_mode) if not qrysvc_mode else None,
-                 '--{} > /dev/null 2>&1'.format(load_mode) if qrysvc_mode else None]
-
-        cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(
-            ' '.join(filter(None, flags)))
+        cmd = '../../../env/bin/python3 ./tpcc.py {} {} {} > {}'.format(
+            driver,
+            conn_settings.cli_args_str_load(task_settings.load_mode),
+            task_settings.cli_args_str_load(),
+            output_dest
+        )
 
         with cd(worker_home), cd('perfrunner'), cd('ch2/ch2driver/pytpcc/'):
             logger.info('Running: {}'.format(cmd))

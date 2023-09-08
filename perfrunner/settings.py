@@ -3,8 +3,9 @@ import json
 import os
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
+from dataclasses import dataclass
 from itertools import chain, combinations, permutations
-from typing import Dict, Iterable, Iterator, List, Tuple
+from typing import Dict, Iterable, Iterator, List, Optional, Tuple
 
 from decorator import decorator
 
@@ -71,6 +72,10 @@ class Config:
 
 class ClusterSpec(Config):
 
+    def __init__(self):
+        super().__init__()
+        self.inactive_cluster_idxs = set()
+
     @property
     def dynamic_infrastructure(self):
         return self.cloud_infrastructure and self.kubernetes_infrastructure
@@ -132,7 +137,8 @@ class ClusterSpec(Config):
 
     @property
     def infrastructure_clusters(self):
-        return {k: v for k, v in self.config.items('clusters')}
+        return {k: v for i, (k, v) in enumerate(self.config.items('clusters'))
+                if i not in self.inactive_cluster_idxs}
 
     @property
     def infrastructure_clients(self):
@@ -182,16 +188,17 @@ class ClusterSpec(Config):
 
     @property
     def clusters(self) -> Iterator:
-        for cluster_name, servers in self.config.items('clusters'):
+        for cluster_name, servers in self.infrastructure_clusters.items():
             hosts = [s.split(':')[0] for s in servers.split()]
             yield cluster_name, hosts
 
     @property
     def clusters_schemas(self) -> Iterator:
         if self.capella_infrastructure and not self.serverless_infrastructure:
-            for cluster_name, servers in self.config.items('clusters_schemas'):
-                schemas = servers.split()
-                yield cluster_name, schemas
+            for i, (cluster_name, servers) in enumerate(self.config.items('clusters_schemas')):
+                if i not in self.inactive_cluster_idxs:
+                    schemas = servers.split()
+                    yield cluster_name, schemas
 
     @property
     def sgw_clusters(self) -> Iterator:
@@ -260,8 +267,9 @@ class ClusterSpec(Config):
     @property
     def clusters_private(self) -> Iterator:
         if self.using_private_cluster_ips:
-            for cluster_name, private_ips in self.config.items('cluster_private_ips'):
-                yield cluster_name, private_ips.split()
+            for i, (cluster_name, ips) in enumerate(self.config.items('cluster_private_ips')):
+                if i not in self.inactive_cluster_idxs:
+                    yield cluster_name, ips.split()
 
     @property
     def clients_private(self) -> Iterator:
@@ -300,7 +308,9 @@ class ClusterSpec(Config):
     def instance_ids_per_cluster(self):
         iids_per_cluster = {}
         if self.using_instance_ids:
-            iids_per_cluster = {k: v.split() for k, v in self.config.items('cluster_instance_ids')}
+            iids_per_cluster = {k: v.split() for i, (k, v) in
+                                enumerate(self.config.items('cluster_instance_ids'))
+                                if i not in self.inactive_cluster_idxs}
         return iids_per_cluster
 
     @property
@@ -348,7 +358,7 @@ class ClusterSpec(Config):
     def server_instance_ids_by_role(self, role: str) -> List[str]:
         has_service = []
         if self.using_instance_ids:
-            for cluster_name, servers in self.config.items('clusters'):
+            for cluster_name, servers in self.infrastructure_clusters.items():
                 for i, server in enumerate(servers.split()):
                     _, roles = server.split(':')
                     if role in roles:
@@ -364,7 +374,7 @@ class ClusterSpec(Config):
 
     def servers_by_role(self, role: str) -> List[str]:
         has_service = []
-        for _, servers in self.config.items('clusters'):
+        for servers in self.infrastructure_clusters.values():
             for server in servers.split():
                 host, roles, *group = server.split(':')
                 if role in roles:
@@ -373,7 +383,7 @@ class ClusterSpec(Config):
 
     def servers_by_cluster_and_role(self, role: str) -> List[str]:
         has_service = []
-        for _, servers in self.config.items('clusters'):
+        for servers in self.infrastructure_clusters.values():
             cluster_has_service = []
             for server in servers.split():
                 host, roles, *group = server.split(':')
@@ -384,7 +394,7 @@ class ClusterSpec(Config):
 
     def servers_by_role_from_first_cluster(self, role: str) -> List[str]:
         has_service = []
-        servers = self.config.items('clusters')[0][1]
+        servers = list(self.infrastructure_clusters.values())[0]
         for server in servers.split():
             host, roles, *group = server.split(':')
             if role in roles:
@@ -394,7 +404,7 @@ class ClusterSpec(Config):
     @property
     def roles(self) -> Dict[str, str]:
         server_roles = {}
-        for _, servers in self.config.items('clusters'):
+        for servers in self.infrastructure_clusters.values():
             for server in servers.split():
                 host, roles, *group = server.split(':')
                 server_roles[host] = roles
@@ -403,7 +413,7 @@ class ClusterSpec(Config):
     @property
     def servers_and_roles(self) -> List[Tuple[str, str]]:
         server_and_roles = []
-        for _, servers in self.config.items('clusters'):
+        for servers in self.infrastructure_clusters.values():
             for server in servers.split():
                 host, roles, *group = server.split(':')
                 server_and_roles.append((host, roles))
@@ -520,7 +530,7 @@ class ClusterSpec(Config):
     @property
     def server_group_map(self) -> dict:
         server_grp_map = {}
-        for cluster_name, servers in self.config.items('clusters'):
+        for servers in self.infrastructure_clusters.values():
             for server in servers.split():
                 host, roles, *group = server.split(':')
                 if len(group):
@@ -613,15 +623,45 @@ class ClusterSpec(Config):
     def data_api(self) -> dict:
         return self._get_options_as_dict('data_api')
 
-    def keep_one_cluster(self, cluster_name: str):
-        if self.config.has_option('clusters', cluster_name):
-            logger.info('Only keeping cluster {} in cluster spec'.format(cluster_name))
-            for cluster in self.config.options('clusters'):
-                if cluster != cluster_name:
-                    self.config.remove_option('clusters', cluster)
-        else:
-            logger.warn('Cluster {} not found in cluster spec, keeping all clusters'
-                        .format(cluster_name))
+    def _cluster_names_to_idxs(self, cluster_names: Iterable[str]) -> List[int]:
+        cluster_idxs = []
+        for i, cluster_name in enumerate(self.config.options('clusters')):
+            if cluster_name in cluster_names:
+                cluster_idxs.append(i)
+
+        return cluster_idxs
+
+    def set_active_clusters_by_name(self, cluster_names: Iterable[str]):
+        self.set_active_clusters_by_idx(self._cluster_names_to_idxs(cluster_names))
+
+    def set_inactive_clusters_by_name(self, cluster_names: Iterable[str]):
+        self.set_inactive_clusers_by_idx(self._cluster_names_to_idxs(cluster_names))
+
+    def set_active_clusters_by_idx(self, cluster_idxs: Iterable[int]):
+        if not (new_active_clusters := set(cluster_idxs)):
+            logger.warn('No valid active clusters specified. Not changing active clusters')
+            return
+
+        self.inactive_cluster_idxs = set(range(len(self.config.options('clusters')))) - \
+            new_active_clusters
+
+        logger.info('Active clusters set to {}'
+                    .format(list(self.infrastructure_clusters.keys())))
+
+    def set_inactive_clusters_by_idx(self, cluster_idxs: Iterable[int]):
+        new_inactive_clusters = set(cluster_idxs)
+
+        if new_inactive_clusters == set(range(len(self.config.options('clusters')))):
+            logger.warn('Cannot set all clusters to inactive. Not changing active clusters')
+            return
+
+        self.inactive_cluster_idxs = new_inactive_clusters
+        logger.info('Active clusters set to {}'
+                    .format(list(self.infrastructure_clusters.keys())))
+
+    def set_all_clusters_active(self):
+        self.inactive_cluster_idxs = set()
+        logger.info('All clusters set to active')
 
 
 class TestCaseSettings:
@@ -2518,6 +2558,55 @@ class TPCDSLoaderSettings:
         return str(self.__dict__)
 
 
+@dataclass
+class CH2ConnectionSettings:
+    userid: str
+    password: str
+    query_url: Optional[str] = None
+    multi_query_url: Optional[str] = None
+    analytics_url: Optional[str] = None
+    data_url: Optional[str] = None
+    multi_data_url: Optional[str] = None
+
+    def cli_args_str_run(self, tclients: int, aclients: int) -> str:
+        """Return a string of connection-related CLI arguments for running benchmark phase."""
+        flags = [
+            '--userid {}'.format(self.userid),
+            '--password {}'.format(self.password)
+        ]
+
+        if tclients > 0:
+            flags += [
+                '--query-url {}'.format(self.query_url),
+                '--multi-query-url {}'.format(self.multi_query_url)
+            ]
+
+        if aclients > 0:
+            flags += ['--analytics-url {}'.format(self.analytics_url)]
+
+        return ' '.join(flags)
+
+    def cli_args_str_load(self, load_mode: str) -> str:
+        """Return a string of connection-related CLI arguments for running load phase."""
+        flags = [
+            '--userid {}'.format(self.userid),
+            '--password {}'.format(self.password)
+        ]
+
+        if load_mode == "qrysvc-load":
+            flags += [
+                '--query-url {}'.format(self.query_url),
+                '--multi-query-url {}'.format(self.multi_query_url),
+            ]
+        else:
+            flags += [
+                '--data-url {}'.format(self.data_url),
+                '--multi-data-url {}'.format(self.multi_data_url),
+            ]
+
+        return ' '.join(flags)
+
+
 class CH2:
 
     REPO = 'https://github.com/couchbaselabs2/ch2.git'
@@ -2561,51 +2650,78 @@ class CH2:
     def __str__(self) -> str:
         return str(self.__dict__)
 
+    def cli_args_str_run(self) -> str:
+        """Return a string of workload-related CLI arguments for running benchmark phase."""
+        flags = [
+            '--warehouses {}'.format(self.warehouses),
+            '--aclients {}'.format(self.aclients) if self.aclients else None,
+            '--tclients {}'.format(self.tclients) if self.tclients else None,
+            '--duration {}'.format(self.duration) if self.duration else None,
+            '--warmup-duration {}'.format(self.warmup_duration) if self.warmup_duration else None,
+            '--query-iterations {}'.format(self.iterations) if self.iterations else None,
+            '--warmup-query-iterations {}'.format(self.warmup_iterations)
+            if self.warmup_iterations else None,
+            '--no-load'
+        ]
+        return ' '.join(filter(None, flags))
 
-class CH3:
+    def cli_args_str_load(self) -> str:
+        """Return a string of workload-related CLI arguments for running load phase."""
+        flags = [
+            '--warehouses {}'.format(self.warehouses),
+            '--tclients {}'.format(self.load_tclients),
+            '--no-execute',
+            '--{}'.format(self.load_mode)
+        ]
+        return ' '.join(filter(None, flags))
+
+
+@dataclass
+class CH3ConnectionSettings(CH2ConnectionSettings):
+    fts_url: Optional[str] = None
+
+    def cli_args_str_run(self, tclients: int, aclients: int, fclients: int) -> str:
+        """Return a string of connection-related CLI arguments for running benchmark phase."""
+        args_str = super().cli_args_str_run(tclients, aclients)
+
+        if fclients > 0:
+            args_str += ' --fts-url {}'.format(self.fts_url)
+
+        return args_str
+
+
+class CH3(CH2):
 
     REPO = 'https://github.com/couchbaselabs/ch3.git'
-    BRANCH = 'main'
-    WAREHOUSES = 1000
-    ACLIENTS = 0
-    TCLIENTS = 0
     FCLIENTS = 0
-    ITERATIONS = 1
-    WARMUP_ITERATIONS = 0
-    WARMUP_DURATION = 0
-    DURATION = 0
     WORKLOAD = 'ch3_mixed'
-    ANALYTICS_STATEMENTS = ''
-    USE_BACKUP = 'true'
     DEBUG = 'false'
-    LOAD_TCLIENTS = 0
-    LOAD_MODE = 'datasvc-bulkload'
 
     def __init__(self, options: dict):
-        self.repo = options.get('repo', self.REPO)
-        self.branch = options.get('branch', self.BRANCH)
-        self.warehouses = int(options.get('warehouses', self.WAREHOUSES))
-        self.aclients = int(options.get('aclients', self.ACLIENTS))
-        self.tclients = int(options.get('tclients', self.TCLIENTS))
+        super().__init__(options)
         self.fclients = int(options.get('fclients', self.FCLIENTS))
-        self.load_tclients = int(options.get('load_tclients', self.LOAD_TCLIENTS))
-        self.load_mode = options.get('load_mode', self.LOAD_MODE)
-        self.iterations = int(options.get('iterations', self.ITERATIONS))
-        self.warmup_iterations = int(options.get('warmup_iterations', self.WARMUP_ITERATIONS))
-        self.warmup_duration = int(options.get('warmup_duration', self.WARMUP_DURATION))
-        self.duration = int(options.get('duration', self.DURATION))
-        self.workload = options.get('workload', self.WORKLOAD)
-        self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
         self.debug = maybe_atoi(options.get('debug', self.DEBUG))
-        self.raw_analytics_statements = options.get('analytics_statements',
-                                                    self.ANALYTICS_STATEMENTS)
-        if self.raw_analytics_statements:
-            self.analytics_statements = self.raw_analytics_statements.strip().split('\n')
-        else:
-            self.analytics_statements = ''
 
     def __str__(self) -> str:
         return str(self.__dict__)
+
+    def cli_args_str_run(self) -> str:
+        """Return a string of workload-related CLI arguments for running benchmark phase."""
+        args_str = '{} --fclients {}'.format(super().cli_args_str_run(), self.fclients)
+
+        if self.debug:
+            args_str += ' --debug'
+
+        return args_str
+
+    def cli_args_str_load(self) -> str:
+        """Return a string of workload-related CLI arguments for running load phase."""
+        args_str = super().cli_args_str_load()
+
+        if self.debug:
+            args_str += ' --debug'
+
+        return args_str
 
 
 class PYTPCCSettings:

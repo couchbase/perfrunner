@@ -908,6 +908,33 @@ class DefaultMonitor(DefaultRestHelper):
 
             time.sleep(self.POLLING_INTERVAL_ANALYTICS)
 
+    def monitor_cbas_pause_status(self, analytics_node: str) -> str:
+        logger.info('Wait until analytics pause operation is completed.')
+
+        start_time = time.time()
+
+        while True:
+            resp = self.get_analytics_pause_status(analytics_node)
+            pause_status, failure = resp['status'], resp['failure']
+            logger.info('Pause status: {}'.format(pause_status))
+
+            if pause_status == 'running':
+                time.sleep(self.POLLING_INTERVAL)
+            elif pause_status == 'complete':
+                break
+            elif pause_status == 'notRunning':
+                logger.warn('No pause attempts were made.')
+                break
+            elif pause_status == 'failed':
+                logger.error('Pause operation failed: {}'.format(failure))
+                break
+
+            if time.time() - start_time > 1800:
+                logger.interrupt('Monitoring analytics pause status timed out after 30 mins.')
+                break
+
+        return pause_status
+
     def monitor_dataset_drop(self, analytics_node: str, dataset: str):
         while True:
             statement = "SELECT COUNT(*) from `{}`;".format(dataset)

@@ -47,12 +47,13 @@ class Remote:
         client_settings = test_config.client_settings.__dict__
         py_version = client_settings['python_client']
         if py_version is not None:
+            logger.info('Installing Python SDK on remote client: {}'.format(py_version))
             with cd(perfrunner_home):
                 if 'review.couchbase.org' in py_version or "github" in py_version:
-                    run("env/bin/pip install {} --no-cache-dir".format(py_version), quiet=True)
+                    run("env/bin/pip install {} --no-cache-dir".format(py_version), warn_only=True)
                 else:
                     run("env/bin/pip install couchbase=={} "
-                        "--no-cache-dir".format(py_version), quiet=True)
+                        "--no-cache-dir".format(py_version), warn_only=True)
 
     @master_client
     def remote_copy(self, worker_home: str):

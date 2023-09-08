@@ -36,7 +36,7 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(args.cluster_spec_fname, override=args.override)
     if args.cluster_name:
-        cluster_spec.keep_one_cluster(args.cluster_name)
+        cluster_spec.set_active_clusters_by_name([args.cluster_name])
     test_config = TestConfig()
     test_config.parse(args.test_config_fname, override=args.override)
 
@@ -50,8 +50,8 @@ def main():
 
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
-    if cluster_spec.capella_infrastructure:
-        if cluster_spec.serverless_infrastructure:
+    if cm.cluster_spec.capella_infrastructure:
+        if cm.cluster_spec.serverless_infrastructure:
             cm.allow_ips_for_serverless_dbs()
             cm.provision_serverless_db_keys()
             cm.bypass_nebula_for_clients()
@@ -69,7 +69,7 @@ def main():
             cm.create_collections()
 
         return
-    elif cluster_spec.dynamic_infrastructure:
+    elif cm.cluster_spec.dynamic_infrastructure:
         cm.set_mem_quotas()
         cm.set_services()
         cm.tune_memory_settings()
@@ -92,7 +92,7 @@ def main():
         return  # Nothing todo with k8s after this
     else:
         # Individual nodes
-        if cluster_spec.goldfish_infrastructure:
+        if cm.cluster_spec.goldfish_infrastructure:
             cm.set_goldfish_s3_bucket()
             cm.add_aws_credential()
 

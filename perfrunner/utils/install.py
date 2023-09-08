@@ -714,7 +714,7 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(fname=args.cluster, override=args.override)
     if args.cluster_name:
-        cluster_spec.keep_one_cluster(args.cluster_name)
+        cluster_spec.set_active_clusters_by_name([args.cluster_name])
 
     if cluster_spec.cloud_infrastructure:
         if cluster_spec.kubernetes_infrastructure:

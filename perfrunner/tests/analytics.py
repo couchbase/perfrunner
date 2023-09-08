@@ -7,6 +7,7 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.worker import tpcds_initial_data_load_task
+from perfrunner.settings import CH2ConnectionSettings
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
 from perfrunner.tests.xdcr import SrcTargetIterator
@@ -15,6 +16,13 @@ from perfrunner.workloads.bigfun.query_gen import Query
 from perfrunner.workloads.tpcdsfun.driver import tpcds
 
 QueryLatencyPair = Tuple[Query, int]
+
+QUERY_PORT = 8093
+QUERY_PORT_SECURE = 18093
+FTS_PORT = 8094
+FTS_PORT_SECURE = 18094
+ANALYTICS_PORT = 8095
+ANALYTICS_PORT_SECURE = 18095
 
 
 class BigFunTest(PerfTest):
@@ -1061,51 +1069,48 @@ class CH2Test(PerfTest):
                                                                bucket,
                                                                self.analytics_node)
 
+    def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
+        if self.test_config.cluster.enable_n2n_encryption:
+            query_port = QUERY_PORT_SECURE
+            cbas_port = ANALYTICS_PORT_SECURE
+        else:
+            query_port = QUERY_PORT
+            cbas_port = ANALYTICS_PORT
+
+        query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
+        userid, password = self.cluster_spec.rest_credentials
+
+        return CH2ConnectionSettings(
+            userid=userid,
+            password=password,
+            analytics_url='{}:{}'.format(self.analytics_nodes[0], cbas_port),
+            query_url=query_urls[0],
+            multi_query_url=",".join(query_urls),
+            data_url=self.data_nodes[0],
+            multi_data_url=",".join(self.data_nodes)
+        )
+
     @with_stats
-    def run_ch2(self):
-        query_url = self.query_nodes[0] + ":8093"
-        analytics_url = self.analytics_nodes[0] + ":8095"
-        query_nodes_port = []
-        for node in self.query_nodes:
-            query_nodes_port.append(node + ":8093")
-        multi_query_url = ",".join(query_nodes_port)
-
+    def run_ch2_local(self, log_file: str = ''):
         logger.info("running {}".format(self.test_config.ch2_settings.workload))
-        local.ch2_run_task(
-            cluster_spec=self.cluster_spec,
-            warehouses=self.test_config.ch2_settings.warehouses,
-            aclients=self.test_config.ch2_settings.aclients,
-            tclients=self.test_config.ch2_settings.tclients,
-            duration=self.test_config.ch2_settings.duration,
-            iterations=self.test_config.ch2_settings.iterations,
-            warmup_iterations=self.test_config.ch2_settings.warmup_iterations,
-            warmup_duration=self.test_config.ch2_settings.warmup_duration,
-            query_url=query_url,
-            multi_query_url=multi_query_url,
-            analytics_url=analytics_url,
-            log_file=self.test_config.ch2_settings.workload
-        )
+        local.ch2_run_task(self._create_ch2_conn_settings(), self.test_config.ch2_settings,
+                           log_file=log_file or self.test_config.ch2_settings.workload)
 
-    def load_ch2(self):
-        data_url = self.data_nodes[0]
-        multi_data_url = ",".join(self.data_nodes)
-        query_url = self.query_nodes[0] + ":8093"
-        query_nodes_port = []
-        for node in self.query_nodes:
-            query_nodes_port.append(node + ":8093")
-        multi_query_url = ",".join(query_nodes_port)
-
+    def load_ch2_local(self):
         logger.info("load CH2 docs")
-        local.ch2_load_task(
-            cluster_spec=self.cluster_spec,
-            warehouses=self.test_config.ch2_settings.warehouses,
-            load_tclients=self.test_config.ch2_settings.load_tclients,
-            data_url=data_url,
-            multi_data_url=multi_data_url,
-            query_url=query_url,
-            multi_query_url=multi_query_url,
-            load_mode=self.test_config.ch2_settings.load_mode
-        )
+        local.ch2_load_task(self._create_ch2_conn_settings(), self.test_config.ch2_settings)
+
+    @with_stats
+    def run_ch2_remote(self, log_file: str = ''):
+        logger.info("running {}".format(self.test_config.ch2_settings.workload))
+        self.remote.ch2_run_task(self._create_ch2_conn_settings(), self.test_config.ch2_settings,
+                                 self.worker_manager.WORKER_HOME,
+                                 log_file=log_file or self.test_config.ch2_settings.workload)
+
+    def load_ch2_remote(self):
+        logger.info("load CH2 docs")
+        self.remote.ch2_load_task(self._create_ch2_conn_settings(), self.test_config.ch2_settings,
+                                  worker_home=self.worker_manager.WORKER_HOME)
 
     def restart(self):
         self.remote.stop_server()
@@ -1122,14 +1127,14 @@ class CH2Test(PerfTest):
         if self.test_config.ch2_settings.use_backup:
             self.restore_local()
         else:
-            self.load_ch2()
+            self.load_ch2_local()
 
         self.wait_for_persistence()
         self.restart()
         self.sync()
         self.create_indexes()
 
-        self.run_ch2()
+        self.run_ch2_local()
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
 
@@ -1154,54 +1159,6 @@ class CH2CloudTest(CH2Test):
                             encrypted=self.test_config.restore_settings.encrypted,
                             passphrase=self.test_config.restore_settings.passphrase)
 
-    @with_stats
-    def run_ch2(self):
-        query_url = self.query_nodes[0] + ":8093"
-        analytics_url = self.analytics_nodes[0] + ":8095"
-        query_nodes_port = []
-        for node in self.query_nodes:
-            query_nodes_port.append(node + ":8093")
-        multi_query_url = ",".join(query_nodes_port)
-
-        logger.info("running {}".format(self.test_config.ch2_settings.workload))
-        self.remote.ch2_run_task(
-            cluster_spec=self.cluster_spec,
-            worker_home=self.worker_manager.WORKER_HOME,
-            warehouses=self.test_config.ch2_settings.warehouses,
-            aclients=self.test_config.ch2_settings.aclients,
-            tclients=self.test_config.ch2_settings.tclients,
-            duration=self.test_config.ch2_settings.duration,
-            iterations=self.test_config.ch2_settings.iterations,
-            warmup_iterations=self.test_config.ch2_settings.warmup_iterations,
-            warmup_duration=self.test_config.ch2_settings.warmup_duration,
-            query_url=query_url,
-            multi_query_url=multi_query_url,
-            analytics_url=analytics_url,
-            log_file=self.test_config.ch2_settings.workload
-        )
-
-    def load_ch2(self):
-        data_url = self.data_nodes[0]
-        multi_data_url = ",".join(self.data_nodes)
-        query_url = self.query_nodes[0] + ":8093"
-        query_nodes_port = []
-        for node in self.query_nodes:
-            query_nodes_port.append(node + ":8093")
-        multi_query_url = ",".join(query_nodes_port)
-
-        logger.info("load CH2 docs")
-        self.remote.ch2_load_task(
-            cluster_spec=self.cluster_spec,
-            worker_home=self.worker_manager.WORKER_HOME,
-            warehouses=self.test_config.ch2_settings.warehouses,
-            load_tclients=self.test_config.ch2_settings.load_tclients,
-            data_url=data_url,
-            multi_data_url=multi_data_url,
-            query_url=query_url,
-            multi_query_url=multi_query_url,
-            load_mode=self.test_config.ch2_settings.load_mode
-        )
-
     def run(self):
         self.remote.init_ch2(repo=self.test_config.ch2_settings.repo,
                              branch=self.test_config.ch2_settings.branch,
@@ -1213,7 +1170,7 @@ class CH2CloudTest(CH2Test):
             self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
             self.restore()
         else:
-            self.load_ch2()
+            self.load_ch2_remote()
 
         self.wait_for_persistence()
         self.restart()
@@ -1222,7 +1179,7 @@ class CH2CloudTest(CH2Test):
                 not self.cluster_spec.goldfish_infrastructure):
             self.create_indexes()
 
-        self.run_ch2()
+        self.run_ch2_remote()
         self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
                                     logfile=self.test_config.ch2_settings.workload)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
@@ -1303,7 +1260,7 @@ class CH2CloudRemoteLinkTest(CH2CloudTest):
             self.restore()
         else:
             # Load into KV cluster
-            self.load_ch2()
+            self.load_ch2_remote()
 
         # Only wait for and restart the KV cluster
         self.wait_for_persistence()
@@ -1320,9 +1277,105 @@ class CH2CloudRemoteLinkTest(CH2CloudTest):
                 not self.cluster_spec.goldfish_infrastructure):
             self.create_indexes()
 
-        self.run_ch2()
+        self.run_ch2_remote()
         self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
                                     logfile=self.test_config.ch2_settings.workload)
+        if self.test_config.ch2_settings.workload != 'ch2_analytics':
+            self.report_kpi()
+
+
+class CH2GoldfishPauseResumeTest(CH2CloudRemoteLinkTest):
+
+    def __init__(self, *args, **kwargs):
+        PerfTest.__init__(self, *args, **kwargs)
+        self.cluster_spec.set_inactive_clusters_by_idx([2])
+
+        self.num_items = 0
+        self.analytics_link = self.test_config.analytics_settings.analytics_link
+        self.data_node, self.analytics_node = self.cluster_spec.masters
+        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
+        self.storage_format = self.test_config.analytics_settings.storage_format
+        self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+
+    @with_stats
+    def pause(self) -> int:
+        logger.info('Pausing analytics cluster...')
+        retries = 5
+        while retries >= 0:
+            self.rest.pause_analytics_cluster(self.analytics_node)
+
+            t0 = time.time()
+            status = self.monitor.monitor_cbas_pause_status(self.analytics_node)
+            pause_time = time.time() - t0
+
+            if status == 'complete':
+                logger.info('Pause operation completed. Time taken: {}s'.format(pause_time))
+                return pause_time
+            else:
+                if status == 'failed':
+                    logger.warn('Pause failed, retrying... ({} retries left)'.format(retries))
+                elif status == 'notRunning':
+                    logger.warn('Pause operation did not start, retrying... ({} retries left)'
+                                .format(retries))
+                retries -= 1
+
+        logger.interrupt('Failed to pause analytics cluster.')
+
+    def run(self):
+        super().run()
+
+        # Disconnect links before pause
+        self.disconnect_link()
+
+        self.pause()
+
+        # Set up second analytics cluster
+        self.cluster_spec.set_active_clusters_by_idx([2])
+        analytics_node = next(self.cluster_spec.masters)
+
+        self.cluster.set_goldfish_s3_bucket()
+        self.cluster.add_aws_credential()
+
+        self.cluster.tune_logging()
+        self.cluster.set_data_path()
+        self.cluster.set_analytics_path()
+
+        # Provision cluster and start resume timer
+        self.cluster.set_mem_quotas()
+        self.cluster.set_services()
+        self.cluster.rename()
+        self.cluster.set_auth()
+        t0 = time.time()
+
+        # Wait for analytics service to be ready (then stop timer)
+        self.monitor.monitor_analytics_node_active(analytics_node)
+        resume_time = (t1 := time.time()) - t0
+        logger.info('Time taken to resume single analytics node: {}s'.format(resume_time))
+
+        # Rebalance in remaining nodes
+        self.cluster.add_nodes()
+        self.cluster.rebalance()
+        rebalance_time = time.time() - t1
+        logger.info('Time taken to rebalance in remaining nodes: {}s'.format(rebalance_time))
+
+        # Finish set up
+        self.cluster.enable_auto_failover()
+        self.cluster.create_buckets()
+        self.cluster.set_analytics_settings()
+        self.cluster.wait_until_healthy()
+        logger.info('Total time taken for new cluster to be ready: {}s'.format(time.time() - t0))
+
+        # Switch over to second analytics cluster
+        self.cluster_spec.set_inactive_clusters_by_idx([1])
+        self.data_node, self.analytics_node = self.cluster_spec.masters
+
+        if (self.test_config.ch2_settings.create_gsi_index and
+                not self.cluster_spec.goldfish_infrastructure):
+            self.create_indexes()
+
+        log_file = '{}_post_resume'.format(self.test_config.ch2_settings.workload)
+        self.run_ch2_remote(log_file=log_file)
+        self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME, logfile=log_file)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
 
@@ -1509,32 +1562,29 @@ class CH3Test(PerfTest):
 
     @with_stats
     def run_ch3(self):
-        query_url = self.query_nodes[0] + ":8093"
-        analytics_url = self.analytics_nodes[0] + ":8095"
-        fts_url = self.fts_nodes[0] + ":8094"
-        query_nodes_port = []
-        for node in self.query_nodes:
-            query_nodes_port.append(node + ":8093")
-        multi_query_url = ",".join(query_nodes_port)
+        if self.test_config.cluster.enable_n2n_encryption:
+            query_port = QUERY_PORT_SECURE
+            fts_port = FTS_PORT_SECURE
+            cbas_port = ANALYTICS_PORT_SECURE
+        else:
+            query_port = QUERY_PORT
+            fts_port = FTS_PORT
+            cbas_port = ANALYTICS_PORT
+
+        query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
+        userid, password = self.cluster_spec.rest_credentials
+        conn_settings = CH2ConnectionSettings(
+            userid=userid,
+            password=password,
+            analytics_url='{}:{}'.format(self.analytics_nodes[0], cbas_port),
+            query_url=query_urls[0],
+            multi_query_url=",".join(query_urls),
+            fts_url='{}:{}'.format(self.fts_nodes[0], fts_port)
+        )
 
         logger.info("running {}".format(self.test_config.ch3_settings.workload))
-        local.ch3_run_task(
-            cluster_spec=self.cluster_spec,
-            warehouses=self.test_config.ch3_settings.warehouses,
-            aclients=self.test_config.ch3_settings.aclients,
-            tclients=self.test_config.ch3_settings.tclients,
-            fclients=self.test_config.ch3_settings.fclients,
-            duration=self.test_config.ch3_settings.duration,
-            iterations=self.test_config.ch3_settings.iterations,
-            warmup_iterations=self.test_config.ch3_settings.warmup_iterations,
-            warmup_duration=self.test_config.ch3_settings.warmup_duration,
-            query_url=query_url,
-            multi_query_url=multi_query_url,
-            analytics_url=analytics_url,
-            fts_url=fts_url,
-            log_file=self.test_config.ch3_settings.workload,
-            debug=self.test_config.ch3_settings.debug
-        )
+        local.ch3_run_task(conn_settings, self.test_config.ch3_settings,
+                           log_file=self.test_config.ch3_settings.workload)
 
     def create_fts_indexes(self):
         local.ch3_create_fts_index(
@@ -1551,26 +1601,24 @@ class CH3Test(PerfTest):
             )
 
     def load_ch3(self):
-        data_url = self.data_nodes[0]
-        multi_data_url = ",".join(self.data_nodes)
-        query_url = self.query_nodes[0] + ":8093"
-        query_nodes_port = []
-        for node in self.query_nodes:
-            query_nodes_port.append(node + ":8093")
-        multi_query_url = ",".join(query_nodes_port)
+        if self.test_config.cluster.enable_n2n_encryption:
+            query_port = QUERY_PORT_SECURE
+        else:
+            query_port = QUERY_PORT
 
-        logger.info("load CH3 docs")
-        local.ch3_load_task(
-            cluster_spec=self.cluster_spec,
-            warehouses=self.test_config.ch3_settings.warehouses,
-            load_tclients=self.test_config.ch3_settings.load_tclients,
-            data_url=data_url,
-            multi_data_url=multi_data_url,
-            query_url=query_url,
-            multi_query_url=multi_query_url,
-            load_mode=self.test_config.ch3_settings.load_mode,
-            debug=self.test_config.ch3_settings.debug
+        query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
+        userid, password = self.cluster_spec.rest_credentials
+        conn_settings = CH2ConnectionSettings(
+            userid=userid,
+            password=password,
+            data_url=self.data_nodes[0],
+            multi_data_url=",".join(self.data_nodes),
+            query_url=query_urls[0],
+            multi_query_url=",".join(query_urls)
         )
+
+        logger.info("running {}".format(self.test_config.ch3_settings.workload))
+        local.ch3_load_task(conn_settings, self.test_config.ch3_settings)
 
     def restart(self):
         self.remote.stop_server()

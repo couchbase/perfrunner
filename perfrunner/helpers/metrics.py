@@ -1861,76 +1861,50 @@ class MetricHelper:
 
         return lat, self._snapshots, metric_info
 
-    def deltasync_time(self, replication_time: float, field_length: str) -> Metric:
+    def deltasync_time(self, replication_time: float) -> Metric:
         title = 'Replication time (sec) {}'.format(self._title)
         metric_id = '{}_{}'.format(self.test_config.name, "time")
-        order_by = '00000003' + field_length
-        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
         replication_time = round(replication_time, 3)
         return replication_time, self._snapshots, metric_info
 
-    def deltasync_throughput(self, throughput: int, field_length: str) -> Metric:
+    def deltasync_throughput(self, throughput: int) -> Metric:
         title = 'Throughput (docs/sec) {}'.format(self._title)
         metric_id = '{}_{}'.format(self.test_config.name, "throughput")
-        order_by = '000002' + field_length
-        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
 
         return throughput, self._snapshots, metric_info
 
-    def deltasync_bandwidth(self, bandwidth: float, field_length: str) -> Metric:
+    def deltasync_bandwidth(self, bandwidth: float) -> Metric:
         title = 'Bandwidth Usage (MB/sec) {}'.format(self._title)
         metric_id = '{}_{}'.format(self.test_config.name, "bandwidth")
-        order_by = '000000004' + field_length
-        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
         return bandwidth, self._snapshots, metric_info
 
-    def deltasync_bytes(self, bytes: float, field_length: str) -> Metric:
+    def deltasync_bytes(self, bytes: float) -> Metric:
         title = 'Bytes Transfer (MB) {}'.format(self._title)
         metric_id = '{}_{}'.format(self.test_config.name, "Mbytes")
-        order_by = '00001' + field_length
-        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
         # in MB
         bytes = round(((bytes/1024)/1024), 2)
         return bytes, self._snapshots, metric_info
 
-    def cblite_e2e_throughput(self, throughput: int, field_length: str,
-                              operation: str, replication: str) -> Metric:
-        title = 'CBLite {} {} Throughput (docs/sec) {}'.format(
-            replication.lower(), operation, self._title)
-        metric_id = '{}_{}_{}_{}'.format(
-            self.test_config.name, "throughput", operation, replication.lower())
-        order_by = '000002' + field_length
-        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
-        return round(throughput), self._snapshots, metric_info
-
-    def sgw_e2e_throughput(self, throughput: int, field_length: str,
+    def sgw_e2e_throughput(self, throughput: int,
                            operation: str, replication: str) -> Metric:
         title = 'SGW {} {} Throughput (docs/sec) {}'.format(
             replication.lower(), operation, self._title)
         metric_id = '{}_{}_{}_{}'.format(
             self.test_config.name, "throughput", operation, replication.lower())
-        order_by = '000002' + field_length
-        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
         return round(throughput), self._snapshots, metric_info
 
-    def sgw_e2e_throughput_per_cblite(self, throughput: int, field_length: str,
+    def sgw_e2e_throughput_per_cblite(self, throughput: int,
                                       operation: str, replication: str) -> Metric:
         title = 'SGW {} {} Throughput (docs/sec) per cblite {}'.format(
             replication.lower(), operation, self._title)
         metric_id = '{}_{}_{}_{}'.format(
             self.test_config.name, "throughput_per_cblite", operation, replication.lower())
-        order_by = '000002' + field_length
-        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
-        return round(throughput), self._snapshots, metric_info
-
-    def cb_e2e_throughput(self, throughput: int, field_length: str,
-                          operation: str, replication: str) -> Metric:
-        title = 'CB {} {} Throughput (docs/sec) {}'.format(
-            replication.lower(), operation, self._title)
-        metric_id = '{}_{}_{}_{}'.format(
-            self.test_config.name, "throughput", operation, replication.lower())
-        order_by = '000002' + field_length
-        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
         return round(throughput), self._snapshots, metric_info
 
 

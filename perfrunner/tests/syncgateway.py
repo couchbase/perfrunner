@@ -1410,8 +1410,7 @@ class DeltaSync(SGPerfTest):
                     replication_time: float,
                     throughput: int,
                     bandwidth: float,
-                    synced_bytes: float,
-                    field_length: str):
+                    synced_bytes: float):
         self.collect_execution_logs()
         for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
             with open(f, 'r') as fout:
@@ -1419,17 +1418,16 @@ class DeltaSync(SGPerfTest):
                 logger.info(fout.read())
         self.reporter.post(
             *self.metrics.deltasync_time(
-                replication_time=replication_time,
-                field_length=field_length
+                replication_time=replication_time
             )
         )
 
         self.reporter.post(
-            *self.metrics.deltasync_throughput(throughput=throughput, field_length=field_length)
+            *self.metrics.deltasync_throughput(throughput=throughput)
         )
 
         self.reporter.post(
-            *self.metrics.deltasync_bytes(bytes=synced_bytes, field_length=field_length)
+            *self.metrics.deltasync_bytes(bytes=synced_bytes)
         )
 
     def db_cleanup(self):
@@ -1490,8 +1488,7 @@ class DeltaSync(SGPerfTest):
                 time_taken=replication_time
             )
             throughput = int(docs_replicated/replication_time)
-            field_length = str(self.test_config.syncgateway_settings.fieldlength)
-            self.report_kpi(replication_time, throughput, bandwidth, byte_transfer, field_length)
+            self.report_kpi(replication_time, throughput, bandwidth, byte_transfer)
 
             self.db_cleanup()
         else:
@@ -1622,15 +1619,13 @@ class DeltaSyncParallel(DeltaSync):
 
             docs_replicated = self.get_docs_replicated(results)
 
-            field_length = str(self.test_config.syncgateway_settings.fieldlength)
-
             throughput = int(docs_replicated/average_time)
             bandwidth = self.calc_bandwidth_usage(
                 synced_bytes=byte_transfer,
                 time_taken=average_time
             )
 
-            self.report_kpi(average_time, throughput, bandwidth, byte_transfer, field_length)
+            self.report_kpi(average_time, throughput, bandwidth, byte_transfer)
 
             self.db_cleanup()
         else:
@@ -1740,12 +1735,10 @@ class EndToEndTest(SGPerfTest):
                 logger.info(f_out.read())
 
     def _report_kpi(self, sgw_load_tp: int, sgw_access_tp: int):
-        field_length = str(self.test_config.syncgateway_settings.fieldlength)
         if sgw_load_tp > 0:  # Make E2E tests a bit resilient, collect partial data when available
             self.reporter.post(
                 *self.metrics.sgw_e2e_throughput(
                     throughput=sgw_load_tp,
-                    field_length=field_length,
                     operation="INSERT",
                     replication=self.test_config.syncgateway_settings.replication_type
                 )
@@ -1753,7 +1746,6 @@ class EndToEndTest(SGPerfTest):
             self.reporter.post(
                 *self.metrics.sgw_e2e_throughput_per_cblite(
                     throughput=sgw_load_tp / float(self.settings.syncgateway_settings.threads),
-                    field_length=field_length,
                     operation="INSERT",
                     replication=self.test_config.syncgateway_settings.replication_type
                 )
@@ -1763,7 +1755,6 @@ class EndToEndTest(SGPerfTest):
             self.reporter.post(
                 *self.metrics.sgw_e2e_throughput(
                     throughput=sgw_access_tp,
-                    field_length=field_length,
                     operation="UPDATE",
                     replication=self.test_config.syncgateway_settings.replication_type
                 )
@@ -1771,7 +1762,6 @@ class EndToEndTest(SGPerfTest):
             self.reporter.post(
                 *self.metrics.sgw_e2e_throughput_per_cblite(
                     throughput=sgw_access_tp / float(self.settings.syncgateway_settings.threads),
-                    field_length=field_length,
                     operation="UPDATE",
                     replication=self.test_config.syncgateway_settings.replication_type
                 )
@@ -2515,13 +2505,11 @@ class EndToEndMultiCBLPullTest(EndToEndMultiCBLTest):
 class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
 
     def _report_kpi(self, sgw_load_tp: int, operation: str):
-        field_length = str(self.test_config.syncgateway_settings.fieldlength)
         if sgw_load_tp <= 0:
             return
         self.reporter.post(
             *self.metrics.sgw_e2e_throughput(
                 throughput=sgw_load_tp,
-                field_length=field_length,
                 operation=operation,
                 replication=self.test_config.syncgateway_settings.replication_type
             )
@@ -2529,7 +2517,6 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
         self.reporter.post(
             *self.metrics.sgw_e2e_throughput_per_cblite(
                 throughput=sgw_load_tp / float(self.settings.syncgateway_settings.threads),
-                field_length=field_length,
                 operation=operation,
                 replication=self.test_config.syncgateway_settings.replication_type
             )

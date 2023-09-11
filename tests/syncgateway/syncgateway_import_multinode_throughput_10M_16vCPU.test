@@ -6,7 +6,7 @@ title = 3 node (multinode import), 10M docs, 1KB docsize, 16 vCPU
 component = syncgateway
 category = import
 sub_category = Throughput
-orderby = b10
+orderby = 000003
 
 [cluster]
 mem_quota = 25000
@@ -24,7 +24,7 @@ workload_instances = 2
 [access]
 workload_path = workloads/workloada
 items = 10000000
-ops = 90000000
+ops = 120000000
 workers = 160
 time = 1500
 workload_instances = 1

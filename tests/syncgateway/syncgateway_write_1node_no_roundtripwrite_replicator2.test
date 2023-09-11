@@ -6,6 +6,7 @@ title = , 1 node, 1M docs, 1K users, 100 channels, 10 channels per doc, roundTri
 component = syncgateway
 category = write
 sub_category = xattr
+orderby = 000003
 
 [cluster]
 mem_quota = 25000

@@ -6,6 +6,7 @@ title = , 4 nodes, 100K users, 100K channels, 20 channels per user, channels/acc
 component = syncgateway
 category = query
 sub_category = xattr
+orderby = 000005
 
 [cluster]
 mem_quota = 25000

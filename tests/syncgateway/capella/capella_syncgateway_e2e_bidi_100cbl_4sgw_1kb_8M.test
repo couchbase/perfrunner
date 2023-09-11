@@ -6,7 +6,7 @@ title = 4 nodes, 100 cbl, 8M docs, 10 fields, 1.5Kb docSize
 component = syncgatewaycloud
 category = e2e
 sub_category = {provider}
-orderby = b21
+orderby = 000001
 
 [cluster]
 mem_quota = 12800

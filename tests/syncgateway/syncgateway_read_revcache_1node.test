@@ -6,7 +6,7 @@ title = , 1 node, cache hit 100%%,
 component = syncgateway
 category = read
 sub_category = xattr
-orderby = b44
+orderby = 000052
 
 [cluster]
 mem_quota = 25000

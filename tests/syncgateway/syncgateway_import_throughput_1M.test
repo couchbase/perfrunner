@@ -22,7 +22,7 @@ workload_instances = 4
 [access]
 workload_path = workloads/workloada
 items = 1000000
-ops = 10000000
+ops = 120000000
 workers = 160
 time = 250
 workload_instances = 4

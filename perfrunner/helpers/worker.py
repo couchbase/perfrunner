@@ -416,6 +416,7 @@ class RemoteWorkerManager:
                 async_result.get()
             except Exception as e:
                 logger.info("Exception while getting result {}".format(e))
+                raise
         self.async_results = []
         logger.info('All tasks are done')
 

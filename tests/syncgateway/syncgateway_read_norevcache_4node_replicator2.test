@@ -47,3 +47,4 @@ requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
 replicator2 = true
 basic_auth = true
+mem_cpu_stats = true

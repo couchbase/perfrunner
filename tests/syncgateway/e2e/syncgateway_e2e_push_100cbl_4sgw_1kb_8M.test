@@ -54,3 +54,4 @@ updatefieldcount = 1
 fieldlength = 100
 ramdisk_size = 8000
 cbl_throughput = 10000
+mem_cpu_stats = true

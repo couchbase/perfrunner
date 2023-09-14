@@ -47,3 +47,4 @@ log_title = sync_gateway_1node_writes
 roundtrip_write_load = true
 sg_blackholepuller_timeout = 600
 sg_blackholepuller_client = 500
+mem_cpu_stats = true

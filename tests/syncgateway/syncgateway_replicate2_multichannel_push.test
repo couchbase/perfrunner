@@ -61,3 +61,4 @@ insertproportion=0
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
 sg_replication_type = push
+mem_cpu_stats = true

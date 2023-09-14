@@ -2752,6 +2752,7 @@ class SyncgatewaySettings:
     FIELDLENGTH = 100
     REPLICATOR2 = "false"
     BASIC_AUTH = "false"
+    MEM_CPU_STATS = False
     IMPORT_NODES = 1
     SSL_MODE_SGW = 'none'
     ROUNDTRIP_WRITE_LOAD = "false"
@@ -2841,6 +2842,7 @@ class SyncgatewaySettings:
 
         self.replicator2 = options.get('replicator2', self.REPLICATOR2)
         self.basic_auth = options.get('basic_auth', self.BASIC_AUTH)
+        self.mem_cpu_stats = options.get('mem_cpu_stats', self.MEM_CPU_STATS)
 
         self.import_nodes = int(options.get('import_nodes', self.IMPORT_NODES))
         self.ssl_mode_sgw = (options.get('ssl_mode_sgw', self.SSL_MODE_SGW))

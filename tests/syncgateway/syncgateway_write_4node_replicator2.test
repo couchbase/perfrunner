@@ -48,3 +48,4 @@ log_title = sync_gateway_4node_writes
 replicator2 = true
 basic_auth = true
 roundtrip_write_load = true
+mem_cpu_stats = true

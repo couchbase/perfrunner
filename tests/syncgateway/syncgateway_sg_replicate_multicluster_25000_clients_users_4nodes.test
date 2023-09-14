@@ -48,3 +48,4 @@ roundtrip_write_load = true
 sg_blackholepuller_timeout = 600
 sg_blackholepuller_client = 5000
 sg_blackholepuller_users = 25000
+mem_cpu_stats = true

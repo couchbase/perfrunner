@@ -50,3 +50,4 @@ scanproportion=1
 requestdistribution = zipfian
 log_title = sync_gateway_1node_auth
 roundtrip_write_load = true
+mem_cpu_stats = true

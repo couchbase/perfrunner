@@ -1813,6 +1813,33 @@ class MetricHelper:
         throughput = self._parse_sg_throughput()
         return throughput, self._snapshots, metric_info
 
+    def avg_sg_cpu_usage(self, title) -> Metric:
+        metric_id = '{}_Average_sg_cpu_usage'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        values = []
+
+        db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                     collector='syncgateway_cluster_stats')
+        values += self.store.get_values(
+            db, metric='syncgateway__global__resource_utilization__process_cpu_percent_utilization')
+        avg_cpu = round(np.average(values) / 100, 2)
+        return avg_cpu, self._snapshots, metric_info
+
+    def avg_sg_mem_usage(self, title) -> Metric:
+        metric_id = '{}_Average_sg_memory_usage'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        values = []
+
+        db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                     collector=' syncgateway_cluster_stats')
+        values += self.store.get_values(
+            db, metric='syncgateway__global__resource_utilization__process_memory_resident')
+        avg_mem = round(np.average(values), 2)
+        avg_mem = int(avg_mem / (1024 ** 2))
+        return avg_mem, self._snapshots, metric_info
+
     def sg_bp_throughput(self, title) -> Metric:
         metric_id = '{}_throughput'.format(self.test_config.name)
         metric_title = "{}{}".format(title, self._title)

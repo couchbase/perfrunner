@@ -45,3 +45,4 @@ insertproportion=1
 requestdistribution = zipfian
 log_title = sync_gateway_4node_writes
 roundtrip_write_load = true
+mem_cpu_stats = true

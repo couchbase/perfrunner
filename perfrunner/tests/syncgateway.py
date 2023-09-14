@@ -282,6 +282,13 @@ class SGRead(SGPerfTest):
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), GET doc by id")
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
 
 class SGReadLatency(SGPerfTest):
@@ -309,6 +316,13 @@ class SGAuthThroughput(SGPerfTest):
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), POST auth")
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
 
 class SGAuthLatency(SGPerfTest):
@@ -341,6 +355,13 @@ class SGSync(SGPerfTest):
             *self.metrics.sg_latency('[INSERT], 95thPercentileLatency(us)',
                                      'Latency, round-trip write, 95 percentile (ms)')
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
 
 class SGSyncQueryThroughput(SGPerfTest):
@@ -354,6 +375,13 @@ class SGSyncQueryThroughput(SGPerfTest):
         self.reporter.post(
             *self.metrics.sg_throughput('Throughput (req/sec), GET docs via _changes')
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
 
 class SGSyncQueryLatency(SGPerfTest):
@@ -381,6 +409,13 @@ class SGWrite(SGPerfTest):
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), POST doc")
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
 
 class SGWriteLatency(SGPerfTest):
@@ -408,6 +443,13 @@ class SGMixQueryThroughput(SGPerfTest):
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec)")
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
 
 class SGTargetIterator(TargetIterator):
@@ -488,6 +530,13 @@ class SGImportThroughputTest(SGPerfTest):
                                                  items_in_range=items_in_range_access,
                                                  operation="UPDATE")
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
     @with_stats
     @with_profiles
@@ -608,6 +657,13 @@ class SGImportLatencyTest(SGPerfTest):
         self.reporter.post(
             *self.metrics.sgimport_latency()
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
     def monitor_sg_import(self):
         host = self.cluster_spec.sgw_servers[0]
@@ -865,6 +921,13 @@ class SGReplicateThroughputTest2(SGPerfTest):
         elif self.sg_settings.sg_replication_type == 'pull':
             time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_pull", sg2_master)
         self.report_kpi(time_elapsed, items_in_range)
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
 
 class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
@@ -1270,6 +1333,14 @@ class SGReplicateMultiClusterPull(SGPerfTest):
                                                                documents))
         )
 
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
+
     def run(self):
 
         self.remote.remove_sglogs()
@@ -1337,6 +1408,14 @@ class SGReplicateMultiClusterPush(SGPerfTest):
             *self.metrics.sg_bp_total_docs_pushed(title="Total docs pushed per second",
                                                   duration=duration)
         )
+
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
     def run(self):
         self.remote.remove_sglogs()
@@ -1429,6 +1508,14 @@ class DeltaSync(SGPerfTest):
         self.reporter.post(
             *self.metrics.deltasync_bytes(bytes=synced_bytes)
         )
+
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
     def db_cleanup(self):
         local.cleanup_cblite_db()
@@ -1766,6 +1853,14 @@ class EndToEndTest(SGPerfTest):
                     replication=self.test_config.syncgateway_settings.replication_type
                 )
             )
+
+            if self.sg_settings.mem_cpu_stats:
+                self.reporter.post(
+                    *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+                )
+                self.reporter.post(
+                    *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+                )
 
     @with_stats
     @with_profiles
@@ -2521,6 +2616,13 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
                 replication=self.test_config.syncgateway_settings.replication_type
             )
         )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
     def run_bidi(self):
         load_docs = int(self.settings.syncgateway_settings.documents)

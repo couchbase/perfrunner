@@ -49,3 +49,4 @@ log_title = sync_gateway_1node_writes
 replication_type = PULL
 writeallfields = false
 updatefieldcount = 1
+mem_cpu_stats = true

@@ -830,7 +830,7 @@ class BucketSettings:
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
     BUCKET_TYPE = 'membase'  # alt: ephemeral
     AUTOFAILOVER_ENABLED = 'true'
-    DEFAULT_FAILOVER_MIN_TIMEOUTS = [1, 5, 30]  # sec
+    DEFAULT_FAILOVER_MIN_TIMEOUTS = [5, 30]  # sec
     DEFAULT_DATA_DISK_FAILURE_TIMEOUT = 10  # sec
     BACKEND_STORAGE = None
     CONFLICT_RESOLUTION_TYPE = 'seqno'

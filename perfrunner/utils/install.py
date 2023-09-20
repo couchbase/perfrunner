@@ -37,19 +37,24 @@ LOCATIONS = (
 PKG_PATTERNS = {
     'rpm': (
         'couchbase-server-{edition}-{release}-{build}-centos{os}.x86_64.rpm',
+        'couchbase-server-{edition}-{release}-{build}-linux.x86_64.rpm',
         'couchbase-server-{edition}-{release}-centos{os}.x86_64.rpm',
         'couchbase-server-{edition}-{release}-centos6.x86_64.rpm',
+        'couchbase-server-{edition}-{release}-linux.x86_64.rpm',
         'couchbase-server-{edition}-{release}-{build}-{os}.rpm',
         'couchbase-server-{edition}-{release}-{os}.rpm',
     ),
     'deb': (
         'couchbase-server-{edition}_{release}-{build}-ubuntu{os}_amd64.deb',
+        'couchbase-server-{edition}_{release}-{build}-linux_amd64.deb',
         'couchbase-server-{edition}_{release}-ubuntu{os}_amd64.deb',
+        'couchbase-server-{edition}_{release}-linux_amd64.deb',
     ),
     'exe': (
         'couchbase-server-{edition}_{release}-{build}-windows_amd64.msi',
         'couchbase-server-{edition}_{release}-{build}-windows_amd64.exe',
         'couchbase-server-{edition}_{release}-windows_amd64.exe',
+        'couchbase-server-{edition}_{release}-windows_amd64.msi',
     ),
 }
 
@@ -427,7 +432,10 @@ class CouchbaseInstaller:
                     if os_arch == 'arm':
                         os_release = 'amzn2.aarch64'
                     elif os_arch == 'al2':
-                        os_release = 'amzn2.x86_64'
+                        if tuple(map(int, self.release.split('.'))) < (7, 6, 0):
+                            os_release = 'amzn2.x86_64'
+                        else:
+                            os_release = 'linux.x86_64'
 
         for pkg_pattern in PKG_PATTERNS[package]:
             for loc_pattern in LOCATIONS:
@@ -530,7 +538,10 @@ class CloudInstaller(CouchbaseInstaller):
                     logger.info('Saving a local url {}'.format(self.options.local_copy_url))
                     resp = requests.get(self.options.local_copy_url)
                 elif 'aarch64' in self.url:
-                    local_url = self.url.replace('aarch64', 'x86_64')
+                    if tuple(map(int, self.release.split('.'))) < (7, 6, 0):
+                        local_url = self.url.replace('aarch64', 'x86_64')
+                    else:
+                        local_url = self.url.replace('amzn2.aarch64', 'linux.x86_64')
                     logger.info('Saving a local copy of x86_64 {}'.format(local_url))
                     resp = requests.get(local_url)
                 else:

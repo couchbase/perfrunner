@@ -1292,3 +1292,25 @@ class RemoteLinux(Remote):
     def set_dn_log_level(self, level: str = 'debug'):
         logger.info('Setting log level on Direct nebula nodes: {}'.format(level))
         run('curl -ks -X PUT http://localhost:8941/log?level={}'.format(level), warn_only=True)
+
+    @all_servers
+    def add_system_limit_config(self):
+        logger.info("Add system_limits.conf for cgroup")
+        run("mkdir -p /etc/systemd/system/couchbase-server.service.d")
+        with cd('/etc/systemd/system/couchbase-server.service.d'):
+            meminfo = run('cat /proc/meminfo')
+            meminfo = dict((i.split()[0].rstrip(':'),
+                            int(i.split()[1])) for i in meminfo.splitlines())
+            mem_kib = meminfo['MemTotal']
+            with open("system_limits.conf", 'w') as f:
+                l1 = "[Service]\n"
+                l2 = "MemoryLimit={}".format(mem_kib*1024)
+                f.writelines([l1, l2])
+            put('system_limits.conf', 'system_limits.conf')
+        run('systemctl daemon-reload')
+
+    @all_servers
+    def clear_system_limit_config(self):
+        logger.info("Clear system_limits.conf")
+        run("rm -rf /etc/systemd/system/couchbase-server.service.d")
+        run('systemctl daemon-reload')

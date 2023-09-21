@@ -713,6 +713,7 @@ class ClusterSettings:
         self.bucket_name = options.get('bucket_name', self.BUCKET_NAME)
 
         self.cloud_server_groups = options.get('bucket_name', self.BUCKET_NAME)
+        self.enable_cgroups = options.get('enable_cgroups', False)
 
 
 class DirectNebulaSettings:

@@ -88,6 +88,7 @@ def main():
     else:
         # Individual nodes
         # cm.serverless_mode()
+        cm.clear_system_limit_config()
         cm.disable_wan()
         cm.clear_login_history()
         cm.tune_memory_settings()
@@ -144,6 +145,8 @@ def main():
 
     if cm.test_config.profiling_settings.linux_perf_profile_flag:
         cm.install_cb_debug_package()
+
+    cm.deploy_couchbase_with_cgroups()
 
 
 if __name__ == '__main__':

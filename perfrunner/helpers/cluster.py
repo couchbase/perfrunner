@@ -1319,3 +1319,13 @@ class ClusterManager:
         self.remote.create_couchbase_cluster()
         logger.info('Waiting for cluster')
         self.remote.wait_for_cluster_ready(timeout=1200)
+
+    def deploy_couchbase_with_cgroups(self):
+        logger.info("starting server in cgroup")
+        if self.test_config.cluster.enable_cgroups:
+            self.remote.add_system_limit_config()
+            self.remote.restart()
+
+    def clear_system_limit_config(self):
+        self.remote.clear_system_limit_config()
+        self.remote.restart()

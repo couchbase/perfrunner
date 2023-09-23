@@ -278,3 +278,9 @@ class RemoteWindows(Remote):
 
     def disable_serverless_mode(self):
         pass
+
+    def clear_system_limit_config(self):
+        pass
+
+    def add_system_limit_config(self):
+        pass

@@ -88,7 +88,6 @@ def main():
     else:
         # Individual nodes
         # cm.serverless_mode()
-        cm.clear_system_limit_config()
         cm.disable_wan()
         cm.clear_login_history()
         cm.tune_memory_settings()
@@ -97,6 +96,7 @@ def main():
         cm.tune_logging()
         cm.restart_with_alternative_num_vbuckets()
         cm.flush_iptables()
+        cm.clear_system_limit_config()
 
         cm.configure_internal_settings()
         cm.set_data_path()

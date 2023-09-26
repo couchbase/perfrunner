@@ -1325,6 +1325,7 @@ class ClusterManager:
         if self.test_config.cluster.enable_cgroups:
             self.remote.add_system_limit_config()
             self.remote.restart()
+            time.sleep(200)
 
     def clear_system_limit_config(self):
         self.remote.clear_system_limit_config()

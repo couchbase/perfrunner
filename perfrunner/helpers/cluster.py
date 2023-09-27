@@ -621,15 +621,21 @@ class ClusterManager:
     def configure_ns_server(self):
         """Configure ns_server using diag/eval.
 
-        Tune ns_server settings with specified Erlang code using  "/diag/eval"
-        and restart the cluster after a specified delay.
+        Tune ns_server settings with specified Erlang code using `diag/eval`
+        and restart the cluster after a specified delay. If no `diag/eval` to do, just
+        run `enable_auto_failover()`.
         """
         diag_eval_settings = self.test_config.diag_eval
-        if self.dynamic_infra or self.capella_infra or not diag_eval_settings.payloads:
+
+        if not diag_eval_settings.payloads:
+            # Nothing to configure, just enable autofailover and return
+            self.enable_auto_failover()
             return
 
-        if diag_eval_settings.enable_nonlocal_diag_eval:
-            self.remote.enable_nonlocal_diag_eval()
+        if self.dynamic_infra or self.capella_infra:
+            return
+
+        self.remote.enable_nonlocal_diag_eval()
 
         for master in self.cluster_spec.masters:
             for payload in diag_eval_settings.payloads:
@@ -640,7 +646,7 @@ class ClusterManager:
         # Some config may be replicated to other nodes asynchronously.
         # Allow configurable delay before restart
         time.sleep(diag_eval_settings.restart_delay)
-        self._restart_clusters()
+        self._restart_clusters()  # Restart and enable auto-failover after
 
     def tune_logging(self):
         if self.dynamic_infra or self.capella_infra:

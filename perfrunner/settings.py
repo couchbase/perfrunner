@@ -2900,14 +2900,13 @@ class DiagEvalSettings:
 
     DEFAULT_RESTART_DELAY = 5  # seconds
 
-    def __init__(self, options: dict, enable_nonlocal_diag_eval: bool):
+    def __init__(self, options: dict):
         self.restart_delay = int(options.get('restart_delay', self.DEFAULT_RESTART_DELAY))
         payloads = options.get('payloads')
         if payloads:
             self.payloads = payloads.strip().split('\n')
         else:
             self.payloads = None
-        self.enable_nonlocal_diag_eval = enable_nonlocal_diag_eval
 
 
 class TestConfig(Config):
@@ -2987,10 +2986,8 @@ class TestConfig(Config):
         ```
         Multiple command can also be specified on one line separated by comma.
         """
-        # If there are bucket_extras, then nonlocal diag/eval is already enabled
-        enable_nonlocal_diag_eval = False if self.bucket_extras else True
         options = self._get_options_as_dict('diag_eval')
-        return DiagEvalSettings(options, enable_nonlocal_diag_eval)
+        return DiagEvalSettings(options)
 
     @property
     def bucket_extras(self) -> dict:

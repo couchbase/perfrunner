@@ -1187,6 +1187,7 @@ class PhaseSettings:
 
     RANGE_SCAN_SAMPLING = "false"
     PREFIX_SCAN = "false"
+    ORDERED = "true"
 
     TRANSACTIONSENABLED = 0
 
@@ -1383,6 +1384,7 @@ class PhaseSettings:
 
         self.range_scan_sampling = options.get('range_scan_sampling', self.RANGE_SCAN_SAMPLING)
         self.prefix_scan = options.get('prefix_scan', self.PREFIX_SCAN)
+        self.ordered = options.get('ordered', self.ORDERED)
 
         # trasnsaction settings
         self.transactionsenabled = int(options.get('transactionsenabled',

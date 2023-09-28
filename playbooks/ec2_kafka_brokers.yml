@@ -1,0 +1,18 @@
+---
+- hosts: kafka_brokers
+  vars:
+    data_dir: /data
+    disk: /dev/nvme1n1
+  tasks:
+  - name: re-creating filesystem
+    filesystem:
+      fstype: "xfs"
+      dev: "{{ disk }}"
+      force: yes
+
+  - name: mounting data parition
+    mount:
+      name: "{{ data_dir }}"
+      state: mounted
+      src: "{{ disk }}"
+      fstype: "xfs"

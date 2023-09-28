@@ -6,6 +6,7 @@ from typing import List, Tuple
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.worker import tpcds_initial_data_load_task
 from perfrunner.settings import CH2ConnectionSettings
 from perfrunner.tests import PerfTest
@@ -1363,15 +1364,114 @@ class CH2GoldfishPauseResumeTest(CH2CloudRemoteLinkTest):
         self.cluster_spec.set_inactive_clusters_by_idx([1])
         self.data_node, self.analytics_node = self.cluster_spec.masters
 
-        if (self.test_config.ch2_settings.create_gsi_index and
-                not self.cluster_spec.goldfish_infrastructure):
-            self.create_indexes()
-
         log_file = '{}_post_resume'.format(self.test_config.ch2_settings.workload)
         self.run_ch2_remote(log_file=log_file)
         self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME, logfile=log_file)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
+
+
+class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.kafka_links_settings = self.test_config.goldfish_kafka_links_settings
+        self.docs_per_collection = {}
+        self.kafka_link_connected = False
+
+        source = self.kafka_links_settings.link_source
+        self.source_details = {"source": source}
+
+        if source == "MONGODB":
+            self.docs_per_collection = {
+                collection: self.count_collection_docs_mongodb(collection)
+                for collection in self.CH2_DATASETS
+            }
+            self.source_details.update({
+                "connectionFields": {
+                    "connectionUri": self.kafka_links_settings.mongodb_uri
+                }
+            })
+        elif source == 'DYNAMODB':
+            logger.interrupt('DynamoDB source is unsupported by perfrunner for Kafka Links')
+        elif source == 'MYSQLDB':
+            logger.interrupt('MySQL source is unsupported by perfrunner for Kafka Links')
+        else:
+            logger.interrupt('Unknown Kafka Link source type: {}'.format(source))
+
+        logger.info('Kafka Link source details: {}'.format(pretty_dict(self.source_details)))
+        logger.info('Docs per collection in source database: {}'
+                    .format(pretty_dict(self.docs_per_collection)))
+
+        self.num_items = sum(self.docs_per_collection.values())
+
+    def count_collection_docs_mongodb(self, collection: str) -> int:
+        from pymongo import MongoClient
+        client = MongoClient(self.kafka_links_settings.mongodb_uri)
+        db = client[self.kafka_links_settings.remote_database_name]
+        coll = db[collection]
+        return coll.estimated_document_count()
+
+    def create_kafka_link(self):
+        logger.info('Creating Kafka Link')
+
+        statement = 'CREATE LINK `{}` TYPE KAFKA WITH {{"sourceDetails": {}}}'\
+            .format(self.analytics_link, json.dumps(self.source_details))
+
+        logger.info('Running: {}'.format(statement))
+        res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+        logger.info("Result: {}".format(str(res)))
+
+    def create_datasets(self):
+        logger.info('Creating standalone datasets')
+
+        for dataset in self.CH2_DATASETS:
+            statement = "CREATE DATASET `{0}` PRIMARY KEY (`{1}`: string) ON {2}.{0} AT `{3}`;" \
+                .format(dataset, self.kafka_links_settings.primary_key_field,
+                        self.kafka_links_settings.remote_database_name, self.analytics_link)
+            logger.info('Running: {}'.format(statement))
+            self.rest.exec_analytics_statement(self.analytics_node, statement)
+
+    @with_stats
+    def sync(self) -> int:
+        """Set up data ingestion and return time taken to ingest all data (excluding setup time)."""
+        self.create_datasets()
+        self.create_analytics_indexes()
+        self.connect_link()
+
+        t0 = time.time()
+        self.monitor.monitor_cbas_kafka_link_connect_status(self.analytics_node,
+                                                            self.analytics_link)
+        link_connect_time = time.time() - t0
+        self.kafka_link_connected = True
+        logger.info('Link connection time: {}s'.format(link_connect_time))
+
+        self.monitor.monitor_cbas_kafka_link_data_ingestion_status(self.analytics_node,
+                                                                   self.docs_per_collection)
+        data_ingest_time = time.time() - link_connect_time
+        logger.info('Data ingestion time: {}s'.format(data_ingest_time))
+
+        logger.info('Total time from link connection -> all data ingested: {}s'
+                    .format(link_connect_time + data_ingest_time))
+
+        return data_ingest_time
+
+    def _report_kpi(self, sync_time: int):
+        self.reporter.post(
+            *self.metrics.avg_ingestion_rate(self.num_items, sync_time)
+        )
+
+    def run(self):
+        try:
+            self.create_kafka_link()
+            data_ingest_time = self.sync()
+            self.report_kpi(data_ingest_time)
+        finally:
+            if self.kafka_link_connected:
+                logger.info('Getting Connector ARNs to be able to look up logs')
+                if not self.cluster.get_msk_connect_connector_arns():
+                    logger.warn('Failed to get Kafka Connect connector ARNs')
+                self.disconnect_link()
 
 
 class CH3Test(PerfTest):

@@ -34,11 +34,21 @@ output "syncgateway_instance_ips" {
   }
 }
 
+output "kafka_instance_ips" {
+  value = {
+    for k, v in aws_instance.kafka_instance: k => {
+      node_group = v.tags_all["node_group"]
+      public_ip  = v.public_dns
+      subnet_id  = aws_subnet.kafka_private[k].id
+    }
+  }
+}
+
 output "network" {
   value = {
-    vpc_id         = aws_vpc.main.id
-    subnet_cidr    = aws_subnet.public.cidr_block
-    route_table_id = aws_route_table.public.id
+    vpc_id                   = aws_vpc.main.id
+    public_subnet_id         = aws_subnet.public.id
+    public_subnet_cidr       = aws_subnet.public.cidr_block
   }
 }
 

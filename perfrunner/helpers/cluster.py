@@ -2,7 +2,7 @@ import os
 import random
 import re
 import time
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 from uuid import uuid4
 
 from logger import logger
@@ -12,6 +12,7 @@ from perfrunner.helpers.misc import (
     SGPortRange,
     maybe_atoi,
     pretty_dict,
+    run_aws_cli_command,
     run_local_shell_command,
     set_azure_capella_subscription,
     set_azure_perf_subscription,
@@ -1135,19 +1136,16 @@ class ClusterManager:
             pwds = []
 
             command_template = (
-                'env/bin/aws secretsmanager get-secret-value --region us-east-1 '
+                'secretsmanager get-secret-value --region us-east-1 '
                 '--secret-id {}_dp-admin '
                 '--query "SecretString" '
                 '--output text'
             )
 
             for cluster_id in self.rest.cluster_ids:
-                command = command_template.format(cluster_id)
-
-                stdout, _, returncode = run_local_shell_command(command)
-
-                if returncode == 0:
-                    pwds.append(stdout.strip())
+                pwd = run_aws_cli_command(command_template, cluster_id)
+                if pwd is not None:
+                    pwds.append(pwd)
 
             creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
             self.cluster_spec.config.set('credentials', 'admin', creds)
@@ -1241,38 +1239,30 @@ class ClusterManager:
 
     def get_capella_aws_cluster_vpc_id(self, cluster_node_hostname):
         command_template = (
-            'env/bin/aws ec2 describe-instances --region $AWS_REGION '
+            'ec2 describe-instances --region $AWS_REGION '
             '--filter Name=ip-address,Values=$(dig +short {}) '
             '--query "Reservations[].Instances[].VpcId" '
             '--output text'
         )
 
-        command = command_template.format(cluster_node_hostname)
+        vpc_id = run_aws_cli_command(command_template, cluster_node_hostname)
 
-        vpc_id = None
-        stdout, _, returncode = run_local_shell_command(command)
-
-        if returncode == 0:
-            vpc_id = stdout.strip()
+        if vpc_id is not None:
             logger.info('Found VPC ID: {}'.format(vpc_id))
 
         return vpc_id
 
     def get_capella_aws_cluster_security_group_id(self, vpc_id):
         command_template = (
-            'env/bin/aws ec2 describe-security-groups --region $AWS_REGION '
+            'ec2 describe-security-groups --region $AWS_REGION '
             '--filters Name=vpc-id,Values={} Name=group-name,Values=default '
             '--query "SecurityGroups[*].GroupId" '
             '--output text'
         )
 
-        command = command_template.format(vpc_id)
+        sg_id = run_aws_cli_command(command_template, vpc_id)
 
-        sg_id = None
-        stdout, _, returncode = run_local_shell_command(command)
-
-        if returncode == 0:
-            sg_id = stdout.strip()
+        if sg_id is not None:
             logger.info('Found Security Group ID: {}'.format(sg_id))
 
         return sg_id
@@ -1310,3 +1300,126 @@ class ClusterManager:
         access_key_id, secret_access_key = \
             local.get_aws_credential(self.test_config.backup_settings.aws_credential_path, False)
         self.remote.add_aws_credential(access_key_id, secret_access_key)
+
+    def configure_kafka(self):
+        self.remote.configure_kafka_brokers(
+            self.test_config.goldfish_kafka_links_settings.partitions_per_topic)
+
+    def start_kafka(self):
+        self.remote.start_kafka_zookeepers()
+        self.remote.start_kafka_brokers()
+
+    def get_msk_connect_custom_plugin_arn(self, name: str) -> Optional[str]:
+        command_template = (
+            'kafkaconnect list-custom-plugins --region $AWS_REGION '
+            '--query \'customPlugins[?name==`{}`].customPluginArn\' '
+            '--output text'
+        )
+
+        if arn := run_aws_cli_command(command_template, name):
+            logger.info('Found ARN for MSK Connect custom plugin "{}": {}'.format(name, arn))
+
+        return arn
+
+    def get_msk_connect_worker_configuration_arn(self, name: str) -> Optional[str]:
+        command_template = (
+            'kafkaconnect list-worker-configurations --region $AWS_REGION '
+            '--query \'workerConfigurations[?name==`{}`].workerConfigurationArn\' '
+            '--output text'
+        )
+
+        if arn := run_aws_cli_command(command_template, name):
+            logger.info('Found ARN for MSK Connect worker configuration "{}": {}'
+                        .format(name, arn))
+
+        return arn
+
+    def get_msk_connect_service_execution_role_arn(self, name: str) -> Optional[str]:
+        command_template = (
+            'iam list-roles --region $AWS_REGION '
+            '--query \'Roles[?RoleName==`{}`].Arn\' '
+            '--output text'
+        )
+
+        if arn := run_aws_cli_command(command_template, name):
+            logger.info('Found ARN for MSK Connect service execution role "{}": {}'
+                        .format(name, arn))
+
+        return arn
+
+    def get_msk_connect_connector_arns(self) -> List[str]:
+        command_template = (
+            'kafkaconnect list-connectors --region $AWS_REGION '
+            '--query '
+            '\'connectors[?kafkaCluster.apacheKafkaCluster.bootstrapServers==`{}`].connectorArn\' '
+            '--output text'
+        )
+        bootstrap_servers = ','.join(['{}:9092'.format(k) for k in self.cluster_spec.kafka_brokers])
+
+        if arns := run_aws_cli_command(command_template, bootstrap_servers):
+            logger.info('Found ARNs for MSK Connect connectors: {}'.format(arns))
+
+        return arns
+
+    def set_kafka_links_settings(self):
+        kafka_links_settings = self.test_config.goldfish_kafka_links_settings
+        settings = {
+            # Generic settings
+            'kafkaConnectVersion': '2.7.1',
+            'vendor': 'AWS_KAFKA',
+            # Settings that MSK Connect needs for creating connectors
+            'brokersUrl': ','.join(['{}:9092'.format(k) for k in self.cluster_spec.kafka_brokers]),
+            'subnets': ','.join(self.cluster_spec.kafka_broker_subnet_ids),
+            'region': os.environ.get('AWS_REGION', 'us-east-1'),
+            # Settings for CBAS sink connector
+            'couchbaseSeedNodes': ','.join(self.cluster_spec.servers_by_role('cbas')),
+            'couchbaseUsername': self.cluster_spec.rest_credentials[0],
+            'couchbasePassword': self.cluster_spec.rest_credentials[1],
+            'batchSize': kafka_links_settings.batch_size_bytes,
+            'maxTasksPerWorker': kafka_links_settings.max_tasks_per_worker,
+            'logBucket': kafka_links_settings.connector_log_bucket,
+            # General connector settings
+            'minimumWorkerCount': kafka_links_settings.min_worker_count,
+            'maximumWorkerCount': kafka_links_settings.max_worker_count,
+            'minCpuPerWorker': kafka_links_settings.min_cpu_per_worker
+        }
+
+        worker_config_arn = self.get_msk_connect_worker_configuration_arn(
+            self.test_config.goldfish_kafka_links_settings.msk_connect_worker_config
+        )
+        if not worker_config_arn:
+            raise Exception('Could not find specified MSK Connect worker configuration')
+
+        service_exec_role_arn = self.get_msk_connect_service_execution_role_arn(
+            self.test_config.goldfish_kafka_links_settings.msk_connect_service_exec_role
+        )
+        if not service_exec_role_arn:
+            raise Exception('Could not find specified MSK Connect service execution role')
+
+        mongodb_plugin_arn = self.get_msk_connect_custom_plugin_arn(
+            self.test_config.goldfish_kafka_links_settings.mongodb_connector_custom_plugin
+        )
+        if not mongodb_plugin_arn:
+            raise Exception('Could not find specified MongoDB connector custom plugin')
+
+        cbas_plugin_arn = self.get_msk_connect_custom_plugin_arn(
+            self.test_config.goldfish_kafka_links_settings.cbas_connector_custom_plugin
+        )
+        if not cbas_plugin_arn:
+            raise Exception('Could not find specified CBAS connector custom plugin')
+
+        settings.update({
+            'workerConfigurationArn': worker_config_arn,
+            'serviceExecutionRoleArn': service_exec_role_arn,
+            'MONGODB': mongodb_plugin_arn,
+            'COUCHBASE_ANALYTICS': cbas_plugin_arn
+        })
+
+        logger.info('Setting Kafka Links settings: {}'.format(pretty_dict(settings)))
+        if self.build_tuple < (8, 0, 0, 1428):
+            # Set settings using environment variables
+            self.remote.set_kafka_links_env_vars(settings)
+            self.remote.restart()
+        else:
+            # Set settings within metakv
+            self.remote.set_kafka_links_metakv_settings(settings)

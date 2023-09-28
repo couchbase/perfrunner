@@ -64,7 +64,7 @@ class DefaultMonitor(DefaultRestHelper):
         'replication_changes_left',
     )
 
-    def __init__(self, cluster_spec, test_config, verbose):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
@@ -819,6 +819,15 @@ class DefaultMonitor(DefaultRestHelper):
             num_items += stats.get(stats_key, 0)
         return num_items
 
+    def query_num_analytics_items(self, analytics_node: str, dataset: str) -> int:
+        """Get the number of items in an analytics dataset using an analytics query."""
+        statement = "SELECT COUNT(*) from `{}`;".format(dataset)
+        result = self.exec_analytics_query(analytics_node, statement)
+        num_analytics_items = result['results'][0]['$1']
+        logger.info("Number of items in dataset `{}`: {}".
+                    format(dataset, num_analytics_items))
+        return num_analytics_items
+
     def get_ingestion_progress(self, analytics_node: str) -> int:
         stats = self.get_ingestion_v2(analytics_node)
         progress = 0
@@ -937,14 +946,64 @@ class DefaultMonitor(DefaultRestHelper):
 
         return pause_status
 
+    def monitor_cbas_kafka_link_connect_status(self, analytics_node: str, link_name: str,
+                                               link_scope: str = 'Default') -> str:
+        logger.info('Wait until Kafka Link is connected.')
+
+        start_time = time.time()
+
+        while True:
+            resp = self.get_analytics_link_info(analytics_node, link_name, link_scope)
+            link_state = resp.get('linkState', None)
+            logger.info('Link state: {}'.format(link_state))
+
+            if link_state == 'CONNECTED':
+                break
+            elif link_state == 'DISCONNECTING':
+                logger.interrupt('Link is disconnecting. '
+                                 'Is there a problem with one of the connectors?')
+                break
+            elif link_state == 'DISCONNECTED':
+                logger.interrupt('Link is disconnected. Was link connection ever initiated?')
+                break
+            elif link_state == 'RETRY_FAILED':
+                logger.interrupt('Link connection failed after retry.')
+                break
+
+            if time.time() - start_time > 1800:
+                logger.interrupt('Monitoring Kafka Link connect state timed out after 30 mins.')
+                break
+
+            time.sleep(self.POLLING_INTERVAL_ANALYTICS)
+
+        return link_state
+
+    def monitor_cbas_kafka_link_data_ingestion_status(self, analytics_node: str,
+                                                      final_dataset_counts: dict[str, int]):
+        logger.info('Wait until Kafka Link data ingestion is completed.')
+        datasets_still_ingesting = set(final_dataset_counts.keys())
+
+        timeout_mins = self.test_config.goldfish_kafka_links_settings.ingestion_timeout_mins
+        t0 = time.time()
+        while datasets_still_ingesting:
+            if time.time() - t0 > (timeout_mins * 60):
+                logger.interrupt('Monitoring Kafka Link data ingestion timed out after {} mins.'
+                                 .format(timeout_mins))
+                break
+
+            for dataset in list(datasets_still_ingesting):
+                target_items = final_dataset_counts[dataset]
+                num_items = self.query_num_analytics_items(analytics_node, dataset)
+                if num_items == target_items:
+                    logger.info('Dataset `{}` has reached target count {} after ~{}s'
+                                .format(dataset, num_items, time.time() - t0))
+                    datasets_still_ingesting.remove(dataset)
+
+            time.sleep(self.POLLING_INTERVAL_ANALYTICS)
+
     def monitor_dataset_drop(self, analytics_node: str, dataset: str):
         while True:
-            statement = "SELECT COUNT(*) from `{}`;".format(dataset)
-            result = self.exec_analytics_query(analytics_node, statement)
-            num_analytics_items = result['results'][0]['$1']
-            logger.info("Number of items in dataset {}: {}".
-                        format(dataset, num_analytics_items))
-
+            num_analytics_items = self.query_num_analytics_items(analytics_node, dataset)
             if num_analytics_items == 0:
                 break
 

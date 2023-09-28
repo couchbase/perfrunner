@@ -5,7 +5,7 @@ from re import split as re_split
 from fabric.api import cd, local, run
 
 from logger import logger
-from perfrunner.helpers.misc import get_python_sdk_installation
+from perfrunner.helpers.misc import get_python_sdk_installation, run_local_shell_command
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.tableau import TableauTerminalHelper
@@ -358,14 +358,24 @@ def version_tuple(version: str):
 
 class ClientInstaller:
 
-    def __init__(self, cluster_spec, test_config, options):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, options):
         self.test_config = test_config
         self.cluster_spec = cluster_spec
         self.client_settings = self.test_config.client_settings
         self.options = options
         self.remote = RemoteHelper(self.cluster_spec, options.verbose)
-        self.client_os = RemoteHelper.detect_client_os(self.cluster_spec.workers[0],
-                                                       self.cluster_spec).lower()
+
+        if self.cluster_spec.workers:
+            self.client_os = RemoteHelper.detect_client_os(self.cluster_spec.workers[0],
+                                                           self.cluster_spec).lower()
+        else:
+            logger.info('Detecting OS on localhost')
+            stdout, _, returncode = run_local_shell_command('egrep "^(ID)=" /etc/os-release')
+            if returncode != 0:
+                logger.interrupt('Failed to detect OS on localhost')
+
+            self.client_os = stdout.replace("\"", "").split("=")[-1]
+
         self.rest = RestHelper(self.cluster_spec, self.test_config, options.verbose)
         self.cb_version = version_tuple(self.rest.get_version(host=next(self.cluster_spec.masters)))
 
@@ -378,10 +388,6 @@ class ClientInstaller:
                    "awk -F ' ' '{ print $2 }' | "
                    "awk -F '=' '{ print $2 }' | "
                    "awk -F ',' '{ print $1 }'")
-
-    def detect_python_client_version(self):
-        return local("env/bin/pip freeze | grep ^couchbase | awk -F '==|@' '{ print $2 }'",
-                     capture=True)
 
     @all_clients
     def uninstall_lcb(self):
@@ -436,6 +442,10 @@ class ClientInstaller:
             run('apt-get install cmake libevent-dev libevent-core-2.1 libev4 -y')
             run('../cmake/configure')
             run('make')
+
+    def detect_python_client_version(self):
+        return local("env/bin/pip freeze | grep ^couchbase | awk -F '==|@' '{ print $2 }'",
+                     capture=True)
 
     def install_python_client(self, version: str):
         package = get_python_sdk_installation(version)
@@ -510,7 +520,7 @@ class ClientInstaller:
                         "Upgrading python SDK version to 3.2.3")
             py_version = "3.2.3"
 
-        if not lcb_version:
+        if not lcb_version and self.cluster_spec.workers:
             logger.info("No libcouchbase version provided. Uninstalling libcouchbase.")
             self.uninstall_lcb()
         elif mb45563_is_hit and version_tuple(lcb_version) < (3, 2, 0):
@@ -526,7 +536,7 @@ class ClientInstaller:
             raise Exception("libcouchbase version 2.x.x must be specified when python_client=2.x.x")
 
         # Install LCB
-        if lcb_version:
+        if lcb_version and self.cluster_spec.workers:
             installed_versions = self.detect_libcouchbase_versions()
 
             if any(v != lcb_version for v in installed_versions.values()):
@@ -546,9 +556,10 @@ class ClientInstaller:
             else:
                 logger.info("Clients already have desired libcouchbase versions.")
 
-        detected = self.detect_libcouchbase_versions()
-        for ip, version in detected.items():
-            logger.info("\t{}:\t{}".format(ip, version))
+        if self.cluster_spec.workers:
+            detected = self.detect_libcouchbase_versions()
+            for ip, version in detected.items():
+                logger.info("\t{}:\t{}".format(ip, version))
 
         # Install Python SDK
         if py_version:
@@ -559,7 +570,9 @@ class ClientInstaller:
         logger.info("Python client detected (pip freeze): {}"
                     .format(detected))
 
-        if (tableau_connector_vendor := self.test_config.tableau_settings.connector_vendor):
+        # Install Tableau Connector
+        tableau_connector_vendor = self.test_config.tableau_settings.connector_vendor
+        if tableau_connector_vendor and self.cluster_spec.workers:
             self.tableau_term = TableauTerminalHelper(self.test_config)
 
             self.uninstall_tableau_connectors()
@@ -574,6 +587,12 @@ class ClientInstaller:
                 self.install_cdata_tableau_connector()
             else:
                 logger.info('No Tableau Connector required.')
+
+        # Install pymongo
+        if self.cluster_spec.goldfish_infrastructure and \
+           self.test_config.goldfish_kafka_links_settings.link_source == 'MONGODB':
+            logger.info('Installing pymongo for Goldfish Kafka Links')
+            run_local_shell_command("env/bin/pip install pymongo --no-cache-dir")
 
 
 def get_args():

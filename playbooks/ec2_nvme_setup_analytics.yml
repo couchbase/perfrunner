@@ -2,7 +2,7 @@
 - hosts: couchbase_servers
   vars:
     data_dir: /data
-    disk: /dev/nvme2n1
+    disk: /dev/nvme1n1  # the local NVMe disk on EC2 instance types with such local storage
   tasks:
   - name: re-creating filesystem
     filesystem:

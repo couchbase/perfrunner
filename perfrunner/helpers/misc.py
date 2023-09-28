@@ -8,7 +8,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from hashlib import md5
-from typing import Any, Union
+from typing import Any, Optional, Union
 from uuid import uuid4
 
 import requests
@@ -327,6 +327,21 @@ def get_python_sdk_installation(version: str) -> str:
         return 'git+https://github.com/couchbase/couchbase-python-client.git@{}'.format(version)
     else:
         return 'couchbase=={}'.format(version)
+
+
+def run_aws_cli_command(command_template: str, *args) -> Optional[str]:
+    """Run an AWS CLI command formatted with any extra args and return the output (if any)."""
+    command = 'env/bin/aws {}'.format(command_template.format(*args))
+    logger.info('Running AWS CLI command: {}'.format(command))
+    stdout, _, returncode = run_local_shell_command(command)
+
+    output = None
+    if returncode == 0:
+        output = stdout.strip()
+        if output:
+            return output
+
+    return output
 
 
 class SSLCertificate:

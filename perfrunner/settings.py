@@ -12,7 +12,7 @@ from decorator import decorator
 from logger import logger
 from perfrunner.helpers.misc import (
     maybe_atoi,
-    run_local_shell_command,
+    run_aws_cli_command,
     target_hash,
 )
 
@@ -82,10 +82,7 @@ class ClusterSpec(Config):
 
     @property
     def cloud_infrastructure(self):
-        if 'infrastructure' in self.config.sections():
-            return True
-        else:
-            return False
+        return 'infrastructure' in self.config.sections()
 
     @property
     def cloud_provider(self):
@@ -126,8 +123,7 @@ class ClusterSpec(Config):
     def generated_cloud_config_path(self):
         if self.cloud_infrastructure:
             return "cloud/infrastructure/generated/infrastructure_config.json"
-        else:
-            return None
+        return None
 
     @property
     def infrastructure_settings(self):
@@ -142,7 +138,9 @@ class ClusterSpec(Config):
 
     @property
     def infrastructure_clients(self):
-        return {k: v for k, v in self.config.items('clients')}
+        if self.config.has_section('clients'):
+            return {k: v for k, v in self.config.items('clients')}
+        return {}
 
     @property
     def infrastructure_syncgateways(self):
@@ -152,7 +150,15 @@ class ClusterSpec(Config):
 
     @property
     def infrastructure_utilities(self):
-        return {k: v for k, v in self.config.items('utilities')}
+        if self.config.has_section('utilities'):
+            return {k: v for k, v in self.config.items('utilities')}
+        return {}
+
+    @property
+    def infrastructure_kafka_clusters(self):
+        if self.config.has_section('kafka_clusters'):
+            return {k: v for k, v in self.config.items('kafka_clusters')}
+        return {}
 
     def kubernetes_version(self, cluster_name):
         return self.infrastructure_section(cluster_name)\
@@ -177,8 +183,7 @@ class ClusterSpec(Config):
     def infrastructure_section(self, section: str):
         if section in self.config.sections():
             return {k: v for k, v in self.config.items(section)}
-        else:
-            return {}
+        return {}
 
     def infrastructure_config(self):
         infra_config = {}
@@ -203,6 +208,12 @@ class ClusterSpec(Config):
     @property
     def sgw_clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('syncgateways'):
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
+
+    @property
+    def kafka_clusters(self) -> Iterator:
+        for cluster_name, servers in self.config.items('kafka_clusters'):
             hosts = [s.split(':')[0] for s in servers.split()]
             yield cluster_name, hosts
 
@@ -244,6 +255,15 @@ class ClusterSpec(Config):
         servers = []
         if self.config.has_section('syncgateways'):
             for _, cluster_servers in self.sgw_clusters:
+                for server in cluster_servers:
+                    servers.append(server)
+        return servers
+
+    @property
+    def kafka_servers(self) -> List[str]:
+        servers = []
+        if self.config.has_section('kafka_clusters'):
+            for _, cluster_servers in self.kafka_clusters:
                 for server in cluster_servers:
                     servers.append(server)
         return servers
@@ -471,6 +491,43 @@ class ClusterSpec(Config):
                 return brokers
         return []
 
+    def _kafka_nodes_by_role(self, role: str) -> List[str]:
+        has_service = []
+        for servers in self.infrastructure_kafka_clusters.values():
+            for server in servers.split():
+                host, roles = server.split(':')
+                if role in roles:
+                    has_service.append(host)
+        return has_service
+
+    @property
+    def kafka_zookeepers(self) -> List[str]:
+        return self._kafka_nodes_by_role('zk')
+
+    @property
+    def kafka_brokers(self) -> List[str]:
+        return self._kafka_nodes_by_role('broker')
+
+    @property
+    def kafka_settings(self) -> List[str]:
+        return self.infrastructure_section('kafka')
+
+    @property
+    def kafka_subnets_per_cluster(self) -> List[str]:
+        if self.config.has_section('kafka_subnet_ids'):
+            return {k: v.split() for k, v in self.config.items('kafka_subnet_ids')}
+        return {}
+
+    @property
+    def kafka_broker_subnet_ids(self) -> List[str]:
+        subnet_ids = []
+        for cluster_name, servers in self.infrastructure_kafka_clusters.items():
+            for i, server in enumerate(servers.split()):
+                _, roles = server.split(':')
+                if 'broker' in roles:
+                    subnet_ids.append(self.kafka_subnets_per_cluster[cluster_name][i])
+        return subnet_ids
+
     @property
     def client_credentials(self) -> List[str]:
         if self.config.has_option('clients', 'credentials'):
@@ -538,15 +595,14 @@ class ClusterSpec(Config):
         return server_grp_map
 
     def get_aws_iid(self, hostname: str, region: str) -> str:
-        iid, _, _ = run_local_shell_command(
-            (
-                "env/bin/aws ec2 describe-instances --region {} "
-                "--filter \"Name=ip-address,Values=$(dig +short {})\" "
-                "--query \"Reservations[].Instances[].InstanceId\" "
-                "--output text"
-            ).format(region, hostname)
+        command_template = (
+            'ec2 describe-instances --region {} '
+            '--filter "Name=ip-address,Values=$(dig +short {})" '
+            '--query "Reservations[].Instances[].InstanceId" '
+            '--output text'
         )
-        return iid.strip()
+        iid = run_aws_cli_command(command_template, region, hostname)
+        return iid
 
     def set_capella_instance_ids(self) -> None:
         if self.capella_backend == 'aws':
@@ -575,21 +631,21 @@ class ClusterSpec(Config):
 
             region = os.environ.get('AWS_REGION', 'us-east-1')
 
-            query = (
-                "env/bin/aws ec2 describe-instances --region {} "
-                "--filters \"Name=tag-key,Values={{}}\" "
-                "\"Name=tag:couchbase-cloud-dataplane-id,Values={}\" "
-                "--query \"Reservations[].Instances[].InstanceId\" "
-                "--output text"
+            command_template = (
+                'ec2 describe-instances --region {} '
+                '--filters "Name=tag-key,Values={{}}" '
+                '"Name=tag:couchbase-cloud-dataplane-id,Values={}" '
+                '--query "Reservations[].Instances[].InstanceId" '
+                '--output text'
             ).format(region, self.infrastructure_settings['cbc_dataplane'])
 
-            stdout, _, _ = run_local_shell_command(query.format('couchbase-cloud-nebula'))
-            dn_iids = stdout.strip().split()
+            stdout = run_aws_cli_command(command_template, 'couchbase-cloud-nebula')
+            dn_iids = stdout.split()
             logger.info('Found DN instance IDs: {}'.format(', '.join(dn_iids)))
             self.config.set('nebula_instance_ids', 'direct_nebula', '\n' + '\n'.join(dn_iids))
 
-            stdout, _, _ = run_local_shell_command(query.format('couchbase-cloud-data-api'))
-            dapi_iids = stdout.strip().split()
+            stdout = run_aws_cli_command(command_template, 'couchbase-cloud-data-api')
+            dapi_iids = stdout.split()
             logger.info('Found DAPI instance IDs: {}'.format(', '.join(dapi_iids)))
             self.config.set('nebula_instance_ids', 'dapi', '\n' + '\n'.join(dapi_iids))
 
@@ -601,16 +657,17 @@ class ClusterSpec(Config):
 
         if self.capella_backend == 'aws':
             region = os.environ.get('AWS_REGION', 'us-east-1')
-            stdout, _, _ = run_local_shell_command(
-                (
-                    "env/bin/aws ec2 describe-instances --region {} "
-                    "--filters \"Name=tag-key,Values=couchbase-cloud-syncgateway-id\" "
-                    "\"Name=tag:couchbase-app-services,Values={}\" "
-                    "--query \"Reservations[].Instances[].InstanceId\" "
-                    "--output text"
-                ).format(region, self.infrastructure_settings['cbc_cluster']),
+            command_template = (
+                'ec2 describe-instances --region {} '
+                '--filters "Name=tag-key,Values=couchbase-cloud-syncgateway-id" '
+                '"Name=tag:couchbase-app-services,Values={}" '
+                '--query "Reservations[].Instances[].InstanceId" '
+                '--output text'
             )
-            sgids = stdout.strip().split()
+            stdout = run_aws_cli_command(command_template,
+                                         region,
+                                         self.infrastructure_settings['cbc_cluster'])
+            sgids = stdout.split()
             logger.info("Found Instance IDs for sgw: {}".format(', '.join(sgids)))
             self.config.set('sgw_instance_ids', 'sync_gateways', '\n', + '\n'.join(sgids))
             self.update_spec_file()
@@ -2421,6 +2478,52 @@ class AnalyticsSettings:
         self.storage_format = options.get('storage_format', self.STORAGE_FORMAT)
 
 
+class GoldfishKafkaLinksSettings:
+
+    # Kafka Broker settings
+    PARTITIONS_PER_TOPIC = 1
+
+    # General connector settings
+    MIN_WORKER_COUNT = 1
+    MAX_WORKER_COUNT = 2
+    MIN_CPU_PER_WORKER = 1
+
+    # Sink connector settings
+    BATCH_SIZE_BYTES = 5000000
+    MAX_TASKS_PER_WORKER = 1
+
+    # Source settings
+    LINK_SOURCE = 'MYSQLDB'  # MONGODB | DYNAMODB | MYSQLDB
+
+    # Test settings
+    INGESTION_TIMEOUT_MINS = 360
+
+    def __init__(self, options: dict):
+        self.partitions_per_topic = options.get('partitions_per_topic', self.PARTITIONS_PER_TOPIC)
+
+        self.mongodb_connector_custom_plugin = options.get('mongodb_connector_custom_plugin')
+        self.cbas_connector_custom_plugin = options.get('cbas_connector_custom_plugin')
+        self.msk_connect_worker_config = options.get('msk_connect_worker_config')
+        self.msk_connect_service_exec_role = options.get('msk_connect_service_exec_role')
+        self.connector_log_bucket = options.get('connector_log_bucket')
+
+        self.min_worker_count = options.get('min_worker_count', self.MIN_WORKER_COUNT)
+        self.max_worker_count = options.get('max_worker_count', self.MAX_WORKER_COUNT)
+        self.min_cpu_per_worker = options.get('min_cpu_per_worker', self.MIN_CPU_PER_WORKER)
+
+        self.batch_size_bytes = options.get('batch_size_bytes', self.BATCH_SIZE_BYTES)
+        self.max_tasks_per_worker = options.get('max_tasks_per_worker', self.MAX_TASKS_PER_WORKER)
+
+        self.link_source = options.get('link_source', self.LINK_SOURCE)
+        self.mongodb_uri = options.get('mongodb_uri')
+
+        self.remote_database_name = options.get('remote_database_name')
+        self.primary_key_field = options.get('primary_key_field')
+
+        self.ingestion_timeout_mins = int(options.get('ingestion_timeout_mins',
+                                          self.INGESTION_TIMEOUT_MINS))
+
+
 class AuditSettings:
 
     ENABLED = True
@@ -3051,6 +3154,7 @@ class TestConfig(Config):
 
     def _configure_phase_settings(method):  # noqa: N805
         """Decorate phase settings properties to configure them."""
+
         def wrapper(self):
             phase_settings = method(self)
             phase_settings.configure(self)
@@ -3350,6 +3454,11 @@ class TestConfig(Config):
     def analytics_settings(self) -> AnalyticsSettings:
         options = self._get_options_as_dict('analytics')
         return AnalyticsSettings(options)
+
+    @property
+    def goldfish_kafka_links_settings(self) -> GoldfishKafkaLinksSettings:
+        options = self._get_options_as_dict('goldfish_kafka_links')
+        return GoldfishKafkaLinksSettings(options)
 
     @property
     def audit_settings(self) -> AuditSettings:

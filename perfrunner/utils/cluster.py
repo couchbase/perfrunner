@@ -91,8 +91,14 @@ def main():
 
         return  # Nothing todo with k8s after this
     else:
+        if cm.cluster_spec.infrastructure_kafka_clusters:
+            cm.configure_kafka()
+            cm.start_kafka()
+
         # Individual nodes
         if cm.cluster_spec.goldfish_infrastructure:
+            if cm.cluster_spec.infrastructure_kafka_clusters:
+                cm.set_kafka_links_settings()
             cm.set_goldfish_s3_bucket()
             cm.add_aws_credential()
 

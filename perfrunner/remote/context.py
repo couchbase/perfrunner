@@ -116,3 +116,42 @@ def all_dapi_nodes(task, *args, **kwargs):
     hosts = helper.cluster_spec.dapi_instance_ids
 
     return execute(parallel(task), *args, hosts=hosts, **kwargs)
+
+
+@decorator
+def all_kafka_nodes(task, *args, **kwargs):
+    """Execute the decorated function on all remote Kafka nodes."""
+    helper = args[0]
+
+    jump_host = helper.cluster_spec.servers[0]
+    hosts = helper.cluster_spec.kafka_servers
+
+    # Kafka nodes are in private subnets, so we need to use a jump host that is publicly accessible
+    with settings(gateway=jump_host):
+        return execute(parallel(task), *args, hosts=hosts, **kwargs)
+
+
+@decorator
+def kafka_zookeepers(task, *args, **kwargs):
+    """Execute the decorated function on all remote Kafka Zookeeper nodes."""
+    helper = args[0]
+
+    jump_host = helper.cluster_spec.servers[0]
+    hosts = helper.cluster_spec.kafka_zookeepers
+
+    # Kafka nodes are in private subnets, so we need to use a jump host that is publicly accessible
+    with settings(gateway=jump_host):
+        return execute(parallel(task), *args, hosts=hosts, **kwargs)
+
+
+@decorator
+def kafka_brokers(task, *args, **kwargs):
+    """Execute the decorated function on all remote Kafka broker nodes."""
+    helper = args[0]
+
+    jump_host = helper.cluster_spec.servers[0]
+    hosts = helper.cluster_spec.kafka_brokers
+
+    # Kafka nodes are in private subnets, so we need to use a jump host that is publicly accessible
+    with settings(gateway=jump_host):
+        return execute(parallel(task), *args, hosts=hosts, **kwargs)

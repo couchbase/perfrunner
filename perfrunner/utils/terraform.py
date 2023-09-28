@@ -88,6 +88,7 @@ class Terraform:
             'clients': 'perf-client-x86-ubuntu20-2023-06-v3',  # ami-0d9789eef66732b62
             'utilities': 'perf-broker-us-east',  # ami-0d9e5ee360aa02d94
             'syncgateways': 'perf-server-x86-ubuntu20-2023-07',  # ami-08d83f4b122efb564
+            'kafka_brokers': 'perf-client-x86-ubuntu20-2023-06-v3'
         },
         'gcp': {
             'clusters': 'perftest-server-x86-ubuntu20-2023-07',
@@ -118,7 +119,8 @@ class Terraform:
             ],
             'clients': self.infra_spec.clients,
             'utilities': self.infra_spec.utilities,
-            'syncgateways': self.infra_spec.sgw_servers
+            'syncgateways': self.infra_spec.sgw_servers,
+            'kafka_brokers': self.infra_spec.kafka_servers
         }
 
         self.cloud_storage = bool(
@@ -157,7 +159,8 @@ class Terraform:
             'clusters': {},
             'clients': {},
             'utilities': {},
-            'syncgateways': {}
+            'syncgateways': {},
+            'kafka_brokers': {}
         }
 
         cloud_provider = self.backend if self.provider == 'capella' else self.provider
@@ -179,7 +182,8 @@ class Terraform:
                     'clusters': 'cluster',
                     'clients': 'client',
                     'utilities': 'utility',
-                    'syncgateways': 'sgw'
+                    'syncgateways': 'sgw',
+                    'kafka_brokers': 'kafka'
                 }[role]))
 
                 # If image name isn't provided as cli param, use hardcoded defaults
@@ -234,6 +238,7 @@ class Terraform:
             '<CLIENT_NODES>': tfvar_nodes['clients'],
             '<UTILITY_NODES>': tfvar_nodes['utilities'],
             '<SYNCGATEWAY_NODES>': tfvar_nodes['syncgateways'],
+            '<KAFKA_NODES>': tfvar_nodes['kafka_brokers'],
             '<CLOUD_STORAGE>': self.cloud_storage,
             '<GLOBAL_TAG>': global_tag
         }
@@ -283,24 +288,27 @@ class Terraform:
 
     # Update spec file with deployed infrastructure.
     def update_spec(self, output):
-        sections = ['clusters', 'clients', 'utilities', 'syncgateways']
+        sections = ['clusters', 'clients', 'utilities', 'syncgateways', 'kafka_clusters']
         cluster_dicts = [
             self.infra_spec.infrastructure_clusters,
             self.infra_spec.infrastructure_clients,
             self.infra_spec.infrastructure_utilities,
-            self.infra_spec.infrastructure_syncgateways
+            self.infra_spec.infrastructure_syncgateways,
+            self.infra_spec.infrastructure_kafka_clusters,
         ]
         output_keys = [
             'cluster_instance_ips',
             'client_instance_ips',
             'utility_instance_ips',
-            'syncgateway_instance_ips'
+            'syncgateway_instance_ips',
+            'kafka_instance_ips'
         ]
         private_sections = [
             'cluster_private_ips',
             'client_private_ips',
             'utility_private_ips',
-            'syncgateway_private_ips'
+            'syncgateway_private_ips',
+            'kafka_private_ips'
         ]
 
         for section, cluster_dict, output_key, private_section in zip(sections,
@@ -314,8 +322,11 @@ class Terraform:
 
             for cluster, nodes in cluster_dict.items():
                 node_list = nodes.strip().split()
-                public_ips = [None for _ in node_list]
-                private_ips = [None for _ in node_list]
+                node_info = {'public_ips': [None for _ in node_list],
+                             'private_ips': [None for _ in node_list]}
+
+                if section == 'kafka_clusters':
+                    node_info['subnet_ids'] = [None for _ in node_list]
 
                 for _, info in output[output_key]['value'].items():
                     node_group = info['node_group']
@@ -325,23 +336,36 @@ class Terraform:
                             public_ip = info['public_ip']
                             if extras:
                                 public_ip += ':{}'.format(*extras)
-                            public_ips[i] = public_ip
+                            node_info['public_ips'][i] = public_ip
+
                             if 'private_ip' in info:
-                                private_ips[i] = info['private_ip']
+                                node_info['private_ips'][i] = info['private_ip']
+
+                            if section == 'kafka_clusters' and 'subnet_id' in info:
+                                node_info['subnet_ids'][i] = info['subnet_id']
                             break
 
-                self.infra_spec.config.set(section, cluster, '\n' + '\n'.join(public_ips))
-                if any(private_ips):
+                self.infra_spec.config.set(section, cluster,
+                                           '\n' + '\n'.join(node_info['public_ips']))
+
+                if any((private_ips := node_info['private_ips'])):
                     if private_section not in self.infra_spec.config.sections():
                         self.infra_spec.config.add_section(private_section)
                     self.infra_spec.config.set(private_section, cluster,
                                                '\n' + '\n'.join(private_ips))
 
+                if 'subnet_ids' in node_info:
+                    if (section := 'kafka_subnet_ids') not in self.infra_spec.config.sections():
+                        self.infra_spec.config.add_section(section)
+                    self.infra_spec.config.set(section, cluster,
+                                               '\n' + '\n'.join(node_info['subnet_ids']))
+
         if self.cloud_storage:
-            bucket_url = output['cloud_storage']['value']['storage_bucket']
+            cloud_storage_info = output['cloud_storage']['value']
+            bucket_url = cloud_storage_info['storage_bucket']
             self.infra_spec.config.set('storage', 'backup', bucket_url)
             if self.provider == 'azure':
-                storage_acc = output['cloud_storage']['value']['storage_account']
+                storage_acc = cloud_storage_info['storage_account']
                 self.infra_spec.config.set('storage', 'storage_acc', storage_acc)
 
         self.infra_spec.update_spec_file()
@@ -353,6 +377,8 @@ class Terraform:
             s = s.replace("worker_list", "\n".join(self.infra_spec.clients))
             if self.infra_spec.sgw_servers:
                 s = s.replace("sgw_list", "\n".join(self.infra_spec.sgw_servers))
+            if self.infra_spec.kafka_brokers:
+                s = s.replace("kafka_broker_list", "\n".join(self.infra_spec.kafka_brokers))
             f.seek(0)
             f.write(s)
 
@@ -1834,6 +1860,8 @@ def get_args():
                         help='Image/AMI name to use for utility nodes')
     parser.add_argument('--sgw-image',
                         help='Image/AMI name to use for sync gateway nodes')
+    parser.add_argument('--kafka-image',
+                        help='Image/AMI name to use for Kafka nodes')
     parser.add_argument('--capella-public-api-url',
                         help='public API URL for Capella environment')
     parser.add_argument('--capella-tenant',

@@ -65,6 +65,23 @@ ARM_ARCHS = {
 Build = namedtuple('Build', ['filename', 'url'])
 
 
+def download_file(url: str, filename: str):
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+
+def upload_file(file: str, to_host: str, to_user: str, to_password: str, to_directory: str = "."):
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(to_host, username=to_user, password=to_password)
+    sftp = client.open_sftp()
+    sftp.put(file, "{}/{}".format(to_directory, file))
+    sftp.close()
+
+
 class OperatorInstaller:
 
     def __init__(self, cluster_spec: ClusterSpec, options):
@@ -403,8 +420,8 @@ class CouchbaseInstaller:
     def url(self) -> str:
         if validators.url(self.options.couchbase_version):
             return self.options.couchbase_version
-        else:
-            return self.find_package(edition=self.options.edition)
+
+        return self.find_package(edition=self.options.edition)
 
     @cached_property
     def debuginfo_url(self) -> str:
@@ -467,15 +484,9 @@ class CouchbaseInstaller:
     def download_local(self, local_copy_url: Optional[str] = None):
         """Download and save a copy of the specified package."""
         try:
-            if local_copy_url:
-                url = local_copy_url
-            else:
-                url = self.url
-
+            url = local_copy_url or self.url
             logger.info('Saving a local copy of {}'.format(url))
-            with open('couchbase.{}'.format(self.remote.package), 'wb') as fh:
-                resp = requests.get(url)
-                fh.write(resp.content)
+            download_file(url, 'couchbase.{}'.format(self.remote.package))
 
         except (Exception, BaseException):
             logger.info("Saving local copy for ubuntu failed, package may not present")
@@ -553,27 +564,24 @@ class CloudInstaller(CouchbaseInstaller):
         package_name = "couchbase.{}".format(self.remote.package)
 
         if self.options.remote_copy:
-            with open(package_name, 'wb') as fh:
-                if self.options.local_copy_url:
-                    logger.info('Saving a local url {}'.format(self.options.local_copy_url))
-                    resp = requests.get(self.options.local_copy_url)
-                elif 'aarch64' in self.url:
-                    local_url = self.url.replace('aarch64', 'x86_64')
-                    logger.info('Saving a local copy of x86_64 {}'.format(local_url))
-                    resp = requests.get(local_url)
-                else:
-                    logger.info('Saving a local copy of {}'.format(self.url))
-                    resp = requests.get(self.url)
-                fh.write(resp.content)
+            url = self.url
+            if self.options.local_copy_url:
+                url = self.options.local_copy_url
+                logger.info('Saving a local url {}'.format(url))
+            elif 'aarch64' in self.url:
+                url = self.url.replace('aarch64', 'x86_64')
+                logger.info('Saving a local copy of x86_64 {}'.format(url))
+            else:
+                logger.info('Saving a local copy of {}'.format(url))
+
+            download_file(url, package_name)
 
             for client in self.cluster_spec.workers:
                 logger.info('uploading client package {} to {} '.format(package_name, client))
                 upload_couchbase(client, user, password, package_name)
 
-        with open(package_name, 'wb') as fh:
-            logger.info('Server URL: {}'.format(self.url))
-            resp = requests.get(self.url)
-            fh.write(resp.content)
+        logger.info('Server URL: {}'.format(self.url))
+        download_file(self.url, package_name)
 
         if not self.cluster_spec.capella_infrastructure:
             logger.info('Uploading {} to servers'.format(package_name))
@@ -601,49 +609,23 @@ class ClientUploader(CouchbaseInstaller):
     def url(self) -> str:
         if validators.url(self.options.couchbase_version):
             return self.options.couchbase_version
-        elif self.options.local_copy_url:
-            return self.options.local_copy_url
-        else:
-            return self.find_package(edition=self.options.edition,
-                                     package='deb',
-                                     os_name='ubuntu',
-                                     os_version='20.04')
 
-    def download(self):
-        logger.info('Saving a local copy of {}'.format(self.url))
-        if self.url.endswith(".rpm"):
-            with open('couchbase.rpm', 'wb') as fh:
-                resp = requests.get(self.url)
-                fh.write(resp.content)
-        else:
-            with open('couchbase.deb', 'wb') as fh:
-                resp = requests.get(self.url)
-                fh.write(resp.content)
+        return self.options.local_copy_url or self.find_package(edition=self.options.edition,
+                                                                package='deb',
+                                                                os_name='ubuntu',
+                                                                os_version='20.04')
 
-    def upload(self):
+    def upload(self, package_name: str):
         logger.info('Using this URL: {}'.format(self.url))
-        if self.url.endswith(".rpm"):
-            package_name = 'couchbase.rpm'
-        else:
-            package_name = 'couchbase.deb'
-
         logger.info('Uploading {} to clients'.format(package_name))
         uploads = []
         user, password = self.cluster_spec.ssh_credentials
         hosts = self.cluster_spec.workers
         for host in hosts:
             logger.info('Uploading {} to {}'.format(package_name, host))
-            args = (host, user, password, package_name)
+            args = (package_name, host, user, password, "/tmp")
 
-            def upload_couchbase(to_host, to_user, to_password, package):
-                client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                client.connect(to_host, username=to_user, password=to_password)
-                sftp = client.open_sftp()
-                sftp.put(package, "/tmp/{}".format(package))
-                sftp.close()
-
-            worker_process = Process(target=upload_couchbase, args=args)
+            worker_process = Process(target=upload_file, args=args)
             worker_process.daemon = True
             worker_process.start()
             uploads.append(worker_process)
@@ -652,8 +634,23 @@ class ClientUploader(CouchbaseInstaller):
             process.join()
 
     def install(self):
-        self.download()
-        self.upload()
+        package_name = 'couchbase.rpm' if self.url.endswith('.rpm') else 'couchbase.deb'
+
+        logger.info('Saving a local copy of {}'.format(self.url))
+        download_file(self.url, package_name)
+
+        self.upload(package_name)
+
+
+class KafkaInstaller:
+
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
+        self.remote = RemoteHelper(cluster_spec, options.verbose)
+        self.options = options
+        self.cluster_spec = cluster_spec
+
+    def install(self):
+        self.remote.install_kafka(self.options.kafka_version)
 
 
 def get_args():
@@ -695,6 +692,9 @@ def get_args():
     parser.add_argument('-obv', '--operator-backup-version',
                         dest='operator_backup_version',
                         help='the build version for the couchbase operator')
+    parser.add_argument('--kafka-version',
+                        default='2.8.2',
+                        help='the Kafka version to install on Kafka nodes')
     parser.add_argument('-u', '--uninstall',
                         action='store_true',
                         help='uninstall the installed build')
@@ -754,6 +754,10 @@ def main():
         test_config.override(args.override)
         if test_config.profiling_settings.linux_perf_profile_flag:
             installer.install_debuginfo()
+
+    if cluster_spec.infrastructure_kafka_clusters:
+        kafka_installer = KafkaInstaller(cluster_spec, args)
+        kafka_installer.install()
 
 
 if __name__ == '__main__':

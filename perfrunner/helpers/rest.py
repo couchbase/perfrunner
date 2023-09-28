@@ -1085,6 +1085,18 @@ class DefaultRestHelper(RestBase):
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
         return self.get(url=url).json()
 
+    def get_analytics_link_info(self, analytics_node: str, link_name: str,
+                                link_scope: str = 'Default') -> dict:
+        path = 'analytics/link/{}/{}'.format(link_scope, link_name)
+        url = self._get_api_url(host=analytics_node, path=path,
+                                plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
+
+        resp = self.get(url=url)
+
+        # The Analytics Links API returns a list, even though there is only one link returned
+        # So we just return the single list element
+        return resp.json()[0]
+
     def deploy_function(self, node: str, func: dict, name: str):
         logger.info('Deploying function on node {}: {}'.format(node, pretty_dict(func)))
         url = self._get_api_url(host=node, path='api/v1/functions/{}'.format(name),

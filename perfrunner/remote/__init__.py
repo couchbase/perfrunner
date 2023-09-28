@@ -11,14 +11,14 @@ from perfrunner.remote.context import (
     master_client,
     syncgateway_servers,
 )
-from perfrunner.settings import REPO
+from perfrunner.settings import REPO, ClusterSpec
 
 
 class Remote:
 
     CLIENT_PROCESSES = 'celery', 'cbc-pillowfight', 'memcached', 'cblite'
 
-    def __init__(self, cluster_spec):
+    def __init__(self, cluster_spec: ClusterSpec):
         self.cluster_spec = cluster_spec
 
     @staticmethod
@@ -44,13 +44,17 @@ class Remote:
                 run('make')
 
     @all_clients
-    def install_clients(self, perfrunner_home: str, python_client: str):
+    def install_clients(self, perfrunner_home: str, python_client: str, need_pymongo: bool = False):
         if python_client is not None:
             logger.info('Installing Python SDK on remote client: {}'.format(python_client))
             with cd(perfrunner_home):
                 package = get_python_sdk_installation(python_client)
                 run("PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {} "
                     "--no-cache-dir".format(package), warn_only=True)
+
+                if need_pymongo:
+                    run("env/bin/pip install pymongo --no-cache-dir", warn_only=True)
+
 
     @master_client
     def remote_copy(self, worker_home: str):

@@ -1,8 +1,7 @@
 import os
-import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from fabric.api import cd, get, put, quiet, run, settings
@@ -15,7 +14,10 @@ from perfrunner.remote.context import (
     all_clients,
     all_dapi_nodes,
     all_dn_nodes,
+    all_kafka_nodes,
     all_servers,
+    kafka_brokers,
+    kafka_zookeepers,
     master_client,
     master_server,
     servers_by_role,
@@ -1324,11 +1326,13 @@ class RemoteLinux(Remote):
                                       s3_bucket: str = 'cb-perf-goldfish'):
         logger.info('Configuring Analytics S3 bucket. Bucket name: {}, region: {}'
                     .format(s3_bucket, region))
-        command = ("curl --request POST --url http://localhost:8091/settings/analytics " +
-                   "--header 'Content-Type: application/x-www-form-urlencoded' " +
-                   "--data blobStorageRegion={} " +
-                   "--data blobStoragePrefix= " +
-                   "--data blobStorageBucket={} " +
+        command = ("curl --max-time 3 --retry 3 --retry-connrefused "
+                   "--request POST "
+                   "--url http://localhost:8091/settings/analytics "
+                   "--header 'Content-Type: application/x-www-form-urlencoded' "
+                   "--data blobStorageRegion={} "
+                   "--data blobStoragePrefix= "
+                   "--data blobStorageBucket={} "
                    "--data blobStorageScheme=s3").format(region, s3_bucket)
         run(command)
 
@@ -1340,21 +1344,84 @@ class RemoteLinux(Remote):
             "http://localhost:8091/_metakv/cbas/debug/settings/blob_storage_secret_access_key"
 
         logger.info('Add AWS access key')
-        command = ("curl -v -X PUT {} --data-urlencode value={}"
+        command = ("curl --max-time 3 --retry 3 --retry-connrefused -v "
+                   "-X PUT {} --data-urlencode value={}"
                    .format(access_key_url, access_key_id))
-
-        retries = 4
-        while retries > 0 and not (output := run(command, warn_only=True)).succeeded:
-            logger.warn('Error while adding AWS access key: {}'.format(output))
-            logger.info('Waiting 5 seconds and retrying ({} retries left)'.format(retries))
-            retries -= 1
-            time.sleep(5)
-
-        if retries == 0:
-            logger.interrupt('Failed to add AWS access key')
-            return
+        run(command)
 
         logger.info('Add AWS secret access key')
         command = ("curl -v -X PUT {} --data-urlencode value={}"
                    .format(secret_access_key_url, secret_access_key))
         run(command)
+
+    @all_kafka_nodes
+    def install_kafka(self, version: str):
+        logger.info('Installing Kafka version: {}'.format(version))
+        archive_name = 'kafka_2.12-{}.tgz'.format(version)
+
+        run('wget https://archive.apache.org/dist/kafka/{}/{}'.format(version, archive_name))
+        logger.info('Downloaded {}'.format(archive_name))
+
+        run('mkdir kafka')
+        run('tar xzf {} -C kafka --strip-components=1'.format(archive_name))
+        logger.info('Extracted {}'.format(archive_name))
+
+    def configure_kafka_brokers(self, partitions_per_topic: int = 1):
+        jump_host = self.cluster_spec.servers[0]
+        broker_config_file = 'kafka/config/server.properties'
+
+        for broker_id, broker in enumerate(self.cluster_spec.kafka_brokers):
+            zks = ['{}:2181'.format(zk) for zk in self.cluster_spec.kafka_zookeepers]
+            zk_conn_string = ','.join(zks).replace(broker, 'localhost')
+            logger.info('Configuring Kafka broker: {} with broker id: {} and '
+                        'zookeeper conn string: {}'.format(broker, broker_id, zk_conn_string))
+            with settings(host_string=broker, gateway=jump_host):
+                # Set unique broker ID on each broker
+                run("sed -i 's/broker.id=0/broker.id={}/' {}"
+                    .format(broker_id, broker_config_file))
+
+                # Set Zookeeper connection string
+                run("sed -i 's/zookeeper.connect=localhost:2181/zookeeper.connect={}/' {}"
+                    .format(zk_conn_string, broker_config_file))
+
+                # Set Kafka log dir
+                run("sed -i -e 's/log\.dirs=.*/log.dirs=\/data\/kafka-logs/' {}"  # noqa: W605
+                    .format(broker_config_file))
+
+                # Set partitions per topic
+                run("sed -i 's/num.partitions=1/num.partitions={}/' {}"
+                    .format(partitions_per_topic, broker_config_file))
+
+    @kafka_zookeepers
+    def start_kafka_zookeepers(self):
+        logger.info('Starting Zookeeper on Kafka ZK nodes')
+        command = 'kafka/bin/zookeeper-server-start.sh -daemon kafka/config/zookeeper.properties'
+
+        # For some reason we really need pty=False here otherwise Zookeeper doesn't start.
+        # I think its something to do with the fact that the zookeeper-server-start.sh script
+        # uses the bash builtin 'exec' command, and/or the fact we are using a jump host
+        run(command, pty=False)
+
+    @kafka_brokers
+    def start_kafka_brokers(self):
+        logger.info('Starting Kafka on Kafka broker nodes')
+        command = 'kafka/bin/kafka-server-start.sh -daemon kafka/config/server.properties'
+
+        # For some reason we really need pty=False here otherwise Kafka doesn't start.
+        # I think its something to do with the fact that the kafka-server-start.sh script
+        # uses the bash builtin 'exec' command, and/or the fact we are using a jump host
+        run(command, pty=False)
+
+    @all_servers
+    def set_kafka_links_env_vars(self, settings: Dict[str, Any]):
+        logger.info('Setting environment variables for Kafka Links to work')
+        env_var_list_str = ' '.join(['{}={}'.format(k, v) for k, v in settings.items()])
+        run('systemctl set-environment {}'.format(env_var_list_str))
+
+    @all_servers
+    def set_kafka_links_metakv_settings(self, settings: Dict[str, Any]):
+        logger.info('Adding Kafka Links settings to metakv')
+        api = 'http://localhost:8091/_metakv/cbas/settings/kafkaClusterDetails/{}'
+        for k, v in settings.items():
+            url = api.format(k)
+            run('curl -X PUT {} --data-urlencode value=\'{}\''.format(url, v))

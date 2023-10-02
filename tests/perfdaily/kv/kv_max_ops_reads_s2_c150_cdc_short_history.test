@@ -35,7 +35,7 @@ workers = 50
 [extra_access]
 run_extra_access = true
 items = 20000000
-workers = 50
+workers = 5
 batch_size = 1000
 iterations = 20000
 updates = 100

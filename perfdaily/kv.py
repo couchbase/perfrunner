@@ -29,4 +29,14 @@ class RebalanceTest(DailyTest, RebalanceKVTest):
 
 class CombinedLatencyAndRebalanceCDCTest(DailyTest, _CombinedLatencyAndRebalanceCDCTest):
 
-    pass
+    def report_latency_kpi(self):
+        if self.test_config.stats_settings.enabled:
+            percentiles = self.test_config.access_settings.latency_percentiles
+            for operation in ('get', 'set', 'durable_set'):
+                for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+                    self.reporter.post(*metric)
+
+    def _report_kpi(self, *args):
+        self.reporter.post(
+            *self.metrics.rebalance_time(self.rebalance_time)
+        )

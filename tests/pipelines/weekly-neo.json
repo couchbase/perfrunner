@@ -30,19 +30,19 @@
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20_no_access.test"}
     ],
     "Magma1": [
-        {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_1B_1indexer_compressed_plasma.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_scan1B_1indexer_compressed_plasma_10kops.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q1_1B.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q2_1B.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q3_1B.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_lat_Q1_1B_10KQops.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_lat_Q2_1B_10Kops_3KQops.test"}
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_1B_1indexer_compressed_plasma.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_scan1B_1indexer_compressed_plasma_10kops.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q1_1B.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q2_1B.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q3_1B.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_lat_Q1_1B_10KQops.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_lat_Q2_1B_10Kops_3KQops.test", "groups": "P0"}
     ],
     "Magma2": [
-        {"job": "rhea-5node2", "cluster": "rhea_5node2_2x2.spec", "test_config": "hidd/xdcr_init_1x1_unidir_500M_1s_1000c.test"},
-        {"job": "rhea-5node2", "cluster": "rhea_5node2_2x2.spec", "test_config": "hidd/xdcr_init_2x2_unidir_500M.test"},
-        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/ycsb_workloadt_4nodes_1B_magma_TR1.test"},
-        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/ycsb_latency_workloadt_4nodes_1B_magma_TR1.test"}
+        {"job": "rhea-5node2", "cluster": "rhea_5node2_2x2.spec", "test_config": "hidd/xdcr_init_1x1_unidir_500M_1s_1000c.test", "groups": "P0"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2_2x2.spec", "test_config": "hidd/xdcr_init_2x2_unidir_500M.test", "groups": "P0"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/ycsb_workloadt_4nodes_1B_magma_TR1.test", "groups": "P0"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/ycsb_latency_workloadt_4nodes_1B_magma_TR1.test", "groups": "P0"}
     ],
     "N1QL": [
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q4_20M_overlap_gsi_moi_ok_1s_1c_1i.test", "groups": "P1"},

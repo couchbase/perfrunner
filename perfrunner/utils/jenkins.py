@@ -1,5 +1,6 @@
 import glob
 import json
+import os
 from collections import defaultdict
 from multiprocessing import set_start_method
 from typing import Dict, Iterator, List, Optional, Tuple
@@ -23,9 +24,10 @@ class JenkinsScanner:
 
     COUCHBASE_BUCKET = 'jenkins'
 
-    COUCHBASE_HOST = 'perflab.sc.couchbase.com'
+    COUCHBASE_HOST = 'cb.2ioc8okhsq7qiudd.cloud.couchbase.com'
 
-    COUCHBASE_PASSWORD = 'password'  # Yay!
+    COUCHBASE_USER = os.getenv('CAPELLA_PERFLAB_USER')
+    COUCHBASE_PASSWORD = os.getenv('CAPELLA_PERFLAB_KEY')
 
     JENKINS_URL = 'http://perf.jenkins.couchbase.com'
 
@@ -46,7 +48,7 @@ class JenkinsScanner:
     """
 
     def __init__(self):
-        pass_auth = PasswordAuthenticator(self.COUCHBASE_BUCKET, self.COUCHBASE_PASSWORD)
+        pass_auth = PasswordAuthenticator(self.COUCHBASE_USER, self.COUCHBASE_PASSWORD)
         options = ClusterOptions(authenticator=pass_auth)
         self.cluster = Cluster(connection_string=self.connection_string, options=options)
         self.bucket = self.cluster.bucket(self.COUCHBASE_BUCKET).default_collection()
@@ -56,7 +58,8 @@ class JenkinsScanner:
 
     @property
     def connection_string(self) -> str:
-        return 'couchbase://{}?password={}'.format(self.COUCHBASE_HOST, self.COUCHBASE_PASSWORD)
+        return ('couchbases://{}?certpath=/root/capella_perflab.pem&sasl_mech_force=PLAIN'
+                .format(self.COUCHBASE_HOST))
 
     def get_checkpoint(self, job_name: str) -> Optional[int]:
         try:

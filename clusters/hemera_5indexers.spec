@@ -17,7 +17,7 @@ data = /data
 
 [credentials]
 rest = Administrator:password
-ssh = root:couchbase
+ssh = root:couchbase1
 
 [parameters]
 OS = CentOS 7

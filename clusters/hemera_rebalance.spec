@@ -10,7 +10,7 @@ hemera =
 [clients]
 hosts =
     ubu-s703.perf.couchbase.com
-credentials = root:couchbase
+credentials = root:couchbase1
 
 [storage]
 data = /data

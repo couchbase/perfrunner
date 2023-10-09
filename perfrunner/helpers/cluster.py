@@ -1290,9 +1290,9 @@ class ClusterManager:
         logger.info('Waiting for cluster')
         self.remote.wait_for_cluster_ready(timeout=1200)
 
-    def deploy_couchbase_with_cgroups(self):
-        logger.info("starting server in cgroup")
+    def deploy_couchbase_with_cgroups_for_index_nodes(self):
         if self.test_config.cluster.enable_cgroups:
+            logger.info("starting server in cgroup")
             self.remote.add_system_limit_config()
             self.remote.restart()
             time.sleep(200)

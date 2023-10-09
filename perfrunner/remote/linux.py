@@ -1297,7 +1297,7 @@ class RemoteLinux(Remote):
         logger.info('Setting log level on Direct nebula nodes: {}'.format(level))
         run('curl -ks -X PUT http://localhost:8941/log?level={}'.format(level), warn_only=True)
 
-    @all_servers
+    @servers_by_role(roles=['index'])
     def add_system_limit_config(self):
         logger.info("Add system_limits.conf for cgroup")
         run("mkdir -p /etc/systemd/system/couchbase-server.service.d")

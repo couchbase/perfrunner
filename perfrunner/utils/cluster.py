@@ -150,7 +150,7 @@ def main():
 
     cm.tweak_memory()
     cm.enable_n2n_encryption()
-    cm.deploy_couchbase_with_cgroups()
+    cm.deploy_couchbase_with_cgroups_for_index_nodes()
 
 
 if __name__ == '__main__':

@@ -377,7 +377,11 @@ class DefaultRestHelper(RestBase):
 
     def is_not_balanced(self, host: str) -> int:
         counters = self.get_counters(host)
-        return counters.get('rebalance_start') - counters.get('rebalance_success')
+        logger.info(f"counters : {counters}")
+        if not counters.get('rebalance_start') and counters.get('rebalance_success'):
+            return counters.get('rebalance_start') - counters.get('rebalance_success')
+        else:
+            return False
 
     def get_failover_counter(self, host: str) -> int:
         counters = self.get_counters(host)

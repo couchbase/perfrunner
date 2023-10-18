@@ -29,7 +29,7 @@ class Monitor:
     POLLING_INTERVAL_SGW_LOGSTREAMING = 5
     POLLING_INTERVAL_SGW_RESYNC = 60  # 1m delay is ok since this takes hours to complete
 
-    REBALANCE_TIMEOUT = 3600 * 6
+    REBALANCE_TIMEOUT = 600
     TIMEOUT = 3600 * 12
 
     DISK_QUEUES = (

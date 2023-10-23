@@ -593,17 +593,17 @@
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec",  "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_swap_1s_1000c.test", "groups": "P0"}
     ],
     "GSI-Recovery": [
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_100M_plasma.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_1B_plasma.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_20res_20kops.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_50res_50kops_random.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_50res_50kops.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_80res_50kops_random.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_80res_50kops.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_2B_initial_only_50res.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_20res.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_50res.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_80res.test"}
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_100M_plasma.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_1B_plasma.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_20res_20kops.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_50res_50kops_random.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_50res_50kops.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_80res_50kops_random.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_80res_50kops.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_2B_initial_only_50res.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_20res.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_50res.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_80res.test", "groups": "P1"}
     ],
     "Cloud": [
         {"job": "Cloud-Tester", "cluster": "ec2_3s_1c_small.spec", "test_config": "cloud/low_end/kv/ycsb_workloadca_3nodes_low_end_small_lat_400ops_1b_1s_40c.test"},

@@ -22,12 +22,12 @@
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma_udf.test", "groups": "P0"}
     ],
     "GSI-Compression": [
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_80_20.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_80_20_no_access.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_100_20.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_100_20_no_access.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20_no_access.test"}
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_80_20.test", "groups": "P0"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_80_20_no_access.test", "groups": "P1"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_100_20.test", "groups": "P0"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_10res_100_20_no_access.test", "groups": "P1"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20.test", "groups": "P0"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20_no_access.test", "groups": "P1"}
     ],
     "Magma1": [
         {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_1B_1indexer_compressed_plasma.test", "groups": "P0"},

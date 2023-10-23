@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryRebalanceTest
 
 [showfast]
-title = File-based Rebalance-in, 1 bucket x 100M x 1KB, 2K KV ops/sec, 1000 indexes, 20%% RR, Plasma, s=1 c=100
+title = Shard Rebalance-in 1 -> 2, 1 bucket x 100M x 1KB, 2K KV ops/sec, 1000 indexes, 20%% RR, Plasma, s=1 c=100
 component = secondary
 category = lat
 sub_category = PlasmaDGM
@@ -50,7 +50,7 @@ projector.backChanSize = 500000
 disable_perindex_stats = True
 indexer.settings.build.batch_size = 100
 cbindexperf_concurrency = 128
-cbindexperf_repeat = 29999
+cbindexperf_repeat = 299999
 
 [access]
 updates = 100

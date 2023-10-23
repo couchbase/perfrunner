@@ -4,5 +4,19 @@
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_reb_in_10RR_s2_c150_cdc_medium_history_dedup_3.test", "groups": "P0"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_latency_mixed_100RR_s2_c150_cdc_medium_history_dedup_3.test", "groups": "P0"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_latency_mixed_durability_mixed_100RR_s2_c150_cdc_medium_history_dedup_2.test", "groups": "P0"}
+    ],
+    "GSI-Rebalance": [
+        {"job": "aether", "cluster": "aether_yubo.spec", "test_config": "gsi/rebalance/secondary_rebalance_in_1B.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_yubo.spec", "test_config": "gsi/rebalance/secondary_rebalance_out_1B.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_yubo.spec", "test_config": "gsi/rebalance/secondary_rebalance_swap_1B.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/rebalance/secondary_55M_100_indexes_plasma_1s_10c_file_rebalance_in_partitioned.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/rebalance/secondary_55M_100_indexes_plasma_1s_10c_file_rebalance_out_partitioned.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/rebalance/secondary_55M_100_indexes_plasma_1s_10c_file_rebalance_swap_partitioned.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/rebalance/secondary_55M_100_indexes_plasma_10b_1s_1c_file_rebalance_in_partitioned_uneven.test.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/rebalance/secondary_55M_100_indexes_plasma_10b_1s_1c_file_rebalance_out_partitioned_uneven.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/rebalance/secondary_55M_100_indexes_plasma_10b_1s_1c_file_rebalance_swap_partitioned_uneven.test.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_1000_indexes_rebalance_in.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_1000_indexes_rebalance_out.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_rebalance.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_1000_indexes_rebalance_swap.test", "groups": "P0"}
     ]
 }

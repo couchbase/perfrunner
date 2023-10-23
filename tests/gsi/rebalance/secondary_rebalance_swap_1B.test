@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryIndexRebalanceOnlyTest
 
 [showfast]
-title = Rebalance-swap (min), 1 -> 1, 1 bucket x 1.6B x 230B , 3 index, 18 index instances
+title = Rebalance-swap (min), 1 -> 1, 1 bucket x 1B x 230B , 3 index, 18 index instances
 component = secondary
 category = rebalance
 sub_category = Plasma
@@ -40,6 +40,8 @@ swap = 1
 
 [secondary]
 indexer.settings.storage_mode = plasma
+indexer.settings.enable_shard_affinity = True
+queryport.client.usePlanner = True
 
 [index]
 statements =

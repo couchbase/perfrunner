@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryRebalanceTest
 
 [showfast]
-title = File-based Rebalance-swap (min) 1->1, 1 bucket x 55M x 1KB, 100 indexes, 10K KV ops/sec, Scan Workload concurrency=128, Plasma, s=1 c=50
+title = Shard Rebalance-swap (min) 1->1, 1 bucket x 55M x 1KB, 100 indexes, 10K KV ops/sec, Scan Workload concurrency=128, Plasma, s=1 c=50
 component = secondary
 category = rebalance
 sub_category = Plasma

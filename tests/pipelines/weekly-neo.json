@@ -54,20 +54,20 @@
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_unique_gsi_moi_ok_1s_1c_1i.test", "groups": "P0"}
     ],
     "GSI-Rebalance": [
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_20RR_1s_10c_2irebalance_out_partitioned.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_20RR_1s_10c_2irebalance_in_partitioned.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned_exclude.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned_exclude.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_20res_2irebalance_in.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_20res_2irebalance_out.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/moi/secondary_55M_100_indexes_moi_1s_10c_2irebalance_in_partitioned.test"},
-        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/moi/secondary_55M_100_indexes_moi_1s_10c_2irebalance_out_partitioned.test"}
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_20RR_1s_10c_2irebalance_out_partitioned.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_20RR_1s_10c_2irebalance_in_partitioned.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned_exclude.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned_exclude.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_20res_2irebalance_in.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_20res_2irebalance_out.test", "groups": "P0"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/moi/secondary_55M_100_indexes_moi_1s_10c_2irebalance_in_partitioned.test", "groups": "P1"},
+        {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/moi/secondary_55M_100_indexes_moi_1s_10c_2irebalance_out_partitioned.test", "groups": "P1"}
     ],
     "GSI": [
-        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO.test"},
-        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO_100RR.test"}
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO.test", "groups": "P1"},
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO_100RR.test", "groups": "P0"}
     ],
     "Eventing": [
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_64byte_fun_bktop_magma.test", "groups": "P0"},

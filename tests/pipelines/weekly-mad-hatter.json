@@ -64,10 +64,10 @@
     ],
     "FTS-MultiIndex": [],
     "GSI": [
-        {"job": "secondary-moi",    "cluster": "nyx.spec", "test_config": "new_moi/secondary_scan_moi.test"},
-        {"job": "secondary-moi",    "cluster": "nyx.spec", "test_config": "new_moi/secondary_1M_multiple_moi.test"},
-        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "new_plasma/secondary_scan_plasma.test"},
-        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "new_plasma/secondary_1M_multiple_plasma.test"}
+        {"job": "secondary-moi",    "cluster": "nyx.spec", "test_config": "new_moi/secondary_scan_moi.test", "groups": "P1"},
+        {"job": "secondary-moi",    "cluster": "nyx.spec", "test_config": "new_moi/secondary_1M_multiple_moi.test", "groups": "P0"},
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "new_plasma/secondary_scan_plasma.test", "groups": "P0"},
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "new_plasma/secondary_1M_multiple_plasma.test", "groups": "P0"}
     ],
     "KV": [
         {"job": "ares", "cluster": "ares.spec", "test_config": "durability/latency/kv/enhanced/kv_latency_durability_none.test", "groups": "P1"},
@@ -293,11 +293,11 @@
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_windows.test", "groups": "P0"}
     ],
     "GSI-Hemera": [
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_4Index.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_4Index_insertonly.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_7Index.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_4Index.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_4Index_insertonly.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_7Index.test"}
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_4Index.test", "groups": "P0"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_4Index_insertonly.test", "groups": "P0"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_7Index.test", "groups": "P0"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_4Index.test", "groups": "P1"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_4Index_insertonly.test", "groups": "P1"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_7Index.test", "groups": "P1"}
     ]
 }

@@ -53,18 +53,18 @@ class JTSTest(PerfTest):
     @with_stats
     @with_profiles
     def run_test(self):
-        self.run_phase(
-            'jts run phase',
-            [WorkloadPhase(jts_run_task, self.target_iterator, self.access)]
-        )
+        logger.info('Running jts run phase')
+        phases = [WorkloadPhase(jts_run_task, self.target_iterator, self.access)]
+        self.log_task_settings(phases)
+        self.worker_manager.run_fg_phases(phases)
         self._download_logs()
 
     def warmup(self):
         if int(self.access.warmup_query_workers) > 0:
-            self.run_phase(
-                'jts warmup phase',
-                [WorkloadPhase(jts_warmup_task, self.target_iterator, self.access)]
-            )
+            logger.info('Running jts warmup phase')
+            phases = [WorkloadPhase(jts_warmup_task, self.target_iterator, self.access)]
+            self.log_task_settings(phases)
+            self.worker_manager.run_fg_phases(phases)
 
     def _download_logs(self):
         local_dir = self.access.jts_logs_dir
@@ -456,10 +456,10 @@ class FTSTest(JTSTest):
         #  if self.access.test_collection_query_mode == "collection_specific":
         #      settings.fts_data_spread_worker_type = "collection_specific"
         settings.seq_upserts = False
-        self.run_phase(
-            'data spread',
-            [WorkloadPhase(spring_task, self.target_iterator, settings)]
-        )
+        logger.info('Running data spread phase')
+        phases = [WorkloadPhase(spring_task, self.target_iterator, settings)]
+        self.log_task_settings(phases)
+        self.worker_manager.run_fg_phases(phases)
 
     def data_restore(self):
         if self.test_config.collection.collection_map:

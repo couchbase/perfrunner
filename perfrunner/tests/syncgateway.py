@@ -193,39 +193,75 @@ class SGPerfTest(PerfTest):
         logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
         self.worker_manager.run_sg_tasks(task, settings, target_iterator, timer, distribute, phase)
         if wait:
-            self.worker_manager.wait_for_workers()
+            self.worker_manager.wait_for_fg_tasks()
 
     def start_memcached(self):
-        self.run_sg_phase("start memcached", syncgateway_task_start_memcached,
-                          self.settings, None, self.settings.time, False)
+        self.run_sg_phase(
+            phase="start memcached",
+            task=syncgateway_task_start_memcached,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=False
+        )
 
     @with_stats
     def load_users(self):
-        self.run_sg_phase("load users", syncgateway_task_load_users,
-                          self.settings, None, self.settings.time, False)
+        self.run_sg_phase(
+            phase="load users",
+            task=syncgateway_task_load_users,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=False
+        )
 
     @with_stats
     def init_users(self):
         if self.test_config.syncgateway_settings.auth == 'true':
-            self.run_sg_phase("init users", syncgateway_task_init_users,
-                              self.settings, None, self.settings.time, False)
+            self.run_sg_phase(
+                phase="init users",
+                task=syncgateway_task_init_users,
+                settings=self.settings,
+                target_iterator=None,
+                timer=self.settings.time,
+                distribute=False
+            )
 
     @with_stats
     def grant_access(self):
         if self.test_config.syncgateway_settings.grant_access == 'true':
-            self.run_sg_phase("grant access to  users", syncgateway_task_grant_access,
-                              self.settings, None, self.settings.time, False)
+            self.run_sg_phase(
+                phase="grant access to users",
+                task=syncgateway_task_grant_access,
+                settings=self.settings,
+                target_iterator=None,
+                timer=self.settings.time,
+                distribute=False
+            )
 
     @with_stats
     def load_docs(self):
-        self.run_sg_phase("load docs", syncgateway_task_load_docs,
-                          self.settings, None, self.settings.time, False)
+        self.run_sg_phase(
+            phase="load docs",
+            task=syncgateway_task_load_docs,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=False
+        )
 
     @with_stats
     @with_profiles
     def run_test(self):
-        self.run_sg_phase("run test", syncgateway_task_run_test,
-                          self.settings, None, self.settings.time, True)
+        self.run_sg_phase(
+            phase="run test",
+            task=syncgateway_task_run_test,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=True
+        )
 
     def compress_sg_logs(self):
         try:
@@ -1346,13 +1382,19 @@ class SGReplicateMultiClusterPull(SGPerfTest):
             target_iterator = self.target_iterator
         self.worker_manager.run_sg_bp_tasks(task, settings, target_iterator,
                                             timer, distribute, phase)
-        self.worker_manager.wait_for_workers()
+        self.worker_manager.wait_for_fg_tasks()
 
     @with_stats
     @with_profiles
     def run_bp_test(self):
-        self.run_sg_bp_phase(" blackholepuller test", syncgateway_bh_puller_task,
-                             self.settings, None, self.settings.time, True)
+        self.run_sg_bp_phase(
+            phase="blackholepuller test",
+            task=syncgateway_bh_puller_task,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=True
+        )
 
     def _report_kpi(self):
         self.collect_execution_logs()
@@ -1429,13 +1471,19 @@ class SGReplicateMultiClusterPush(SGPerfTest):
             target_iterator = self.target_iterator
         self.worker_manager.run_sg_bp_tasks(task, settings, target_iterator,
                                             timer, distribute, phase)
-        self.worker_manager.wait_for_workers()
+        self.worker_manager.wait_for_fg_tasks()
 
     @with_stats
     @with_profiles
     def run_bp_test(self):
-        self.run_sg_docpush_phase(" newDocpusher test", syncgateway_new_docpush_task,
-                                  self.settings, None, self.settings.time, True)
+        self.run_sg_docpush_phase(
+            phase="newDocpusher test",
+            task=syncgateway_new_docpush_task,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=True
+        )
 
     def _report_kpi(self):
         self.collect_execution_logs()
@@ -1477,11 +1525,11 @@ class DeltaSync(SGPerfTest):
 
     def load_docs(self):
         self.run_sg_phase(
-            "load docs",
-            syncgateway_delta_sync_task_load_docs,
-            self.settings,
-            None,
-            self.settings.time,
+            phase="load docs",
+            task=syncgateway_delta_sync_task_load_docs,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
             distribute=False
         )
 
@@ -1489,11 +1537,11 @@ class DeltaSync(SGPerfTest):
     @with_profiles
     def run_test(self):
         self.run_sg_phase(
-            "run test",
-            syncgateway_delta_sync_task_run_test,
-            self.settings,
-            None,
-            self.settings.time,
+            phase="run test",
+            task=syncgateway_delta_sync_task_run_test,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
             distribute=True
         )
 
@@ -1951,7 +1999,7 @@ class EndToEndTest(SGPerfTest):
                 initial_docs=post_load_writes,
                 target_docs=int(load_docs*0.9)
             )
-        self.worker_manager.wait_for_workers()
+        self.worker_manager.wait_for_bg_tasks()
         return sgw_access_time, observed_pushed
 
     @with_stats
@@ -2264,8 +2312,14 @@ class EndToEndMultiCBLTest(EndToEndTest):
         p.daemon = True
         p.start()
         try:
-            self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, None,
-                              self.settings.time, True)
+            self.run_sg_phase(
+                phase="run test",
+                task=syncgateway_task_run_test,
+                settings=self.settings,
+                target_iterator=None,
+                timer=self.settings.time,
+                distribute=True
+            )
             ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
@@ -2376,7 +2430,6 @@ class EndToEndMultiCBLTest(EndToEndTest):
         q.daemon = True
         q.start()
         try:
-
             settings.syncgateway_settings.documents = \
                 int(load_docs *
                     float(settings.syncgateway_settings.pushproportion))
@@ -2393,8 +2446,14 @@ class EndToEndMultiCBLTest(EndToEndTest):
             settings.syncgateway_settings.documents = \
                 int(load_docs *
                     float(settings.syncgateway_settings.pullproportion))
-            self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, None,
-                              self.settings.time, True)
+            self.run_sg_phase(
+                phase="run test",
+                task=syncgateway_task_run_test,
+                settings=self.settings,
+                target_iterator=None,
+                timer=self.settings.time,
+                distribute=True
+            )
             ret1 = queue.get(timeout=900)
             ret2 = queue.get(timeout=900)
         except Exception as ex:

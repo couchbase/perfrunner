@@ -167,7 +167,7 @@ class RebalanceKVTest(RebalanceTest):
 
     def post_rebalance(self):
         super().post_rebalance()
-        self.worker_manager.abort()
+        self.worker_manager.abort_all_tasks()
 
     def run(self):
         self.load()
@@ -188,7 +188,7 @@ class CapellaRebalanceKVTest(RebalanceKVTest, CapellaRebalanceTest):
 
     def post_rebalance(self):
         super().post_rebalance()
-        self.worker_manager.abort()
+        self.worker_manager.abort_all_tasks()
 
     def run(self):
         self.load()
@@ -229,7 +229,7 @@ class RebalanceDurabilityTest(RebalanceTest):
     def rebalance(self, services=None):
         self.access_bg()
         self.rebalance_time = self._rebalance(services)
-        self.worker_manager.abort()
+        self.worker_manager.abort_all_tasks()
 
     def _report_kpi(self, *args):
         for operation in ('set', 'durable_set'):

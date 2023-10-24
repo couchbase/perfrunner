@@ -572,7 +572,7 @@ class PillowFightTest(PerfTest):
         end_time = time.time()
         self.cb_time = round(end_time - start_time)
         logger.info("cbcollect_info finished and it took: {} seconds".format(self.cb_time))
-        self.worker_manager.wait_for_workers()
+        self.worker_manager.wait_for_bg_tasks()
 
     def run(self):
         self.load()

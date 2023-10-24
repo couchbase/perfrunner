@@ -365,7 +365,7 @@ class N1QLLatencyRebalanceTest(N1QLLatencyTest):
         logger.info('Sleeping for 30 seconds before finishing')
         time.sleep(30)
 
-        self.worker_manager.abort()
+        self.worker_manager.abort_all_tasks()
 
     def run(self):
         self.enable_stats()
@@ -626,7 +626,7 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
 
         total_requests = total_requests_after - total_requests_before
 
-        self.worker_manager.abort()
+        self.worker_manager.abort_all_tasks()
 
         return rebalance_time, total_requests
 
@@ -915,7 +915,7 @@ class N1QLXattrThroughputRebalanceTest(N1QLXattrThroughputTest):
         logger.info('Sleeping for 30 seconds before finishing')
         time.sleep(30)
 
-        self.worker_manager.abort()
+        self.worker_manager.abort_all_tasks()
 
     def run(self):
         self.enable_stats()
@@ -1219,7 +1219,7 @@ class N1QLShutdownTest(N1QLTest):
         known_nodes = self.cluster_spec.servers[:initial_nodes]
         self.rest.rebalance(master, known_nodes, [failover_n1ql_node])
         self.monitor.monitor_rebalance(master)
-        self.worker_manager.wait_for_workers()
+        self.worker_manager.wait_for_bg_tasks()
 
     def graceful_failover(self, *args):
         wait_time = self.test_config.access_settings.time // 4
@@ -1232,7 +1232,7 @@ class N1QLShutdownTest(N1QLTest):
         known_nodes = self.cluster_spec.servers[:initial_nodes]
         self.rest.rebalance(master, known_nodes, [failover_n1ql_node])
         self.monitor.monitor_rebalance(master)
-        self.worker_manager.wait_for_workers()
+        self.worker_manager.wait_for_bg_tasks()
 
     def rebalance_out(self, *args):
         wait_time = self.test_config.access_settings.time // 4
@@ -1243,7 +1243,7 @@ class N1QLShutdownTest(N1QLTest):
         eject_n1ql_node = self.cluster_spec.servers_by_role("n1ql")[-1]
         self.rest.rebalance(master, known_nodes, [eject_n1ql_node])
         self.monitor.monitor_rebalance(master)
-        self.worker_manager.wait_for_workers()
+        self.worker_manager.wait_for_bg_tasks()
 
     @with_stats
     @with_profiles

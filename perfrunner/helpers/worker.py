@@ -4,9 +4,10 @@ import sys
 import time
 from itertools import cycle
 from multiprocessing import set_start_method
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Iterator, List, Optional, Tuple
 
-from celery import Celery, group
+from celery import Celery, Signature, group
+from celery.result import AsyncResult
 from kombu.serialization import registry
 from sqlalchemy import create_engine
 
@@ -260,7 +261,7 @@ class WorkloadPhase:
                  target_iterator: Iterable[TargetSettings],
                  base_settings: PhaseSettings,
                  override_settings: dict = {},
-                 timer: int = None):
+                 timer: Optional[int] = None):
         self.task = task
         self.target_iterator = target_iterator
         self.targets = list(target_iterator)
@@ -271,19 +272,18 @@ class WorkloadPhase:
         self.task_settings.bucket_list = [t.bucket for t in self.targets]
         self.timer = timer
 
-    def task_sigs(self, workers):
-        sigs, sig_workers = [], []
+    def task_sigs(self, workers: Iterator[str]) -> List[Tuple[Signature, str]]:
+        sigs_with_workers = []
 
         for target in self.targets:
             for instance in range(self.task_settings.workload_instances):
-                sig_workers.append(worker := next(workers))
-                sigs.append(
-                    self.task.si(self.task_settings, target, self.timer, instance).set(
-                        queue=worker, expires=self.timer
-                    )
+                worker = next(workers)
+                sig = self.task.si(self.task_settings, target, self.timer, instance).set(
+                    queue=worker, expires=self.timer
                 )
+                sigs_with_workers.append((sig, worker))
 
-        return sigs, sig_workers
+        return sigs_with_workers
 
 
 class WorkerManager:
@@ -338,7 +338,8 @@ class RemoteWorkerManager:
         self.terminate()
         self.start()
         self.wait_until_workers_are_ready()
-        self.async_results = []
+        self.fg_async_results = []
+        self.bg_async_results = []
 
     @property
     def is_remote(self) -> bool:
@@ -400,34 +401,55 @@ class RemoteWorkerManager:
             time.sleep(self.PING_INTERVAL)
         logger.info('All remote Celery workers are ready')
 
-    def run_tasks(self, phase):
+    def run_tasks(self, phase: WorkloadPhase) -> List[AsyncResult]:
         if self.test_config.test_case.reset_workers:
             self.reset_workers()
-        sigs, sig_workers = phase.task_sigs(self.workers)
-        for sig, worker in zip(sigs, sig_workers):
-            logger.info('Running task on {}'.format(worker))
-            async_result = sig.apply_async()
-            self.async_results.append(async_result)
-        logger.info('task results {}'.format(self.async_results))
 
-    def wait_for_workers(self):
-        logger.info('Waiting for all tasks to finish')
-        for async_result in self.async_results:
+        async_results = []
+        for sig, worker in phase.task_sigs(self.workers):
+            logger.info('Running task on {}'.format(worker))
+            async_results.append(sig.apply_async())
+
+        logger.info('Task results: {}'.format(async_results))
+
+        return async_results
+
+    def run_fg_phases(self, phases: Iterable[WorkloadPhase]):
+        for phase in phases:
+            self.fg_async_results.extend(self.run_tasks(phase))
+        self.wait_for_fg_tasks()
+
+    def run_bg_phases(self, phases: Iterable[WorkloadPhase]):
+        for phase in phases:
+            self.bg_async_results.extend(self.run_tasks(phase))
+
+    def _wait_for_tasks(self, async_results: List[AsyncResult]):
+        for res in async_results:
             try:
-                async_result.get()
+                res.get()
             except Exception as e:
                 logger.info("Exception while getting result {}".format(e))
                 raise
-        self.async_results = []
-        logger.info('All tasks are done')
+
+    def wait_for_fg_tasks(self):
+        logger.info('Waiting for foreground tasks to finish')
+        self._wait_for_tasks(self.fg_async_results)
+        logger.info('All foreground tasks are done')
+        self.fg_async_results.clear()
+
+    def wait_for_bg_tasks(self):
+        logger.info('Waiting for background tasks to finish')
+        self._wait_for_tasks(self.bg_async_results)
+        logger.info('All background tasks are done')
+        self.bg_async_results.clear()
 
     def download_celery_logs(self):
         if not os.path.exists('celery'):
             os.mkdir('celery')
         self.remote.get_celery_logs(self.WORKER_HOME)
 
-    def abort(self):
-        for result in self.async_results:
+    def abort_all_tasks(self):
+        for result in self.fg_async_results + self.bg_async_results:
             logger.info('Terminating Celery task (SIGTERM): {}'.format(result))
             result.revoke(terminate=True, signal='SIGTERM', wait=True)
         logger.info('All Celery tasks have been sent SIGTERM')
@@ -446,7 +468,7 @@ class RemoteWorkerManager:
                      timer: int = None,
                      distribute: bool = False,
                      phase: str = ""):
-        self.async_results = []
+        self.fg_async_results.clear()
         self.reset_workers()
         for target in target_iterator:
             if distribute:
@@ -459,7 +481,7 @@ class RemoteWorkerManager:
 
                 group_tasks = []
 
-                for instance in range(instances_per_client):
+                for _ in range(instances_per_client):
                     for client in self.cluster_spec.workers[:total_clients]:
                         worker_id += 1
                         logger.info('Running the \'{}\' by worker #{} on client {}'
@@ -475,7 +497,7 @@ class RemoteWorkerManager:
                             ))
 
                 g = group(group_tasks)
-                self.async_results.append(g())
+                self.fg_async_results.append(g())
                 time.sleep(15)
             else:
                 client = self.cluster_spec.workers[0]
@@ -488,7 +510,7 @@ class RemoteWorkerManager:
                     queue=client,
                     expires=timer,
                 )
-                self.async_results.append(async_result)
+                self.fg_async_results.append(async_result)
                 time.sleep(15)
                 if task is syncgateway_task_start_memcached:
                     break
@@ -500,7 +522,7 @@ class RemoteWorkerManager:
                         timer: int = None,
                         distribute: bool = False,
                         phase: str = ""):
-        self.async_results = []
+        self.fg_async_results.clear()
         self.reset_workers()
         for target in target_iterator:
             if distribute:
@@ -513,7 +535,7 @@ class RemoteWorkerManager:
                     async_result = task.apply_async(
                         args=(task_settings, target, timer, worker_id, self.cluster_spec),
                         queue=client, expires=timer,)
-                    self.async_results.append(async_result)
+                    self.fg_async_results.append(async_result)
                 time.sleep(15)
             else:
                 client = self.cluster_spec.workers[0]
@@ -521,7 +543,7 @@ class RemoteWorkerManager:
                 async_result = task.apply_async(
                     args=(task_settings, target, timer, 0, self.cluster_spec),
                     queue=client, expires=timer)
-                self.async_results.append(async_result)
+                self.fg_async_results.append(async_result)
                 time.sleep(15)
 
 
@@ -530,8 +552,7 @@ class LocalWorkerManager(RemoteWorkerManager):
     BROKER_DB = 'perfrunner.db'
     RESULTS_DB = 'results.db'
 
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
-                 verbose: bool):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.workers = cycle(['localhost'])
@@ -539,7 +560,8 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.tune_sqlite()
         self.start()
         self.wait_until_workers_are_ready()
-        self.async_results = []
+        self.fg_async_results = []
+        self.bg_async_results = []
 
     @property
     def is_remote(self) -> bool:
@@ -577,10 +599,12 @@ class LocalWorkerManager(RemoteWorkerManager):
             pid = f.read()
         return int(pid)
 
-    def abort(self):
+    def abort_all_tasks(self):
         logger.info('Interrupting Celery workers')
         os.kill(self.pid, signal.SIGTERM)
-        self.wait_for_workers()
+        logger.info('All Celery workers have been sent SIGTERM')
+        self.wait_for_fg_tasks()
+        self.wait_for_bg_tasks()
 
     def terminate(self):
         logger.info('Terminating Celery workers')
@@ -593,9 +617,9 @@ class LocalWorkerManager(RemoteWorkerManager):
                      timer: int = None,
                      distribute: bool = False,
                      phase: str = ""):
-        self.async_results = []
+        self.fg_async_results.clear()
         self.reset_workers()
-        for target in target_iterator:
+        for _ in target_iterator:
             if distribute:
                 total_threads = int(task_settings.syncgateway_settings.threads)
                 total_clients = int(task_settings.syncgateway_settings.clients)
@@ -603,8 +627,8 @@ class LocalWorkerManager(RemoteWorkerManager):
                 total_instances = total_clients * instances_per_client
                 threads_per_instance = int(total_threads/total_instances) or 1
                 worker_id = 0
-                for instance in range(instances_per_client):
-                    for _ in range(0, total_clients):
+                for _ in range(instances_per_client):
+                    for _ in range(total_clients):
                         client = self.next_worker()
                         worker_id += 1
                         logger.info('Running the \'{}\' by worker #{} on client {}'
@@ -616,7 +640,7 @@ class LocalWorkerManager(RemoteWorkerManager):
                             queue=client,
                             expires=timer,
                         )
-                        self.async_results.append(async_result)
+                        self.fg_async_results.append(async_result)
                 time.sleep(15)
             else:
                 client = self.next_worker()
@@ -629,5 +653,5 @@ class LocalWorkerManager(RemoteWorkerManager):
                     queue=client,
                     expires=timer,
                 )
-                self.async_results.append(async_result)
+                self.fg_async_results.append(async_result)
                 time.sleep(15)

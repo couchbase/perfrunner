@@ -435,12 +435,7 @@ class PerfTest:
         logger.info('Running phase for {} seconds'.format(access_settings.time))
         time.sleep(access_settings.time)
 
-    def run_phase(self,
-                  phase_name: str,
-                  phases: Iterable[WorkloadPhase],
-                  wait: bool = True):
-        logger.info('Running {} phase'.format(phase_name))
-
+    def log_task_settings(self, phases: Iterable[WorkloadPhase]):
         if len(phases) > 1:
             common_task_settings, diff_task_settings = PhaseSettings.compare_phase_settings(
                 [ph.task_settings for ph in phases]
@@ -457,12 +452,6 @@ class PerfTest:
         else:
             logger.info('Task settings: {}'.format(pretty_dict(phases[0].task_settings)))
 
-        for phase in phases:
-            self.worker_manager.run_tasks(phase)
-
-        if wait:
-            self.worker_manager.wait_for_workers()
-
     def generic_phase(self,
                       phase_name: str,
                       default_settings: PhaseSettings,
@@ -473,8 +462,7 @@ class PerfTest:
                       mixed_tasks: Iterable[Callable] = None,
                       mixed_settings: Iterable[PhaseSettings] = None,
                       mixed_target_iterators: Iterable[Iterable] = None,
-                      use_timers: bool = False,
-                      wait: bool = True) -> List[WorkloadPhase]:
+                      use_timers: bool = False) -> List[WorkloadPhase]:
         if settings is None:
             settings = default_settings
 
@@ -511,7 +499,10 @@ class PerfTest:
                 )
             ]
 
-        self.run_phase(phase_name, phases, wait)
+        logger.info('Running {} phase'.format(phase_name))
+        self.log_task_settings(phases)
+
+        return phases
 
     def load(self,
              task: Callable = spring_task,
@@ -520,8 +511,8 @@ class PerfTest:
              mixed_tasks: Iterable[Callable] = None,
              mixed_settings: Iterable[PhaseSettings] = None,
              mixed_target_iterators: Iterable[Iterable] = None):
-        self.generic_phase(
-            phase_name='load phase',
+        phases = self.generic_phase(
+            phase_name='load',
             default_settings=self.test_config.load_settings,
             default_mixed_settings=self.test_config.mixed_load_settings,
             task=task,
@@ -531,6 +522,7 @@ class PerfTest:
             mixed_settings=mixed_settings,
             mixed_target_iterators=mixed_target_iterators
         )
+        self.worker_manager.run_fg_phases(phases)
 
     def load_bg(self,
                 task: Callable = spring_task,
@@ -539,8 +531,8 @@ class PerfTest:
                 mixed_tasks: Iterable[Callable] = None,
                 mixed_settings: Iterable[PhaseSettings] = None,
                 mixed_target_iterators: Iterable[Iterable] = None):
-        self.generic_phase(
-            phase_name='load phase',
+        phases = self.generic_phase(
+            phase_name='background load',
             default_settings=self.test_config.load_settings,
             default_mixed_settings=self.test_config.mixed_load_settings,
             task=task,
@@ -549,8 +541,8 @@ class PerfTest:
             mixed_tasks=mixed_tasks,
             mixed_settings=mixed_settings,
             mixed_target_iterators=mixed_target_iterators,
-            wait=False
         )
+        self.worker_manager.run_bg_phases(phases)
 
     def hot_load(self,
                  task: Callable = spring_task,
@@ -559,8 +551,8 @@ class PerfTest:
                  mixed_tasks: Iterable[Callable] = None,
                  mixed_settings: Iterable[PhaseSettings] = None,
                  mixed_target_iterators: Iterable[Iterable] = None):
-        self.generic_phase(
-            phase_name='hot load phase',
+        phases = self.generic_phase(
+            phase_name='hot load',
             default_settings=self.test_config.hot_load_settings,
             default_mixed_settings=self.test_config.mixed_hot_load_settings,
             task=task,
@@ -570,14 +562,15 @@ class PerfTest:
             mixed_settings=mixed_settings,
             mixed_target_iterators=mixed_target_iterators
         )
+        self.worker_manager.run_fg_phases(phases)
 
     def xattr_load(self,
                    task: Callable = spring_task,
                    target_iterator: Iterable = None,
                    mixed_tasks: Iterable[Callable] = None,
                    mixed_target_iterators: Iterable[Iterable] = None):
-        self.generic_phase(
-            phase_name='xattr phase',
+        phases = self.generic_phase(
+            phase_name='xattr load',
             default_settings=self.test_config.xattr_load_settings,
             default_mixed_settings=self.test_config.mixed_xattr_load_settings,
             task=task,
@@ -587,6 +580,7 @@ class PerfTest:
             mixed_settings=None,
             mixed_target_iterators=mixed_target_iterators
         )
+        self.worker_manager.run_fg_phases(phases)
 
     def access(self,
                task: Callable = spring_task,
@@ -595,8 +589,8 @@ class PerfTest:
                mixed_tasks: Iterable[Callable] = None,
                mixed_settings: Iterable[PhaseSettings] = None,
                mixed_target_iterators: Iterable[Iterable] = None):
-        self.generic_phase(
-            phase_name='access phase',
+        phases = self.generic_phase(
+            phase_name='access',
             default_settings=self.test_config.access_settings,
             default_mixed_settings=self.test_config.mixed_access_settings,
             task=task,
@@ -607,6 +601,7 @@ class PerfTest:
             mixed_target_iterators=mixed_target_iterators,
             use_timers=True
         )
+        self.worker_manager.run_fg_phases(phases)
 
     def access_bg(self,
                   task: Callable = spring_task,
@@ -615,8 +610,8 @@ class PerfTest:
                   mixed_tasks: Iterable[Callable] = None,
                   mixed_settings: Iterable[PhaseSettings] = None,
                   mixed_target_iterators: Iterable[Iterable] = None):
-        self.generic_phase(
-            phase_name='background access phase',
+        phases = self.generic_phase(
+            phase_name='background access',
             default_settings=self.test_config.access_settings,
             default_mixed_settings=self.test_config.mixed_access_settings,
             task=task,
@@ -625,9 +620,9 @@ class PerfTest:
             mixed_tasks=mixed_tasks,
             mixed_settings=mixed_settings,
             mixed_target_iterators=mixed_target_iterators,
-            use_timers=True,
-            wait=False
+            use_timers=True
         )
+        self.worker_manager.run_bg_phases(phases)
 
     def report_kpi(self, *args, **kwargs):
         if self.test_config.stats_settings.enabled:

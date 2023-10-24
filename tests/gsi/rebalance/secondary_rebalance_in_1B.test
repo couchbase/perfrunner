@@ -38,6 +38,7 @@ start_after = 300
 stop_after = 300
 
 [secondary]
+indexer.settings.rebalance.redistribute_indexes = True
 indexer.settings.storage_mode = plasma
 indexer.settings.enable_shard_affinity = True
 queryport.client.usePlanner = True

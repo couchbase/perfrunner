@@ -42,7 +42,10 @@ stop_after = 300
 swap = 1
 
 [secondary]
+indexer.settings.rebalance.redistribute_indexes = True
 indexer.settings.storage_mode = plasma
+indexer.settings.enable_shard_affinity = True
+queryport.client.usePlanner = True
 
 [index]
 statements =

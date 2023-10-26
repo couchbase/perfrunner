@@ -142,7 +142,7 @@ class KVLatency(Latency):
 
     def move_local_stat_files(self):
         dest = Path(self.cluster)
-        dest.mkdir()
+        dest.mkdir(exist_ok=True)
         for file in Path.cwd().glob(self.PATTERN):
             file.rename(dest / file.name)
 

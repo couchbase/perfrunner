@@ -758,6 +758,33 @@ class AWSDeployer(Deployer):
             PolicyArn=self.deployed_infra['vpc']['ebs_csi_policy_arn']
         )
 
+    def add_ebs_csi_driver(self):
+        self.setup_eks_csi_driver_iam_policy()
+        ebs_csi_driver_addon = 'aws-ebs-csi-driver'
+        logger.info('Adding EBS CSI driver addon')
+        for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
+            cluster_name = 'k8s_cluster_{}'.format(i)
+
+            self.eksclient.create_addon(
+                clusterName=cluster_name,
+                addonName=ebs_csi_driver_addon,
+                tags={
+                    'Name': self.options.tag
+                }
+            )
+            response = self.eksclient.describe_addon(
+                clusterName=cluster_name,
+                addonName=ebs_csi_driver_addon
+            )
+            logger.info('Deployed addon: {}'.format(response.get('addon')))
+
+        waiter = self.eksclient.get_waiter('addon_active')
+        for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
+            cluster_name = 'k8s_cluster_{}'.format(i)
+            waiter.wait(clusterName=cluster_name,
+                        addonName=ebs_csi_driver_addon,
+                        WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
+
     def update_infrastructure_spec(self):
         if self.infra_spec.infrastructure_settings['type'] == 'kubernetes':
             remote = RemoteHelper(self.infra_spec)
@@ -962,6 +989,7 @@ class AWSDeployer(Deployer):
         self.create_ec2s()
         self.create_s3bucket()
         self.open_security_groups()
+        self.add_ebs_csi_driver()
         self.update_infrastructure_spec()
         if self.deployed_infra['vpc'].get('eks_clusters', None) is not None:
             for k, v in self.deployed_infra['vpc']['eks_clusters'].items():

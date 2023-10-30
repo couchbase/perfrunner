@@ -1,0 +1,12 @@
+apiVersion: couchbase.com/v2
+kind: CouchbaseBackup
+metadata:
+  name: my-backup
+spec:
+  strategy: full_only
+  full:
+    schedule: "59 23 31 12 *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  size: 1000Gi
+  defaultRecoveryType: none

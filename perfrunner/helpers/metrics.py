@@ -198,6 +198,7 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id, title, chirality=1)
         timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
         thr = round(np.average(timings), 2)
+        thr = round(thr/(int(self.test_config.jts_access_settings.aggregation_buffer_ms)/1000))
         if thr > 100:
             thr = round(thr)
         return thr, self._snapshots, metric_info

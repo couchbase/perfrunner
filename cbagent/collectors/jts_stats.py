@@ -79,7 +79,9 @@ class JTSCollector(Collector):
                     data = {
                         'jts_throughput': float(self.results["throughput"][bucket][k])
                     }
-                    self.append_to_store(data=data, timestamp=timestamp_offset + int(k) * 1000,
+                    self.append_to_store(data=data,
+                                         timestamp=timestamp_offset +
+                                         int(k) * int(self.settings.aggregation_buffer_ms),
                                          cluster=self.cluster, bucket=bucket,
                                          collector=self.COLLECTOR)
 
@@ -111,7 +113,9 @@ class JTSThroughputCollector(JTSCollector):
                     data = {
                         'jts_throughput': float(self.results["throughput"][bucket][k])
                     }
-                    self.append_to_store(data=data, timestamp=timestamp_offset + int(k)*1000,
+                    self.append_to_store(data=data,
+                                         timestamp=timestamp_offset +
+                                         int(k) * int(self.settings.aggregation_buffer_ms),
                                          cluster=self.cluster, bucket=bucket,
                                          collector=self.COLLECTOR)
 

@@ -1861,6 +1861,11 @@ class JTSAccessSettings(PhaseSettings):
         if self.fts_file_based_rebal_disabled != self.FTS_FILE_BASED_REBAL_DISABLED:
             self.fts_node_level_parameters["disableFileTransferRebalance"] = \
                 self.fts_file_based_rebal_disabled
+        self.search_query_timeout_in_sec = options.get("search_query_timeout_in_sec", None)
+        self.test_geojson_query_type = options.get("test_geojson_query_type", None)
+        self.test_geojson_query_relation = options.get("test_geojson_query_relation", None)
+        self.aggregation_buffer_ms = options.get("aggregation_buffer_ms", "1000")
+        self.indexPartitions = options.get("indexPartitions", None)
 
     def __str__(self) -> str:
         return str(self.__dict__)

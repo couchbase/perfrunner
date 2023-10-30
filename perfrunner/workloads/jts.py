@@ -84,19 +84,22 @@ def execute_jts_run(settings: PhaseSettings, target, full_index_name, index_map)
         )
 
     if settings.collections_enabled:
-        params += " -test_collections_enabled {test_collections_enabled}"\
-            .format(test_collections_enabled=settings.collections_enabled)
-        params += " -test_collection_query_mode {test_collection_query_mode}" \
-            .format(test_collection_query_mode=settings.test_collection_query_mode)
-        params += " -test_collection_specific_count {test_collection_specific_count}" \
-            .format(test_collection_specific_count=settings.test_collection_specific_count)
-        params += " -test_fts_index_map \'{test_fts_index_map}\'"\
-            .format(test_fts_index_map=json.dumps(index_map))
-    if settings.capella_infrastructure:
+        params += f" -test_collections_enabled {settings.collections_enabled}"
+        params += f" -test_collection_query_mode {settings.test_collection_query_mode}"
+        params += f" -test_collection_specific_count {settings.test_collection_specific_count}"
+        params += f" -test_fts_index_map \'{json.dumps(index_map)}\'"
+    if settings.capella_infrastructure == 'capella':
         params += " -couchbase_ssl_mode capella"
     if settings.test_mutation_field and settings.test_mutation_field != 'None':
-        params += " -test_mutation_field {test_mutation_field}"\
-            .format(test_mutation_field=settings.test_mutation_field)
+        params += f" -test_mutation_field {settings.test_mutation_field}"
+    if settings.search_query_timeout_in_sec:
+        params += f" -search_query_timeout_in_sec {settings.search_query_timeout_in_sec}"
+    if settings.test_geojson_query_type:
+        params += f" -test_geojson_query_type {settings.test_geojson_query_type}"
+    if settings.test_geojson_query_relation:
+        params += f" -test_geojson_query_relation {settings.test_geojson_query_relation}"
+    if str(settings.aggregation_buffer_ms) != "1000":
+        params += f" -aggregation_buffer_ms {settings.aggregation_buffer_ms}"
     print(params)
     run_custom_cmd(settings.jts_home_dir, settings.jts_run_cmd, params)
 
@@ -141,19 +144,23 @@ def execute_jts_warmup(settings: PhaseSettings, target, full_index_name, index_m
     )
 
     if settings.collections_enabled:
-        params += " -test_collections_enabled {test_collections_enabled}" \
-            .format(test_collections_enabled=settings.collections_enabled)
-        params += " -test_collection_query_mode {test_collection_query_mode}" \
-            .format(test_collection_query_mode=settings.test_collection_query_mode)
-        params += " -test_collection_specific_count {test_collection_specific_count}" \
-            .format(test_collection_specific_count=settings.test_collection_specific_count)
-        params += " -test_fts_index_map \'{test_fts_index_map}\'" \
-            .format(test_fts_index_map=json.dumps(index_map))
+        params += f" -test_collections_enabled {settings.collections_enabled}"
+        params += f" -test_collection_query_mode {settings.test_collection_query_mode}"
+        params += f" -test_collection_specific_count {settings.test_collection_specific_count}"
+        params += f" -test_fts_index_map \'{json.dumps(index_map)}\'"
     if settings.capella_infrastructure == 'capella':
         params += " -couchbase_ssl_mode capella"
     if settings.test_mutation_field and settings.test_mutation_field != 'None':
-        params += " -test_mutation_field {test_mutation_field}"\
-            .format(test_mutation_field=settings.test_mutation_field)
+        params += f" -test_mutation_field {settings.test_mutation_field}"
+    if settings.search_query_timeout_in_sec:
+        params += f" -search_query_timeout_in_sec {settings.search_query_timeout_in_sec}"
+    if settings.test_geojson_query_type:
+        params += f" -test_geojson_query_type {settings.test_geojson_query_type}"
+    if settings.test_geojson_query_relation:
+        params += f" -test_geojson_query_relation {settings.test_geojson_query_relation}"
+    if str(settings.aggregation_buffer_ms) != "1000":
+        params += f" -aggregation_buffer_ms {settings.aggregation_buffer_ms}"
+
     print(params)
     run_custom_cmd(settings.jts_home_dir, settings.jts_run_cmd, params)
 

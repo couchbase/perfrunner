@@ -660,7 +660,7 @@ class RemoteLinux(Remote):
         with settings(host_string=host_string):
             try:
                 logger.info('checking {}'.format(host_string))
-                result = run(":", timeout=30)
+                result = run(":", timeout=60)
                 logger.info('done {}'.format(host_string))
                 return result.return_code == 0  # 0 means success
             except NetworkError:

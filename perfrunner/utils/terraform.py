@@ -671,6 +671,9 @@ class CapellaTerraform(Terraform):
                 "region": self.region,
                 "singleAZ": not self.options.multi_az,
                 "server": self.options.capella_cb_version,
+                'configurationType': "multiNode"
+                                     if int(spec[0]['count']) != 1
+                                     else "singleNode",
                 "specs": spec,
                 "package": "enterprise"
             }

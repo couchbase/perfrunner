@@ -126,7 +126,9 @@ class ClusterSpec(Config):
 
     @property
     def infrastructure_settings(self):
-        return {k: v for k, v in self.config.items('infrastructure')}
+        if self.config.has_section('infrastructure'):
+            return {k: v for k, v in self.config.items('infrastructure')}
+        return {}
 
     @property
     def infrastructure_clusters(self):
@@ -140,8 +142,7 @@ class ClusterSpec(Config):
     def infrastructure_syncgateways(self):
         if self.config.has_section('syncgateways'):
             return {k: v for k, v in self.config.items('syncgateways')}
-        else:
-            return {}
+        return {}
 
     @property
     def infrastructure_utilities(self):

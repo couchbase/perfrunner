@@ -1,6 +1,7 @@
 import os
 from argparse import ArgumentParser, Namespace
 from collections import namedtuple
+from functools import cached_property
 from multiprocessing import Process, set_start_method
 from typing import Iterator, Optional
 
@@ -36,19 +37,16 @@ LOCATIONS = (
 
 PKG_PATTERNS = {
     'rpm': (
-        'couchbase-server-{edition}-{release}-{build}-centos{os}.x86_64.rpm',
-        'couchbase-server-{edition}-{release}-{build}-linux.x86_64.rpm',
-        'couchbase-server-{edition}-{release}-centos{os}.x86_64.rpm',
-        'couchbase-server-{edition}-{release}-centos6.x86_64.rpm',
-        'couchbase-server-{edition}-{release}-linux.x86_64.rpm',
-        'couchbase-server-{edition}-{release}-{build}-{os}.rpm',
-        'couchbase-server-{edition}-{release}-{os}.rpm',
+        'couchbase-server-{edition}-{release}-{build}-linux.{arch}.rpm',
+        'couchbase-server-{edition}-{release}-{build}-{os_name}{os_version}.{arch}.rpm',
+        'couchbase-server-{edition}-{release}-linux.{arch}.rpm',
+        'couchbase-server-{edition}-{release}-{os_name}{os_version}.{arch}.rpm',
     ),
     'deb': (
-        'couchbase-server-{edition}_{release}-{build}-ubuntu{os}_amd64.deb',
-        'couchbase-server-{edition}_{release}-{build}-linux_amd64.deb',
-        'couchbase-server-{edition}_{release}-ubuntu{os}_amd64.deb',
-        'couchbase-server-{edition}_{release}-linux_amd64.deb',
+        'couchbase-server-{edition}_{release}-{build}-linux_{arch}.deb',
+        'couchbase-server-{edition}_{release}-{build}-{os_name}{os_version}_{arch}.deb',
+        'couchbase-server-{edition}_{release}-linux_{arch}.deb',
+        'couchbase-server-{edition}_{release}-{os_name}{os_version}_{arch}.deb',
     ),
     'exe': (
         'couchbase-server-{edition}_{release}-{build}-windows_amd64.msi',
@@ -56,6 +54,11 @@ PKG_PATTERNS = {
         'couchbase-server-{edition}_{release}-windows_amd64.exe',
         'couchbase-server-{edition}_{release}-windows_amd64.msi',
     ),
+}
+
+ARM_ARCHS = {
+    'rpm': 'aarch64',
+    'deb': 'arm64'
 }
 
 Build = namedtuple('Build', ['filename', 'url'])
@@ -395,7 +398,7 @@ class CouchbaseInstaller:
         self.options = options
         self.cluster_spec = cluster_spec
 
-    @property
+    @cached_property
     def url(self) -> str:
         if validators.url(self.options.couchbase_version):
             return self.options.couchbase_version
@@ -413,35 +416,31 @@ class CouchbaseInstaller:
             return split[1]
 
     def find_package(self, edition: str, package: Optional[str] = None,
-                     os_release: Optional[str] = None) -> Optional[str]:
-        for url in self.url_iterator(edition, package, os_release):
+                     os_name: Optional[str] = None,
+                     os_version: Optional[str] = None) -> Optional[str]:
+        for url in self.url_iterator(edition, package, os_name, os_version):
             if self.is_exist(url):
                 return url
         logger.interrupt('Target build not found')
 
     def url_iterator(self, edition: str, package: Optional[str] = None,
-                     os_release: Optional[str] = None) -> Iterator[str]:
-        if package is None:
-            package = self.remote.package  # package type based on server OS
+                     os_name: Optional[str] = None,
+                     os_version: Optional[str] = None) -> Iterator[str]:
+        package = package or self.remote.package  # package type based on server OS
+        os_name = os_name or self.remote.distro
+        os_version = os_version or self.remote.distro_version
 
-            if self.remote.PLATFORM == 'linux':
-                os_release = self.remote.distro_version
-
-                if self.cluster_spec.cloud_infrastructure:
-                    os_arch = self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
-                    if os_arch == 'arm':
-                        os_release = 'amzn2.aarch64'
-                    elif os_arch == 'al2':
-                        if tuple(map(int, self.release.split('.'))) < (7, 6, 0):
-                            os_release = 'amzn2.x86_64'
-                        else:
-                            os_release = 'linux.x86_64'
+        arch_strings = ['x86_64', 'amd64']
+        arch = self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
+        if arch == 'arm':
+            arch_strings = [ARM_ARCHS[package]]
 
         for pkg_pattern in PKG_PATTERNS[package]:
             for loc_pattern in LOCATIONS:
-                url = loc_pattern + pkg_pattern
-                yield url.format(release=self.release, build=self.build,
-                                 edition=edition, os=os_release)
+                for arch_string in arch_strings:
+                    url = loc_pattern + pkg_pattern
+                    yield url.format(release=self.release, build=self.build, edition=edition,
+                                     os_name=os_name, os_version=os_version, arch=arch_string)
 
     @staticmethod
     def is_exist(url: str) -> bool:
@@ -533,25 +532,25 @@ class CloudInstaller(CouchbaseInstaller):
 
         self.remote.upload_iss_files(self.release)
         package_name = "couchbase.{}".format(self.remote.package)
+
         if self.options.remote_copy:
             with open(package_name, 'wb') as fh:
                 if self.options.local_copy_url:
                     logger.info('Saving a local url {}'.format(self.options.local_copy_url))
                     resp = requests.get(self.options.local_copy_url)
                 elif 'aarch64' in self.url:
-                    if tuple(map(int, self.release.split('.'))) < (7, 6, 0):
-                        local_url = self.url.replace('aarch64', 'x86_64')
-                    else:
-                        local_url = self.url.replace('amzn2.aarch64', 'linux.x86_64')
+                    local_url = self.url.replace('aarch64', 'x86_64')
                     logger.info('Saving a local copy of x86_64 {}'.format(local_url))
                     resp = requests.get(local_url)
                 else:
                     logger.info('Saving a local copy of {}'.format(self.url))
                     resp = requests.get(self.url)
                 fh.write(resp.content)
+
             for client in self.cluster_spec.workers:
                 logger.info('uploading client package {} to {} '.format(package_name, client))
                 upload_couchbase(client, user, password, package_name)
+
         with open(package_name, 'wb') as fh:
             logger.info('Server URL: {}'.format(self.url))
             resp = requests.get(self.url)
@@ -579,7 +578,7 @@ class CloudInstaller(CouchbaseInstaller):
 
 class ClientUploader(CouchbaseInstaller):
 
-    @property
+    @cached_property
     def url(self) -> str:
         if validators.url(self.options.couchbase_version):
             return self.options.couchbase_version
@@ -588,7 +587,8 @@ class ClientUploader(CouchbaseInstaller):
         else:
             return self.find_package(edition=self.options.edition,
                                      package='deb',
-                                     os_release='20.04')
+                                     os_name='ubuntu',
+                                     os_version='20.04')
 
     def download(self):
         logger.info('Saving a local copy of {}'.format(self.url))

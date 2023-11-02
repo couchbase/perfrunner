@@ -29,6 +29,7 @@ instances_per_client = 20
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = tmp-sqw-weekly-updated-c3
+ycsb_command = syncgateway3
 users = 400
 channels = 400
 channels_per_user = 1

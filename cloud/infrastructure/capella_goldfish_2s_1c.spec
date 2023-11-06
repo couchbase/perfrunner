@@ -1,9 +1,7 @@
 [infrastructure]
-provider = aws
-type = ec2
-os_arch = arm
+provider = capella
+backend = aws
 service = goldfish
-cloud_storage = 1
 
 [clusters]
 goldfish =

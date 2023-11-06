@@ -8,6 +8,7 @@ from typing import Dict
 from uuid import uuid4
 
 import requests
+from capella.columnar.CapellaAPI import CapellaAPI as CapellaAPIColumnar
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
 from capella.serverless.CapellaAPI import CapellaAPI as CapellaAPIServerless
 from fabric.api import local
@@ -70,13 +71,7 @@ def format_datadog_link(cluster_id: str = None, dataplane_id: str = None,
     return DATADOG_LINK_TEMPLATE.format(filter_string, int(one_hour_ago * 1000), int(now * 1000))
 
 
-class Terraform:
-
-    # TODO: AWS capacity retry,
-    #  Reset TFs function,
-    #  Swap find and replace for pipe,
-    #  Backup spec update,
-    #  Add support for multiple clusters.
+class CloudDeployer:
 
     IMAGE_MAP = {
         'aws': {
@@ -383,7 +378,7 @@ class Terraform:
             f.write(s)
 
 
-class CapellaTerraform(Terraform):
+class CapellaDeployer(CloudDeployer):
 
     def __init__(self, options):
         super().__init__(options)
@@ -501,7 +496,7 @@ class CapellaTerraform(Terraform):
             # Deploy non-capella resources
             self.terraform_apply(self.backend)
             non_capella_output = self.terraform_output(self.backend)
-            Terraform.update_spec(self, non_capella_output)
+            CloudDeployer.update_spec(self, non_capella_output)
 
         # Deploy capella cluster
         self.deploy_cluster()
@@ -625,7 +620,7 @@ class CapellaTerraform(Terraform):
         }
         ```
         """
-        server_groups = CapellaTerraform.capella_server_group_sizes(node_schemas)
+        server_groups = CapellaDeployer.capella_server_group_sizes(node_schemas)
 
         cluster_list = []
         for cluster, server_groups in server_groups.items():
@@ -726,8 +721,7 @@ class CapellaTerraform(Terraform):
             logger.info('Initialised cluster deployment for cluster {} \n  config: {}'.
                         format(cluster_id, config))
             logger.info('Saving cluster ID to spec file.')
-            self.infra_spec.config.set('infrastructure', 'cbc_cluster',
-                                       '\n'.join(self.cluster_ids))
+            self.infra_spec.config.set('infrastructure', 'cbc_cluster', '\n'.join(self.cluster_ids))
             self.infra_spec.update_spec_file()
 
         timeout_mins = self.capella_timeout
@@ -1001,12 +995,12 @@ class CapellaTerraform(Terraform):
         local('gcloud dns managed-zones delete {}'.format(dns_managed_zone))
 
 
-class ServerlessTerraform(CapellaTerraform):
+class ServerlessDeployer(CapellaDeployer):
 
     NEBULA_OVERRIDE_ARGS = ['override_count', 'min_count', 'max_count', 'instance_type']
 
     def __init__(self, options):
-        Terraform.__init__(self, options)
+        CloudDeployer.__init__(self, options)
         if not options.test_config:
             logger.error('Test config required if deploying serverless infrastructure.')
             exit(1)
@@ -1083,13 +1077,13 @@ class ServerlessTerraform(CapellaTerraform):
         if not self.options.capella_only:
             logger.info('Deploying non-Capella resources')
             # Configure terraform
-            Terraform.populate_tfvars(self)
+            CloudDeployer.populate_tfvars(self)
             self.terraform_init(self.backend)
 
             # Deploy non-capella resources
             self.terraform_apply(self.backend)
             non_capella_output = self.terraform_output(self.backend)
-            Terraform.update_spec(self, non_capella_output)
+            CloudDeployer.update_spec(self, non_capella_output)
         else:
             logger.info('Skipping deploying non-Capella resources as --capella-only flag is set')
 
@@ -1441,11 +1435,11 @@ class ServerlessTerraform(CapellaTerraform):
         logger.info('Project successfully queued for deletion.')
 
 
-class EKSTerraform(Terraform):
+class EKSDeployer(CloudDeployer):
     pass
 
 
-class AppServicesTerraform(Terraform):
+class AppServicesDeployer(CloudDeployer):
     def __init__(self, options):
         super().__init__(options)
 
@@ -1609,7 +1603,7 @@ class AppServicesTerraform(Terraform):
         return sgw_group_sizes
 
     def construct_capella_sgw_groups(self, infra_spec, node_schemas):
-        sgw_groups = AppServicesTerraform.capella_sgw_group_sizes(node_schemas)
+        sgw_groups = AppServicesDeployer.capella_sgw_group_sizes(node_schemas)
 
         for sgw_groups in sgw_groups.items():
 
@@ -1798,6 +1792,226 @@ class AppServicesTerraform(Terraform):
         logger.info('Capella App Services cluster successfully queued for deletion.')
 
 
+class CapellaColumnarDeployer(CapellaDeployer):
+
+    def __init__(self, options):
+        CloudDeployer.__init__(self, options)
+
+        if public_api_url := self.options.capella_public_api_url:
+            env = public_api_url.removeprefix('https://')\
+                                .removesuffix('.nonprod-project-avengers.com')\
+                                .split('.', 1)[1]
+            self.infra_spec.config.set('infrastructure', 'cbc_env', env)
+            self.infra_spec.update_spec_file()
+
+        self.api_client = CapellaAPIColumnar(
+            'https://cloudapi.{}.nonprod-project-avengers.com'.format(
+                self.infra_spec.infrastructure_settings['cbc_env']
+            ),
+            os.getenv('CBC_SECRET_KEY'),
+            os.getenv('CBC_ACCESS_KEY'),
+            os.getenv('CBC_USER'),
+            os.getenv('CBC_PWD'),
+            os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
+        )
+
+        if (tenant := self.options.capella_tenant) is None:
+            tenant = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
+        else:
+            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
+            self.infra_spec.update_spec_file()
+
+        self.tenant_id = tenant or self.get_tenant_id()
+
+        if (project := self.options.capella_project) is None:
+            project = self.infra_spec.infrastructure_settings.get('cbc_project', None)
+        else:
+            self.infra_spec.config.set('infrastructure', 'cbc_project', project)
+            self.infra_spec.update_spec_file()
+
+        self.project_id = project
+
+        self.capella_timeout = max(0, self.options.capella_timeout)
+
+        self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
+
+    def deploy(self):
+        if not self.project_id:
+            self.create_project()
+
+        if not self.options.capella_only:
+            # Configure terraform
+            self.populate_tfvars()
+            self.terraform_init(self.infra_spec.capella_backend)
+
+            # Deploy non-capella resources
+            self.terraform_apply(self.infra_spec.capella_backend)
+            non_capella_output = self.terraform_output(self.infra_spec.capella_backend)
+            CloudDeployer.update_spec(self, non_capella_output)
+
+        # Deploy capella cluster(s)
+        self.deploy_goldfish_instances()
+
+        # Update cluster spec file
+        self.update_spec()
+
+    def deploy_goldfish_instances(self):
+        instance_sizes = [len(servers) for _, servers in self.infra_spec.clusters]
+        names = ['perf-goldfish-{}'.format(self.uuid) for _ in instance_sizes]
+        if len(names) > 1:
+            names = ['{}-{}'.format(name, i) for i, name in enumerate(names)]
+
+        for name, size in zip(names, instance_sizes):
+            config = {
+                "name": name,
+                "description": "",
+                "provider": self.infra_spec.capella_backend,
+                "region": self.region,
+                "nodes": size
+            }
+
+            logger.info('Deploying Goldfish instance with config: {}'.format(pretty_dict(config)))
+            resp = self.api_client.create_goldfish_instance(self.tenant_id, self.project_id,
+                                                            **config)
+            raise_for_status(resp)
+
+            instance_id = resp.json().get('id')
+            self.cluster_ids.append(instance_id)
+
+            logger.info('Initialised Goldfish instance deployment {}'.format(instance_id))
+            logger.info('Saving Goldfish instance ID to spec file.')
+            self.infra_spec.config.set('infrastructure', 'cbc_cluster', '\n'.join(self.cluster_ids))
+            self.infra_spec.update_spec_file()
+
+        timeout_mins = self.capella_timeout
+        interval_secs = 30
+        pending_instances = [instance_id for instance_id in self.cluster_ids]
+        logger.info('Waiting for Goldfish instance(s) to be deployed...')
+        t0 = time()
+        while pending_instances and (time() - t0) < timeout_mins * 60:
+            sleep(interval_secs)
+
+            statuses = []
+            for instance_id in pending_instances:
+                resp = self.api_client.get_specific_goldfish_instance(self.tenant_id,
+                                                                      self.project_id,
+                                                                      instance_id)
+                raise_for_status(resp)
+                status = resp.json()['state']
+                logger.info('Instance state for {}: {}'.format(instance_id, status))
+                if status == 'deploy_failed':
+                    logger.error('Deployment failed for Goldfish instance {}.'.format(instance_id))
+                    exit(1)
+                statuses.append(status)
+
+            pending_instances = [
+                pending_instances[i] for i, status in enumerate(statuses) if status != 'healthy'
+            ]
+
+        if pending_instances:
+            logger.error('Deployment timed out after {} mins'.format(timeout_mins))
+            exit(1)
+
+        logger.info('Successfully deployed all Goldfish instances')
+
+    def destroy(self):
+        if not self.options.capella_only:
+            # Destroy non-capella resources
+            self.terraform_destroy(self.infra_spec.capella_backend)
+
+        # Destroy Goldfish instance(s)
+        if not self.options.keep_cluster:
+            self.destroy_goldfish_instance()
+
+            if int(self.infra_spec.infrastructure_settings.get('cbc_project_created', 0)):
+                instance_destroyed = self.wait_for_goldfish_instance_destroy()
+                if instance_destroyed:
+                    self.destroy_project()
+
+    def destroy_goldfish_instance(self):
+        for instance_id in self.cluster_ids:
+            logger.info('Deleting Goldfish instance {}...'.format(instance_id))
+            resp = self.api_client.delete_goldfish_instance(self.tenant_id, self.project_id,
+                                                            instance_id)
+            raise_for_status(resp)
+            logger.info('Goldfish instance successfully queued for deletion.')
+
+    def wait_for_goldfish_instance_destroy(self) -> bool:
+        logger.info('Waiting for Goldfish instances to be destroyed...')
+
+        instance_id = self.cluster_ids[0]
+        timeout_mins = self.capella_timeout
+        interval_secs = 30
+        pending_instances = [instance_id for instance_id in self.cluster_ids]
+        t0 = time()
+        while pending_instances and (time() - t0) < timeout_mins * 60:
+            sleep(interval_secs)
+
+            resp = self.api_client.get_goldfish_instances(self.tenant_id, self.project_id)
+            raise_for_status(resp)
+
+            pending_instances = []
+            for instance in resp.json().get('data'):
+                if (instance_id := instance.get('data', {}).get('id')) in self.cluster_ids:
+                    pending_instances.append(instance_id)
+                    logger.info('Instance {} not destroyed yet'.format(instance_id))
+
+        if pending_instances:
+            logger.error('Timed out after {} mins waiting for instances to delete.'
+                         .format(timeout_mins))
+            return False
+
+        logger.info('All Goldfish instances destroyed.')
+        return True
+
+    def update_spec(self):
+        """Update the infrastructure spec file with Goldfish instance details.
+
+        This includes:
+        - Hostnames for compute nodes
+        - Nebula endpoints
+        - API keys
+        """
+        if not self.infra_spec.config.has_section('goldfish_nebula'):
+            self.infra_spec.config.add_section('goldfish_nebula')
+
+        nebula_creds = []
+        cb_versions = []
+
+        for i, instance_id in enumerate(self.cluster_ids):
+            cluster, servers = list(self.infra_spec.clusters)[i]
+            hostnames = [
+                'multinodeapi-{}.{}.{}.aws.omnistrate.cloud:kv,cbas'.format(
+                    x, instance_id, self.region
+                )
+                for x, _ in enumerate(servers)
+            ]
+            self.infra_spec.config.set('clusters', cluster, '\n' + '\n'.join(hostnames))
+
+            resp = self.api_client.get_specific_goldfish_instance(self.tenant_id, self.project_id,
+                                                                  instance_id)
+            raise_for_status(resp)
+            nebula_endpoint = resp.json()['config']['endpoint']
+            logger.info('Nebula endpoint for {}: {}'.format(instance_id, nebula_endpoint))
+            self.infra_spec.config.set('goldfish_nebula', cluster, nebula_endpoint)
+
+            cb_version = resp.json()['config']['version']['server']
+            logger.info('Couchbase Server version for {}: {}'.format(instance_id, cb_version))
+            cb_versions.append(cb_version)
+
+            logger.info('Generating API keys for {}...'.format(instance_id))
+            resp = self.api_client.create_api_keys(self.tenant_id, self.project_id, instance_id)
+            raise_for_status(resp)
+            key_id, key_secret = resp.json()['apikeyId'], resp.json()['secret']
+            logger.info('API key ID for {}: {}'.format(instance_id, key_id))
+            nebula_creds.append('{}:{}'.format(key_id, key_secret))
+
+        self.infra_spec.config.set('credentials', 'goldfish_nebula',
+                                   '\n'.join(nebula_creds).replace('%', '%%'))
+        self.infra_spec.config.set('infrastructure', 'goldfish_cb_versions', '\n'.join(cb_versions))
+        self.infra_spec.update_spec_file()
+
+
 # CLI args.
 def get_args():
     parser = ArgumentParser()
@@ -1948,13 +2162,15 @@ def destroy():
     infra_spec = ClusterSpec()
     infra_spec.parse(fname=args.cluster, override=args.override)
     if infra_spec.cloud_provider != 'capella':
-        deployer = Terraform(args)
+        deployer = CloudDeployer(args)
     elif infra_spec.serverless_infrastructure:
-        deployer = ServerlessTerraform(args)
+        deployer = ServerlessDeployer(args)
     elif infra_spec.app_services == 'true':
-        deployer = AppServicesTerraform(args)
+        deployer = AppServicesDeployer(args)
+    elif infra_spec.goldfish_infrastructure:
+        deployer = CapellaColumnarDeployer(args)
     else:
-        deployer = CapellaTerraform(args)
+        deployer = CapellaDeployer(args)
 
     deployer.destroy()
 
@@ -1964,12 +2180,14 @@ def main():
     infra_spec = ClusterSpec()
     infra_spec.parse(fname=args.cluster, override=args.override)
     if infra_spec.cloud_provider != 'capella':
-        deployer = Terraform(args)
+        deployer = CloudDeployer(args)
     elif infra_spec.serverless_infrastructure:
-        deployer = ServerlessTerraform(args)
+        deployer = ServerlessDeployer(args)
     elif infra_spec.app_services == 'true':
-        deployer = AppServicesTerraform(args)
+        deployer = AppServicesDeployer(args)
+    elif infra_spec.goldfish_infrastructure:
+        deployer = CapellaColumnarDeployer(args)
     else:
-        deployer = CapellaTerraform(args)
+        deployer = CapellaDeployer(args)
 
     deployer.deploy()

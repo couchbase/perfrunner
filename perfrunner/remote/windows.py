@@ -7,6 +7,7 @@ from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
 from perfrunner.remote.context import all_servers, master_server
+from perfrunner.settings import ClusterSpec
 
 
 class RemoteWindows(Remote):
@@ -25,14 +26,15 @@ class RemoteWindows(Remote):
 
     PROCESSES = ('erl*', 'epmd*', 'memcached')
 
+    def __init__(self, cluster_spec: ClusterSpec):
+        super().__init__(cluster_spec)
+        self.package = 'exe'
+        self.distro, self.distro_version = None, None
+
     @staticmethod
     def exists(fname):
         r = run('test -f "{}"'.format(fname), warn_only=True, quiet=True)
         return not r.return_code
-
-    @property
-    def package(self):
-        return 'exe'
 
     def reset_swap(self):
         pass

@@ -4,7 +4,7 @@ test = perfrunner.tests.secondary.SecondaryRebalanceTest
 [showfast]
 title = File-based Rebalance-in, 1 bucket x 100M x 1KB, 2K KV ops/sec, 10000 indexes, 20%% RR, Plasma, s=1 c=100
 component = secondary
-category = lat
+category = rebalance
 sub_category = PlasmaDGM
 
 [stats]

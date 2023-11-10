@@ -15,6 +15,7 @@ from perfrunner.helpers.misc import (
     run_local_shell_command,
     set_azure_capella_subscription,
     set_azure_perf_subscription,
+    url_exist,
 )
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
@@ -1070,9 +1071,9 @@ class ClusterManager:
             release = 'alice'
 
         if self.remote.distro.upper() in ['UBUNTU', 'DEBIAN']:
-            package_name = 'couchbase-server-enterprise-dbg_{{}}-{{}}{{}}_amd64.deb'
+            package_name = 'couchbase-server-enterprise-dbg_{}-{}{}_amd64.deb'
         else:
-            package_name = 'couchbase-server-enterprise-debuginfo-{{}}-{{}}{{}}.x86_64.rpm'
+            package_name = 'couchbase-server-enterprise-debuginfo-{}-{}{}.x86_64.rpm'
 
         package_name = package_name.format(self.build, self.remote.distro,
                                            self.remote.distro_version)
@@ -1082,7 +1083,11 @@ class ClusterManager:
         ).format(release, build_number, package_name)
 
     def install_cb_debug_package(self):
-        self.remote.install_cb_debug_package(url=self.get_debug_package_url())
+        url = self.get_debug_package_url()
+        if url_exist(url):
+            self.remote.install_cb_debug_package(url=url)
+        else:
+            logger.warn('Debug packages not found for url: {}'.format(url))
 
     def enable_developer_preview(self):
         if self.build_tuple > (7, 0, 0, 4698) or self.build_tuple < (1, 0, 0, 0):

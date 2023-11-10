@@ -10,6 +10,7 @@ from hashlib import md5
 from typing import Any, Union
 from uuid import uuid4
 
+import requests
 import yaml
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import (
@@ -158,6 +159,15 @@ def human_format(number: float) -> str:
 
 def copy_template(source, dest):
     shutil.copyfile(source, dest)
+
+
+def url_exist(url: str) -> bool:
+    try:
+        status_code = requests.head(url).status_code
+    except ConnectionError:
+        return False
+
+    return status_code == 200
 
 
 def inject_config_tags(config_path,

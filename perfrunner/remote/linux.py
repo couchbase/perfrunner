@@ -1052,13 +1052,15 @@ class RemoteLinux(Remote):
 
     @all_servers
     def install_cb_debug_package(self, url):
-        logger.info('Installing Couchbase Debug package on all servers')
+        logger.info('Installing Couchbase Debug package')
         if url.endswith('deb'):
-            cmd = 'dpkg -i {}'.format(url)
+            self.wget(url, outdir='/tmp')
+            filename = urlparse(url).path.split('/')[-1]
+            cmd = 'dpkg -i /tmp/{}'.format(filename)
         else:
             cmd = 'rpm -iv {}'.format(url)
 
-        run(cmd, quiet=True)
+        run(cmd, warn_only=True)
 
     @all_servers
     def generate_linux_perf_script(self):

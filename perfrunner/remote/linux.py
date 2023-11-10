@@ -914,8 +914,8 @@ class RemoteLinux(Remote):
 
     @master_client
     def cleanup(self, backup_dir: str):
-        logger.info("Cleaning the disk before backup/export")
-        run('rm -fr {}/*'.format(backup_dir))
+        logger.info("Clearing the backup directory before backup/export")
+        run("find {} -mindepth 1 -name '*' -delete".format(backup_dir), warn_only=True)
         run('mkdir -p {}'.format(backup_dir))
 
     @master_client

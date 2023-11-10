@@ -5,6 +5,7 @@ import time
 import urllib.parse
 from datetime import date
 from glob import glob
+from pathlib import Path
 from sys import platform
 from typing import List, Optional
 
@@ -36,15 +37,16 @@ def extract_cb_any(filename: str):
 
 
 def cleanup(backup_dir: str):
-    logger.info("Cleaning the disk before backup/export")
+    logger.info("Clearing the backup directory before backup/export")
 
-    # Remove files from the directory, if any.
-    local('rm -fr {}/*'.format(backup_dir))
+    if (path := Path(backup_dir)).exists():
+        local("find {} -mindepth 1 -name '*' -delete".format(backup_dir))
+    else:
+        path.mkdir(parents=True)
 
     # Discard unused blocks. Twice.
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)  # Otherwise fstrim won't find the device
-    if platform == "linux2":
+    if platform == "linux2":  # this never gets run? platform is "linux" on linux
+        logger.info('Running fstrim on backup directory to discard unused blocks')
         local('fstrim -v {0} && fstrim -v {0}'.format(backup_dir))
 
 

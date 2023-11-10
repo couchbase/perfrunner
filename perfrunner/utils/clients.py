@@ -440,7 +440,7 @@ class ClientInstaller:
         if not ('review.couchbase.org' in version or 'github.com' in version):
             version = "couchbase=={}".format(version)
 
-        local("env/bin/pip install {} --no-cache-dir".format(version))
+        local("PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {} --no-cache-dir".format(version))
 
     def uninstall_tableau_connectors(self):
         local('rm -rf {}/*couchbase*'.format(self.jar_destination))

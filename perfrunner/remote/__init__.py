@@ -158,9 +158,9 @@ class Remote:
     def get_export_files(self, worker_home: str):
         logger.info('Collecting YCSB export files')
         with cd(worker_home), cd('perfrunner'):
-            r = run('stat YCSB/ycsb_run_*.log', quiet=True)
+            r = run('stat YCSB/ycsb_*.log', quiet=True)
             if not r.return_code:
-                get('YCSB/ycsb_run_*.log', local_path='YCSB/')
+                get('YCSB/ycsb_*.log', local_path='YCSB/')
 
     @all_clients
     def get_gsi_measurements(self, worker_home: str):

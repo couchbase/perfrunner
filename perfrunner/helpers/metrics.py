@@ -1219,6 +1219,22 @@ class MetricHelper:
 
         return time_elapsed, self._snapshots, metric_info
 
+    def cluster_deployment_time(self, deployment_time, title) -> Metric:
+        metric_id = '{}_cluster_deployment_time'.format(self.test_config.name)
+        metric_title = "{},{}".format(title, ",".join(self._title.split(",")[2:]))
+        metric_info = self._metric_info(metric_id, metric_title)
+        time = round(float(deployment_time), 2)
+
+        return time, self._snapshots, metric_info
+
+    def bucket_creation_time(self, creation_time, title) -> Metric:
+        metric_id = '{}_bucket_creation_time'.format(self.test_config.name)
+        metric_title = "{},{}".format(title, ",".join(self._title.split(",")[2:]))
+        metric_info = self._metric_info(metric_id, metric_title)
+        time = round(float(creation_time), 2)
+
+        return time, self._snapshots, metric_info
+
     def kv_throughput(self, total_ops: int) -> Metric:
         metric_info = self._metric_info(chirality=1)
 
@@ -1692,9 +1708,13 @@ class MetricHelper:
         rate = round(items_in_range / time_elapsed)
         return rate, self._snapshots, metric_info
 
-    def _parse_sg_throughput(self) -> int:
+    def _parse_sg_throughput(self, operation: str = "access") -> int:
         throughput = 0
-        for filename in glob.glob("YCSB/*_runtest_*.result"):
+        if operation == "load":
+            pattern = "YCSB/*loaddocs*.result"
+        else:
+            pattern = "YCSB/*_runtest_*.result"
+        for filename in glob.glob(pattern):
             with open(filename) as fh:
                 for line in fh.readlines():
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
@@ -1812,6 +1832,13 @@ class MetricHelper:
         metric_title = "{}{}".format(title, self._title)
         metric_info = self._metric_info(metric_id, metric_title)
         throughput = self._parse_sg_throughput()
+        return throughput, self._snapshots, metric_info
+
+    def sg_load_throughput(self, title) -> Metric:
+        metric_id = '{}_load_throughput'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        throughput = self._parse_sg_throughput("load")
         return throughput, self._snapshots, metric_info
 
     def avg_sg_cpu_usage(self, title) -> Metric:

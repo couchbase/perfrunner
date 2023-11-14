@@ -43,6 +43,7 @@ from perfrunner.helpers.worker import (
     ycsb_task,
 )
 from perfrunner.settings import (
+    TIMING_FILE,
     ClusterSpec,
     PhaseSettings,
     TargetIterator,
@@ -371,6 +372,45 @@ class SGPerfTest(PerfTest):
 
         if too_many_warnings:
             raise Exception("Too many warnings: {}".format(too_many_warnings))
+
+
+class SGLoad(SGPerfTest):
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*loaddocs*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        if self.capella_infra and self.test_config.cluster.monitor_deployment_time:
+            with open(TIMING_FILE, 'r') as f:
+                deployment_time = f.readline()
+                creation_time = f.readline()
+            logger.info("deployment_time is: {}".format(deployment_time))
+            logger.info("creation_time is: {}".format(creation_time))
+            self.reporter.post(
+                *self.metrics.cluster_deployment_time(deployment_time,
+                                                      "App Services Deployment Time (sec)")
+            )
+
+            self.reporter.post(
+                *self.metrics.bucket_creation_time(creation_time, "Database Creation Time (sec)")
+            )
+
+        self.reporter.post(
+            *self.metrics.sg_load_throughput("Load Throughput (docs/sec)")
+        )
+
+    def run(self):
+        self.remote.remove_sglogs()
+
+        self.download_ycsb()
+
+        self.start_memcached()
+        self.load_users()
+        self.load_docs()
+
+        self.report_kpi()
 
 
 class SGRead(SGPerfTest):

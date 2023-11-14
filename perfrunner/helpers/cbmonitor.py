@@ -207,12 +207,6 @@ class CbAgent:
             self.add_collector(AnalyticsStats, self.test)
         if kv_dedup:
             self.add_collector(MetricsRestApiDeduplication)
-        if kvstore:
-            self.add_collector(KVStoreStats, self.test)
-        if cbstats_memory:
-            self.add_collector(CBStatsMemory, self.test)
-        if cbstats_all:
-            self.add_collector(CBStatsAll, self.test)
 
         if self.test.test_config.cluster.serverless_mode == 'enabled':
             self.add_collector(MetricsRestApiMetering)
@@ -230,6 +224,12 @@ class CbAgent:
                         self.add_io_collector(PageCache)
                     if vmstat:
                         self.add_collector(VMSTAT)
+                    if kvstore:
+                        self.add_collector(KVStoreStats, self.test)
+                    if cbstats_memory:
+                        self.add_collector(CBStatsMemory, self.test)
+                    if cbstats_all:
+                        self.add_collector(CBStatsAll, self.test)
                     if not self.test.cloud_infra:
                         if disk:
                             self.add_io_collector(Disk)

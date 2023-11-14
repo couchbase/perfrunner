@@ -1835,6 +1835,13 @@ class CapellaRestBase(DefaultRestHelper):
         resp = self.get(url=self._get_api_url(host=host, path='logs/rebalanceReport'), auth=auth)
         return resp.json()
 
+    def get_cp_version(self) -> str:
+        api = 'https://api.{}.nonprod-project-avengers.com/status'.format(
+            self.cluster_spec.infrastructure_settings['cbc_env']
+        )
+        response = self.get(url=api)
+        return response.json()["commit"]
+
 
 class ProvisionedCapellaRestHelper(CapellaRestBase):
 

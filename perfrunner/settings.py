@@ -19,6 +19,7 @@ from perfrunner.helpers.misc import (
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
 REPO = 'https://github.com/couchbase/perfrunner'
+TIMING_FILE = 'timing.out' # Used for Capella Deployment Tests
 
 
 @decorator
@@ -805,6 +806,8 @@ class ClusterSettings:
     BUCKET_NAME = 'bucket-1'
     DISABLE_UI_HTTP = None
     SERVERLESS_MODE = None
+    MONITOR_DEPLOYMENT_TIME = None
+    SHOW_CP_VERSION = None
 
     IPv6 = 0
 
@@ -847,7 +850,9 @@ class ClusterSettings:
                                                  self.ENABLE_N2N_ENCRYPTION)
         self.ui_http = options.get('ui_http', self.DISABLE_UI_HTTP)
         self.serverless_mode = options.get('serverless_mode', self.SERVERLESS_MODE)
-
+        self.monitor_deployment_time = options.get('monitor_deployment_time',
+                                                   self.MONITOR_DEPLOYMENT_TIME)
+        self.show_cp_version = options.get('show_cp_version', self.SHOW_CP_VERSION)
         self.serverless_throttle = {'dataThrottleLimit': int(options.get('data_throttle',
                                                                          0)),
                                     'indexThrottleLimit': int(options.get('index_throttle',

@@ -16,7 +16,7 @@ from requests.exceptions import HTTPError
 
 from logger import logger
 from perfrunner.helpers.misc import maybe_atoi, pretty_dict, remove_nulls, run_local_shell_command
-from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.settings import TIMING_FILE, ClusterSpec, TestConfig
 
 CAPELLA_CREDS_FILE = '.capella_creds'
 DATADOG_LINK_TEMPLATE = (
@@ -510,6 +510,9 @@ class CapellaDeployer(CloudDeployer):
             non_capella_output = self.terraform_output(self.backend)
             CloudDeployer.update_spec(self, non_capella_output)
 
+        if self.test_config.cluster.monitor_deployment_time:
+            logger.info("Start timing capella cluster deployment")
+            t0 = time()
         # Deploy capella cluster
         self.deploy_cluster()
 
@@ -523,6 +526,14 @@ class CapellaDeployer(CloudDeployer):
             # Do VPC peering
             network_info = non_capella_output['network']['value']
             self.peer_vpc(network_info, self.cluster_ids[0])
+
+        if self.test_config.cluster.monitor_deployment_time:
+            logger.info("Finished timing capella cluster deployment")
+            deployment_time = time() - t0
+            logger.info("The total capella cluster deployment time is: {}".format(deployment_time))
+            with open(TIMING_FILE, 'w') as f:
+                l1 = "{}\n".format(str(deployment_time))
+                f.writelines([l1])
 
     def destroy(self):
         # Tear down VPC peering connection
@@ -1503,9 +1514,18 @@ class AppServicesDeployer(CloudDeployer):
         logger.info("Started deploying the AS")
         # Deploy capella cluster
         # Create sgw backend(app services)
-        logger.info("Deploying sgw backend")
+        if self.test_config.cluster.monitor_deployment_time:
+            logger.info("Started timing the app services deployment")
+            t0 = time()
+            logger.info("Deploying sgw backend")
         sgw_cluster_id = self.deploy_cluster_internal_api()
 
+        if self.test_config.cluster.monitor_deployment_time:
+            logger.info("Finished timing the app services deployment")
+            deployment_time = time() - t0
+            logger.info("The app services deployment time is: {}".format(deployment_time))
+            logger.info("Started timing the app service database creation")
+            t0 = time()
         for bucket_name in self.test_config.buckets:
             # Create sgw database(app endpoint)
             logger.info("Deploying sgw database")
@@ -1571,6 +1591,16 @@ class AppServicesDeployer(CloudDeployer):
 
             # Update cluster spec file
             self.update_spec(sgw_cluster_id, sgw_db_name)
+
+        if self.test_config.cluster.monitor_deployment_time:
+            logger.info("Finished creating the app services databases")
+            db_creation_time = time() - t0
+            logger.info("The app services database creation time is: {}".format(db_creation_time))
+
+            with open(TIMING_FILE, 'w') as f:
+                l1 = "{}\n".format(str(deployment_time))
+                l2 = "{}\n".format(str(db_creation_time))
+                f.writelines([l1, l2])
 
     def destroy(self):
         # Destroy capella cluster
@@ -1761,7 +1791,7 @@ class AppServicesDeployer(CloudDeployer):
         num_sgw = 0
         count = 0
         while num_sgw != self.test_config.cluster.num_buckets:
-            sleep(30)
+            sleep(10)
             resp = self.api_client.get_sgw_databases(self.tenant_id, self.project_id,
                                                      self.cluster_id, sgw_cluster_id).json()
             logger.info("The response_data is: {}".format(resp))

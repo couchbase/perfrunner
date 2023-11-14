@@ -397,7 +397,8 @@ def get_memcached_host(cluster, workload_settings):
     elif cluster.cloud_infrastructure and (cluster.infrastructure_settings['provider'] == 'azure'
                                            or (cluster.infrastructure_settings['provider'] ==
                                                'capella' and
-                                               cluster.capella_backend == 'azure')):
+                                               (cluster.capella_backend == 'azure' or
+                                                cluster.capella_backend == 'gcp'))):
         memcached_ip = next(cluster.clients_private)[1][0]
     else:
         memcached_ip = cluster.workers[0]

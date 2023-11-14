@@ -16,6 +16,7 @@ from perfrunner.helpers.worker import (
     ycsb_data_load_task,
     ycsb_task,
 )
+from perfrunner.settings import TIMING_FILE
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.n1ql import N1QLThroughputTest
 from perfrunner.tests.rebalance import RebalanceKVTest
@@ -1007,12 +1008,14 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
 
     @with_stats
     def custom_load(self):
-        KVTest.save_stats(self)
+        if not self.cluster_spec.capella_infrastructure:
+            KVTest.save_stats(self)
         YCSBThroughputTest.load(self)
         self.wait_for_persistence()
         self.check_num_items()
-        self.print_amplifications(doc_size=self.test_config.access_settings.size)
-        KVTest.print_kvstore_stats(self)
+        if not self.cluster_spec.capella_infrastructure:
+            self.print_amplifications(doc_size=self.test_config.access_settings.size)
+            KVTest.print_kvstore_stats(self)
 
     @with_stats
     def run_extra_access(self):
@@ -1066,6 +1069,22 @@ class YCSBLoadThroughputHIDDTest(YCSBThroughputHIDDTest):
 
     def _report_kpi(self):
         self.collect_export_files()
+
+        if self.cluster_spec.capella_infrastructure and \
+           self.test_config.cluster.monitor_deployment_time:
+            with open(TIMING_FILE, 'r') as f:
+                deployment_time = f.readline()
+                creation_time = f.readline()
+            logger.info("deployment_time is: {}".format(deployment_time))
+            logger.info("creation_time is: {}".format(creation_time))
+            self.reporter.post(
+                *self.metrics.cluster_deployment_time(deployment_time,
+                                                      "Cluster Deployment Time (sec)")
+            )
+
+            self.reporter.post(
+                *self.metrics.bucket_creation_time(creation_time, "Bucket Creation Time (sec)")
+            )
 
         self.reporter.post(
             *self.metrics.ycsb_throughput(operation="load")

@@ -108,9 +108,6 @@
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan100M_plasma_10k_indexes_50_50_overlapping_20res_1s_1000c.test", "groups": "P1"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan100M_plasma_10k_indexes_30_30_overlapping_20res_1s_1000c.test", "groups": "P1"},
 
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan100M_plasma_1000_indexes_stalefalse_1s_100c_2kops_20RR.test", "groups": "P0"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan100M_plasma_10k_indexes_stalefalse_1s_1000c_2kops_20RR.test", "groups": "P0"},
-
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_10k_indexes_20_70_10_iud_20res_plasma_1s_1000c.test", "groups": "P0"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_10k_indexes_45_45_10_iud_20res_plasma_1s_1000c.test", "groups": "P1"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_10k_indexes_70_20_10_iud_20res_plasma_1s_1000c.test", "groups": "P1"},

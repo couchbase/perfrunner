@@ -1129,28 +1129,6 @@ class ClusterManager:
             self.cluster_spec.set_nebula_instance_ids()
             self.remote.nebula_init_ssh()
 
-    def get_capella_cluster_admin_creds(self):
-        if self.cluster_spec.capella_infrastructure:
-            logger.info('Getting cluster admin credentials.')
-            user = 'couchbase-cloud-admin'
-            pwds = []
-
-            command_template = (
-                'secretsmanager get-secret-value --region us-east-1 '
-                '--secret-id {}_dp-admin '
-                '--query "SecretString" '
-                '--output text'
-            )
-
-            for cluster_id in self.rest.cluster_ids:
-                pwd = run_aws_cli_command(command_template, cluster_id)
-                if pwd is not None:
-                    pwds.append(pwd)
-
-            creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
-            self.cluster_spec.config.set('credentials', 'admin', creds)
-            self.cluster_spec.update_spec_file()
-
     def open_capella_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
         if self.cluster_spec.capella_infrastructure:
             logger.info('Opening port ranges for Capella cluster:\n{}'

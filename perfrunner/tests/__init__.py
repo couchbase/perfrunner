@@ -64,7 +64,10 @@ class PerfTest:
             self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
 
         ssl_enabled_modes = ('data', 'n2n', 'capella', 'nebula', 'dapi')
-        need_certificate = (
+        need_certificate = not (
+            self.cluster_spec.capella_infrastructure and
+            self.cluster_spec.goldfish_infrastructure
+        ) and (
             self.test_config.cluster.enable_n2n_encryption or
             self.test_config.load_settings.ssl_mode in ssl_enabled_modes or
             self.test_config.access_settings.ssl_mode in ssl_enabled_modes

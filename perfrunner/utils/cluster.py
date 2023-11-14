@@ -40,13 +40,15 @@ def main():
     test_config = TestConfig()
     test_config.parse(args.test_config_fname, override=args.override)
 
-    # If on provisioned Capella, we need to do two things before anything else:
-    # 1. Create some DB credentials
-    # 2. Whitelist the local IP
-    if cluster_spec.capella_infrastructure and not cluster_spec.serverless_infrastructure:
-        rest = RestHelper(cluster_spec, test_config)
-        rest.allow_my_ip_all_clusters()
-        rest.create_db_user_all_clusters(*cluster_spec.rest_credentials)
+    if cluster_spec.capella_infrastructure:
+        cluster_spec.set_capella_admin_credentials()
+        if not cluster_spec.serverless_infrastructure and not cluster_spec.goldfish_infrastructure:
+            # If on provisioned Capella, we need to do two things before anything else:
+            # 1. Create some DB credentials
+            # 2. Whitelist the local IP
+            rest = RestHelper(cluster_spec, test_config)
+            rest.allow_my_ip_all_clusters()
+            rest.create_db_user_all_clusters(*cluster_spec.rest_credentials)
 
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
@@ -58,12 +60,11 @@ def main():
             cm.serverless_throttle()
             cm.init_nebula_ssh()
             cm.set_nebula_log_levels()
-        else:
+        elif not cm.cluster_spec.goldfish_infrastructure:
             cm.create_buckets()
             cm.create_eventing_buckets()
             cm.create_eventing_metadata_bucket()
             cm.capella_allow_client_ips()
-        cm.get_capella_cluster_admin_creds()
 
         if cm.test_config.collection.collection_map:
             cm.create_collections()

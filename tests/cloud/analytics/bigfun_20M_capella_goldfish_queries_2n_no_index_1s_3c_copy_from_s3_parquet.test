@@ -1,24 +1,18 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunQueryNoIndexExternalTest
+test = perfrunner.tests.analytics.GoldfishCopyFromS3Test
 
 [showfast]
-title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, AWS, Goldfish, External Storage, json
+title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, Capella Goldfish, COPY FROM S3, json
 component = analyticscloud
 category = latency
-sub_category = AWS
+sub_category = {provider}
 
 [stats]
-server_processes = java
+server_processes = cbas java
 
 [cluster]
-mem_quota = 256
-analytics_mem_quota = 25600
 initial_nodes = 2
-num_buckets = 1
-serverless_mode = enabled
-
-[collection]
-config = collections/1bucket_1scope_3collections_analytics.json
+enable_n2n_encryption = all
 
 [backup]
 obj_staging_dir = /stage
@@ -30,11 +24,14 @@ queries = perfrunner/workloads/bigfun/queries_without_index_external.json
 analytics_config_file = tests/analytics/config/3_datasets_collection_config.json
 external_dataset_type = s3
 external_dataset_region = us-east-1
-external_bucket = analytics-bigfun20m-json
-external_file_format = json
-external_file_include = json
+external_bucket = analytics-bigfun20m-parquet
+external_file_format = parquet
+external_file_include = parquet
 aws_credential_path = /root/.ssh/
 
 [access]
 ops = 5
 workers = 1
+
+[clients]
+python_client = 4.0.2

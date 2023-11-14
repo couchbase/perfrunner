@@ -822,8 +822,8 @@ class DefaultMonitor(DefaultRestHelper):
     def query_num_analytics_items(self, analytics_node: str, dataset: str) -> int:
         """Get the number of items in an analytics dataset using an analytics query."""
         statement = "SELECT COUNT(*) from `{}`;".format(dataset)
-        result = self.exec_analytics_query(analytics_node, statement)
-        num_analytics_items = result['results'][0]['$1']
+        result = self.exec_analytics_statement(analytics_node, statement)
+        num_analytics_items = result.json()['results'][0]['$1']
         logger.info("Number of items in dataset `{}`: {}".
                     format(dataset, num_analytics_items))
         return num_analytics_items

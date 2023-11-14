@@ -49,6 +49,9 @@ SGW_APPSERVICE_METRICS_PORT = 4988
 ELASTICSEARCH_REST_PORT = 9200
 ELASTICSEARCH_REST_PORT_SSL = 19200
 
+GOLDFISH_NEBULA_ANALYTICS_PORT = 18001
+
+
 @decorator
 def retry(method: Callable, *args, **kwargs):
     r = namedtuple('request', ['url'])('')
@@ -914,8 +917,7 @@ class DefaultRestHelper(RestBase):
             if r.status_code == 200:
                 break
 
-    def add_rbac_user(self, host: str, user: str, password: str,
-                      roles: List[str]):
+    def add_rbac_user(self, host: str, user: str, password: str, roles: List[str]):
         logger.info('Adding an RBAC user: {}, roles: {}'.format(user, roles))
         data = {
             'password': password,
@@ -939,8 +941,7 @@ class DefaultRestHelper(RestBase):
         cluster_info = self.get_analytics_cluster_info(host)
         return cluster_info["state"] == "ACTIVE"
 
-    def exec_analytics_statement(self, analytics_node: str,
-                                 statement: str) -> requests.Response:
+    def exec_analytics_statement(self, analytics_node: str, statement: str) -> requests.Response:
         data = {
             'statement': statement
         }
@@ -949,10 +950,9 @@ class DefaultRestHelper(RestBase):
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
         return self.post(url=url, data=data)
 
-    def exec_analytics_statement_curl(self, analytics_node: str,
-                                      statement: str) -> requests.Response:
+    def exec_analytics_statement_curl(self, analytics_node: str, statement: str) -> str:
         url = self._get_api_url(host=analytics_node, path='analytics/service',
-                            plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
+                                plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
         data = {
             'statement': statement
         }
@@ -961,14 +961,13 @@ class DefaultRestHelper(RestBase):
             format(self.rest_username, self.rest_password, data_json, url)
         return local(cmd, capture=True)
 
-    def exec_analytics_query(self, analytics_node: str,
-                             statement: str) -> requests.Response:
-        url = self._get_api_url(host=analytics_node, path='analytics/service',
-                            plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
+    def exec_analytics_statement_goldfish_nebula(self, endpoint: str,
+                                                 statement: str) -> requests.Response:
+        api = 'https://{}:{}/analytics/service'.format(endpoint, GOLDFISH_NEBULA_ANALYTICS_PORT)
         data = {
             'statement': statement
         }
-        return self.post(url=url, data=data).json()
+        return self.post(url=api, data=data)
 
     def get_analytics_stats(self, analytics_node: str) -> dict:
         url = self._get_api_url(host=analytics_node, path='analytics/node/stats',

@@ -2,9 +2,9 @@
 test = perfrunner.tests.analytics.GoldfishCopyFromS3Test
 
 [showfast]
-title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, AWS, Goldfish, External Storage, json
+title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, AWS, Goldfish, COPY FROM S3, json
 component = analyticscloud
-category = ch2
+category = latency
 sub_category = {provider}
 
 [stats]

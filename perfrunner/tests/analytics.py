@@ -3,27 +3,31 @@ import random
 import time
 from typing import List, Tuple
 
+import requests
+
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.rest import (
+    ANALYTICS_PORT,
+    ANALYTICS_PORT_SSL,
+    FTS_PORT,
+    FTS_PORT_SSL,
+    GOLDFISH_NEBULA_ANALYTICS_PORT,
+    QUERY_PORT,
+    QUERY_PORT_SSL,
+)
 from perfrunner.helpers.worker import tpcds_initial_data_load_task
 from perfrunner.settings import CH2ConnectionSettings
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
 from perfrunner.tests.xdcr import SrcTargetIterator
-from perfrunner.workloads.bigfun.driver import bigfun
+from perfrunner.workloads.bigfun.driver import QueryMethod, bigfun
 from perfrunner.workloads.bigfun.query_gen import Query
 from perfrunner.workloads.tpcdsfun.driver import tpcds
 
 QueryLatencyPair = Tuple[Query, int]
-
-QUERY_PORT = 8093
-QUERY_PORT_SECURE = 18093
-FTS_PORT = 8094
-FTS_PORT_SECURE = 18094
-ANALYTICS_PORT = 8095
-ANALYTICS_PORT_SECURE = 18095
 
 
 class BigFunTest(PerfTest):
@@ -160,10 +164,10 @@ class BigFunTest(PerfTest):
     def get_dataset_items(self, dataset: str):
         logger.info('Get number of items in dataset {}'.format(dataset))
         statement = "SELECT COUNT(*) from `{}`;".format(dataset)
-        result = self.rest.exec_analytics_query(self.analytics_node, statement)
-        logger.info("Number of items in dataset {}: {}".
-                    format(dataset, result['results'][0]['$1']))
-        return result['results'][0]['$1']
+        result = self.rest.exec_analytics_statement(self.analytics_node, statement)
+        num_items = result.json()['results'][0]['$1']
+        logger.info("Number of items in dataset {}: {}".format(dataset, num_items))
+        return num_items
 
     def restore_remote_storage(self):
         self.remote.extract_cb_any(filename='couchbase',
@@ -411,7 +415,9 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
         external_dataset_region = self.analytics_settings.external_dataset_region
         access_key_id, secret_access_key =\
             local.get_aws_credential(self.analytics_settings.aws_credential_path)
-        local.set_up_s3_link(rest_username, rest_password, self.analytics_node,
+        baseurl = self.rest._get_api_url(self.analytics_node, '',
+                                         ANALYTICS_PORT, ANALYTICS_PORT_SSL)
+        local.set_up_s3_link(rest_username, rest_password, baseurl,
                              external_dataset_type, external_dataset_region,
                              access_key_id, secret_access_key)
 
@@ -443,7 +449,7 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
                          concurrency=int(self.test_config.access_settings.workers),
                          num_requests=int(self.test_config.access_settings.ops),
                          query_set=self.QUERIES,
-                         external_storage=True)
+                         query_method=QueryMethod.CURL_CBAS)
         return [(query, latency) for query, latency in results]
 
     def run(self):
@@ -459,6 +465,56 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
 
 class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
 
+    COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
+
+    def __init__(self, *args, **kwargs):
+        PerfTest.__init__(self, *args, **kwargs)
+
+        self.num_items = 0
+        self.analytics_settings = self.test_config.analytics_settings
+        self.config_file = self.analytics_settings.analytics_config_file
+        self.analytics_link = self.analytics_settings.analytics_link
+
+        self.is_capella_goldfish = self.cluster_spec.capella_infrastructure and \
+            self.cluster_spec.goldfish_infrastructure
+
+        if self.is_capella_goldfish:
+            self.nebula_endpoint = self.cluster_spec.config.items('goldfish_nebula')[0][1]
+            self.rest.rest_username, self.rest.rest_password = \
+                self.cluster_spec.goldfish_nebula_credentials[0]
+            cb_version = \
+                self.cluster_spec.infrastructure_settings['goldfish_cb_versions'].split()[0]
+            version_number, build_number = cb_version.split('-')
+            self.cb_build_tuple = tuple(map(int, version_number.split('.'))) + (int(build_number),)
+        else:
+            self.cb_build_tuple = self.cluster.build_tuple
+
+        self.analytics_node = self.analytics_nodes[0]
+
+        self.QUERIES = self.analytics_settings.queries
+
+    def exec_analytics_statement(self, statement: str) -> requests.Response:
+        if self.is_capella_goldfish:
+            return self.rest.exec_analytics_statement_goldfish_nebula(self.nebula_endpoint,
+                                                                      statement)
+        return self.rest.exec_analytics_statement(self.analytics_node, statement)
+
+    def set_up_s3_link(self):
+        external_dataset_type = self.analytics_settings.external_dataset_type
+        external_dataset_region = self.analytics_settings.external_dataset_region
+        access_key_id, secret_access_key =\
+            local.get_aws_credential(self.analytics_settings.aws_credential_path)
+
+        if self.is_capella_goldfish:
+            baseurl = 'https://{}:{}'.format(self.nebula_endpoint, GOLDFISH_NEBULA_ANALYTICS_PORT)
+        else:
+            baseurl = self.rest._get_api_url(self.analytics_node, '',
+                                             ANALYTICS_PORT, ANALYTICS_PORT_SSL)
+
+        local.set_up_s3_link(self.rest.rest_username, self.rest.rest_password, baseurl,
+                             external_dataset_type, external_dataset_region,
+                             access_key_id, secret_access_key)
+
     def create_standalone_datasets(self):
         logger.info('Creating standalone datasets')
         with open(self.config_file, "r") as json_file:
@@ -467,28 +523,57 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         for dataset in dataset_list:
             statement = "CREATE DATASET `{}` PRIMARY KEY (`key`: string)".format(dataset["Dataset"])
             logger.info("statement: {}".format(statement))
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
+            self.exec_analytics_statement(statement)
 
     @with_stats
     @timeit
     def ingest_data(self):
         logger.info('Ingesting data from S3 using COPY FROM')
+
         with open(self.config_file, "r") as json_file:
             analytics_config = json.load(json_file)
+
         dataset_list = analytics_config["Analytics"]
         external_bucket = self.analytics_settings.external_bucket
         file_format = self.analytics_settings.external_file_format
         file_include = self.analytics_settings.external_file_include
+        path_keyword = 'USING' if self.cb_build_tuple < (8, 0, 0, 1452) else 'PATH'
+
         for dataset in dataset_list:
-            statement = "COPY INTO `{}` FROM `{}` AT `external_link` " \
-                        "USING '{}' WITH {{ 'format': '{}', 'include': '*.{}' }};"\
-                .format(dataset["Dataset"], external_bucket, dataset["Collection"],
-                        file_format, file_include)
+            statement = (
+                "COPY INTO `{}` FROM `{}` AT `external_link` {} '{}' "
+                "WITH {{ 'format': '{}', 'include': '*.{}' }};"
+            ).format(
+                dataset["Dataset"],
+                external_bucket,
+                path_keyword,
+                dataset["Collection"],
+                file_format,
+                file_include
+            )
             logger.info("statement: {}".format(statement))
 
             t0 = time.time()
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
+            self.exec_analytics_statement(statement)
             logger.info('Statement execution time: {}'.format(time.time() - t0))
+
+    @with_stats
+    def access(self) -> List[QueryLatencyPair]:
+        if self.is_capella_goldfish:
+            nodes = [self.nebula_endpoint]
+            query_method = QueryMethod.PYTHON_GOLDFISH_NEBULA
+        else:
+            nodes = self.analytics_nodes
+            query_method = QueryMethod.CURL_CBAS
+
+        logger.info("analytics_nodes = {}".format(nodes))
+        results = bigfun(self.rest,
+                         nodes=nodes,
+                         concurrency=int(self.test_config.access_settings.workers),
+                         num_requests=int(self.test_config.access_settings.ops),
+                         query_set=self.QUERIES,
+                         query_method=query_method)
+        return [(query, latency) for query, latency in results]
 
     def run(self):
         random.seed(8095)
@@ -1066,8 +1151,8 @@ class CH2Test(PerfTest):
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         if self.test_config.cluster.enable_n2n_encryption:
-            query_port = QUERY_PORT_SECURE
-            cbas_port = ANALYTICS_PORT_SECURE
+            query_port = QUERY_PORT_SSL
+            cbas_port = ANALYTICS_PORT_SSL
         else:
             query_port = QUERY_PORT
             cbas_port = ANALYTICS_PORT
@@ -1657,9 +1742,9 @@ class CH3Test(PerfTest):
     @with_stats
     def run_ch3(self):
         if self.test_config.cluster.enable_n2n_encryption:
-            query_port = QUERY_PORT_SECURE
-            fts_port = FTS_PORT_SECURE
-            cbas_port = ANALYTICS_PORT_SECURE
+            query_port = QUERY_PORT_SSL
+            fts_port = FTS_PORT_SSL
+            cbas_port = ANALYTICS_PORT_SSL
         else:
             query_port = QUERY_PORT
             fts_port = FTS_PORT
@@ -1696,7 +1781,7 @@ class CH3Test(PerfTest):
 
     def load_ch3(self):
         if self.test_config.cluster.enable_n2n_encryption:
-            query_port = QUERY_PORT_SECURE
+            query_port = QUERY_PORT_SSL
         else:
             query_port = QUERY_PORT
 

@@ -573,6 +573,13 @@ class ClusterSpec(Config):
         ]
 
     @property
+    def goldfish_nebula_credentials(self) -> List[List[str]]:
+        return [
+            creds.split(':')
+            for creds in self.config.get('credentials', 'goldfish_nebula', fallback='').split()
+        ]
+
+    @property
     def ssh_credentials(self) -> List[str]:
         return self.config.get('credentials', 'ssh').split(':')
 
@@ -593,6 +600,31 @@ class ClusterSpec(Config):
                 if len(group):
                     server_grp_map[host] = group[0]
         return server_grp_map
+
+    def set_capella_admin_credentials(self) -> None:
+        if self.capella_infrastructure:
+            logger.info('Getting cluster admin credentials.')
+            user = 'couchbase-cloud-admin'
+            pwds = []
+
+            command_template = (
+                'secretsmanager get-secret-value --region us-east-1 '
+                '--secret-id {}_dp-admin '
+                '--query "SecretString" '
+                '--output text'
+            )
+
+            for cluster_id in self.infrastructure_settings.get('cbc_cluster').split():
+                pwd = run_aws_cli_command(command_template, cluster_id)
+                if pwd is not None:
+                    pwds.append(pwd)
+
+            creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
+            if self.goldfish_infrastructure:
+                self.config.set('credentials', 'rest', creds)
+            else:
+                self.config.set('credentials', 'admin', creds)
+            self.update_spec_file()
 
     def get_aws_iid(self, hostname: str, region: str) -> str:
         command_template = (

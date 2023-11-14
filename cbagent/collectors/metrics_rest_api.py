@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from cbagent.collectors.collector import Collector
 from cbagent.settings import CbAgentSettings
 
@@ -9,6 +11,26 @@ class MetricsRestApiBase(Collector):
         self.server_processes = settings.server_processes
         self.stats_uri = '/pools/default/stats/range/'
         self.stats_data = []
+
+    @cached_property
+    def internal_to_external_hostnames(self) -> dict[str, str]:
+        """Return a mapping of internal hostnames to external hostnames.
+
+        The internal hostname is used within the CB cluster and is what is returned by the metrics
+        REST API.
+
+        In cbmonitor reports though we use the external hostname, so for consistency with all the
+        other metrics we need to map the internal hostnames to the external ones.
+        """
+        hostname_map = {}
+        for node in self.nodes:
+            cluster_info = self.get_http(path='/pools/default', server=node)
+            for node_info in cluster_info['nodes']:
+                if node_info.get('thisNode', False):
+                    internal_hostname = node_info['hostname'].split(':')[0]
+                    hostname_map[internal_hostname] = node
+                    break
+        return hostname_map
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -84,7 +106,7 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
 
     def sample(self):
         for node, stats in self.get_stats().items():
-            self.add_stats(stats, node=node)
+            self.add_stats(stats, node=self.internal_to_external_hostnames[node])
 
 
 class MetricsRestApiMetering(MetricsRestApiBase):
@@ -197,8 +219,10 @@ class MetricsRestApiDeduplication(MetricsRestApiBase):
         current_stats = self.get_stats()
         for node, per_bucket_stats in current_stats.items():
             for bucket, stats in per_bucket_stats.items():
-                bucket = self.serverless_db_names.get(bucket, bucket)
-                self.add_stats(stats, node=node, bucket=bucket)
+                bucket = self.serverless_dbs_names.get(bucket, bucket)
+                self.add_stats(stats,
+                               node=self.internal_to_external_hostnames[node],
+                               bucket=bucket)
 
 
 class MetricsRestApiThroughputCollection(MetricsRestApiBase):

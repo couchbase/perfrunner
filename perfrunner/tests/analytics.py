@@ -1490,6 +1490,12 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
 
         self.num_items = sum(self.docs_per_collection.values())
 
+        self.is_capella_goldfish = self.cluster_spec.capella_infrastructure and \
+            self.cluster_spec.goldfish_infrastructure
+
+        if self.is_capella_goldfish:
+            self.COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
+
     def count_collection_docs_mongodb(self, collection: str) -> int:
         from pymongo import MongoClient
         client = MongoClient(self.kafka_links_settings.mongodb_uri)
@@ -1521,7 +1527,6 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
     def sync(self) -> int:
         """Set up data ingestion and return time taken to ingest all data (excluding setup time)."""
         self.create_datasets()
-        self.create_analytics_indexes()
         self.connect_link()
 
         t0 = time.time()
@@ -1553,9 +1558,10 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
             self.report_kpi(data_ingest_time)
         finally:
             if self.kafka_link_connected:
-                logger.info('Getting Connector ARNs to be able to look up logs')
-                if not self.cluster.get_msk_connect_connector_arns():
-                    logger.warn('Failed to get Kafka Connect connector ARNs')
+                if not self.is_capella_goldfish:
+                    logger.info('Getting Connector ARNs to be able to look up logs')
+                    if not self.cluster.get_msk_connect_connector_arns():
+                        logger.warn('Failed to get Kafka Connect connector ARNs')
                 self.disconnect_link()
 
 

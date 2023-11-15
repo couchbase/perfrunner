@@ -377,10 +377,13 @@ class ClientInstaller:
             self.client_os = stdout.replace("\"", "").split("=")[-1]
 
         self.rest = RestHelper(self.cluster_spec, self.test_config, options.verbose)
-        self.cb_version = version_tuple(self.rest.get_version(host=next(self.cluster_spec.masters)))
 
         self.taco_destination = '/var/opt/tableau/tableau_server/data/tabsvc/vizqlserver/Connectors'
         self.jar_destination = '/opt/tableau/tableau_driver/jdbc/'
+
+    @property
+    def cb_version(self):
+        return version_tuple(self.rest.get_version(host=next(self.cluster_spec.masters)))
 
     @all_clients
     def detect_libcouchbase_versions(self):
@@ -507,7 +510,12 @@ class ClientInstaller:
         py_version = self.client_settings.python_client
         logger.info("Desired clients: lcb={}, py={}".format(lcb_version, py_version))
 
-        mb45563_is_hit = self.cb_version >= (7, 1, 0, 1745) and self.cb_version < (7, 1, 0, 1807)
+        # Check if we are using Capella to avoid evaluating the server version if we are using
+        # Capella Columnar, as the "self.rest.get_version(...)" method doesn't work for
+        # Capella Columnar yet...
+        mb45563_is_hit = ((not self.cluster_spec.capella_infrastructure) and
+                          self.cb_version >= (7, 1, 0, 1745) and
+                          self.cb_version < (7, 1, 0, 1807))
 
         if not py_version:
             logger.info("No python SDK version provided. "

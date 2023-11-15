@@ -15,7 +15,7 @@ from fabric.api import local
 from requests.exceptions import HTTPError
 
 from logger import logger
-from perfrunner.helpers.misc import maybe_atoi, pretty_dict, remove_nulls
+from perfrunner.helpers.misc import maybe_atoi, pretty_dict, remove_nulls, run_local_shell_command
 from perfrunner.settings import ClusterSpec, TestConfig
 
 CAPELLA_CREDS_FILE = '.capella_creds'
@@ -217,7 +217,7 @@ class CloudDeployer:
 
         return tfvar_nodes
 
-    def populate_tfvars(self):
+    def populate_tfvars(self) -> bool:
         logger.info('Setting tfvars')
         cloud_provider = self.backend if self.provider == 'capella' else self.provider
         global_tag = self.options.tag if self.options.tag else ''
@@ -226,6 +226,10 @@ class CloudDeployer:
             global_tag = global_tag.lower()
 
         tfvar_nodes = self.create_tfvar_nodes()
+
+        if not any(tfvar_nodes.values()):
+            logger.warn('Nothing to deploy with Terraform.')
+            return False
 
         replacements = {
             '<CLOUD_REGION>': self.region,
@@ -253,6 +257,8 @@ class CloudDeployer:
             tfvars.seek(0)
             tfvars.write(file_string)
 
+        return True
+
     # Initializes terraform environment.
     def terraform_init(self, provider):
         logger.info('Initializating Terraform (terraform init)')
@@ -276,6 +282,12 @@ class CloudDeployer:
     def terraform_destroy(self, provider):
         logger.info('Building and executing Terraform destruction plan '
                     '(terraform plan -destroy, terraform apply)')
+        _, _, returncode = run_local_shell_command('cd terraform/{} && terraform validate'
+                                                   .format(provider), quiet=True)
+        if returncode != 0:
+            logger.info('No resources to destroy with Terraform.')
+            return
+
         local('cd terraform/{} && '
               'terraform plan -destroy -out tfplan_destroy.out >> terraform.log && '
               'terraform apply -auto-approve tfplan_destroy.out'
@@ -1831,6 +1843,8 @@ class CapellaColumnarDeployer(CapellaDeployer):
 
         self.project_id = project
 
+        self.backend = self.infra_spec.infrastructure_settings['backend']
+
         self.capella_timeout = max(0, self.options.capella_timeout)
 
         self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
@@ -1841,13 +1855,13 @@ class CapellaColumnarDeployer(CapellaDeployer):
 
         if not self.options.capella_only:
             # Configure terraform
-            self.populate_tfvars()
-            self.terraform_init(self.infra_spec.capella_backend)
+            if self.populate_tfvars():
+                self.terraform_init(self.infra_spec.capella_backend)
 
-            # Deploy non-capella resources
-            self.terraform_apply(self.infra_spec.capella_backend)
-            non_capella_output = self.terraform_output(self.infra_spec.capella_backend)
-            CloudDeployer.update_spec(self, non_capella_output)
+                # Deploy non-capella resources
+                self.terraform_apply(self.infra_spec.capella_backend)
+                non_capella_output = self.terraform_output(self.infra_spec.capella_backend)
+                CloudDeployer.update_spec(self, non_capella_output)
 
         # Deploy capella cluster(s)
         self.deploy_goldfish_instances()
@@ -1939,7 +1953,6 @@ class CapellaColumnarDeployer(CapellaDeployer):
     def wait_for_goldfish_instance_destroy(self) -> bool:
         logger.info('Waiting for Goldfish instances to be destroyed...')
 
-        instance_id = self.cluster_ids[0]
         timeout_mins = self.capella_timeout
         interval_secs = 30
         pending_instances = [instance_id for instance_id in self.cluster_ids]

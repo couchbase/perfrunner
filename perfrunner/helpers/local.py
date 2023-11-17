@@ -167,39 +167,22 @@ def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
 
 def get_backup_snapshots(cluster_spec: ClusterSpec) -> List[str]:
 
-    logger.info('running cbbackupmgr list/info command ')
-
-    cmd_type = 'list'
+    logger.info('running cbbackupmgr info command ')
 
     cmd = \
-        './opt/couchbase/bin/cbbackupmgr list ' \
+        './opt/couchbase/bin/cbbackupmgr info ' \
         '--archive {} --repo default '.format(cluster_spec.backup)
 
-    for line in local(cmd, capture=True).split('\n'):
-        if 'list is deprecated' in line:
-            cmd_type = 'info'
+    logger.info('Running: {}'.format(cmd))
 
-    cmd = \
-        './opt/couchbase/bin/cbbackupmgr {} ' \
-        '--archive {} --repo default '.format(cmd_type,
-                                              cluster_spec.backup,
-                                              )
     snapshots = []
-    if cmd_type == 'info':
-        pattern = '+  {}-'.format(date.today().year)
-        for line in local(cmd, capture=True).split('\n'):
-            if pattern in line:
-                snapshot = line.strip().split()[1]
-                snapshots.append(snapshot)
-        return snapshots
+    pattern = '  {}-'.format(date.today().year)
+    for line in local(cmd, capture=True).split('\n'):
+        if pattern in line:
+            snapshot = line.strip().split()[1]
+            snapshots.append(snapshot)
+    return snapshots
 
-    elif cmd_type == 'list':
-        pattern = '+ {}-'.format(date.today().year)
-        for line in local(cmd, capture=True).split('\n'):
-            if pattern in line:
-                snapshot = line.strip().split()[-1]
-                snapshots.append(snapshot)
-        return snapshots
 
 
 def cbbackupmgr_merge(cluster_spec: ClusterSpec, snapshots: List[str],

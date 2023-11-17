@@ -4,6 +4,7 @@ import shutil
 from fabric.api import cd, get, run, settings, shell_env
 
 from logger import logger
+from perfrunner.helpers.misc import get_python_sdk_installation
 from perfrunner.remote.context import (
     all_clients,
     all_clients_batch,
@@ -43,17 +44,13 @@ class Remote:
                 run('make')
 
     @all_clients
-    def install_clients(self, perfrunner_home, test_config):
-        client_settings = test_config.client_settings.__dict__
-        py_version = client_settings['python_client']
-        if py_version is not None:
-            logger.info('Installing Python SDK on remote client: {}'.format(py_version))
+    def install_clients(self, perfrunner_home: str, python_client: str):
+        if python_client is not None:
+            logger.info('Installing Python SDK on remote client: {}'.format(python_client))
             with cd(perfrunner_home):
-                if 'review.couchbase.org' in py_version or "github" in py_version:
-                    run("env/bin/pip install {} --no-cache-dir".format(py_version), warn_only=True)
-                else:
-                    run("env/bin/pip install couchbase=={} "
-                        "--no-cache-dir".format(py_version), warn_only=True)
+                package = get_python_sdk_installation(python_client)
+                run("PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {} "
+                    "--no-cache-dir".format(package), warn_only=True)
 
     @master_client
     def remote_copy(self, worker_home: str):

@@ -2,6 +2,7 @@ import datetime
 import fileinput
 import ipaddress
 import json
+import os
 import shutil
 import subprocess
 import time
@@ -11,6 +12,7 @@ from typing import Any, Union
 from uuid import uuid4
 
 import requests
+import validators
 import yaml
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, generate_private_key
@@ -305,6 +307,26 @@ def set_azure_capella_subscription(capella_env: str) -> int:
         sub = 'capellanonprod-rcm'
 
     return set_azure_subscription(sub, 'capella')
+
+
+def get_python_sdk_installation(version: str) -> str:
+    """Convert specified version into a format that can be installed by pip.
+
+    Possible version that can be specified in settings:
+    1. Full URL/local path to a wheel source
+    2. Gerrit reference in the form of refs/changes/X/Y/Z
+    3. Commit hash
+    4. Version number in the form of x.y.z
+    """
+    if validators.url(version) or os.path.exists(version):
+        # direct url to internal package source or file path
+        return '"{}"'.format(version)
+    elif 'refs/changes' in version:  # gerrit change
+        return 'git+https://review.couchbase.org/couchbase-python-client@{}'.format(version)
+    elif '.' not in version:  # git commit
+        return 'git+https://github.com/couchbase/couchbase-python-client.git@{}'.format(version)
+    else:
+        return 'couchbase=={}'.format(version)
 
 
 class SSLCertificate:

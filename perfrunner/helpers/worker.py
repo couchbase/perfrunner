@@ -360,7 +360,8 @@ class RemoteWorkerManager:
     def start_remote_workers(self):
         perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
         self.remote.init_repo(self.WORKER_HOME)
-        self.remote.install_clients(perfrunner_home, self.test_config)
+        self.remote.install_clients(perfrunner_home,
+                                    self.test_config.client_settings.python_client)
         if '--remote-copy' in sys.argv:
             self.remote.remote_copy(self.WORKER_HOME)
         for worker in self.cluster_spec.workers:

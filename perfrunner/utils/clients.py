@@ -5,6 +5,7 @@ from re import split as re_split
 from fabric.api import cd, local, run
 
 from logger import logger
+from perfrunner.helpers.misc import get_python_sdk_installation
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.tableau import TableauTerminalHelper
@@ -437,10 +438,8 @@ class ClientInstaller:
             run('make')
 
     def install_python_client(self, version: str):
-        if not ('review.couchbase.org' in version or 'github.com' in version):
-            version = "couchbase=={}".format(version)
-
-        local("PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {} --no-cache-dir".format(version))
+        package = get_python_sdk_installation(version)
+        local("PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {} --no-cache-dir".format(package))
 
     def uninstall_tableau_connectors(self):
         local('rm -rf {}/*couchbase*'.format(self.jar_destination))

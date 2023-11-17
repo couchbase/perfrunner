@@ -1,6 +1,7 @@
 import os
 import time
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -1066,38 +1067,44 @@ class RemoteLinux(Remote):
 
     @all_servers
     def generate_linux_perf_script(self):
+        files = []
+        with cd(self.LINUX_PERF_PROFILES_PATH):
+            files = run('for i in *_perf.data; do echo $i; done').replace('\r', '').split('\n')
+            # On some shells the pattern is returned if nothing is found
+            if files and files[0] == '*_perf.data':
+                return
 
-        files_list = 'for i in {}*_perf.data; do echo $i; ' \
-                     'done'.format(self.LINUX_PERF_PROFILES_PATH)
-        files = run(files_list).replace("\r", "").split("\n")
+        with ThreadPoolExecutor() as executor:
+            executor.map(self._process_and_zip_perf_files, files)
 
-        for filename in files:
-            fname = filename.split('/')[-1]
-            if fname != '*_perf.data':
-                cmd_perf_script = 'perf script -i {}' \
-                    ' --no-inline > {}.txt'.format(filename, filename)
+    def _process_and_zip_perf_files(self, filename: str):
+        filename = filename.strip()
+        if '_c2c_' in filename:
+            sub_cmd = 'c2c report --stdio --full-symbols'
+        elif '_mem_' in filename:
+            sub_cmd = 'mem report'
+        else:
+            sub_cmd = 'script --no-inline'
 
-                logger.info('Generating linux script data : {}'.format(cmd_perf_script))
-                try:
+        args = [
+            'perf {}'.format(sub_cmd),
+            '-i {0} > {0}.txt'.format(filename)
+        ]
+        perf_cmd = ' '.join(args)
+        logger.info('Generating linux perf data report : {}'.format(perf_cmd))
 
-                    with settings(warn_only=True):
-                        run(cmd_perf_script, timeout=600, pty=False)
-                        time.sleep(self.LINUX_PERF_DELAY)
-
-                except CommandTimeout:
-                    logger.error('linux perf script timed out')
-
-                cmd_zip = 'cd {}; zip -q {}.zip {}.txt'.format(self.LINUX_PERF_PROFILES_PATH,
-                                                               fname,
-                                                               fname)
-
-                with settings(warn_only=True):
-                    run(cmd_zip, pty=False)
+        zip_cmd = 'zip -q {0}.zip {0}.txt'.format(filename)
+        try:
+            with settings(warn_only=True), cd(self.LINUX_PERF_PROFILES_PATH):
+                run(perf_cmd, timeout=600, pty=False)
+                run(zip_cmd, pty=False)
+        except Exception as e:
+            logger.error('Failed to process perf files. {}'.format(e))
 
     @all_servers
     def get_linuxperf_files(self):
 
-        logger.info('Collecting linux perf files from kv nodes')
+        logger.info('Collecting linux perf files from server nodes')
         with cd(self.LINUX_PERF_PROFILES_PATH):
             r = run('stat *.zip', quiet=True, warn_only=True)
             if not r.return_code:

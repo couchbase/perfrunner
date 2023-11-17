@@ -18,7 +18,7 @@ from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import pretty_dict, target_hash
 from perfrunner.helpers.monitor import Monitor
-from perfrunner.helpers.profiler import Profiler, with_profiles
+from perfrunner.helpers.profiler import ProfilerHelper, with_profiles
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
@@ -94,7 +94,7 @@ class SGPerfTest(PerfTest):
             self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
         self.settings = self.test_config.access_settings
         self.settings.syncgateway_settings = self.test_config.syncgateway_settings
-        self.profiler = Profiler(cluster_spec, test_config)
+        self.profiler = ProfilerHelper(cluster_spec, test_config)
         self.cluster = ClusterManager(cluster_spec, test_config)
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)

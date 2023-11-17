@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import threading
@@ -40,13 +41,62 @@ class Timer(threading.Timer):
             self.run()
 
 
-class Profiler:
+class ProfilerHelper:
+    def __new__(cls, cluster_spec: ClusterSpec, test_config: TestConfig):
+        if test_config.profiling_settings.linux_perf_profile_flag:
+            return LinuxPerfProfiler(cluster_spec, test_config)
+        else:
+            return GoDebugProfiler(cluster_spec, test_config)
+
+
+class ProfilerBase:
+
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+        self.test_config = test_config
+        self.cluster_spec = cluster_spec
+        self.rest = RestHelper(cluster_spec, test_config)
+        self.master_node = next(cluster_spec.sgw_masters)
+        self.ssh_username, self.ssh_password = cluster_spec.ssh_credentials
+        self.profiling_settings = copy.deepcopy(test_config.profiling_settings)
+
+    def timer(self, **kwargs):
+        timer = Timer(
+            function=self.profile,
+            interval=self.profiling_settings.interval,
+            num_runs=self.profiling_settings.num_profiles,
+            kwargs=kwargs,
+        )
+        timer.start()
+
+    def profile(self, host: str, service: str, profile: str):
+        logger.warn('Unknown profiler, doing nothing')
+
+    def _schedule_service(self, service, nodes):
+        logger.info('Scheduling "{}" service profiling'.format(service))
+        for server in nodes:
+            for profile in self.profiling_settings.profiles:
+                self.timer(host=server, service=service, profile=profile)
+
+    def schedule(self):
+        for service in self.profiling_settings.services:
+            if service == 'syncgateway':
+                initial_nodes = int(self.test_config.syncgateway_settings.nodes)
+                self._schedule_service(service, self.cluster_spec.sgw_servers[:initial_nodes])
+            else:
+                role = 'kv' if service == 'projector' else service
+                active_nodes_by_role = self.rest.get_active_nodes_by_role(self.master_node,
+                                                                          role=role)
+                self._schedule_service(service, active_nodes_by_role)
+
+
+class GoDebugProfiler (ProfilerBase):
+
+    """Go profiler profiles using existing debug ports from each service."""
 
     DEBUG_PORTS = {
         'fts':   8094,
         'index': 9102,
         'goxdcr': 9998,
-        'kv': 9998,           # will be deprecated in future
         'n1ql':  8093,
         'eventing': 8096,
         'projector': 9999,
@@ -64,64 +114,7 @@ class Profiler:
     }
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
-        self.test_config = test_config
-        self.rest = RestHelper(cluster_spec, test_config)
-        self.master_node = next(cluster_spec.sgw_masters)
-        self.ssh_username, self.ssh_password = cluster_spec.ssh_credentials
-        self.cluster_spec = cluster_spec
-        self.profiling_settings = test_config.profiling_settings
-        self.linux_perf_path = '/opt/couchbase/var/lib/couchbase/logs/'
-
-    def new_tunnel(self, host: str, port: int) -> SSHTunnelForwarder:
-        return SSHTunnelForwarder(
-            ssh_address_or_host=host,
-            ssh_username=self.ssh_username,
-            ssh_password=self.ssh_password,
-            remote_bind_address=('127.0.0.1', port),
-        )
-
-    def save(self, host: str, service: str, profile: str, content: bytes):
-        fname = '{}_{}_{}_{}_{}.pprof'.format(
-            host, service, profile, time.strftime("%y%m%d%H%M%S"), uhex()[:6])
-        logger.info('Collected {} '.format(fname))
-        with open(fname, 'wb') as fh:
-            fh.write(content)
-
-    def copy_profiles(self, host: str):
-        logger.info("Copying profile files from SG servers")
-        os.system('sshpass -p couchbase scp root@{}:/home/sync_gateway/*.pprof ./'.format(host))
-
-    def linux_perf_profile(self, host: str, fname: str, path: str):
-
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-        try:
-            client.connect(hostname=host, username=self.ssh_username,
-                           password=self.ssh_password)
-
-        except Exception:
-            logger.info('Cannot connect to the "{}" via SSH Server'.format(host))
-            exit()
-
-        logger.info('Capturing linux profile using linux perf record ')
-
-        cmd = 'perf record -a -F {} -g --call-graph {} ' \
-              '-p $(pgrep memcached) -o {}{} ' \
-              '-- sleep {}'.format(self.profiling_settings.linux_perf_frequency,
-                                   self.profiling_settings.linux_perf_callgraph,
-                                   path,
-                                   fname,
-                                   self.profiling_settings.linux_perf_profile_duration)
-        stdin, stdout, stderr = client.exec_command(cmd)
-        exit_status = stdout.channel.recv_exit_status()
-
-        if exit_status == 0:
-            logger.info("linux perf record: linux perf profile capture completed")
-        else:
-            logger.info("perf record failed , exit_status :  ", exit_status)
-
-        client.close()
+        super().__init__(cluster_spec, test_config)
 
     def profile(self, host: str, service: str, profile: str):
         logger.info('Collecting {} profile on {}'.format(profile, host))
@@ -161,52 +154,98 @@ class Profiler:
                 self.save(host, service, profile, response.content)
 
             self.copy_profiles(host=host)
-
         else:
             endpoint = self.ENDPOINTS[profile]
             port = self.DEBUG_PORTS[service]
 
-            if self.profiling_settings.linux_perf_profile_flag:
-                logger.info('Collecting {} profile on {} using linux perf '
-                            'record'.format(profile, host))
+            logger.info('Collecting {} profile on {}'.format(profile, host))
+            with self.new_tunnel(host, port) as tunnel:
+                url = endpoint.format(tunnel.local_bind_port)
+                response = requests.get(url=url, auth=self.rest.auth)
+                self.save(host, service, profile, response.content)
 
-                fname = 'linux_{}_{}_{}_perf.data'.format(host, profile, uhex()[:4])
-                self.linux_perf_profile(host=host, fname=fname, path=self.linux_perf_path)
-
-            else:
-                logger.info('Collecting {} profile on {}'.format(profile, host))
-
-                with self.new_tunnel(host, port) as tunnel:
-                    url = endpoint.format(tunnel.local_bind_port)
-                    response = requests.get(url=url, auth=self.rest.auth)
-                    self.save(host, service, profile, response.content)
-
-    def timer(self, **kwargs):
-        timer = Timer(
-            function=self.profile,
-            interval=self.test_config.profiling_settings.interval,
-            num_runs=self.test_config.profiling_settings.num_profiles,
-            kwargs=kwargs,
+    def new_tunnel(self, host: str, port: int) -> SSHTunnelForwarder:
+        return SSHTunnelForwarder(
+            ssh_address_or_host=host,
+            ssh_username=self.ssh_username,
+            ssh_password=self.ssh_password,
+            remote_bind_address=('127.0.0.1', port),
         )
-        timer.start()
 
-    def schedule(self):
-        for service in self.test_config.profiling_settings.services:
-            logger.info('Scheduling profiling of "{}" services'.format(service))
-            if service == 'syncgateway':
-                initial_nodes = int(self.test_config.syncgateway_settings.nodes)
-                logger.info("number of syncgateway nodes :{}".format(initial_nodes))
-                for _server in range(initial_nodes):
-                    server = self.cluster_spec.sgw_servers[_server]
-                    for profile in self.test_config.profiling_settings.profiles:
-                        self.timer(host=server, service=service, profile=profile)
-            else:
-                if service == 'projector':
-                    active_nodes_by_role = self.rest.get_active_nodes_by_role(
-                                                    self.master_node, role='kv')
-                else:
-                    active_nodes_by_role = self.rest.get_active_nodes_by_role(
-                                                self.master_node, role=service)
-                for server in active_nodes_by_role:
-                    for profile in self.test_config.profiling_settings.profiles:
-                        self.timer(host=server, service=service, profile=profile)
+    def copy_profiles(self, host: str):
+        logger.info("Copying profile files from SG servers")
+        os.system('sshpass -p couchbase scp root@{}:/home/sync_gateway/*.pprof ./'.format(host))
+
+    def save(self, host: str, service: str, profile: str, content: bytes):
+        fname = '{}_{}_{}_{}_{}.pprof'.format(
+            host, service, profile, time.strftime("%y%m%d%H%M%S"), uhex()[:6])
+        logger.info('Collected {} '.format(fname))
+        with open(fname, 'wb') as fh:
+            fh.write(content)
+
+
+class LinuxPerfProfiler (ProfilerBase):
+
+    """Linux perf profiler profile individual services using `perf` subcommands.
+
+    `profiling.profiles` setting can be one of the following:
+        1. 'cpu': (Default if nothing is specified) runs `perf record`
+        2. 'c2c': runs `perf c2c record`
+        3. 'mem': runs `perf mem record`
+    """
+
+    # perf (record | mem | c2c)
+    # Specific functions probe are not supported yet
+    PERF_COMMANDS = {
+        'cpu': 'record',
+        'c2c': 'c2c record',
+        'mem': 'mem record'
+    }
+
+    SERVICE_MAP = {  # For backward compatibility
+        'kv': 'memcached'
+    }
+
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+        super().__init__(cluster_spec, test_config)
+        self.linux_perf_path = '/opt/couchbase/var/lib/couchbase/logs/'
+        if not self.profiling_settings.services:
+            self.profiling_settings.services = ['kv']
+
+    def profile(self, host: str, service: str, profile: str):
+        fname = 'linux_{}_{}_{}_{}_perf.data'.format(host, service, profile, uhex()[:4])
+
+        service = self.SERVICE_MAP.get(service, service)
+        perf_profile = self.PERF_COMMANDS.get(profile, profile)
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            client.connect(hostname=host, username=self.ssh_username,
+                           password=self.ssh_password)
+
+        except Exception:
+            logger.info('Cannot connect to the "{}" via SSH Server'.format(host))
+            exit()
+
+        logger.info('Capturing linux `perf {}` profile on {}'.format(profile, host))
+
+        args = [
+            'perf {} -a'.format(perf_profile),
+            '-F {}'.format(self.profiling_settings.linux_perf_frequency),
+            '-g --call-graph {}'.format(self.profiling_settings.linux_perf_callgraph),
+            '-p $(pgrep {})'.format(service) if 'mem' not in profile else '',
+            '-o {}{}'.format(self.linux_perf_path, fname),
+            '-- sleep {}'.format(self.profiling_settings.linux_perf_profile_duration)
+        ]
+        cmd = '{}'.format(' '.join(args))
+        _, stdout, _ = client.exec_command(cmd)
+        exit_status = stdout.channel.recv_exit_status()
+
+        if exit_status == 0:
+            logger.info('linux perf record: linux perf profile capture completed')
+        else:
+            logger.info('perf record failed , exit_status : {}'.format(exit_status))
+
+        client.close()

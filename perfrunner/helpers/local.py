@@ -360,7 +360,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
              scope_collection_exp: str, field_separator: str = None, limit_rows: int = None,
              skip_rows: int = None, infer_types: int = None,
              omit_empty: int = None, errors_log: str = None,
-             log_file: str = None):
+             log_file: str = None, is_sample_format: bool = False):
 
     if not scope_collection_exp:
 
@@ -371,7 +371,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
                  '--bucket {}'.format(bucket),
                  '--username {}'.format(cluster_spec.rest_credentials[0]),
                  '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 '--generate-key "#MONO_INCR#"',
+                 '--generate-key "#MONO_INCR#"' if not is_sample_format else None,
                  '--threads {}'.format(threads) if threads else None,
                  '--field-separator {}'.format(field_separator) if field_separator
                  else None,

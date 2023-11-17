@@ -504,8 +504,9 @@ class ExportImportTest(BackupRestoreTest):
         if import_file is None:
             import_file = 'data.{}'.format(self.test_config.export_settings.type)
             import_file = os.path.join(self.cluster_spec.backup, import_file)
-        if self.test_config.export_settings.format != 'sample':
-            import_file = 'file://{}'.format(import_file)
+        import_file = 'file://{}'.format(import_file)
+
+        is_sample_format = self.test_config.export_settings.format == 'sample'
 
         local.drop_caches()
 
@@ -525,7 +526,8 @@ class ExportImportTest(BackupRestoreTest):
                        omit_empty=export_settings.omit_empty,
                        errors_log=export_settings.errors_log,
                        log_file=export_settings.log_file,
-                       scope_collection_exp=export_settings.scope_collection_exp)
+                       scope_collection_exp=export_settings.scope_collection_exp,
+                       is_sample_format=is_sample_format)
 
     def _report_kpi(self, time_elapsed: float):
         self.reporter.post(

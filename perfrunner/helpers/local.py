@@ -7,9 +7,9 @@ from datetime import date
 from glob import glob
 from pathlib import Path
 from sys import platform
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-from fabric.api import hide, lcd, local, quiet, settings, shell_env
+from fabric.api import lcd, local, quiet, settings, shell_env
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
@@ -1035,16 +1035,23 @@ def detect_ubuntu_release():
     return local('lsb_release -sr', capture=True).strip()
 
 
-def get_cbstats(server: str, port: int, command: str, cluster_spec: ClusterSpec):
-    cmd = "./opt/couchbase/bin/cbstats -a {}:{} -u {} -p {} {} -j" \
-        .format(server, port, cluster_spec.rest_credentials[0],
-                cluster_spec.rest_credentials[1], command)
-    with hide('warnings'), settings(warn_only=True):
-        result = local(cmd, capture=True)
-        if result.return_code == 0:
-            return result
-        else:
-            return False
+def run_cbstats(command: str, server: str, port: int, username: str, password: str,
+                bucket: Optional[str] = None) -> Tuple[str, int]:
+    """Run cbstats on the given server, returning (stdout, returncode).
+
+    If `bucket` not provided, then run cbstats with the -a flag (iterating over all buckets).
+    """
+    args = [
+        '{}:{}'.format(server, port),
+        '-u {}'.format(username),
+        '-p {}'.format(password),
+        '-b {}'.format(bucket) if bucket else '-a',
+        '-j',
+        command
+    ]
+    cmd = "./opt/couchbase/bin/cbstats {}".format(' '.join(args))
+    stdout, _, returncode = run_local_shell_command(cmd)
+    return stdout, returncode
 
 
 def read_aws_credential(credential_path: str):

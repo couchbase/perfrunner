@@ -342,23 +342,24 @@ class KVTest(PerfTest):
 
     def print_kvstore_stats(self):
         try:
-            result = local.get_cbstats(self.master_node, self.CB_STATS_PORT, "kvstore",
-                                       self.cluster_spec)
-            buckets_data = list(filter(lambda a: a != "", result.split("*")))
-            for data in buckets_data:
-                data = data.strip()
-                if data.startswith(self.test_config.buckets[0]):
-                    data = data.split("\n", 1)[1]
-                    data = data.replace("\"{", "{")
-                    data = data.replace("}\"", "}")
-                    data = data.replace("\\", "")
-                    data = json.loads(data)
-                    stats = {}
-                    for key, value in data.items():
-                        if key.startswith(("rw_0:", "rw_1:", "rw_2:", "rw_3:")):
-                            stats[key] = value
-                    logger.info("kvstore stats for first 4 shards: {}".format(pretty_dict(stats)))
-                    break
+            uname, pwd = self.cluster_spec.rest_credentials
+            stdout, returncode = local.run_cbstats("kvstore", self.master_node, self.CB_STATS_PORT,
+                                                   uname, pwd, self.test_config.buckets[0])
+            if returncode != 0:
+                logger.warning("KVTest failed to get kvstore stats from server: {}"
+                               .format(self.master_node))
+                return
+
+            data = json.loads(stdout)
+            stats = {}
+            for key, value in data.items():
+                if key.startswith(("rw_0:", "rw_1:", "rw_2:", "rw_3:")):
+                    if key.endswith(":magma"):
+                        # The :magma stats are an escaped JSON string, so we need to parse it again
+                        value = json.loads(value)
+                    stats[key] = value
+
+            logger.info("kvstore stats for first 4 shards: {}".format(pretty_dict(stats)))
         except Exception:
             pass
 

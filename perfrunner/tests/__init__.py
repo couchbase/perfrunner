@@ -337,8 +337,8 @@ class PerfTest:
     def reset_kv_stats(self):
         master_node = next(self.cluster_spec.masters)
         if self.test_config.cluster.enable_n2n_encryption:
-            local.get_cbstats(self.master_node, 11210, "reset",
-                              self.cluster_spec)
+            uname, pwd = self.cluster_spec.rest_credentials
+            local.run_cbstats("reset", self.master_node, 11210, uname, pwd)
         else:
             for bucket in self.test_config.buckets:
                 for server in self.rest.get_server_list(master_node, bucket):

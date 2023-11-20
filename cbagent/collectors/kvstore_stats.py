@@ -1,7 +1,8 @@
 import json
 
 from cbagent.collectors.collector import Collector
-from perfrunner.helpers.local import extract_cb_any, get_cbstats
+from logger import logger
+from perfrunner.helpers.local import extract_cb_any, run_cbstats
 
 
 class KVStoreStats(Collector):
@@ -166,47 +167,39 @@ class KVStoreStats(Collector):
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
         try:
-            result = get_cbstats(server, self.CB_STATS_PORT, "kvstore", self.cluster_spec)
-            buckets_data = list(filter(lambda a: a != "", result.split("*")))
-            for data in buckets_data:
-                data = data.strip()
-                if data.startswith(bucket):
-                    data = data.split("\n", 1)[1]
-                    data = data.replace("\"{", "{")
-                    data = data.replace("}\"", "}")
-                    data = data.replace("\\", "")
-                    data = json.loads(data)
-                    for (shard, metrics) in data.items():
-                        if not shard.endswith(":magma"):
-                            continue
-                        for metric in self.METRICS_ACROSS_SHARDS:
-                            if metric in metrics.keys():
-                                if metric in stats:
-                                    stats[metric] += metrics[metric]
-                                else:
-                                    stats[metric] = metrics[metric]
-                            if metric == "TxnSizeEstimate" and \
-                                    "walStats" in metrics.keys() and \
-                                    metric in metrics["walStats"].keys():
-                                if metric in stats:
-                                    stats[metric] += metrics["walStats"][metric]
-                                else:
-                                    stats[metric] = metrics["walStats"][metric]
-                            if metric == "CheckpointOverheadKeyIndex" and \
-                                    "KeyStats" in metrics.keys() and \
-                                    metric in metrics["KeyStats"].keys():
-                                if metric in stats:
-                                    stats[metric] += metrics["KeyStats"][metric]
-                                else:
-                                    stats[metric] = metrics["KeyStats"][metric]
-                            if metric == "CheckpointOverheadSeqIndex" and \
-                                    "SeqStats" in metrics.keys() and \
-                                    metric in metrics["SeqStats"].keys():
-                                if metric in stats:
-                                    stats[metric] += metrics["SeqStats"][metric]
-                                else:
-                                    stats[metric] = metrics["SeqStats"][metric]
-                    break
+            uname, pwd = self.cluster_spec.rest_credentials
+            stdout, returncode = run_cbstats("kvstore", server, self.CB_STATS_PORT, uname, pwd,
+                                             bucket)
+            if returncode != 0:
+                logger.warning("KVStoreStats failed to get kvstore stats from server: {}"
+                               .format(server))
+                return stats
+
+            data = json.loads(stdout)
+            for shard, metrics in data.items():
+                if not shard.endswith(":magma"):
+                    continue
+
+                # The :magma stats are an escaped JSON string so we need to parse it again
+                metrics = json.loads(metrics)
+
+                for metric in self.METRICS_ACROSS_SHARDS:
+                    if metric in metrics:
+                        value = metrics[metric]
+
+                    if metric == "TxnSizeEstimate" and metric in metrics.get("walStats", {}):
+                        value = metrics["walStats"][metric]
+                    elif metric == "CheckpointOverheadKeyIndex" and \
+                            metric in metrics.get("KeyStats", {}):
+                        value = metrics["KeyStats"][metric]
+                    elif metric == "CheckpointOverheadSeqIndex" and \
+                            metric in metrics.get("SeqStats", {}):
+                        value = metrics["SeqStats"][metric]
+
+                    if metric in stats:
+                        stats[metric] += value
+                    else:
+                        stats[metric] = value
         except Exception:
             pass
 
@@ -217,18 +210,15 @@ class KVStoreStats(Collector):
         return node_stats
 
     def _get_num_shards(self, bucket: str, server: str):
-        result = get_cbstats(server, self.CB_STATS_PORT, "workload", self.cluster_spec)
-        buckets_data = list(filter(lambda a: a != "", result.split("*")))
-        for data in buckets_data:
-            data = data.strip()
-            if data.startswith(bucket):
-                data = data.split("\n", 1)[1]
-                data = data.replace("\"{", "{")
-                data = data.replace("}\"", "}")
-                data = data.replace("\\", "")
-                data = json.loads(data)
-                return data["ep_workload:num_shards"]
-        return 1
+        uname, pwd = self.cluster_spec.rest_credentials
+        stdout, returncode = run_cbstats("workload", server, self.CB_STATS_PORT, uname, pwd, bucket)
+        if returncode != 0:
+            logger.warning("KVStoreStats failed to get workload stats from server: {}"
+                           .format(server))
+            return 1
+
+        data = json.loads(stdout)
+        return data["ep_workload:num_shards"]
 
     def sample(self):
         if self.collect_per_server_stats:

@@ -260,9 +260,23 @@ def remove_nulls(d: dict) -> dict:
 
 def run_local_shell_command(command: str, success_msg: str = '',
                             err_msg: str = '') -> tuple[str, str, int]:
+    """Run a shell command locally using `subprocess` and print stdout + stderr on failure.
+
+    Args
+    ----
+    command: shell command to run
+    success_msg: message to print on success
+    err_msg: message to print on failure (in addition to command stdout and stderr)
+
+    Returns
+    -------
+    command stdout, stderr, return code
+
+    """
     process = subprocess.run(command, shell=True, capture_output=True)
     if (returncode := process.returncode) == 0:
-        logger.info(success_msg)
+        if success_msg:
+            logger.info(success_msg)
     else:
         if err_msg:
             logger.error(err_msg)

@@ -1,7 +1,8 @@
 import json
 
 from cbagent.collectors.collector import Collector
-from perfrunner.helpers.local import extract_cb_any, get_cbstats
+from logger import logger
+from perfrunner.helpers.local import extract_cb_any, run_cbstats
 
 
 class CBStatsMemory(Collector):
@@ -19,23 +20,21 @@ class CBStatsMemory(Collector):
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
         try:
-            result = get_cbstats(server, self.CB_STATS_PORT, "memory", self.cluster_spec)
-            buckets_data = list(filter(lambda a: a != "", result.split("*")))
-            for data in buckets_data:
-                data = data.strip()
-                if data.startswith(bucket):
-                    data = data.split("\n", 1)[1]
-                    data = data.replace("\"{", "{")
-                    data = data.replace("}\"", "}")
-                    data = data.replace("\\", "")
-                    data = json.loads(data)
-                    for (metric, number) in data.items():
-                        if metric in self.METRICS:
-                            if metric in stats:
-                                stats[metric] += number
-                            else:
-                                stats[metric] = number
-                    break
+            uname, pwd = self.cluster_spec.rest_credentials
+            stdout, returncode = run_cbstats("memory", server, self.CB_STATS_PORT, uname, pwd,
+                                             bucket)
+            if returncode != 0:
+                logger.warning("CBStatsMemory failed to get memory stats from server: {}"
+                               .format(server))
+                return stats
+
+            data = json.loads(stdout)
+            for metric, value in data.items():
+                if metric in self.METRICS:
+                    if metric in stats:
+                        stats[metric] += value
+                    else:
+                        stats[metric] = value
         except Exception:
             pass
 
@@ -96,29 +95,26 @@ class CBStatsAll(Collector):
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
         try:
-            result = get_cbstats(server, self.CB_STATS_PORT, "all", self.cluster_spec)
-            buckets_data = list(filter(lambda a: a != "", result.split("*")))
-            for data in buckets_data:
-                data = data.strip()
-                if data.startswith(bucket):
-                    data = data.split("\n", 1)[1]
-                    data = data.replace("\"{", "{")
-                    data = data.replace("}\"", "}")
-                    data = data.replace("\\", "")
-                    data = json.loads(data)
-                    for (metric, number) in data.items():
-                        if metric in self.METRICS:
-                            if metric in stats:
-                                stats[metric] += number
-                            else:
-                                stats[metric] = number
-                    ep_magma_mem_used_diff = stats['mem_used_secondary'] -\
-                        stats['ep_magma_total_mem_used']
-                    if 'ep_magma_mem_used_diff' in stats:
-                        stats['ep_magma_mem_used_diff'] += ep_magma_mem_used_diff
+            uname, pwd = self.cluster_spec.rest_credentials
+            stdout, returncode = run_cbstats("all", server, self.CB_STATS_PORT, uname, pwd, bucket)
+            if returncode != 0:
+                logger.warning("CBStatsAll failed to get stats from server: {}".format(server))
+                return stats
+
+            data = json.loads(stdout)
+
+            for metric, value in data.items():
+                if metric in self.METRICS:
+                    if metric in stats:
+                        stats[metric] += value
                     else:
-                        stats['ep_magma_mem_used_diff'] = ep_magma_mem_used_diff
-                    break
+                        stats[metric] = value
+
+            ep_magma_mem_used_diff = stats['mem_used_secondary'] - stats['ep_magma_total_mem_used']
+            if 'ep_magma_mem_used_diff' in stats:
+                stats['ep_magma_mem_used_diff'] += ep_magma_mem_used_diff
+            else:
+                stats['ep_magma_mem_used_diff'] = ep_magma_mem_used_diff
         except Exception:
             pass
 

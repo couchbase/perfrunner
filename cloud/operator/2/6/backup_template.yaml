@@ -9,4 +9,3 @@ spec:
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
   size: 1000Gi
-  defaultRecoveryType: none

@@ -147,8 +147,7 @@ class WorkloadGen:
             connection_string = connection_string.format(host=host,
                                                          password=password)
             pass_auth = PasswordAuthenticator(bucket, password)
-            self.cluster = TxCluster(connection_string=connection_string,
-                                     options=ClusterOptions(pass_auth))
+            self.cluster = TxCluster(connection_string, ClusterOptions(pass_auth))
             self.bucket = self.cluster.bucket(bucket)
             self.collection = self.bucket.scope("scope-1").collection("collection-1")
 

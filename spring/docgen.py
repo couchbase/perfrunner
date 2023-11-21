@@ -4,6 +4,7 @@ import math
 import random
 import time
 import uuid
+from collections import deque
 from datetime import date, datetime, timedelta
 from typing import Iterator, List, Tuple
 
@@ -83,6 +84,8 @@ class Key:
             return hash_fmtr(self.number, self.prefix)
         if self.fmtr == 'hex':
             return hex_fmtr(self.number, self.prefix)
+        if self.fmtr == 'no_hash':
+            return str(self.number)
         return decimal_fmtr(self.number, self.prefix)
 
 
@@ -2502,4 +2505,25 @@ class TimeSeriesDocument(Document):
                 "_v2": round(random.uniform(100, 150), 2)
             }
 
+        return doc
+
+class MultiVectorDocument:
+    def __init__(self, knn_list: deque) -> None:
+        self.knn_list = knn_list
+
+    def next(self, doc):
+         doc = doc.content
+         doc["emb2"] = self.knn_list.pop()
+         self.knn_list.appendleft(doc["emb"])
+         return doc
+
+class TextAndVectorDocument:
+    def __init__(self) -> None:
+        self.fk = Faker()
+        Faker.seed(1000)
+
+    def next(self, doc):
+        doc = doc.content
+        text = self.fk.sentence(20)
+        doc["text"] = text
         return doc

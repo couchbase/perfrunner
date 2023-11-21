@@ -191,6 +191,22 @@ class MetricHelper:
 
         return index_size_mb, self._snapshots, metric_info
 
+    def fts_index_with_latency(self, elapsed_time: float) -> Metric:
+        metric_id = self.test_config.name.replace("latency", "index_time")
+        title = 'Total Index build time(sec), {}'.format(self._title)
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        metric_info['subCategory'] = "Index"
+        index_time = round(elapsed_time, 1)
+        return index_time, self._snapshots, metric_info
+
+    def fts_size_with_latency(self, index_size_raw: int) -> Metric:
+        metric_id = "{}_indexsize".format(self.test_config.name).replace("latency", "")
+        title = 'Index size (MB), {}'.format(self._title)
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        index_size_mb = int(index_size_raw / (1024 ** 2))
+        metric_info['subCategory'] = "Index"
+        return index_size_mb, self._snapshots, metric_info
+
     def jts_throughput(self) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, "jts_throughput")
         metric_id = metric_id.replace('.', '')
@@ -217,6 +233,15 @@ class MetricHelper:
         if lat > 100:
             lat = round(lat)
         return lat, self._snapshots, metric_info
+
+    def jts_recall_and_accuracy(self,value, metric, k_nearest_neighbour):
+        metric_id = '{}_{}at{}'.format(self.test_config.name, metric, k_nearest_neighbour)
+        title_prefix = "Average {}@{} across 1000 queries".format(metric, k_nearest_neighbour)
+        metric_id = metric_id.replace('.', '')
+        title = "{}, {}".format(title_prefix, self._title)
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        metric_info['subCategory'] = metric
+        return value, self._snapshots, metric_info
 
     def _jts_metric(self, collector, metric, percentile=None):
         timings = []

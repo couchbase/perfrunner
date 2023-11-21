@@ -2,6 +2,7 @@ import copy
 import os
 import signal
 import time
+from collections import deque
 from multiprocessing import Event, Lock, Manager, Process, Value
 from pathlib import Path
 from threading import Timer
@@ -57,6 +58,7 @@ from spring.docgen import (
     LargeItemPlasmaDocument,
     MovingWorkingSetKey,
     MultiBucketDocument,
+    MultiVectorDocument,
     NestedDocument,
     NewOrderedKey,
     PackageDocument,
@@ -72,6 +74,7 @@ from spring.docgen import (
     SmallPlasmaDocument,
     SmallPlasmaGroupedDocument,
     String,
+    TextAndVectorDocument,
     TimeSeriesDocument,
     TimestampDocument,
     TpcDsDocument,
@@ -835,6 +838,37 @@ class SeqUpsertsWorker(Worker):
                                         if i not in finished_key_iters]
 
 
+class SeqFetchModifyUpsertsWorker(Worker):
+
+    def run(self, sid, *args):
+        logger.info("running SeqFetchModifyUpsertsWorker")
+        self.cb.connect_collections(self.load_targets)
+        self.default_load(sid)
+
+    def init_doc_modifier(self, sid, ws, target):
+        if ws.modify_doc_loader == "multi_vector":
+            knn_list = deque()
+            for seq_id in range(sid, ws.items, ws.workers):
+                doc = self.cb.get(target, str(seq_id))
+                doc = doc.content
+                knn = doc["emb"]
+                knn_list.append(knn)
+                if len(knn_list) >= 10:
+                    break
+            self.doc_modifier = MultiVectorDocument(knn_list)
+        else :
+            self.doc_modifier = TextAndVectorDocument()
+
+    def default_load(self, sid):
+        ws = copy.deepcopy(self.ws)
+        for target in self.load_targets:
+            ws.items = self.load_map[target]
+            self.init_doc_modifier(sid, ws, target)
+            for key in SequentialKey(sid, ws, self.ts.prefix):
+                doc = self.cb.get(target, key.string)
+                doc = self.doc_modifier.next(doc)
+                self.cb.update(target, key.string, doc)
+
 class FTSDataSpreadWorker(Worker):
 
     def run(self, sid, *args):
@@ -1437,6 +1471,8 @@ class WorkerFactory:
         elif getattr(settings, 'fts_data_spread_workers', None):
             worker = FTSDataSpreadWorker
             num_workers = settings.fts_data_spread_workers
+        elif getattr(settings, 'modify_doc_loader'):
+            worker = SeqFetchModifyUpsertsWorker
         else:
             worker = KVWorker
         return worker, num_workers

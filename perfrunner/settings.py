@@ -1423,6 +1423,7 @@ class PhaseSettings:
         self.reads = int(options.get('reads', self.READS))
         self.updates = int(options.get('updates', self.UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
+        self.modify_doc_loader = options.get('modify_doc_loader', None)
         self.ttl = int(options.get('ttl', self.TTL))
         self.reads_and_updates = int(options.get('reads_and_updates',
                                                  self.READS_AND_UPDATES))
@@ -1866,11 +1867,23 @@ class JTSAccessSettings(PhaseSettings):
         if self.fts_file_based_rebal_disabled != self.FTS_FILE_BASED_REBAL_DISABLED:
             self.fts_node_level_parameters["disableFileTransferRebalance"] = \
                 self.fts_file_based_rebal_disabled
+        self.raw_query_map_file = options.get('raw_query_map_file', None)
+        self.report_percentiles = options.get('report_percentiles', "80,95").split(',')
+        self.ground_truth_file_name = options.get('ground_truth_file_name', None)
+        self.ground_truth_s3_path = options.get('ground_truth_s3_path', None)
+        self.k_nearest_neighbour = int(options.get("k_nearest_neighbour", 3))
+        self.vector_dimension = int(options.get("vector_dimension", 0))
+        self.fts_load_workers = int(options.get("fts_load_workers", "100"))
+        self.test_query_field2 = options.get("test_query_field2", None)
+        self.vector_similarity_type = options.get("vector_similarity_type", None)
+        self.index_partitions = options.get("index_partitions", None)
+        self.index_replicas = options.get("index_replicas", None)
         self.search_query_timeout_in_sec = options.get("search_query_timeout_in_sec", None)
         self.test_geojson_query_type = options.get("test_geojson_query_type", None)
         self.test_geojson_query_relation = options.get("test_geojson_query_relation", None)
         self.aggregation_buffer_ms = options.get("aggregation_buffer_ms", "1000")
-        self.indexPartitions = options.get("indexPartitions", None)
+        self.max_segment_size = options.get("max_segment_size", None)
+        self.vector_index_optimized_for = options.get("vector_index_optimized_for", None)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1926,6 +1939,7 @@ class RestoreSettings:
         self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
         self.encrypted = int(options.get('encrypted', self.ENCRYPTED))
         self.passphrase = options.get('passphrase', self.PASSPHRASE)
+        self.modify_storage_dir_name = bool(options.get('modify_storage_dir_name', 0))
 
         self.cloud = self.CLOUD
         if self.backup_storage:

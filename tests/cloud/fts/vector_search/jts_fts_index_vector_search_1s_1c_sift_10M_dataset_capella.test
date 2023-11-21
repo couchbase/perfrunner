@@ -1,0 +1,68 @@
+[test_case]
+test = perfrunner.tests.fts.FTSIndexBuildCloudBackupTest
+
+[showfast]
+title = Index build time, initial (sec), Vector Search SIFT Dataset,Pure Knn, wiki 10M x 128 dim, 1 bucket, 1s, 1c, FTS
+component = jtscloud
+category = Index
+sub_category = {provider}
+orderby = q0b00000010
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 8
+num_buckets = 1
+fts_index_mem_quota = 20000
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[load]
+items = 10000000
+fts_data_spread_workers = 100
+ssl_mode = capella
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket]
+replica_number = 0
+
+[jts]
+jts_repo_branch = multi_query_support
+logging_method = bucket_wise
+jts_instances = 1
+test_duration = 600
+test_total_docs = 10000000
+test_query_workers = 1
+test_kv_workers = 60
+test_kv_throughput_goal = 10000
+test_driver = couchbase
+test_stats_limit = 10000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_query_limit = 500
+test_worker_type = validatedLatency
+couchbase_index_name = perf_fts_index
+test_data_file = ../tests/fts/data/vector/testData/sift_500K_100Numeric_422To1500TextHits.txt
+test_query_type = vector
+test_query_field = emb
+couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_only_vector_index.json
+raw_query_map_file = tests/fts/data/vector/raw_vector_match_none_query.json
+report_percentiles = 80,95,99
+index_replicas = 1
+vector_dimension = 128
+index_partitions = 20
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[restore]
+backup_storage = s3://fts-vector-sift-10m-128dims
+backup_repo = fts_vector_sift_10M_128dims
+threads = 20
+use_tls = 1
+
+[profiling]
+services = fts

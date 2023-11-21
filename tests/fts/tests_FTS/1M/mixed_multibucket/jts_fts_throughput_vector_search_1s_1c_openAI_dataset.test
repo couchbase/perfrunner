@@ -1,0 +1,53 @@
+
+[test_case]
+test = perfrunner.tests.fts.FTSThroughputTest
+
+[showfast]
+title = Vector Search OPEN_AI dataset,Pure Knn, wiki 500K x 1536 dim, 3 node, 1 bucket, 1s, 1c, FTS
+component = jts
+category = vector
+sub_category = Throughput
+orderby = q0b00000110
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[jts]
+jts_repo_branch = multi_query_support
+logging_method = bucket_wise
+jts_instances = 6
+test_duration = 600
+test_total_docs = 500000
+test_query_workers = 15
+test_kv_workers = 5
+test_kv_throughput_goal = 1660
+test_driver = couchbase
+test_stats_limit = 500000
+test_stats_aggregation_step = 100
+test_debug = false
+test_query_limit = 10
+test_worker_type = validatedThroughput
+couchbase_index_name = perf_fts_index
+test_data_file = ../tests/fts/data/vector/testData/openai_500K_100Numeric_422To1500TextHits.txt
+test_query_type = vector
+test_query_field = emb
+couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_only_vector_index.json
+raw_query_map_file = tests/fts/data/vector/raw_vector_match_none_query.json
+vector_dimension = 1536
+
+[restore]
+backup_storage = /data2
+backup_repo = fts_openai_medium_500k_1536_dims
+
+[load]
+items = 500000
+fts_data_spread_workers = 100
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[profiling]
+services = fts

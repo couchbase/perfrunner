@@ -17,10 +17,7 @@ from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec, TestConfig
-from perfrunner.utils.terraform import (
-    CAPELLA_CREDS_FILE,
-    SERVICES_CAPELLA_TO_PERFRUNNER,
-)
+from perfrunner.utils.terraform import CAPELLA_CREDS_FILE, SERVICES_CAPELLA_TO_PERFRUNNER
 
 MAX_RETRY = 20
 RETRY_DELAY = 10
@@ -1674,6 +1671,12 @@ class DefaultRestHelper(RestBase):
 
     def get_rebalance_report(self, host: str) -> dict:
         resp = self.get(url=self._get_api_url(host=host, path='logs/rebalanceReport'))
+        return resp.json()
+
+    def fts_search_query(self, host: str, indexName: str,  data: dict) -> dict:
+        url = self._get_api_url(host=host, path=f"api/index/{indexName}/query",
+                                plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
+        resp = self.post(url=url, data= json.dumps(data))
         return resp.json()
 
     def is_persistence_active(self, host: str) -> str:

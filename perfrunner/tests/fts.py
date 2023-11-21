@@ -1,23 +1,21 @@
 import copy
+import math
 import os
 import shutil
 import threading
 import time
 from collections import deque
+from typing import Any
 
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import pretty_dict, read_json
+from perfrunner.helpers.misc import pretty_dict, read_json, run_aws_cli_command
 from perfrunner.helpers.profiler import with_profiles
-from perfrunner.helpers.worker import (
-    WorkloadPhase,
-    jts_run_task,
-    jts_warmup_task,
-    spring_task,
-)
+from perfrunner.helpers.worker import WorkloadPhase, jts_run_task, jts_warmup_task, spring_task
 from perfrunner.settings import TargetIterator
 from perfrunner.tests import PerfTest
+from perfrunner.utils.fts.vector_recall_calculator import VectorRecallCalculator
 
 
 class JTSTest(PerfTest):
@@ -26,60 +24,63 @@ class JTSTest(PerfTest):
 
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
-        self.access = self.test_config.jts_access_settings
+        self.jts_access = self.test_config.jts_access_settings
         if self.test_config.collection.collection_map:
-            self.access.collections_enabled = True
+            self.jts_access.collections_enabled = True
         self.showfast = self.test_config.showfast
         self.fts_index_map = dict()
         self.fts_index_defs = dict()
         self.fts_index_name_flag = False
-        self.access.capella_infrastructure = self.cluster_spec.capella_infrastructure
+        self.jts_access.capella_infrastructure = self.cluster_spec.capella_infrastructure
+        self.jts_access.fts_raw_query_map = None
+        if self.jts_access.raw_query_map_file:
+            self.jts_access.fts_raw_query_map = read_json(self.jts_access.raw_query_map_file)
 
     def download_jts(self):
         if self.worker_manager.is_remote:
             self.remote.init_jts(
-                repo=self.access.jts_repo,
-                branch=self.access.jts_repo_branch,
+                repo=self.jts_access.jts_repo,
+                branch=self.jts_access.jts_repo_branch,
                 worker_home=self.worker_manager.WORKER_HOME,
-                jts_home=self.access.jts_home_dir
+                jts_home=self.jts_access.jts_home_dir
             )
         else:
             local.init_jts(
-                repo=self.access.jts_repo,
-                branch=self.access.jts_repo_branch,
-                jts_home=self.access.jts_home_dir
+                repo=self.jts_access.jts_repo,
+                branch=self.jts_access.jts_repo_branch,
+                jts_home=self.jts_access.jts_home_dir
             )
 
     @with_stats
     @with_profiles
     def run_test(self):
         logger.info('Running jts run phase')
-        phases = [WorkloadPhase(jts_run_task, self.target_iterator, self.access)]
+        phases = [WorkloadPhase(jts_run_task, self.target_iterator, self.jts_access)]
         self.log_task_settings(phases)
         self.worker_manager.run_fg_phases(phases)
         self._download_logs()
 
     def warmup(self):
-        if int(self.access.warmup_query_workers) > 0:
+        if int(self.jts_access.warmup_query_workers) > 0:
             logger.info('Running jts warmup phase')
-            phases = [WorkloadPhase(jts_warmup_task, self.target_iterator, self.access)]
+            phases = [WorkloadPhase(jts_warmup_task, self.target_iterator, self.jts_access)]
             self.log_task_settings(phases)
             self.worker_manager.run_fg_phases(phases)
 
     def _download_logs(self):
-        local_dir = self.access.jts_logs_dir
+        local_dir = self.jts_access.jts_logs_dir
         if self.worker_manager.is_remote:
             if os.path.exists(local_dir):
                 shutil.rmtree(local_dir, ignore_errors=True)
             os.makedirs(local_dir)
             self.remote.get_jts_logs(
                 self.worker_manager.WORKER_HOME,
-                self.access.jts_home_dir,
-                self.access.jts_logs_dir
+                self.jts_access.jts_home_dir,
+                self.jts_access.jts_logs_dir
             )
         else:
             local.get_jts_logs(
-                self.access.jts_home_dir,
+                self.jts_access.jts_home_dir,
                 local_dir
             )
 
@@ -98,7 +99,7 @@ class FTSTest(JTSTest):
     def delete_index(self):
         self.rest.delete_fts_index(
             self.fts_master_node,
-            self.access.couchbase_index_name
+            self.jts_access.couchbase_index_name
         )
 
     def delete_indexes(self):
@@ -120,12 +121,12 @@ class FTSTest(JTSTest):
         collection_list_per_index = []
         collection_list = list(collection_map[bucket][scope].keys())
         total_num_collections = len(collection_list)
-        collections_per_index = int(total_num_collections / self.access.index_groups)
+        collections_per_index = int(total_num_collections / self.jts_access.index_groups)
 
-        if int(self.access.index_groups) == 1:
+        if int(self.jts_access.index_groups) == 1:
             # if index is built on all the collections
             return [collection_list]
-        for i in range(self.access.index_groups):
+        for i in range(self.jts_access.index_groups):
             start = collections_per_index * i
             end = collections_per_index * (i + 1)
             collection_list_per_index.append(collection_list[start:end])
@@ -144,9 +145,9 @@ class FTSTest(JTSTest):
                     or index_def["planParams"]["numReplicas"] < 1:
                 index_def["planParams"]["numReplicas"] = 1
 
-        if self.access.couchbase_index_type:
+        if self.jts_access.couchbase_index_type:
             index_def["params"]["store"]["indexType"] = \
-                self.access.couchbase_index_type
+                self.jts_access.couchbase_index_type
 
         # setting the type mapping for collection indexes
         if collection_map:
@@ -169,6 +170,26 @@ class FTSTest(JTSTest):
             coll_type_mapping.append(types_col)
         return coll_type_mapping
 
+    def update_key_value_mutate_nested(self, value: dict, target_key: str,
+                                       new_value: Any) -> bool:
+        if isinstance(value, dict):
+            found_occurrence = False
+            for key, _value in value.items():
+                if key == target_key:
+                    value[key] = new_value
+                    found_occurrence = True
+                else:
+                    if self.update_key_value_mutate_nested(_value, target_key, new_value):
+                        found_occurrence = True
+            return found_occurrence
+        elif isinstance(value, list):
+            found_occurrence = False
+            for element in value:
+                if self.update_key_value_mutate_nested(element, target_key, new_value):
+                    found_occurrence = True
+            return found_occurrence
+        return False
+
     def create_fts_index_definitions(self):
         bucket_name = self.test_config.buckets[0]
         result = self.rest.get_bucket_info(self.fts_nodes[0], bucket_name)
@@ -187,23 +208,52 @@ class FTSTest(JTSTest):
         # this variable will hold the key valuesfor the custom type mapping
         key_values = []
 
-        if self.access.test_query_mode == 'mixed':
+        if self.jts_access.test_query_mode == 'mixed':
             self.mixed_query_map = dict()
-            self.mixed_query_map = read_json(self.access.couchbase_index_configmap)
-            self.access.mixed_query_map = self.mixed_query_map
+            self.mixed_query_map = read_json(self.jts_access.couchbase_index_configmap)
+            self.jts_access.mixed_query_map = self.mixed_query_map
 
         else:
-            general_index_def = read_json(self.access.couchbase_index_configfile)
+            general_index_def = read_json(self.jts_access.couchbase_index_configfile)
             general_index_def = self.update_index_def(general_index_def)
+            if self.jts_access.max_segment_size:
+                general_index_def["params"]["store"]["scorchMergePlanOptions"] = {
+                    "maxSegmentSize": int(self.jts_access.max_segment_size)
+                }
+            if self.update_key_value_mutate_nested(general_index_def, "dims",
+                                                   self.jts_access.vector_dimension):
+                if self.jts_access.vector_dimension == 0:
+                    logger.interrupt("vector dimension not provided for vector search test")
+                logger.info(f"Vector dimension successful update to \
+                            {self.jts_access.vector_dimension}")
+                if self.jts_access.vector_similarity_type:
+                    self.update_key_value_mutate_nested(general_index_def,
+                                                        "similarity",
+                                                        self.jts_access.vector_similarity_type)
+                    logger.info(f"Vector similarity successful updated to \
+                                {self.jts_access.vector_similarity_type}")
+            if self.jts_access.vector_index_optimized_for:
+                self.update_key_value_mutate_nested(general_index_def,
+                                                    "vector_index_optimized_for",
+                                                    self.jts_access.vector_index_optimized_for)
+            if self.jts_access.index_partitions:
+                index_partitions = int(self.jts_access.index_partitions)
+                logger.info(f"Successfully updated index partitions to {index_partitions}")
+                self.update_key_value_mutate_nested(general_index_def, "indexPartitions",
+                                                    index_partitions)
+                self.update_key_value_mutate_nested(general_index_def, "maxPartitionsPerPIndex",
+                                                    math.ceil(1024/index_partitions))
+            if self.jts_access.index_replicas:
+                general_index_def["planParams"]["numReplicas"] = int(self.jts_access.index_replicas)
 
             # Geo queries have a slightly different index type with custom type mapping
             if "types" in list(general_index_def["params"]["mapping"].keys()):
                 # if any custom type mapping is present
                 key_values = list(general_index_def["params"]["mapping"]["types"].keys())
 
-            if self.access.couchbase_index_type:
+            if self.jts_access.couchbase_index_type:
                 general_index_def["params"]["store"]["indexType"] = \
-                    self.access.couchbase_index_type
+                    self.jts_access.couchbase_index_type
 
         # index_type_mapping holds the type mapping part of the index
         index_type_mapping = {}
@@ -235,6 +285,7 @@ class FTSTest(JTSTest):
                     index_type_mapping = \
                         copy.deepcopy(bucket_index_def["params"]["mapping"]["default_mapping"])
                     bucket_index_def["params"]["mapping"]["default_mapping"]["enabled"] = False
+                    bucket_index_def["params"]["mapping"]["default_mapping"].pop("properties")
 
                 for scope_name in scope_names:
                     collection_name_list = list(collection_map[bucket_name][scope_name].keys())
@@ -253,8 +304,9 @@ class FTSTest(JTSTest):
 
                     for coll_group_id, collection_type_mapping in \
                             enumerate(index_type_mapping_per_group):
-                        for index_count in range(0, self.access.indexes_per_group):
-                            index_name = "{}-{}".format(self.access.couchbase_index_name, index_id)
+                        for index_count in range(0, self.jts_access.indexes_per_group):
+                            index_name = "{}-{}".format(self.jts_access.couchbase_index_name,
+                                                        index_id)
                             collection_index_def = copy.deepcopy(bucket_index_def)
                             collection_index_def.update({
                                 'name': index_name,
@@ -288,8 +340,8 @@ class FTSTest(JTSTest):
                         bucket_index_def["params"]["mapping"]["default_mapping"]["enabled"] = False
 
                 # default, multiple indexes with the same index def
-                for num_indexes in range(0, self.access.indexes_per_group):
-                    index_name = "{}-{}".format(self.access.couchbase_index_name, num_indexes)
+                for num_indexes in range(0, self.jts_access.indexes_per_group):
+                    index_name = "{}-{}".format(self.jts_access.couchbase_index_name, num_indexes)
                     collection_index_def = copy.deepcopy(bucket_index_def)
                     collection_index_def.update({
                         'name': index_name,
@@ -304,14 +356,14 @@ class FTSTest(JTSTest):
                         "bucket": bucket_name,
                         "scope": "_default",
                         "collections": ["_default"],
-                        "total_docs": int(self.access.test_total_docs)
+                        "total_docs": int(self.jts_access.test_total_docs)
                     }
 
                     self.fts_index_defs[index_name] = {
                         "index_def": collection_index_def
                     }
 
-        self.access.fts_index_map = self.fts_index_map
+        self.jts_access.fts_index_map = self.fts_index_map
 
     def create_fts_index_and_wait(self, index_name, index_def):
         time.sleep(1)
@@ -355,7 +407,7 @@ class FTSTest(JTSTest):
                     iname)
                 self.fts_index_map[index_name]["full_index_name"] = fts_updated_name
             bucket_name = self.fts_index_map[index_name]["bucket"]
-            if self.access.index_creation_style == 'async':
+            if self.jts_access.index_creation_style == 'async':
                 if thread_dict.get(bucket_name, None) is None:
                     thread_dict[bucket_name] = deque()
                 thread_dict[bucket_name].append(threading.Thread(
@@ -365,8 +417,8 @@ class FTSTest(JTSTest):
                 index_def_list.append([index_name, index_def])
         logger.info('Index map: {}'.format(pretty_dict(self.fts_index_map)))
         t0 = time.time()
-        logger.info("Creating indexes {}hronously.".format(self.access.index_creation_style))
-        if self.access.index_creation_style == 'async':
+        logger.info("Creating indexes {}hronously.".format(self.jts_access.index_creation_style))
+        if self.jts_access.index_creation_style == 'async':
             self.async_index_create(thread_dict)
         else:
             self.sync_index_create(index_def_list)
@@ -420,8 +472,8 @@ class FTSTest(JTSTest):
             roles = servers_and_roles[i][1]
             if "fts" in roles:
                 fts_nodes_before.append(host)
-        if len(self.access.fts_node_level_parameters.keys()) != 0:
-            node_level_params = self.access.fts_node_level_parameters
+        if len(self.jts_access.fts_node_level_parameters.keys()) != 0:
+            node_level_params = self.jts_access.fts_node_level_parameters
             for node in fts_nodes_before:
                 self.rest.fts_set_node_level_parameters(node_level_params, node)
         return fts_nodes_before
@@ -453,7 +505,7 @@ class FTSTest(JTSTest):
 
     def spread_data(self):
         settings = self.test_config.load_settings
-        #  if self.access.test_collection_query_mode == "collection_specific":
+        #  if self.jts_access.test_collection_query_mode == "collection_specific":
         #      settings.fts_data_spread_worker_type = "collection_specific"
         settings.seq_upserts = False
         logger.info('Running data spread phase')
@@ -473,6 +525,48 @@ class FTSTest(JTSTest):
         self.delete_index()
         self.data_restore()
         self.wait_for_persistence()
+
+    def cloud_restore(self):
+        self.remote.extract_cb_any(filename='couchbase',
+                                   worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+
+        credential = local.read_aws_credential(
+            self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+        collection_map = self.test_config.collection.collection_map
+        restore_mapping = None
+        if collection_map:
+            for target in self.target_iterator:
+                if not collection_map.get(
+                        target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
+                    restore_mapping = \
+                        "{0}._default._default={0}.scope-1.collection-1"\
+                        .format(target.bucket)
+        archive = self.test_config.restore_settings.backup_storage
+        if self.test_config.restore_settings.modify_storage_dir_name:
+            suffix_repo = "aws"
+            if self.cluster_spec.capella_infrastructure:
+                suffix_repo = self.cluster_spec.capella_backend
+            archive = archive + "/" + suffix_repo
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            archive=archive,
+                            repo=self.test_config.restore_settings.backup_repo,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            map_data=restore_mapping,
+                            encrypted=self.test_config.restore_settings.encrypted,
+                            passphrase=self.test_config.restore_settings.passphrase)
+        self.wait_for_persistence()
+        if self.test_config.collection.collection_map:
+            self.spread_data()
 
 
 class FTSThroughputTest(FTSTest):
@@ -503,12 +597,14 @@ class FTSLatencyTest(FTSTest):
     def update_settings_for_multi_queries(self, test_config):
         for config in test_config.keys():
             logger.info(test_config[config])
-            setattr(self.access, config, test_config[config])
-            logger.info(self.access)
+            setattr(self.jts_access, config, test_config[config])
+            logger.info(self.jts_access)
 
     def report_kpi(self):
-        self.reporter.post(*self.metrics.jts_latency(percentile=80))
-        self.reporter.post(*self.metrics.jts_latency(percentile=95))
+        logger.info(f"Reporting latencies for percentiles \
+                    {self.test_config.jts_access_settings.report_percentiles}")
+        for percentile in self.test_config.jts_access_settings.report_percentiles:
+            self.reporter.post(*self.metrics.jts_latency(percentile=int(percentile)))
 
     def run(self):
         self.cleanup_and_restore()
@@ -599,34 +695,8 @@ class FTSLatencyCloudTest(FTSLatencyTest):
 
 class FTSLatencyCloudBackupTest(FTSLatencyTest):
 
-    def restore(self):
-        self.remote.extract_cb_any(filename='couchbase',
-                                   worker_home=self.worker_manager.WORKER_HOME)
-        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
-
-        credential = local.read_aws_credential(
-            self.test_config.backup_settings.aws_credential_path)
-        self.remote.create_aws_credential(credential)
-        self.remote.client_drop_caches()
-        self.remote.restore(cluster_spec=self.cluster_spec,
-                            master_node=self.master_node,
-                            threads=self.test_config.restore_settings.threads,
-                            worker_home=self.worker_manager.WORKER_HOME,
-                            archive=self.test_config.restore_settings.backup_storage,
-                            repo=self.test_config.restore_settings.backup_repo,
-                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region,
-                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
-                            use_tls=self.test_config.restore_settings.use_tls,
-                            map_data=self.test_config.restore_settings.map_data,
-                            encrypted=self.test_config.restore_settings.encrypted,
-                            passphrase=self.test_config.restore_settings.passphrase)
-        self.wait_for_persistence()
-        if self.test_config.collection.collection_map:
-            self.spread_data()
-
     def run(self):
-        self.restore()
+        self.cloud_restore()
         self.create_fts_index_definitions()
         self.create_fts_indexes()
         self.download_jts()
@@ -640,6 +710,12 @@ class FTSThroughputCloudBackupTest(FTSLatencyCloudBackupTest):
 
     def report_kpi(self):
         self.reporter.post(*self.metrics.jts_throughput())
+
+
+class FTSIndexBuildCloudBackupTest(FTSIndexTest):
+
+    def cleanup_and_restore(self):
+        self.cloud_restore()
 
 
 class FTSIndexLoadTest(FTSIndexTest):
@@ -794,3 +870,101 @@ class FTSLatencysLoadWithStatsTest(FTSLatencyTest):
         self.warmup()
         self.run_test()
         self.report_kpi()
+
+
+class FTSVectorSearchRecallTest(FTSLatencyTest):
+
+    COLLECTORS = {'fts_stats': False, 'jts_stats': False}
+
+    def report_kpi(self, avg_recall, avg_accuracy):
+        self.reporter.post(
+            *self.metrics.jts_recall_and_accuracy(avg_recall, "Recall",
+                                                  self.jts_access.k_nearest_neighbour)
+                        )
+        self.reporter.post(
+            *self.metrics.jts_recall_and_accuracy(avg_accuracy, "Accuracy",
+                                                  self.jts_access.k_nearest_neighbour)
+                        )
+
+    @with_profiles
+    @with_stats
+    def calculate_recall(self):
+        self.jts_access.fts_master_node = self.fts_master_node
+        recallCalculator = VectorRecallCalculator(self.jts_access, self.rest)
+        avg_recall, avg_accuracy = recallCalculator.run()
+        return avg_recall, avg_accuracy
+
+    def downloads_ground_truth_file(self):
+        logger.info("Downloading ground truth files from aws")
+        s3_bucket_path = self.jts_access.ground_truth_s3_path
+        ground_truth_file_name = self.jts_access.ground_truth_file_name
+        logger.info('Downloading {}'.format(ground_truth_file_name))
+        run_aws_cli_command(
+            f"s3 cp {s3_bucket_path+ground_truth_file_name} {ground_truth_file_name}")
+
+    def run(self):
+        self.cleanup_and_restore()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.wait_for_index_persistence()
+        self.downloads_ground_truth_file()
+        avg_recall, avg_accuracy = self.calculate_recall()
+        self.report_kpi(avg_recall, avg_accuracy)
+
+
+class FTSVectorSearchModifiedDataTest(FTSLatencyTest):
+
+    def run(self):
+        self.cleanup_and_restore()
+        self.access()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        index_size = self.calculate_index_size()
+        size_final = int(index_size / (1024 ** 2))
+        logger.info("The index size is {} MB".format(size_final))
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.run_test()
+        self.report_kpi()
+
+
+class FTSLatencyTestWithIndexStats(FTSLatencyTest):
+
+    COLLECTORS = {'fts_stats': True}
+
+    def report_index_stats(self, time_elapsed, size):
+        self.reporter.post(
+            *self.metrics.fts_index_with_latency(time_elapsed)
+        )
+        self.reporter.post(
+            *self.metrics.fts_size_with_latency(size)
+        )
+        self.cbmonitor_snapshots = []
+        self.cbmonitor_clusters = []
+        self.COLLECTORS["jts_stats"] = True
+
+    @with_stats
+    def build_index(self, fts_nodes):
+        elapsed_time = self.create_fts_indexes()
+        self.wait_for_index_persistence(fts_nodes)
+        return elapsed_time
+
+    def run(self):
+        self.cleanup_and_restore()
+        self.create_fts_index_definitions()
+        fts_nodes = self.add_extra_fts_parameters()
+        time_elapsed = self.build_index(fts_nodes)
+        size = self.calculate_index_size()
+        self.report_index_stats(time_elapsed, size)
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.run_test()
+        self.report_kpi()
+
+
+class FTSLatencyCloudBackupModifiedDataTest(FTSVectorSearchModifiedDataTest):
+
+    def cleanup_and_restore(self):
+        return self.cloud_restore()

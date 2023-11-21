@@ -1,0 +1,68 @@
+{
+  "type": "fulltext-index",
+  "name": "",
+  "uuid": "",
+  "sourceType": "gocbcore",
+  "sourceName": "",
+  "sourceUUID": "",
+  "planParams": {
+    "maxPartitionsPerPIndex": 113,
+    "indexPartitions": 9
+  },
+  "params": {
+    "doc_config": {
+      "docid_prefix_delim": "",
+      "docid_regexp": "",
+      "mode": "scope.collection.type_field",
+      "type_field": "type"
+    },
+    "mapping": {
+      "analysis": {},
+      "default_analyzer": "standard",
+      "default_datetime_parser": "dateTimeOptional",
+      "default_field": "_all",
+      "default_mapping": {
+        "dynamic": true,
+        "enabled": true,
+        "properties": {
+          "emb": {
+            "dynamic": false,
+            "enabled": true,
+            "fields": [
+              {
+                "dims": 1536,
+                "index": true,
+                "name": "emb",
+                "similarity": "l2_norm",
+                "type": "vector",
+                "vector_index_optimized_for": "latency"
+              }
+            ]
+          },
+          "id": {
+            "dynamic": false,
+            "enabled": true,
+            "fields": [
+              {
+                "index": true,
+                "name": "id",
+                "type": "number"
+              }
+            ]
+          }
+        }
+      },
+      "default_type": "_default",
+      "docvalues_dynamic": false,
+      "index_dynamic": true,
+      "store_dynamic": false,
+      "type_field": "_type"
+    },
+    "store": {
+      "indexType": "scorch",
+      "segmentVersion": 16,
+      "spatialPlugin": "s2"
+    }
+  },
+  "sourceParams": {}
+}

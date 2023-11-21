@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.fts.FTSLatencyTest
+
+[showfast]
+title = Vector Search With Numeric OPEN_AI dataset, wiki 5M x 1536 dim, 3 node, 1 bucket, 1s, 1c, FTS
+component = jts
+category = vector
+sub_category = Latency
+orderby = q0b00000010
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[load]
+items = 5000000
+fts_data_spread_workers = 100
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[jts]
+jts_repo_branch = multi_query_support
+logging_method = bucket_wise
+jts_instances = 1
+test_duration = 600
+test_total_docs = 5000000
+test_query_workers = 1
+test_kv_workers = 60
+test_kv_throughput_goal = 10000
+test_driver = couchbase
+test_stats_limit = 5000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_query_limit = 500
+test_worker_type = validatedLatency
+couchbase_index_name = perf_fts_index
+test_data_file = ../tests/fts/data/vector/testData/openai_5M_100Numeric_4915To6500TextHits.txt
+test_query_type = numeric_vector
+test_query_field = emb
+test_query_field2 = id
+couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_numeric_vector_index.json
+raw_query_map_file = tests/fts/data/vector/raw_vector_match_none_query.json
+report_percentiles = 80,95,99
+vector_dimension = 1536
+
+[restore]
+backup_storage = /data2
+backup_repo = fts_openai_large_5m_1536_dims
+
+[profiling]
+services = fts

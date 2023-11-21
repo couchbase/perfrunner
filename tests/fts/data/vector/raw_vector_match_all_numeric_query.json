@@ -1,0 +1,9 @@
+{
+  "query": {
+    "min": 121476,
+    "inclusive_min": true,
+    "field":"id"
+},
+  "sort": ["-_score"],
+  "limit": 3
+}

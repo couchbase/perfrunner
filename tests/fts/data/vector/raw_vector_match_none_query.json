@@ -1,0 +1,7 @@
+{
+  "query": {
+    "match_none": {}
+  },
+  "sort": ["-_score"],
+  "limit": 3
+}

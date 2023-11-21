@@ -100,6 +100,11 @@ def execute_jts_run(settings: PhaseSettings, target, full_index_name, index_map)
         params += f" -test_geojson_query_relation {settings.test_geojson_query_relation}"
     if str(settings.aggregation_buffer_ms) != "1000":
         params += f" -aggregation_buffer_ms {settings.aggregation_buffer_ms}"
+    if settings.fts_raw_query_map:
+        params += f" -k_nearest_neighbour {settings.k_nearest_neighbour}"
+        params += f" -fts_raw_query_map \'{json.dumps(settings.fts_raw_query_map)}\'"
+    if settings.test_query_field2:
+        params += f" -test_query_field2 {settings.test_query_field2}"
     print(params)
     run_custom_cmd(settings.jts_home_dir, settings.jts_run_cmd, params)
 
@@ -160,7 +165,11 @@ def execute_jts_warmup(settings: PhaseSettings, target, full_index_name, index_m
         params += f" -test_geojson_query_relation {settings.test_geojson_query_relation}"
     if str(settings.aggregation_buffer_ms) != "1000":
         params += f" -aggregation_buffer_ms {settings.aggregation_buffer_ms}"
-
+    if settings.fts_raw_query_map:
+        params += f" -k_nearest_neighbour {settings.k_nearest_neighbour}"
+        params += f" -fts_raw_query_map \'{json.dumps(settings.fts_raw_query_map)}\'"
+    if settings.test_query_field2:
+        params += f" -test_query_field2 {settings.test_query_field2}"
     print(params)
     run_custom_cmd(settings.jts_home_dir, settings.jts_run_cmd, params)
 

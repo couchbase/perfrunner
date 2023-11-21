@@ -106,7 +106,7 @@ class HighBucketDensityTest(RebalanceKVTest,
     def create_fts_indexes(self):
         less_words = True
         for bkt in self.test_config.buckets:
-            definition = read_json(self.access.couchbase_index_configfile)
+            definition = read_json(self.jts_access.couchbase_index_configfile)
             if less_words:
                 name = "fts_less_words"
                 less_words = False

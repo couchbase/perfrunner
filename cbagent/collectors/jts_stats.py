@@ -12,7 +12,7 @@ class JTSCollector(Collector):
 
     def __init__(self, settings, test):
         super().__init__(settings)
-        self.settings = test.access
+        self.settings = test.jts_access
 
     def update_metadata(self):
         self.mc.add_cluster()

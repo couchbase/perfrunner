@@ -43,7 +43,7 @@ class GenericDocgen:
                 saved = self.c.get(key).value
                 if 'text' in saved:
                     i += 1
-            except Exception as e:
+            except Exception:
                 pass
         master_file.close()
 

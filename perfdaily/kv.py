@@ -1,8 +1,9 @@
 from perfdaily import DailyTest
 from perfrunner.tests.dcp import JavaDCPThroughputTest as _DCPThroughputTest
 from perfrunner.tests.kv import PillowFightTest as _PillowFightTest
-from perfrunner.tests.magma import \
-    CombinedLatencyAndRebalanceCDCTest as _CombinedLatencyAndRebalanceCDCTest
+from perfrunner.tests.magma import (
+    CombinedLatencyAndRebalanceCDCTest as _CombinedLatencyAndRebalanceCDCTest,
+)
 from perfrunner.tests.magma import PillowFightCDCTest as _PillowFightCDCTest
 from perfrunner.tests.rebalance import RebalanceKVTest
 

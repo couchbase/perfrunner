@@ -573,18 +573,18 @@ class DefaultMonitor(DefaultRestHelper):
             check_for_status = 'Ready'
 
         index_list = []
-        for bucket_name, scope_map in indexes.items():
-            for scope_name, collection_map in scope_map.items():
-                for collection_name, index_map in collection_map.items():
+        for scope_map in indexes.values():
+            for collection_map in scope_map.values():
+                for index_map in collection_map.values():
                     for index, index_config in index_map.items():
-                        if type(index_config) is dict:
+                        if isinstance(index_config, dict):
                             num_replica = index_config["num_replica"]
                             index_list.append(index)
                             for i in range(1, num_replica+1):
                                 index_list.append("{index_name} (replica {number})"
                                                   .format(index_name=index, number=i))
                         else:
-                            for index_name in index_map.keys():
+                            for index_name in index_map:
                                 index_list.append(index_name)
 
         indexes = index_list
@@ -1069,7 +1069,7 @@ class DefaultMonitor(DefaultRestHelper):
         logger.info('host: {}'.format(host))
         replicate_docs = 0
         while True:
-            if type(host) is list:
+            if isinstance(host, list):
                 for sg in range(len(host)):
                     stats = self.get_sgreplicate_stats(host=host[sg],
                                                        version=version)
@@ -1115,7 +1115,7 @@ class DefaultMonitor(DefaultRestHelper):
         logger.info('Monitoring syncgateway replicate status :')
         while True:
             replicate_docs = 0
-            if type(host) is list:
+            if isinstance(host, list):
                 for sg in range(len(host)):
                     stats = self.get_sgreplicate_stats(host=host[sg],
                                                        version=version)

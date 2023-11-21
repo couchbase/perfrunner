@@ -1,0 +1,18 @@
+target-version = "py39"
+line-length = 100
+exclude = ["cbagent/collectors/__init__.py"]
+
+[lint]
+extend-select = [
+    "D",  # pydocstyle
+    "I",  # isort
+    "W",  # pycodestyle warnings
+]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "D211", "D213"]
+
+[lint.isort]
+known-first-party = ["fastdocgen"]
+known-third-party = ["spooky"]
+
+[lint.pydocstyle]
+convention = "pep257"

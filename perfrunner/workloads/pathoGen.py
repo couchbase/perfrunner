@@ -107,15 +107,13 @@ if sdk_major_version == 2:
     from couchbase.exceptions import TemporaryFailError, TimeoutError
 elif sdk_major_version == 3:
     from couchbase.cluster import Cluster, PasswordAuthenticator
-    from couchbase.exceptions import \
-        TemporaryFailException as TemporaryFailError
+    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
     from couchbase.exceptions import TimeoutException as TimeoutError
     from couchbase_core._libcouchbase import FMT_BYTES
 elif sdk_major_version == 4:
     from couchbase.auth import PasswordAuthenticator
     from couchbase.cluster import Cluster
-    from couchbase.exceptions import \
-        TemporaryFailException as TemporaryFailError
+    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
     from couchbase.exceptions import TimeoutException as TimeoutError
     from couchbase.pycbc_core import FMT_BYTES
 

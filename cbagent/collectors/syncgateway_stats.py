@@ -286,7 +286,7 @@ class SyncGatewayStats(Collector):
                         if m in self.sg_stats[host][i][j][k]:
                             return self.sg_stats[host][i][j][k][m]
         if len(metric_array) == 5:
-            i, j, k, l, m = metric_name.split("__")
+            i, j, k, l, m = metric_name.split("__")  # noqa: E741
             if i in self.sg_stats[host]:
                 if j in self.sg_stats[host][i]:
                     for db in range(1, self.num_buckets + 1):

@@ -133,7 +133,7 @@ class SecondaryIndexTest(PerfTest):
                     for index, index_config in index_map.items():
                         configs = ''
                         partition_keys = ''
-                        if type(index_config) is dict:
+                        if isinstance(index_config, dict):
                             index_def = index_config.pop("field")
                             for config, value in index_config.items():
                                 configs = configs + '"{}":{},'.format(config, value)

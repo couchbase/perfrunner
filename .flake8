@@ -1,3 +1,0 @@
-[flake8]
-max-line-length = 100
-exclude = perfrunner/utils/fts,cbagent/collectors/__init__.py

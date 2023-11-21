@@ -24,9 +24,7 @@ clean:
 	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:
-	${ENV}/bin/flake8 --statistics ${PYTHON_PROJECTS}
-	${ENV}/bin/isort --quiet --check-only ${PYTHON_PROJECTS}
-	${ENV}/bin/pydocstyle ${PYTHON_PROJECTS}
+	${ENV}/bin/ruff check ${PYTHON_PROJECTS}
 
 test:
 	${ENV}/bin/nosetests -v --with-coverage --cover-package=cbagent,perfrunner,spring unittests.py

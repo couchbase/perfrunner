@@ -13,10 +13,7 @@ from uuid import uuid4
 import requests
 import yaml
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric.rsa import (
-    RSAPrivateKey,
-    generate_private_key,
-)
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, generate_private_key
 from cryptography.x509 import (
     AuthorityKeyIdentifier,
     BasicConstraints,

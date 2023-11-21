@@ -9,11 +9,11 @@ class TestDataset:
 
     def _shuffle_and_cut(self, fpath, limit=1000):
         f = open(fpath)
-        l = list(f)
-        random.shuffle(l)
-        l = l[:limit]
+        lines = list(f)
+        random.shuffle(lines)
+        lines = lines[:limit]
         f.close()
-        return l
+        return lines
 
     def combine_2(self, output_name, file1, file2):
         lines1 = self._shuffle_and_cut(file1)

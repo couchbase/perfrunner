@@ -16,8 +16,7 @@ if sdk_major_version == 2:
     from couchbase.exceptions import CouchbaseError, TemporaryFailError
 elif sdk_major_version >= 3:
     from couchbase.exceptions import CouchbaseException as CouchbaseError
-    from couchbase.exceptions import \
-        TemporaryFailException as TemporaryFailError
+    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
 
 
 ClientError = Union[CouchbaseError, HTTPError]

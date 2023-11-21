@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryRebalanceTest
 
 [showfast]
-title = File-based Rebalance-in, 1 bucket x 100M x 1KB, 2K KV ops/sec, 10000 indexes, 20%% RR, Plasma, s=1 c=100
+title = Shard Rebalance-in, 1 bucket x 100M x 1KB, 2K KV ops/sec, 10000 indexes, 20%% RR, Plasma, s=1 c=100
 component = secondary
 category = rebalance
 sub_category = PlasmaDGM
@@ -13,8 +13,7 @@ lat_interval = 0.5
 
 [cluster]
 mem_quota = 30000
-index_mem_quota = 175000
-kernel_mem_limit = 230G
+index_mem_quota = 127000
 initial_nodes = 6
 num_buckets = 1
 

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryRebalanceTest
 
 [showfast]
-title = File-based Rebalance-swap (min) 1->1, 1 bucket x 250M, single 2i index, 10K KV ops/sec, 20%% Resident, PLASMA, Compression 80/20
+title = Shard Rebalance-swap (min) 1->1, 1 bucket x 250M, single 2i index, 10K KV ops/sec, 20%% Resident, PLASMA, Compression 80/20
 component = secondary
 category = rebalance
 sub_category = Compression

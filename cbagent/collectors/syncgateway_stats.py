@@ -340,8 +340,6 @@ class SyncGatewayStats(Collector):
                                 stats["_totals"][metric] += float(value)
                             else:
                                 stats["_totals"][metric] = float(value)
-                for metric in self.METRICS_CAPELLA:
-                    stats["_totals"][metric] /= 2
                 break
         else:
             for metric in self.METRICS:

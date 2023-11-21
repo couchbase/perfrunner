@@ -1081,7 +1081,6 @@ class Monitor:
                 str = stats[stat_list[i]:stat_list[i+1]]
                 a = str.find("}")
                 import_count += int(float(str[a+2:]))
-            import_count /= 2
         return import_count
 
     def _wait_for_sg_import_start(self, host: str):
@@ -1286,7 +1285,6 @@ class Monitor:
                 str = sgw_stats[stat_list[i]:stat_list[i+1]]
                 a = str.find("}")
                 push_count += int(float(str[a+2:]))
-            push_count /= 2
         return push_count
 
     def get_sgw_pull_count(self, host):
@@ -1310,7 +1308,6 @@ class Monitor:
                 str = sgw_stats[stat_list[i]:stat_list[i+1]]
                 a = str.find("}")
                 pull_count += int(float(str[a+2:]))
-            pull_count /= 2
         return pull_count
 
     def wait_sgw_push_start(self, hosts, initial_docs):

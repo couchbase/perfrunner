@@ -1435,7 +1435,10 @@ class BackupTestDGM(BackupTest, StabilityBootstrap):
                 self.wait_for_persistence()
                 self.wait_for_fragmentation()
 
-        time_elapsed = self.backup()
+        try:
+            time_elapsed = self.backup()
+        finally:
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)
 

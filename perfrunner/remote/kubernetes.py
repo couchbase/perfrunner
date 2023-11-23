@@ -736,10 +736,9 @@ class RemoteKubernetes(Remote):
         pods = self.get_pods()
         for pod in pods:
             pod_name = pod.get("metadata", {}).get("name", "")
-            # Generally we will only care about operator and backup pods logs.
-            # But we can revisit this to include other pods when needed.
-            if ("couchbase-operator-" in pod_name and "admission" not in pod_name)\
-                    or "backup" in pod_name:
+            # Collect logs for operator, backup and server pods (server, metrics & CNG)
+            pod_prefixes = ('couchbase-operator-', 'my-backup-', 'cb-example-perf-')
+            if pod_name.startswith(pod_prefixes) and 'admission' not in pod_name:
                 logger.info("Collecting pod '{}' logs".format(pod_name))
                 logs = self.get_logs(pod_name)
                 with open("{}.log".format(pod_name), 'w') as file:

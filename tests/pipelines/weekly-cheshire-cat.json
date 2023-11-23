@@ -150,7 +150,6 @@
     ],
     "KV-DGM": [
         {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_1000M_compacted_fe_1s_1000c.test", "groups": "P0"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_1000M_compacted_ve_1s_1000c.test", "groups": "P0"},
         {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_1000M_compacted_fe_1000s_1000c.test", "groups": "P1"}
     ],
     "KV-Athena": [

@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.WriteLatencyDGMTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 4B x 256B, 15K ops/sec (45/10/45 C/R/W), Uniform distribution, Magma
+title = latency (ms), 4 nodes, 1 bucket x 4B x 256B, 15K ops/sec (45/10/45 C/R/W), Uniform distribution, 2%% Resident Ratio, Magma
 component = hidd
 category = latency
 

@@ -113,11 +113,14 @@ class TestDataset:
         output_file = open(output_file, "w")
         for line in lines:
             line = line.split()[0]
-            result = "{} {} {}".format(line, dates[random.randint(0, 1)], dates[random.randint(2, 3)])
+            result = "{} {} {}".format(line,
+                                       dates[random.randint(0, 1)],
+                                       dates[random.randint(2, 3)])
             print(result, file=output_file)
 
     def get_phrases(self, cb_url, output_file, input_file, docs_total):
-        cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, "bucket-1"), password="password")
+        cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, "bucket-1"),
+                    password="password")
         lines = self._shuffle_and_cut(input_file, 10 ** 6)
         formatted_lines = list()
         for line in lines:

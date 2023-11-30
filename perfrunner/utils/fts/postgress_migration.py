@@ -17,7 +17,8 @@ def load_as_separate_docs(bucketname, count, limit):
     bucket_name = bucketname
 
     print("Connecting to postgres")
-    conn = psycopg2.connect("dbname='musicbrainz_db' user='musicbrainz' host='localhost' password='musicbrainz'")
+    conn = psycopg2.connect("dbname='musicbrainz_db' user='musicbrainz' host='localhost' "
+                            "password='musicbrainz'")
     curr = conn.cursor()
 
     print("Fetching all tracks")
@@ -51,10 +52,13 @@ def load_as_separate_docs(bucketname, count, limit):
         curr.execute(query)
         credit = curr.fetchall()[0]
 
-        query = "select artist.name, artist.sort_name, artist.begin_date_year, artist.begin_date_month, " \
-                "artist.begin_date_day, artist.end_date_year, artist.end_date_month, artist.end_date_day, " \
-                "artist.comment, artist.edits_pending, artist.last_updated, artist.id " \
-                "from artist where artist.id = {} limit 1".format(credit[0])
+        query = (
+            "select artist.name, artist.sort_name, artist.begin_date_year, "
+            "artist.begin_date_month, artist.begin_date_day, artist.end_date_year, "
+            "artist.end_date_month, artist.end_date_day, artist.comment, artist.edits_pending, "
+            "artist.last_updated, artist.id "
+            "from artist where artist.id = {} limit 1"
+        ).format(credit[0])
 
         curr.execute(query)
         artist = curr.fetchall()[0]

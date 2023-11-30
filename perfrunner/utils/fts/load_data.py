@@ -56,7 +56,8 @@ class Docgen:
                 break
 
     def start_load(self):
-        cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.bucket_name), password="password")
+        cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.bucket_name),
+                    password="password")
         master_file = open(self.master_file_path)
         shadow_file = open(self.shadow_file_path)
 
@@ -127,7 +128,8 @@ class Numeric(Docgen):
             cb.upsert(key, {"time": val})
 
     def start_load(self):
-        c = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.bucket_name), password="password")
+        c = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.bucket_name),
+                   password="password")
         self.insert_cb(c)
 
 
@@ -137,7 +139,10 @@ class Datefacet:
         self.cb = Bucket('couchbase://172.23.99.211/bucket-1', password="password")
         self.lock = Lock()
         self.dsize = 1000000
-        self.dateiter = Manager().dict({key: None for key in ['2013-10-17', '2013-11-17', '2014-02-09', '2015-11-26']})
+        self.dateiter = Manager().dict(
+            {key: None for key in ['2013-10-17', '2013-11-17', '2014-02-09', '2015-11-26']}
+        )
+
         self.dateiter['2013-10-17'] = .65 * self.dsize
         self.dateiter['2013-11-17'] = .2 * self.dsize
         self.dateiter['2014-02-09'] = .1 * self.dsize

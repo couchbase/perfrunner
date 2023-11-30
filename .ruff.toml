@@ -7,6 +7,7 @@ extend-select = [
     "D",  # pydocstyle
     "I",  # isort
     "W",  # pycodestyle warnings
+    "E",  # pycodestyle errors
 ]
 ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "D211", "D213"]
 

@@ -14,7 +14,8 @@ class GenericDocgen:
         self.dateBuilder = DateBuilder()
         self.numBuilder = NumericBuilder(self.items)
 
-        self.c = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, bucket_name), password="password")
+        self.c = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, bucket_name),
+                        password="password")
 
     def read_file_gen(self, file):
         while True:
@@ -111,8 +112,10 @@ class DateBuilder:
         self.form_dates_list()
 
     def form_dates_list(self):
-        for id in range(self.total_size):
-            self.dates_list.append('{}-{}-{}'.format(next(self.years), next(self.month), next(self.days)))
+        for _ in range(self.total_size):
+            self.dates_list.append('{}-{}-{}'.format(next(self.years),
+                                                     next(self.month),
+                                                     next(self.days)))
 
     def build(self):
         index = self.zipf()

@@ -8,7 +8,8 @@ class NumericExctractor:
         self.distance = 39000
         self.output_lines_goal = 1000
         self.total_docs = items
-        self.cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, bucket_name), password="password")
+        self.cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, bucket_name),
+                         password="password")
         self.output_list = list()
 
     def run(self):
@@ -143,7 +144,8 @@ class TermProcessor:
         output_file.close()
 
     def get_phrases(self, cb_url, output_file, input_file, docs_total):
-        cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, "bucket-1"), password="password")
+        cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, "bucket-1"),
+                    password="password")
         lines = self._shuffle_and_cut(input_file, 10 ** 6)
         formatted_lines = list()
         for line in lines:

@@ -9,7 +9,8 @@ result_dataset = list()
 for line in dataset:
     words = line.split(' ')
     full_query = {}
-    query = {"conjuncts": [{"field": "name", "term": words[0]}, {"field": "name", "term": words[1]}]}
+    query = {"conjuncts": [{"field": "name", "term": words[0]},
+                           {"field": "name", "term": words[1]}]}
     full_query["ctl"] = {"timeout": 0}
     full_query["size"] = 10
     full_query["query"] = query

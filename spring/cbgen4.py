@@ -159,7 +159,7 @@ class CBGen4(CBAsyncGen4):
         super().do_upsert(*args, **kwargs)
 
     @time_all
-    def do_update_durable(self, *args, **kwargs):
+    def do_upsert_durable(self, *args, **kwargs):
         super().do_upsert_durable(*args, **kwargs)
 
     @quiet

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondarycloud.CloudSecondaryRebalanceTest
 
 [showfast]
-title = Rebalance-out (min) 4->3, 1 bucket x 55M x 1KB, 100 indexes, 10K KV ops/sec, Plasma 20%%RR, s=1 c=50 With Scans
+title = Rebalance-out (min) 4->3, 1 bucket x 55M x 1KB, 100 indexes, 10K KV ops/sec, Plasma 20%%RR, s=1 c=10 With Scans
 component = secondarycloud
 category = rebalance
 sub_category = {provider}

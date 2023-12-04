@@ -60,7 +60,7 @@ class SGImportLatency(Collector):
 
     def check_longpoll_changefeed(self, host: str, key: str, last_sequence: str):
         logger.info("checking longpoll changefeed")
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             api = 'https://{}:4985/{}/_changes'.format(host, self.sg_db)
         else:
             api = 'http://{}:4985/{}/_changes'.format(host, self.sg_db)
@@ -99,7 +99,7 @@ class SGImportLatency(Collector):
 
     def get_lastsequence(self, host: str):
         logger.info("getting last sequence")
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             api = 'https://{}:4985/{}/_changes'.format(host, self.sg_db)
         else:
             api = 'http://{}:4985/{}/_changes'.format(host, self.sg_db)

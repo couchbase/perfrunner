@@ -15,7 +15,7 @@ from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import DestTargetIterator, UniDirXdcrInitTest
-from perfrunner.utils.terraform import CapellaDeployer
+from perfrunner.utils.terraform import CapellaProvisionedDeployer
 from perfrunner.workloads.sdks_bench import get_sdk_build_command
 
 
@@ -132,7 +132,7 @@ class CapellaRebalanceTest(RebalanceTest):
         for cluster_name, new_nodes in new_clusters.items():
             self.cluster_spec.config.set('clusters', cluster_name, '\n' + '\n'.join(new_nodes))
 
-        self.cluster_spec.update_spec_file()
+        self.cluster_spec.update_config_file()
 
     def post_rebalance(self):
         super().post_rebalance()
@@ -141,7 +141,7 @@ class CapellaRebalanceTest(RebalanceTest):
     @timeit
     def _rebalance(self, services):
         masters = self.cluster_spec.masters
-        clusters_schemas = self.cluster_spec.clusters_schemas
+        clusters_schemas = self.cluster_spec.capella_provisioned_cluster_specs
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
@@ -155,9 +155,9 @@ class CapellaRebalanceTest(RebalanceTest):
                 nodes_after_rebalance = schemas[:nodes_after]
 
                 new_cluster_config = {
-                    'specs': CapellaDeployer.construct_capella_server_groups(
+                    'specs': CapellaProvisionedDeployer.construct_capella_server_groups(
                         self.cluster_spec, nodes_after_rebalance
-                    )[0]
+                    )
                 }
 
                 self.rest.update_cluster_configuration(master, new_cluster_config)

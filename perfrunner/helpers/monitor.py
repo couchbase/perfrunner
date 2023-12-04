@@ -1063,7 +1063,7 @@ class Monitor:
     def get_import_count(self, host: str):
         stats = self.rest.get_sg_stats(host=host)
         import_count = 0
-        if not self.cluster_spec.capella_infrastructure:
+        if not self.cluster_spec.has_any_capella:
             if 'syncGateway_import' in stats.keys():
                 import_count = int(stats['syncGateway_import']['import_count'])
             else:
@@ -1261,7 +1261,7 @@ class Monitor:
     def get_sgw_push_count(self, host):
         sgw_stats = self.rest.get_sg_stats(host)
         push_count = 0
-        if not self.cluster_spec.capella_infrastructure:
+        if not self.cluster_spec.has_any_capella:
             for count in range(1, self.test_config.cluster.num_buckets + 1):
                 db = 'db-{}'.format(count)
                 push_count += \
@@ -1274,8 +1274,8 @@ class Monitor:
 
     def get_sgw_pull_count(self, host):
         pull_count = 0
-        sgw_stats = self.rest.get_sg_stats(host)
-        if not self.cluster_spec.capella_infrastructure:
+        sgw_stats = self.get_sg_stats(host)
+        if not self.cluster_spec.has_any_capella:
             for count in range(1, self.test_config.cluster.num_buckets + 1):
                 db = 'db-{}'.format(count)
                 pull_count += \
@@ -1294,7 +1294,7 @@ class Monitor:
             start_time = time.time()
             for host in hosts:
                 push_count += self.get_sgw_push_count(host)
-                if self.cluster_spec.capella_infrastructure:
+                if self.cluster_spec.has_any_capella:
                     break
 
             if push_count > initial_docs:
@@ -1315,7 +1315,7 @@ class Monitor:
             start_time = time.time()
             for host in hosts:
                 pull_count += self.get_sgw_pull_count(host)
-                if self.cluster_spec.capella_infrastructure:
+                if self.cluster_spec.has_any_capella:
                     break
 
             if pull_count > initial_docs:
@@ -1337,7 +1337,7 @@ class Monitor:
             finished_time = time.time()
             for host in hosts:
                 push_count += self.get_sgw_push_count(host)
-                if self.cluster_spec.capella_infrastructure:
+                if self.cluster_spec.has_any_capella:
                     break
 
             if push_count >= target_docs:
@@ -1361,7 +1361,7 @@ class Monitor:
             finished_time = time.time()
             for host in hosts:
                 pull_count += self.get_sgw_pull_count(host)
-                if self.cluster_spec.capella_infrastructure:
+                if self.cluster_spec.has_any_capella:
                     break
 
             if pull_count >= target_docs:
@@ -1389,7 +1389,7 @@ class Monitor:
             push_count = 0
             for host in hosts:
                 push_count += self.get_sgw_push_count(host)
-                if self.cluster_spec.capella_infrastructure:
+                if self.cluster_spec.has_any_capella:
                     break
 
             logger.info('push count: {}'.format(push_count))

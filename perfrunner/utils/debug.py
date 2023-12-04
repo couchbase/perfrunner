@@ -131,7 +131,7 @@ def main():
 
     remote = RemoteHelper(cluster_spec, verbose=False)
 
-    if cluster_spec.serverless_infrastructure:
+    if cluster_spec.has_capella_serverless:
         remote.collect_dn_logs()
         remote.collect_dapi_logs()
 
@@ -153,7 +153,7 @@ def main():
                 for fname in log_fnames:
                     z.write(fname, arcname=Path(fname).name)
 
-    if cluster_spec.capella_infrastructure:
+    if cluster_spec.has_any_capella:
         get_capella_cluster_logs(cluster_spec, args.s3_bucket_name)
     elif cluster_spec.dynamic_infrastructure:
         remote.collect_k8s_logs()
@@ -179,7 +179,7 @@ def main():
             failures['crashes'][file_name] = crash_files
         if storage_corrupted:
             failures['storage_corrupted'][file_name] = True
-            if not cluster_spec.capella_infrastructure:
+            if not cluster_spec.has_any_capella:
                 remote.collect_index_datafiles()
 
     if failures:

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import json
 import os
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from collections import Counter
 from time import sleep, time
-from typing import Dict
+from typing import Any, Dict, Optional, Sequence
 from uuid import uuid4
 
 import requests
@@ -71,7 +71,7 @@ def format_datadog_link(cluster_id: str = None, dataplane_id: str = None,
     return DATADOG_LINK_TEMPLATE.format(filter_string, int(one_hour_ago * 1000), int(now * 1000))
 
 
-class CloudDeployer:
+class CloudVMDeployer:
 
     IMAGE_MAP = {
         'aws': {
@@ -99,55 +99,60 @@ class CloudDeployer:
         }
     }
 
-    def __init__(self, options):
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
         self.options = options
-        self.infra_spec = ClusterSpec()
-        self.infra_spec.parse(self.options.cluster, override=options.override)
-        self.provider = self.infra_spec.cloud_provider
-        self.backend = None
-        self.uuid = uuid4().hex[0:6] if self.provider != 'aws' else None
-        self.os_arch = self.infra_spec.infrastructure_settings.get('os_arch', 'x86_64')
-        self.node_list = {
-            'clusters': [
-                n for nodes in self.infra_spec.infrastructure_clusters.values()
-                for n in nodes.strip().split()
-            ],
-            'clients': self.infra_spec.clients,
-            'utilities': self.infra_spec.utilities,
-            'syncgateways': self.infra_spec.sgw_servers,
-            'kafka_brokers': self.infra_spec.kafka_servers
+        self.cluster_spec = cluster_spec
+        self.csp = self.cluster_spec.cloud_provider
+        self.uuid = self.cluster_spec.infrastructure_settings.get('uuid', uuid4().hex[:6])
+        self.os_arch = self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
+        self.all_nodes = {
+            'clusters': {
+                k: v.strip().split()
+                for k, v in self.cluster_spec.vm_clusters_raw.items()
+            },
+            'clients': {
+                k: v.strip().split()
+                for k, v in self.cluster_spec.infrastructure_clients.items()
+            },
+            'utilities': {
+                k: v.strip().split()
+                for k, v in self.cluster_spec.infrastructure_utilities.items()
+            },
+            'syncgateways': {
+                k: v.strip().split()
+                for k, v in self.cluster_spec.infrastructure_syncgateways.items()
+            },
+            'kafka_brokers': {
+                k: v.strip().split()
+                for k, v in self.cluster_spec.infrastructure_kafka_clusters.items()
+            }
         }
 
         self.cloud_storage = bool(
-            int(self.infra_spec.infrastructure_settings.get('cloud_storage', 0))
+            int(self.cluster_spec.infrastructure_settings.get('cloud_storage', 0))
         )
 
-        if self.provider == 'gcp' or \
-           (self.provider == 'capella' and self.infra_spec.capella_backend == 'gcp'):
+        if self.csp == 'gcp':
             self.zone = self.options.zone
             self.region = self.zone.rsplit('-', 1)[0]
         else:
             self.zone = None
-            if self.provider == 'aws' or \
-               (self.provider == 'capella' and self.infra_spec.capella_backend == 'aws'):
+            if self.csp == 'aws':
                 self.region = self.options.aws_region
             else:
                 self.region = self.options.azure_region
 
     def deploy(self):
-        # Configure terraform
         self.populate_tfvars()
-        self.terraform_init(self.provider)
+        self.terraform_init(self.csp)
 
-        # Deploy resources
-        self.terraform_apply(self.provider)
+        self.terraform_apply(self.csp)
 
-        # Get info about deployed resources and update cluster spec file
-        output = self.terraform_output(self.provider)
+        output = self.terraform_output(self.csp)
         self.update_spec(output)
 
     def destroy(self):
-        self.terraform_destroy(self.provider)
+        self.terraform_destroy(self.csp)
 
     def create_tfvar_nodes(self) -> Dict[str, Dict]:
         tfvar_nodes = {
@@ -158,70 +163,62 @@ class CloudDeployer:
             'kafka_brokers': {}
         }
 
-        cloud_provider = self.backend if self.provider == 'capella' else self.provider
-
-        for role, nodes in self.node_list.items():
-            # If this is a capella test, skip cluster nodes
-            if self.provider == 'capella' and (role == 'clusters' or role == 'syncgateways'):
-                continue
-
+        for role, node_lists in self.all_nodes.items():
             i = 0
-            for node in nodes:
-                node_cluster, node_group = node.split(':')[0].split('.', 2)[1:]
-                parameters = self.infra_spec.infrastructure_config()[node_group.split('.')[0]]
+            for label, nodes in node_lists.items():
+                for node in nodes:
+                    node_group = node.split(':')[0]
+                    params = self.cluster_spec.infrastructure_config()[node_group.split('.')[0]]
 
-                parameters['node_group'] = node_group
+                    params['node_group'] = '{}.{}'.format(label, node_group)
 
-                # Try getting image name from cli option
-                image = getattr(self.options, '{}_image'.format({
-                    'clusters': 'cluster',
-                    'clients': 'client',
-                    'utilities': 'utility',
-                    'syncgateways': 'sgw',
-                    'kafka_brokers': 'kafka'
-                }[role]))
+                    # Try getting image name from cli option
+                    image = getattr(self.options, '{}_image'.format({
+                        'clusters': 'cluster',
+                        'clients': 'client',
+                        'utilities': 'utility',
+                        'syncgateways': 'sgw',
+                        'kafka_brokers': 'kafka'
+                    }[role]))
 
-                # If image name isn't provided as cli param, use hardcoded defaults
-                if image is None:
-                    image = self.IMAGE_MAP[cloud_provider][role]
-                    if cloud_provider == 'aws' and role == 'clusters':
-                        image = image.get(self.os_arch, image['x86_64'])
+                    # If image name isn't provided as cli param, use hardcoded defaults
+                    if image is None:
+                        image = self.IMAGE_MAP[self.csp][role]
+                        if self.csp == 'aws' and role == 'clusters':
+                            image = image.get(self.os_arch, image['x86_64'])
 
-                parameters['image'] = image
+                    params['image'] = image
 
-                # Set disk size and type
-                parameters['volume_size'] = int(parameters.get('volume_size', 0))
+                    # Set disk size and type
+                    params['storage_size'] = int(params.get('storage_size', 0))
 
-                storage_class = parameters.get('storage_class', parameters.get('volume_type', None))
-                if not storage_class:
-                    node_cluster_config = self.infra_spec.infrastructure_section(node_cluster)
-                    storage_class = node_cluster_config.get('storage_class')
-                parameters['storage_class'] = storage_class
+                    if not (storage_type := params.get('storage_type', None)):
+                        logger.interrupt('Storage type not specified for node group {}')
+                    params['storage_type'] = storage_type
 
-                # Set CSP-specific options
-                if cloud_provider == 'azure':
-                    parameters['disk_tier'] = parameters.get('disk_tier', '')
-                else:
-                    # AWS and GCP
-                    parameters['iops'] = int(parameters.get('iops', 0))
-                    if cloud_provider == 'aws':
-                        parameters['volume_throughput'] = int(parameters.get('volume_throughput',
-                                                                             0))
+                    # Set CSP-specific options
+                    if self.csp == 'azure':
+                        params['disk_tier'] = params.get('disk_tier', '')
                     else:
-                        # GCP
-                        parameters['local_nvmes'] = int(parameters.get('local_nvmes', 0))
+                        # AWS and GCP
+                        params['iops'] = int(params.get('iops', 0))
+                        if self.csp == 'aws':
+                            params['storage_throughput'] = int(params.get('storage_throughput', 0))
+                        else:
+                            # GCP
+                            params['local_nvmes'] = int(params.get('local_nvmes', 0))
 
-                del parameters['instance_capacity']
+                    if 'instance_capacity' in params:
+                        del params['instance_capacity']
 
-                tfvar_nodes[role][str(i := i+1)] = parameters
+                    tfvar_nodes[role][str(i := i+1)] = params
 
         return tfvar_nodes
 
     def populate_tfvars(self) -> bool:
         logger.info('Setting tfvars')
-        cloud_provider = self.backend if self.provider == 'capella' else self.provider
         global_tag = self.options.tag if self.options.tag else ''
-        if cloud_provider.lower() == 'gcp':
+        if self.csp.lower() == 'gcp':
             # GCP doesn't allow uppercase letters in tags
             global_tag = global_tag.lower()
 
@@ -239,16 +236,14 @@ class CloudDeployer:
             '<SYNCGATEWAY_NODES>': tfvar_nodes['syncgateways'],
             '<KAFKA_NODES>': tfvar_nodes['kafka_brokers'],
             '<CLOUD_STORAGE>': self.cloud_storage,
-            '<GLOBAL_TAG>': global_tag
+            '<GLOBAL_TAG>': global_tag,
+            '<UUID>': self.uuid
         }
-
-        if self.uuid:
-            replacements['<UUID>'] = self.uuid
 
         if self.zone:
             replacements['<CLOUD_ZONE>'] = self.zone
 
-        with open('terraform/{}/terraform.tfvars'.format(cloud_provider), 'r+') as tfvars:
+        with open('terraform/{}/terraform.tfvars'.format(self.csp), 'r+') as tfvars:
             file_string = tfvars.read()
 
             for k, v in replacements.items():
@@ -260,30 +255,30 @@ class CloudDeployer:
         return True
 
     # Initializes terraform environment.
-    def terraform_init(self, provider):
+    def terraform_init(self, csp: str):
         logger.info('Initializating Terraform (terraform init)')
-        local('cd terraform/{} && terraform init >> terraform.log'.format(provider))
+        local('cd terraform/{} && terraform init >> terraform.log'.format(csp))
 
     # Apply and output terraform deployment.
-    def terraform_apply(self, provider):
+    def terraform_apply(self, csp: str):
         logger.info('Building and executing Terraform deployment plan '
                     '(terraform plan, terraform apply)')
         local('cd terraform/{} && '
               'terraform plan -out tfplan.out >> terraform.log && '
               'terraform apply -auto-approve tfplan.out'
-              .format(provider))
+              .format(csp))
 
-    def terraform_output(self, provider):
+    def terraform_output(self, csp: str) -> dict[str, Any]:
         output = json.loads(
-            local('cd terraform/{} && terraform output -json'.format(provider), capture=True)
+            local('cd terraform/{} && terraform output -json'.format(csp), capture=True)
         )
         return output
 
-    def terraform_destroy(self, provider):
+    def terraform_destroy(self, csp: str):
         logger.info('Building and executing Terraform destruction plan '
                     '(terraform plan -destroy, terraform apply)')
         _, _, returncode = run_local_shell_command('cd terraform/{} && terraform validate'
-                                                   .format(provider), quiet=True)
+                                                   .format(csp), quiet=True)
         if returncode != 0:
             logger.info('No resources to destroy with Terraform.')
             return
@@ -291,17 +286,17 @@ class CloudDeployer:
         local('cd terraform/{} && '
               'terraform plan -destroy -out tfplan_destroy.out >> terraform.log && '
               'terraform apply -auto-approve tfplan_destroy.out'
-              .format(provider))
+              .format(csp))
 
     # Update spec file with deployed infrastructure.
-    def update_spec(self, output):
-        sections = ['clusters', 'clients', 'utilities', 'syncgateways', 'kafka_clusters']
+    def update_spec(self, output: str):
+        sections = ['cb.selfmanaged.vm', 'clients', 'utilities', 'syncgateways', 'kafka_clusters']
         cluster_dicts = [
-            self.infra_spec.infrastructure_clusters,
-            self.infra_spec.infrastructure_clients,
-            self.infra_spec.infrastructure_utilities,
-            self.infra_spec.infrastructure_syncgateways,
-            self.infra_spec.infrastructure_kafka_clusters,
+            self.cluster_spec.vm_clusters_raw,
+            self.cluster_spec.infrastructure_clients,
+            self.cluster_spec.infrastructure_utilities,
+            self.cluster_spec.infrastructure_syncgateways,
+            self.cluster_spec.infrastructure_kafka_clusters,
         ]
         output_keys = [
             'cluster_instance_ips',
@@ -322,9 +317,7 @@ class CloudDeployer:
                                                                       cluster_dicts,
                                                                       output_keys,
                                                                       private_sections):
-            if (section not in self.infra_spec.config.sections()) or \
-               (self.provider == 'capella' and (section == 'clusters' or
-                                                section == 'syncgateways')):
+            if section not in self.cluster_spec.config:
                 continue
 
             for cluster, nodes in cluster_dict.items():
@@ -335,11 +328,11 @@ class CloudDeployer:
                 if section == 'kafka_clusters':
                     node_info['subnet_ids'] = [None for _ in node_list]
 
-                for _, info in output[output_key]['value'].items():
+                for info in output[output_key]['value'].values():
                     node_group = info['node_group']
                     for i, node in enumerate(node_list):
                         hostname, *extras = node.split(':', maxsplit=1)
-                        if hostname.split('.', 2)[-1] == node_group:
+                        if '{}.{}'.format(cluster, hostname) == node_group:
                             public_ip = info['public_ip']
                             if extras:
                                 public_ip += ':{}'.format(*extras)
@@ -352,48 +345,235 @@ class CloudDeployer:
                                 node_info['subnet_ids'][i] = info['subnet_id']
                             break
 
-                self.infra_spec.config.set(section, cluster,
+                self.cluster_spec.config.set(section, cluster,
                                            '\n' + '\n'.join(node_info['public_ips']))
 
                 if any((private_ips := node_info['private_ips'])):
-                    if private_section not in self.infra_spec.config.sections():
-                        self.infra_spec.config.add_section(private_section)
-                    self.infra_spec.config.set(private_section, cluster,
+                    if private_section not in self.cluster_spec.config:
+                        self.cluster_spec.config.add_section(private_section)
+                    self.cluster_spec.config.set(private_section, cluster,
                                                '\n' + '\n'.join(private_ips))
 
                 if 'subnet_ids' in node_info:
-                    if (section := 'kafka_subnet_ids') not in self.infra_spec.config.sections():
-                        self.infra_spec.config.add_section(section)
-                    self.infra_spec.config.set(section, cluster,
+                    if (section := 'kafka_subnet_ids') not in self.cluster_spec.config:
+                        self.cluster_spec.config.add_section(section)
+                    self.cluster_spec.config.set(section, cluster,
                                                '\n' + '\n'.join(node_info['subnet_ids']))
 
         if self.cloud_storage:
             cloud_storage_info = output['cloud_storage']['value']
             bucket_url = cloud_storage_info['storage_bucket']
-            self.infra_spec.config.set('storage', 'backup', bucket_url)
-            if self.provider == 'azure':
+            self.cluster_spec.config.set('storage', 'backup', bucket_url)
+            if self.csp == 'azure':
                 storage_acc = cloud_storage_info['storage_account']
-                self.infra_spec.config.set('storage', 'storage_acc', storage_acc)
+                self.cluster_spec.config.set('storage', 'storage_acc', storage_acc)
 
-        self.infra_spec.update_spec_file()
+        self.cluster_spec.config.set('infrastructure', 'uuid', self.uuid)
+
+        cloud_network_section = 'cloud_network'
+        self.cluster_spec.config.add_section(cloud_network_section)
+        for k, v in output['network']['value'].items():
+            self.cluster_spec.config.set(cloud_network_section, k, v)
+
+        self.cluster_spec.update_config_file()
 
         with open('cloud/infrastructure/cloud.ini', 'r+') as f:
             s = f.read()
-            if self.provider != 'capella':
-                s = s.replace("server_list", "\n".join(self.infra_spec.servers))
-            s = s.replace("worker_list", "\n".join(self.infra_spec.clients))
-            if self.infra_spec.sgw_servers:
-                s = s.replace("sgw_list", "\n".join(self.infra_spec.sgw_servers))
-            if self.infra_spec.kafka_brokers:
-                s = s.replace("kafka_broker_list", "\n".join(self.infra_spec.kafka_brokers))
+            s = s.replace("server_list", "\n".join(self.cluster_spec.servers))
+            s = s.replace("worker_list", "\n".join(self.cluster_spec.clients))
+            if self.cluster_spec.sgw_servers:
+                s = s.replace("sgw_list", "\n".join(self.cluster_spec.sgw_servers))
+            if self.cluster_spec.kafka_brokers:
+                s = s.replace("kafka_broker_list", "\n".join(self.cluster_spec.kafka_brokers))
             f.seek(0)
             f.write(s)
 
 
-class CapellaDeployer(CloudDeployer):
+class ControlPlanePreparer:
 
-    def __init__(self, options):
-        super().__init__(options)
+    def __init__(
+        self,
+        cluster_spec: ClusterSpec,
+        public_api_url: Optional[str] = None,
+        org_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        deployment_tag: Optional[str] = None
+    ):
+        logger.info('Control plane preparer initialising...')
+        self.cluster_spec = cluster_spec
+        self.org_id = org_id
+        self.project_id = project_id
+        self.tag = deployment_tag
+        self.uuid = self.cluster_spec.infrastructure_settings.get('uuid', uuid4().hex[:6])
+
+        if 'controlplane' not in self.cluster_spec.config:
+            self.cluster_spec.config.add_section('controlplane')
+
+        if public_api_url is None:
+            logger.info('No Capella public API URL provided. '
+                        'Looking for Capella environment info in cluster spec.')
+
+            if (env := self.cluster_spec.controlplane_settings.get('env')):
+                public_api_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(env)
+            else:
+                logger.interrupt('No Capella environment info specified in cluster spec. '
+                                 'Cannot determine Capella public API URL to proceed.')
+        else:
+            logger.info('Capella public API URL provided. '
+                        'Saving Capella environment info to cluster spec.')
+
+            env = public_api_url.removeprefix('https://')\
+                                .removesuffix('.nonprod-project-avengers.com')\
+                                .split('.', 1)[1]
+            self.cluster_spec.config.set('controlplane', 'env', env)
+            self.cluster_spec.update_config_file()
+
+        logger.info('Using Capella public API URL: {}'.format(public_api_url))
+
+        self.api_client = CapellaAPIDedicated(
+            public_api_url,
+            None,
+            None,
+            os.getenv('CBC_USER'),
+            os.getenv('CBC_PWD'),
+            os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
+        )
+        logger.info('Control plane preparer initialised.')
+
+    def save_project_id(self, create_project_if_none: bool = True):
+        project_created = False
+
+        if self.project_id is None:
+            logger.info('No project ID set. Looking for project ID in cluster spec.')
+            if (project_id := self.cluster_spec.controlplane_settings.get('project')) is None:
+                logger.info('No project ID found in cluster spec.')
+
+                if create_project_if_none:
+                    project_name = self.tag or 'perf-{}'.format(self.uuid)
+                    project_id = self._create_project(self.org_id, project_name)
+                    project_created = True
+            else:
+                logger.info('Found project ID in cluster spec')
+
+            self.project_id = project_id
+        else:
+            logger.info('Project ID already set.')
+
+        logger.info('Saving project ID in cluster spec file.')
+        self.cluster_spec.config.set('controlplane', 'project', self.project_id)
+        if project_created:
+            self.cluster_spec.config.set('controlplane', 'project_created', '1')
+        self.cluster_spec.update_config_file()
+
+    def save_org_id(self):
+        if self.org_id is None:
+            logger.info('No organization ID set. Looking for organization ID in cluster spec.')
+            if (org := self.cluster_spec.controlplane_settings.get('org')) is None:
+                logger.info('No organization ID found in cluster spec.')
+                org = self._find_org()
+            else:
+                logger.info('Found organization ID in cluster spec.')
+
+            self.org_id = org
+        else:
+            logger.info('Organization ID already set.')
+
+        logger.info('Saving organization ID in cluster spec file.')
+        self.cluster_spec.config.set('controlplane', 'org', self.org_id)
+        self.cluster_spec.update_config_file()
+
+    @staticmethod
+    def api_keys_set_in_file() -> bool:
+        if os.path.isfile(CAPELLA_CREDS_FILE):
+            with open(CAPELLA_CREDS_FILE, 'r') as f:
+                creds = json.load(f)
+                access_key = creds.get('access')
+                secret_key = creds.get('secret')
+                return bool(access_key and secret_key)
+
+        logger.info('No creds file found.')
+        return False
+
+    def get_api_keys(self):
+        logger.info('Getting control plane API keys...')
+
+        access_key = os.getenv('CBC_ACCESS_KEY')
+        secret_key = os.getenv('CBC_SECRET_KEY')
+
+        if not bool(access_key and secret_key):
+            logger.info('No control plane API keys set as env vars. '
+                        'Looking for API keys in creds file.')
+
+            if not self.api_keys_set_in_file():
+                logger.info('No control plane API keys found in creds file.')
+
+                key_name = self.tag or 'perf-{}'.format(self.uuid)
+                key_id, access_key, secret_key = self._generate_api_key(self.org_id, key_name)
+                creds = {'id': key_id, 'access': access_key, 'secret': secret_key}
+                with open(CAPELLA_CREDS_FILE, 'w') as f:
+                    json.dump(creds, f)
+                logger.info('Saved API keys in creds file.')
+            else:
+                logger.info('Found control plane API keys in creds file.')
+        else:
+            logger.info('Found control plane API keys set as env vars.')
+
+    def _find_org(self) -> str:
+        logger.info('Finding an accessible organization...')
+        resp = self.api_client.list_accessible_tenants()
+        raise_for_status(resp)
+        org = resp.json()[0]['id']
+        logger.info('Found organization ID: {}'.format(org))
+        return org
+
+    def _generate_api_key(self, org_id: str, name: str) -> tuple[str, str, str]:
+        logger.info('Generating control plane API keys in organization {}...'.format(org_id))
+        resp = self.api_client.create_access_secret_key(name, org_id)
+        raise_for_status(resp)
+        payload = resp.json()
+        return payload['id'], payload['access'], payload['secret']
+
+    def _create_project(self, org_id: str, name: str) -> str:
+        logger.info('Creating project in organization {}...'.format(org_id))
+        resp = self.api_client.create_project(org_id, name)
+        raise_for_status(resp)
+        project = resp.json()['id']
+        return project
+
+    def _destroy_project(self, org_id: str, project_id: str):
+        logger.info('Deleting project {} from organization {}...'.format(project_id, org_id))
+        resp = self.api_client.delete_project(org_id, project_id)
+        if resp.status_code == 400 and resp.json()['errorType'] == 'DeleteProjectsWithDatabases':
+            logger.warn('Cannot delete project because there are still databases present.')
+            return
+        else:
+            raise_for_status(resp)
+        logger.info('Project successfully queued for deletion.')
+
+    def clean_up_project(self):
+        if int(self.cluster_spec.controlplane_settings.get('project_created', 0)):
+            self._destroy_project(self.org_id, self.project_id)
+
+    def clean_up_api_keys(self):
+        if os.path.isfile(CAPELLA_CREDS_FILE):
+            logger.info('Revoking API key...')
+            with open(CAPELLA_CREDS_FILE, 'r') as f:
+                creds = json.load(f)
+                self.api_client.revoke_access_secret_key(self.org_id, creds['id'])
+            os.remove(CAPELLA_CREDS_FILE)
+
+
+class CapellaProvisionedDeployer(CloudVMDeployer):
+
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
+        super().__init__(cluster_spec, options)
+
+        self.all_nodes['clusters'] = {
+            k: v.strip().split()
+            for k, v in self.cluster_spec.capella_provisioned_clusters_raw.items()
+        }
+
+        self.client_network_info = self.cluster_spec.infrastructure_section('cloud_network')
 
         self.test_config = None
         if options.test_config:
@@ -402,130 +582,56 @@ class CapellaDeployer(CloudDeployer):
             self.test_config = test_config
 
         if self.test_config and self.test_config.rebalance_settings.nodes_after:
-            self.node_list['clusters'] = [
-                node
-                for nodes, initial_num in zip(self.infra_spec.infrastructure_clusters.values(),
-                                              self.test_config.cluster.initial_nodes)
-                for node in nodes.strip().split()[:initial_num]
-            ]
-
-        self.backend = self.infra_spec.infrastructure_settings['backend']
-
-        if public_api_url := self.options.capella_public_api_url:
-            env = public_api_url.removeprefix('https://')\
-                                .removesuffix('.nonprod-project-avengers.com')\
-                                .split('.', 1)[1]
-            self.infra_spec.config.set('infrastructure', 'cbc_env', env)
-            self.infra_spec.update_spec_file()
+            self.all_nodes['clusters'] = {
+                k: v.strip().split()[:init_num]
+                for (k, v), init_num in zip(self.cluster_spec.infrastructure_clusters.items(),
+                                            self.test_config.cluster.initial_nodes)
+            }
 
         self.api_client = CapellaAPIDedicated(
             'https://cloudapi.{}.nonprod-project-avengers.com'.format(
-                self.infra_spec.infrastructure_settings['cbc_env']
+                self.cluster_spec.controlplane_settings['env']
             ),
-            os.getenv('CBC_SECRET_KEY'),
-            os.getenv('CBC_ACCESS_KEY'),
+            None,
+            None,
             os.getenv('CBC_USER'),
             os.getenv('CBC_PWD'),
             os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
         )
 
-        if (tenant := self.options.capella_tenant) is None:
-            tenant = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
-        else:
-            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
-            self.infra_spec.update_spec_file()
+        access_key = os.getenv('CBC_ACCESS_KEY')
+        secret_key = os.getenv('CBC_SECRET_KEY')
 
-        self.tenant_id = tenant or self.get_tenant_id()
+        if not bool(access_key and secret_key):
+            with open(CAPELLA_CREDS_FILE, 'r') as f:
+                creds = json.load(f)
+                access_key = creds.get('access')
+                secret_key = creds.get('secret')
 
-        if not self.api_client.ACCESS or not self.api_client.SECRET:
-            if os.path.isfile(CAPELLA_CREDS_FILE):
-                with open(CAPELLA_CREDS_FILE, 'r') as f:
-                    creds = json.load(f)
-                    self.api_client.ACCESS = creds.get('access')
-                    self.api_client.SECRET = creds.get('secret')
-            else:
-                self.api_client.ACCESS, self.api_client.SECRET = self.generate_api_key()
+        self.api_client.ACCESS = access_key
+        self.api_client.SECRET = secret_key
 
-        if (project := self.options.capella_project) is None:
-            project = self.infra_spec.infrastructure_settings.get('cbc_project', None)
-        else:
-            self.infra_spec.config.set('infrastructure', 'cbc_project', project)
-            self.infra_spec.update_spec_file()
-
-        self.project_id = project
+        self.org_id = self.cluster_spec.controlplane_settings['org']
+        self.project_id = self.cluster_spec.controlplane_settings['project']
 
         self.capella_timeout = max(0, self.options.capella_timeout)
 
-        self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
-
-    def generate_api_key(self):
-        logger.info('Generating API key...')
-        key_name = self.options.tag or 'perf-key-{}'.format(self.uuid)
-        resp = self.api_client.create_access_secret_key(key_name, self.tenant_id)
-        raise_for_status(resp)
-        creds = {
-            'id': resp.json()['id'],
-            'access': resp.json()['access'],
-            'secret': resp.json()['secret']
-        }
-        with open(CAPELLA_CREDS_FILE, 'w') as f:
-            json.dump(creds, f)
-        return creds['access'], creds['secret']
-
-    def get_tenant_id(self):
-        logger.info('Finding a tenant...')
-        resp = self.api_client.list_accessible_tenants()
-        raise_for_status(resp)
-        tenant = resp.json()[0]['id']
-        self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
-        self.infra_spec.update_spec_file()
-        logger.info('Found tenant ID: {}'.format(tenant))
-        return tenant
-
-    def create_project(self):
-        logger.info('Creating project...')
-        resp = self.api_client.create_project(
-            self.tenant_id,
-            self.options.tag or 'perf-provisioned-{}'.format(self.uuid)
-        )
-        raise_for_status(resp)
-        project = resp.json()['id']
-        self.infra_spec.config.set('infrastructure', 'cbc_project', project)
-        self.infra_spec.config.set('infrastructure', 'cbc_project_created', '1')
-        self.infra_spec.update_spec_file()
-        self.project_id = project
-        logger.info('Project created: {}'.format(project))
+        self.cluster_ids = self.cluster_spec.capella_provisioned_cluster_ids
 
     def deploy(self):
-        if not self.project_id:
-            self.create_project()
-
-        if not self.options.capella_only:
-            # Configure terraform
-            self.populate_tfvars()
-            self.terraform_init(self.backend)
-
-            # Deploy non-capella resources
-            self.terraform_apply(self.backend)
-            non_capella_output = self.terraform_output(self.backend)
-            CloudDeployer.update_spec(self, non_capella_output)
-
         if self.test_config.cluster.monitor_deployment_time:
             logger.info("Start timing capella cluster deployment")
             t0 = time()
-        # Deploy capella cluster
-        self.deploy_cluster()
+
+        self.deploy_clusters()
 
         if self.options.disable_autoscaling:
             self.disable_autoscaling()
 
-        # Update cluster spec file
         self.update_spec()
 
         if not self.options.capella_only and self.options.vpc_peering:
-            # Do VPC peering
-            network_info = non_capella_output['network']['value']
-            self.peer_vpc(network_info, self.cluster_ids[0])
+            self.peer_vpc(next(iter(self.cluster_ids.values())))
 
         if self.test_config.cluster.monitor_deployment_time:
             logger.info("Finished timing capella cluster deployment")
@@ -536,32 +642,16 @@ class CapellaDeployer(CloudDeployer):
                 f.writelines([l1])
 
     def destroy(self):
-        # Tear down VPC peering connection
         self.destroy_peering_connection()
 
-        # Destroy non-capella resources
-        self.terraform_destroy(self.backend)
-
-        # Destroy capella cluster
         if not self.options.keep_cluster:
-            self.destroy_cluster()
+            self.destroy_clusters()
+            self.wait_for_cluster_destroy()
 
-            if int(self.infra_spec.infrastructure_settings.get('cbc_project_created', 0)):
-                cluster_destroyed = self.wait_for_cluster_destroy()
-                if cluster_destroyed:
-                    self.destroy_project()
-
-        if os.path.isfile(CAPELLA_CREDS_FILE):
-            logger.info('Revoking API key...')
-            with open(CAPELLA_CREDS_FILE, 'r') as f:
-                creds = json.load(f)
-                self.api_client.revoke_access_secret_key(self.tenant_id, creds['id'])
-            os.remove(CAPELLA_CREDS_FILE)
-
-    def wait_for_cluster_destroy(self) -> bool:
+    def wait_for_cluster_destroy(self):
         logger.info('Waiting for clusters to be destroyed...')
 
-        pending_clusters = [cluster_id for cluster_id in self.cluster_ids]
+        pending_clusters = [cluster_id for cluster_id in self.cluster_ids.values()]
         timeout_mins = self.capella_timeout
         interval_secs = 30
         t0 = time()
@@ -573,7 +663,7 @@ class CapellaDeployer(CloudDeployer):
 
             pending_clusters = []
             for cluster in resp.json()['data'].get('items', []):
-                if (cluster_id := cluster['id']) in self.cluster_ids:
+                if (cluster_id := cluster['id']) in self.cluster_ids.values():
                     pending_clusters.append(cluster_id)
                     logger.info('Cluster {} not destroyed yet'.format(cluster_id))
 
@@ -583,44 +673,29 @@ class CapellaDeployer(CloudDeployer):
             for cluster_id in pending_clusters:
                 logger.error('DataDog link for debugging (cluster {}): {}'
                              .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
-            return False
         else:
             logger.info('All clusters destroyed.')
-            return True
-
-    def destroy_project(self):
-        logger.info('Deleting project...')
-        resp = self.api_client.delete_project(self.tenant_id, self.project_id)
-        raise_for_status(resp)
-        logger.info('Project successfully queued for deletion.')
 
     @staticmethod
-    def capella_server_group_sizes(node_schemas):
-        server_groups = {}
+    def capella_server_group_sizes(node_schemas: Sequence[str]) -> Counter:
+        server_groups = []
         for node in node_schemas:
             name, services = node.split(':')[:2]
 
-            _, cluster, node_group, _ = name.split('.')
+            node_group, _ = name.split('.')
             services_set = tuple(set(services.split(',')))
 
-            node_tuple = (node_group, services_set)
+            server_groups.append((node_group, services_set))
 
-            if cluster not in server_groups:
-                server_groups[cluster] = [node_tuple]
-            else:
-                server_groups[cluster].append(node_tuple)
-
-        server_group_sizes = {
-            cluster: Counter(node_tuples) for cluster, node_tuples in server_groups.items()
-        }
-
-        return server_group_sizes
+        return Counter(server_groups)
 
     @staticmethod
-    def construct_capella_server_groups(infra_spec,
-                                        node_schemas,
-                                        enable_disk_autoscaling: bool = True):
-        """Create correct server group objects for deploying clusters using internal API.
+    def construct_capella_server_groups(
+        cluster_spec: ClusterSpec,
+        node_schemas: Sequence[str],
+        enable_disk_autoscaling: bool = True
+    ) -> list[dict[str, Any]]:
+        """Create server groups for deploying a Provisioned Capella cluster using internal API.
 
         Sample server group template:
         ```
@@ -643,65 +718,56 @@ class CapellaDeployer(CloudDeployer):
         }
         ```
         """
-        server_groups = CapellaDeployer.capella_server_group_sizes(node_schemas)
+        server_group_sizes = CapellaProvisionedDeployer.capella_server_group_sizes(node_schemas)
 
-        cluster_list = []
-        for cluster, server_groups in server_groups.items():
-            server_list = []
-            cluster_params = infra_spec.infrastructure_section(cluster)
+        server_groups = []
+        for (node_group, services), size in server_group_sizes.items():
+            node_group_config = cluster_spec.infrastructure_section(node_group)
 
-            for (node_group, services), size in server_groups.items():
-                node_group_config = infra_spec.infrastructure_section(node_group)
+            storage_class = node_group_config.get('storage_type').lower()
 
-                storage_class = node_group_config.get(
-                    'volume_type', node_group_config.get(
-                        'storage_class', cluster_params.get('storage_class')
-                    )
-                ).lower()
+            if cluster_spec.cloud_provider == 'azure' and 'disk_tier' in node_group_config:
+                disk_tier = node_group_config['disk_tier']
+            else:
+                disk_tier = ""
 
-                if infra_spec.capella_backend == 'azure' and 'disk_tier' in node_group_config:
-                    disk_tier = node_group_config['disk_tier']
-                else:
-                    disk_tier = ""
-
-                server_group = {
-                    'count': size,
-                    'services': [{'type': svc} for svc in services],
-                    'compute': {
-                        'type': node_group_config['instance_type'],
-                        'cpu': 0,
-                        'memoryInGb': 0
-                    },
-                    'disk': {
-                        'type': storage_class
-                        if infra_spec.capella_backend != 'azure'
-                        else disk_tier,
-                        'sizeInGb': int(node_group_config['volume_size']),
-                    },
-                    'diskAutoScaling': {
-                        "enabled": enable_disk_autoscaling
-                    }
+            server_group = {
+                'count': size,
+                'services': [{'type': svc} for svc in services],
+                'compute': {
+                    'type': node_group_config['instance_type'],
+                    'cpu': 0,
+                    'memoryInGb': 0
+                },
+                'disk': {
+                    'type': storage_class
+                    if cluster_spec.cloud_provider != 'azure'
+                    else disk_tier,
+                    'sizeInGb': int(node_group_config['storage_size']),
+                },
+                'diskAutoScaling': {
+                    "enabled": enable_disk_autoscaling
                 }
+            }
 
-                if infra_spec.capella_backend == 'aws':
-                    server_group['disk']['iops'] = int(node_group_config.get('iops', 3000))
+            if cluster_spec.cloud_provider == 'aws':
+                server_group['disk']['iops'] = int(node_group_config.get('iops', 3000))
 
-                server_list.append(server_group)
+            server_groups.append(server_group)
 
-            cluster_list.append(server_list)
+        return server_groups
 
-        return cluster_list
-
-    def deploy_cluster(self):
-        specs = self.construct_capella_server_groups(
-            self.infra_spec,
-            self.node_list['clusters'],
-            self.options.enable_disk_autoscaling)
-        names = ['perf-cluster-{}'.format(self.uuid) for _ in specs]
+    def deploy_clusters(self):
+        cluster_nodes = self.all_nodes['clusters']
+        names = ['perf-cluster-{}'.format(self.uuid) for _ in cluster_nodes]
         if len(names) > 1:
             names = ['{}-{}'.format(name, i) for i, name in enumerate(names)]
 
-        for name, spec in zip(names, specs):
+        self.cluster_spec.config.add_section('cb.capella.provisioned.id')
+
+        for name, (label, nodes_list) in zip(names, cluster_nodes.items()):
+            spec = self.construct_capella_server_groups(self.cluster_spec, nodes_list,
+                                                        self.options.enable_disk_autoscaling)
             config = {
                 "cidr": self.get_available_cidr(),
                 "name": name,
@@ -711,7 +777,7 @@ class CapellaDeployer(CloudDeployer):
                     'aws': 'hostedAWS',
                     'gcp': 'hostedGCP',
                     'azure': 'hostedAzure'
-                }[self.infra_spec.capella_backend.lower()],
+                }[self.cluster_spec.cloud_provider.lower()],
                 "region": self.region,
                 "singleAZ": not self.options.multi_az,
                 "server": self.options.capella_cb_version,
@@ -736,20 +802,20 @@ class CapellaDeployer(CloudDeployer):
             if release_id := self.options.release_id:
                 config['overRide'].update({'releaseId': release_id})
 
-            resp = self.api_client.create_cluster_customAMI(self.tenant_id, config)
+            resp = self.api_client.create_cluster_customAMI(self.org_id, config)
             raise_for_status(resp)
             cluster_id = resp.json().get('id')
-            self.cluster_ids.append(cluster_id)
+            self.cluster_ids[label] = cluster_id
 
-            logger.info('Initialised cluster deployment for cluster {} \n  config: {}'.
-                        format(cluster_id, config))
+            logger.info('Initialised cluster deployment for cluster {} (label: {})\n  config: {}'.
+                        format(cluster_id, label, config))
             logger.info('Saving cluster ID to spec file.')
-            self.infra_spec.config.set('infrastructure', 'cbc_cluster', '\n'.join(self.cluster_ids))
-            self.infra_spec.update_spec_file()
+            self.cluster_spec.config.set('cb.capella.provisioned.id', label, cluster_id)
+            self.cluster_spec.update_config_file()
 
         timeout_mins = self.capella_timeout
         interval_secs = 30
-        pending_clusters = [cluster_id for cluster_id in self.cluster_ids]
+        pending_clusters = [cluster_id for cluster_id in self.cluster_ids.values()]
         t0 = time()
         while pending_clusters and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
@@ -775,16 +841,16 @@ class CapellaDeployer(CloudDeployer):
                              .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
             exit(1)
 
-    def destroy_cluster(self):
-        for cluster_id in self.cluster_ids:
+    def destroy_clusters(self):
+        for cluster_id in self.cluster_ids.values():
             logger.info('Deleting Capella cluster {}...'.format(cluster_id))
             resp = self.api_client.delete_cluster(cluster_id)
             raise_for_status(resp)
             logger.info('Capella cluster successfully queued for deletion.')
 
     def get_available_cidr(self):
-        resp = self.api_client.get_deployment_options(self.tenant_id,
-                                                      self.infra_spec.capella_backend.lower())
+        resp = self.api_client.get_deployment_options(self.org_id,
+                                                      self.cluster_spec.cloud_provider.lower())
         return resp.json().get('suggestedCidr')
 
     def get_deployed_cidr(self, cluster_id):
@@ -792,7 +858,7 @@ class CapellaDeployer(CloudDeployer):
         return resp.json().get('place', {}).get('CIDR')
 
     def get_hostnames(self, cluster_id):
-        resp = self.api_client.get_nodes(tenant_id=self.tenant_id,
+        resp = self.api_client.get_nodes(tenant_id=self.org_id,
                                          project_id=self.project_id,
                                          cluster_id=cluster_id)
         nodes = resp.json()['data']
@@ -812,16 +878,16 @@ class CapellaDeployer(CloudDeployer):
         return ret_list
 
     def update_spec(self):
-        self.infra_spec.config.add_section('clusters_schemas')
-        for option, value in self.infra_spec.infrastructure_clusters.items():
-            self.infra_spec.config.set('clusters_schemas', option, value)
+        self.cluster_spec.config.add_section('cb.capella.provisioned.spec')
+        for option, value in self.cluster_spec.capella_provisioned_clusters_raw.items():
+            self.cluster_spec.config.set('cb.capella.provisioned.spec', option, value)
 
-        for i, cluster_id in enumerate(self.cluster_ids):
+        for label, cluster_id in self.cluster_ids.items():
             hostnames = self.get_hostnames(cluster_id)
-            cluster = self.infra_spec.config.options('clusters')[i]
-            self.infra_spec.config.set('clusters', cluster, '\n' + '\n'.join(hostnames))
+            self.cluster_spec.config.set('cb.capella.provisioned', label,
+                                         '\n' + '\n'.join(hostnames))
 
-        self.infra_spec.update_spec_file()
+        self.cluster_spec.update_config_file()
 
     def disable_autoscaling(self):
         if self.api_client.TOKEN_FOR_INTERNAL_SUPPORT is None:
@@ -829,7 +895,7 @@ class CapellaDeployer(CloudDeployer):
                          'for CBC_TOKEN_FOR_INTERNAL_SUPPORT, so cannot authenticate with CP API.')
             return
 
-        for cluster_id in self.cluster_ids:
+        for cluster_id in self.cluster_ids.values():
             logger.info(
                 'Creating deployment circuit breaker to prevent auto-scaling for cluster {}.'
                 .format(cluster_id)
@@ -843,29 +909,28 @@ class CapellaDeployer(CloudDeployer):
 
             logger.info('Circuit breaker created: {}'.format(pretty_dict(resp.json())))
 
-    def peer_vpc(self, network_info, cluster_id):
+    def peer_vpc(self, cluster_id: str):
         logger.info('Setting up VPC peering...')
-        if self.infra_spec.capella_backend == 'aws':
-            peering_connection = self._peer_vpc_aws(network_info, cluster_id)
-        elif self.infra_spec.capella_backend == 'gcp':
-            peering_connection, dns_managed_zone, client_vpc = self._peer_vpc_gcp(network_info,
-                                                                                  cluster_id)
-            self.infra_spec.config.set('infrastructure', 'dns_managed_zone', dns_managed_zone)
-            self.infra_spec.config.set('infrastructure', 'client_vpc', client_vpc)
+        if self.cluster_spec.cloud_provider == 'aws':
+            peering_connection = self._peer_vpc_aws(cluster_id)
+        elif self.cluster_spec.cloud_provider == 'gcp':
+            peering_connection, dns_managed_zone, client_vpc = self._peer_vpc_gcp(cluster_id)
+            self.cluster_spec.config.set('infrastructure', 'dns_managed_zone', dns_managed_zone)
+            self.cluster_spec.config.set('infrastructure', 'client_vpc', client_vpc)
 
         if peering_connection:
-            self.infra_spec.config.set('infrastructure', 'peering_connection', peering_connection)
-            self.infra_spec.update_spec_file()
+            self.cluster_spec.config.set('infrastructure', 'peering_connection', peering_connection)
+            self.cluster_spec.update_config_file()
         else:
             exit(1)
 
-    def _peer_vpc_aws(self, network_info, cluster_id) -> str:
+    def _peer_vpc_aws(self, cluster_id: str) -> str:
         # Initiate VPC peering
         logger.info('Initiating peering')
 
-        client_vpc = network_info['vpc_id']
-        cidr = network_info['subnet_cidr']
-        route_table = network_info['route_table_id']
+        client_vpc = self.client_network_info['vpc_id']
+        cidr = self.client_network_info['public_subnet_cidr']
+        route_table = self.client_network_info['route_table_id']
         cluster_cidr = self.get_deployed_cidr(cluster_id)
 
         logger.info('Adding Capella private network (AWS): VPC ID = {}'.format(client_vpc))
@@ -889,13 +954,13 @@ class CapellaDeployer(CloudDeployer):
 
         try:
             resp = self.api_client.create_private_network(
-                self.tenant_id, self.project_id, cluster_id, data)
+                self.org_id, self.project_id, cluster_id, data)
             private_network_id = resp.json()['id']
 
             # Get AWS CLI commands that we need to run to complete the peering process
             logger.info('Accepting peering request')
             resp = self.api_client.get_private_network(
-                self.tenant_id, self.project_id, cluster_id, private_network_id)
+                self.org_id, self.project_id, cluster_id, private_network_id)
             aws_commands = resp.json()['data']['commands']
             peering_connection_id = resp.json()['data']['aws']['providerId']
 
@@ -918,12 +983,12 @@ class CapellaDeployer(CloudDeployer):
 
         return peering_connection_id
 
-    def _peer_vpc_gcp(self, network_info, cluster_id) -> tuple[str, str]:
+    def _peer_vpc_gcp(self, cluster_id: str) -> tuple[str, str]:
         # Initiate VPC peering
         logger.info('Initiating peering')
 
-        client_vpc = network_info['vpc_id']
-        cidr = network_info['subnet_cidr']
+        client_vpc = self.client_network_info['vpc_id']
+        cidr = self.client_network_info['subnet_cidr']
         service_account = local("gcloud config get account", capture=True)
 
         logger.info('Adding Capella private network (GCP): VPC name = {}'.format(client_vpc))
@@ -946,13 +1011,13 @@ class CapellaDeployer(CloudDeployer):
 
         try:
             resp = self.api_client.create_private_network(
-                self.tenant_id, self.project_id, cluster_id, data)
+                self.org_id, self.project_id, cluster_id, data)
             private_network_id = resp.json()['id']
 
             # Get gcloud commands that we need to run to complete the peering process
             logger.info('Accepting peering request')
             resp = self.api_client.get_private_network(
-                self.tenant_id, self.project_id, cluster_id, private_network_id)
+                self.org_id, self.project_id, cluster_id, private_network_id)
             gcloud_commands = resp.json()['data']['commands']
 
             # Finish peering process using gcloud
@@ -983,13 +1048,14 @@ class CapellaDeployer(CloudDeployer):
 
     def destroy_peering_connection(self):
         logger.info("Destroying peering connection...")
-        if self.infra_spec.capella_backend == 'aws':
+        if self.cluster_spec.cloud_provider == 'aws':
             self._destroy_peering_connection_aws()
-        elif self.infra_spec.capella_backend == 'gcp':
+        elif self.cluster_spec.cloud_provider == 'gcp':
             self._destroy_peering_connection_gcp()
 
     def _destroy_peering_connection_aws(self):
-        peering_connection = self.infra_spec.infrastructure_settings.get('peering_connection', None)
+        peering_connection = self.cluster_spec.infrastructure_settings.get('peering_connection',
+                                                                           None)
 
         if not peering_connection:
             logger.warn('No peering connection ID found in cluster spec; nothing to destroy.')
@@ -1004,26 +1070,27 @@ class CapellaDeployer(CloudDeployer):
         )
 
     def _destroy_peering_connection_gcp(self):
-        peering_connection = self.infra_spec.infrastructure_settings.get('peering_connection', None)
+        peering_connection = self.cluster_spec.infrastructure_settings.get('peering_connection',
+                                                                           None)
 
         if not peering_connection:
             logger.warn('No peering connection ID found in cluster spec; nothing to destroy.')
             return
 
-        dns_managed_zone = self.infra_spec.infrastructure_settings['dns_managed_zone']
-        client_vpc = self.infra_spec.infrastructure_settings['client_vpc']
+        dns_managed_zone = self.cluster_spec.infrastructure_settings['dns_managed_zone']
+        client_vpc = self.cluster_spec.infrastructure_settings['client_vpc']
 
         local('gcloud compute networks peerings delete {} --network={}'
               .format(peering_connection, client_vpc))
         local('gcloud dns managed-zones delete {}'.format(dns_managed_zone))
 
 
-class ServerlessDeployer(CapellaDeployer):
+class CapellaServerlessDeployer(CapellaProvisionedDeployer):
 
     NEBULA_OVERRIDE_ARGS = ['override_count', 'min_count', 'max_count', 'instance_type']
 
-    def __init__(self, options):
-        CloudDeployer.__init__(self, options)
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
+        CloudVMDeployer.__init__(self, cluster_spec, options)
         if not options.test_config:
             logger.error('Test config required if deploying serverless infrastructure.')
             exit(1)
@@ -1035,22 +1102,13 @@ class ServerlessDeployer(CapellaDeployer):
         for prefix, section in {'dapi': 'data_api', 'nebula': 'direct_nebula'}.items():
             for arg in self.NEBULA_OVERRIDE_ARGS:
                 if (value := getattr(options, prefix + '_' + arg)) is not None:
-                    self.infra_spec.config.set(section, arg, str(value))
+                    self.cluster_spec.config.set(section, arg, str(value))
 
-        self.infra_spec.update_spec_file()
+        self.cluster_spec.update_config_file()
 
-        self.backend = self.infra_spec.infrastructure_settings['backend']
-
-        if public_api_url := self.options.capella_public_api_url:
-            env = public_api_url.removeprefix('https://')\
-                                .removesuffix('.nonprod-project-avengers.com')\
-                                .split('.', 1)[1]
-            self.infra_spec.config.set('infrastructure', 'cbc_env', env)
-            self.infra_spec.update_spec_file()
-        else:
-            public_api_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
-                self.infra_spec.infrastructure_settings['cbc_env']
-            )
+        public_api_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
+            self.cluster_spec.controlplane_settings['env']
+        )
 
         self.serverless_client = CapellaAPIServerless(
             public_api_url,
@@ -1061,60 +1119,29 @@ class ServerlessDeployer(CapellaDeployer):
 
         self.dedicated_client = CapellaAPIDedicated(
             public_api_url,
-            None,  # Don't need access key and secret key for creating a project or getting tenant
-            None,  # IDs (which are the only things we need it for)
+            None,
+            None,
             os.getenv('CBC_USER'),
             os.getenv('CBC_PWD')
         )
 
-        if (tenant := self.options.capella_tenant) is None:
-            tenant = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
-        else:
-            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
-            self.infra_spec.update_spec_file()
-
-        self.tenant_id = tenant or self.get_tenant_id()
+        self.org_id = self.cluster_spec.controlplane_settings['org']
 
         if (dp_id := self.options.capella_dataplane) is None:
-            dp_id = self.infra_spec.infrastructure_settings.get('cbc_dataplane', None)
+            dp_id = next(iter(self.cluster_spec.capella_serverless_dataplane_ids.values()))
         else:
-            self.infra_spec.config.set('infrastructure', 'cbc_dataplane', dp_id)
-            self.infra_spec.update_spec_file()
+            self.cluster_spec.config.set('infrastructure', 'cbc_dataplane', dp_id)
+            self.cluster_spec.update_config_file()
 
         self.dp_id = dp_id
 
-        self.project_id = self.infra_spec.infrastructure_settings.get('cbc_project', None)
-        self.cluster_id = self.infra_spec.infrastructure_settings.get('cbc_cluster', None)
-
-    def get_tenant_id(self):
-        logger.info('Getting tenant ID...')
-        resp = self.dedicated_client.list_accessible_tenants()
-        raise_for_status(resp)
-        tenant_id = resp.json()[0]['id']
-        self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant_id)
-        self.infra_spec.update_spec_file()
-        logger.info('Found tenant ID: {}'.format(tenant_id))
-        return tenant_id
+        self.project_id = self.cluster_spec.controlplane_settings['project']
+        self.cluster_id = self.cluster_spec.infrastructure_settings.get('cbc_cluster', None)
 
     def deploy(self):
-        if not self.options.capella_only:
-            logger.info('Deploying non-Capella resources')
-            # Configure terraform
-            CloudDeployer.populate_tfvars(self)
-            self.terraform_init(self.backend)
-
-            # Deploy non-capella resources
-            self.terraform_apply(self.backend)
-            non_capella_output = self.terraform_output(self.backend)
-            CloudDeployer.update_spec(self, non_capella_output)
-        else:
-            logger.info('Skipping deploying non-Capella resources as --capella-only flag is set')
-
-        # Deploy serverless dataplane + databases
         self.deploy_serverless_dataplane()
 
         if not self.options.no_serverless_dbs:
-            self.create_project()
             self.create_serverless_dbs()
         else:
             logger.info('Skipping deploying serverless dbs as --no-serverless-dbs flag is set')
@@ -1122,9 +1149,6 @@ class ServerlessDeployer(CapellaDeployer):
         self.update_spec()
 
     def destroy(self):
-        # Destroy non-capella resources
-        self.terraform_destroy(self.backend)
-
         dbs_destroyed = False
 
         # Destroy capella cluster
@@ -1135,17 +1159,12 @@ class ServerlessDeployer(CapellaDeployer):
         else:
             logger.warn('No serverless dataplane ID found. Not destroying serverless dataplane.')
 
-        if self.tenant_id and self.project_id and dbs_destroyed:
-            self.destroy_project()
-        else:
-            logger.warn('No tenant ID or project ID found. Not destroying project.')
-
     def deploy_serverless_dataplane(self):
         if not self.dp_id:
             logger.info('Deploying serverless dataplane')
             # If no dataplane ID given (which is normal) then we deploy a new one
-            nebula_config = self.infra_spec.direct_nebula
-            dapi_config = self.infra_spec.data_api
+            nebula_config = self.cluster_spec.direct_nebula
+            dapi_config = self.cluster_spec.data_api
 
             config = remove_nulls({
                 "provider": "aws",
@@ -1155,10 +1174,10 @@ class ServerlessDeployer(CapellaDeployer):
                         'image': self.options.capella_ami,
                         'version': self.options.capella_cb_version,
                         'specs': (
-                            specs[0]
+                            specs
                             if (specs := self.construct_capella_server_groups(
-                                self.infra_spec,
-                                self.node_list['clusters'],
+                                self.cluster_spec,
+                                next(iter(self.all_nodes['clusters'].values())),
                                 self.options.enable_disk_autoscaling
                             ))
                             else None
@@ -1196,8 +1215,8 @@ class ServerlessDeployer(CapellaDeployer):
             self.dp_id = resp.json().get('dataplaneId')
             logger.info('Initialised deployment for serverless dataplane {}'.format(self.dp_id))
             logger.info('Saving dataplane ID to spec file.')
-            self.infra_spec.config.set('infrastructure', 'cbc_dataplane', self.dp_id)
-            self.infra_spec.update_spec_file()
+            self.cluster_spec.config.set('infrastructure', 'cbc_dataplane', self.dp_id)
+            self.cluster_spec.update_config_file()
         else:
             logger.info('Skipping serverless dataplane deployment as existing dataplane specified: '
                         '{}'.format(self.dp_id))
@@ -1210,8 +1229,8 @@ class ServerlessDeployer(CapellaDeployer):
         status = resp.json()['status']['state']
 
         self.cluster_id = resp.json()['couchbaseCluster']['id']
-        self.infra_spec.config.set('infrastructure', 'cbc_cluster', self.cluster_id)
-        self.infra_spec.update_spec_file()
+        self.cluster_spec.config.set('infrastructure', 'cbc_cluster', self.cluster_id)
+        self.cluster_spec.update_config_file()
 
         if self.options.disable_autoscaling:
             self.disable_autoscaling()
@@ -1262,9 +1281,9 @@ class ServerlessDeployer(CapellaDeployer):
 
         data = {
             'name': name,
-            'tenantId': self.tenant_id,
+            'tenantId': self.org_id,
             'projectId': self.project_id,
-            'provider': self.backend,
+            'provider': self.csp,
             'region': self.region,
             'overRide': {
                 'width': width,
@@ -1352,7 +1371,7 @@ class ServerlessDeployer(CapellaDeployer):
             dp_creds['couchbaseCreds']['username'],
             dp_creds['couchbaseCreds']['password']
         )
-        self.infra_spec.config.set('credentials', 'rest', ':'.join(auth).replace('%', '%%'))
+        self.cluster_spec.config.set('credentials', 'rest', ':'.join(auth).replace('%', '%%'))
 
         default_pool = self.get_default_pool(hostname, auth)
         nodes = []
@@ -1367,9 +1386,9 @@ class ServerlessDeployer(CapellaDeployer):
         nodes = [':'.join(n) for n in sorted(nodes, key=lambda n: '' if 'kv' in n[1] else n[1])]
         node_string = '\n'.join(nodes)
 
-        self.infra_spec.config.set('clusters', 'serverless', node_string)
+        self.cluster_spec.config.set('clusters', 'serverless', node_string)
 
-        self.infra_spec.update_spec_file()
+        self.cluster_spec.update_config_file()
 
     def get_default_pool(self, hostname, auth):
         session = requests.Session()
@@ -1378,22 +1397,9 @@ class ServerlessDeployer(CapellaDeployer):
         raise_for_status(resp)
         return resp.json()
 
-    def create_project(self):
-        logger.info('Creating project for serverless DBs')
-        resp = self.dedicated_client.create_project(
-            self.tenant_id,
-            self.options.tag or 'perf-{}'.format(uuid4().hex[:6])
-        )
-        raise_for_status(resp)
-        project_id = resp.json()['id']
-        self.project_id = project_id
-        self.infra_spec.config.set('infrastructure', 'cbc_project', project_id)
-        self.infra_spec.update_spec_file()
-        logger.info('Project created: {}'.format(project_id))
-
     def _destroy_db(self, db_id):
         logger.info('Destroying serverless DB {}'.format(db_id))
-        resp = self.serverless_client.delete_database(self.tenant_id, self.project_id, db_id)
+        resp = self.serverless_client.delete_database(self.org_id, self.project_id, db_id)
         raise_for_status(resp)
         logger.info('Serverless DB queued for deletion: {}'.format(db_id))
 
@@ -1415,7 +1421,7 @@ class ServerlessDeployer(CapellaDeployer):
             t0 = time()
             while pending_dbs and time() - t0 < timeout_mins * 60:
                 sleep(interval_secs)
-                resp = self.serverless_client.list_all_databases(self.tenant_id, self.project_id)
+                resp = self.serverless_client.list_all_databases(self.org_id, self.project_id)
                 raise_for_status(resp)
                 pending_dbs = [db['data']['id'] for db in resp.json()['data']]
                 logger.info('{} databases remaining: {}'.format(len(pending_dbs), pending_dbs))
@@ -1447,24 +1453,14 @@ class ServerlessDeployer(CapellaDeployer):
         raise_for_status(resp)
         logger.info('Serverless dataplane successfully queued for deletion.')
 
-    def destroy_project(self):
-        logger.info('Deleting project...')
-        resp = self.dedicated_client.delete_project(self.tenant_id, self.project_id)
-        if resp.status_code == 400 and resp.json()['errorType'] == 'DeleteProjectsWithDatabases':
-            logger.warn('Cannot delete project because some serverless databases failed to delete.')
-            return
-        else:
-            raise_for_status(resp)
-        logger.info('Project successfully queued for deletion.')
 
-
-class EKSDeployer(CloudDeployer):
+class EKSDeployer(CloudVMDeployer):
     pass
 
 
-class AppServicesDeployer(CloudDeployer):
-    def __init__(self, options):
-        super().__init__(options)
+class CapellaAppServicesDeployer(CloudVMDeployer):
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
+        super().__init__(cluster_spec, options)
 
         self.test_config = None
         if options.test_config:
@@ -1472,37 +1468,20 @@ class AppServicesDeployer(CloudDeployer):
             test_config.parse(options.test_config, override=options.override)
             self.test_config = test_config
 
-        self.backend = self.infra_spec.infrastructure_settings['backend']
+        self.org_id = self.cluster_spec.controlplane_settings['org']
+        self.project_id = self.cluster_spec.controlplane_settings['project']
+        self.cluster_id = next(iter(self.cluster_spec.capella_provisioned_cluster_ids.values()))
 
-        if public_api_url := self.options.capella_public_api_url:
-            env = public_api_url.removeprefix('https://')\
-                                .removesuffix('.nonprod-project-avengers.com')\
-                                .split('.', 1)[1]
-            self.infra_spec.config.set('infrastructure', 'cbc_env', env)
-
-        if tenant := self.options.capella_tenant:
-            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
-
-        if project := self.options.capella_project:
-            self.infra_spec.config.set('infrastructure', 'cbc_project', project)
-
-        self.infra_spec.update_spec_file()
-
-        self.tenant_id = self.infra_spec.infrastructure_settings['cbc_tenant']
-        self.project_id = self.infra_spec.infrastructure_settings['cbc_project']
-        self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
-        self.cluster_id = self.cluster_ids[0]
-
-        logger.info("The tenant id is: {}".format(self.tenant_id))
+        logger.info("The org id is: {}".format(self.org_id))
         logger.info("The project id is: {}".format(self.project_id))
         logger.info("The cluster id is: {}".format(self.cluster_id))
 
         self.api_client = CapellaAPIDedicated(
             'https://cloudapi.{}.nonprod-project-avengers.com'.format(
-                self.infra_spec.infrastructure_settings['cbc_env']
+                self.cluster_spec.controlplane_settings['env']
             ),
-            os.getenv('CBC_SECRET_KEY'),
-            os.getenv('CBC_ACCESS_KEY'),
+            None,
+            None,
             os.getenv('CBC_USER'),
             os.getenv('CBC_PWD')
         )
@@ -1534,43 +1513,43 @@ class AppServicesDeployer(CloudDeployer):
             # Set sync function
             logger.info("Setting sync function")
             sync_function = "function (doc) { channel(doc.channels); }"
-            self.api_client.update_sync_function_sgw(self.tenant_id, self.project_id,
+            self.api_client.update_sync_function_sgw(self.org_id, self.project_id,
                                                      self.cluster_id, sgw_cluster_id,
                                                      sgw_db_name, sync_function)
 
             # Resume sgw database
             logger.info("Resuming sgw database")
-            self.api_client.resume_sgw_database(self.tenant_id, self.project_id,
+            self.api_client.resume_sgw_database(self.org_id, self.project_id,
                                                 self.cluster_id, sgw_cluster_id,
                                                 sgw_db_name)
 
             # Allow my IP
             logger.info("Whitelisting own IP on sgw backend")
-            self.api_client.allow_my_ip_sgw(self.tenant_id, self.project_id,
+            self.api_client.allow_my_ip_sgw(self.org_id, self.project_id,
                                             self.cluster_id, sgw_cluster_id)
 
             # Add allowed IPs
             logger.info("Whitelisting IPs")
-            client_ips = self.infra_spec.clients
+            client_ips = self.cluster_spec.clients
             logger.info("The client list is: {}".format(client_ips))
-            if self.infra_spec.capella_backend == 'aws':
+            if self.cluster_spec.cloud_provider == 'aws':
                 client_ips = [
                     dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
                 ]
             logger.info("The client list is: {}".format(client_ips))
             for client_ip in client_ips:
-                self.api_client.add_allowed_ip_sgw(self.tenant_id, self.project_id,
+                self.api_client.add_allowed_ip_sgw(self.org_id, self.project_id,
                                                    sgw_cluster_id, self.cluster_id,
                                                    client_ip)
 
             # Add app roles
             logger.info("Adding app roles")
             app_role = {"name": "moderator", "admin_channels": []}
-            self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
+            self.api_client.add_app_role_sgw(self.org_id, self.project_id,
                                              self.cluster_id, sgw_cluster_id,
                                              sgw_db_name, app_role)
             app_role = {"name": "admin", "admin_channels": []}
-            self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
+            self.api_client.add_app_role_sgw(self.org_id, self.project_id,
                                              self.cluster_id, sgw_cluster_id,
                                              sgw_db_name, app_role)
 
@@ -1578,14 +1557,14 @@ class AppServicesDeployer(CloudDeployer):
             logger.info("Adding user")
             user = {"email": "", "password": "Password123!", "name": "guest",
                     "disabled": False, "admin_channels": ["*"], "admin_roles": []}
-            self.api_client.add_user_sgw(self.tenant_id, self.project_id,
+            self.api_client.add_user_sgw(self.org_id, self.project_id,
                                          self.cluster_id, sgw_cluster_id,
                                          sgw_db_name, user)
 
             # Add admin user
             logger.info("Adding admin user")
             admin_user = {"name": "Administrator", "password": "Password123!"}
-            self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
+            self.api_client.add_admin_user_sgw(self.org_id, self.project_id,
                                                self.cluster_id, sgw_cluster_id,
                                                sgw_db_name, admin_user)
 
@@ -1604,29 +1583,29 @@ class AppServicesDeployer(CloudDeployer):
 
     def destroy(self):
         # Destroy capella cluster
-        sgw_cluster_id = self.infra_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.infrastructure_settings['app_services_cluster']
         self.destroy_cluster_internal_api(sgw_cluster_id)
 
     def update_spec(self, sgw_cluster_id, sgw_db_name):
         # Get sgw public and private ips
-        resp = self.api_client.get_sgw_links(self.tenant_id, self.project_id,
+        resp = self.api_client.get_sgw_links(self.org_id, self.project_id,
                                              self.cluster_id, sgw_cluster_id,
                                              sgw_db_name)
 
         logger.info("The connect response is: {}".format(resp))
         adminurl = resp.json().get('data').get('adminURL').split(':')[1].split('//')[1]
         logger.info("The admin url is: {}".format(adminurl))
-        self.infra_spec.config.add_section('sgw_schemas')
-        for option, value in self.infra_spec.infrastructure_syncgateways.items():
-            self.infra_spec.config.set('sgw_schemas', option, value)
+        self.cluster_spec.config.add_section('sgw_schemas')
+        for option, value in self.cluster_spec.infrastructure_syncgateways.items():
+            self.cluster_spec.config.set('sgw_schemas', option, value)
 
-        sgw_option = self.infra_spec.config.options('syncgateways')[0]
+        sgw_option = self.cluster_spec.config.options('syncgateways')[0]
         sgw_list = []
         for i in range(0, self.test_config.syncgateway_settings.nodes):
             sgw_list.append(adminurl)
         logger.info("the sgw list is: {}".format(sgw_list))
-        self.infra_spec.config.set('syncgateways', sgw_option, '\n' + '\n'.join(sgw_list))
-        self.infra_spec.update_spec_file()
+        self.cluster_spec.config.set('syncgateways', sgw_option, '\n' + '\n'.join(sgw_list))
+        self.cluster_spec.update_config_file()
 
     @staticmethod
     def capella_sgw_group_sizes(self, node_schemas):
@@ -1644,13 +1623,13 @@ class AppServicesDeployer(CloudDeployer):
 
         return sgw_group_sizes
 
-    def construct_capella_sgw_groups(self, infra_spec, node_schemas):
-        sgw_groups = AppServicesDeployer.capella_sgw_group_sizes(node_schemas)
+    def construct_capella_sgw_groups(self, cluster_spec, node_schemas):
+        sgw_groups = CapellaAppServicesDeployer.capella_sgw_group_sizes(node_schemas)
 
         for sgw_groups in sgw_groups.items():
 
             for (node_group) in sgw_groups.items():
-                node_group_config = infra_spec.infrastructure_section(node_group)
+                node_group_config = cluster_spec.infrastructure_section(node_group)
 
                 return node_group_config['instance_type']
 
@@ -1683,14 +1662,14 @@ class AppServicesDeployer(CloudDeployer):
             }
             logger.info('Deploying with custom AMI: {}'.format(self.options.capella_sgw_ami))
 
-        resp = self.api_client.create_sgw_backend(self.tenant_id, config)
+        resp = self.api_client.create_sgw_backend(self.org_id, config)
         raise_for_status(resp)
         sgw_cluster_id = resp.json().get('id')
         logger.info('Initialised app services deployment {}'.format(sgw_cluster_id))
         logger.info('Saving app services ID to spec file.')
 
-        self.infra_spec.config.set('infrastructure', 'app_services_cluster', sgw_cluster_id)
-        self.infra_spec.update_spec_file()
+        self.cluster_spec.config.set('infrastructure', 'app_services_cluster', sgw_cluster_id)
+        self.cluster_spec.update_config_file()
 
         timeout_mins = self.capella_timeout
         interval_secs = 30
@@ -1699,7 +1678,7 @@ class AppServicesDeployer(CloudDeployer):
         while pending_sgw_cluster and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            status = self.api_client.get_sgw_info(self.tenant_id, self.project_id,
+            status = self.api_client.get_sgw_info(self.org_id, self.project_id,
                                                   self.cluster_id, sgw_cluster_id).json() \
                                                                                   .get('data') \
                                                                                   .get('status') \
@@ -1781,7 +1760,7 @@ class AppServicesDeployer(CloudDeployer):
             config["scopes"] = scopes
         logger.info("The configuration is: {}".format(config))
 
-        resp = self.api_client.create_sgw_database(self.tenant_id, self.project_id,
+        resp = self.api_client.create_sgw_database(self.org_id, self.project_id,
                                                    self.cluster_id, sgw_cluster_id, config)
         # raise_for_status(resp)
         sgw_db_id = resp.json().get('id')
@@ -1792,7 +1771,7 @@ class AppServicesDeployer(CloudDeployer):
         count = 0
         while num_sgw != self.test_config.cluster.num_buckets:
             sleep(10)
-            resp = self.api_client.get_sgw_databases(self.tenant_id, self.project_id,
+            resp = self.api_client.get_sgw_databases(self.org_id, self.project_id,
                                                      self.cluster_id, sgw_cluster_id).json()
             logger.info("The response_data is: {}".format(resp))
             new_resp = resp.get('data')
@@ -1811,7 +1790,7 @@ class AppServicesDeployer(CloudDeployer):
 
     def destroy_cluster_internal_api(self, sgw_cluster_id):
         logger.info('Deleting Capella App Services cluster...')
-        resp = self.api_client.delete_sgw_backend(self.tenant_id, self.project_id,
+        resp = self.api_client.delete_sgw_backend(self.org_id, self.project_id,
                                                   self.cluster_id, sgw_cluster_id)
 
         timeout_mins = self.capella_timeout
@@ -1821,7 +1800,7 @@ class AppServicesDeployer(CloudDeployer):
         while pending_sgw_cluster and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
             try:
-                status = self.api_client.get_sgw_info(self.tenant_id, self.project_id,
+                status = self.api_client.get_sgw_info(self.org_id, self.project_id,
                                                       self.cluster_id, sgw_cluster_id)
                 status = status.json().get('data').get('status').get('state')
                 logger.info('Cluster state for {}: {}'.format(pending_sgw_cluster, status))
@@ -1834,102 +1813,74 @@ class AppServicesDeployer(CloudDeployer):
         logger.info('Capella App Services cluster successfully queued for deletion.')
 
 
-class CapellaColumnarDeployer(CapellaDeployer):
+class CapellaColumnarDeployer(CapellaProvisionedDeployer):
 
-    def __init__(self, options):
-        CloudDeployer.__init__(self, options)
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
+        CloudVMDeployer.__init__(self, cluster_spec, options)
 
         if public_api_url := self.options.capella_public_api_url:
             env = public_api_url.removeprefix('https://')\
                                 .removesuffix('.nonprod-project-avengers.com')\
                                 .split('.', 1)[1]
-            self.infra_spec.config.set('infrastructure', 'cbc_env', env)
-            self.infra_spec.update_spec_file()
+            self.cluster_spec.config.set('infrastructure', 'cbc_env', env)
+            self.cluster_spec.update_config_file()
 
         self.api_client = CapellaAPIColumnar(
             'https://cloudapi.{}.nonprod-project-avengers.com'.format(
-                self.infra_spec.infrastructure_settings['cbc_env']
+                self.cluster_spec.controlplane_settings['env']
             ),
-            os.getenv('CBC_SECRET_KEY'),
-            os.getenv('CBC_ACCESS_KEY'),
+            None,
+            None,
             os.getenv('CBC_USER'),
             os.getenv('CBC_PWD'),
             os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
         )
 
-        if (tenant := self.options.capella_tenant) is None:
-            tenant = self.infra_spec.infrastructure_settings.get('cbc_tenant', None)
-        else:
-            self.infra_spec.config.set('infrastructure', 'cbc_tenant', tenant)
-            self.infra_spec.update_spec_file()
-
-        self.tenant_id = tenant or self.get_tenant_id()
-
-        if (project := self.options.capella_project) is None:
-            project = self.infra_spec.infrastructure_settings.get('cbc_project', None)
-        else:
-            self.infra_spec.config.set('infrastructure', 'cbc_project', project)
-            self.infra_spec.update_spec_file()
-
-        self.project_id = project
-
-        self.backend = self.infra_spec.infrastructure_settings['backend']
+        self.org_id = self.cluster_spec.controlplane_settings['org']
+        self.project_id = self.cluster_spec.controlplane_settings['project']
 
         self.capella_timeout = max(0, self.options.capella_timeout)
 
-        self.cluster_ids = self.infra_spec.infrastructure_settings.get('cbc_cluster', '').split()
+        self.instance_ids = self.cluster_spec.capella_columnar_instance_ids
 
     def deploy(self):
-        if not self.project_id:
-            self.create_project()
-
-        if not self.options.capella_only:
-            # Configure terraform
-            if self.populate_tfvars():
-                self.terraform_init(self.infra_spec.capella_backend)
-
-                # Deploy non-capella resources
-                self.terraform_apply(self.infra_spec.capella_backend)
-                non_capella_output = self.terraform_output(self.infra_spec.capella_backend)
-                CloudDeployer.update_spec(self, non_capella_output)
-
-        # Deploy capella cluster(s)
         self.deploy_goldfish_instances()
-
-        # Update cluster spec file
         self.update_spec()
 
     def deploy_goldfish_instances(self):
-        instance_sizes = [len(servers) for _, servers in self.infra_spec.clusters]
-        names = ['perf-goldfish-{}'.format(self.uuid) for _ in instance_sizes]
+        names = ['perf-goldfish-{}'.format(self.uuid)
+                 for _ in self.cluster_spec.capella_columnar_instances]
         if len(names) > 1:
             names = ['{}-{}'.format(name, i) for i, name in enumerate(names)]
 
-        for name, size in zip(names, instance_sizes):
+        self.cluster_spec.config.add_section('cb.capella.columnar.id')
+
+        for name, (label, nodes) in zip(names,
+                                        self.cluster_spec.capella_columnar_instances):
             config = {
                 "name": name,
                 "description": "",
-                "provider": self.infra_spec.capella_backend,
+                "provider": self.csp,
                 "region": self.region,
-                "nodes": size
+                "nodes": len(nodes)
             }
 
             logger.info('Deploying Goldfish instance with config: {}'.format(pretty_dict(config)))
-            resp = self.api_client.create_columnar_instance(self.tenant_id, self.project_id,
+            resp = self.api_client.create_columnar_instance(self.org_id, self.project_id,
                                                             **config)
             raise_for_status(resp)
 
             instance_id = resp.json().get('id')
-            self.cluster_ids.append(instance_id)
+            self.instance_ids[label] = instance_id
 
             logger.info('Initialised Goldfish instance deployment {}'.format(instance_id))
             logger.info('Saving Goldfish instance ID to spec file.')
-            self.infra_spec.config.set('infrastructure', 'cbc_cluster', '\n'.join(self.cluster_ids))
-            self.infra_spec.update_spec_file()
+            self.cluster_spec.config.set('cb.capella.columnar.id', label, instance_id)
+            self.cluster_spec.update_config_file()
 
         timeout_mins = self.capella_timeout
         interval_secs = 30
-        pending_instances = [instance_id for instance_id in self.cluster_ids]
+        pending_instances = [instance_id for instance_id in self.instance_ids.values()]
         logger.info('Waiting for Goldfish instance(s) to be deployed...')
         t0 = time()
         while pending_instances and (time() - t0) < timeout_mins * 60:
@@ -1937,7 +1888,7 @@ class CapellaColumnarDeployer(CapellaDeployer):
 
             statuses = []
             for instance_id in pending_instances:
-                resp = self.api_client.get_specific_columnar_instance(self.tenant_id,
+                resp = self.api_client.get_specific_columnar_instance(self.org_id,
                                                                       self.project_id,
                                                                       instance_id)
                 raise_for_status(resp)
@@ -1959,53 +1910,42 @@ class CapellaColumnarDeployer(CapellaDeployer):
         logger.info('Successfully deployed all Goldfish instances')
 
     def destroy(self):
-        if not self.options.capella_only:
-            # Destroy non-capella resources
-            self.terraform_destroy(self.infra_spec.capella_backend)
-
-        # Destroy Goldfish instance(s)
         if not self.options.keep_cluster:
-            self.destroy_goldfish_instance()
+            self.destroy_goldfish_instances()
+            self.wait_for_goldfish_instance_destroy()
 
-            if int(self.infra_spec.infrastructure_settings.get('cbc_project_created', 0)):
-                instance_destroyed = self.wait_for_goldfish_instance_destroy()
-                if instance_destroyed:
-                    self.destroy_project()
-
-    def destroy_goldfish_instance(self):
-        for instance_id in self.cluster_ids:
+    def destroy_goldfish_instances(self):
+        for instance_id in self.instance_ids.values():
             logger.info('Deleting Goldfish instance {}...'.format(instance_id))
-            resp = self.api_client.delete_columnar_instance(self.tenant_id, self.project_id,
+            resp = self.api_client.delete_columnar_instance(self.org_id, self.project_id,
                                                             instance_id)
             raise_for_status(resp)
             logger.info('Goldfish instance successfully queued for deletion.')
 
-    def wait_for_goldfish_instance_destroy(self) -> bool:
+    def wait_for_goldfish_instance_destroy(self):
         logger.info('Waiting for Goldfish instances to be destroyed...')
 
         timeout_mins = self.capella_timeout
         interval_secs = 30
-        pending_instances = [instance_id for instance_id in self.cluster_ids]
+        pending_instances = [instance_id for instance_id in self.instance_ids.values()]
         t0 = time()
         while pending_instances and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            resp = self.api_client.get_columnar_instances(self.tenant_id, self.project_id)
+            resp = self.api_client.get_columnar_instances(self.org_id, self.project_id)
             raise_for_status(resp)
 
             pending_instances = []
-            for instance in resp.json().get('data'):
-                if (instance_id := instance.get('data', {}).get('id')) in self.cluster_ids:
+            for instance in resp.json()['data']:
+                if (instance_id := instance['data'].get('id')) in self.instance_ids.values():
                     pending_instances.append(instance_id)
                     logger.info('Instance {} not destroyed yet'.format(instance_id))
 
         if pending_instances:
             logger.error('Timed out after {} mins waiting for instances to delete.'
                          .format(timeout_mins))
-            return False
-
-        logger.info('All Goldfish instances destroyed.')
-        return True
+        else:
+            logger.info('All Goldfish instances destroyed.')
 
     def update_spec(self):
         """Update the infrastructure spec file with Goldfish instance details.
@@ -2015,44 +1955,45 @@ class CapellaColumnarDeployer(CapellaDeployer):
         - Nebula endpoints
         - API keys
         """
-        if not self.infra_spec.config.has_section('goldfish_nebula'):
-            self.infra_spec.config.add_section('goldfish_nebula')
+        if not self.cluster_spec.config.has_section('goldfish_nebula'):
+            self.cluster_spec.config.add_section('goldfish_nebula')
 
         nebula_creds = []
         cb_versions = []
 
-        for i, instance_id in enumerate(self.cluster_ids):
-            cluster, servers = list(self.infra_spec.clusters)[i]
+        for label, instance_id in self.instance_ids.items():
+            nodes = self.cluster_spec.capella_columnar_instances_raw[label].strip().split()
             hostnames = [
                 'multinodeapi-{}.{}.{}.aws.omnistrate.cloud:kv,cbas'.format(
                     x, instance_id, self.region
                 )
-                for x, _ in enumerate(servers)
+                for x, _ in enumerate(nodes)
             ]
-            self.infra_spec.config.set('clusters', cluster, '\n' + '\n'.join(hostnames))
+            self.cluster_spec.config.set('cb.capella.columnar', label, '\n' + '\n'.join(hostnames))
 
-            resp = self.api_client.get_specific_columnar_instance(self.tenant_id, self.project_id,
+            resp = self.api_client.get_specific_columnar_instance(self.org_id, self.project_id,
                                                                   instance_id)
             raise_for_status(resp)
             nebula_endpoint = resp.json()['config']['endpoint']
             logger.info('Nebula endpoint for {}: {}'.format(instance_id, nebula_endpoint))
-            self.infra_spec.config.set('goldfish_nebula', cluster, nebula_endpoint)
+            self.cluster_spec.config.set('goldfish_nebula', label, nebula_endpoint)
 
             cb_version = resp.json()['config']['version']['server']
             logger.info('Couchbase Server version for {}: {}'.format(instance_id, cb_version))
             cb_versions.append(cb_version)
 
             logger.info('Generating API keys for {}...'.format(instance_id))
-            resp = self.api_client.create_api_keys(self.tenant_id, self.project_id, instance_id)
+            resp = self.api_client.create_api_keys(self.org_id, self.project_id, instance_id)
             raise_for_status(resp)
             key_id, key_secret = resp.json()['apikeyId'], resp.json()['secret']
             logger.info('API key ID for {}: {}'.format(instance_id, key_id))
             nebula_creds.append('{}:{}'.format(key_id, key_secret))
 
-        self.infra_spec.config.set('credentials', 'goldfish_nebula',
+        self.cluster_spec.config.set('credentials', 'goldfish_nebula',
                                    '\n'.join(nebula_creds).replace('%', '%%'))
-        self.infra_spec.config.set('infrastructure', 'goldfish_cb_versions', '\n'.join(cb_versions))
-        self.infra_spec.update_spec_file()
+        self.cluster_spec.config.set('infrastructure', 'goldfish_cb_versions',
+                                     '\n'.join(cb_versions))
+        self.cluster_spec.update_config_file()
 
 
 # CLI args.
@@ -2200,37 +2141,89 @@ def get_args():
     return parser.parse_args()
 
 
+def deployer_sequence(
+    cluster_spec: ClusterSpec,
+    cli_args: Namespace
+) -> list[type[CloudVMDeployer]]:
+    if cluster_spec.app_services == 'true':
+        return [CapellaAppServicesDeployer]
+
+    deployers = []
+
+    if not (cluster_spec.has_any_capella and cli_args.capella_only):
+        deployers.append(CloudVMDeployer)
+
+    if cluster_spec.has_capella_provisioned and cluster_spec.has_capella_serverless:
+        logger.interrupt('Having both Capella Provisioned and Capella Serverless databases in the '
+                         'same test is not supported.')
+
+    if cluster_spec.has_capella_provisioned:
+        deployers.append(CapellaProvisionedDeployer)
+    elif cluster_spec.has_capella_serverless:
+        deployers.append(CapellaServerlessDeployer)
+
+    if cluster_spec.has_capella_columnar:
+        deployers.append(CapellaColumnarDeployer)
+
+    return deployers
+
+
+def need_capella_project(
+    deployer_classes: list[type[CloudVMDeployer]],
+    cli_args: Namespace
+) -> bool:
+    return not (
+        CapellaServerlessDeployer in deployer_classes and
+        cli_args.no_serverless_dbs and
+        CapellaColumnarDeployer not in deployer_classes
+    )
+
+
 def destroy():
     args = get_args()
-    infra_spec = ClusterSpec()
-    infra_spec.parse(fname=args.cluster, override=args.override)
-    if infra_spec.cloud_provider != 'capella':
-        deployer = CloudDeployer(args)
-    elif infra_spec.serverless_infrastructure:
-        deployer = ServerlessDeployer(args)
-    elif infra_spec.app_services == 'true':
-        deployer = AppServicesDeployer(args)
-    elif infra_spec.goldfish_infrastructure:
-        deployer = CapellaColumnarDeployer(args)
-    else:
-        deployer = CapellaDeployer(args)
+    cluster_spec = ClusterSpec()
+    cluster_spec.parse(fname=args.cluster, override=args.override)
 
-    deployer.destroy()
+    deployer_classes = deployer_sequence(cluster_spec, args)
+    for deployer_cls in deployer_classes:
+        logger.info('Destroying with {}'.format(deployer_cls.__name__))
+        deployer = deployer_cls(cluster_spec, args)
+        deployer.destroy()
+
+    if cluster_spec.has_any_capella:
+        cp_prepper = ControlPlanePreparer(
+            cluster_spec,
+            args.capella_public_api_url,
+            args.capella_tenant,
+            args.capella_project
+        )
+        cp_prepper.save_org_id()
+        cp_prepper.clean_up_api_keys()
+        if not args.keep_cluster:
+            cp_prepper.save_project_id(False)
+            cp_prepper.clean_up_project()
 
 
 def main():
     args = get_args()
-    infra_spec = ClusterSpec()
-    infra_spec.parse(fname=args.cluster, override=args.override)
-    if infra_spec.cloud_provider != 'capella':
-        deployer = CloudDeployer(args)
-    elif infra_spec.serverless_infrastructure:
-        deployer = ServerlessDeployer(args)
-    elif infra_spec.app_services == 'true':
-        deployer = AppServicesDeployer(args)
-    elif infra_spec.goldfish_infrastructure:
-        deployer = CapellaColumnarDeployer(args)
-    else:
-        deployer = CapellaDeployer(args)
+    cluster_spec = ClusterSpec()
+    cluster_spec.parse(fname=args.cluster, override=args.override)
 
-    deployer.deploy()
+    deployer_classes = deployer_sequence(cluster_spec, args)
+
+    if cluster_spec.has_any_capella:
+        cp_prepper = ControlPlanePreparer(
+            cluster_spec,
+            args.capella_public_api_url,
+            args.capella_tenant,
+            args.capella_project,
+            args.tag
+        )
+        cp_prepper.save_org_id()
+        cp_prepper.get_api_keys()
+        cp_prepper.save_project_id(need_capella_project(deployer_classes, args))
+
+    for deployer_cls in deployer_classes:
+        logger.info('Deploying with {}'.format(deployer_cls.__name__))
+        deployer = deployer_cls(cluster_spec, args)
+        deployer.deploy()

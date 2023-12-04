@@ -2,7 +2,7 @@ import os
 import random
 import re
 import time
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Union
 from uuid import uuid4
 
 from logger import logger
@@ -22,6 +22,7 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
 
+CollectionMap = dict[str, dict[str, dict[str, dict[str, Union[int, str]]]]]
 
 class ClusterManager:
 
@@ -30,7 +31,7 @@ class ClusterManager:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
-        self.capella_infra = self.cluster_spec.capella_infrastructure
+        self.capella_infra = self.cluster_spec.has_any_capella
         self.rest = RestHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.memcached = MemcachedHelper(cluster_spec, test_config)
@@ -165,7 +166,7 @@ class ClusterManager:
                     self.remote.update_cluster_config(cluster)
                 else:
                     for cluster_index_servers in \
-                            self.cluster_spec.servers_by_cluster_and_role('index'):
+                            self.cluster_spec.onprem_servers_by_cluster_and_role('index').values():
                         index_node = cluster_index_servers[0]
                         self.rest.set_index_settings(index_node,
                                                      self.test_config.gsi_settings.settings)
@@ -320,14 +321,33 @@ class ClusterManager:
                 self.rest.delete_bucket(host=master,
                                         name=bucket_name)
 
+    def _create_buckets_capella_provisioned(
+        self,
+        bucket_names: Iterable[str],
+        per_bucket_mem_quota: int,
+        use_ttl: bool = True
+    ):
+        for master in self.cluster_spec.capella_provisioned_masters:
+            for bucket_name in bucket_names:
+                bucket_params = {
+                    'host': master,
+                    'name': bucket_name,
+                    'ram_quota': per_bucket_mem_quota,
+                    'replica_number': self.test_config.bucket.replica_number,
+                    'conflict_resolution_type':
+                        self.test_config.bucket.conflict_resolution_type,
+                    'backend_storage': self.test_config.bucket.backend_storage,
+                    'eviction_policy': self.test_config.bucket.eviction_policy,
+                    'flush': self.test_config.bucket.flush,
+                    'durability': self.test_config.bucket.min_durability,
+                    'ttl_value': self.test_config.bucket.doc_ttl_value if use_ttl else 0,
+                    'ttl_unit': self.test_config.bucket.doc_ttl_unit if use_ttl else None
+                }
+
+                self.rest.create_bucket(**bucket_params)
+
     def create_buckets(self):
         mem_quota = self.test_config.cluster.mem_quota
-
-        if self.capella_infra:
-            logger.info('Getting free memory available for buckets on Capella cluster.')
-            mem_info = self.rest.get_bucket_mem_available(next(self.cluster_spec.masters))
-            mem_quota = mem_info['free']
-            logger.info('Free memory for buckets (per node): {}MB'.format(mem_quota))
 
         if self.test_config.cluster.num_buckets > 7:
             self.increase_bucket_limit(self.test_config.cluster.num_buckets + 3)
@@ -353,71 +373,78 @@ class ClusterManager:
                         'conflict_resolution_type':
                             self.test_config.bucket.conflict_resolution_type,
                         'backend_storage': self.test_config.bucket.backend_storage,
-                        'eviction_policy': self.test_config.bucket.eviction_policy
+                        'eviction_policy': self.test_config.bucket.eviction_policy,
+                        'password': self.test_config.bucket.password,
+                        'replica_index': self.test_config.bucket.replica_index,
+                        'bucket_type': self.test_config.bucket.bucket_type,
+                        'compression_mode': self.test_config.bucket.compression_mode,
+                        'magma_seq_tree_data_block_size':
+                            self.test_config.bucket.magma_seq_tree_data_block_size,
+                        'history_seconds': self.test_config.bucket.history_seconds,
+                        'history_bytes': self.test_config.bucket.history_bytes,
+                        'max_ttl': self.test_config.bucket.max_ttl
                     }
-                    if self.capella_infra:
-                        bucket_params.update({
-                            'flush': self.test_config.bucket.flush,
-                            'durability': self.test_config.bucket.min_durability,
-                            'ttl_value': self.test_config.bucket.doc_ttl_value,
-                            'ttl_unit': self.test_config.bucket.doc_ttl_unit
-                        })
-                    else:
-                        bucket_params.update({
-                            'password': self.test_config.bucket.password,
-                            'replica_index': self.test_config.bucket.replica_index,
-                            'bucket_type': self.test_config.bucket.bucket_type,
-                            'compression_mode': self.test_config.bucket.compression_mode,
-                            'magma_seq_tree_data_block_size':
-                                self.test_config.bucket.magma_seq_tree_data_block_size,
-                            'history_seconds': self.test_config.bucket.history_seconds,
-                            'history_bytes': self.test_config.bucket.history_bytes,
-                            'max_ttl': self.test_config.bucket.max_ttl
-                        })
 
                     self.rest.create_bucket(**bucket_params)
 
-    def create_collections(self):
+    def create_buckets_capella_provisioned(self):
+        logger.info('Getting free memory available for buckets on Capella cluster...')
+        mem_info = self.rest.get_bucket_mem_available(next(self.cluster_spec.masters))
+        mem_quota = mem_info['free']
+        logger.info('Free memory for buckets (per node): {}MB'.format(mem_quota))
+
+        if self.test_config.cluster.eventing_metadata_bucket_mem_quota:
+            mem_quota -= (self.test_config.cluster.eventing_metadata_bucket_mem_quota +
+                          self.test_config.cluster.eventing_bucket_mem_quota)
+
+        per_bucket_quota = mem_quota // self.test_config.cluster.num_buckets
+        self._create_buckets_capella_provisioned(self.test_config.buckets, per_bucket_quota)
+
+
+    def _create_collections_bulk_api(self, host: str, collection_map: CollectionMap):
+        for bucket, scopes in collection_map.items():
+            create_scopes = []
+            for scope, collections in scopes.items():
+                create_collections = []
+                for collection, options in collections.items():
+                    create_collection = {'name': collection}
+                    if 'history' in options:
+                        create_collection['history'] = bool(options['history'])
+                    create_collections.append(create_collection)
+                create_scope = {'name': scope, 'collections': create_collections}
+                create_scopes.append(create_scope)
+
+            self.rest.set_collection_map(host, bucket, {'scopes': create_scopes})
+
+    def _create_collections_one_by_one(self, host: str, collection_map: CollectionMap):
+        for bucket, scopes in collection_map.items():
+            delete_default = (
+                (not self.test_config.access_settings.transactionsenabled) and
+                '_default' not in scopes.get('_default', {})
+            )
+
+            if delete_default:
+                self.rest.delete_collection(host, bucket, '_default', '_default')
+
+            for scope, collections in scopes.items():
+                if scope != '_default':
+                    self.rest.create_scope(host, bucket, scope)
+                for collection, options in collections.items():
+                    if collection != '_default':
+                        history = bool(options['history']) if 'history' in options else None
+                        self.rest.create_collection(host, bucket, scope, collection, history)
+
+    def create_collections(self, masters: Iterable[str]):
         if self.dynamic_infra:
             return
+
         collection_map = self.test_config.collection.collection_map
-        for master in self.cluster_spec.masters:
+        for master in masters:
             if collection_map is not None:
                 if self.test_config.collection.use_bulk_api:
-                    for bucket, scopes in collection_map.items():
-                        create_scopes = []
-                        for scope, collections in scopes.items():
-                            create_collections = []
-                            for collection, options in collections.items():
-                                create_collection = {'name': collection}
-                                if 'history' in options:
-                                    create_collection['history'] = bool(options['history'])
-                                create_collections.append(create_collection)
-                            create_scope = {'name': scope, 'collections': create_collections}
-                            create_scopes.append(create_scope)
-
-                        self.rest.set_collection_map(master, bucket, {'scopes': create_scopes})
+                    self._create_collections_bulk_api(master, collection_map)
                 else:
-                    for bucket, scopes in collection_map.items():
-                        # If transactions are enabled, we need to keep the default collection
-                        # Otherwise, we can delete it if it is not specified in the collection map
-                        delete_default = (
-                            (not self.test_config.access_settings.transactionsenabled) and
-                            '_default' not in scopes.get('_default', {})
-                        )
-
-                        if delete_default:
-                            self.rest.delete_collection(master, bucket, '_default', '_default')
-
-                        for scope, collections in scopes.items():
-                            if scope != '_default':
-                                self.rest.create_scope(master, bucket, scope)
-                            for collection, options in collections.items():
-                                if collection != '_default':
-                                    history = bool(options['history']) \
-                                              if 'history' in options else None
-                                    self.rest.create_collection(master, bucket, scope, collection,
-                                                                history)
+                    self._create_collections_one_by_one(master, collection_map)
 
     def create_eventing_buckets(self):
         if not self.test_config.cluster.eventing_bucket_mem_quota:
@@ -436,24 +463,26 @@ class ClusterManager:
                     'ram_quota': per_bucket_quota,
                     'replica_number': self.test_config.bucket.replica_number,
                     'conflict_resolution_type': self.test_config.bucket.conflict_resolution_type,
-                    'backend_storage': self.test_config.bucket.backend_storage
+                    'backend_storage': self.test_config.bucket.backend_storage,
+                    'password': self.test_config.bucket.password,
+                    'replica_index': self.test_config.bucket.replica_index,
+                    'eviction_policy': self.test_config.bucket.eviction_policy,
+                    'bucket_type': self.test_config.bucket.bucket_type,
+                    'compression_mode': self.test_config.bucket.compression_mode
                 }
-                if self.capella_infra:
-                    bucket_params.update({
-                        'flush': self.test_config.bucket.flush,
-                        'durability': self.test_config.bucket.min_durability,
-                        'ttl_value': 0,
-                        'ttl_unit': None
-                    })
-                else:
-                    bucket_params.update({
-                        'password': self.test_config.bucket.password,
-                        'replica_index': self.test_config.bucket.replica_index,
-                        'eviction_policy': self.test_config.bucket.eviction_policy,
-                        'bucket_type': self.test_config.bucket.bucket_type,
-                        'compression_mode': self.test_config.bucket.compression_mode
-                    })
+
                 self.rest.create_bucket(**bucket_params)
+
+    def create_eventing_buckets_capella_provisioned(self):
+        if not self.test_config.cluster.eventing_bucket_mem_quota:
+            return
+
+        per_bucket_quota = self.test_config.cluster.eventing_bucket_mem_quota \
+            // self.test_config.cluster.eventing_buckets
+
+        self._create_buckets_capella_provisioned(self.test_config.eventing_buckets,
+                                                 per_bucket_quota,
+                                                 use_ttl=False)
 
     def create_eventing_metadata_bucket(self):
         if not self.test_config.cluster.eventing_metadata_bucket_mem_quota:
@@ -467,24 +496,25 @@ class ClusterManager:
                 'ram_quota': self.test_config.cluster.eventing_metadata_bucket_mem_quota,
                 'replica_number': self.test_config.bucket.replica_number,
                 'conflict_resolution_type': self.test_config.bucket.conflict_resolution_type,
-                'backend_storage': self.test_config.bucket.backend_storage
+                'backend_storage': self.test_config.bucket.backend_storage,
+                'password': self.test_config.bucket.password,
+                'replica_index': self.test_config.bucket.replica_index,
+                'eviction_policy': self.test_config.bucket.eviction_policy,
+                'bucket_type': self.test_config.bucket.bucket_type,
+                'compression_mode': self.test_config.bucket.compression_mode
             }
-            if self.capella_infra:
-                bucket_params.update({
-                    'flush': self.test_config.bucket.flush,
-                    'durability': self.test_config.bucket.min_durability,
-                    'ttl_value': 0,
-                    'ttl_unit': None
-                })
-            else:
-                bucket_params.update({
-                    'password': self.test_config.bucket.password,
-                    'replica_index': self.test_config.bucket.replica_index,
-                    'eviction_policy': self.test_config.bucket.eviction_policy,
-                    'bucket_type': self.test_config.bucket.bucket_type,
-                    'compression_mode': self.test_config.bucket.compression_mode
-                })
+
             self.rest.create_bucket(**bucket_params)
+
+    def create_eventing_metadata_bucket_capella_provisioned(self):
+        if not self.test_config.cluster.eventing_metadata_bucket_mem_quota:
+            return
+
+        self._create_buckets_capella_provisioned(
+            [self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME],
+            self.test_config.cluster.eventing_metadata_bucket_mem_quota,
+            use_ttl=False
+        )
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction
@@ -1092,19 +1122,36 @@ class ClusterManager:
         if not self.capella_infra:
             return
 
+        logger.info('Adding client node IPs to allow list')
         if self.cluster_spec.infrastructure_settings.get('peering_connection', None) is None:
             client_ips = self.cluster_spec.clients
-            if self.cluster_spec.capella_backend == 'aws':
+            if self.cluster_spec.cloud_provider == 'aws':
                 client_ips = [
                     dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
                 ]
             self.rest.add_allowed_ips_all_clusters(client_ips)
 
+    def capella_allow_columnar_ips(self):
+        if not self.capella_infra:
+            return
+
+        logger.info('Adding Columnar node IPs to allow list')
+        columnar_ips = []
+        for _, hostnames in self.cluster_spec.capella_columnar_instances:
+            for hostname in hostnames:
+                stdout, _, returncode = run_local_shell_command('dig +short {}'.format(hostname))
+                if returncode != 0:
+                    logger.interrupt('Failed to get IP address for hostname {}'.format(hostname))
+                else:
+                    columnar_ips.append(stdout.strip())
+
+        self.rest.add_allowed_ips_all_clusters(columnar_ips)
+
     def allow_ips_for_serverless_dbs(self):
         for db_id in self.test_config.buckets:
             self.rest.allow_my_ip(db_id)
             client_ips = self.cluster_spec.clients
-            if self.cluster_spec.capella_backend == 'aws':
+            if self.cluster_spec.cloud_provider == 'aws':
                 client_ips = [
                     dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
                 ]
@@ -1112,7 +1159,7 @@ class ClusterManager:
 
     def bypass_nebula_for_clients(self):
         client_ips = self.cluster_spec.clients
-        if self.cluster_spec.capella_backend == 'aws':
+        if self.cluster_spec.cloud_provider == 'aws':
             client_ips = [
                 dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
             ]
@@ -1129,19 +1176,19 @@ class ClusterManager:
         self.test_config.serverless_db.update_db_map(dbs)
 
     def init_nebula_ssh(self):
-        if self.cluster_spec.serverless_infrastructure and \
-           self.cluster_spec.capella_backend == 'aws':
+        if self.cluster_spec.has_capella_serverless and \
+           self.cluster_spec.cloud_provider == 'aws':
             self.cluster_spec.set_nebula_instance_ids()
             self.remote.nebula_init_ssh()
 
     def open_capella_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             logger.info('Opening port ranges for Capella cluster:\n{}'
                         .format('\n'.join(str(pr) for pr in port_ranges)))
 
-            if self.cluster_spec.capella_backend == 'aws':
+            if self.cluster_spec.cloud_provider == 'aws':
                 self._open_capella_aws_cluster_ports(port_ranges)
-            elif self.cluster_spec.capella_backend == 'azure':
+            elif self.cluster_spec.cloud_provider == 'azure':
                 self._open_capella_azure_cluster_ports(port_ranges)
 
     def _open_capella_aws_cluster_ports(self, port_ranges: Iterable[SGPortRange]):

@@ -56,8 +56,8 @@ class MetricHelper:
     @property
     def _title(self) -> str:
         title = self.test_config.showfast.title
-        if self.cluster_spec.capella_infrastructure:
-            return title.format(provider=self.cluster_spec.capella_backend.upper())
+        if self.cluster_spec.has_any_capella:
+            return title.format(provider=self.cluster_spec.cloud_provider.upper())
         return title
 
     @property
@@ -99,7 +99,7 @@ class MetricHelper:
     @property
     def _bucket_names(self):
         bucket_names = self.test_config.buckets
-        if self.cluster_spec.serverless_infrastructure:
+        if self.cluster_spec.has_capella_serverless:
             bucket_names = [
                 self.test_config.serverless_db.db_map[bucket]['name'] for bucket in bucket_names
             ]
@@ -1536,7 +1536,7 @@ class MetricHelper:
 
     def get_max_rss_values(self, function_name: str, server: str):
         ratio = 1024 * 1024
-        if self.cluster_spec.serverless_infrastructure:
+        if self.cluster_spec.has_capella_serverless:
             function_name = self.test_config.serverless_db.db_map[function_name]['name']
         db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                      collector='eventing_consumer_stats',
@@ -1574,6 +1574,7 @@ class MetricHelper:
 
     def ch2_metric(self, duration: float, logfile: str):
         filename = logfile + '.log'
+        total_time, rate = 0, 0
         test_duration = duration
         with open(filename) as fh:
             for line in fh.readlines():

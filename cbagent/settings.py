@@ -47,7 +47,7 @@ class CbAgentSettings:
         elif test.cluster_spec.cloud_infrastructure:
             self.cloud.update({'enabled': True, 'dynamic': False, 'cloud_rest': test.rest})
             self.hostnames = test.cluster_spec.servers
-            if test.cluster_spec.serverless_infrastructure:
+            if test.cluster_spec.has_capella_serverless:
                 self.cloud.update({'serverless': True})
                 self.serverless_db_names = {
                     k: v['name'] for k, v in test.test_config.serverless_db.db_map.items()

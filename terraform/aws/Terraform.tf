@@ -4,61 +4,61 @@ variable "cloud_region" {
 
 variable "cluster_nodes" {
   type = map(object({
-    node_group        = string
-    image             = string
-    instance_type     = string
-    storage_class     = string
-    volume_size       = number
-    iops              = number
-    volume_throughput = number
+    node_group         = string
+    image              = string
+    instance_type      = string
+    storage_type       = string
+    storage_size       = number
+    iops               = number
+    storage_throughput = number
   }))
 }
 
 variable "client_nodes" {
   type = map(object({
-    node_group        = string
-    image             = string
-    instance_type     = string
-    storage_class     = string
-    volume_size       = number
-    iops              = number
-    volume_throughput = number
+    node_group         = string
+    image              = string
+    instance_type      = string
+    storage_type       = string
+    storage_size       = number
+    iops               = number
+    storage_throughput = number
   }))
 }
 
 variable "utility_nodes" {
   type = map(object({
-    node_group        = string
-    image             = string
-    instance_type     = string
-    storage_class     = string
-    volume_size       = number
-    iops              = number
-    volume_throughput = number
+    node_group         = string
+    image              = string
+    instance_type      = string
+    storage_type       = string
+    storage_size       = number
+    iops               = number
+    storage_throughput = number
   }))
 }
 
 variable "syncgateway_nodes" {
   type = map(object({
-    node_group        = string
-    image             = string
-    instance_type     = string
-    storage_class     = string
-    volume_size       = number
-    iops              = number
-    volume_throughput = number
+    node_group         = string
+    image              = string
+    instance_type      = string
+    storage_type       = string
+    storage_size       = number
+    iops               = number
+    storage_throughput = number
   }))
 }
 
 variable "kafka_nodes" {
   type = map(object({
-    node_group        = string
-    image             = string
-    instance_type     = string
-    storage_class     = string
-    volume_size       = number
-    iops              = number
-    volume_throughput = number
+    node_group         = string
+    image              = string
+    instance_type      = string
+    storage_type       = string
+    storage_size       = number
+    iops               = number
+    storage_throughput = number
   }))
 }
 
@@ -392,12 +392,12 @@ resource "aws_instance" "cluster_instance" {
 }
 
 resource "aws_ebs_volume" "cluster_ebs_volume" {
-  for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.cluster_nodes : k => node if node.storage_size > 0}
 
   availability_zone = one(random_shuffle.az.result)
-  type              = lower(each.value.storage_class)
-  size              = each.value.volume_size
-  throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+  type              = lower(each.value.storage_type)
+  size              = each.value.storage_size
+  throughput        = each.value.storage_throughput > 0 ? each.value.storage_throughput : null
   iops              = each.value.iops > 0 ? each.value.iops : null
 
   tags = {
@@ -406,7 +406,7 @@ resource "aws_ebs_volume" "cluster_ebs_volume" {
 }
 
 resource "aws_volume_attachment" "cluster_ebs_volume_attachment" {
-  for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.cluster_nodes : k => node if node.storage_size > 0}
 
   device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.cluster_ebs_volume[each.key].id
@@ -429,12 +429,12 @@ resource "aws_instance" "client_instance" {
 }
 
 resource "aws_ebs_volume" "client_ebs_volume" {
-  for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.client_nodes : k => node if node.storage_size > 0}
 
   availability_zone = one(random_shuffle.az.result)
-  type              = lower(each.value.storage_class)
-  size              = each.value.volume_size
-  throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+  type              = lower(each.value.storage_type)
+  size              = each.value.storage_size
+  throughput        = each.value.storage_throughput > 0 ? each.value.storage_throughput : null
   iops              = each.value.iops > 0 ? each.value.iops : null
 
   tags = {
@@ -443,7 +443,7 @@ resource "aws_ebs_volume" "client_ebs_volume" {
 }
 
 resource "aws_volume_attachment" "client_ebs_volume_attachment" {
-  for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.client_nodes : k => node if node.storage_size > 0}
 
   device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.client_ebs_volume[each.key].id
@@ -466,12 +466,12 @@ resource "aws_instance" "utility_instance" {
 }
 
 resource "aws_ebs_volume" "utility_ebs_volume" {
-  for_each = {for k, node in var.utility_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.utility_nodes : k => node if node.storage_size > 0}
 
   availability_zone = one(random_shuffle.az.result)
-  type              = lower(each.value.storage_class)
-  size              = each.value.volume_size
-  throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+  type              = lower(each.value.storage_type)
+  size              = each.value.storage_size
+  throughput        = each.value.storage_throughput > 0 ? each.value.storage_throughput : null
   iops              = each.value.iops > 0 ? each.value.iops : null
 
   tags = {
@@ -480,7 +480,7 @@ resource "aws_ebs_volume" "utility_ebs_volume" {
 }
 
 resource "aws_volume_attachment" "utility_ebs_volume_attachment" {
-  for_each = {for k, node in var.utility_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.utility_nodes : k => node if node.storage_size > 0}
 
   device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.utility_ebs_volume[each.key].id
@@ -503,12 +503,12 @@ resource "aws_instance" "syncgateway_instance" {
 }
 
 resource "aws_ebs_volume" "syncgateway_ebs_volume" {
-  for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.syncgateway_nodes : k => node if node.storage_size > 0}
 
   availability_zone = one(random_shuffle.az.result)
-  type              = lower(each.value.storage_class)
-  size              = each.value.volume_size
-  throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+  type              = lower(each.value.storage_type)
+  size              = each.value.storage_size
+  throughput        = each.value.storage_throughput > 0 ? each.value.storage_throughput : null
   iops              = each.value.iops > 0 ? each.value.iops : null
 
   tags = {
@@ -517,7 +517,7 @@ resource "aws_ebs_volume" "syncgateway_ebs_volume" {
 }
 
 resource "aws_volume_attachment" "syncgateway_ebs_volume_attachment" {
-  for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.syncgateway_nodes : k => node if node.storage_size > 0}
 
   device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.syncgateway_ebs_volume[each.key].id
@@ -540,12 +540,12 @@ resource "aws_instance" "kafka_instance" {
 }
 
 resource "aws_ebs_volume" "kafka_ebs_volume" {
-  for_each = {for k, node in var.kafka_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.kafka_nodes : k => node if node.storage_size > 0}
 
   availability_zone = random_shuffle.kafka_broker_azs[0].result[tonumber(each.key) - 1]
-  type              = lower(each.value.storage_class)
-  size              = each.value.volume_size
-  throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
+  type              = lower(each.value.storage_type)
+  size              = each.value.storage_size
+  throughput        = each.value.storage_throughput > 0 ? each.value.storage_throughput : null
   iops              = each.value.iops > 0 ? each.value.iops : null
 
   tags = {
@@ -554,7 +554,7 @@ resource "aws_ebs_volume" "kafka_ebs_volume" {
 }
 
 resource "aws_volume_attachment" "kafka_ebs_volume_attachment" {
-  for_each = {for k, node in var.kafka_nodes : k => node if node.volume_size > 0}
+  for_each = {for k, node in var.kafka_nodes : k => node if node.storage_size > 0}
 
   device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.kafka_ebs_volume[each.key].id

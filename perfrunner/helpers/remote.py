@@ -22,7 +22,7 @@ class RemoteHelper:
         state.output.running = verbose
         state.output.stdout = verbose
 
-        if cluster_spec.capella_infrastructure:
+        if cluster_spec.has_any_capella:
             state.env.use_ssh_config = True
             return RemoteLinux(cluster_spec)
 

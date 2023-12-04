@@ -44,7 +44,7 @@ class PerfTest:
         self.test_config = test_config
         self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
         self.cloud_infra = self.cluster_spec.cloud_infrastructure
-        self.capella_infra = self.cluster_spec.capella_infrastructure
+        self.capella_infra = self.cluster_spec.has_any_capella
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.cluster = ClusterManager(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
@@ -65,7 +65,7 @@ class PerfTest:
 
         ssl_enabled_modes = ('data', 'n2n', 'capella', 'nebula', 'dapi')
         need_certificate = not (
-            self.cluster_spec.capella_infrastructure and
+            self.cluster_spec.has_any_capella and
             self.cluster_spec.goldfish_infrastructure
         ) and (
             self.test_config.cluster.enable_n2n_encryption or
@@ -170,9 +170,15 @@ class PerfTest:
         if self.dynamic_infra:
             pass
         else:
-            for master in self.cluster_spec.masters:
-                if self.rest.is_not_balanced(master):
-                    return 'The cluster is not balanced'
+            all_masters = [
+                self.cluster_spec.onprem_masters,
+                self.cluster_spec.vm_masters,
+                self.cluster_spec.capella_provisioned_masters
+            ]
+            for masters in all_masters:
+                for master in masters:
+                    if self.rest.is_not_balanced(master):
+                        return 'The cluster is not balanced'
 
     def check_failover(self) -> Optional[str]:
         if self.dynamic_infra:
@@ -183,10 +189,16 @@ class PerfTest:
                     self.rebalance_settings.graceful_failover:
                 return
 
-        for master in self.cluster_spec.masters:
-            num_failovers = self.rest.get_failover_counter(master)
-            if num_failovers:
-                return 'Failover happened {} time(s)'.format(num_failovers)
+        all_masters = [
+            self.cluster_spec.onprem_masters,
+            self.cluster_spec.vm_masters,
+            self.cluster_spec.capella_provisioned_masters
+        ]
+        for masters in all_masters:
+            for master in masters:
+                num_failovers = self.rest.get_failover_counter(master)
+                if num_failovers:
+                    return 'Failover happened {} time(s)'.format(num_failovers)
 
     def check_core_dumps(self) -> str:
         if self.capella_infra:
@@ -280,7 +292,7 @@ class PerfTest:
                 )
 
     def compact_bucket(self, wait: bool = True):
-        if not self.cluster_spec.capella_infrastructure:
+        if not self.cluster_spec.has_any_capella:
             for target in self.target_iterator:
                 self.rest.trigger_bucket_compaction(target.node, target.bucket)
 
@@ -635,7 +647,7 @@ class PerfTest:
         pass
 
     def _measure_curr_ops(self) -> int:
-        if self.cluster_spec.serverless_infrastructure:
+        if self.cluster_spec.has_capella_serverless:
             return self._measure_curr_ops_rest()
         return self._measure_curr_ops_mc()
 

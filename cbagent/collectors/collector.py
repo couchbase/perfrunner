@@ -71,7 +71,13 @@ class Collector:
             r = self.session.get(**params)
 
             if r.status_code in (200, 201, 202):
-                return json and r.json() or r.text
+                if json:
+                    try:
+                        return r.json()
+                    except requests.JSONDecodeError:
+                        logger.warn("Failed to decode JSON: {}".format(url))
+                        return r.text
+                return r.text
             else:
                 logger.warn("Bad response (GET): {}".format(url))
                 logger.warn("Response text: {}".format(r.text))
@@ -102,7 +108,13 @@ class Collector:
             r = self.session.post(**params)
 
             if r.status_code in (200, 201, 202):
-                return json_out and r.json() or r.text
+                if json_out:
+                    try:
+                        return r.json()
+                    except requests.JSONDecodeError:
+                        logger.warn("Failed to decode JSON: {}".format(url))
+                        return r.text
+                return r.text
             else:
                 logger.warn("Bad response (POST): {}".format(url))
                 logger.warn("Request payload: {}".format(json_data))

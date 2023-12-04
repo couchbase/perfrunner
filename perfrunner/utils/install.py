@@ -583,7 +583,7 @@ class CloudInstaller(CouchbaseInstaller):
         logger.info('Server URL: {}'.format(self.url))
         download_file(self.url, package_name)
 
-        if not self.cluster_spec.capella_infrastructure:
+        if not self.cluster_spec.has_any_capella:
             logger.info('Uploading {} to servers'.format(package_name))
             uploads = []
             hosts = self.cluster_spec.servers
@@ -728,7 +728,7 @@ def main():
             else:
                 raise Exception("{} is not a valid infrastructure provider"
                                 .format(infra_provider))
-        elif cluster_spec.capella_infrastructure:
+        elif cluster_spec.has_any_capella:
             installer = ClientUploader(cluster_spec, args)
         else:
             installer = CloudInstaller(cluster_spec, args)

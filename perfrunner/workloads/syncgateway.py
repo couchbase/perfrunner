@@ -493,14 +493,14 @@ def syncgateway_load_users(workload_settings: PhaseSettings,
                                    insertstart=get_offset(workload_settings, worker_id),
                                    exportfile=res_file_name,
                                    use_capella="true"
-                                               if cluster.capella_infrastructure else "false",
+                                               if cluster.has_any_capella else "false",
                                    starchannel=sgs.starchannel,
                                    e2e=sgs.e2e)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     path = get_instance_home(workload_settings, worker_id)
@@ -537,13 +537,13 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
                                   channels_per_doc=sgs.channels_per_doc,
                                   insertstart=get_offset(workload_settings, worker_id),
                                   use_capella="true"
-                                              if cluster.capella_infrastructure else "false",
+                                              if cluster.has_any_capella else "false",
                                   exportfile=res_file_name)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     path = get_instance_home(workload_settings, worker_id)
@@ -569,13 +569,13 @@ def syncgateway_init_users(workload_settings: PhaseSettings, target: TargetSetti
                                    insertstart=get_offset(workload_settings, worker_id),
                                    sequence_start=int(sgs.users) + int(sgs.documents) + 1,
                                    use_capella="true"
-                                               if cluster.capella_infrastructure else "false",
+                                               if cluster.has_any_capella else "false",
                                    exportfile=res_file_name)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     path = get_instance_home(workload_settings, worker_id)
@@ -606,13 +606,13 @@ def syncgateway_grant_access(workload_settings: PhaseSettings,
                                      exportfile=res_file_name,
                                      grant_access=sgs.grant_access,
                                      use_capella="true"
-                                                 if cluster.capella_infrastructure else "false",
+                                                 if cluster.has_any_capella else "false",
                                      channels_per_grant=sgs.channels_per_grant)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     path = get_instance_home(workload_settings, worker_id)
@@ -660,13 +660,13 @@ def syncgateway_run_test(workload_settings: PhaseSettings,
                                  exportfile=res_file_name,
                                  feedmode=sgs.feed_mode,
                                  use_capella="true"
-                                             if cluster.capella_infrastructure else "false",
+                                             if cluster.has_any_capella else "false",
                                  grant_access_in_scan=sgs.grant_access_in_scan)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     logger.info("The command to be run is: {}".format(params))
@@ -706,13 +706,13 @@ def syncgateway_delta_sync_load_docs(
         channels_per_user=sgs.channels_per_user,
         channels_per_doc=sgs.channels_per_doc,
         insertstart=get_offset(workload_settings, worker_id),
-        use_capella="true" if cluster.capella_infrastructure else "false",
+        use_capella="true" if cluster.has_any_capella else "false",
         exportfile=res_file_name)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     path = get_instance_home(workload_settings, worker_id)
@@ -765,13 +765,13 @@ def syncgateway_delta_sync_run_test(
         channels_per_doc=sgs.channels_per_doc,
         exportfile=res_file_name,
         feedmode=sgs.feed_mode,
-        use_capella="true" if cluster.capella_infrastructure else "false",
+        use_capella="true" if cluster.has_any_capella else "false",
         grant_access_in_scan=sgs.grant_access_in_scan)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     path = get_instance_home(workload_settings, worker_id)
@@ -823,13 +823,13 @@ def syncgateway_e2e_cbl_load_docs(
         insertcount=docs_per_instance,
         retry_count=sgs.ycsb_retry_count,
         retry_interval=sgs.ycsb_retry_interval,
-        use_capella="true" if cluster.capella_infrastructure else "false",
+        use_capella="true" if cluster.has_any_capella else "false",
         exportfile=res_file_name)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     path = get_instance_home(workload_settings, worker_id)
@@ -887,13 +887,13 @@ def syncgateway_e2e_cbl_run_test(
         grant_access_in_scan=sgs.grant_access_in_scan,
         retry_count=sgs.ycsb_retry_count,
         retry_interval=sgs.ycsb_retry_interval,
-        use_capella="true" if cluster.capella_infrastructure else "false",
+        use_capella="true" if cluster.has_any_capella else "false",
         request_distribution=sgs.requestdistribution)
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     path = get_instance_home(workload_settings, worker_id)
@@ -945,7 +945,7 @@ def syncgateway_e2e_multi_cbl_load_docs(
         data_integrity=sgs.data_integrity,
         exportfile=res_file_name)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     if workload_settings.collections:
@@ -1021,7 +1021,7 @@ def syncgateway_e2e_multi_cbl_run_test(
         data_integrity=sgs.data_integrity,
         request_distribution=sgs.requestdistribution)
 
-    if cluster.capella_infrastructure:
+    if cluster.has_any_capella:
         params = add_capella_password(params)
 
     if workload_settings.collections:

@@ -4,7 +4,8 @@ import os
 import time
 from collections import namedtuple
 from json import JSONDecodeError
-from typing import Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Callable, Dict, Generator, Iterator, List, Optional, Tuple, Union
+from urllib.parse import urlparse
 
 import requests
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
@@ -82,9 +83,9 @@ class RestHelper:
                 ):
         if cluster_spec.dynamic_infrastructure:
             return KubernetesRestHelper(cluster_spec, test_config)
-        elif cluster_spec.serverless_infrastructure:
+        elif cluster_spec.has_capella_serverless:
             return ServerlessRestHelper(cluster_spec, test_config)
-        elif cluster_spec.capella_infrastructure:
+        elif cluster_spec.has_capella_provisioned:
             return ProvisionedCapellaRestHelper(cluster_spec, test_config)
         else:
             return DefaultRestHelper(cluster_spec, test_config)
@@ -100,13 +101,23 @@ class RestBase:
         self.use_tls = test_config.cluster.enable_n2n_encryption or \
             self.cluster_spec.capella_infrastructure
 
+    def _set_auth(self, kwargs: dict) -> Tuple[str, str]:
+        if (auth := kwargs.pop('auth', None)):
+            return auth
+
+        for label, nodes in self.cluster_spec.capella_columnar_instances:
+            if urlparse(kwargs['url']).netloc.split(':')[0] in nodes:
+                return self.cluster_spec.capella_columnar_admin_credentials[label]
+
+        return self.auth
+
     @retry
     def get(self, **kwargs) -> requests.Response:
-        auth = kwargs.pop('auth', self.auth)
+        auth = self._set_auth(kwargs)
         return requests.get(auth=auth, verify=False, **kwargs)
 
     def _post(self, **kwargs) -> requests.Response:
-        auth = kwargs.pop('auth', self.auth)
+        auth = self._set_auth(kwargs)
         return requests.post(auth=auth, verify=False, **kwargs)
 
     @retry
@@ -114,7 +125,7 @@ class RestBase:
         return self._post(**kwargs)
 
     def _put(self, **kwargs) -> requests.Response:
-        auth = kwargs.pop('auth', self.auth)
+        auth = self._set_auth(kwargs)
         return requests.put(auth=auth, verify=False, **kwargs)
 
     @retry
@@ -122,7 +133,7 @@ class RestBase:
         return self._put(**kwargs)
 
     def _delete(self, **kwargs) -> requests.Response:
-        auth = kwargs.pop('auth', self.auth)
+        auth = self._set_auth(kwargs)
         return requests.delete(auth=auth, verify=False, **kwargs)
 
     def delete(self, **kwargs) -> requests.Response:
@@ -149,6 +160,13 @@ class DefaultRestHelper(RestBase):
 
     def __init__(self, cluster_spec, test_config):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+
+    def hostname_rest_creds(self, host: str) -> Tuple[str, str]:
+        for _, nodes in self.cluster_spec.capella_columnar_instances:
+            if host in nodes:
+                return tuple(self.cluster_spec.goldfish_nebula_credentials[0])
+
+        return self.rest_username, self.rest_password
 
     def set_data_path(self, host: str, path: str):
         logger.info('Configuring data path on {}'.format(host))
@@ -1495,7 +1513,7 @@ class DefaultRestHelper(RestBase):
         except Exception as ex:
             logger.info("Expvar request failed: {}".format(ex))
             raise ex
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             return response
         return response.json()
 
@@ -1510,7 +1528,7 @@ class DefaultRestHelper(RestBase):
             password="guest",
             collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             ws_prefix = "wss://"
         else:
@@ -1551,7 +1569,7 @@ class DefaultRestHelper(RestBase):
             password="guest",
             collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             ws_prefix = "wss://"
         else:
@@ -1592,7 +1610,7 @@ class DefaultRestHelper(RestBase):
             password="guest",
             collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             ws_prefix = "wss://"
         else:
@@ -1724,11 +1742,10 @@ class CapellaRestBase(DefaultRestHelper):
     def __init__(self, cluster_spec, test_config):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
         self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
-            self.cluster_spec.infrastructure_settings['cbc_env']
+            self.cluster_spec.controlplane_settings['env']
         )
-        self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
-        self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
-        self.cluster_ids = self.cluster_spec.infrastructure_settings['cbc_cluster'].split()
+        self.org_id = self.cluster_spec.controlplane_settings['org']
+        self.project_id = self.cluster_spec.controlplane_settings['project']
 
         access, secret = os.getenv('CBC_ACCESS_KEY'), os.getenv('CBC_SECRET_KEY')
         if (not access or not secret) and os.path.isfile(CAPELLA_CREDS_FILE):
@@ -1739,14 +1756,29 @@ class CapellaRestBase(DefaultRestHelper):
         self.dedicated_client = CapellaAPIDedicated(
             self.base_url, secret, access, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
-        self.admin_credentials = self.cluster_spec.capella_admin_credentials
+        self.cluster_ids = self.cluster_spec.capella_provisioned_cluster_ids
+        self.admin_credentials = self.cluster_spec.capella_provisioned_admin_credentials
+
+    @property
+    def clusters(self) -> Generator[Tuple[str, List[str]], None, None]:
+        raise NotImplementedError
 
     def _admin_creds(self, host: str) -> Tuple[str, str]:
-        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
+        for label, hostnames in self.clusters:
             if host in hostnames:
-                username, password = self.admin_credentials[i]
+                username, password = self.admin_credentials[label]
                 return (username, password)
         return (self.rest_username, self.rest_password)
+
+    def hostname_to_cluster_id(self, host: str):
+        if len(self.cluster_ids) == 1:
+            return next(iter(self.cluster_ids.values()))
+
+        for label, hostnames in self.clusters:
+            if host in hostnames:
+                return self.cluster_ids[label]
+
+        return None
 
     @property
     def _cbc_user(self):
@@ -1766,7 +1798,7 @@ class CapellaRestBase(DefaultRestHelper):
         return resp
 
     def trigger_all_cluster_log_collection(self):
-        for cluster_id in self.cluster_ids:
+        for cluster_id in self.cluster_ids.values():
             logger.info('Triggering log collection for clusterId: {}'.format(cluster_id))
             resp = self.trigger_log_collection(cluster_id)
         return resp
@@ -1799,7 +1831,7 @@ class CapellaRestBase(DefaultRestHelper):
         return clusters_not_uploaded
 
     def wait_until_all_logs_uploaded(self):
-        cluster_ids_not_uploaded = [cluster_id for cluster_id in self.cluster_ids]
+        cluster_ids_not_uploaded = [cluster_id for cluster_id in self.cluster_ids.values()]
         t0 = time.time()
         timeout_mins = 20
 
@@ -1825,7 +1857,7 @@ class CapellaRestBase(DefaultRestHelper):
 
     def get_all_cluster_node_logs(self):
         log_nodes = {}
-        for cluster_id in self.cluster_ids:
+        for cluster_id in self.cluster_ids.values():
             logger.info('Getting node information from the cluster id: {}'.format(cluster_id))
             log_nodes = log_nodes | self.get_node_log_info(cluster_id)
         return log_nodes
@@ -1845,14 +1877,9 @@ class CapellaRestBase(DefaultRestHelper):
 
 class ProvisionedCapellaRestHelper(CapellaRestBase):
 
-    def hostname_to_cluster_id(self, host: str):
-        if len(self.cluster_ids) == 1:
-            return self.cluster_ids[0]
-
-        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
-            if host in hostnames:
-                return self.cluster_ids[i]
-        return None
+    @property
+    def clusters(self) -> Generator[Tuple[str, List[str]], None, None]:
+        return self.cluster_spec.capella_provisioned_clusters
 
     def get_remote_clusters(self, host: str) -> List[Dict]:
         logger.info('Getting remote clusters')
@@ -1862,23 +1889,28 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
         return response.json()
 
     def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
-        cluster_idx = self.cluster_ids.index(self.hostname_to_cluster_id(master_node))
-        return self.cluster_spec.servers_by_cluster_and_role(role)[cluster_idx]
+        nodes_by_role = self.cluster_spec.capella_provisioned_servers_by_cluster_and_role(role)
+
+        for label, nodes in self.clusters:
+            if master_node in nodes:
+                return nodes_by_role[label]
+
+        return []
 
     def create_db_user_all_clusters(self, username: str, password: str):
-        for cluster_id in self.cluster_ids:
+        for cluster_id in self.cluster_ids.values():
             self.create_db_user(cluster_id, username, password)
 
     @retry
     def create_db_user(self, cluster_id: str, username: str, password: str):
         logger.info('Adding DB credential')
-        resp = self.dedicated_client.create_db_user(self.tenant_id, self.project_id, cluster_id,
+        resp = self.dedicated_client.create_db_user(self.org_id, self.project_id, cluster_id,
                                                     username, password)
         return resp
 
     def get_bucket_mem_available(self, host: str):
         cluster_id = self.hostname_to_cluster_id(host)
-        resp = self.dedicated_client.get_buckets(self.tenant_id, self.project_id, cluster_id)
+        resp = self.dedicated_client.get_buckets(self.org_id, self.project_id, cluster_id)
         return {
             'free': resp.json()['freeMemoryInMb'],
             'total': resp.json()['totalMemoryInMb']
@@ -1924,29 +1956,29 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 
         resp = self.dedicated_client.create_bucket(
-            self.tenant_id, self.project_id, cluster_id, data
+            self.org_id, self.project_id, cluster_id, data
         )
         return resp
 
     def allow_my_ip_all_clusters(self):
-        for cluster_id in self.cluster_ids:
+        for cluster_id in self.cluster_ids.values():
             self.allow_my_ip(cluster_id)
 
     def add_allowed_ips_all_clusters(self, ips: list[str]):
-        for cluster_id in self.cluster_ids:
+        for cluster_id in self.cluster_ids.values():
             self.add_allowed_ips(cluster_id, ips)
 
     @retry
     def allow_my_ip(self, cluster_id):
         logger.info('Whitelisting own IP on cluster {}'.format(cluster_id))
-        resp = self.dedicated_client.allow_my_ip(self.tenant_id, self.project_id, cluster_id)
+        resp = self.dedicated_client.allow_my_ip(self.org_id, self.project_id, cluster_id)
         return resp
 
     @retry
     def add_allowed_ips(self, cluster_id, ips: list[str]):
         logger.info('Whitelisting IPs on cluster {}: {}'.format(cluster_id, ips))
         resp = self.dedicated_client.add_allowed_ips(
-            self.tenant_id, self.project_id, cluster_id, ips)
+            self.org_id, self.project_id, cluster_id, ips)
         return resp
 
     @retry
@@ -1955,7 +1987,7 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
         bucket_id = base64.urlsafe_b64encode(bucket.encode()).decode()
         logger.info('Flushing bucket on cluster {}: {}'.format(cluster_id, bucket_id))
         resp = self.dedicated_client.flush_bucket(
-            self.tenant_id, self.project_id, cluster_id, bucket_id)
+            self.org_id, self.project_id, cluster_id, bucket_id)
         return resp
 
     @retry
@@ -1963,7 +1995,7 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
         cluster_id = self.hostname_to_cluster_id(host)
         logger.info('Deleting bucket on cluster {}: {}'.format(cluster_id, bucket))
         resp = self.dedicated_client.delete_bucket(
-            self.tenant_id, self.project_id, cluster_id, bucket)
+            self.org_id, self.project_id, cluster_id, bucket)
         return resp
 
     @retry
@@ -1971,22 +2003,22 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
         cluster_id = self.hostname_to_cluster_id(host)
         logger.info('Updating cluster config for cluster {}. New config: {}'
                     .format(cluster_id, pretty_dict(new_cluster_config)))
-        resp = self.dedicated_client.update_specs(self.tenant_id, self.project_id, cluster_id,
+        resp = self.dedicated_client.update_specs(self.org_id, self.project_id, cluster_id,
                                                   new_cluster_config)
         return resp
 
     def create_replication(self, host: str, params: dict):
         logger.info('Creating XDCR replication with parameters: {}'.format(pretty_dict(params)))
         cluster_id = self.hostname_to_cluster_id(host)
-        resp = self.dedicated_client.create_xdcr_replication(self.tenant_id, self.project_id,
+        resp = self.dedicated_client.create_xdcr_replication(self.org_id, self.project_id,
                                                              cluster_id, params)
         logger.info('XDCR replication created.')
         return resp
 
     def get_all_cluster_nodes(self):
         cluster_nodes = {}
-        for i, cluster_id in enumerate(self.cluster_ids):
-            resp = self.dedicated_client.get_nodes(tenant_id=self.tenant_id,
+        for cluster_name, cluster_id in self.cluster_ids.items():
+            resp = self.dedicated_client.get_nodes(tenant_id=self.org_id,
                                                    project_id=self.project_id,
                                                    cluster_id=cluster_id)
             nodes = resp.json()['data']
@@ -2002,7 +2034,6 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
                 else:
                     non_kv_nodes.append("{}:{}".format(hostname, services_string))
 
-            cluster_name = self.cluster_spec.config.options('clusters')[i]
             cluster_nodes[cluster_name] = kv_nodes + non_kv_nodes
         return cluster_nodes
 
@@ -2010,7 +2041,7 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
     def backup(self, host: str, bucket: str):
         cluster_id = self.hostname_to_cluster_id(host)
         logger.info('Triggering backup.')
-        resp = self.dedicated_client.backup_now(self.tenant_id, self.project_id, cluster_id,
+        resp = self.dedicated_client.backup_now(self.org_id, self.project_id, cluster_id,
                                                 bucket)
         return resp
 
@@ -2018,7 +2049,7 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
         cluster_id = self.hostname_to_cluster_id(host)
         while True:
             time.sleep(30)
-            resp = self.dedicated_client.get_backups(self.tenant_id, self.project_id, cluster_id)
+            resp = self.dedicated_client.get_backups(self.org_id, self.project_id, cluster_id)
             if resp is not None:
                 logger.info(str(resp.json()))
 
@@ -2031,14 +2062,14 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
     def restore(self, host: str, bucket: str):
         cluster_id = self.hostname_to_cluster_id(host)
         logger.info('Triggering restore.')
-        self.dedicated_client.restore_from_backup(self.tenant_id, self.project_id, cluster_id,
+        self.dedicated_client.restore_from_backup(self.org_id, self.project_id, cluster_id,
                                                   bucket)
 
     def wait_for_restore_initialize(self, host: str, bucket):
         cluster_id = self.hostname_to_cluster_id(host)
         while True:
             try:
-                resp = self.dedicated_client.get_restores(self.tenant_id, self.project_id,
+                resp = self.dedicated_client.get_restores(self.org_id, self.project_id,
                                                           cluster_id, bucket)
                 if resp.json()['status']:
                     break
@@ -2051,18 +2082,17 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
     def wait_for_restore(self, host: str, bucket):
         cluster_id = self.hostname_to_cluster_id(host)
         while True:
-            resp = self.dedicated_client.get_restores(self.tenant_id, self.project_id, cluster_id,
+            resp = self.dedicated_client.get_restores(self.org_id, self.project_id, cluster_id,
                                                       bucket)
             if resp.json()['status'] == 'complete':
                 break
 
     def get_sgversion(self, host: str) -> str:
         logger.info('Getting SG Server version on server: {}'.format(host))
-        cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        cluster_id = next(iter(self.cluster_ids.values()))
+        sgw_cluster_id = self.cluster_spec.infrastructure_settings['app_services_cluster']
         build = \
-            self.dedicated_client.get_sgw_info(self.tenant_id,
+            self.dedicated_client.get_sgw_info(self.org_id,
                                                self.project_id,
                                                cluster_id,
                                                sgw_cluster_id).json() \
@@ -2179,15 +2209,22 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
 
 
 class ServerlessRestHelper(CapellaRestBase):
+
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
         self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
             self.cluster_spec.infrastructure_settings['cbc_env']
         )
-        self.dp_id = self.cluster_spec.infrastructure_settings['cbc_dataplane']
+        self.dp_id = next(iter(self.cluster_spec.capella_serverless_dataplane_ids.values()))
         self.serverless_client = CapellaAPIServerless(
             self.base_url, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
+        self.cluster_ids = self.cluster_spec.capella_serverless_cluster_ids
+        self.admin_credentials = self.cluster_spec.capella_serverless_admin_credentials
+
+    @property
+    def clusters(self) -> Generator[Tuple[str, List[str]], None, None]:
+        return self.cluster_spec.capella_provisioned_clusters
 
     def get_db_info(self, db_id):
         logger.info('Getting debug info for DB {}'.format(db_id))
@@ -2203,7 +2240,7 @@ class ServerlessRestHelper(CapellaRestBase):
     @retry
     def allow_my_ip(self, db_id):
         logger.info('Whitelisting own IP on DB {}'.format(db_id))
-        resp = self.serverless_client.allow_my_ip(self.tenant_id, self.project_id, db_id)
+        resp = self.serverless_client.allow_my_ip(self.org_id, self.project_id, db_id)
         return resp
 
     @retry
@@ -2216,7 +2253,7 @@ class ServerlessRestHelper(CapellaRestBase):
             ]
         }
 
-        resp = self.serverless_client.add_ip_allowlists(self.tenant_id, db_id, self.project_id,
+        resp = self.serverless_client.add_ip_allowlists(self.org_id, db_id, self.project_id,
                                                         data)
         return resp
 
@@ -2236,7 +2273,7 @@ class ServerlessRestHelper(CapellaRestBase):
     @retry
     def get_db_api_key(self, db_id):
         logger.info('Getting API key for serverless DB {}'.format(db_id))
-        resp = self.serverless_client.generate_keys(self.tenant_id, self.project_id, db_id)
+        resp = self.serverless_client.generate_keys(self.org_id, self.project_id, db_id)
         return resp
 
     @retry

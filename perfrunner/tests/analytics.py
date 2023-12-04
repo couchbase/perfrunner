@@ -475,8 +475,7 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         self.config_file = self.analytics_settings.analytics_config_file
         self.analytics_link = self.analytics_settings.analytics_link
 
-        self.is_capella_goldfish = self.cluster_spec.capella_infrastructure and \
-            self.cluster_spec.goldfish_infrastructure
+        self.is_capella_goldfish = self.cluster_spec.has_capella_columnar
 
         if self.is_capella_goldfish:
             self.nebula_endpoint = self.cluster_spec.config.items('goldfish_nebula')[0][1]
@@ -1157,6 +1156,9 @@ class CH2Test(PerfTest):
             query_port = QUERY_PORT
             cbas_port = ANALYTICS_PORT
 
+        if self.test_config.has_capella_columnar:
+            cbas_port = GOLDFISH_NEBULA_ANALYTICS_PORT
+
         query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
         userid, password = self.cluster_spec.rest_credentials
 
@@ -1371,6 +1373,130 @@ class CH2CloudRemoteLinkTest(CH2CloudTest):
                                     logfile=self.test_config.ch2_settings.workload)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
+
+
+class CH2CapellaGoldfishTest(CH2CloudRemoteLinkTest):
+
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'secondary_stats': False,
+        'ns_server_system': True,
+        'analytics': True,
+        'active_tasks': False,
+        'ns_server': False,
+    }
+
+    def __init__(self, *args, **kwargs):
+        PerfTest.__init__(self, *args, **kwargs)
+
+        self.num_items = 0
+        self.analytics_link = self.test_config.analytics_settings.analytics_link
+        self.data_node = next(self.cluster_spec.capella_provisioned_masters)
+        self.analytics_node = next(self.cluster_spec.capella_columnar_masters)
+        self.nebula_endpoint = self.cluster_spec.config.items('goldfish_nebula')[0][1]
+        self.nebula_username, self.nebula_password = \
+            self.cluster_spec.goldfish_nebula_credentials[0]
+        self.data_cluster_username, self.data_cluster_password = \
+            next(iter(self.cluster_spec.capella_provisioned_admin_credentials.values()))
+
+        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
+        self.storage_format = self.test_config.analytics_settings.storage_format
+        self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+
+    def exec_analytics_statement(self, statement: str) -> requests.Response:
+        return self.rest.exec_analytics_statement_goldfish_nebula(self.nebula_endpoint, statement)
+
+    def wait_for_persistence(self):
+        for bucket in self.test_config.buckets:
+            self.monitor.monitor_disk_queues(self.data_node, bucket)
+            self.monitor.monitor_dcp_queues(self.data_node, bucket)
+            self.monitor.monitor_replica_count(self.data_node, bucket)
+
+    def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
+        query_port = QUERY_PORT_SSL
+        nebula_port = GOLDFISH_NEBULA_ANALYTICS_PORT
+
+        query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
+        userid, password = self.cluster_spec.rest_credentials
+
+        return CH2ConnectionSettings(
+            userid=userid,
+            password=password,
+            userid_analytics=self.nebula_username,
+            password_analytics=self.nebula_password,
+            analytics_url='{}:{}'.format(self.nebula_endpoint, nebula_port),
+            query_url=query_urls[0],
+            multi_query_url=",".join(query_urls),
+            data_url=self.data_nodes[0],
+            multi_data_url=",".join(self.data_nodes),
+            use_tls=True
+        )
+
+    def _report_kpi(self):
+        measure_time = self.test_config.ch2_settings.duration - \
+                       self.test_config.ch2_settings.warmup_duration
+        total_time, rate, test_duration = \
+            self.metrics.ch2_metric(duration=measure_time,
+                                    logfile=self.test_config.ch2_settings.workload)
+
+        if self.test_config.ch2_settings.tclients:
+            tpm = round(rate*60/test_duration, 2)
+            if tpm > 0:
+                response_time = round(total_time/1000000/rate, 2)
+            else:
+                response_time = float('inf')
+
+            self.reporter.post(
+                *self.metrics.ch2_tmp(tpm, self.test_config.ch2_settings.tclients)
+            )
+
+            self.reporter.post(
+                *self.metrics.ch2_response_time(response_time,
+                                                self.test_config.ch2_settings.tclients)
+            )
+
+        if self.test_config.ch2_settings.aclients:
+            self.reporter.post(
+                *self.metrics.ch2_analytics_query_time(test_duration,
+                                                       self.test_config.ch2_settings.tclients)
+            )
+
+    def run(self):
+        self.remote.init_ch2(repo=self.test_config.ch2_settings.repo,
+                             branch=self.test_config.ch2_settings.branch,
+                             worker_home=self.worker_manager.WORKER_HOME)
+
+        self.load_ch2_remote()
+
+        # Only wait for and restart the KV cluster
+        self.wait_for_persistence()
+
+        local.create_remote_link(
+            self.analytics_link,
+            self.data_node,
+            self.nebula_endpoint,
+            self.nebula_username,
+            self.nebula_password,
+            use_secure_port=True,
+            goldfish_nebula=True,
+            data_node_username=self.data_cluster_username,
+            data_node_password=self.data_cluster_password
+        )
+
+        sync_time = self.sync()
+        self.report_sync_kpi(sync_time)
+
+        if self.test_config.ch2_settings.create_gsi_index:
+            self.create_indexes()
+
+        self.run_ch2_remote()
+        self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
+                                    logfile=self.test_config.ch2_settings.workload)
+
+        self.report_kpi()
 
 
 class CH2GoldfishPauseResumeTest(CH2CloudRemoteLinkTest):

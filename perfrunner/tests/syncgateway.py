@@ -81,7 +81,7 @@ class SGPerfTest(PerfTest):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
-        self.capella_infra = self.cluster_spec.capella_infrastructure
+        self.capella_infra = self.cluster_spec.has_any_capella
         self.cloud_infra = self.cluster_spec.cloud_infrastructure
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
@@ -894,7 +894,7 @@ class SGReplicateThroughputTest1(SGPerfTest):
         )
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = 'https://{}:4985/db-1'.format(sg1_master)
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
@@ -951,7 +951,7 @@ class SGReplicateThroughputTest1(SGPerfTest):
 class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = 'https://{}:4985/db-1'.format(sg1_master)
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
@@ -1004,7 +1004,7 @@ class SGReplicateThroughputTest2(SGPerfTest):
         )
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = 'https://{}:4985/db-1'.format(sg1_master)
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
@@ -1069,7 +1069,7 @@ class SGReplicateThroughputTest2(SGPerfTest):
 class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = 'https://{}:4985/db-1'.format(sg1_master)
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
@@ -1117,7 +1117,7 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
 class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
         else:
@@ -1176,7 +1176,7 @@ class SGReplicateLoad(SGPerfTest):
 class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = 'https://{}:4985/db-1'.format(sg1_master)
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
@@ -1228,7 +1228,7 @@ class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
 class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
         else:
@@ -1272,7 +1272,7 @@ class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
 class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master, channel):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = 'https://{}:4985/db-1'.format(sg1_master)
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
@@ -1337,7 +1337,7 @@ class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
 class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master, channel):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.cluster_spec.has_any_capella or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = 'https://{}:4985/db-1'.format(sg1_master)
             sg2 = 'https://{}:4985/db-1'.format(sg2_master)
@@ -1917,7 +1917,7 @@ class EndToEndTest(SGPerfTest):
         for host in sg_servers:
             logger.info("The host is: {}".format(host))
             sgw_stats = self.rest.get_sg_stats(host)
-            if not self.cluster_spec.capella_infrastructure:
+            if not self.cluster_spec.has_any_capella:
                 logger.info('Sync-gateway Stats for host {}: {}'.format(host,
                             pretty_dict(sgw_stats['syncgateway']['per_db'])))
                 for count in range(1, self.test_config.cluster.num_buckets + 1):

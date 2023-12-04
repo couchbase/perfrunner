@@ -10,7 +10,7 @@ from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import CapellaRebalanceTest
-from perfrunner.utils.terraform import CapellaDeployer
+from perfrunner.utils.terraform import CapellaProvisionedDeployer
 
 
 class N1QLTest(PerfTest):
@@ -1400,7 +1400,7 @@ class N1QLLatencyRebalanceRawStatementTest(N1QLLatencyRawStatementTest, CapellaR
     @timeit
     def _rebalance(self, services):
         masters = self.cluster_spec.masters
-        clusters_schemas = self.cluster_spec.clusters_schemas
+        clusters_schemas = self.cluster_spec.capella_provisioned_cluster_specs
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
@@ -1414,9 +1414,9 @@ class N1QLLatencyRebalanceRawStatementTest(N1QLLatencyRawStatementTest, CapellaR
                 nodes_after_rebalance = schemas[:nodes_after]
 
                 new_cluster_config = {
-                    'specs': CapellaDeployer.construct_capella_server_groups(
+                    'specs': CapellaProvisionedDeployer.construct_capella_server_groups(
                         self.cluster_spec, nodes_after_rebalance
-                    )[0]
+                    )
                 }
 
                 self.rest.update_cluster_configuration(master, new_cluster_config)

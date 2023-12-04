@@ -270,22 +270,25 @@ class EndToEndLatencyWithXDCRTest(EndToEndLatencyTest, CapellaXdcrTest):
     @with_stats
     def create_indexes_with_stats(self) -> float:
         """Create indexes on all clusters, but only time index build on the first cluster."""
-        query_nodes_per_cluster = self.cluster_spec.servers_by_cluster_and_role('n1ql')
-        index_nodes_per_cluster = self.cluster_spec.servers_by_cluster_and_role('index')
+        query_nodes_per_cluster = \
+            self.cluster_spec.capella_provisioned_servers_by_cluster_and_role('n1ql')
+        index_nodes_per_cluster = \
+            self.cluster_spec.capella_provisioned_servers_by_cluster_and_role('index')
 
         t0 = time.time()
-        for cluster_query_nodes in query_nodes_per_cluster:
+        for cluster_query_nodes in query_nodes_per_cluster.values():
             self.create_indexes(query_node=cluster_query_nodes[0])
 
         # Wait for index build to complete on first cluster, and record time
         logger.info('Waiting for index build on primary cluster')
-        self.wait_for_indexing(index_nodes=index_nodes_per_cluster[0])
+        self.wait_for_indexing(index_nodes=next(iter(index_nodes_per_cluster.values())))
         index_build_time = time.time() - t0
         logger.info("Index build completed in {} sec".format(index_build_time))
 
         # Wait for index build to complete on remaining clusters
         logger.info('Waiting for index build to complete on remaining clusters')
-        remaining_index_nodes = [node for nodes in index_nodes_per_cluster[1:] for node in nodes]
+        remaining_index_nodes = [node for nodes in list(index_nodes_per_cluster.values())[1:]
+                                 for node in nodes]
         self.wait_for_indexing(index_nodes=remaining_index_nodes)
 
         return index_build_time

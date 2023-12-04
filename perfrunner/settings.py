@@ -5,7 +5,7 @@ import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from dataclasses import dataclass
 from itertools import chain, combinations, permutations
-from typing import Dict, Iterable, Iterator, List, Optional, Tuple
+from typing import Dict, Generator, Iterable, Iterator, List, Optional, Tuple
 
 from decorator import decorator
 
@@ -59,7 +59,7 @@ class Config:
                 self.config.add_section(section)
             self.config.set(section, option, value)
 
-    def update_spec_file(self):
+    def update_config_file(self):
         with open(self.fname, 'w') as f:
             self.config.write(f)
 
@@ -78,92 +78,157 @@ class ClusterSpec(Config):
         self.inactive_cluster_idxs = set()
 
     @property
-    def dynamic_infrastructure(self):
+    def dynamic_infrastructure(self) -> bool:
         return self.cloud_infrastructure and self.kubernetes_infrastructure
 
     @property
-    def cloud_infrastructure(self):
-        return 'infrastructure' in self.config.sections()
+    def cloud_infrastructure(self) -> bool:
+        return 'infrastructure' in self.config
 
     @property
-    def cloud_provider(self):
-        return self.config.get('infrastructure', 'provider', fallback='')
+    def cloud_provider(self) -> str:
+        return self.config.get('infrastructure', 'cloud_provider', fallback='')
 
     @property
-    def capella_backend(self):
-        return self.config.get('infrastructure', 'backend', fallback='')
-
-    @property
-    def app_services(self):
+    def app_services(self) -> str:
         return self.config.get('infrastructure', 'app_services', fallback='')
 
     @property
-    def kubernetes_infrastructure(self):
-        if self.cloud_infrastructure and not self.capella_infrastructure:
+    def kubernetes_infrastructure(self) -> bool:
+        if self.cloud_infrastructure and not self.has_any_capella:
             return self.infrastructure_settings.get("type", "kubernetes") == "kubernetes"
         return False
 
     @property
-    def capella_infrastructure(self):
-        if self.cloud_infrastructure:
-            return self.infrastructure_settings.get("provider", "aws") == "capella"
-        return False
+    def has_any_capella(self) -> bool:
+        return (
+            self.has_capella_provisioned or
+            self.has_capella_serverless or
+            self.has_capella_columnar
+        )
 
     @property
-    def serverless_infrastructure(self):
-        return self.capella_infrastructure and \
-            self.infrastructure_settings.get('capella_arch', 'dedicated') == 'serverless'
+    def has_capella_provisioned(self) -> bool:
+        return self.cloud_infrastructure and 'cb.capella.provisioned' in self.config
 
     @property
-    def goldfish_infrastructure(self):
-        if self.cloud_infrastructure:
-            return self.infrastructure_settings.get("service", "") == "goldfish"
-        return False
+    def has_capella_serverless(self) -> bool:
+        return self.cloud_infrastructure and 'cb.capella.serverless' in self.config
 
     @property
-    def generated_cloud_config_path(self):
+    def has_capella_columnar(self) -> bool:
+        return self.cloud_infrastructure and 'cb.capella.columnar' in self.config
+
+    @property
+    def has_selfmanaged_vms(self) -> bool:
+        return 'cb.selfmanaged.vm' in self.config
+
+    @property
+    def has_selfmanaged_onprem(self) -> bool:
+        return 'cb.selfmanaged.onprem' in self.config
+
+    @property
+    def capella_provisioned_clusters_raw(self) -> dict[str, str]:
+        if self.has_capella_provisioned:
+            return dict(self.config.items('cb.capella.provisioned'))
+        return {}
+
+    @property
+    def capella_serverless_dataplanes_raw(self) -> dict[str, str]:
+        if self.has_capella_serverless:
+            return dict(self.config.items('cb.capella.serverless'))
+        return {}
+
+    @property
+    def capella_columnar_instances_raw(self) -> dict[str, str]:
+        if self.has_capella_provisioned:
+            return dict(self.config.items('cb.capella.columnar'))
+        return {}
+
+    @property
+    def vm_clusters_raw(self) -> dict[str, str]:
+        if 'cb.selfmanaged.vm' in self.config:
+            return dict(self.config.items('cb.selfmanaged.vm'))
+        return {}
+
+    @property
+    def onprem_clusters_raw(self) -> dict[str, str]:
+        if 'cb.selfmanaged.onprem' in self.config:
+            return dict(self.config.items('cb.selfmanaged.onprem'))
+        return {}
+
+    @property
+    def goldfish_infrastructure(self) -> bool:
+        return self.cloud_infrastructure and \
+            self.infrastructure_settings.get("service", "") == "goldfish"
+
+    @property
+    def generated_cloud_config_path(self) -> Optional[str]:
         if self.cloud_infrastructure:
             return "cloud/infrastructure/generated/infrastructure_config.json"
         return None
 
     @property
-    def infrastructure_settings(self):
-        if self.config.has_section('infrastructure'):
-            return {k: v for k, v in self.config.items('infrastructure')}
+    def infrastructure_settings(self) -> dict[str, str]:
+        if 'infrastructure' in self.config:
+            return dict(self.config.items('infrastructure'))
         return {}
 
     @property
-    def infrastructure_clusters(self):
-        return {k: v for i, (k, v) in enumerate(self.config.items('clusters'))
+    def controlplane_settings(self) -> dict[str, str]:
+        if 'controlplane' in self.config:
+            return dict(self.config.items('controlplane'))
+        return {}
+
+    @property
+    def infrastructure_clusters(self) -> dict[str, str]:
+        # For now only Capella Columnar can coexist with other couchbase cluster types
+        if sum([self.has_selfmanaged_onprem, self.has_selfmanaged_vms,
+                self.has_capella_provisioned, self.has_capella_serverless]) > 1:
+            logger.interrupt('Cannot have multiple Couchbase cluster types'
+                             '(exception: can have Capella Columnar with one other cluster type)')
+
+        if self.has_selfmanaged_onprem:
+            clusters_raw = self.onprem_clusters_raw
+        elif self.has_selfmanaged_vms:
+            clusters_raw = self.vm_clusters_raw
+        elif self.has_capella_provisioned:
+            clusters_raw = self.capella_provisioned_clusters_raw
+        elif self.has_capella_serverless:
+            clusters_raw = self.capella_serverless_dataplanes_raw
+
+        if self.has_capella_columnar:
+            clusters_raw.update(self.capella_columnar_instances_raw)
+
+        return {k: v for i, (k, v) in enumerate(clusters_raw.items())
                 if i not in self.inactive_cluster_idxs}
 
     @property
-    def infrastructure_clients(self):
-        if self.config.has_section('clients'):
-            return {k: v for k, v in self.config.items('clients')}
+    def infrastructure_clients(self) -> dict[str, str]:
+        if 'clients' in self.config:
+            return dict(self.config.items('clients'))
         return {}
 
     @property
-    def infrastructure_syncgateways(self):
-        if self.config.has_section('syncgateways'):
-            return {k: v for k, v in self.config.items('syncgateways')}
+    def infrastructure_syncgateways(self) -> dict[str, str]:
+        if 'syncgateways' in self.config:
+            return dict(self.config.items('syncgateways'))
         return {}
 
     @property
-    def infrastructure_utilities(self):
-        if self.config.has_section('utilities'):
-            return {k: v for k, v in self.config.items('utilities')}
+    def infrastructure_utilities(self) -> dict[str, str]:
+        if 'utilities' in self.config:
+            return dict(self.config.items('utilities'))
         return {}
 
     @property
-    def infrastructure_kafka_clusters(self):
-        if self.config.has_section('kafka_clusters'):
-            return {k: v for k, v in self.config.items('kafka_clusters')}
+    def infrastructure_kafka_clusters(self) -> dict[str, str]:
+        if 'kafka_clusters' in self.config:
+            return dict(self.config.items('kafka_clusters'))
         return {}
 
     def kubernetes_version(self, cluster_name):
-        return self.infrastructure_section(cluster_name)\
-            .get('version', '1.17')
+        return self.infrastructure_section(cluster_name).get('version', '1.17')
 
     def istio_enabled(self, cluster_name):
         istio_enabled = self.infrastructure_section(cluster_name).get('istio_enabled', 0)
@@ -171,24 +236,23 @@ class ClusterSpec(Config):
         return istio_enabled
 
     def kubernetes_storage_class(self, cluster_name):
-        return self.infrastructure_section(cluster_name) \
-            .get('storage_class', 'default')
+        return self.infrastructure_section(cluster_name).get('storage_class', 'default')
 
     def kubernetes_clusters(self):
         k8s_clusters = []
-        if 'k8s' in self.config.sections():
-            for k, v in self.config.items('k8s'):
+        if 'k8s' in self.config:
+            for v in self.config.values('k8s'):
                 k8s_clusters += v.split(",")
         return k8s_clusters
 
     def infrastructure_section(self, section: str):
-        if section in self.config.sections():
+        if section in self.config:
             return {k: v for k, v in self.config.items(section)}
         return {}
 
     def infrastructure_config(self):
         infra_config = {}
-        for section in self.config.sections():
+        for section in self.config:
             infra_config[section] = {p: v for p, v in self.config.items(section)}
         return infra_config
 
@@ -199,12 +263,63 @@ class ClusterSpec(Config):
             yield cluster_name, hosts
 
     @property
-    def clusters_schemas(self) -> Iterator:
-        if self.capella_infrastructure and not self.serverless_infrastructure:
-            for i, (cluster_name, servers) in enumerate(self.config.items('clusters_schemas')):
-                if i not in self.inactive_cluster_idxs:
-                    schemas = servers.split()
-                    yield cluster_name, schemas
+    def capella_provisioned_clusters(self) -> Iterator:
+        for cluster_name, servers in self.capella_provisioned_clusters_raw.items():
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
+
+    @property
+    def capella_serverless_dataplanes(self) -> Iterator:
+        for cluster_name, servers in self.capella_serverless_dataplanes_raw.items():
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
+
+    @property
+    def capella_columnar_instances(self) -> Iterator:
+        for cluster_name, servers in self.capella_columnar_instances_raw.items():
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
+
+    @property
+    def vm_clusters(self) -> Iterator:
+        for cluster_name, servers in self.vm_clusters_raw.items():
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
+
+    @property
+    def onprem_clusters(self) -> Iterator:
+        for cluster_name, servers in self.onprem_clusters_raw.items():
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
+
+    @property
+    def capella_provisioned_cluster_specs(self) -> Iterator:
+        if self.has_capella_provisioned:
+            for cluster_name, servers in self.config.items('cb.capella.provisioned.spec'):
+                spec = servers.split()
+                yield cluster_name, spec
+
+    @property
+    def capella_provisioned_cluster_ids(self) -> dict[str, str]:
+        if (section := 'cb.capella.provisioned.id') in self.config:
+            return dict(self.config.items(section))
+        return {}
+
+    @property
+    def capella_serverless_cluster_ids(self) -> dict[str, str]:
+        if (section := 'cb.capella.serverless.cluster.id') in self.config:
+            return dict(self.config.items(section))
+
+    @property
+    def capella_serverless_dataplane_ids(self) -> dict[str, str]:
+        if (section := 'cb.capella.serverless.dataplane.id') in self.config:
+            return dict(self.config.items(section))
+
+    @property
+    def capella_columnar_instance_ids(self) -> dict[str, str]:
+        if (section := 'cb.capella.columnar.id') in self.config:
+            return dict(self.config.items(section))
+        return {}
 
     @property
     def sgw_clusters(self) -> Iterator:
@@ -217,6 +332,30 @@ class ClusterSpec(Config):
         for cluster_name, servers in self.config.items('kafka_clusters'):
             hosts = [s.split(':')[0] for s in servers.split()]
             yield cluster_name, hosts
+
+    def _masters(self, clusters: Iterable[Tuple[str, List[str]]]) -> Generator[str, None, None]:
+        for _, servers in clusters:
+            yield servers[0]
+
+    @property
+    def capella_provisioned_masters(self) -> Generator[str, None, None]:
+        return self._masters(self.capella_provisioned_clusters)
+
+    @property
+    def capella_serverless_masters(self) -> Generator[str, None, None]:
+        return self._masters(self.capella_serverless_dataplanes)
+
+    @property
+    def capella_columnar_masters(self) -> Generator[str, None, None]:
+        return self._masters(self.capella_columnar_instances)
+
+    @property
+    def onprem_masters(self) -> Generator[str, None, None]:
+        return self._masters(self.onprem_clusters)
+
+    @property
+    def vm_masters(self) -> Generator[str, None, None]:
+        return self._masters(self.vm_clusters)
 
     @property
     def masters(self) -> Iterator[str]:
@@ -233,7 +372,7 @@ class ClusterSpec(Config):
                 yield servers[0]
 
     @property
-    def servers(self) -> List[str]:
+    def servers(self) -> list[str]:
         servers = [node for _, cluster_servers in self.clusters for node in cluster_servers]
         return servers
 
@@ -402,16 +541,26 @@ class ClusterSpec(Config):
                     has_service.append(host)
         return has_service
 
-    def servers_by_cluster_and_role(self, role: str) -> List[str]:
-        has_service = []
-        for servers in self.infrastructure_clusters.values():
+    def _servers_by_cluster_and_role(
+        self,
+        role: str,
+        clusters: dict[str, str]
+    ) -> dict[str, list[str]]:
+        has_service = {}
+        for label, servers in clusters.items():
             cluster_has_service = []
             for server in servers.split():
                 host, roles, *group = server.split(':')
                 if role in roles:
                     cluster_has_service.append(host)
-            has_service.append(cluster_has_service)
+            has_service[label] = cluster_has_service
         return has_service
+
+    def onprem_servers_by_cluster_and_role(self, role: str) -> dict[str, list[str]]:
+        return self._servers_by_cluster_and_role(role, self.onprem_clusters_raw)
+
+    def capella_provisioned_servers_by_cluster_and_role(self, role: str) -> dict[str, list[str]]:
+        return self._servers_by_cluster_and_role(role, self.capella_provisioned_clusters_raw)
 
     def servers_by_role_from_first_cluster(self, role: str) -> List[str]:
         has_service = []
@@ -567,11 +716,22 @@ class ClusterSpec(Config):
         return self.config.get('credentials', 'rest').split(':')
 
     @property
-    def capella_admin_credentials(self) -> List[List[str]]:
-        return [
-            creds.split(':')
-            for creds in self.config.get('credentials', 'admin', fallback='').split()
-        ]
+    def capella_provisioned_admin_credentials(self) -> dict[str, tuple[str, str]]:
+        if (section := 'cb.capella.provisioned.admin_credentials') in self.config:
+            return {
+                label: tuple(creds.split(':'))
+                for label, creds in self.config.items(section)
+            }
+        return {}
+
+    @property
+    def capella_columnar_admin_credentials(self) -> dict[str, tuple[str, str]]:
+        if (section := 'cb.capella.columnar.admin_credentials') in self.config:
+            return {
+                label: tuple(creds.split(':'))
+                for label, creds in self.config.items(section)
+            }
+        return {}
 
     @property
     def goldfish_nebula_credentials(self) -> List[List[str]]:
@@ -603,10 +763,9 @@ class ClusterSpec(Config):
         return server_grp_map
 
     def set_capella_admin_credentials(self) -> None:
-        if self.capella_infrastructure:
+        if self.has_any_capella:
             logger.info('Getting cluster admin credentials.')
             user = 'couchbase-cloud-admin'
-            pwds = []
 
             command_template = (
                 'secretsmanager get-secret-value --region us-east-1 '
@@ -615,17 +774,32 @@ class ClusterSpec(Config):
                 '--output text'
             )
 
-            for cluster_id in self.infrastructure_settings.get('cbc_cluster').split():
-                pwd = run_aws_cli_command(command_template, cluster_id)
-                if pwd is not None:
-                    pwds.append(pwd)
+            pwds = {'provisioned': {}, 'serverless': {}, 'columnar': {}}
+            cluster_ids = [self.capella_provisioned_cluster_ids,
+                           self.capella_serverless_cluster_ids,
+                           self.capella_columnar_instance_ids]
 
-            creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
-            if self.goldfish_infrastructure:
-                self.config.set('credentials', 'rest', creds)
-            else:
-                self.config.set('credentials', 'admin', creds)
-            self.update_spec_file()
+            for k, cluster_id_map in zip(pwds.keys(), cluster_ids):
+                if not cluster_id_map:
+                    continue
+
+                for label, cluster_id in cluster_id_map.items():
+                    pwd = run_aws_cli_command(command_template, cluster_id)
+                    if pwd is not None:
+                        pwds[k][label] = pwd
+
+            for k, pwd_map in pwds.items():
+                if not pwd_map:
+                    continue
+
+                section = 'cb.capella.{}.admin_credentials'.format(k)
+                if section not in self.config:
+                    self.config.add_section(section)
+
+                for label, pwd in pwd_map.items():
+                    self.config.set(section, label, '{}:{}'.format(user, pwd).replace('%', '%%'))
+
+            self.update_config_file()
 
     def get_aws_iid(self, hostname: str, region: str) -> str:
         command_template = (
@@ -638,7 +812,7 @@ class ClusterSpec(Config):
         return iid
 
     def set_capella_instance_ids(self) -> None:
-        if self.capella_backend == 'aws':
+        if self.cloud_provider == 'aws':
             logger.info('Getting cluster instance IDs')
 
             if not self.config.has_section('cluster_instance_ids'):
@@ -653,10 +827,10 @@ class ClusterSpec(Config):
                     logger.info('Instance ID for {}: {}'.format(host, iid))
                     iids.append(iid)
                 self.config.set('cluster_instance_ids', cluster_name, '\n' + '\n'.join(iids))
-            self.update_spec_file()
+            self.update_config_file()
 
     def set_nebula_instance_ids(self) -> None:
-        if self.capella_backend == 'aws':
+        if self.cloud_provider == 'aws':
             logger.info('Getting Nebula instance IDs')
 
             if not self.config.has_section('nebula_instance_ids'):
@@ -682,13 +856,13 @@ class ClusterSpec(Config):
             logger.info('Found DAPI instance IDs: {}'.format(', '.join(dapi_iids)))
             self.config.set('nebula_instance_ids', 'dapi', '\n' + '\n'.join(dapi_iids))
 
-        self.update_spec_file()
+        self.update_config_file()
 
     def set_sgw_instance_ids(self) -> None:
         if not self.config.has_section('sgw_instance_ids'):
             self.config.add_section('sgw_instance_ids')
 
-        if self.capella_backend == 'aws':
+        if self.cloud_provider == 'aws':
             region = os.environ.get('AWS_REGION', 'us-east-1')
             command_template = (
                 'ec2 describe-instances --region {} '
@@ -703,7 +877,7 @@ class ClusterSpec(Config):
             sgids = stdout.split()
             logger.info("Found Instance IDs for sgw: {}".format(', '.join(sgids)))
             self.config.set('sgw_instance_ids', 'sync_gateways', '\n', + '\n'.join(sgids))
-            self.update_spec_file()
+            self.update_config_file()
 
     @property
     def direct_nebula(self) -> dict:
@@ -2723,18 +2897,30 @@ class TPCDSLoaderSettings:
 class CH2ConnectionSettings:
     userid: str
     password: str
+    userid_analytics: Optional[str] = None
+    password_analytics: Optional[str] = None
     query_url: Optional[str] = None
     multi_query_url: Optional[str] = None
     analytics_url: Optional[str] = None
     data_url: Optional[str] = None
     multi_data_url: Optional[str] = None
+    use_tls: bool = False
 
     def cli_args_str_run(self, tclients: int, aclients: int) -> str:
         """Return a string of connection-related CLI arguments for running benchmark phase."""
         flags = [
             '--userid {}'.format(self.userid),
-            '--password {}'.format(self.password)
+            "--password '{}'".format(self.password)
         ]
+
+        if self.use_tls:
+            flags += ['--tls']
+
+        if self.userid_analytics:
+            flags += ['--userid-analytics {}'.format(self.userid_analytics)]
+
+        if self.password_analytics:
+            flags += ["--password-analytics '{}'".format(self.password_analytics)]
 
         if tclients > 0:
             flags += [
@@ -2751,8 +2937,17 @@ class CH2ConnectionSettings:
         """Return a string of connection-related CLI arguments for running load phase."""
         flags = [
             '--userid {}'.format(self.userid),
-            '--password {}'.format(self.password)
+            "--password '{}'".format(self.password)
         ]
+
+        if self.use_tls:
+            flags += ['--tls']
+
+        if self.userid_analytics:
+            flags += ['--userid-analytics {}'.format(self.userid_analytics)]
+
+        if self.password_analytics:
+            flags += ["--password-analytics '{}'".format(self.password_analytics)]
 
         if load_mode == "qrysvc-load":
             flags += [
@@ -2785,6 +2980,8 @@ class CH2:
     LOAD_TCLIENTS = 0
     LOAD_MODE = 'datasvc-bulkload'
     CREATE_GSI_INDEX = 'true'
+    TXTIMEOUT = 3
+    DEBUG = 'false'
 
     def __init__(self, options: dict):
         self.repo = options.get('repo', self.REPO)
@@ -2800,9 +2997,11 @@ class CH2:
         self.duration = int(options.get('duration', self.DURATION))
         self.workload = options.get('workload', self.WORKLOAD)
         self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
+        self.create_gsi_index = maybe_atoi(options.get('create_gsi_index', self.CREATE_GSI_INDEX))
+        self.txtimeout = float(options.get('txtimeout', self.TXTIMEOUT))
+        self.debug = maybe_atoi(options.get('debug', self.DEBUG))
         self.raw_analytics_statements = options.get('analytics_statements',
                                                     self.ANALYTICS_STATEMENTS)
-        self.create_gsi_index = maybe_atoi(options.get('create_gsi_index', self.CREATE_GSI_INDEX))
         if self.raw_analytics_statements:
             self.analytics_statements = self.raw_analytics_statements.strip().split('\n')
         else:
@@ -2814,6 +3013,7 @@ class CH2:
     def cli_args_str_run(self) -> str:
         """Return a string of workload-related CLI arguments for running benchmark phase."""
         flags = [
+            '--debug' if self.debug else None,
             '--warehouses {}'.format(self.warehouses),
             '--aclients {}'.format(self.aclients) if self.aclients else None,
             '--tclients {}'.format(self.tclients) if self.tclients else None,
@@ -2822,6 +3022,7 @@ class CH2:
             '--query-iterations {}'.format(self.iterations) if self.iterations else None,
             '--warmup-query-iterations {}'.format(self.warmup_iterations)
             if self.warmup_iterations else None,
+            '--txtimeout {}'.format(self.txtimeout),
             '--no-load'
         ]
         return ' '.join(filter(None, flags))
@@ -2829,6 +3030,7 @@ class CH2:
     def cli_args_str_load(self) -> str:
         """Return a string of workload-related CLI arguments for running load phase."""
         flags = [
+            '--debug' if self.debug else None,
             '--warehouses {}'.format(self.warehouses),
             '--tclients {}'.format(self.load_tclients),
             '--no-execute',
@@ -2856,12 +3058,10 @@ class CH3(CH2):
     REPO = 'https://github.com/couchbaselabs/ch3.git'
     FCLIENTS = 0
     WORKLOAD = 'ch3_mixed'
-    DEBUG = 'false'
 
     def __init__(self, options: dict):
         super().__init__(options)
         self.fclients = int(options.get('fclients', self.FCLIENTS))
-        self.debug = maybe_atoi(options.get('debug', self.DEBUG))
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -3634,7 +3834,7 @@ class TargetIterator(Iterable):
             if self.prefix is None:
                 prefix = target_hash(master)
 
-            if self.cluster_spec.serverless_infrastructure:
+            if self.cluster_spec.has_capella_serverless:
                 for bucket in self.buckets:
                     params = self.test_config.serverless_db.db_map[bucket]
                     access = params['access']

@@ -110,12 +110,12 @@ class SecondaryIndexTest(PerfTest):
                               "indexer.settings.enable_shard_affinity", False)
 
     def admin_creds(self, host: str):
-        admin_credentials = self.cluster_spec.capella_admin_credentials
-        username, password = 'Administrator',  'password'
+        admin_credentials = self.cluster_spec.capella_provisioned_admin_credentials
+        username, password = 'Administrator', 'password'
         if len(admin_credentials) > 0:
-            for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
+            for label, hostnames in self.cluster_spec.capella_provisioned_clusters:
                 if host in hostnames:
-                    username, password = admin_credentials[i]
+                    username, password = admin_credentials[label]
         return username, password
 
     def remove_statsfile(self):
@@ -299,7 +299,7 @@ class SecondaryIndexTest(PerfTest):
     def cloud_apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
                                  run_in_background=False, is_ssl=False):
         rest_username, rest_password = self.cluster_spec.rest_credentials
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             rest_username, rest_password = self.admin_auth[0], self.admin_auth[1]
         with open(self.configfile, 'r') as fp:
             config_file_content = fp.read()
@@ -937,14 +937,14 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             # Open ports for cbindex and cbindexperf
             self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
 
         initial_index_time = self.build_secondaryindex()
         self.report_kpi(0, 0, initial_index_time)
         self.access_bg()
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             # Open ports for cbindex and cbindexperf
             self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
         self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
@@ -2270,7 +2270,7 @@ class CloudSecondaryInitialBuildTest(CloudSecondaryIndexingScanTest):
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             # Open ports for cbindex and cbindexperf
             self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
         initial_index_time = self.build_secondaryindex()

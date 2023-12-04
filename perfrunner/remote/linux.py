@@ -44,7 +44,7 @@ class RemoteLinux(Remote):
 
     def __init__(self, cluster_spec: ClusterSpec):
         super().__init__(cluster_spec)
-        if not cluster_spec.capella_infrastructure:
+        if not cluster_spec.has_any_capella:
             self.distro, self.distro_version = self.detect_distro()
 
     @property
@@ -444,7 +444,7 @@ class RemoteLinux(Remote):
     def detect_core_dumps(self):
         # Based on kernel.core_pattern = /data/core-%e-%p
         logger.info('Detecting core dumps')
-        target_dir = '/data' if not self.cluster_spec.capella_infrastructure else '/var/cb/data'
+        target_dir = '/data' if not self.cluster_spec.has_any_capella else '/var/cb/data'
         r = run('ls {}/core*'.format(target_dir), quiet=True)
         if not r.return_code:
             return r.split()
@@ -1029,7 +1029,7 @@ class RemoteLinux(Remote):
                             obj_access_key_id: Optional[str] = None, use_tls: bool = False,
                             map_data: Optional[str] = None, encrypted: bool = False,
                             passphrase: str = 'couchbase'):
-        restore_to_capella = cluster_spec.capella_infrastructure
+        restore_to_capella = cluster_spec.has_any_capella
 
         with cd(worker_home), cd('perfrunner'):
             flags = [
@@ -1236,7 +1236,7 @@ class RemoteLinux(Remote):
 
     @syncgateway_servers
     def remove_sglogs(self):
-        if not self.cluster_spec.capella_infrastructure:
+        if not self.cluster_spec.has_any_capella:
             logger.info('removing old sglogs')
             cmd = 'rm -rf /var/tmp/sglogs/*'
             run(cmd)
@@ -1249,8 +1249,8 @@ class RemoteLinux(Remote):
         run(cmd)
 
     def nebula_init_ssh(self):
-        if not (self.cluster_spec.serverless_infrastructure and
-                self.cluster_spec.capella_backend == 'aws'):
+        if not (self.cluster_spec.has_capella_serverless and
+                self.cluster_spec.cloud_provider == 'aws'):
             return
 
         iids = self.cluster_spec.direct_nebula_instance_ids + self.cluster_spec.dapi_instance_ids

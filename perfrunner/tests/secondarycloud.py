@@ -100,7 +100,7 @@ class SecondaryIndexCloudTest(PerfTest):
         self.download_certificate()
         self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
 
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.has_any_capella:
             # Open ports for cbindex and cbindexperf
             self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
 

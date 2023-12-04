@@ -49,6 +49,7 @@ output "network" {
     vpc_id                   = aws_vpc.main.id
     public_subnet_id         = aws_subnet.public.id
     public_subnet_cidr       = aws_subnet.public.cidr_block
+    route_table_id           = aws_route_table.public.id
   }
 }
 

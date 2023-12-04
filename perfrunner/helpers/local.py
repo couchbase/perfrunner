@@ -9,6 +9,7 @@ from pathlib import Path
 from sys import platform
 from typing import List, Optional, Tuple
 
+import requests
 from fabric.api import hide, lcd, local, quiet, settings, shell_env
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
@@ -1089,19 +1090,58 @@ def cbepctl(master_node: str, cluster_spec: ClusterSpec, bucket: str,
     local(cmd)
 
 
-def create_remote_link(analytics_link, data_node, analytics_node, username, password):
+def create_remote_link(
+    link_name: str,
+    data_node: str,
+    analytics_node: str,
+    username: str,
+    password: str,
+    use_secure_port: bool = False,
+    goldfish_nebula: bool = False,
+    data_node_username: Optional[str] = None,
+    data_node_password: Optional[str] = None
+):
     logger.info('Create analytics remote link')
-    cmd = "curl -v -u {}:{} " \
-          "-X POST http://{}:8095/analytics/link " \
-          "-d dataverse=Default " \
-          "-d name={} " \
-          "-d type=couchbase " \
-          "-d hostname={}:8091 " \
-          "-d username={} " \
-          "-d password={} " \
-          "-d encryption=none ".format(username, password, analytics_node, analytics_link,
-                                       data_node, username, password)
-    local(cmd)
+
+    analytics_baseurl = 'http://{}:8095'.format(analytics_node)
+    data_node_hostname = '{}:8091'.format(data_node)
+
+    if use_secure_port:
+        analytics_baseurl = 'https://{}:18095'.format(analytics_node)
+        data_node_hostname = '{}:18091'.format(data_node)
+
+    if goldfish_nebula:
+        analytics_baseurl = 'https://{}:18001'.format(analytics_node)
+
+    data_node_username = data_node_username or username
+    data_node_password = data_node_password or password
+
+    params = {
+        'dataverse': 'Default',
+        'name': link_name,
+        'type': 'couchbase',
+        'hostname': data_node_hostname,
+        'username': data_node_username,
+        'password': data_node_password,
+        'encryption': 'none'
+    }
+
+    if use_secure_port or goldfish_nebula:
+        params['encryption'] = 'full'
+        with open('root.pem', 'r') as f:
+            params['certificate'] = f.read()
+
+    resp = requests.post(
+        url='{}/analytics/link'.format(analytics_baseurl),
+        auth=(username, password),
+        data=params
+    )
+
+    try:
+        resp.raise_for_status()
+    except requests.HTTPError:
+        logger.error('Failed to create remote link')
+        logger.interrupt(resp.text)
 
 
 def download_pytppc(repo: str, branch: str):
@@ -1455,7 +1495,7 @@ def remove_sg_newdocpusher_logs():
 
 
 def replicate_push(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
-    if cluster_spec.capella_infrastructure:
+    if cluster_spec.has_any_capella:
         cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
               'push --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
               'wss://{1}:4984/db-1'.format(cblite_db, sgw_ip)
@@ -1469,7 +1509,7 @@ def replicate_push(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
 
 
 def replicate_pull(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
-    if cluster_spec.capella_infrastructure:
+    if cluster_spec.has_any_capella:
         cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
               'pull --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
               'wss://{1}:4984/db-1'.format(cblite_db, sgw_ip)
@@ -1514,7 +1554,7 @@ def build_cblite():
 
 
 def replicate_push_continuous(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
-    if cluster_spec.capella_infrastructure:
+    if cluster_spec.has_any_capella:
         cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
               'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
               'wss://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
@@ -1528,7 +1568,7 @@ def replicate_push_continuous(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip:
 
 
 def replicate_pull_continuous(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
-    if cluster_spec.capella_infrastructure:
+    if cluster_spec.has_any_capella:
         cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
               'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
               'wss://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)

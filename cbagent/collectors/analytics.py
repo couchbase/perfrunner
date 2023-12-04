@@ -41,7 +41,10 @@ class AnalyticsStats(Collector):
                                  port=self.PORT)
         else:
             stats = {}
-            api = 'http://{}:8095/_prometheusMetrics'.format(server)
+            if self.n2n_enabled:
+                api = 'https://{}:18095/_prometheusMetrics'.format(server)
+            else:
+                api = 'http://{}:8095/_prometheusMetrics'.format(server)
             api_return = self.rest.get(url=api)
             for line in api_return.text.splitlines():
                 if "#" not in line:

@@ -42,47 +42,52 @@ def main():
     test_config = TestConfig()
     test_config.parse(args.test_config_fname, override=args.override)
 
-    if cluster_spec.capella_infrastructure:
+    if cluster_spec.has_any_capella:
         cluster_spec.set_capella_admin_credentials()
-        if not cluster_spec.serverless_infrastructure and not cluster_spec.goldfish_infrastructure:
-            # If on provisioned Capella, we need to do two things before anything else:
-            # 1. Create some DB credentials
-            # 2. Whitelist the local IP
+        if cluster_spec.has_capella_provisioned:
             rest = RestHelper(cluster_spec, test_config)
             rest.allow_my_ip_all_clusters()
             rest.create_db_user_all_clusters(*cluster_spec.rest_credentials)
 
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
-    if cm.cluster_spec.capella_infrastructure:
-        if cm.cluster_spec.serverless_infrastructure:
+    if cm.cluster_spec.has_any_capella:
+        if cm.cluster_spec.has_capella_serverless:
+            logger.info('Setting up Capella serverless dataplane')
             cm.allow_ips_for_serverless_dbs()
             cm.provision_serverless_db_keys()
             cm.bypass_nebula_for_clients()
             cm.serverless_throttle()
             cm.init_nebula_ssh()
             cm.set_nebula_log_levels()
-        elif not cm.cluster_spec.goldfish_infrastructure:
+            masters = cm.cluster_spec.capella_serverless_masters
+        elif cm.cluster_spec.has_capella_provisioned:
+            logger.info('Setting up Capella provisioned cluster(s)')
+
             if cm.test_config.cluster.monitor_deployment_time:
                 logger.info("Start timing the bucket creation")
                 t0 = time()
-            cm.create_buckets()
-            cm.create_eventing_buckets()
-            cm.create_eventing_metadata_bucket()
+
+            cm.create_buckets_capella_provisioned()
+            cm.create_eventing_buckets_capella_provisioned()
+            cm.create_eventing_metadata_bucket_capella_provisioned()
+
             if cm.test_config.cluster.monitor_deployment_time:
                 deployment_time = time() - t0
                 logger.info("The total bucket creation time is: {}".format(deployment_time))
-
                 with open(TIMING_FILE, 'a') as f:
                     l1 = "{}\n".format(str(deployment_time))
                     f.writelines([l1])
+
             cm.capella_allow_client_ips()
+            if cm.cluster_spec.has_capella_columnar:
+                cm.capella_allow_columnar_ips()
+            masters = cm.cluster_spec.capella_provisioned_masters
 
         if cm.test_config.collection.collection_map:
-            cm.create_collections()
+            cm.create_collections(masters)
 
-        return
-    elif cm.cluster_spec.dynamic_infrastructure:
+    if cm.cluster_spec.dynamic_infrastructure:
         cm.set_mem_quotas()
         cm.set_services()
         cm.tune_memory_settings()
@@ -101,9 +106,9 @@ def main():
         cm.add_rbac_users()
 
         cm.wait_until_healthy()
+    elif cm.cluster_spec.has_selfmanaged_onprem or cm.cluster_spec.has_selfmanaged_vms:
+        logger.info('Setting up self-managed cluster(s)')
 
-        return  # Nothing todo with k8s after this
-    else:
         if cm.cluster_spec.infrastructure_kafka_clusters:
             cm.configure_kafka()
             cm.start_kafka()
@@ -148,29 +153,32 @@ def main():
         cm.set_magma_min_quota()
         cm.serverless_throttle()
 
-    if cm.test_config.cluster.num_buckets:
-        cm.create_buckets()
-        cm.create_eventing_buckets()
-        cm.create_eventing_metadata_bucket()
-        cm.add_rbac_users()
+        if cm.test_config.cluster.num_buckets:
+            cm.create_buckets()
+            cm.create_eventing_buckets()
+            cm.create_eventing_metadata_bucket()
+            cm.add_rbac_users()
 
-    cm.restart_with_alternative_bucket_options()
-    cm.set_index_settings()
-    cm.set_query_settings()
-    cm.set_analytics_settings()
-    cm.set_x509_certificates()
-    cm.set_min_tls_version()
-    cm.set_cipher_suite()
-    cm.wait_until_healthy()
-    cm.wait_until_warmed_up()
-    cm.disable_ui_http()
+        cm.restart_with_alternative_bucket_options()
+        cm.set_index_settings()
+        cm.set_query_settings()
+        cm.set_analytics_settings()
+        cm.set_x509_certificates()
+        cm.set_min_tls_version()
+        cm.set_cipher_suite()
+        cm.wait_until_healthy()
+        cm.wait_until_warmed_up()
+        cm.disable_ui_http()
 
-    if cm.test_config.collection.collection_map:
-        cm.create_collections()
+        if cm.test_config.collection.collection_map:
+            cm.create_collections(
+                cm.cluster_spec.on_prem_masters if cm.cluster_spec.has_selfmanaged_onprem
+                else cm.cluster_spec.vm_masters
+            )
 
-    cm.tweak_memory()
-    cm.enable_n2n_encryption()
-    cm.deploy_couchbase_with_cgroups_for_index_nodes()
+        cm.tweak_memory()
+        cm.enable_n2n_encryption()
+        cm.deploy_couchbase_with_cgroups()
 
 
 if __name__ == '__main__':

@@ -45,9 +45,9 @@ class ShowFastReporter(Reporter):
         category = metric.get('category') or self.test_config.showfast.category
         sub_category = metric.get('subCategory') or self.test_config.showfast.sub_category
 
-        if self.cluster_spec.capella_infrastructure:
-            sub_category = sub_category.format(provider=self.cluster_spec.capella_backend.upper())
-            if self.cluster_spec.serverless_infrastructure:
+        if self.cluster_spec.has_any_capella:
+            sub_category = sub_category.format(provider=self.cluster_spec.cloud_provider.upper())
+            if self.cluster_spec.has_capella_serverless:
                 metric['provider'] = "serverless"
             else:
                 metric['provider'] = self.cluster_spec.cloud_provider.lower()
@@ -82,7 +82,7 @@ class ShowFastReporter(Reporter):
 
             build_str = self.sdk_version + ' : ' + build_str
 
-        if not self.cluster_spec.capella_infrastructure:
+        if not self.cluster_spec.has_any_capella:
             if self.test_config.access_settings.show_tls_version or \
                self.test_config.backup_settings.show_tls_version or \
                self.test_config.restore_settings.show_tls_version:

@@ -323,7 +323,7 @@ class SSLCertificate:
         self.not_valid_after = self.not_valid_before + datetime.timedelta(days=60)
 
     def generate(self):
-        """Generate CA and use it to sign a new certificate and store both and key to `INBOX`."""
+        """Generate new CA and a signed certificate and store them and their keys to `INBOX`."""
         logger.info('Generating certificates')
         # Generate CA first
         ca_key, ca = self.generate_ca()
@@ -370,6 +370,7 @@ class SSLCertificate:
 
         # Store CA
         self._store_cert('ca', ca)
+        self._store_key('ca_key', ca_key_pair)
         return ca_key_pair, ca
 
     def generate_signing_request(self, ca: Certificate

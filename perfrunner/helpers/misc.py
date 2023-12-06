@@ -1,5 +1,4 @@
 import datetime
-import fileinput
 import ipaddress
 import json
 import os
@@ -13,7 +12,6 @@ from uuid import uuid4
 
 import requests
 import validators
-import yaml
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, generate_private_key
 from cryptography.x509 import (
@@ -167,79 +165,6 @@ def url_exist(url: str) -> bool:
         return False
 
     return status_code == 200
-
-
-def inject_config_tags(config_path,
-                       operator_tag,
-                       admission_controller_tag):
-    #  operator
-    with fileinput.FileInput(config_path, inplace=True, backup='.bak') as file:
-        search = 'couchbase/operator:build'
-        replace = operator_tag
-        for line in file:
-            print(line.replace(search, replace), end='')
-
-    #  admission controller
-    with fileinput.FileInput(config_path, inplace=True, backup='.bak') as file:
-        search = 'couchbase/admission-controller:build'
-        replace = admission_controller_tag
-        for line in file:
-            print(line.replace(search, replace), end='')
-
-
-def inject_cluster_tags(cluster_path,
-                        couchbase_tag,
-                        operator_backup_tag,
-                        exporter_tag,
-                        refresh_rate):
-    #  couchbase
-    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
-        search = 'couchbase/server:build'
-        replace = couchbase_tag
-        for line in file:
-            print(line.replace(search, replace), end='')
-
-    #  operator backup
-    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
-        search = 'couchbase/operator-backup:build'
-        replace = operator_backup_tag
-        for line in file:
-            print(line.replace(search, replace), end='')
-
-    #  exporter
-    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
-        search = 'couchbase/exporter:build'
-        replace = exporter_tag
-        for line in file:
-            print(line.replace(search, replace), end='')
-
-    # Refresh rate
-    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
-        search = 'XX'
-        replace = refresh_rate
-        for line in file:
-            print(line.replace(search, replace), end='')
-
-
-def inject_server_count(cluster_path, server_count):
-    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
-        search = 'size: node_count'
-        replace = 'size: {}'.format(server_count)
-        for line in file:
-            print(line.replace(search, replace), end='')
-
-
-def inject_workers_spec(num_workers, mem_limit, cpu_limit, worker_template_path, worker_path):
-    with open(worker_template_path) as file:
-        worker_config = yaml.safe_load(file)
-
-    worker_config['spec']['replicas'] = num_workers
-    limits = worker_config['spec']['template']['spec']['containers'][0]['resources']['limits']
-    limits['cpu'] = cpu_limit
-    limits['memory'] = mem_limit
-
-    with open(worker_path, "w") as file:
-        yaml.dump(worker_config, file)
 
 
 def is_null(element) -> bool:

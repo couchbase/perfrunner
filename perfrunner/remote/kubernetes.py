@@ -8,8 +8,11 @@ import time
 import requests
 import yaml
 
-import perfrunner.helpers.misc as misc
 from logger import logger
+from perfrunner.helpers.config_files import (
+    CAOCouchbaseBackupFile,
+    CAOHorizontalAutoscalerFile,
+)
 from perfrunner.remote import Remote
 from perfrunner.settings import ClusterSpec
 
@@ -21,16 +24,6 @@ class RemoteKubernetes(Remote):
     def __init__(self, cluster_spec: ClusterSpec):
         super().__init__(cluster_spec)
         self.kube_config_path = "cloud/infrastructure/generated/kube_configs/k8s_cluster_1"
-        self.base_path = 'cloud/operator'
-        self.cluster_file = 'couchbase-cluster.yaml'
-        self.bucket_template_file = 'bucket_template.yaml'
-        self.backup_template_file = 'backup_template.yaml'
-        self.backup_file = 'backup.yaml'
-        self.restore_template_file = 'restore_template.yaml'
-        self.restore_file = 'restore.yaml'
-        self.autoscaler_template_file = 'autoscaler_template.yaml'
-        self.autoscaler_file = 'autoscaler.yaml'
-        self.operator_version = None
 
         if cluster_spec.cloud_provider == 'openshift':
             self.k8s_client = self._oc
@@ -184,36 +177,6 @@ class RemoteKubernetes(Remote):
             "generic",
             certificate_authority_path)
 
-    def create_operator_config(self,
-                               config_template_path,
-                               config_path,
-                               operator_tag,
-                               admission_controller_tag):
-        misc.copy_template(config_template_path,
-                           config_path)
-        misc.inject_config_tags(config_path,
-                                operator_tag,
-                                admission_controller_tag)
-        self.create_from_file(config_path)
-
-    def create_couchbase_cluster_config(self,
-                                        template_cb_cluster_path: str,
-                                        cb_cluster_path: str,
-                                        couchbase_tag: str,
-                                        operator_tag: str,
-                                        exporter_tag: str,
-                                        node_count: str,
-                                        refresh_rate: str):
-        misc.copy_template(template_cb_cluster_path,
-                           cb_cluster_path)
-        misc.inject_cluster_tags(cb_cluster_path,
-                                 couchbase_tag,
-                                 operator_tag,
-                                 exporter_tag,
-                                 refresh_rate)
-        misc.inject_server_count(cb_cluster_path,
-                                 node_count)
-
     def delete_secret(self, secret_name, ignore_errors=True):
         try:
             self.k8s_client("delete secret {}".format(secret_name))
@@ -246,10 +209,6 @@ class RemoteKubernetes(Remote):
             if not ignore_errors:
                 raise ex
 
-    def create_cluster(self):
-        cluster_path = self.get_cluster_path()
-        self.create_from_file(cluster_path)
-
     def describe_cluster(self):
         ret = self.k8s_client('describe cbc', split_lines=False)
         return yaml.safe_load(ret)
@@ -258,10 +217,6 @@ class RemoteKubernetes(Remote):
         raw_cluster = self.k8s_client("get cbc cb-example-perf -o json", split_lines=False)
         cluster = json.loads(raw_cluster.decode('utf8'))
         return cluster
-
-    def get_cluster_config(self):
-        with open(self.get_cluster_path()) as file:
-            return yaml.safe_load(file)
 
     def get_backups(self):
         raw_backups = self.k8s_client("get couchbasebackups -o json", split_lines=False)
@@ -300,73 +255,6 @@ class RemoteKubernetes(Remote):
                         build = image.split(":")[-1]
                         return build.split("-")[0]
         raise Exception("could not get operator version")
-
-    def get_cluster_path(self):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}".format(
-            self.base_path,
-            self.operator_version.split(".")[0],
-            self.operator_version.split(".")[1],
-            self.cluster_file)
-
-    def get_bucket_path(self, bucket_name):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}.yaml".format(
-            self.base_path,
-            self.operator_version.split(".")[0],
-            self.operator_version.split(".")[1],
-            bucket_name)
-
-    def get_bucket_template_path(self):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}".format(self.base_path,
-                                    self.operator_version.split(".")[0],
-                                    self.operator_version.split(".")[1],
-                                    self.bucket_template_file)
-
-    # This function just updates the local configuration files, no changes are applied to remote
-    def update_cluster_config(self, cluster: dict):
-        cluster_path = self.get_cluster_path()
-        self.dump_config_to_yaml_file(cluster, cluster_path)
-
-    def create_couchbase_cluster(self):
-        cluster_path = self.get_cluster_path()
-        self.create_from_file(cluster_path)
-
-    def update_bucket_config(self, bucket, timeout=1200):
-        cluster_path = self.get_cluster_path()
-        bucket['metadata'] = self.sanitize_meta(bucket['metadata'])
-        bucket_path = "cloud/operator/2/1/{}.yaml".format(bucket['metadata']['name'])
-        self.dump_config_to_yaml_file(bucket, bucket_path)
-        self.k8s_client('replace -f {}'.format(cluster_path))
-        self.wait_for_cluster_ready(timeout=timeout)
-
-    def create_bucket(self, bucket_name, mem_quota, bucket_config, timeout=30):
-        bucket_template_path = self.get_bucket_template_path()
-        bucket_path = self.get_bucket_path(bucket_name)
-        misc.copy_template(bucket_template_path, bucket_path)
-        with open(bucket_path, 'r') as file:
-            bucket = yaml.load(file, Loader=yaml.FullLoader)
-        bucket['metadata']['name'] = bucket_name
-        bucket['spec'] = {
-            'memoryQuota': '{}Mi'.format(mem_quota),
-            'replicas': bucket_config.replica_number,
-            'evictionPolicy': bucket_config.eviction_policy,
-            'compressionMode': str(bucket_config.compression_mode)
-            if bucket_config.compression_mode else "off",
-            'conflictResolution': str(bucket_config.conflict_resolution_type)
-            if bucket_config.conflict_resolution_type else "seqno",
-            'enableFlush': True,
-            'enableIndexReplica': False,
-            'ioPriority': 'high',
-        }
-        bucket['metadata'] = self.sanitize_meta(bucket['metadata'])
-        self.dump_config_to_yaml_file(bucket, bucket_path)
-        self.k8s_client('create -f {}'.format(bucket_path))
-        self.wait_for_cluster_ready(timeout=timeout)
 
     def delete_all_buckets(self, timeout=1200):
         self.k8s_client('delete couchbasebuckets --all')
@@ -603,38 +491,13 @@ class RemoteKubernetes(Remote):
                             .format(worker, member)
                         self.k8s_client(cmd)
 
-    def yaml_to_json(self, file_path):
-        with open(file_path, 'r') as file:
-            json_from_yaml = yaml.load(file, Loader=yaml.FullLoader)
-        return json_from_yaml
-
-    def get_backup_template_path(self):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}".format(self.base_path,
-                                    self.operator_version.split(".")[0],
-                                    self.operator_version.split(".")[1],
-                                    self.backup_template_file)
-
-    def get_backup_path(self):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}".format(self.base_path,
-                                    self.operator_version.split(".")[0],
-                                    self.operator_version.split(".")[1],
-                                    self.backup_file)
-
     def create_backup(self):
-        backup_template_path = self.get_backup_template_path()
-        backup_path = self.get_backup_path()
-        misc.copy_template(backup_template_path, backup_path)
         # 2020-12-04T23:33:57Z
         current_utc = datetime.datetime.utcnow()
         minute = (current_utc.minute + 5) % 60
-        cron_schedule = '{} * * * *'.format(minute)
-        backup_def = self.yaml_to_json(backup_path)
-        backup_def['spec']['full']['schedule'] = cron_schedule
-        self.dump_config_to_yaml_file(backup_def, backup_path)
+        with CAOCouchbaseBackupFile() as backup_config:
+            backup_config.set_schedule_time(f"{minute} * * * *")
+            backup_path = backup_config.dest_file
         self.create_from_file(backup_path)
 
     def wait_for_backup_complete(self, timeout=7200):
@@ -656,70 +519,32 @@ class RemoteKubernetes(Remote):
                 return True
         return False
 
-    def get_restore_template_path(self):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}".format(self.base_path,
-                                    self.operator_version.split(".")[0],
-                                    self.operator_version.split(".")[1],
-                                    self.restore_template_file)
-
-    def get_restore_path(self):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}".format(self.base_path,
-                                    self.operator_version.split(".")[0],
-                                    self.operator_version.split(".")[1],
-                                    self.restore_file)
-
     def create_restore(self):
-        restore_template_path = self.get_restore_template_path()
-        self.create_from_file(restore_template_path)
+        self.create_from_file("cloud/operator/restore.yaml")
 
-    def get_autoscaler_template_path(self):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}".format(self.base_path,
-                                    self.operator_version.split(".")[0],
-                                    self.operator_version.split(".")[1],
-                                    self.autoscaler_template_file)
+    def create_horizontal_pod_autoscaler(
+        self,
+        cluster_name: str,
+        server_group: str,
+        min_nodes: int,
+        max_nodes: int,
+        target_metric: str,
+        target_type: str,
+        target_value: str,
+    ):
+        with CAOHorizontalAutoscalerFile() as autoscaler_config:
+            autoscaler_config.setup_pod_autoscaler(
+                cluster_name,
+                server_group,
+                min_nodes,
+                max_nodes,
+                target_metric,
+                target_type,
+                target_value,
+            )
+            autoscaler_path = autoscaler_config.dest_file
 
-    def get_autoscaler_path(self):
-        if not self.operator_version:
-            self.operator_version = self.get_operator_version()
-        return "{}/{}/{}/{}".format(self.base_path,
-                                    self.operator_version.split(".")[0],
-                                    self.operator_version.split(".")[1],
-                                    self.autoscaler_file)
-
-    def create_horizontal_pod_autoscaler(self, server_group, min_nodes, max_nodes,
-                                         target_metric, target_type, target_value):
-        autoscaler_template_path = self.get_autoscaler_template_path()
-        autoscaler_path = self.get_autoscaler_path()
-        misc.copy_template(autoscaler_template_path, autoscaler_path)
-        with open(autoscaler_path, 'r') as file:
-            autoscaler = yaml.load(file, Loader=yaml.FullLoader)
-
-        cluster = self.get_cluster_config()
-        cluster_name = cluster['metadata']['name']
-        autoscaler['spec']['scaleTargetRef']['name'] = "{}.{}".format(server_group, cluster_name)
-        autoscaler['spec']['minReplicas'] = min_nodes
-        autoscaler['spec']['maxReplicas'] = max_nodes
-        autoscaler['spec']['metrics'] = \
-            [
-                {
-                    'type': 'Pods',
-                    'pods':
-                        {
-                            'metric': {'name': target_metric},
-                            'target':
-                                {
-                                    'type': target_type,
-                                    target_type: target_value
-                            }
-                        }
-                }
-        ]
+        self.create_from_file(autoscaler_path)
 
     def get_logs(self, pod_name: str, container: str = None, options: str = '') -> str:
         # Get from all pod's containers if none is specified,

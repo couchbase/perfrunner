@@ -13,7 +13,8 @@ from sqlalchemy import create_engine
 
 from logger import logger
 from perfrunner import celerylocal, celeryremote
-from perfrunner.helpers import local, misc
+from perfrunner.helpers import local
+from perfrunner.helpers.config_files import CAOWorkerFile
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import (
     ClusterSpec,
@@ -323,8 +324,9 @@ class RemoteWorkerManager:
             if self.cluster_spec.kubernetes_infrastructure:
                 self.WORKER_HOME = '/opt/perfrunner'
                 self.broker_url = self.remote.get_broker_urls()[0]
-                self.worker_template_path = "cloud/worker/worker_template.yaml"
-                self.worker_path = "cloud/worker/worker.yaml"
+                with CAOWorkerFile(self.cluster_spec) as worker_config:
+                    worker_config.update_worker_spec()
+                    self.worker_path = worker_config.dest_file
             else:
                 self.broker_url = 'amqp://couchbase:couchbase@{}:5672/broker'\
                     .format(self.cluster_spec.brokers[0])
@@ -386,15 +388,6 @@ class RemoteWorkerManager:
 
     def start_kubernetes_workers(self):
         num_workers = len(self.cluster_spec.workers)
-        k8s = self.cluster_spec.infrastructure_section('k8s')
-        mem_limit = "{}Gi".format(k8s.get('worker_mem_limit', '128'))
-        cpu_limit = k8s.get('worker_cpu_limit', 80)  # Gb
-
-        misc.inject_workers_spec(num_workers,
-                                 mem_limit,
-                                 cpu_limit,
-                                 self.worker_template_path,
-                                 self.worker_path)
         self.remote.create_from_file(self.worker_path)
         self.remote.wait_for_pods_ready("worker", num_workers)
         worker_idx = 0

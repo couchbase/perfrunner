@@ -9,7 +9,7 @@ from pathlib import Path
 from sys import platform
 from typing import List, Optional, Tuple
 
-from fabric.api import hide, lcd, local, quiet, settings, shell_env
+from fabric.api import hide, lcd, local, quiet, settings, shell_env, warn_only
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
@@ -40,6 +40,15 @@ def extract_cb_any(filename: str):
         extract_cb_deb("{}.deb".format(filename))
     else:
         extract_cb("{}.rpm".format(filename))
+
+
+def extract_any(filename: str, to_path: str = None):
+    cmd = [
+        f"tar xfv {filename}",
+        f"--one-top-level={to_path} --strip-components 1" if to_path else "",
+    ]
+    with warn_only():
+        local(" ".join(cmd))
 
 
 def cleanup(backup_dir: str):
@@ -912,10 +921,17 @@ def clone_git_repo(repo: str, branch: str, commit: str = None):
         logger.info('repo {} exists...removing...'.format(repo_name))
         shutil.rmtree(repo_name, ignore_errors=True)
     logger.info('Cloning repository: {} branch: {}'.format(repo, branch))
-    local('git clone -q -b {} {}'.format(branch, repo))
+    local('git clone -q -b {} --single-branch {}'.format(branch, repo))
     if commit:
         with lcd(repo_name):
             local('git checkout {}'.format(commit))
+
+
+def check_if_remote_branch_exists(repo: str, branch: str) -> bool:
+    """Return true if a specified branch exists in the specified repo."""
+    logger.info(f"Checking if branch {branch} exists on {repo}")
+    ret = local(f"git ls-remote -q --heads {repo} refs/heads/{branch}", capture=True)
+    return f"refs/heads/{branch}" in ret.stdout
 
 
 def init_tpcds_couchbase_loader(repo: str, branch: str):

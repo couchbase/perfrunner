@@ -59,8 +59,9 @@ class Config:
                 self.config.add_section(section)
             self.config.set(section, option, value)
 
-    def update_spec_file(self):
-        with open(self.fname, 'w') as f:
+    def update_spec_file(self, new_file: str = None):
+        dest_file = new_file or self.fname
+        with open(dest_file, "w") as f:
             self.config.write(f)
 
     @safe

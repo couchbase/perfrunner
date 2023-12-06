@@ -3,7 +3,7 @@ from multiprocessing import set_start_method
 from time import time
 
 from logger import logger
-from perfrunner.helpers.cluster import ClusterManager
+from perfrunner.helpers.cluster import DefaultClusterManager, KubernetesClusterManager
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import TIMING_FILE, ClusterSpec, TestConfig
 
@@ -42,6 +42,15 @@ def main():
     test_config = TestConfig()
     test_config.parse(args.test_config_fname, override=args.override)
 
+    if cluster_spec.dynamic_infrastructure:
+        cm = KubernetesClusterManager(cluster_spec, test_config)
+        cm.configure_cluster()
+        cm.configure_autoscaling()
+        cm.deploy_couchbase_cluster()
+        cm.add_rbac_users()
+        cm.create_buckets()
+        return
+
     if cluster_spec.capella_infrastructure:
         cluster_spec.set_capella_admin_credentials()
         if not cluster_spec.serverless_infrastructure and not cluster_spec.goldfish_infrastructure:
@@ -52,7 +61,7 @@ def main():
             rest.allow_my_ip_all_clusters()
             rest.create_db_user_all_clusters(*cluster_spec.rest_credentials)
 
-    cm = ClusterManager(cluster_spec, test_config, args.verbose)
+    cm = DefaultClusterManager(cluster_spec, test_config, args.verbose)
 
     if cm.cluster_spec.capella_infrastructure:
         if cm.cluster_spec.serverless_infrastructure:
@@ -82,27 +91,6 @@ def main():
             cm.create_collections()
 
         return
-    elif cm.cluster_spec.dynamic_infrastructure:
-        cm.set_mem_quotas()
-        cm.set_services()
-        cm.tune_memory_settings()
-        cm.throttle_cpu()
-        cm.enable_auto_failover()
-        cm.configure_auto_compaction()
-        cm.configure_autoscaling()
-
-        # We need to run cluster configuration first before buckets for k8s,
-        # as we dont have a cluster at this point
-        cm.set_index_settings()
-        # Now we have a complete cluster file, with all needed configurations
-        cm.deploy_couchbase_cluster()
-        # Now create buckets and users
-        cm.create_buckets()
-        cm.add_rbac_users()
-
-        cm.wait_until_healthy()
-
-        return  # Nothing todo with k8s after this
     else:
         if cm.cluster_spec.infrastructure_kafka_clusters:
             cm.configure_kafka()

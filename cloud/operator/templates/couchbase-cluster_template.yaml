@@ -6,6 +6,9 @@ spec:
   image: couchbase/server:build
   antiAffinity: true
   networking:
+    exposeAdminConsole: true
+    exposedFeatures:
+    - client
     networkPlatform: Istio
   security:
     adminSecret: cb-example-auth
@@ -17,6 +20,8 @@ spec:
   monitoring:
     prometheus:
       enabled: true
+      image: couchbase/exporter:build
+      refreshRate: 60
   buckets:
     managed: true
   backup:
@@ -27,16 +32,16 @@ spec:
     serviceAccountName: couchbase-backup
     nodeSelector:
       NodeRoles: backups1
-    resources:
-      requests:
-        cpu: "24"
-        memory: 64Gi
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
   cluster:
     dataServiceMemoryQuota: 256Mi
     indexServiceMemoryQuota: 256Mi
     indexStorageSetting: memory_optimized
     autoFailoverTimeout: 120s
-    autoFailoverMaxCount: 3
+    autoFailoverMaxCount: 1
     autoFailoverOnDataDiskIssues: true
     autoFailoverOnDataDiskIssuesTimePeriod: 120s
     autoFailoverServerGroup: false
@@ -65,9 +70,3 @@ spec:
       resources:
         requests:
           storage: 1000Gi
-  networking:
-    exposeAdminConsole: true
-    exposedFeatures:
-    - client
-
-

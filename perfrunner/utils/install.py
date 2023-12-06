@@ -12,6 +12,13 @@ from fabric.api import cd, run
 from requests.exceptions import ConnectionError
 
 from logger import logger
+from perfrunner.helpers.config_files import CAOConfigFile, CAOCouchbaseClusterFile, CAOWorkerFile
+from perfrunner.helpers.local import (
+    check_if_remote_branch_exists,
+    clone_git_repo,
+    extract_any,
+    run_custom_cmd,
+)
 from perfrunner.helpers.misc import url_exist
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.context import master_client
@@ -57,6 +64,16 @@ PKG_PATTERNS = {
     ),
 }
 
+OPERATOR_LOCATIONS = {
+    "internal": "http://172.23.126.166/builds/latestbuilds/couchbase-operator/{release}/{build}/",
+    "release": "http://172.23.126.166/builds/releases/couchbase-operator/{release}/",
+}
+
+OPERATOR_PACKAGES = {
+    "internal": "couchbase-autonomous-operator_{release}-{build}-kubernetes-linux-amd64.tar.gz",
+    "release": "couchbase-autonomous-operator_{release}-kubernetes-linux-amd64.tar.gz",
+}
+
 ARM_ARCHS = {
     'rpm': 'aarch64',
     'deb': 'arm64'
@@ -83,100 +100,84 @@ def upload_file(file: str, to_host: str, to_user: str, to_password: str, to_dire
 
 
 class OperatorInstaller:
-
     def __init__(self, cluster_spec: ClusterSpec, options):
-        self.options = options
         self.cluster_spec = cluster_spec
         self.registry_base = "ghcr.io/cb-vanilla/"
         if cluster_spec.cloud_provider == 'openshift':
             self.registry_base = "ghcr.io/cb-rhcc/"
 
-        self.operator_version = self.options.operator_version
-        if "-" in self.operator_version:
-            self.operator_release = self.operator_version.split("-")[0]
-            self.operator_tag = '{}operator:{}' \
-                .format(self.registry_base, self.operator_version)
-            self.admission_controller_release = self.operator_version.split("-")[0]
-            self.admission_controller_tag = '{}admission-controller:{}' \
-                .format(self.registry_base, self.operator_version)
-        else:
-            self.operator_release = self.operator_version
-            self.operator_tag = 'couchbase/operator:{}' \
-                .format(self.operator_version)
-            self.admission_controller_release = self.operator_version
-            self.admission_controller_tag = 'couchbase/admission-controller:{}' \
-                .format(self.operator_version)
+        self.operator_version = options.operator_version
+        # Operator and admission controller image tags
+        self.operator_release, self.operator_tag = self._get_image_tag_for(
+            "operator", self.operator_version
+        )
+        _, self.controller_tag = self._get_image_tag_for(
+            "admission-controller", self.operator_version
+        )
+        # CB server image tag
+        self.couchbase_version = options.couchbase_version
+        self.couchbase_release, self.couchbase_tag = self._get_image_tag_for(
+            "server", self.couchbase_version
+        )
+        # Backup image tag
+        self.backup_version = options.operator_backup_version
+        _, self.operator_backup_tag = self._get_image_tag_for(
+            "operator-backup", self.backup_version
+        )
+        # Exporter image tag
+        self.exporter_version = (
+            options.exporter_version or cluster_spec.infrastructure_settings.get("exporter_version")
+        )
+        _, self.exporter_tag = self._get_image_tag_for("exporter", self.exporter_version)
 
-        self.couchbase_version = self.options.couchbase_version
-        if "-" in self.couchbase_version:
-            self.couchbase_release = self.couchbase_version.split("-")[0]
-            self.couchbase_tag = '{}server:{}' \
-                .format(self.registry_base, self.couchbase_version)
-        else:
-            self.couchbase_release = self.couchbase_version
-            self.couchbase_tag = 'couchbase/server:{}' \
-                .format(self.couchbase_version)
-
-        self.operator_backup_version = self.options.operator_backup_version
-        if self.operator_backup_version:
-            if "-" in self.operator_backup_version:
-                self.operator_backup_release = self.operator_backup_version.split("-")[0]
-                self.operator_backup_tag = '{}operator-backup:{}' \
-                    .format(self.registry_base, self.operator_backup_version)
-            else:
-                self.operator_backup_release = self.operator_backup_version
-                self.operator_backup_tag = 'couchbase/operator-backup/{}' \
-                    .format(self.operator_backup_version)
-        else:
-            self.operator_backup_tag = '{}operator-backup:latest' \
-                .format(self.registry_base)
-
-        self.exporter_version = self.options.exporter_version or self.cluster_spec \
-            .infrastructure_settings.get('exporter_version', '1.0.7')  # For now default to 1.0.7
-        if "-" in self.exporter_version:
-            self.exporter_release = self.exporter_version.split("-")[0]
-            self.exporter_tag = '{}exporter:{}' \
-                .format(self.registry_base, self.exporter_version)
-        else:
-            self.exporter_release = self.exporter_version
-            self.exporter_tag = 'couchbase/exporter:{}' \
-                .format(self.exporter_version)
-
-        self.node_count = len(self.cluster_spec.infrastructure_clusters['couchbase1'].split())
-        self.refresh_rate = self.cluster_spec.infrastructure_settings.get('refresh_rate', '60')
+        self.node_count = len(cluster_spec.infrastructure_clusters["couchbase1"].split())
+        self.refresh_rate = int(cluster_spec.infrastructure_settings.get("refresh_rate", "60"))
 
         self.remote = RemoteHelper(cluster_spec)
 
         self.docker_config_path = os.path.expanduser("~") + "/.docker/config.json"
-        self.operator_base_path = "cloud/operator/{}/{}" \
-            .format(self.operator_release.split(".")[0],
-                    self.operator_release.split(".")[1])
-        self.certificate_authority_path = "{}/ca.crt" \
-            .format(self.operator_base_path)
-        self.crd_path = "{}/crd.yaml" \
-            .format(self.operator_base_path)
-        self.config_path = "{}/config.yaml" \
-            .format(self.operator_base_path)
-        self.config_template_path = "{}/config_template.yaml" \
-            .format(self.operator_base_path)
-        self.auth_path = "{}/auth_secret.yaml" \
-            .format(self.operator_base_path)
-        self.cb_cluster_path = "{}/couchbase-cluster.yaml" \
-            .format(self.operator_base_path)
-        self.template_cb_cluster_path = "{}/couchbase-cluster_template.yaml" \
-            .format(self.operator_base_path)
-        self.worker_base_path = "cloud/worker"
-        self.worker_path = "{}/worker.yaml" \
-            .format(self.worker_base_path)
-        self.rmq_base_path = "cloud/broker/rabbitmq/0.48"
-        self.rmq_operator_path = "{}/cluster-operator.yaml" \
-            .format(self.rmq_base_path)
-        self.rmq_cluster_path = "{}/rabbitmq.yaml" \
-            .format(self.rmq_base_path)
+        self.crd_path = "cloud/operator/crd.yaml"
+        self.auth_path = "cloud/operator/auth_secret.yaml"
+        self.cb_cluster_path = "cloud/operator/couchbase-cluster.yaml"
+        self.rmq_operator_path = "cloud/broker/rabbitmq/0.48/cluster-operator.yaml"
+        self.rmq_cluster_path = "cloud/broker/rabbitmq/0.48/rabbitmq.yaml"
+
+    def _get_image_tag_for(self, component: str, version_string: str) -> tuple[str, str]:
+        if not version_string:
+            return None, None
+
+        if "-" in version_string:
+            image_tag = f"{self.registry_base}{component}:{version_string}"
+        else:
+            image_tag = f"couchbase/{component}:{version_string}"
+
+        release = version_string.split("-")[0]
+        return release, image_tag
 
     def install(self):
         self.install_operator()
         self.install_celery_broker()
+
+    def prepare_operator_files(self):
+        source = "internal" if "-" in self.operator_version else "release"
+        build = self.operator_version.split("-")[-1]
+        package_name = OPERATOR_PACKAGES.get(source).format(
+            release=self.operator_release, build=build
+        )
+        operator_url = (
+            OPERATOR_LOCATIONS.get(source).format(release=self.operator_release, build=build)
+            + package_name
+        )
+        if url_exist(operator_url):
+            download_file(operator_url, package_name)
+            extract_any(package_name, "couchbase-operator")
+            source_dir = "couchbase-operator"
+        else:
+            # Cases where the specified build doesnt exist, generate the CRD from source
+            self.make_operator(self.operator_release)
+            source_dir = "couchbase-operator/example"
+        # Copy generated CRD file to the operator directory
+        run_custom_cmd("./", "cp", f"{source_dir}/crd.yaml cloud/operator/")
 
     def install_operator(self):
         logger.info("installing operator")
@@ -220,22 +221,21 @@ class OperatorInstaller:
 
     def create_secrets(self):
         logger.info("creating secrets")
-        self.remote.create_docker_secret(
-            self.docker_config_path)
-        self.remote.create_operator_tls_secret(
-            self.certificate_authority_path)
+        self.remote.create_docker_secret(self.docker_config_path)
 
     def create_crd(self):
         logger.info("creating CRD")
+        self.prepare_operator_files()
         self.remote.create_from_file(self.crd_path)
 
     def create_config(self):
         logger.info("creating config")
-        self.remote.create_operator_config(
-            self.config_template_path,
-            self.config_path,
-            self.operator_tag,
-            self.admission_controller_tag)
+        config_file = None
+        with CAOConfigFile(self.operator_release, self.operator_tag, self.controller_tag) as config:
+            config.setup_config()
+            config_file = config.dest_file
+
+        self.remote.create_from_file(config_file)
 
     def create_auth(self):
         logger.info("creating auth")
@@ -243,14 +243,10 @@ class OperatorInstaller:
 
     def create_cluster_config(self):
         logger.info("preparing couchbase cluster config")
-        self.remote.create_couchbase_cluster_config(
-            self.template_cb_cluster_path,
-            self.cb_cluster_path,
-            self.couchbase_tag,
-            self.operator_backup_tag,
-            self.exporter_tag,
-            self.node_count,
-            self.refresh_rate)
+        with CAOCouchbaseClusterFile(self.couchbase_release, self.cluster_spec) as cb_config:
+            cb_config.set_server_spec(self.couchbase_tag, self.node_count)
+            cb_config.set_backup(self.operator_backup_tag)
+            cb_config.set_exporter(self.exporter_tag, self.refresh_rate)
 
     def wait_for_operator_and_admission(self):
         logger.info("waiting for operator and admission controller")
@@ -277,10 +273,25 @@ class OperatorInstaller:
         logger.info("creating rabbitmq config")
         self.remote.upload_rabbitmq_config()
 
+    def make_operator(self, release: str):
+        """Generate operator CRD from source."""
+        github_token = os.getenv("GITHUB_ACCESS_TOKEN", "")
+        repo = f"https://{github_token}@github.com/couchbase/couchbase-operator.git"
+        # Operator branches are in the form of <major>.<minor>.x ex 2.6.x
+        branch = f"{release.rsplit('.', 1)[0]}.x"
+        # If a version branch doesnt exist, use master
+        branch = branch if check_if_remote_branch_exists(repo, branch) else "master"
+        clone_git_repo(repo, branch)
+        run_custom_cmd("couchbase-operator", "make", "crd")
+
     def delete_operator_files(self):
         logger.info("deleting operator files")
-        files = [self.cb_cluster_path, self.auth_path,
-                 self.config_path, self.crd_path]
+        files = [
+            self.cb_cluster_path,
+            self.auth_path,
+            CAOConfigFile(self.operator_release, self.operator_tag, self.controller_tag).dest_file,
+            self.crd_path,
+        ]
         self.remote.delete_from_files(files)
 
     def delete_operator_secrets(self):
@@ -305,7 +316,7 @@ class OperatorInstaller:
 
     def delete_worker_files(self):
         logger.info("deleting worker files")
-        self.remote.delete_from_file(self.worker_path)
+        self.remote.delete_from_file(CAOWorkerFile(self.cluster_spec).dest_file)
 
     def wait_for_worker_deletion(self):
         logger.info("waiting for worker deletion")

@@ -131,7 +131,7 @@ class PerfTest:
         if self.test_config.cluster.kernel_mem_limit:
             self.collect_logs()
 
-            self.cluster.reset_memory_settings()
+            self.reset_memory_settings()
 
         if self.test_config.cluster.num_vbuckets:
             self.remote.reset_num_vbuckets()
@@ -150,6 +150,9 @@ class PerfTest:
                 shutil.move(fname, '{}.zip'.format(hostname))
 
     def reset_memory_settings(self):
+        if self.capella_infra or self.dynamic_infra:
+            return
+
         if self.test_config.cluster.kernel_mem_limit:
             for service in self.test_config.cluster.kernel_mem_limit_services:
                 for server in self.cluster_spec.servers_by_role(service):

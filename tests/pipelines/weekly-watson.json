@@ -180,8 +180,6 @@
     "XDCR-C1": [
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M.test", "groups": "P0"},
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt.test", "groups": "P0"},
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_with_filter.test", "groups": "P0"},
-        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_filter.test", "groups": "P0"},
         {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_ssl.test", "groups": "P0"}
     ],
     "XDCR-C2": [

@@ -9,6 +9,7 @@ from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import ycsb_data_load_task, ycsb_task
 from perfrunner.tests import PerfTest
 from perfrunner.tests.n1ql import N1QLTest
+from perfrunner.tests.xdcr import XdcrInitTest
 
 
 class YCSBTest(PerfTest):
@@ -164,6 +165,19 @@ class YCSBDurabilityThroughputTest(YCSBTest):
                     self.reporter.post(
                         *self.metrics.ycsb_slo_latency(key, latency_dic[key])
                     )
+
+
+class UniDirXdcrInitYCSBTest(YCSBTest, XdcrInitTest):
+
+    def run(self):
+        self.download_ycsb()
+        self.load()
+        self.compact_bucket(wait=True)
+
+        self.configure_wan()
+
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)
 
 
 class YCSBLatencyTest(YCSBTest):

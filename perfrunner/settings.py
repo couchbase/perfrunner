@@ -1963,6 +1963,7 @@ class XDCRSettings:
     BACKFILL_COLLECTION_MAPPING = ''   # ----------------------"----------------------------------
     XDCR_LINK_DIRECTIONS = 'one-way'
     XDCR_LINK_NETWORK_LIMITS = '0'
+    MOBILE = None
 
     def __init__(self, options: dict):
         self.demand_encryption = options.get('demand_encryption')
@@ -1979,6 +1980,8 @@ class XDCRSettings:
         self.backfill_collection_mapping = options.get('backfill_collection_mapping',
                                                        self.BACKFILL_COLLECTION_MAPPING)
         self.collections_oso_mode = bool(options.get('collections_oso_mode'))
+
+        self.mobile = options.get('mobile', self.MOBILE)
 
         # Capella-specific settings
         self.xdcr_link_directions = options.get('xdcr_link_directions',

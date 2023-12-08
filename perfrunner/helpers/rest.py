@@ -527,10 +527,23 @@ class DefaultRestHelper(RestBase):
         api = 'pools/default/buckets/@xdcr-{}/stats'.format(bucket)
         return self.get(url=self._get_api_url(host=host, path=api)).json()
 
-    def get_xdcr_changes_left_total(self, host: str, bucket: str) -> dict:
+    def get_xdcr_changes_left_total(self, host: str, bucket: str) -> int:
         api = 'pools/default/stats/range/xdcr_changes_left_total?' \
             'sourceBucketName={}&pipelineType=Main'.format(bucket)
-        return self.get(url=self._get_api_url(host=host, path=api)).json()
+        resp = self.get(url=self._get_api_url(host=host, path=api)).json()
+        return int(resp["data"][0]["values"][-1][1])
+
+    def get_xdcr_docs_written_total(self, host: str, bucket: str) -> int:
+        api = 'pools/default/stats/range/xdcr_docs_written_total?' \
+            'sourceBucketName={}&pipelineType=Main'.format(bucket)
+        resp = self.get(url=self._get_api_url(host=host, path=api)).json()
+        return int(resp["data"][0]["values"][-1][1])
+
+    def xdcr_mobile_docs_filtered_total(self, host: str, bucket: str) -> int:
+        api = 'pools/default/stats/range/xdcr_mobile_docs_filtered_total?' \
+            'sourceBucketName={}&pipelineType=Main'.format(bucket)
+        resp = self.get(url=self._get_api_url(host=host, path=api)).json()
+        return int(resp["data"][0]["values"][-1][1])
 
     def add_remote_cluster(self,
                            local_host: str,
@@ -637,6 +650,17 @@ class DefaultRestHelper(RestBase):
         logger.info('Updating xdcr cluster settings: {}'.format(data))
         url = self._get_api_url(host=host, path='settings/replications')
         self.post(url=url, data=data)
+
+    def enable_cross_clustering_versioning(self, host: str, bucket: str):
+        logger.info("Enabling cross clustering versioning on node: {}".format(host))
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/buckets/{}'.format(host, bucket)
+        else:
+            api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
+        data = {
+            'enableCrossClusterVersioning': 'true'
+        }
+        self.post(url=api, data=data)
 
     def run_diag_eval(self, host: str, cmd: str):
         url = self._get_api_url(host=host, path='diag/eval')

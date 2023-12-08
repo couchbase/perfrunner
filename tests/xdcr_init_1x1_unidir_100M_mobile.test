@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrInitTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, Mobile Mode Enabled
+component = xdcr
+category = init_single
+orderby = aa
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 24000
+initial_nodes = 1 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[xdcr]
+mobile = active
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = large
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

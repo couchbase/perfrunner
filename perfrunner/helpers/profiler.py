@@ -55,7 +55,7 @@ class ProfilerBase:
         self.test_config = test_config
         self.cluster_spec = cluster_spec
         self.rest = RestHelper(cluster_spec, test_config)
-        self.master_node = next(cluster_spec.sgw_masters)
+        self.master_node = next(cluster_spec.masters)
         self.ssh_username, self.ssh_password = cluster_spec.ssh_credentials
         self.profiling_settings = copy.deepcopy(test_config.profiling_settings)
 
@@ -83,10 +83,14 @@ class ProfilerBase:
                 initial_nodes = int(self.test_config.syncgateway_settings.nodes)
                 self._schedule_service(service, self.cluster_spec.sgw_servers[:initial_nodes])
             else:
-                role = 'kv' if service == 'projector' else service
-                active_nodes_by_role = self.rest.get_active_nodes_by_role(self.master_node,
-                                                                          role=role)
-                self._schedule_service(service, active_nodes_by_role)
+                role = 'kv' if (service == 'projector' or service == 'goxdcr') else service
+                for _, servers in self.cluster_spec.clusters:
+                    self.master_node = servers[0]
+                    logger.info("The current master node is: {}".format(self.master_node))
+                    active_nodes_by_role = self.rest.get_active_nodes_by_role(self.master_node,
+                                                                            role=role)
+                    self._schedule_service(service, active_nodes_by_role)
+                    self.master_node = next(self.cluster_spec.masters)
 
 
 class GoDebugProfiler (ProfilerBase):

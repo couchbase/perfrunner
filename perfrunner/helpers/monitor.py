@@ -306,12 +306,38 @@ class Monitor:
 
     def _wait_for_empty_xdcr_queues(self, host: str, bucket: str):
         start_time = time.time()
+        # For mobile replication (XDCR with SGW), xdcr_changes_left_total will never reach 0
+        # because of sgw heartbeat docs being constantly rewritten. These docs are filtered and
+        # are not replicated, but they still count towards xdcr_changes_left_total.
+        # So we will consider replication complete if the following happens:
+        # - xdcr_docs_written_total >= total number of docs (it can be greater due to import)
+        # - xdcr_mobile_docs_filtered_total keeps increasing
+        # - xdcr_changes_left_total = 1
+        previous_xdcr_mobile_docs_filtered_total = \
+            self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
+        logger.info('Initial xdcr_mobile_docs_filtered_total = {:,}'.
+                    format(previous_xdcr_mobile_docs_filtered_total))
         while True:
             xdcr_changes_left_total = self.rest.get_xdcr_changes_left_total(host, bucket)
-            value = int(xdcr_changes_left_total["data"][0]["values"][-1][1])
-            if value:
-                logger.info('xdcr_changes_left_total = {:,}'.format(value))
-            elif value == 0:
+            if xdcr_changes_left_total:
+                logger.info('xdcr_changes_left_total = {:,}'.format(xdcr_changes_left_total))
+                if xdcr_changes_left_total == 1:
+                    xdcr_docs_written_total = self.rest.get_xdcr_docs_written_total(host, bucket)
+                    logger.info('xdcr_docs_written_total = {:,}'.format(xdcr_docs_written_total))
+
+                    if xdcr_docs_written_total >= self.test_config.load_settings.items:
+                        xdcr_mobile_docs_filtered_total = \
+                            self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
+                        logger.info('xdcr_mobile_docs_filtered_total = {:,}'.
+                                    format(xdcr_mobile_docs_filtered_total))
+                        if xdcr_mobile_docs_filtered_total > \
+                           previous_xdcr_mobile_docs_filtered_total:
+                            logger.info('Reached the end of the replication')
+                            break
+                else:
+                    previous_xdcr_mobile_docs_filtered_total = \
+                        self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
+            elif xdcr_changes_left_total == 0:
                 logger.info('xdcr_changes_left_total reached 0')
                 break
             time.sleep(self.POLLING_INTERVAL)

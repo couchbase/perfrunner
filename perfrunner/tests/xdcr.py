@@ -51,6 +51,15 @@ class XdcrTest(PerfTest):
             params.update({
                 'filterExpression': self.xdcr_settings.filter_expression,
             })
+        if self.xdcr_settings.mobile:
+            logger.info("XDCR mobile replication is active")
+            params.update({
+                'mobile': 'active'
+            })
+            for bucket in self.test_config.buckets:
+                m1, m2 = self.cluster_spec.masters
+                self.rest.enable_cross_clustering_versioning(m1, bucket)
+                self.rest.enable_cross_clustering_versioning(m2, bucket)
         return params
 
     def create_replication(self):
@@ -297,7 +306,10 @@ class XdcrInitTest(XdcrTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.check_num_items()
+        # check_num_items doesn't work when SGW is connected to server, as SGW adds its own
+        # documents (sync, config, heartbeat)
+        if not self.xdcr_settings.mobile:
+            self.check_num_items()
         self.compact_bucket(wait=True)
 
         self.configure_wan()

@@ -26,6 +26,7 @@ indexer.settings.storage_mode = memory_optimized
 workload_path = workloads/workloade
 items = 20000000
 workers = 40
+ycsb_client = couchbase3
 
 [index]
 statements =
@@ -40,6 +41,7 @@ workers = 120
 workload_instances = 10
 ssl_mode = auth
 ycsb_jvm_args = "-Djdk.tls.client.protocols=TLSv1.2"
+ycsb_client = couchbase3
 
 [ycsb]
-branch = tmp-x509
+branch = couchbase3

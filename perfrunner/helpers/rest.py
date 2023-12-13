@@ -2485,6 +2485,14 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
                                                            "db-1", config)
         resp.raise_for_status()
 
+    def get_index_storage_stats_mm(self, host: str) -> str:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:19102/stats/storage/mm'.format(host)
+        else:
+            api = 'http://{}:9102/stats/storage/mm'.format(host)
+        auth = self._admin_creds(host)
+        return self.get(url=api, auth=auth).text
+
 
 class ServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):

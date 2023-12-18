@@ -321,6 +321,11 @@ class RemoteLinux(Remote):
         with settings(host_string=host):
             self._killall(('memcached',), signal='SIGSTOP')
 
+    def kill_indexer(self, host: str):
+        # Kill indexer with SIGSTOP to ensure it doesnt get restarted before the failover
+        with settings(host_string=host):
+            self._killall(('indexer',), signal='SIGSTOP')
+
     def _killall(self, processes, signal: str = 'SIGKILL'):
         logger.info('Killing {}'.format(', '.join(processes)))
         run('killall -{} {}'.format(signal, ' '.join(processes)), warn_only=True, quiet=True)

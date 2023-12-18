@@ -19,7 +19,7 @@ from perfrunner.helpers.local import (
 from perfrunner.helpers.misc import SGPortRange, create_build_tuple, pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
-from perfrunner.tests.rebalance import RebalanceTest
+from perfrunner.tests.rebalance import AutoFailoverAndFailureDetectionTest, RebalanceTest
 from spring.docgen import decimal_fmtr
 
 
@@ -2373,3 +2373,41 @@ class SecondaryIndexRebalanceOnlyTest(SecondaryRebalanceTest):
         logger.info('Rebalance completed in {} secs'.format(self.rebalance_timings['total_time']))
         self.report_kpi(rebalance_time=True)
         self.print_index_disk_usage()
+
+
+class IndexerFailureDetectionTest(AutoFailoverAndFailureDetectionTest, SecondaryIndexTest):
+    # This test should probably be in `rebalance.py`, but currently this will introduce
+    # circular dipendency between the files
+    ALL_HOSTNAMES = True
+
+    """Measure indexer failover with scan and access workload."""
+
+    COLLECTORS = {'secondary_stats': True, 'iostat': True,
+                  'memory': True, 'ns_server_system': True, 'latency': True}
+
+    def _failover(self):
+        indexer_nodes = self.rest.get_active_nodes_by_role(self.master_node, 'index')
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        self.t_failure = time.time()
+        for node in indexer_nodes[-failed_nodes:]:
+            self.remote.kill_indexer(node)
+
+    def run(self):
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+
+        self.access_bg()
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        run_cbindexperf('./opt/couchbase/bin/cbindexperf', self.index_nodes[0],
+                        rest_username, rest_password, self.configfile, run_in_background=True,
+                        is_ssl=self.test_config.cluster.enable_n2n_encryption,
+                        gcpercent=self.cbindexperf_gcpercent)
+
+        self.failover()
+
+        if self.is_balanced():
+            self.report_kpi()

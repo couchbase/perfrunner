@@ -89,6 +89,10 @@ class RemoteWindows(Remote):
         with settings(host_string=host):
             self._taskkill(('memcached',))
 
+    def kill_indexer(self, host: str):
+        with settings(host_string=host):
+            self._taskkill(('indexer',))
+
     def _taskkill(self, processes):
         logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
         run('taskkill /F /T /IM {}'.format(' /IM '.join(self.PROCESSES)),

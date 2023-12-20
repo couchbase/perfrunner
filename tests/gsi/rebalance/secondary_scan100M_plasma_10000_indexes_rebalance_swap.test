@@ -13,7 +13,7 @@ lat_interval = 0.5
 
 [cluster]
 mem_quota = 30000
-index_mem_quota = 127000
+index_mem_quota = 100000
 initial_nodes = 5
 num_buckets = 1
 

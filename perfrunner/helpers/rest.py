@@ -1950,6 +1950,22 @@ class DefaultRestHelper(RestBase):
         resp = self.get(url=api)
         return resp.json()
 
+    def get_orchestrator_node(self, host: str) -> str:
+        """Return the address to the ns-server selected orchestrator node.
+
+        If the call fails (Unauthorised, unknown pool), return host.
+        """
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18091/pools/default/terseClusterInfo'.format(host)
+        else:
+            api = 'http://{}:8091/pools/default/terseClusterInfo'.format(host)
+
+        resp = self.get(url=api)
+        try:
+            return resp.json().get('orchestrator').split('@')[-1]
+        except Exception:
+            return host
+
 
 class KubernetesRestHelper(RestBase):
 

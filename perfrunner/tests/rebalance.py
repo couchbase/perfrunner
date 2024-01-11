@@ -351,6 +351,11 @@ class FailoverTest(RebalanceTest):
         t = dateutil.parser.parse(time_str, ignoretz=True)
         return float(t.strftime('%s.%f'))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Use selected ochestrator as the master node.
+        self.master_node = self.rest.get_orchestrator_node(self.master_node)
+
     def _failover(self):
         pass
 

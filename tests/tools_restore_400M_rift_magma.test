@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.tools.RestoreTest
+
+[showfast]
+title = 4 nodes, 1 bucket x 400M x 1KB, Heavy DGM, Idle, Magma
+component = tools
+category = restore
+sub_category = Rift
+
+[stats]
+client_processes = cbbackupmgr
+
+[cluster]
+mem_quota = 52428
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+backend_storage = magma
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 400000000
+size = 1024
+workers = 40
+
+[backup]
+threads = 16
+storage_type = rift
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

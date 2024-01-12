@@ -2,31 +2,12 @@ import time
 
 from logger import logger
 from perfrunner.helpers import misc
-from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.helpers.rest import (
-    DefaultRestHelper,
-    KubernetesRestHelper,
-    ProvisionedCapellaRestHelper,
-    ServerlessRestHelper,
-)
+from perfrunner.helpers.rest import RestType
+from perfrunner.remote import Remote
 from perfrunner.settings import ClusterSpec, TestConfig
 
 
 class Monitor:
-
-    def __new__(cls,
-                cluster_spec: ClusterSpec,
-                test_config: TestConfig,
-                verbose: bool = False):
-        if cluster_spec.dynamic_infrastructure:
-            return KubernetesMonitor(cluster_spec, test_config, verbose)
-        elif cluster_spec.serverless_infrastructure:
-            return ServerlessMonitor(cluster_spec, test_config, verbose)
-        else:
-            return DefaultMonitor(cluster_spec, test_config, verbose)
-
-
-class DefaultMonitor(DefaultRestHelper):
 
     MAX_RETRY = 150
     MAX_RETRY_RECOVERY = 1200
@@ -64,13 +45,14 @@ class DefaultMonitor(DefaultRestHelper):
         'replication_changes_left',
     )
 
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
+                 rest: RestType, remote: Remote, build: str):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.remote = RemoteHelper(cluster_spec, verbose)
+        self.remote = remote
+        self.rest = rest
         self.master_node = next(cluster_spec.masters)
-        self.build = self.get_version(self.master_node)
+        self.build = build
         version, build_number = self.build.split('-')
         self.build_version_number = tuple(map(int, version.split('.'))) + (int(build_number),)
 
@@ -80,7 +62,7 @@ class DefaultMonitor(DefaultRestHelper):
         is_running = False
         start_time = time.time()
         while not is_running:
-            is_running, progress = self.get_task_status(host, task_type='rebalance')
+            is_running, progress = self.rest.get_task_status(host, task_type='rebalance')
             logger.info('Rebalance running: {}'.format(is_running))
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Monitoring got stuck')
@@ -97,7 +79,7 @@ class DefaultMonitor(DefaultRestHelper):
         while is_running:
             time.sleep(self.POLLING_INTERVAL)
 
-            is_running, progress = self.get_task_status(host,
+            is_running, progress = self.rest.get_task_status(host,
                                                         task_type='rebalance')
             if progress == last_progress:
                 if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
@@ -142,22 +124,25 @@ class DefaultMonitor(DefaultRestHelper):
         start_time = time.time()
         while True:
             kv_dcp_stats = stats_function(host, bucket)
-            stats = int(kv_dcp_stats["data"][0]["values"][-1][1])
-            if stats:
-                logger.info('{} = {}'.format('ep_dcp_replica_items_remaining', stats))
-                if time.time() - start_time > self.TIMEOUT:
-                    raise Exception('Monitoring got stuck')
-                time.sleep(self.POLLING_INTERVAL)
-            else:
-                logger.info('{} reached 0'.format('ep_dcp_replica_items_remaining'))
-                break
+            try:
+                if stats := int(kv_dcp_stats['data'][0]['values'][-1][1]):
+                    logger.info('{} = {}'.format('ep_dcp_replica_items_remaining', stats))
+                else:
+                    logger.info('{} reached 0'.format('ep_dcp_replica_items_remaining'))
+                    break
+            except Exception:
+                pass
+
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('DCP queue Monitoring got stuck')
+            time.sleep(self.POLLING_INTERVAL)
 
     def _wait_for_replica_count_match(self, host, bucket):
         start_time = time.time()
-        bucket_info = self.get_bucket_info(host, bucket)
+        bucket_info = self.rest.get_bucket_info(host, bucket)
         replica_number = int(bucket_info['replicaNumber'])
         while replica_number:
-            bucket_stats = self.get_bucket_stats(host, bucket)
+            bucket_stats = self.rest.get_bucket_stats(host, bucket)
             curr_items = bucket_stats['op']['samples'].get("curr_items")[-1]
             replica_curr_items = bucket_stats['op']['samples'].get("vb_replica_curr_items")[-1]
             logger.info("curr_items: {}, replica_curr_items: {}".format(curr_items,
@@ -254,7 +239,7 @@ class DefaultMonitor(DefaultRestHelper):
     def monitor_disk_queues(self, host, bucket):
         logger.info('Monitoring disk queues: {}'.format(bucket))
         self._wait_for_empty_queues(host, bucket, self.DISK_QUEUES,
-                                    self.get_bucket_stats)
+                                    self.rest.get_bucket_stats)
 
     def monitor_dcp_queues(self, host, bucket):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
@@ -262,31 +247,31 @@ class DefaultMonitor(DefaultRestHelper):
             if self.test_config.bucket.replica_number != 0:
                 if self.build_version_number < (0, 0, 0, 2106):
                     self._wait_for_empty_dcp_queues(host, bucket,
-                                                    self.get_dcp_replication_items)
+                                                    self.rest.get_dcp_replication_items)
                 else:
                     self._wait_for_empty_dcp_queues(host, bucket,
-                                                    self.get_dcp_replication_items_v2)
+                                                    self.rest.get_dcp_replication_items_v2)
             self.DCP_QUEUES = (
                 'ep_dcp_other_items_remaining',
             )
             self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
-                                        self.get_bucket_stats)
+                                        self.rest.get_bucket_stats)
         elif self.build_version_number < (7, 0, 0, 3937):
             self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
-                                        self.get_bucket_stats)
+                                        self.rest.get_bucket_stats)
         else:
             if self.test_config.bucket.replica_number != 0:
                 if self.build_version_number < (7, 0, 0, 4990):
                     self._wait_for_empty_dcp_queues(host, bucket,
-                                                    self.get_dcp_replication_items)
+                                                    self.rest.get_dcp_replication_items)
                 else:
                     self._wait_for_empty_dcp_queues(host, bucket,
-                                                    self.get_dcp_replication_items_v2)
+                                                    self.rest.get_dcp_replication_items_v2)
             self.DCP_QUEUES = (
                 'ep_dcp_other_items_remaining',
             )
             self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
-                                        self.get_bucket_stats)
+                                        self.rest.get_bucket_stats)
 
     def monitor_replica_count(self, host, bucket):
         logger.info('Monitoring replica count match: {}'.format(bucket))
@@ -296,13 +281,13 @@ class DefaultMonitor(DefaultRestHelper):
         is_running = False
         while not is_running:
             time.sleep(self.POLLING_INTERVAL)
-            is_running, _ = self.get_task_status(host, task_type='xdcr')
+            is_running, _ = self.rest.get_task_status(host, task_type='xdcr')
 
     def xdcr_link_starttime(self, host: str, uuid: str):
         is_running = False
         while not is_running:
             time.sleep(self.POLLING_INTERVAL)
-            is_running, _ = self.get_xdcrlink_status(host, task_type='xdcr', uuid=uuid)
+            is_running, _ = self.rest.get_xdcrlink_status(host, task_type='xdcr', uuid=uuid)
         return time.time()
 
     def monitor_xdcr_queues(self, host: str, bucket: str):
@@ -312,14 +297,14 @@ class DefaultMonitor(DefaultRestHelper):
         time.sleep(20)
         if self.build_version_number < (7, 6, 0, 0):
             self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
-                                        self.get_xdcr_stats)
+                                        self.rest.get_xdcr_stats)
         else:
             self._wait_for_empty_xdcr_queues(host, bucket)
 
     def _wait_for_empty_xdcr_queues(self, host: str, bucket: str):
         start_time = time.time()
         while True:
-            xdcr_changes_left_total = self.get_xdcr_changes_left_total(host, bucket)
+            xdcr_changes_left_total = self.rest.get_xdcr_changes_left_total(host, bucket)
             value = int(xdcr_changes_left_total["data"][0]["values"][-1][1])
             if value:
                 logger.info('xdcr_changes_left_total = {:,}'.format(value))
@@ -336,7 +321,7 @@ class DefaultMonitor(DefaultRestHelper):
         start_time = time.time()
         link1_time, link2_items = self._wait_for_replication_completion(host, bucket,
                                                                         self.XDCR_QUEUES,
-                                                                        self.get_xdcr_stats,
+                                                                        self.rest.get_xdcr_stats,
                                                                         xdcrlink1,
                                                                         xdcrlink2)
         return start_time, link1_time, link2_items
@@ -344,7 +329,7 @@ class DefaultMonitor(DefaultRestHelper):
     def monitor_xdcr_completeness(self, host: str, bucket: str, xdcr_link: str):
         logger.info('Monitoring XDCR Link Completeness: {}'.format(bucket))
         self._wait_for_completeness(host=host, bucket=bucket, xdcr_link=xdcr_link,
-                                    stats_function=self.get_xdcr_stats)
+                                    stats_function=self.rest.get_xdcr_stats)
         return time.time()
 
     def get_num_items(self, host: str, bucket: str):
@@ -352,7 +337,7 @@ class DefaultMonitor(DefaultRestHelper):
         return num_items
 
     def _get_num_items(self, host: str, bucket: str, total: bool = False) -> int:
-        stats = self.get_bucket_stats(host=host, bucket=bucket)
+        stats = self.rest.get_bucket_stats(host=host, bucket=bucket)
         if total:
             curr_items = stats['op']['samples'].get('curr_items_tot')
         else:
@@ -364,7 +349,7 @@ class DefaultMonitor(DefaultRestHelper):
 
     def _get_num_items_scope_and_collection(self, host: str, bucket: str, scope: str,
                                             coll: str = None) -> int:
-        stats = self.get_scope_and_collection_items(host, bucket, scope, coll)
+        stats = self.rest.get_scope_and_collection_items(host, bucket, scope, coll)
         if stats:
             return sum(int(d['values'][-1][1]) for d in stats['data'])
         return 0
@@ -420,7 +405,7 @@ class DefaultMonitor(DefaultRestHelper):
         while True:
             time.sleep(self.POLLING_INTERVAL)
 
-            tasks = [task for task in self.get_tasks(host)
+            tasks = [task for task in self.rest.get_tasks(host)
                      if task.get('type') == task_type]
             if tasks:
                 for task in tasks:
@@ -433,10 +418,9 @@ class DefaultMonitor(DefaultRestHelper):
         logger.info('Task {} successfully completed'.format(task_type))
 
     def monitor_warmup(self, memcached, host, bucket):
-        logger.info('Monitoring warmup status: {}@{}'.format(bucket,
-                                                             host))
+        logger.info('Monitoring warmup status: {}@{}'.format(bucket, host))
 
-        memcached_port = self.get_memcached_port(host)
+        memcached_port = self.rest.get_memcached_port(host)
 
         while True:
             stats = memcached.get_stats(host, memcached_port, bucket, 'warmup')
@@ -454,7 +438,7 @@ class DefaultMonitor(DefaultRestHelper):
     def monitor_compression(self, memcached, host, bucket):
         logger.info('Monitoring active compression status')
 
-        memcached_port = self.get_memcached_port(host)
+        memcached_port = self.rest.get_memcached_port(host)
 
         json_docs = -1
         while json_docs:
@@ -470,10 +454,10 @@ class DefaultMonitor(DefaultRestHelper):
 
         for retry in range(self.MAX_RETRY):
             unhealthy_nodes = {
-                n for n, status in self.node_statuses(host).items()
+                n for n, status in self.rest.node_statuses(host).items()
                 if status != 'healthy'
             } | {
-                n for n, status in self.node_statuses_v2(host).items()
+                n for n, status in self.rest.node_statuses_v2(host).items()
                 if status != 'healthy'
             }
             if unhealthy_nodes:
@@ -481,32 +465,28 @@ class DefaultMonitor(DefaultRestHelper):
             else:
                 break
         else:
-            logger.interrupt('Some nodes are not healthy: {}'.format(
-                unhealthy_nodes
-            ))
+            logger.interrupt('Some nodes are not healthy: {}'.format(unhealthy_nodes))
 
     def monitor_analytics_node_active(self, host):
         logger.info('Monitoring analytics node health')
 
         for retry in range(self.MAX_RETRY):
-            active = self.analytics_node_active(host)
+            active = self.rest.analytics_node_active(host)
             if active:
                 break
             else:
                 time.sleep(self.POLLING_INTERVAL)
         else:
-            logger.interrupt('Analytics node still not healthy: {}'.format(
-                host
-            ))
+            logger.interrupt('Analytics node still not healthy: {}'.format(host))
 
     def is_index_ready(self, host: str) -> bool:
-        for status in self.get_index_status(host)['status']:
+        for status in self.rest.get_index_status(host)['status']:
             if status['status'] != 'Ready':
                 return False
         return True
 
     def estimate_pending_docs(self, host: str) -> int:
-        stats = self.get_gsi_stats(host)
+        stats = self.rest.get_gsi_stats(host)
         pending_docs = 0
         for metric, value in stats.items():
             if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
@@ -529,7 +509,7 @@ class DefaultMonitor(DefaultRestHelper):
 
         def update_indexes_remaining():
             for i, node in enumerate(index_nodes):
-                indexes_remaining[i] = self.indexes_per_node(node)
+                indexes_remaining[i] = self.rest.indexes_per_node(node)
 
         while (sum(indexes_remaining) != 0):
             time.sleep(self.POLLING_INTERVAL_INDEXING)
@@ -551,7 +531,7 @@ class DefaultMonitor(DefaultRestHelper):
 
         @misc.retry(catch=(KeyError,), iterations=10, wait=30)
         def update_indexes_ready():
-            json2i = self.get_index_status(host)
+            json2i = self.rest.get_index_status(host)
             for i, index in enumerate(indexes):
                 status = get_index_status(json2i, index)
                 if status == 'Ready':
@@ -604,7 +584,7 @@ class DefaultMonitor(DefaultRestHelper):
 
         @misc.retry(catch=(KeyError,), iterations=10, wait=30)
         def update_indexes_ready():
-            json2i = self.get_index_status(host)
+            json2i = self.rest.get_index_status(host)
             for i, index in enumerate(indexes):
                 status = get_index_status(json2i, index)
                 if status == check_for_status:
@@ -626,7 +606,7 @@ class DefaultMonitor(DefaultRestHelper):
 
         # collect num_docs_indexed information globally from all index nodes
         def get_num_docs_indexed():
-            data = self.get_index_stats(index_nodes)
+            data = self.rest.get_index_stats(index_nodes)
             num_indexed = []
             for index in indexes:
                 key = "" + bucket + ":" + index + ":num_docs_indexed"
@@ -635,7 +615,7 @@ class DefaultMonitor(DefaultRestHelper):
             return num_indexed
 
         def get_num_docs_index_pending():
-            data = self.get_index_stats(index_nodes)
+            data = self.rest.get_index_stats(index_nodes)
             num_pending = []
             for index in indexes:
                 key = "" + bucket + ":" + index + ":num_docs_pending"
@@ -678,7 +658,7 @@ class DefaultMonitor(DefaultRestHelper):
 
         # collect num_docs_indexed information globally from all index nodes
         def get_num_docs_indexed():
-            data = self.get_index_stats(index_nodes)
+            data = self.rest.get_index_stats(index_nodes)
             num_indexed = []
             for index in indexes:
                 key = index + ":num_docs_indexed"
@@ -687,7 +667,7 @@ class DefaultMonitor(DefaultRestHelper):
             return num_indexed
 
         def get_num_docs_index_pending():
-            data = self.get_index_stats(index_nodes)
+            data = self.rest.get_index_stats(index_nodes)
             num_pending = []
             for index in indexes:
                 key = index + ":num_docs_pending"
@@ -709,11 +689,11 @@ class DefaultMonitor(DefaultRestHelper):
         logger.info("Number of Items indexed {}".format(curr_num_indexed))
 
     def wait_for_num_connections(self, index_node, expected_connections):
-        curr_connections = self.get_index_num_connections(index_node)
+        curr_connections = self.rest.get_index_num_connections(index_node)
         retry = 1
         while curr_connections < expected_connections and retry < self.MAX_RETRY:
             time.sleep(self.POLLING_INTERVAL_INDEXING)
-            curr_connections = self.get_index_num_connections(index_node)
+            curr_connections = self.rest.get_index_num_connections(index_node)
             logger.info("Got current connections {}".format(curr_connections))
             retry += 1
         if retry == self.MAX_RETRY:
@@ -723,7 +703,7 @@ class DefaultMonitor(DefaultRestHelper):
     def wait_for_recovery(self, index_nodes, bucket, index):
         time.sleep(self.MONITORING_DELAY)
         for retry in range(self.MAX_RETRY_RECOVERY):
-            response = self.get_index_stats(index_nodes)
+            response = self.rest.get_index_stats(index_nodes)
             item = "{}:{}:disk_load_duration".format(bucket, index)
             if item in response:
                 return response[item]
@@ -749,7 +729,7 @@ class DefaultMonitor(DefaultRestHelper):
         logger.info('{} : Waiting for indexing to finish'.format(index))
         count = 0
         while count < items:
-            count = self.get_fts_doc_count(host, index, bucket)
+            count = self.rest.get_fts_doc_count(host, index, bucket)
             logger.info('FTS indexed documents for {}: {:,}'.format(index, count))
             time.sleep(self.POLLING_INTERVAL)
 
@@ -764,7 +744,7 @@ class DefaultMonitor(DefaultRestHelper):
                 persist = 0
                 compact = 0
                 for host in hosts:
-                    stats = self.get_fts_stats(host)
+                    stats = self.rest.get_fts_stats(host)
                     metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
                     persist += stats[metric]
 
@@ -784,7 +764,7 @@ class DefaultMonitor(DefaultRestHelper):
         items = int(self.test_config.fts_settings.test_total_docs)
         count = 0
         while count < items:
-            count = self.get_elastic_doc_count(host, index)
+            count = self.rest.get_elastic_doc_count(host, index)
             logger.info('Elasticsearch indexed documents: {:,}'.format(count))
             time.sleep(self.POLLING_INTERVAL)
 
@@ -793,7 +773,7 @@ class DefaultMonitor(DefaultRestHelper):
 
         pending_items = -1
         while pending_items:
-            stats = self.get_elastic_stats(host)
+            stats = self.rest.get_elastic_stats(host)
             pending_items = stats['indices'][index]['total']['translog']['operations']
             logger.info('Records to persist: {:,}'.format(pending_items))
             time.sleep(self.POLLING_INTERVAL)
@@ -803,7 +783,7 @@ class DefaultMonitor(DefaultRestHelper):
         for node in nodes:
             retry = 1
             while retry < self.MAX_RETRY_BOOTSTRAP:
-                if function in self.get_apps_with_status(node, "deployed"):
+                if function in self.rest.get_apps_with_status(node, "deployed"):
                     break
                 time.sleep(self.POLLING_INTERVAL)
                 retry += 1
@@ -814,22 +794,22 @@ class DefaultMonitor(DefaultRestHelper):
     def get_num_analytics_items(self, analytics_node: str, bucket: str) -> int:
         stats_key = '{}:all:incoming_records_count_total'.format(bucket)
         num_items = 0
-        for node in self.get_active_nodes_by_role(analytics_node, 'cbas'):
-            stats = self.get_analytics_stats(node)
+        for node in self.rest.get_active_nodes_by_role(analytics_node, 'cbas'):
+            stats = self.rest.get_analytics_stats(node)
             num_items += stats.get(stats_key, 0)
         return num_items
 
     def query_num_analytics_items(self, analytics_node: str, dataset: str) -> int:
         """Get the number of items in an analytics dataset using an analytics query."""
         statement = "SELECT COUNT(*) from `{}`;".format(dataset)
-        result = self.exec_analytics_statement(analytics_node, statement)
+        result = self.rest.exec_analytics_statement(analytics_node, statement)
         num_analytics_items = result.json()['results'][0]['$1']
         logger.info("Number of items in dataset `{}`: {}".
                     format(dataset, num_analytics_items))
         return num_analytics_items
 
     def get_ingestion_progress(self, analytics_node: str) -> int:
-        stats = self.get_ingestion_v2(analytics_node)
+        stats = self.rest.get_ingestion_v2(analytics_node)
         progress = 0
         number_dataset = 0
         for scope_state in stats["links"][0]["state"]:
@@ -843,14 +823,14 @@ class DefaultMonitor(DefaultRestHelper):
             num_items = 0
             try:
                 if self.build_version_number < (7, 0, 0, 4622):
-                    stats = self.get_pending_mutations(analytics_node)
+                    stats = self.rest.get_pending_mutations(analytics_node)
                     for dataset in stats['Default']:
                         if self.build_version_number < (7, 0, 0, 4310):
                             num_items += int(stats['Default'][dataset])
                         else:
                             num_items += int(stats['Default'][dataset]['seqnoLag'])
                 else:
-                    stats = self.get_pending_mutations_v2(analytics_node)
+                    stats = self.rest.get_pending_mutations_v2(analytics_node)
                     for scope in stats['scopes']:
                         for collection in scope['collections']:
                             num_items += int(collection['seqnoLag'])
@@ -869,9 +849,9 @@ class DefaultMonitor(DefaultRestHelper):
                 num_analytics_items = self.get_num_analytics_items(analytics_node, bucket)
             else:
                 if self.build_version_number < (7, 0, 0, 4990):
-                    incoming_records = self.get_cbas_incoming_records_count(analytics_node)
+                    incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node)
                 else:
-                    incoming_records = self.get_cbas_incoming_records_count_v2(analytics_node)
+                    incoming_records = self.rest.get_cbas_incoming_records_count_v2(analytics_node)
                 num_analytics_items = int(incoming_records["data"][0]["values"][-1][1])
 
             logger.info('Analytics has {:,} docs (target is {:,})'.format(
@@ -906,7 +886,7 @@ class DefaultMonitor(DefaultRestHelper):
             pending_ops = 0
             for analytics_node in analytics_nodes:
                 api = 'http://{}:8095/_prometheusMetrics'.format(analytics_node)
-                api_return = self.get(url=api)
+                api_return = self.rest.get(url=api)
                 for line in api_return.text.splitlines():
                     if "#" not in line:
                         metric_line = line.split()
@@ -925,7 +905,7 @@ class DefaultMonitor(DefaultRestHelper):
         start_time = time.time()
 
         while True:
-            resp = self.get_analytics_pause_status(analytics_node)
+            resp = self.rest.get_analytics_pause_status(analytics_node)
             pause_status, failure = resp['status'], resp['failure']
             logger.info('Pause status: {}'.format(pause_status))
 
@@ -953,7 +933,7 @@ class DefaultMonitor(DefaultRestHelper):
         start_time = time.time()
 
         while True:
-            resp = self.get_analytics_link_info(analytics_node, link_name, link_scope)
+            resp = self.rest.get_analytics_link_info(analytics_node, link_name, link_scope)
             link_state = resp.get('linkState', None)
             logger.info('Link state: {}'.format(link_state))
 
@@ -1013,7 +993,7 @@ class DefaultMonitor(DefaultRestHelper):
         logger.info('Waiting for timer events to start processing: {} '.format(function))
         retry = 1
         while retry < self.MAX_RETRY_TIMER_EVENT:
-            if 0 < self.get_num_events_processed(
+            if 0 < self.rest.get_num_events_processed(
                     event=event, node=node, name=function):
                 break
             time.sleep(self.POLLING_INTERVAL_EVENTING)
@@ -1038,8 +1018,8 @@ class DefaultMonitor(DefaultRestHelper):
         retry = 1
         events_processed = {}
         while retry < self.MAX_RETRY_TIMER_EVENT:
-            events_processed = self.get_num_events_processed(event="ALL",
-                                                             node=node, name=function)
+            events_processed = self.rest.get_num_events_processed(event="ALL",
+                                                                  node=node, name=function)
             if events_processed["dcp_mutation"] == events_processed["timer_responses_received"]:
                 break
             time.sleep(self.POLLING_INTERVAL_EVENTING)
@@ -1052,7 +1032,7 @@ class DefaultMonitor(DefaultRestHelper):
         logger.info('Waiting for {} function to {}'.format(function, status))
         retry = 1
         while retry < self.MAX_RETRY_TIMER_EVENT:
-            op = self.get_apps_with_status(node, status)
+            op = self.rest.get_apps_with_status(node, status)
             if function in op:
                 break
             time.sleep(self.POLLING_INTERVAL_EVENTING)
@@ -1063,7 +1043,7 @@ class DefaultMonitor(DefaultRestHelper):
     def wait_for_fragmentation_stable(self, host: str, bucket: str,
                                       target_fragmentation: int = 50):
         while True:
-            stats = self.get_bucket_stats(host=host, bucket=bucket)
+            stats = self.rest.get_bucket_stats(host=host, bucket=bucket)
             fragmentation = int(stats['op']['samples'].get("couch_docs_fragmentation")[-1])
             logger.info("couch_docs_fragmentation: {}".format(fragmentation))
             if fragmentation <= target_fragmentation:
@@ -1078,7 +1058,7 @@ class DefaultMonitor(DefaultRestHelper):
         return time_taken, items_in_range
 
     def get_import_count(self, host: str):
-        stats = self.get_sg_stats(host=host)
+        stats = self.rest.get_sg_stats(host=host)
         import_count = 0
         if not self.cluster_spec.capella_infrastructure:
             if 'syncGateway_import' in stats.keys():
@@ -1159,8 +1139,8 @@ class DefaultMonitor(DefaultRestHelper):
         while True:
             if isinstance(host, list):
                 for sg in range(len(host)):
-                    stats = self.get_sgreplicate_stats(host=host[sg],
-                                                       version=version)
+                    stats = self.rest.get_sgreplicate_stats(host=host[sg],
+                                                            version=version)
                     for stat in stats:
                         if stat.get('replication_id', '') == replicate_id[sg]:
                             if 'pull' in replicate_id[sg]:
@@ -1168,8 +1148,8 @@ class DefaultMonitor(DefaultRestHelper):
                             elif 'push' in replicate_id[sg]:
                                 replicate_docs += int(stat.get('docs_written', 0))
             else:
-                stats = self.get_sgreplicate_stats(host=host,
-                                                   version=version)
+                stats = self.rest.get_sgreplicate_stats(host=host,
+                                                        version=version)
                 for stat in stats:
                     if stat.get('replication_id', '') == replicate_id:
                         if replicate_id == 'sgr1_pull' or replicate_id == 'sgr2_pull':
@@ -1205,8 +1185,8 @@ class DefaultMonitor(DefaultRestHelper):
             replicate_docs = 0
             if isinstance(host, list):
                 for sg in range(len(host)):
-                    stats = self.get_sgreplicate_stats(host=host[sg],
-                                                       version=version)
+                    stats = self.rest.get_sgreplicate_stats(host=host[sg],
+                                                            version=version)
                     for stat in stats:
                         if stat.get('replication_id', '') == replicate_id[sg]:
                             if 'pull' in replicate_id[sg]:
@@ -1214,8 +1194,7 @@ class DefaultMonitor(DefaultRestHelper):
                             elif 'push' in replicate_id[sg]:
                                 replicate_docs += int(stat.get('docs_written', 0))
             else:
-                stats = self.get_sgreplicate_stats(host=host,
-                                                   version=version)
+                stats = self.rest.get_sgreplicate_stats(host=host, version=version)
                 for stat in stats:
                     if stat.get('replication_id', '') == replicate_id:
                         if replicate_id == 'sgr1_pull' or replicate_id == 'sgr2_pull':
@@ -1238,7 +1217,7 @@ class DefaultMonitor(DefaultRestHelper):
 
             logger.info('Docs replicated: {}'.format(replicate_docs))
             if replicate_id == 'sgr2_conflict_resolution':
-                sg_stats = self.get_sg_stats(host=host)
+                sg_stats = self.rest.get_sg_stats(host=host)
                 local_count = 0
                 remote_count = 0
                 merge_count = 0
@@ -1266,7 +1245,7 @@ class DefaultMonitor(DefaultRestHelper):
                 raise Exception("timeout of 1800 seconds exceeded")
 
     def deltasync_stats(self, host: str, db: str):
-        stats = self.get_expvar_stats(host)
+        stats = self.rest.get_expvar_stats(host)
         if 'delta_sync' in stats['syncgateway']['per_db'][db].keys():
             return stats['syncgateway']['per_db'][db]
         else:
@@ -1274,7 +1253,7 @@ class DefaultMonitor(DefaultRestHelper):
             return stats['syncgateway']['per_db']
 
     def deltasync_bytes_transfer(self, host: str):
-        stats = self.get_expvar_stats(host)
+        stats = self.rest.get_expvar_stats(host)
         bytes_transeferred = 0
         if self.test_config.syncgateway_settings.replication_type == 'PUSH':
             replication_type = 'doc_writes_bytes_blip'
@@ -1287,7 +1266,7 @@ class DefaultMonitor(DefaultRestHelper):
             return bytes_transeferred
 
     def get_sgw_push_count(self, host):
-        sgw_stats = self.get_sg_stats(host)
+        sgw_stats = self.rest.get_sg_stats(host)
         push_count = 0
         if not self.cluster_spec.capella_infrastructure:
             for count in range(1, self.test_config.cluster.num_buckets + 1):
@@ -1312,7 +1291,7 @@ class DefaultMonitor(DefaultRestHelper):
 
     def get_sgw_pull_count(self, host):
         pull_count = 0
-        sgw_stats = self.get_sg_stats(host)
+        sgw_stats = self.rest.get_sg_stats(host)
         if not self.cluster_spec.capella_infrastructure:
             for count in range(1, self.test_config.cluster.num_buckets + 1):
                 db = 'db-{}'.format(count)
@@ -1456,8 +1435,6 @@ class DefaultMonitor(DefaultRestHelper):
             time.sleep(self.POLLING_INTERVAL_SGW)
 
     def wait_sgw_log_streaming_status(self, desired_status: str):
-        self.rest = ProvisionedCapellaRestHelper(cluster_spec=self.cluster_spec,
-                                                 test_config=self.test_config)
         retries = 0
         max_retries = 180
         logger.info('Waiting for \'{}\' log-streaming status'.format(desired_status))
@@ -1474,236 +1451,11 @@ class DefaultMonitor(DefaultRestHelper):
                 )
             time.sleep(self.POLLING_INTERVAL_SGW_LOGSTREAMING)
 
-    def wait_for_snapshot_persistence(self, rest, index_nodes):
+    def wait_for_snapshot_persistence(self, index_nodes: list[str]):
         """Execute additional steps for shard based rebalance."""
         logger.info("Checking and sleeping until all snapshots are ready")
-        self.rest = rest
         is_snapshot_ready = False
         while not is_snapshot_ready:
             time.sleep(self.MONITORING_DELAY)
             is_snapshot_ready = all(self.rest.is_persistence_active(host=host) == "done" for host
                                     in index_nodes)
-
-class KubernetesMonitor(KubernetesRestHelper):
-
-    MAX_RETRY = 150
-    MAX_RETRY_RECOVERY = 1200
-    MAX_RETRY_TIMER_EVENT = 18000
-    MAX_RETRY_BOOTSTRAP = 1200
-
-    MONITORING_DELAY = 5
-
-    POLLING_INTERVAL = 2
-    POLLING_INTERVAL_INDEXING = 1
-    POLLING_INTERVAL_MACHINE_UP = 10
-    POLLING_INTERVAL_ANALYTICS = 15
-    POLLING_INTERVAL_EVENTING = 1
-
-    REBALANCE_TIMEOUT = 3600 * 6
-    TIMEOUT = 3600 * 12
-
-    DISK_QUEUES = (
-        'ep_queue_size',
-        'ep_flusher_todo',
-        'ep_diskqueue_items',
-        'vb_active_queue_size',
-        'vb_replica_queue_size',
-    )
-
-    DCP_QUEUES = (
-        'ep_dcp_replica_items_remaining',
-        'ep_dcp_other_items_remaining',
-    )
-
-    XDCR_QUEUES = (
-        'replication_changes_left',
-    )
-
-    def __init__(self, cluster_spec, test_config, verbose):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
-        self.cluster_spec = cluster_spec
-        self.test_config = test_config
-        self.master_node = next(cluster_spec.masters)
-        # We create a k8s monitor during cluster creation, when we dont have cluster yet.
-        # The k8s monitor is not used during cluster creation anyways, so empty string is OK.
-        try:
-            self.build = self.get_version(self.master_node)
-        except Exception:
-            self.build = ''
-
-    def is_index_ready(self, host: str) -> bool:
-        return True
-
-    def monitor_indexing(self, host):
-        logger.info('Monitoring indexing progress')
-
-        while not self.is_index_ready(host):
-            time.sleep(self.POLLING_INTERVAL_INDEXING * 5)
-            pending_docs = self.estimate_pending_docs(host)
-            logger.info('Pending docs: {:,}'.format(pending_docs))
-
-        logger.info('Indexing completed')
-
-    def estimate_pending_docs(self, host: str) -> int:
-        stats = self.get_gsi_stats(host)
-        pending_docs = 0
-        for metric, value in stats.items():
-            if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
-                pending_docs += value
-        return pending_docs
-
-    def monitor_disk_queues(self, host, bucket):
-        logger.info('Monitoring disk queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host, bucket, self.DISK_QUEUES,
-                                    self.get_bucket_stats)
-
-    def monitor_dcp_queues(self, host, bucket):
-        logger.info('Monitoring DCP queues: {}'.format(bucket))
-
-        version, build_number = self.build.split('-')
-        build = tuple(map(int, version.split('.'))) + (int(build_number),)
-
-        if build < (7, 0, 0, 3937):
-            self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
-                                        self.get_bucket_stats)
-        else:
-            if self.test_config.bucket.replica_number != 0:
-                self._wait_for_empty_dcp_queues(host, bucket,
-                                                self.get_dcp_replication_items)
-            self.DCP_QUEUES = (
-                'ep_dcp_other_items_remaining',
-            )
-            self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
-                                        self.get_bucket_stats)
-
-    def monitor_replica_count(self, host, bucket):
-        logger.info('Monitoring replica count match: {}'.format(bucket))
-        self._wait_for_replica_count_match(host, bucket)
-
-    def _wait_for_empty_dcp_queues(self, host, bucket, stats_function):
-        start_time = time.time()
-        while True:
-            kv_dcp_stats = stats_function(host, bucket)
-            try:
-                if stats := int(kv_dcp_stats['data'][0]['values'][-1][1]):
-                    logger.info('{} = {}'.format('ep_dcp_replica_items_remaining', stats))
-                else:
-                    logger.info('{} reached 0'.format('ep_dcp_replica_items_remaining'))
-                    break
-            except Exception:
-                pass
-
-            if time.time() - start_time > self.TIMEOUT:
-                raise Exception('DCP queue Monitoring got stuck')
-            time.sleep(self.POLLING_INTERVAL)
-
-    def _wait_for_empty_queues(self, host, bucket, queues, stats_function):
-        metrics = list(queues)
-
-        start_time = time.time()
-        while metrics:
-            bucket_stats = stats_function(host, bucket)
-            # As we are changing metrics in the loop; take a copy of it to
-            # iterate over.
-            for metric in list(metrics):
-                stats = bucket_stats['op']['samples'].get(metric)
-                if stats:
-                    last_value = stats[-1]
-                    if last_value:
-                        logger.info('{} = {:,}'.format(metric, last_value))
-                        continue
-                    else:
-                        logger.info('{} reached 0'.format(metric))
-                    metrics.remove(metric)
-                else:
-                    logger.info('{} reached 0'.format(metric))
-                    metrics.remove(metric)
-            if metrics:
-                time.sleep(self.POLLING_INTERVAL)
-            if time.time() - start_time > self.TIMEOUT:
-                raise Exception('Monitoring got stuck')
-
-    def _wait_for_replica_count_match(self, host, bucket):
-        start_time = time.time()
-        bucket_info = self.get_bucket_info(host, bucket)
-        replica_number = int(bucket_info['replicaNumber'])
-        while replica_number:
-            bucket_stats = self.get_bucket_stats(host, bucket)
-            curr_items = bucket_stats['op']['samples'].get("curr_items")[-1]
-            replica_curr_items = bucket_stats['op']['samples'].get("vb_replica_curr_items")[-1]
-            logger.info("curr_items: {}, replica_curr_items: {}".format(curr_items,
-                                                                        replica_curr_items))
-            if (curr_items * replica_number) == replica_curr_items:
-                break
-            time.sleep(self.POLLING_INTERVAL)
-            if time.time() - start_time > self.TIMEOUT:
-                raise Exception('Replica items monitoring got stuck')
-
-    def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int = None):
-        logger.info('Checking the number of items in {}'.format(bucket))
-        if not max_retry:
-            max_retry = self.MAX_RETRY
-        retries = 0
-        while retries < max_retry:
-            curr_items = self._get_num_items(host, bucket, total=True)
-            if curr_items == num_items:
-                break
-            else:
-                logger.info('{}(curr_items) != {}(num_items)'.format(curr_items, num_items))
-            time.sleep(self.POLLING_INTERVAL)
-            retries += 1
-        else:
-            actual_items = self._get_num_items(host, bucket, total=True)
-            raise Exception('Mismatch in the number of items: {}'
-                            .format(actual_items))
-
-    def _get_num_items(self, host: str, bucket: str, total: bool = False) -> int:
-        stats = self.get_bucket_stats(host=host, bucket=bucket)
-        if total:
-            curr_items = stats['op']['samples'].get('curr_items_tot')
-        else:
-            curr_items = stats['op']['samples'].get('curr_items')
-        if curr_items:
-            return curr_items[-1]
-        return 0
-
-
-class ServerlessMonitor(DefaultMonitor):
-
-    def __init__(self, cluster_spec, test_config, verbose):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config, verbose=verbose)
-        self.rest = ServerlessRestHelper(cluster_spec=cluster_spec, test_config=test_config)
-
-    def monitor_fts_indexing_queue(self, host: str, index: str, items: int, bucket="bucket-1"):
-        logger.info('{} : Waiting for indexing to finish'.format(index))
-        count = 0
-        while count < items:
-            count = self.rest.get_fts_doc_count(host, index, bucket)
-            logger.info('FTS indexed documents for {}: {:,}'.format(index, count))
-            time.sleep(self.POLLING_INTERVAL)
-
-    def monitor_fts_index_persistence(self, hosts: list, index: str, bkt: str = None):
-        logger.info('{}: Waiting for index to be persisted'.format(index))
-        if not bkt:
-            bkt = self.test_config.buckets[0]
-        tries = 0
-        pending_items = 1
-        while pending_items:
-            try:
-                persist = 0
-                compact = 0
-                for host in hosts:
-                    stats = self.rest.get_fts_stats(host)
-                    metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
-                    persist += stats[metric]
-
-                    metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
-                    compact += stats[metric]
-                pending_items = persist or compact
-                logger.info('Records to persist: {:,}'.format(persist))
-                logger.info('Ongoing compactions: {:,}'.format(compact))
-            except KeyError:
-                tries += 1
-            if tries >= 10:
-                raise Exception("cannot get fts stats")
-            time.sleep(self.POLLING_INTERVAL)

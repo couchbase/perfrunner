@@ -4,7 +4,7 @@ import os
 import time
 from collections import namedtuple
 from json import JSONDecodeError
-from typing import Callable, Dict, Iterator, List, Optional, Tuple
+from typing import Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 import requests
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
@@ -1686,7 +1686,7 @@ class DefaultRestHelper(RestBase):
         return keys
 
 
-class KubernetesRestHelper(RestBase):
+class KubernetesRestHelper(DefaultRestHelper):
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
@@ -1698,23 +1698,14 @@ class KubernetesRestHelper(RestBase):
         trans_port = self.port_translation.get(trans_host).get(str(port))
         return trans_host, trans_port
 
-    def exec_n1ql_statement(self, host: str, statement: str, query_context: str = None) -> dict:
-        if self.test_config.cluster.enable_n2n_encryption:
-            host, port = self.translate_host_and_port(host, '18093')
-            api = 'https://{}:{}/query/service' \
-                .format(host, port)
+    def _get_api_url(self, host: str, path: str,
+                     plain_port: str = REST_PORT, ssl_port: str = REST_PORT_SSL) -> str:
+        if self.use_tls:
+            host, ssl_port = self.translate_host_and_port(host, ssl_port)
         else:
-            host, port = self.translate_host_and_port(host, '8093')
-            api = 'http://{}:{}/query/service' \
-                .format(host, port)
+            host, plain_port = self.translate_host_and_port(host, plain_port)
 
-        data = {
-            'statement': statement,
-        }
-        if query_context:
-            data['query_context'] = query_context
-        response = self.post(url=api, data=data)
-        return response.json()
+        return super()._get_api_url(host, path, plain_port, ssl_port)
 
     # indexer endpoints not yet exposed by operator
     def get_index_status(self, host: str) -> dict:
@@ -1729,53 +1720,6 @@ class KubernetesRestHelper(RestBase):
         for node in self.cluster_spec.servers_by_role(role):
             active_nodes_by_role.append(node)
         return active_nodes_by_role
-
-    def node_statuses(self, host: str) -> dict:
-        host, port = self.translate_host_and_port(host, '8091')
-        api = 'http://{}:{}/nodeStatuses' \
-            .format(host, port)
-        data = self.get(url=api).json()
-        return {node: info['status'] for node, info in data.items()}
-
-    def get_version(self, host: str) -> str:
-        logger.info('Getting Couchbase Server version')
-        if self.test_config.cluster.enable_n2n_encryption:
-            host, port = self.translate_host_and_port(host, '18091')
-            api = 'https://{}:{}/pools/' \
-                .format(host, port)
-        else:
-            host, port = self.translate_host_and_port(host, '8091')
-            api = 'http://{}:{}/pools/' \
-                .format(host, port)
-        r = self.get(url=api).json()
-        return r['implementationVersion'] \
-            .replace('-rel-enterprise', '') \
-            .replace('-enterprise', '') \
-            .replace('-community', '')
-
-    def get_bucket_stats(self, host: str, bucket: str) -> dict:
-        host, port = self.translate_host_and_port(host, '8091')
-        api = 'http://{}:{}/pools/default/buckets/{}/stats' \
-            .format(host, port, bucket)
-        return self.get(url=api).json()
-
-    def get_bucket_info(self, host: str, bucket: str) -> List[str]:
-        host, port = self.translate_host_and_port(host, '8091')
-        api = 'http://{}:{}/pools/default/buckets/{}' \
-            .format(host, port, bucket)
-        return self.get(url=api).json()
-
-    def flush_bucket(self, host: str, bucket: str):
-        logger.info('Flushing bucket: {}'.format(bucket))
-        host, port = self.translate_host_and_port(host, '8091')
-        api = 'http://{}:{}/pools/default/buckets/{}/controller/doFlush'.format(host, port, bucket)
-        self.post(url=api)
-
-    def get_dcp_replication_items(self, host: str, bucket: str) -> dict:
-        host, port = self.translate_host_and_port(host, '8091')
-        api = 'http://{}:{}/pools/default/stats/range/kv_dcp_items_remaining?bucket={}&' \
-              'connection_type=replication&aggregationFunction=sum'.format(host, port, bucket)
-        return self.get(url=api).json()
 
 
 class CapellaRestBase(DefaultRestHelper):
@@ -2389,3 +2333,8 @@ class ServerlessRestHelper(CapellaRestBase):
         auth = self._admin_creds(host)
         response = self.get(url=url, auth=auth)
         return response.json()
+
+
+# For type hinting rest classes
+RestType = Union[KubernetesRestHelper, ServerlessRestHelper,
+                 ProvisionedCapellaRestHelper, DefaultRestHelper]

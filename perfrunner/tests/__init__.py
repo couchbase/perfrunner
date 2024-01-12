@@ -51,9 +51,9 @@ class PerfTest:
         self.profiler = ProfilerHelper(cluster_spec, test_config)
         self.master_node = next(cluster_spec.masters)
         self.memcached = MemcachedHelper(cluster_spec, test_config)
-        self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.rest = RestHelper(cluster_spec, test_config)
         self.build = self.rest.get_version(self.master_node)
+        self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote, self.build)
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
 

@@ -33,18 +33,20 @@ class ClusterManager:
         self.capella_infra = self.cluster_spec.capella_infrastructure
         self.rest = RestHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
-        self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.master_node = next(self.cluster_spec.masters)
         if self.dynamic_infra:
             self.initial_nodes = None
-            self.build = ''  # During cluster creation, we dont have cb server yet,
-            # and we dont have a usecase for this value in k8s
+            # During cluster creation in k8s, we dont have a cluster yet,
+            # so provide an arbitrary build
+            self.build = '1.0.0-100'
         else:
             self.initial_nodes = test_config.cluster.initial_nodes
             self.build = self.rest.get_version(self.master_node)
             version, build_number = self.build.split('-')
             self.build_tuple = tuple(map(int, version.split('.'))) + (int(build_number),)
+
+        self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote, self.build)
 
     def is_compatible(self, min_release: str) -> bool:
         for master in self.cluster_spec.masters:

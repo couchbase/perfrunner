@@ -97,7 +97,8 @@ class SGPerfTest(PerfTest):
         self.profiler = ProfilerHelper(cluster_spec, test_config)
         self.cluster = ClusterManager(cluster_spec, test_config)
         self.target_iterator = TargetIterator(cluster_spec, test_config)
-        self.monitor = Monitor(cluster_spec, test_config, verbose)
+        self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote,
+                               self.rest.get_version(self.master_node))
         self.sg_settings = self.test_config.syncgateway_settings
         self.collections = self.test_config.collection.collection_map
         if self.test_config.collection.collection_map:

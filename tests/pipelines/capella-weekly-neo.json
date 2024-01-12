@@ -1,0 +1,11 @@
+{
+    "AWS": [
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_5m.test", "groups": "P0"}
+    ],
+    "GCP": [
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_4s_1c_n2_highmem_8_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloada_4nodes_1b.test", "groups": "P0"}
+    ],
+    "Azure": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_5m.test", "groups": "P0"}
+    ]
+}

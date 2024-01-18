@@ -1415,6 +1415,14 @@ class DefaultMonitor(DefaultRestHelper):
                 )
             time.sleep(self.POLLING_INTERVAL_SGW_LOGSTREAMING)
 
+    def wait_for_snapshot_persistence(self, index_nodes):
+        """Execute additional steps for shard based rebalance."""
+        logger.info("Checking and sleeping until all snapshots are ready")
+        is_snapshot_ready = False
+        while not is_snapshot_ready:
+            time.sleep(self.MONITORING_DELAY)
+            is_snapshot_ready = all(self.rest.is_persistence_active(host=host) == "done" for host
+                                    in index_nodes)
 
 class KubernetesMonitor(KubernetesRestHelper):
 

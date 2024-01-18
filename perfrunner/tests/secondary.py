@@ -106,6 +106,8 @@ class SecondaryIndexTest(PerfTest):
             self.admin_auth = self.admin_creds(self.master_node)
         else:
             self.admin_auth = 'Administrator', 'password'
+        self.shard_affinity = self.test_config.gsi_settings.settings.get(
+                              "indexer.settings.enable_shard_affinity", False)
 
     def admin_creds(self, host: str):
         admin_credentials = self.cluster_spec.capella_admin_credentials
@@ -339,7 +341,7 @@ class SecondaryIndexTest(PerfTest):
         return avg_rr
 
     def calc_avg_rr_compression(self, storage_stats):
-        total_num_rec_allocs, total_num_rec_frees, total_num_rec_swapout, total_num_rec_swapin,\
+        total_num_rec_allocs, total_num_rec_frees, total_num_rec_swapout, total_num_rec_swapin, \
             total_num_rec_compressed = 0, 0, 0, 0, 0
 
         for index in storage_stats:
@@ -1552,6 +1554,11 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
                                                                          duration))
         return lines * interval / (duration / 1000000000 / concurrency)
 
+    def pre_rebalance(self):
+        super().pre_rebalance()
+        if self.shard_affinity:
+            self.monitor.wait_for_snapshot_persistence()
+
     def run(self):
         self.remove_statsfile()
         self.load()
@@ -2346,6 +2353,7 @@ class RebalanceThroughputLatencyMutationScanCloudTest(SecondaryRebalanceTest):
 
 
 class SecondaryIndexRebalanceOnlyTest(SecondaryRebalanceTest):
+
     def run(self):
         self.load()
         self.wait_for_persistence()

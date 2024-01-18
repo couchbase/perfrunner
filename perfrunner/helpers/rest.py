@@ -1950,6 +1950,14 @@ class DefaultRestHelper(RestBase):
         resp = self.get(url=api)
         return resp.json()
 
+    def is_persistence_active(self, host: str) -> str:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:19102/isPersistanceActive'.format(host)
+        else:
+            api = 'http://{}:9102/isPersistanceActive'.format(host)
+        resp = self.get(url=api)
+        return resp.text
+
     def get_orchestrator_node(self, host: str) -> str:
         """Return the address to the ns-server selected orchestrator node.
 

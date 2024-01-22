@@ -317,9 +317,8 @@ class ClusterManager:
     def create_buckets(self):
         mem_quota = self.test_config.cluster.mem_quota
 
-        if mem_quota == 0 and self.capella_infra:
-            logger.info('No memory quota provided for buckets on provisioned Capella cluster. '
-                        'Getting free memory available for buckets...')
+        if self.capella_infra:
+            logger.info('Getting free memory available for buckets on Capella cluster.')
             mem_info = self.rest.get_bucket_mem_available(next(self.cluster_spec.masters))
             mem_quota = mem_info['free']
             logger.info('Free memory for buckets (per node): {}MB'.format(mem_quota))

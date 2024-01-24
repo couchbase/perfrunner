@@ -5,10 +5,9 @@ test = perfrunner.tests.tools.ProvisionedCapellaBackup
 title = 3 nodes, 1 bucket x 10M x 1KB, Idle, AWS, c5.2xlarge
 component = toolscloud
 category = backup
-sub_category = AWS  
+sub_category = AWS
 
 [cluster]
-mem_quota = 12500
 initial_nodes = 3
 num_buckets = 1
 enable_cpu_cores = false

@@ -11,7 +11,6 @@ sub_category = {provider}
 server_processes = goxdcr
 
 [cluster]
-mem_quota = 12800
 initial_nodes = 3 3
 num_buckets = 1
 enable_n2n_encryption = all

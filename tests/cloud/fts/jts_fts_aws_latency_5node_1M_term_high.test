@@ -8,9 +8,6 @@ category = Latency
 sub_category = AWS
 
 [cluster]
-mem_quota = 8192
-index_mem_quota = 8192
-fts_index_mem_quota = 8192
 initial_nodes = 5
 num_buckets = 1
 enable_cpu_cores = false
@@ -38,7 +35,7 @@ couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 
 [backup]
-obj_staging_dir = /root
+obj_staging_dir = /stage
 obj_region = us-east-1
 aws_credential_path = /root/.ssh
 

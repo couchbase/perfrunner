@@ -7,8 +7,6 @@ component = secondarycloud
 sub_category = AWS
 
 [cluster]
-mem_quota = 54000
-index_mem_quota = 123000
 initial_nodes = 5
 num_buckets = 1
 enable_cpu_cores = false

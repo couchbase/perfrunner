@@ -169,15 +169,9 @@ class BigFunTest(PerfTest):
                                    worker_home=self.worker_manager.WORKER_HOME)
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
-        if self.cluster_spec.capella_infrastructure:
-            backend = self.cluster_spec.capella_backend
-        else:
-            backend = self.cluster_spec.cloud_provider
-
-        if backend == 'aws':
-            credential = local.read_aws_credential(
-                self.test_config.backup_settings.aws_credential_path)
-            self.remote.create_aws_credential(credential)
+        credential = local.read_aws_credential(
+            self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
         self.remote.client_drop_caches()
 
         self.remote.restore(cluster_spec=self.cluster_spec,

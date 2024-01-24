@@ -1,42 +1,26 @@
 [test_case]
-test = perfrunner.tests.fts.FTSThroughputCloudBackupTest
+test = perfrunner.tests.fts.FTSLatencyCloudBackupTest
 
 [showfast]
 title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 5 node, FTS, s=1 c=1
 component = jtscloud
-category = Throughput
-sub_category = AZURE
-orderby = q0b00000010
+category = Latency
+sub_category = {provider}
 
 [cluster]
 initial_nodes = 5
 num_buckets = 1
 enable_cpu_cores = false
-ui_http = disabled
 enable_n2n_encryption = all
-
-[collection]
-config = collections/1bucket_1scope_1collection_basic.json
-
-[load]
-items = 1000000
-fts_data_spread_workers = 100
-
-[bucket]
-eviction_policy = fullEviction
-backend_storage = magma
 
 [jts]
 jts_repo_branch = korry_jts_enhancements
-test_collection_query_mode = default
-index_groups = 1
-indexes_per_group = 1
-jts_instances = 6
+jts_instances = 1
 test_duration = 600
 test_total_docs = 1000000
-test_query_workers = 30
-test_kv_workers = 5
-test_kv_throughput_goal = 1660
+test_query_workers = 1
+test_kv_workers = 60
+test_kv_throughput_goal = 10000
 test_data_file = ../tests/fts/data/benchmark/med.txt
 test_driver = couchbase
 test_stats_limit = 1000000
@@ -46,17 +30,20 @@ test_query_type = term
 test_query_limit = 10
 test_query_field = text
 test_mutation_field = text2
-test_worker_type = validatedThroughput
+test_worker_type = validatedLatency
 couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
 
 [backup]
 obj_staging_dir = /stage
-obj_access_key_id = cbperfstorage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
 
 [restore]
-backup_storage = az://fts-wiki1m
-backup_repo =  default
+backup_storage = s3://fts-wiki
+backup_repo = fts_wiki_collection
 threads = 8
 use_tls = 1

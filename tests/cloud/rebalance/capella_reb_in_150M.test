@@ -8,7 +8,6 @@ category = kv
 sub_category = {provider}
 
 [cluster]
-mem_quota = 12800
 initial_nodes = 3
 num_buckets = 1
 enable_cpu_cores = false

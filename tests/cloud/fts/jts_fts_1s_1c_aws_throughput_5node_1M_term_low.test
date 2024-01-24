@@ -8,9 +8,6 @@ category = Throughput
 sub_category = AWS
 
 [cluster]
-mem_quota = 8192
-index_mem_quota = 8192
-fts_index_mem_quota = 8192
 initial_nodes = 5
 num_buckets = 1
 enable_cpu_cores = false
@@ -44,7 +41,7 @@ couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 config = collections/1bucket_1scope_1collection_basic.json
 
 [backup]
-obj_staging_dir = /root
+obj_staging_dir = /stage
 obj_region = us-east-1
 aws_credential_path = /root/.ssh
 
@@ -53,4 +50,3 @@ backup_storage = s3://fts-wiki
 backup_repo = fts_wiki_collection
 threads = 8
 use_tls = 1
-

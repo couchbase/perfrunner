@@ -9,8 +9,6 @@ sub_category = {provider}
 orderby = b21
 
 [cluster]
-mem_quota = 12800
-index_mem_quota = 12800
 initial_nodes = 3
 num_buckets = 1
 enable_cpu_cores = false

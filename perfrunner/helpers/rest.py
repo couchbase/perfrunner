@@ -2533,6 +2533,15 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
         auth = self._admin_creds(host)
         return self.get(url=api, auth=auth).text
 
+    def is_persistence_active(self, host: str) -> str:
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:19102/isPersistanceActive'.format(host)
+        else:
+            api = 'http://{}:9102/isPersistanceActive'.format(host)
+        auth = self._admin_creds(host)
+        resp = self.get(url=api, auth=auth)
+        return resp.text
+
 
 class ServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):

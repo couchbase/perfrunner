@@ -1415,9 +1415,10 @@ class DefaultMonitor(DefaultRestHelper):
                 )
             time.sleep(self.POLLING_INTERVAL_SGW_LOGSTREAMING)
 
-    def wait_for_snapshot_persistence(self, index_nodes):
+    def wait_for_snapshot_persistence(self, rest, index_nodes):
         """Execute additional steps for shard based rebalance."""
         logger.info("Checking and sleeping until all snapshots are ready")
+        self.rest = rest
         is_snapshot_ready = False
         while not is_snapshot_ready:
             time.sleep(self.MONITORING_DELAY)

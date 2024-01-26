@@ -49,4 +49,5 @@ aws_credential_path = /root/.ssh
 backup_storage = s3://fts-wiki
 backup_repo = fts_wiki_collection
 threads = 8
+map_data = bucket-1.scope-1=bucket-1.scope-1
 use_tls = 1

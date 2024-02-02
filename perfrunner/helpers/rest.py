@@ -929,12 +929,15 @@ class DefaultRestHelper(RestBase):
             if r.status_code == 200:
                 break
 
-    def analytics_node_active(self, host: str) -> bool:
-        logger.info('Checking if analytics node is active: {}'.format(host))
+    def get_analytics_cluster_info(self, host: str) -> dict:
         url = self._get_api_url(host=host, path='analytics/cluster', plain_port=ANALYTICS_PORT,
                                 ssl_port=ANALYTICS_PORT_SSL)
-        status = self.get(url=url).json()
-        return status["state"] == "ACTIVE"
+        return self.get(url=url).json()
+
+    def analytics_node_active(self, host: str) -> bool:
+        logger.info('Checking if analytics node is active: {}'.format(host))
+        cluster_info = self.get_analytics_cluster_info(host)
+        return cluster_info["state"] == "ACTIVE"
 
     def exec_analytics_statement(self, analytics_node: str,
                                  statement: str) -> requests.Response:

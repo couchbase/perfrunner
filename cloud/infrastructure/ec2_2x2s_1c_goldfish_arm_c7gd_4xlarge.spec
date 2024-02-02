@@ -50,7 +50,7 @@ volume_size = 100
 [ec2_node_group_4]
 instance_type = c7gd.4xlarge
 instance_capacity = 2
-volume_size = 100
+volume_size = 0
 
 [storage]
 data = /data/data

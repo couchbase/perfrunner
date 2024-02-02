@@ -1301,6 +1301,17 @@ class ClusterManager:
             local.get_aws_credential(self.test_config.backup_settings.aws_credential_path, False)
         self.remote.add_aws_credential(access_key_id, secret_access_key)
 
+    def set_goldfish_storage_partitions(self):
+        if self.build_tuple < (8, 0, 0, 1547):
+            logger.warning('Cannot set storage partitions for Goldfish. '
+                           'Couchbase Server 8.0.0-1547 or later required.')
+            return
+
+        if storage_partitions := self.test_config.analytics_settings.goldfish_storage_partitions:
+            self.remote.set_goldfish_storage_partitions(storage_partitions)
+        else:
+            logger.info('Keeping default number of storage partitions for Goldfish.')
+
     def configure_kafka(self):
         self.remote.configure_kafka_brokers(
             self.test_config.goldfish_kafka_links_settings.partitions_per_topic)

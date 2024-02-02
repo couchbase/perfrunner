@@ -101,6 +101,7 @@ def main():
                 cm.set_kafka_links_settings()
             cm.set_goldfish_s3_bucket()
             cm.add_aws_credential()
+            cm.set_goldfish_storage_partitions()
 
         cm.disable_wan()
         cm.clear_login_history()

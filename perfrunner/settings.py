@@ -2477,6 +2477,8 @@ class AnalyticsSettings:
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
         self.storage_format = options.get('storage_format', self.STORAGE_FORMAT)
 
+        self.goldfish_storage_partitions = int(options.get('goldfish_storage_partitions', 0))
+
 
 class GoldfishKafkaLinksSettings:
 

@@ -1354,6 +1354,15 @@ class RemoteLinux(Remote):
                    .format(secret_access_key_url, secret_access_key))
         run(command)
 
+    @all_servers
+    def set_goldfish_storage_partitions(self, num_partitions: int):
+        logger.info('Setting number of Goldfish storage partitions to {}'.format(num_partitions))
+        command = ('curl -v -X PUT '
+                   'http://localhost:8091/_metakv/cbas/debug/settings/storage_partitions_count '
+                   '--data-urlencode value={}'
+                   .format(num_partitions))
+        run(command)
+
     @all_kafka_nodes
     def install_kafka(self, version: str):
         logger.info('Installing Kafka version: {}'.format(version))

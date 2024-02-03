@@ -68,3 +68,4 @@ class CbAgentSettings:
 
         if self.remote:
             self.remote_worker_home = test.worker_manager.WORKER_HOME
+        self.capella_infrastructure = test.cluster_spec.capella_infrastructure

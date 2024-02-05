@@ -44,7 +44,6 @@ class Collector:
 
         self.metrics = set()
         self.updater = None
-        self.capella_infrastructure = settings.capella_infrastructure
 
     def get_http(self, path: str, server: Optional[str] = None, port: int = 8091,
                  json: bool = True) -> Union[dict, str]:
@@ -68,10 +67,7 @@ class Collector:
                     'auth': self.auth,
                     'verify': False
                 })
-            if self.capella_infrastructure:
-                params.update({
-                    'auth': self.session._admin_creds(host = server)
-                })
+
             r = self.session.get(**params)
 
             if r.status_code in (200, 201, 202):
@@ -102,10 +98,6 @@ class Collector:
                 # When we are on cloud, self.session is a RestHelper so we shouldn't add auth
                 # because it will do it for us. When not on cloud, we need it.
                 params['auth'] = self.auth
-            if self.capella_infrastructure:
-                params.update({
-                    'auth': self.session._admin_creds(host = server)
-                })
 
             r = self.session.post(**params)
 

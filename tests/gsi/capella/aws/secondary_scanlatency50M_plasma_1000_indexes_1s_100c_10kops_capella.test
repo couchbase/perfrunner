@@ -43,6 +43,7 @@ ssl_mode = capella
 indexes = tests/gsi/index_defs/1bucket_1scope_100collections_1000_indexes_1.json
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_1000_indexes_plasma_1s_100c_random.json
 indexer.settings.storage_mode = plasma
+indexer.settings.num_replica = 0
 disable_perindex_stats = True
 cbindexperf_concurrency = 128
 report_initial_build_time = 1

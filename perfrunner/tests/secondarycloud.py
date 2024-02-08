@@ -175,6 +175,29 @@ class SecondaryIndexCloudTest(PerfTest):
 
         return all_options
 
+    def set_index_settings(self):
+        if self.capella_infra:
+            return
+        logger.info('Setting index settings')
+        index_nodes = self.cluster_spec.servers_by_role('index')
+        if index_nodes:
+            settings = self.test_config.gsi_settings.settings
+            if settings:
+                if self.dynamic_infra:
+                    cluster = self.remote.get_cluster_config()
+                    cluster['spec']['cluster']['indexStorageSetting'] = \
+                        settings['indexer.settings.storage_mode']
+                    self.remote.update_cluster_config(cluster)
+                else:
+                    for cluster_index_servers in \
+                            self.cluster_spec.servers_by_cluster_and_role('index'):
+                        index_node = cluster_index_servers[0]
+                        self.rest.set_index_settings(index_node,
+                                                     self.test_config.gsi_settings.settings)
+                        cluster_settings = self.rest.get_index_settings(index_node)
+                        cluster_settings = pretty_dict(self.rest.get_index_settings(index_node))
+                        logger.info('Index settings: {}'.format(cluster_settings))
+
     def batch_build_index_collection_options(self, indexes):
         all_options = ""
         for bucket_name, scope_map in indexes.items():

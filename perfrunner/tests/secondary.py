@@ -930,16 +930,35 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
                                           self.cluster_spec.index_path,
                                           human_readable=False)
 
+    def set_index_settings(self):
+        logger.info('Setting index settings')
+        index_nodes = self.cluster_spec.servers_by_role('index')
+        if index_nodes:
+            settings = self.test_config.gsi_settings.settings
+            if settings:
+                if self.dynamic_infra:
+                    cluster = self.remote.get_cluster_config()
+                    cluster['spec']['cluster']['indexStorageSetting'] = \
+                        settings['indexer.settings.storage_mode']
+                    self.remote.update_cluster_config(cluster)
+                else:
+                    for cluster_index_servers in \
+                            self.cluster_spec.servers_by_cluster_and_role('index'):
+                        index_node = cluster_index_servers[0]
+                        self.rest.set_index_settings(index_node,
+                                                     self.test_config.gsi_settings.settings)
+                        cluster_settings = self.rest.get_index_settings(index_node)
+                        cluster_settings = pretty_dict(self.rest.get_index_settings(index_node))
+                        logger.info('Index settings: {}'.format(cluster_settings))
+
+
     def run(self):
         self.download_certificate()
         self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
-        if self.cluster_spec.capella_infrastructure:
-            # Open ports for cbindex and cbindexperf
-            self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
-
+        self.set_index_settings()
         initial_index_time = self.build_secondaryindex()
         self.report_kpi(0, 0, initial_index_time)
         self.access_bg()

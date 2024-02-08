@@ -2120,6 +2120,36 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
         resp = self.get(url=url, auth=auth)
         return resp.text
 
+    def get_index_settings(self, host: str) -> dict:
+        url = self._get_api_url(host=host, path='settings?internal=ok',
+                                plain_port=INDEXING_PORT, ssl_port=INDEXING_PORT_SSL)
+        auth = self._admin_creds(host=host)
+        return self.get(url=url, auth=auth).json()
+
+    def set_index_settings(self, host: str, settings: dict):
+        api = 'https://{}:{}/settings'.format(host, INDEXING_PORT_SSL)
+        count = 0
+        curr_settings = self.get_index_settings(host)
+        for option, value in settings.items():
+            if option in curr_settings:
+                if "enableInMemoryCompression" in option and not value:
+                    while count <= 10:
+                        compression = self.get_index_settings(host)[option]
+                        if compression:
+                            logger.info("current compression settings {}".format(compression))
+                            break
+                        else:
+                            time.sleep(30)
+                            compression = self.get_index_settings(host)[option]
+                        count += 1
+                    if count == 10:
+                        raise Exception("Unable to set compression disabled after 5 min")
+                logger.info('Changing {} to {}'.format(option, value))
+                auth = self._admin_creds(host=host)
+                self.post(url=api, auth = auth, data=json.dumps({option: value}))
+            else:
+                logger.warn('Skipping unknown option: {}'.format(option))
+
 
 class ServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):

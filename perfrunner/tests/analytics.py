@@ -1317,9 +1317,18 @@ class CH2CloudRemoteLinkTest(CH2CloudTest):
                             passphrase=self.test_config.restore_settings.passphrase)
 
     @with_stats
-    @timeit
-    def sync(self):
-        super().sync()
+    def sync(self) -> int:
+        self.disconnect_link()
+        self.create_datasets()
+        self.create_analytics_indexes()
+        self.connect_link()
+
+        t0 = time.time()
+        for bucket in self.test_config.buckets:
+            self.num_items += self.monitor.monitor_data_synced(self.data_node,
+                                                               bucket,
+                                                               self.analytics_node)
+        return time.time() - t0
 
     def report_sync_kpi(self, sync_time: int):
         logger.info('Sync time: {}s'.format(sync_time))

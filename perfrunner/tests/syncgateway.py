@@ -313,7 +313,6 @@ class SGPerfTest(PerfTest):
         return channels
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         if collector := self.settings.syncgateway_settings.log_streaming:
             self.enable_log_streaming(collector)
@@ -582,7 +581,6 @@ class SGImportLoad(PerfTest):
         PerfTest.load(self, task=pillowfight_data_load_task)
 
     def run(self):
-        self.remote.remove_sglogs()
         self.load()
 
 
@@ -687,8 +685,6 @@ class SGImportThroughputTest(SGPerfTest):
         return time_elapsed, remaining_docs
 
     def run(self):
-        self.remote.remove_sglogs()
-
         self.download_ycsb()
 
         t0 = time()
@@ -772,7 +768,6 @@ class SGImportLatencyTest(SGPerfTest):
         super().access_bg(task=ycsb_task, target_iterator=cb_target_iterator)
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.load()
         self.report_kpi()
@@ -797,7 +792,6 @@ class SGSyncByUserWithAuth(SGSync):
         )
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_users()
@@ -809,7 +803,6 @@ class SGSyncByUserWithAuth(SGSync):
 class SGSyncByKeyNoAuth(SGSyncByUserWithAuth):
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.run_test()
@@ -819,7 +812,6 @@ class SGSyncByKeyNoAuth(SGSyncByUserWithAuth):
 class SGSyncInitialLoad(SGSyncByUserWithAuth):
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_users()
@@ -881,7 +873,6 @@ class SGReplicateThroughputTest1(SGPerfTest):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
@@ -929,7 +920,6 @@ class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
@@ -994,7 +984,6 @@ class SGReplicateThroughputTest2(SGPerfTest):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
@@ -1050,7 +1039,6 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
@@ -1116,7 +1104,6 @@ class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
 class SGReplicateLoad(SGPerfTest):
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
@@ -1264,7 +1251,6 @@ class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
         sg1_node = []
         sg2_node = []
         replication_ids = []
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
@@ -1347,7 +1333,6 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
         return time_elapsed, items_in_range
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
@@ -1432,7 +1417,6 @@ class SGReplicateMultiClusterPull(SGPerfTest):
 
     def run(self):
 
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_users()
@@ -1513,7 +1497,6 @@ class SGReplicateMultiClusterPush(SGPerfTest):
             )
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_users()
@@ -2788,7 +2771,6 @@ class LogStreamingTest(SGWrite):
         self.monitor.wait_sgw_log_streaming_status('disabled')
 
     def run(self):
-        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_users()

@@ -26,3 +26,7 @@
 - name: SYNC GATEWAY | Remove tmp logging dir (log rotation tests)
   shell: rm -rf /tmp/sg_logs
   ignore_errors: yes
+
+- name: SYNC GATEWAY | Remove var/tmp/sglogs dir
+  shell: rm -rf /var/tmp/sglogs/*
+  ignore_errors: yes

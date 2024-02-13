@@ -41,7 +41,10 @@ class ClusterManager:
             # so provide an arbitrary build
             self.build = '1.0.0-100'
         else:
-            self.initial_nodes = test_config.cluster.initial_nodes
+            self.initial_nodes = [
+                num_nodes for i, num_nodes in enumerate(test_config.cluster.initial_nodes)
+                if i not in self.cluster_spec.inactive_cluster_idxs
+            ]
             self.build = self.rest.get_version(self.master_node)
             version, build_number = self.build.split('-')
             self.build_tuple = tuple(map(int, version.split('.'))) + (int(build_number),)

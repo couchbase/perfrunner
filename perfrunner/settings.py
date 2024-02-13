@@ -724,7 +724,7 @@ class ClusterSpec(Config):
         self.set_active_clusters_by_idx(self._cluster_names_to_idxs(cluster_names))
 
     def set_inactive_clusters_by_name(self, cluster_names: Iterable[str]):
-        self.set_inactive_clusers_by_idx(self._cluster_names_to_idxs(cluster_names))
+        self.set_inactive_clusters_by_idx(self._cluster_names_to_idxs(cluster_names))
 
     def set_active_clusters_by_idx(self, cluster_idxs: Iterable[int]):
         if not (new_active_clusters := set(cluster_idxs)):

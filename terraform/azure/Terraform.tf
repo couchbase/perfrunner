@@ -159,7 +159,7 @@ resource "azurerm_public_ip" "perf-public-utility" {
   }
 }
 
-# Create public utility ip(s).
+# Create public syncgateway ip(s).
 resource "azurerm_public_ip" "perf-public-syncgateway" {
   for_each = var.syncgateway_nodes
 
@@ -297,6 +297,8 @@ resource "azurerm_network_interface_application_security_group_association" "clu
 
   network_interface_id          = azurerm_network_interface.perf-cluster-ni[each.key].id
   application_security_group_id = azurerm_application_security_group.cluster-asg.id
+
+  depends_on = [azurerm_virtual_machine.perf-cluster-vm]
 }
 
 resource "azurerm_network_interface_application_security_group_association" "utility-asg-association" {
@@ -304,6 +306,8 @@ resource "azurerm_network_interface_application_security_group_association" "uti
 
   network_interface_id          = azurerm_network_interface.perf-utility-ni[each.key].id
   application_security_group_id = azurerm_application_security_group.utility-asg.id
+
+  depends_on = [azurerm_virtual_machine.perf-utility-vm]
 }
 
 resource "azurerm_network_interface_application_security_group_association" "syncgateway-asg-association" {
@@ -311,6 +315,8 @@ resource "azurerm_network_interface_application_security_group_association" "syn
 
   network_interface_id          = azurerm_network_interface.perf-syncgateway-ni[each.key].id
   application_security_group_id = azurerm_application_security_group.syncgateway-asg.id
+
+  depends_on = [azurerm_virtual_machine.perf-syncgateway-vm]
 }
 
 # Create network security group.

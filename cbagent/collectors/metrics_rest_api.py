@@ -219,7 +219,7 @@ class MetricsRestApiDeduplication(MetricsRestApiBase):
         current_stats = self.get_stats()
         for node, per_bucket_stats in current_stats.items():
             for bucket, stats in per_bucket_stats.items():
-                bucket = self.serverless_dbs_names.get(bucket, bucket)
+                bucket = self.serverless_db_names.get(bucket, bucket)
                 self.add_stats(stats,
                                node=self.internal_to_external_hostnames[node],
                                bucket=bucket)

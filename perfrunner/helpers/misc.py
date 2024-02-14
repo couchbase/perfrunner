@@ -344,6 +344,22 @@ def run_aws_cli_command(command_template: str, *args) -> Optional[str]:
     return output
 
 
+def parse_prometheus_stat(stats, stat_name: str):
+    stat_count = 0
+    stat = stats.find(stat_name)
+    stat_list = []
+    while stat != -1:
+        stat_list.append(stat)
+        stat = stats.find(stat_name, stat + 1)
+    last = stats.find("# HELP", stat_list[-1] + 1)
+    stat_list.append(last)
+    for i in range(2, len(stat_list) - 1):
+        stat_str = stats[stat_list[i]:stat_list[i+1]]
+        a = stat_str.find("}")
+        stat_count += int(float(stat_str[a+2:]))
+    return stat_count
+
+
 class SSLCertificate:
 
     """Generate a self signed CA and node certificate with SAN including cluster nodes IPs.

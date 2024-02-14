@@ -1070,17 +1070,8 @@ class Monitor:
                                                   stats['syncgateway']['per_db'][db]):
                         import_count += int(db_stats['shared_bucket_import']['import_count'])
         else:
-            stat = stats.find("sgw_shared_bucket_import_import_count")
-            stat_list = []
-            while stat != -1:
-                stat_list.append(stat)
-                stat = stats.find("sgw_shared_bucket_import_import_count", stat + 1)
-            last = stats.find("# HELP", stat_list[-1] + 1)
-            stat_list.append(last)
-            for i in range(2, len(stat_list) - 1):
-                str = stats[stat_list[i]:stat_list[i+1]]
-                a = str.find("}")
-                import_count += int(float(str[a+2:]))
+            import_count = misc.parse_prometheus_stat(stats,
+                                                      "sgw_shared_bucket_import_import_count")
         return import_count
 
     def _wait_for_sg_import_start(self, host: str):
@@ -1274,17 +1265,8 @@ class Monitor:
                     int(sgw_stats['syncgateway']['per_db'][db]
                                  ['cbl_replication_push']['doc_push_count'])
         else:
-            stat = sgw_stats.find("sgw_replication_push_doc_push_count")
-            stat_list = []
-            while stat != -1:
-                stat_list.append(stat)
-                stat = sgw_stats.find("sgw_replication_push_doc_push_count", stat + 1)
-            last = sgw_stats.find("# HELP", stat_list[-1] + 1)
-            stat_list.append(last)
-            for i in range(2, len(stat_list) - 1):
-                str = sgw_stats[stat_list[i]:stat_list[i+1]]
-                a = str.find("}")
-                push_count += int(float(str[a+2:]))
+            push_count = misc.parse_prometheus_stat(sgw_stats,
+                                                    "sgw_replication_push_doc_push_count")
         return push_count
 
     def get_sgw_pull_count(self, host):
@@ -1297,17 +1279,8 @@ class Monitor:
                     int(sgw_stats['syncgateway']['per_db'][db]
                                  ['cbl_replication_pull']['rev_send_count'])
         else:
-            stat = sgw_stats.find("sgw_replication_pull_rev_send_count")
-            stat_list = []
-            while stat != -1:
-                stat_list.append(stat)
-                stat = sgw_stats.find("sgw_replication_pull_rev_send_count", stat + 1)
-            last = sgw_stats.find("# HELP", stat_list[-1] + 1)
-            stat_list.append(last)
-            for i in range(2, len(stat_list) - 1):
-                str = sgw_stats[stat_list[i]:stat_list[i+1]]
-                a = str.find("}")
-                pull_count += int(float(str[a+2:]))
+            pull_count = misc.parse_prometheus_stat(sgw_stats,
+                                                    "sgw_replication_pull_rev_send_count")
         return pull_count
 
     def wait_sgw_push_start(self, hosts, initial_docs):

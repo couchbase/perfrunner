@@ -16,7 +16,7 @@ from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
-from perfrunner.helpers.misc import pretty_dict, target_hash
+from perfrunner.helpers.misc import parse_prometheus_stat, pretty_dict, target_hash
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.profiler import ProfilerHelper, with_profiles
 from perfrunner.helpers.remote import RemoteHelper
@@ -305,6 +305,21 @@ class SGPerfTest(PerfTest):
             except Exception as ex:
                 logger.warn(ex)
 
+    def check_num_warnings(self):
+        warn_count = 0
+        if not self.cluster_spec.capella_infrastructure:
+            for host in self.cluster_spec.sgw_servers:
+                stats = self.rest.get_sg_stats(host)
+                warn_count += int(stats['syncgateway']['global']
+                                       ['resource_utilization']['warn_count'])
+        else:
+            host = self.cluster_spec.sgw_servers[0]
+            stats = self.rest.get_sg_stats(host)
+            warn_count = parse_prometheus_stat(stats, "sgw_resource_utilization_warn_count")
+
+        if warn_count > 100:
+            return warn_count
+
     def channel_list(self, number_of_channels: int):
         channels = []
         for number in range(1, number_of_channels + 1):
@@ -345,12 +360,17 @@ class SGPerfTest(PerfTest):
             self.remote.reset_memory_settings()
             self.monitor.wait_for_servers()
 
-        if self.settings.syncgateway_settings.collect_sgw_logs:
+        too_many_warnings = self.check_num_warnings()
+
+        if self.settings.syncgateway_settings.collect_sgw_logs or too_many_warnings:
             self.compress_sg_logs()
             self.get_sg_logs()
 
         if self.settings.syncgateway_settings.collect_sgw_console:
             self.get_sg_console()
+
+        if too_many_warnings:
+            raise Exception("Too many warnings: {}".format(too_many_warnings))
 
 
 class SGRead(SGPerfTest):

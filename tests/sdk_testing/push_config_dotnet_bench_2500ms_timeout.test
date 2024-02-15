@@ -2,9 +2,9 @@
 test = perfrunner.tests.rebalance.FailoverSDKConfigPushTest
 
 [showfast]
-title = Config push - Write Availability time (s) , Python SDK, 1 bucket x 200K x 512B
+title = Config push - Write Availability time (s) , .Net SDK, 1 bucket x 200K x 512B, 2500ms (DEFAULT) KV timeout
 component = sdk
-category = java
+category = dotnet
 sub_category = neo
 
 [cluster]
@@ -19,7 +19,7 @@ failover_min = 1
 size = 512
 items = 200000
 workers = 50
-doc_gen = basic
+doc_gen = json
 
 [access]
 items = 10
@@ -27,8 +27,8 @@ workers = 1
 
 [sdktesting]
 enable_sdktest = 1
-sdk_timeout = 10
-sdk_type = python
+sdk_timeout = 2500
+sdk_type = dotnet
 bench_name = config_push
 
 [rebalance]
@@ -37,7 +37,8 @@ start_after = 60
 stop_after = 180
 
 [clients]
-python_client = 4.1.9
+dotnet_client = 3.4.12
+libcouchbase = 3.3.9
 
 [stats]
-client_processes = python
+client_processes = dotnet

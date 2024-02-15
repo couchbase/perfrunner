@@ -2,9 +2,9 @@
 test = perfrunner.tests.rebalance.FailoverSDKConfigPushTest
 
 [showfast]
-title = Config push - Write Availability time (s) , Go SDK, 1 bucket x 200K x 512B
+title = Config push - Write Availability time (s) , .Net SDK, 1 bucket x 200K x 512B, 50ms KV timeout
 component = sdk
-category = go
+category = dotnet
 sub_category = neo
 
 [cluster]
@@ -27,8 +27,8 @@ workers = 1
 
 [sdktesting]
 enable_sdktest = 1
-sdk_timeout = 10
-sdk_type = go
+sdk_timeout = 50
+sdk_type = dotnet
 bench_name = config_push
 
 [rebalance]
@@ -37,8 +37,8 @@ start_after = 60
 stop_after = 180
 
 [clients]
-go_client = v2.6.4
+dotnet_client = 3.4.12
 libcouchbase = 3.3.9
 
 [stats]
-client_processes = go
+client_processes = dotnet

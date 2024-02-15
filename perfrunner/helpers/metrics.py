@@ -1963,7 +1963,7 @@ class MetricHelper:
             if first_failure_time < failure_time[1]:
                 logger.warn('Failure happened before failover time')
                 return 0
-            return lines[2].strip().split()[-1]
+            return float(lines[2].strip().split()[-1])
         else:
             # Here we are dealing with raw logs, which can be huge, avoid printing and
             # only process the necessary part
@@ -1983,7 +1983,7 @@ class MetricHelper:
                     logger.info('Write success start: "{}"'.format(line.rstrip()))
                     return round(log_time - failure_time[0], 2)
 
-        logger.warn('Benchmark didnot recover from failure' if failure_start_found else
+        raise Exception('Benchmark didnot recover from failure' if failure_start_found else
                     'No failures found, either no failover happened or timout is too large')
 
 

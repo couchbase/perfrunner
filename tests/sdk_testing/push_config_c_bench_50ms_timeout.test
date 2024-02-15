@@ -2,9 +2,9 @@
 test = perfrunner.tests.rebalance.FailoverSDKConfigPushTest
 
 [showfast]
-title = Config push - Write Availability time (s) , .Net SDK, 1 bucket x 200K x 512B
+title = Config push - Write Availability time (s) , C SDK, 1 bucket x 200K x 512B, 50ms KV timeout
 component = sdk
-category = dotnet
+category = libc
 sub_category = neo
 
 [cluster]
@@ -27,18 +27,17 @@ workers = 1
 
 [sdktesting]
 enable_sdktest = 1
-sdk_timeout = 10
-sdk_type = dotnet
+sdk_timeout = 50
+sdk_type = libc
 bench_name = config_push
 
 [rebalance]
 failed_nodes = 1
-start_after = 60
-stop_after = 180
+start_after = 300
+stop_after = 300
 
 [clients]
-dotnet_client = 3.4.12
-libcouchbase = 3.3.9
+libcouchbase = 3.3.8
 
 [stats]
-client_processes = dotnet
+client_processes = config_push

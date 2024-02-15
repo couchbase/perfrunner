@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.rebalance.FailoverSDKConfigPushTest
+
+[showfast]
+title = Config push - Write Availability time (s) , Java SDK, 1 bucket x 200K x 512B, 2500ms (DEFAULT) KV timeout
+component = sdk
+category = java
+sub_category = neo
+
+[cluster]
+mem_quota = 51200
+num_buckets = 1
+initial_nodes = 4
+
+[bucket]
+failover_min = 1
+
+[load]
+size = 512
+items = 200000
+workers = 50
+doc_gen = json
+
+[access]
+items = 10
+workers = 1
+
+[sdktesting]
+enable_sdktest = 1
+sdk_timeout = 2500
+sdk_type = java
+bench_name = config-push
+
+[rebalance]
+failed_nodes = 1
+start_after = 60
+stop_after = 180
+
+[clients]
+libcouchbase = 3.3.10
+java_client = 3.5.3
+
+[stats]
+client_processes = java

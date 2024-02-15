@@ -2,9 +2,9 @@
 test = perfrunner.tests.rebalance.FailoverSDKConfigPushTest
 
 [showfast]
-title = Config push - Write Availability time (s) , Java SDK, 1 bucket x 200K x 512B
+title = Config push - Write Availability time (s) , C SDK, 1 bucket x 200K x 512B, 2500ms (DEFAULT) KV timeout
 component = sdk
-category = java
+category = libc
 sub_category = neo
 
 [cluster]
@@ -27,18 +27,17 @@ workers = 1
 
 [sdktesting]
 enable_sdktest = 1
-sdk_timeout = 10
-sdk_type = java
-bench_name = config-push
+sdk_timeout = 2500
+sdk_type = libc
+bench_name = config_push
 
 [rebalance]
 failed_nodes = 1
-start_after = 60
-stop_after = 180
+start_after = 300
+stop_after = 300
 
 [clients]
-libcouchbase = 3.3.8
-java_client = 3.4.10
+libcouchbase = 3.3.11
 
 [stats]
-client_processes = java
+client_processes = config_push

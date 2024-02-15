@@ -21,5 +21,10 @@
         {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_10000_indexes_rebalance_in.test", "groups": "P0"},
         {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_10000_indexes_rebalance_out.test", "groups": "P0"},
         {"job": "aether", "cluster": "aether_rebalance.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_10000_indexes_rebalance_swap.test", "groups": "P0"}
+    ],
+    "Rebalance": [
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "rebalance/migration_to_magma_4B_4nodes_kv.test", "groups": "P1"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "rebalance/migration_to_magma_1B_4nodes_kv_1s_1000c.test", "groups": "P0"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "rebalance/migration_to_magma_20M_4nodes_durability_majority.test", "groups": "P0"}
     ]
 }

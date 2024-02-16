@@ -130,6 +130,7 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_1000c.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/memory/kv_fragmentation_5M_1s_1c.test", "groups": "P0"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/memory/kv_mem_20M_1024B_1s_1000c.test", "groups": "P0"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/memory/kv_mem_20M_1024B_1000s_1000c.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_1s_100c.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_1s_10c.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_1s_1c.test", "groups": "P1"},
@@ -145,12 +146,24 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_100c.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_10c.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_1c.test", "groups": "P1"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_500c.test", "groups": "P1"}
-
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_500c.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_balanced_512_1s_1000c_10b.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_balanced_512_1s_1000c_30b.test", "groups": "P1"},
+        {"job": "ares_triage", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_balanced_512_1s_1000c_max_workers.test", "groups": "P1"},
+        {"job": "ares_triage", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_balanced_512_1s_1c_max_workers.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_balanced_512_cpu_ephemeral_1s_1000c.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_balanced_512_cpu_ephemeral_1s_1c.test", "groups": "P1"},
+        {"job": "ares_triage", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_balanced_512_default_max_workers.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/latency/kv_latency_mixed_20M_1s_1000c_10b.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/latency/kv_latency_mixed_20M_1s_1000c_30b.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/latency/kv_latency_mixed_20M_default.test", "groups": "P1"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M_ephemeral.test", "groups": "P1"}
     ],
     "KV-DGM": [
         {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_1000M_compacted_fe_1s_1000c.test", "groups": "P0"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_1000M_compacted_fe_1000s_1000c.test", "groups": "P1"}
+        {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_1000M_compacted_fe_1000s_1000c.test", "groups": "P1"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_500M_compacted_fe_1000s_1000c.test", "groups": "P1"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_500M_compacted_fe_1s_1000c.test", "groups": "P1"}
     ],
     "KV-Athena": [
         {"job": "athena", "cluster": "athena.spec", "test_config": "collections/compaction/kv_compact_1000M_fe_1s_1c.test", "groups": "P0"},
@@ -250,7 +263,8 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r0_p0_1s_1c_tls.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p0_1s_1c_tls.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p1_1s_1c_tls.test", "groups": "P1"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p2_1s_1c_tls.test", "groups": "P1"}
+        {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p2_1s_1c_tls.test", "groups": "P1"},
+        {"job": "ares-dev", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_100threads_durability_majority_persist_active_1s_1c.test", "groups": "P1"}
     ],
     "N1QL": [
         {"job": "iris",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_lat_Q1_20M_10KQops_1s_1c.test", "groups": "P0"},
@@ -357,7 +371,11 @@
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_10c.test", "groups": "P1"}
     ],
     "Rebalance": [
-         {"job": "titan", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_swap_1B_9nodes_kv_disk_io_optimized_1s_1000c.test", "groups": "P0"}
+        {"job": "titan", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_swap_1B_9nodes_kv_disk_io_optimized_1s_1000c.test", "groups": "P0"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_swap_10B_9nodes_kv.test", "groups": "P1"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_out_4B_4nodes_kv.test", "groups": "P1"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_in_4B_4nodes_kv.test", "groups": "P1"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_swap_4B_4nodes_kv.test", "groups": "P1"}
     ],
     "Rebalance-C1": [
         {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "collections/rebalance/reb_in_1B_4nodes_kv_1s_1000c.test", "groups": "P0"}

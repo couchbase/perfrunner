@@ -83,9 +83,11 @@
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_adv_multi_src_multi_dst_insert.test", "groups": "P0"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_noop_multi_coll.test", "groups": "P0"}
     ],
+    "Rebalance": [
+        {"job": "titan", "cluster": "titan.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_10nodes.test", "groups": "P0"}
+    ],
     "Rebalance-Hestia": [
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_memcached.test", "groups": "P0"},
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_10nodes.test", "groups": "P0"}
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_memcached.test", "groups": "P0"}
     ],
     "Rebalance-Windows": [
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_memcached.test", "groups": "P0"}

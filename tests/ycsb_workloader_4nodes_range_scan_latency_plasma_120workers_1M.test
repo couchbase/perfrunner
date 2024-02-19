@@ -25,13 +25,13 @@ indexer.settings.storage_mode = plasma
 [load]
 workload_path = workloads/workloader
 ycsb_client = couchbase3
-items = 20000000
+items = 1000000
 workers = 40
 
 [access]
 workload_path = workloads/workloader
 ycsb_client = couchbase3
-items = 20000000
+items = 1000000
 target = 20
 ops = 0
 time = 1200
@@ -42,7 +42,7 @@ kv_endpoints = 512
 
 [ycsb]
 branch = couchbase3-range-scan
-latency_percentiles = 99
+latency_percentiles = 90,99
 average_latency = 1
 
 [stats]

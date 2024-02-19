@@ -42,7 +42,7 @@ kv_endpoints = 512
 
 [ycsb]
 branch = couchbase3-range-scan
-latency_percentiles = 99
+latency_percentiles = 90,99
 average_latency = 1
 
 [stats]

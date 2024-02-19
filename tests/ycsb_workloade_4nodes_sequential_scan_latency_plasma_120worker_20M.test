@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBLatencyTest
+test = perfrunner.tests.ycsb.YCSBN1QLSequentialScanLatencyTest
 
 [showfast]
-title = Avg Latency(ms), Workload ER, KV Range Scan, Plasma, 4 nodes, concurency 10
+title = Latency (ms), Workload E, N1QL Sequential Scan, Plasma, 4 nodes, concurrency 120
 component = n1ql
 category = ycsb
 sub_category = Plasma
@@ -23,26 +23,26 @@ replica_number = 0
 indexer.settings.storage_mode = plasma
 
 [load]
-workload_path = workloads/workloader
+workload_path = workloads/workloade
 ycsb_client = couchbase3
 items = 20000000
 workers = 40
 
 [access]
-workload_path = workloads/workloader
+workload_path = workloads/workloade
 ycsb_client = couchbase3
 items = 20000000
 target = 20
 ops = 0
 time = 1200
-workers = 10
+workers = 120
 workload_instances = 10
 timeseries = 1
 kv_endpoints = 512
 
 [ycsb]
 branch = couchbase3-range-scan
-latency_percentiles = 99
+latency_percentiles = 90,99
 average_latency = 1
 
 [stats]

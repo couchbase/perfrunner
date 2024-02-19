@@ -22,9 +22,29 @@
         {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_10000_indexes_rebalance_out.test", "groups": "P0"},
         {"job": "aether", "cluster": "aether_rebalance.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_10000_indexes_rebalance_swap.test", "groups": "P0"}
     ],
+    "KV-Hercules": [
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloader_4nodes_range_scan_latency_plasma_120workers_1M.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloader_4nodes_range_scan_latency_plasma_120workers_20M.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloader_4nodes_range_scan_plasma_120workers_20M.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloader_4nodes_range_scan_plasma_120workers_1M.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloader_4nodes_range_scan_latency_plasma_10workers_20M.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloader_4nodes_range_scan_latency_plasma_10workers_1M.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloader_4nodes_range_scan_plasma_10workers_20M.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloader_4nodes_range_scan_plasma_10workers_1M.test", "groups": "P1"}
+    ],
     "Rebalance": [
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "rebalance/migration_to_magma_4B_4nodes_kv.test", "groups": "P1"},
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "rebalance/migration_to_magma_1B_4nodes_kv_1s_1000c.test", "groups": "P0"},
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "rebalance/migration_to_magma_20M_4nodes_durability_majority.test", "groups": "P0"}
+    ],
+    "YCSB": [
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_sequential_scan_latency_plasma_120worker_1M.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_sequential_scan_latency_plasma_120worker_20M.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_sequential_scan_plasma_120workers_1M.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_sequential_scan_plasma_120workers_20M.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_sequential_scan_latency_plasma_10worker_1M.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_sequential_scan_latency_plasma_10worker_20M.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_sequential_scan_plasma_10workers_1M.test", "groups": "P1"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_sequential_scan_plasma_10workers_20M.test", "groups": "P1"}
     ]
 }

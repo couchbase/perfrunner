@@ -13,7 +13,7 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_writes_512.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512_tls.test", "groups": "P0"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M.test", "groups": "P0"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M_durability.test", "groups": "P0"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M_durability.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_subdoc_20M.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_pathoGen_frozen.test", "groups": "P0"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_5M.test", "groups": "P1"},

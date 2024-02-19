@@ -227,7 +227,7 @@ class CloudDeployer:
 
         tfvar_nodes = self.create_tfvar_nodes()
 
-        if not any(tfvar_nodes.values()):
+        if not any(tfvar_nodes.values()) and not self.cloud_storage:
             logger.warn('Nothing to deploy with Terraform.')
             return False
 
@@ -256,6 +256,7 @@ class CloudDeployer:
 
             tfvars.seek(0)
             tfvars.write(file_string)
+            tfvars.truncate()
 
         return True
 

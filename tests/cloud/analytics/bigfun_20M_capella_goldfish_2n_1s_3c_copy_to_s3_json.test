@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.analytics.GoldfishCopyToS3Test
+
+[showfast]
+title = 2 nodes, BigFUN 20M users (320M docs), s=1 c=3, Capella Goldfish, COPY TO S3, json
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+initial_nodes = 2
+enable_n2n_encryption = all
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[analytics]
+analytics_config_file = tests/analytics/config/3_datasets_collection_config.json
+external_dataset_type = s3
+external_dataset_region = us-east-1
+external_bucket = analytics-bigfun20m-json
+external_file_format = json
+external_file_include = json
+aws_credential_path = /root/.ssh/
+
+[copy_to_s3]
+format = json
+max_objects_per_file = 1000, 10000, 100000, 1000000
+compression = none
+query_file = tests/cloud/analytics/workload/bigfun_copy_to_s3_queries.json
+
+[clients]
+python_client = 4.1.9

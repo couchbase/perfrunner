@@ -5,7 +5,7 @@ import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from dataclasses import dataclass
 from itertools import chain, combinations, permutations
-from typing import Dict, Iterable, Iterator, List, Optional, Tuple
+from typing import Iterable, Iterator, Optional, Tuple
 
 from decorator import decorator
 
@@ -51,7 +51,7 @@ class Config:
         if override is not None:
             self.override(override)
 
-    def override(self, override: List[str]):
+    def override(self, override: list[str]):
         override = [x for x in csv.reader(override, delimiter='.')]
 
         for section, option, value in override:
@@ -233,26 +233,26 @@ class ClusterSpec(Config):
                 yield servers[0]
 
     @property
-    def servers(self) -> List[str]:
+    def servers(self) -> list[str]:
         servers = [node for _, cluster_servers in self.clusters for node in cluster_servers]
         return servers
 
     @property
-    def clients(self) -> List[str]:
+    def clients(self) -> list[str]:
         clients = []
         for client_servers in self.infrastructure_clients.values():
             clients += client_servers.strip().split('\n')
         return clients
 
     @property
-    def utilities(self) -> List[str]:
+    def utilities(self) -> list[str]:
         utilities = []
         for utility_servers in self.infrastructure_utilities.values():
             utilities += utility_servers.strip().split('\n')
         return utilities
 
     @property
-    def sgw_servers(self) -> List[str]:
+    def sgw_servers(self) -> list[str]:
         servers = []
         if self.config.has_section('syncgateways'):
             for _, cluster_servers in self.sgw_clusters:
@@ -261,7 +261,7 @@ class ClusterSpec(Config):
         return servers
 
     @property
-    def kafka_servers(self) -> List[str]:
+    def kafka_servers(self) -> list[str]:
         servers = []
         if self.config.has_section('kafka_clusters'):
             for _, cluster_servers in self.kafka_clusters:
@@ -350,18 +350,18 @@ class ClusterSpec(Config):
         return {k: v.split() for k, v in self.config.items('nebula_instance_ids')}
 
     @property
-    def cluster_instance_ids(self) -> List[str]:
+    def cluster_instance_ids(self) -> list[str]:
         iids = []
         for cluster_iids in self.instance_ids_per_cluster.values():
             iids += cluster_iids
         return iids
 
     @property
-    def direct_nebula_instance_ids(self) -> List[str]:
+    def direct_nebula_instance_ids(self) -> list[str]:
         return self.instance_ids_per_nebula_cluster.get('direct_nebula', [])
 
     @property
-    def dapi_instance_ids(self) -> List[str]:
+    def dapi_instance_ids(self) -> list[str]:
         return self.instance_ids_per_nebula_cluster.get('dapi', [])
 
     @property
@@ -369,14 +369,14 @@ class ClusterSpec(Config):
         return {k: v.split() for k, v in self.config.items('sgw_instance_ids')}
 
     @property
-    def sgw_instance_ids(self) -> List[str]:
+    def sgw_instance_ids(self) -> list[str]:
         iids = []
         for sgw_iids in self.sgw_instance_ids_per_cluster.values():
             iids += sgw_iids
         return iids
 
     @property
-    def server_instance_ids_by_role(self, role: str) -> List[str]:
+    def server_instance_ids_by_role(self, role: str) -> list[str]:
         has_service = []
         if self.using_instance_ids:
             for cluster_name, servers in self.infrastructure_clusters.items():
@@ -386,14 +386,14 @@ class ClusterSpec(Config):
                         has_service.append(self.instance_ids_per_cluster[cluster_name][i])
         return has_service
 
-    def cluster_servers(self, node: str) -> List[str]:
+    def cluster_servers(self, node: str) -> list[str]:
         """Return all servers from the same cluster as the given node."""
         for _, servers in self.clusters:
             if node in servers:
                 return servers
         return []
 
-    def servers_by_role(self, role: str) -> List[str]:
+    def servers_by_role(self, role: str) -> list[str]:
         has_service = []
         for servers in self.infrastructure_clusters.values():
             for server in servers.split():
@@ -402,7 +402,7 @@ class ClusterSpec(Config):
                     has_service.append(host)
         return has_service
 
-    def servers_by_cluster_and_role(self, role: str) -> List[str]:
+    def servers_by_cluster_and_role(self, role: str) -> list[str]:
         has_service = []
         for servers in self.infrastructure_clusters.values():
             cluster_has_service = []
@@ -413,7 +413,7 @@ class ClusterSpec(Config):
             has_service.append(cluster_has_service)
         return has_service
 
-    def servers_by_role_from_first_cluster(self, role: str) -> List[str]:
+    def servers_by_role_from_first_cluster(self, role: str) -> list[str]:
         has_service = []
         servers = list(self.infrastructure_clusters.values())[0]
         for server in servers.split():
@@ -423,7 +423,7 @@ class ClusterSpec(Config):
         return has_service
 
     @property
-    def roles(self) -> Dict[str, str]:
+    def roles(self) -> dict[str, str]:
         server_roles = {}
         for servers in self.infrastructure_clusters.values():
             for server in servers.split():
@@ -432,7 +432,7 @@ class ClusterSpec(Config):
         return server_roles
 
     @property
-    def servers_and_roles(self) -> List[Tuple[str, str]]:
+    def servers_and_roles(self) -> list[Tuple[str, str]]:
         server_and_roles = []
         for servers in self.infrastructure_clusters.values():
             for server in servers.split():
@@ -441,7 +441,7 @@ class ClusterSpec(Config):
         return server_and_roles
 
     @property
-    def workers(self) -> List[str]:
+    def workers(self) -> list[str]:
         if self.cloud_infrastructure:
             if self.kubernetes_infrastructure:
                 client_map = self.infrastructure_clients
@@ -461,7 +461,7 @@ class ClusterSpec(Config):
             return self.config.get('clients', 'hosts').split()
 
     @property
-    def syncgateways(self) -> List[str]:
+    def syncgateways(self) -> list[str]:
         if self.cloud_infrastructure:
             if self.kubernetes_infrastructure:
                 client_map = self.infrastructure_clients
@@ -481,7 +481,7 @@ class ClusterSpec(Config):
             return self.config.get('syncgateways', 'hosts').split()
 
     @property
-    def brokers(self) -> List[str]:
+    def brokers(self) -> list[str]:
         if self.cloud_infrastructure:
             if not self.kubernetes_infrastructure:
                 util_map = self.infrastructure_utilities
@@ -492,7 +492,7 @@ class ClusterSpec(Config):
                 return brokers
         return []
 
-    def _kafka_nodes_by_role(self, role: str) -> List[str]:
+    def _kafka_nodes_by_role(self, role: str) -> list[str]:
         has_service = []
         for servers in self.infrastructure_kafka_clusters.values():
             for server in servers.split():
@@ -502,25 +502,25 @@ class ClusterSpec(Config):
         return has_service
 
     @property
-    def kafka_zookeepers(self) -> List[str]:
+    def kafka_zookeepers(self) -> list[str]:
         return self._kafka_nodes_by_role('zk')
 
     @property
-    def kafka_brokers(self) -> List[str]:
+    def kafka_brokers(self) -> list[str]:
         return self._kafka_nodes_by_role('broker')
 
     @property
-    def kafka_settings(self) -> List[str]:
+    def kafka_settings(self) -> list[str]:
         return self.infrastructure_section('kafka')
 
     @property
-    def kafka_subnets_per_cluster(self) -> List[str]:
+    def kafka_subnets_per_cluster(self) -> list[str]:
         if self.config.has_section('kafka_subnet_ids'):
             return {k: v.split() for k, v in self.config.items('kafka_subnet_ids')}
         return {}
 
     @property
-    def kafka_broker_subnet_ids(self) -> List[str]:
+    def kafka_broker_subnet_ids(self) -> list[str]:
         subnet_ids = []
         for cluster_name, servers in self.infrastructure_kafka_clusters.items():
             for i, server in enumerate(servers.split()):
@@ -530,7 +530,7 @@ class ClusterSpec(Config):
         return subnet_ids
 
     @property
-    def client_credentials(self) -> List[str]:
+    def client_credentials(self) -> list[str]:
         if self.config.has_option('clients', 'credentials'):
             return self.config.get('clients', 'credentials').split(':')
         else:
@@ -546,7 +546,7 @@ class ClusterSpec(Config):
                                fallback=self.config.get('storage', 'data'))
 
     @property
-    def analytics_paths(self) -> List[str]:
+    def analytics_paths(self) -> list[str]:
         analytics_paths = self.config.get('storage', 'analytics', fallback=None)
         if analytics_paths is not None:
             return analytics_paths.split()
@@ -563,22 +563,22 @@ class ClusterSpec(Config):
         return self.config.get('storage', 'backup', fallback=None)
 
     @property
-    def rest_credentials(self) -> List[str]:
+    def rest_credentials(self) -> list[str]:
         return self.config.get('credentials', 'rest').split(':')
 
     @property
-    def capella_admin_credentials(self) -> List[List[str]]:
+    def capella_admin_credentials(self) -> list[list[str]]:
         return [
             creds.split(':')
             for creds in self.config.get('credentials', 'admin', fallback='').split()
         ]
 
     @property
-    def ssh_credentials(self) -> List[str]:
+    def ssh_credentials(self) -> list[str]:
         return self.config.get('credentials', 'ssh').split(':')
 
     @property
-    def aws_key_name(self) -> List[str]:
+    def aws_key_name(self) -> list[str]:
         return self.config.get('credentials', 'aws_key_name')
 
     @property
@@ -706,7 +706,7 @@ class ClusterSpec(Config):
     def data_api(self) -> dict:
         return self._get_options_as_dict('data_api')
 
-    def _cluster_names_to_idxs(self, cluster_names: Iterable[str]) -> List[int]:
+    def _cluster_names_to_idxs(self, cluster_names: Iterable[str]) -> list[int]:
         cluster_idxs = []
         for i, cluster_name in enumerate(self.config.options('clusters')):
             if cluster_name in cluster_names:
@@ -2152,7 +2152,7 @@ class IndexSettings:
                                                           self.FTS_INDEX_CONFIG_FILE)
         self.statements = self.create_index_statements()
 
-    def create_index_statements(self) -> List[str]:
+    def create_index_statements(self) -> list[str]:
         #  Here we generate all permutations of all subsets of index fields
         #  The total number generate given n fields is the following:
         #
@@ -2572,6 +2572,26 @@ class GoldfishKafkaLinksSettings:
 
         self.ingestion_timeout_mins = int(options.get('ingestion_timeout_mins',
                                           self.INGESTION_TIMEOUT_MINS))
+
+
+class CopyToS3Settings:
+
+    FILE_FORMAT = 'json'
+    MAX_OBJECTS_PER_FILE = '1000'
+    COMPRESSION = 'none'
+
+    def __init__(self, options: dict):
+        self.file_format = set(
+            fmt.strip() for fmt in options.get('format', self.FILE_FORMAT).split(',')
+        )
+        self.max_objects_per_file = set(
+            mopf.strip() for mopf in
+            options.get('max_objects_per_file', self.MAX_OBJECTS_PER_FILE).split(',')
+        )
+        self.compression = set(
+            cmprs.strip() for cmprs in options.get('compression', self.COMPRESSION).split(',')
+        )
+        self.query_file = options.get('query_file')
 
 
 class AuditSettings:
@@ -3314,7 +3334,7 @@ class TestConfig(Config):
         return bucket_extras
 
     @property
-    def buckets(self) -> List[str]:
+    def buckets(self) -> list[str]:
         if self.serverless_db.db_map:
             return list(self.serverless_db.db_map.keys())
         elif self.cluster.num_buckets == 1 and self.cluster.bucket_name != 'bucket-1':
@@ -3325,13 +3345,13 @@ class TestConfig(Config):
             ]
 
     @property
-    def eventing_buckets(self) -> List[str]:
+    def eventing_buckets(self) -> list[str]:
         return [
             'eventing-bucket-{}'.format(i + 1) for i in range(self.cluster.eventing_buckets)
         ]
 
     @property
-    def eventing_metadata_bucket(self) -> List[str]:
+    def eventing_metadata_bucket(self) -> list[str]:
         return [
             'eventing'
         ]
@@ -3359,7 +3379,7 @@ class TestConfig(Config):
         return load_settings
 
     @property
-    def mixed_load_settings(self) -> List[LoadSettings]:
+    def mixed_load_settings(self) -> list[LoadSettings]:
         base_settings = self.load_settings
         mix = []
         if base_settings.workload_mix:
@@ -3374,7 +3394,7 @@ class TestConfig(Config):
         return hot_load
 
     @property
-    def mixed_hot_load_settings(self) -> List[HotLoadSettings]:
+    def mixed_hot_load_settings(self) -> list[HotLoadSettings]:
         base_settings = self.hot_load_settings
         mix = []
         if base_settings.workload_mix:
@@ -3389,7 +3409,7 @@ class TestConfig(Config):
         return xattr_settings
 
     @property
-    def mixed_xattr_load_settings(self) -> List[XattrLoadSettings]:
+    def mixed_xattr_load_settings(self) -> list[XattrLoadSettings]:
         base_settings = self.xattr_load_settings
         mix = []
         if base_settings.workload_mix:
@@ -3452,7 +3472,7 @@ class TestConfig(Config):
         return access
 
     @property
-    def mixed_access_settings(self) -> List[AccessSettings]:
+    def mixed_access_settings(self) -> list[AccessSettings]:
         base_settings = self.access_settings
         mix = []
         if base_settings.workload_mix:
@@ -3467,7 +3487,7 @@ class TestConfig(Config):
         return extra_access
 
     @property
-    def mixed_extra_access_settings(self) -> List[ExtraAccessSettings]:
+    def mixed_extra_access_settings(self) -> list[ExtraAccessSettings]:
         base_settings = self.extra_access_settings
         mix = []
         if base_settings.workload_mix:
@@ -3531,6 +3551,11 @@ class TestConfig(Config):
     def goldfish_kafka_links_settings(self) -> GoldfishKafkaLinksSettings:
         options = self._get_options_as_dict('goldfish_kafka_links')
         return GoldfishKafkaLinksSettings(options)
+
+    @property
+    def copy_to_s3_settings(self) -> CopyToS3Settings:
+        options = self._get_options_as_dict('copy_to_s3')
+        return CopyToS3Settings(options)
 
     @property
     def audit_settings(self) -> AuditSettings:

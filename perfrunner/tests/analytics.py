@@ -1,7 +1,7 @@
+import itertools
 import json
 import random
 import time
-from typing import List, Tuple
 
 from logger import logger
 from perfrunner.helpers import local
@@ -24,7 +24,7 @@ from perfrunner.workloads.bigfun.driver import QueryMethod, bigfun
 from perfrunner.workloads.bigfun.query_gen import Query
 from perfrunner.workloads.tpcdsfun.driver import tpcds
 
-QueryLatencyPair = Tuple[Query, int]
+QueryLatencyPair = tuple[Query, int]
 
 
 class BigFunTest(PerfTest):
@@ -298,7 +298,7 @@ class BigFunQueryTest(BigFunTest):
         super().__init__(*args, **kwargs)
         self.QUERIES = self.analytics_settings.queries
 
-    def warmup(self, nodes: list = []) -> List[QueryLatencyPair]:
+    def warmup(self, nodes: list = []) -> list[QueryLatencyPair]:
         if len(nodes) == 0:
             analytics_nodes = self.analytics_nodes
         else:
@@ -313,7 +313,7 @@ class BigFunQueryTest(BigFunTest):
         return [(query, latency) for query, latency in results]
 
     @with_stats
-    def access(self, nodes: list = [], *args, **kwargs) -> List[QueryLatencyPair]:
+    def access(self, nodes: list = [], *args, **kwargs) -> list[QueryLatencyPair]:
         if len(nodes) == 0:
             analytics_nodes = self.analytics_nodes
         else:
@@ -326,7 +326,7 @@ class BigFunQueryTest(BigFunTest):
                          query_set=self.QUERIES)
         return [(query, latency) for query, latency in results]
 
-    def _report_kpi(self, results: List[QueryLatencyPair]):
+    def _report_kpi(self, results: list[QueryLatencyPair]):
         for query, latency in results:
             self.reporter.post(
                 *self.metrics.analytics_latency(query, latency)
@@ -413,7 +413,7 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
             self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     @with_stats
-    def access(self, nodes: list = [], *args, **kwargs) -> List[QueryLatencyPair]:
+    def access(self, nodes: list = [], *args, **kwargs) -> list[QueryLatencyPair]:
         if len(nodes) == 0:
             analytics_nodes = self.analytics_nodes
         else:
@@ -516,7 +516,7 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
             logger.info('Statement execution time: {}'.format(time.time() - t0))
 
     @with_stats
-    def access(self) -> List[QueryLatencyPair]:
+    def access(self) -> list[QueryLatencyPair]:
         nodes = self.analytics_nodes
         query_method = QueryMethod.CURL_CBAS
 
@@ -540,6 +540,76 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
 
         results = self.access()
         self.report_kpi(results)
+
+
+class GoldfishCopyToS3Test(GoldfishCopyFromS3Test):
+
+    @with_stats
+    def access(self):
+        with open(self.test_config.copy_to_s3_settings.query_file, 'r') as f:
+            queries = json.load(f)
+
+        s3_bucket_name = self.cluster_spec.backup.split('://')[1]
+        query_template = f'COPY {{}} TO `{s3_bucket_name}` AT `external_link` PATH({{}}) {{}} {{}}'
+
+        for fmt, mopf, compression in itertools.product(
+            self.test_config.copy_to_s3_settings.file_format,
+            self.test_config.copy_to_s3_settings.max_objects_per_file,
+            self.test_config.copy_to_s3_settings.compression
+        ):
+            for query in queries:
+                output_path_prefix = \
+                    f"\"mopf-{mopf}/{fmt}/compression-{compression}/{query['id']}\""
+
+                output_path_expr = output_path_prefix
+                if output_path_exps := query.get('output_path_exps'):
+                    output_path_expr += f", {', '.join(output_path_exps)}"
+
+                partition_clause = ''
+                if partition_exps := query.get('partition_exps'):
+                    partition_clause = f"PARTITION BY {', '.join(partition_exps)}"
+
+                order_clause = ''
+                if order_exps := query.get('order_exps'):
+                    order_clause = f"ORDER BY {', '.join(order_exps)}"
+
+                over_clause = ''
+                if partition_clause or order_clause:
+                    over_clause = \
+                        f"OVER({' '.join(filter(None, (partition_clause, order_clause)))})"
+
+                with_options = {'format': fmt, 'max-objects-per-file': mopf}
+                if compression != 'none':
+                    with_options['compression'] = compression
+
+                with_clause = f'WITH {json.dumps(with_options)}'
+
+                statement = query_template.format(
+                    query['source_def'],
+                    output_path_expr,
+                    over_clause,
+                    with_clause
+                )
+                logger.info(f'statement: {statement}')
+
+                t0 = time.time()
+                resp = self.rest.exec_analytics_statement(self.analytics_node, statement)
+                latency = time.time() - t0
+
+                logger.info(resp.json())
+                logger.info(f'client-side query response time (s): {latency}')
+
+
+    def run(self):
+        random.seed(8095)
+
+        self.set_up_s3_link()
+        self.create_standalone_datasets()
+
+        copy_from_time = self.ingest_data()
+        logger.info(f'Total data ingestion time using COPY FROM: {copy_from_time}')
+
+        self.access()
 
 
 class BigFunQueryFailoverTest(BigFunQueryTest):
@@ -859,8 +929,8 @@ class TPCDSQueryTest(TPCDSTest):
     QUERIES = 'perfrunner/workloads/tpcdsfun/queries.json'
 
     @with_stats
-    def access(self, *args, **kwargs) -> Tuple[List[QueryLatencyPair], List[QueryLatencyPair],
-                                               List[QueryLatencyPair], List[QueryLatencyPair]]:
+    def access(self, *args, **kwargs) -> tuple[list[QueryLatencyPair], list[QueryLatencyPair],
+                                               list[QueryLatencyPair], list[QueryLatencyPair]]:
 
         logger.info('Running COUNT queries without primary key index')
         results = tpcds(self.rest,
@@ -908,7 +978,7 @@ class TPCDSQueryTest(TPCDSTest):
             without_index_results, \
             with_index_results
 
-    def _report_kpi(self, results: List[QueryLatencyPair], with_index: bool):
+    def _report_kpi(self, results: list[QueryLatencyPair], with_index: bool):
         for query, latency in results:
             self.reporter.post(
                 *self.metrics.analytics_volume_latency(query, latency, with_index)
@@ -1217,15 +1287,15 @@ class CH2CloudRemoteLinkTest(CH2CloudTest):
         self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
 
     @property
-    def data_nodes(self) -> List[str]:
+    def data_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.data_node, 'kv')
 
     @property
-    def query_nodes(self) -> List[str]:
+    def query_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.data_node, 'n1ql')
 
     @property
-    def analytics_nodes(self) -> List[str]:
+    def analytics_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.analytics_node, 'cbas')
 
     def restart(self):

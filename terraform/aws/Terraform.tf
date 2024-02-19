@@ -155,6 +155,9 @@ data "aws_ami" "kafka_ami" {
 }
 
 resource "random_shuffle" "az" {
+  count = (length(data.aws_ec2_instance_type_offerings.available.instance_types) != 0 &&
+           length(data.aws_ec2_instance_type_offerings.available.locations) != 0) ? 1 : 0
+
   input = setintersection([
     for instance_type in distinct(data.aws_ec2_instance_type_offerings.available.instance_types) : [
       for idx, loc in data.aws_ec2_instance_type_offerings.available.locations : loc
@@ -176,6 +179,9 @@ resource "random_shuffle" "kafka_broker_azs" {
 }
 
 resource "aws_vpc" "main"{
+  count = (length(data.aws_ec2_instance_type_offerings.available.instance_types) != 0 &&
+           length(data.aws_ec2_instance_type_offerings.available.locations) != 0) ? 1 : 0
+
   cidr_block           = "10.1.0.0/18"
   enable_dns_hostnames = true
   tags = {
@@ -185,8 +191,10 @@ resource "aws_vpc" "main"{
 
 # Public subnet for Couchbase cluster
 resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
-  availability_zone       = one(random_shuffle.az.result)
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  vpc_id                  = one(aws_vpc.main[*].id)
+  availability_zone       = one(random_shuffle.az[*].result)[0]
   cidr_block              = "10.1.0.0/24"
   map_public_ip_on_launch = true
   tags = {
@@ -198,7 +206,7 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "kafka_private" {
   for_each = var.kafka_nodes
 
-  vpc_id                  = aws_vpc.main.id
+  vpc_id                  = one(aws_vpc.main[*].id)
   availability_zone       = random_shuffle.kafka_broker_azs[0].result[tonumber(each.key) - 1]
   cidr_block              = "10.1.${each.key}.0/24"
   map_public_ip_on_launch = true
@@ -209,7 +217,9 @@ resource "aws_subnet" "kafka_private" {
 
 # Internet Gateway
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main.id
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  vpc_id = one(aws_vpc.main[*].id)
   tags = {
     Name = var.global_tag != "" ? var.global_tag : "Terra IGW"
   }
@@ -217,8 +227,10 @@ resource "aws_internet_gateway" "igw" {
 
 # NAT Gateway for public subnet
 resource "aws_nat_gateway" "nat"{
-  allocation_id = aws_eip.nat_eip.id
-  subnet_id     = aws_subnet.public.id
+  count = length(aws_subnet.public) != 0 ? 1 : 0
+
+  allocation_id = one(aws_eip.nat_eip[*].id)
+  subnet_id     = one(aws_subnet.public[*].id)
   tags = {
     Name = var.global_tag != "" ? var.global_tag : "NAT GW"
   }
@@ -226,6 +238,8 @@ resource "aws_nat_gateway" "nat"{
 
 # Elastic IP for NAT Gateway
 resource "aws_eip" "nat_eip" {
+  count = length(aws_internet_gateway.igw) != 0 ? 1 : 0
+
   domain     = "vpc"
   depends_on = [aws_internet_gateway.igw]
   tags = {
@@ -235,10 +249,12 @@ resource "aws_eip" "nat_eip" {
 
 # Route table for public subnet
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  vpc_id = one(aws_vpc.main[*].id)
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
+    gateway_id = one(aws_internet_gateway.igw[*].id)
   }
   tags = {
     Name = var.global_tag != "" ? var.global_tag : "Public Route Table"
@@ -248,10 +264,10 @@ resource "aws_route_table" "public" {
 # Route table for private subnet(s)
 resource "aws_route_table" "kafka_private" {
   count = length(var.kafka_nodes) != 0 ? 1 : 0
-  vpc_id = aws_vpc.main.id
+  vpc_id = one(aws_vpc.main[*].id)
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat.id
+    gateway_id = one(aws_nat_gateway.nat[*].id)
   }
   tags = {
     Name = var.global_tag != "" ? "${var.global_tag}-private" : "Kafka Private Route Table"
@@ -260,123 +276,146 @@ resource "aws_route_table" "kafka_private" {
 
 # Associate public subnet to public route table.
 resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public.id
+  count = length(aws_subnet.public) != 0 ? 1 : 0
+
+  subnet_id      = one(aws_subnet.public[*].id)
+  route_table_id = one(aws_route_table.public[*].id)
 }
 
 # Associate private subnet(s) to private route table.
 resource "aws_route_table_association" "kafka_private" {
   for_each = var.kafka_nodes
   subnet_id      = aws_subnet.kafka_private[each.key].id
-  route_table_id = aws_route_table.kafka_private[0].id
+  route_table_id = one(aws_route_table.kafka_private[*].id)
 }
 
 resource "aws_security_group_rule" "enable_ssh" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_rabbitmq" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 5672
   to_port           = 5672
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 # ["8091-8096","18091-18096","11210","11207"]
 resource "aws_security_group_rule" "enable_couchbase_default" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 8091
   to_port           = 8096
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_indexer" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 9102
   to_port           = 9102
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_cbas" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 9110
   to_port           = 9110
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_couchbase_secure" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 18091
   to_port           = 18096
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_indexer_secure" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 19102
   to_port           = 19102
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_cbas_secure" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 19110
   to_port           = 19110
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_memcached" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 11209
   to_port           = 11210
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_memcached_secure" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 11207
   to_port           = 11207
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 resource "aws_security_group_rule" "enable_sgw" {
+  count = length(aws_vpc.main) != 0 ? 1 : 0
+
   type              = "ingress"
   from_port         = 4984
   to_port           = 5025
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_vpc.main.default_security_group_id
+  security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
-
 
 resource "aws_instance" "cluster_instance" {
   for_each = var.cluster_nodes
 
-  availability_zone = one(random_shuffle.az.result)
-  subnet_id         = aws_subnet.public.id
+  availability_zone = one(random_shuffle.az[*].result)[0]
+  subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.cluster_ami[each.key].id
   instance_type     = each.value.instance_type
 
@@ -394,7 +433,7 @@ resource "aws_instance" "cluster_instance" {
 resource "aws_ebs_volume" "cluster_ebs_volume" {
   for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
 
-  availability_zone = one(random_shuffle.az.result)
+  availability_zone = one(random_shuffle.az[*].result)[0]
   type              = lower(each.value.storage_class)
   size              = each.value.volume_size
   throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
@@ -416,8 +455,8 @@ resource "aws_volume_attachment" "cluster_ebs_volume_attachment" {
 resource "aws_instance" "client_instance" {
   for_each = var.client_nodes
 
-  availability_zone = one(random_shuffle.az.result)
-  subnet_id         = aws_subnet.public.id
+  availability_zone = one(random_shuffle.az[*].result)[0]
+  subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.client_ami[each.key].id
   instance_type     = each.value.instance_type
 
@@ -431,7 +470,7 @@ resource "aws_instance" "client_instance" {
 resource "aws_ebs_volume" "client_ebs_volume" {
   for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
 
-  availability_zone = one(random_shuffle.az.result)
+  availability_zone = one(random_shuffle.az[*].result)[0]
   type              = lower(each.value.storage_class)
   size              = each.value.volume_size
   throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
@@ -453,8 +492,8 @@ resource "aws_volume_attachment" "client_ebs_volume_attachment" {
 resource "aws_instance" "utility_instance" {
   for_each = var.utility_nodes
 
-  availability_zone = one(random_shuffle.az.result)
-  subnet_id         = aws_subnet.public.id
+  availability_zone = one(random_shuffle.az[*].result)[0]
+  subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.utility_ami[each.key].id
   instance_type     = each.value.instance_type
 
@@ -468,7 +507,7 @@ resource "aws_instance" "utility_instance" {
 resource "aws_ebs_volume" "utility_ebs_volume" {
   for_each = {for k, node in var.utility_nodes : k => node if node.volume_size > 0}
 
-  availability_zone = one(random_shuffle.az.result)
+  availability_zone = one(random_shuffle.az[*].result)[0]
   type              = lower(each.value.storage_class)
   size              = each.value.volume_size
   throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
@@ -490,8 +529,8 @@ resource "aws_volume_attachment" "utility_ebs_volume_attachment" {
 resource "aws_instance" "syncgateway_instance" {
   for_each = var.syncgateway_nodes
 
-  availability_zone = one(random_shuffle.az.result)
-  subnet_id         = aws_subnet.public.id
+  availability_zone = one(random_shuffle.az[*].result)[0]
+  subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.syncgateway_ami[each.key].id
   instance_type     = each.value.instance_type
 
@@ -505,7 +544,7 @@ resource "aws_instance" "syncgateway_instance" {
 resource "aws_ebs_volume" "syncgateway_ebs_volume" {
   for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
 
-  availability_zone = one(random_shuffle.az.result)
+  availability_zone = one(random_shuffle.az[*].result)[0]
   type              = lower(each.value.storage_class)
   size              = each.value.volume_size
   throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null

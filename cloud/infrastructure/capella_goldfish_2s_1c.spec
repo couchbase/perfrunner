@@ -33,7 +33,7 @@ instance_capacity = 1
 volume_size = 100
 
 [ec2_node_group_3]
-instance_type = c5.24xlarge
+instance_type = c5.9xlarge
 instance_capacity = 1
 volume_size = 100
 

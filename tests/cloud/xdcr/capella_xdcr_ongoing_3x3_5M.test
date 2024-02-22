@@ -41,7 +41,7 @@ items = 5000000
 workers = 80
 working_set = 10
 working_set_access = 98
-time = 3600
+time = 1200
 ssl_mode = capella
 
 [clients]

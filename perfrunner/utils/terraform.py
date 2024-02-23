@@ -1885,7 +1885,7 @@ class CapellaColumnarDeployer(CapellaDeployer):
             }
 
             logger.info('Deploying Goldfish instance with config: {}'.format(pretty_dict(config)))
-            resp = self.api_client.create_goldfish_instance(self.tenant_id, self.project_id,
+            resp = self.api_client.create_columnar_instance(self.tenant_id, self.project_id,
                                                             **config)
             raise_for_status(resp)
 
@@ -1907,7 +1907,7 @@ class CapellaColumnarDeployer(CapellaDeployer):
 
             statuses = []
             for instance_id in pending_instances:
-                resp = self.api_client.get_specific_goldfish_instance(self.tenant_id,
+                resp = self.api_client.get_specific_columnar_instance(self.tenant_id,
                                                                       self.project_id,
                                                                       instance_id)
                 raise_for_status(resp)
@@ -1945,7 +1945,7 @@ class CapellaColumnarDeployer(CapellaDeployer):
     def destroy_goldfish_instance(self):
         for instance_id in self.cluster_ids:
             logger.info('Deleting Goldfish instance {}...'.format(instance_id))
-            resp = self.api_client.delete_goldfish_instance(self.tenant_id, self.project_id,
+            resp = self.api_client.delete_columnar_instance(self.tenant_id, self.project_id,
                                                             instance_id)
             raise_for_status(resp)
             logger.info('Goldfish instance successfully queued for deletion.')
@@ -1960,7 +1960,7 @@ class CapellaColumnarDeployer(CapellaDeployer):
         while pending_instances and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            resp = self.api_client.get_goldfish_instances(self.tenant_id, self.project_id)
+            resp = self.api_client.get_columnar_instances(self.tenant_id, self.project_id)
             raise_for_status(resp)
 
             pending_instances = []
@@ -2001,7 +2001,7 @@ class CapellaColumnarDeployer(CapellaDeployer):
             ]
             self.infra_spec.config.set('clusters', cluster, '\n' + '\n'.join(hostnames))
 
-            resp = self.api_client.get_specific_goldfish_instance(self.tenant_id, self.project_id,
+            resp = self.api_client.get_specific_columnar_instance(self.tenant_id, self.project_id,
                                                                   instance_id)
             raise_for_status(resp)
             nebula_endpoint = resp.json()['config']['endpoint']

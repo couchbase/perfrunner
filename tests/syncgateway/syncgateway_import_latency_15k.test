@@ -6,6 +6,7 @@ title = , CB ingestion rate 15K docs/sec, 3 SG Nodes (1 import, 2 non-import), t
 component = syncgateway
 category = import
 sub_category = Latency
+orderby = 000007
 
 [cluster]
 mem_quota = 25000

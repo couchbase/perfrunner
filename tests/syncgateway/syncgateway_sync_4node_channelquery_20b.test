@@ -5,7 +5,7 @@ test = perfrunner.tests.syncgateway.SGSyncQueryThroughput
 title = , 4 nodes, 1M docs, 100K users, 100K channels, 20 channels per user, 90/10 R/W, channels query (no SG cache), 20 sg databases
 component = syncgateway
 category = query
-sub_category = xattr
+orderby = 000202
 
 [cluster]
 mem_quota = 25000

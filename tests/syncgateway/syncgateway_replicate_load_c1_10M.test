@@ -6,6 +6,7 @@ title = SG Replicate Load, ISGR/BLIP, 1 SG node, 1 CB node, 1 Channel, 600K docs
 component = syncgateway
 category = sgreplicate
 sub_category = Bidirectional
+orderby = 999999
 
 [cluster]
 mem_quota = 25000

@@ -6,6 +6,7 @@ title = Replication Time (secs) deltasync-on 1 node, 100K docs, 10 fields, 1 MB 
 component = syncgateway
 category = replicate
 sub_category = Pull
+orderby = 999999
 
 [cluster]
 mem_quota = 25000

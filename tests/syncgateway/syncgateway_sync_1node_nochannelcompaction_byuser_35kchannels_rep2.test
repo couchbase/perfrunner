@@ -6,7 +6,7 @@ title = , 1 node, channel cache (Max 50K, LWM 30K, HWM 40K), 35K users, 35K chan
 component = syncgateway
 category = sync
 sub_category = xattr
-orderby = 1
+orderby = 999999
 
 [cluster]
 mem_quota = 25000

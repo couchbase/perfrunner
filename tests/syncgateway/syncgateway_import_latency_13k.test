@@ -6,6 +6,7 @@ title = Import Latency(ms), 13K Throughput, 3 SG Nodes
 component = syncgateway
 category = import
 sub_category = Latency
+orderby = 000006
 
 [cluster]
 mem_quota = 25000

@@ -6,6 +6,7 @@ title = Avg Throughput (items/sec), SG Replicate 2.0 Pull, 1 SG node, 1 CB node,
 component = syncgateway
 category = sgreplicate
 sub_category = Pull
+orderby = 000301
 
 [cluster]
 mem_quota = 25000

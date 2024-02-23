@@ -6,6 +6,7 @@ title = Avg Throughput (items/sec), 3 node (multinode import), 20M docs, 1K docs
 component = syncgateway
 category = import
 sub_category = Throughput
+orderby = 999999
 
 [cluster]
 mem_quota = 25000

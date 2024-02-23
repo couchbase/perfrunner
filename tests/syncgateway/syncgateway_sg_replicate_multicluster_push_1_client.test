@@ -6,6 +6,7 @@ title = , Central cluster (1 sgnode + 4 cbnode), 1 edge cluster1 (simulated), BL
 component = syncgateway
 category = sgreplicate
 sub_category = Multi-cluster
+orderby = 000210
 
 [cluster]
 mem_quota = 25000

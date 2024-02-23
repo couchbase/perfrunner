@@ -6,6 +6,7 @@ title = , Central cluster (4 sgnode + 4 cbnode), 200K docs, multiple users, 5000
 component = syncgateway
 category = sgreplicate
 sub_category = Multi-cluster
+orderby = 001006
 
 [cluster]
 mem_quota = 25000

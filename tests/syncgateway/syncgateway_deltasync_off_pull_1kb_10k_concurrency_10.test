@@ -12,6 +12,7 @@ mem_quota = 25000
 index_mem_quota = 25000
 initial_nodes = 4
 num_buckets = 1
+orderby = 999999
 
 
 [access]

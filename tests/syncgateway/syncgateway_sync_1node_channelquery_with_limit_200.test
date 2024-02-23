@@ -6,7 +6,7 @@ title = , 1 node, 1M docs, 1 user, 1 channel, channels query with limit, since 0
 component = syncgateway
 category = query
 sub_category = xattr
-orderby = z1
+orderby = 999999
 
 [cluster]
 mem_quota = 25000

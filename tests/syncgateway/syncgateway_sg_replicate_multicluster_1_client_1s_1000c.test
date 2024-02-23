@@ -6,6 +6,7 @@ title = , Central cluster (1 sgnode + 4 cbnode), 200K docs, 1 edge cluster1 (sim
 component = syncgateway
 category = sgreplicate
 sub_category = Multi-cluster
+orderby = 000103
 
 [cluster]
 mem_quota = 25000

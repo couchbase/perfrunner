@@ -6,7 +6,7 @@ title = +rev, 4 nodes, cache hit 0.5%%, replicator2, basicAuth, s=1 c=50
 component = syncgateway
 category = read
 sub_category = xattr
-orderby = b21
+orderby = 000504
 
 [cluster]
 mem_quota = 25000

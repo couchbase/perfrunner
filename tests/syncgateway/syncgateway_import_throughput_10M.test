@@ -6,7 +6,7 @@ title = 3 node (1 import, 2 non-import), 10M docs, 1KB docsize, 48 vCPU
 component = syncgateway
 category = import
 sub_category = Throughput
-orderby = c12
+orderby = 000206
 
 [cluster]
 mem_quota = 25000

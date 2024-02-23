@@ -6,6 +6,7 @@ title = , 4 node, 1M users, 10K channel, 50 channels per user, access query, azu
 component = syncgateway
 category = query
 sub_category = xattr
+orderby = 999999
 
 [cluster]
 mem_quota = 25000

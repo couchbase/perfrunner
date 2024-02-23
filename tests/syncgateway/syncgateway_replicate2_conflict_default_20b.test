@@ -6,6 +6,7 @@ title = Avg Throughput (items/sec), SG Replicate 2.0 Bidirectional, ISGR/BLIP, 1
 component = syncgateway
 category = sgreplicate
 sub_category = Bidirectional
+orderby = 000203
 
 [cluster]
 mem_quota = 25000

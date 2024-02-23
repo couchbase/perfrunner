@@ -6,7 +6,7 @@ title = , 1 node, 10K docs, 10 fields, 1MB docSize, deltasync-off
 component = syncgateway
 category = replicate
 sub_category = Pull
-orderby = 000010
+orderby = 000008
 
 [cluster]
 mem_quota = 25000

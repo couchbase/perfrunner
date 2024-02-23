@@ -6,6 +6,7 @@ title = , 4 nodes, cache disabled, 10 sg databases
 component = syncgateway
 category = read
 sub_category = xattr
+orderby = 000201
 
 [cluster]
 mem_quota = 25000

@@ -186,7 +186,7 @@ class Remote:
                 logger.info('Extracting couchbase.rpm')
                 run('rpm2cpio ./{}.rpm | cpio -idm'.format(filename), quiet=True)
 
-    @master_client
+    @all_clients
     def get_ch2_logfile(self, worker_home: str, logfile: str):
         logger.info('Collecting CH2 log')
         with cd(worker_home), cd('perfrunner'):
@@ -194,7 +194,7 @@ class Remote:
             if not r.return_code:
                 get('{}*.log'.format(logfile), local_path='./')
 
-    @master_client
+    @all_clients
     def init_ch2(self, repo: str, branch: str, worker_home: str):
         self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
 

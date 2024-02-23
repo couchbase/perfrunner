@@ -2878,6 +2878,7 @@ class CH2:
     ANALYTICS_STATEMENTS = ''
     USE_BACKUP = 'true'
     LOAD_TCLIENTS = 0
+    LOAD_TASKS = 1
     LOAD_MODE = 'datasvc-bulkload'
     CREATE_GSI_INDEX = 'true'
 
@@ -2888,6 +2889,7 @@ class CH2:
         self.aclients = int(options.get('aclients', self.ACLIENTS))
         self.tclients = int(options.get('tclients', self.TCLIENTS))
         self.load_tclients = int(options.get('load_tclients', self.LOAD_TCLIENTS))
+        self.load_tasks = int(options.get('load_tasks', self.LOAD_TASKS))
         self.load_mode = options.get('load_mode', self.LOAD_MODE)
         self.iterations = int(options.get('iterations', self.ITERATIONS))
         self.warmup_iterations = int(options.get('warmup_iterations', self.WARMUP_ITERATIONS))
@@ -2902,6 +2904,8 @@ class CH2:
             self.analytics_statements = self.raw_analytics_statements.strip().split('\n')
         else:
             self.analytics_statements = ''
+
+        self.starting_warehouse = 1
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -2924,6 +2928,7 @@ class CH2:
     def cli_args_str_load(self) -> str:
         """Return a string of workload-related CLI arguments for running load phase."""
         flags = [
+            '--starting_warehouse {}'.format(self.starting_warehouse),
             '--warehouses {}'.format(self.warehouses),
             '--tclients {}'.format(self.load_tclients),
             '--no-execute',

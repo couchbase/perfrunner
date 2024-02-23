@@ -1271,40 +1271,39 @@ def copy_pytpcc_run_output():
 def ch2_run_task(
     conn_settings: CH2ConnectionSettings,
     task_settings: CH2,
-    driver: str = 'nestcollections',
-    log_file: str = 'ch2_mixed'
+    driver: str = "nestcollections",
+    log_file: str = "ch2_mixed",
 ):
-    cmd = '../../../env/bin/python3 ./tpcc.py {} {} {} > ../../../{}.log'.format(
-        driver,
-        conn_settings.cli_args_str_run(task_settings.tclients, task_settings.aclients),
-        task_settings.cli_args_str_run(),
-        log_file
+    cmd = (
+        f"../../../env/bin/python3 ./tpcc.py {driver} "
+        f"{conn_settings.cli_args_str_run(task_settings.tclients, task_settings.aclients)} "
+        f"{task_settings.cli_args_str_run()} > ../../../{log_file}.log"
     )
 
-    with lcd('ch2/ch2driver/pytpcc/'):
-        logger.info('Running: {}'.format(cmd))
+    with lcd("ch2/ch2driver/pytpcc/"):
+        logger.info(f"Running: {cmd}")
         local(cmd)
 
 
 def ch2_load_task(
     conn_settings: CH2ConnectionSettings,
     task_settings: CH2,
-    driver: str = 'nestcollections'
+    driver: str = "nestcollections",
+    log_file: str = "ch2_load",
 ):
     if task_settings.load_mode == "qrysvc-load":
-        output_dest = '/dev/null 2>&1'
+        output_dest = "/dev/null 2>&1"
     else:
-        output_dest = '../../../ch2_load.log'
+        output_dest = f"../../../{log_file}.log"
 
-    cmd = '../../../env/bin/python3 ./tpcc.py {} {} {} > {}'.format(
-        driver,
-        conn_settings.cli_args_str_load(task_settings.load_mode),
-        task_settings.cli_args_str_load(),
-        output_dest
+    cmd = (
+        f"../../../env/bin/python3 ./tpcc.py {driver} "
+        f"{conn_settings.cli_args_str_load(task_settings.load_mode)} "
+        f"{task_settings.cli_args_str_load()} > {output_dest}"
     )
 
-    with lcd('ch2/ch2driver/pytpcc/'):
-        logger.info('Running: {}'.format(cmd))
+    with lcd("ch2/ch2driver/pytpcc/"):
+        logger.info(f"Running: {cmd}")
         local(cmd)
 
 

@@ -1,7 +1,10 @@
+import copy
 import itertools
 import json
 import random
 import time
+
+from celery import group
 
 from logger import logger
 from perfrunner.helpers import local
@@ -15,7 +18,7 @@ from perfrunner.helpers.rest import (
     QUERY_PORT,
     QUERY_PORT_SSL,
 )
-from perfrunner.helpers.worker import tpcds_initial_data_load_task
+from perfrunner.helpers.worker import ch2_load, tpcds_initial_data_load_task
 from perfrunner.settings import CH2ConnectionSettings
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
@@ -1229,6 +1232,41 @@ class CH2Test(PerfTest):
             multi_data_url=",".join(self.data_nodes)
         )
 
+    def _distributed_ch2_load(self):
+        conn_settings = self._create_ch2_conn_settings()
+        ch2_settings = self.test_config.ch2_settings
+        load_tasks = ch2_settings.load_tasks
+
+        total_warehouses = ch2_settings.warehouses
+        min_warehouses_per_task = total_warehouses // load_tasks
+        leftover = total_warehouses % load_tasks
+
+        warehouses_per_task = [min_warehouses_per_task] * load_tasks
+        for i in range(leftover):
+            warehouses_per_task[i] += 1
+
+        task_sigs = []
+        workers = itertools.cycle(self.cluster_spec.workers)
+        starting_warehouse = 1
+        for i, warehouses in enumerate(warehouses_per_task):
+            worker = next(workers)
+
+            task_settings = copy.deepcopy(ch2_settings)
+            task_settings.warehouses = warehouses
+            task_settings.starting_warehouse = starting_warehouse
+
+            sig = ch2_load.si(conn_settings, task_settings, "nestcollections", f"ch2_load_{i}").set(
+                queue=worker
+            )
+            task_sigs.append(sig)
+
+            starting_warehouse += warehouses
+
+        async_result = group(task_sigs).apply_async()
+        logger.info(f"Running CH2 load task group: {async_result}")
+        async_result.get()
+        logger.info("CH2 load task group finished")
+
     @with_stats
     def run_ch2_local(self, log_file: str = ''):
         logger.info("running {}".format(self.test_config.ch2_settings.workload))
@@ -1237,7 +1275,10 @@ class CH2Test(PerfTest):
 
     def load_ch2_local(self):
         logger.info("load CH2 docs")
-        local.ch2_load_task(self._create_ch2_conn_settings(), self.test_config.ch2_settings)
+        if (ch2_settings := self.test_config.ch2_settings).load_tasks == 1:
+            local.ch2_load_task(self._create_ch2_conn_settings(), ch2_settings)
+        else:
+            self._distributed_ch2_load()
 
     @with_stats
     def run_ch2_remote(self, log_file: str = ''):
@@ -1248,8 +1289,11 @@ class CH2Test(PerfTest):
 
     def load_ch2_remote(self):
         logger.info("load CH2 docs")
-        self.remote.ch2_load_task(self._create_ch2_conn_settings(), self.test_config.ch2_settings,
-                                  worker_home=self.worker_manager.WORKER_HOME)
+        if (ch2_settings := self.test_config.ch2_settings).load_tasks == 1:
+            self.remote.ch2_load_task(self._create_ch2_conn_settings(), ch2_settings,
+                                      worker_home=self.worker_manager.WORKER_HOME)
+        else:
+            self._distributed_ch2_load()
 
     def restart(self):
         self.remote.stop_server()

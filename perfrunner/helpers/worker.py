@@ -4,7 +4,7 @@ import sys
 import time
 from itertools import cycle
 from multiprocessing import set_start_method
-from typing import Callable, Iterable, Iterator, List, Optional, Tuple
+from typing import Callable, Iterable, Iterator, Optional
 
 from celery import Celery, Signature, group
 from celery.result import AsyncResult
@@ -17,6 +17,8 @@ from perfrunner.helpers import local
 from perfrunner.helpers.config_files import CAOWorkerFile
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import (
+    CH2,
+    CH2ConnectionSettings,
     ClusterSpec,
     PhaseSettings,
     TargetSettings,
@@ -266,6 +268,10 @@ def sdks_benchmark_task(*args):
 def vectordb_bench_task(*args):
     run_vectordb_bench_case(*args)
 
+@celery.task
+def ch2_load(conn_settings: CH2ConnectionSettings, task_settings: CH2, driver: str, log_file: str):
+    local.ch2_load_task(conn_settings, task_settings, driver, log_file)
+
 
 class WorkloadPhase:
 
@@ -285,7 +291,7 @@ class WorkloadPhase:
         self.task_settings.bucket_list = [t.bucket for t in self.targets]
         self.timer = timer
 
-    def task_sigs(self, workers: Iterator[str]) -> List[Tuple[Signature, str]]:
+    def task_sigs(self, workers: Iterator[str]) -> list[tuple[Signature, str]]:
         sigs_with_workers = []
 
         for target in self.targets:
@@ -412,7 +418,7 @@ class RemoteWorkerManager:
             time.sleep(self.PING_INTERVAL)
         logger.info('All remote Celery workers are ready')
 
-    def run_tasks(self, phase: WorkloadPhase) -> List[AsyncResult]:
+    def run_tasks(self, phase: WorkloadPhase) -> list[AsyncResult]:
         if self.test_config.test_case.reset_workers:
             self.reset_workers()
 
@@ -434,7 +440,7 @@ class RemoteWorkerManager:
         for phase in phases:
             self.bg_async_results.extend(self.run_tasks(phase))
 
-    def _wait_for_tasks(self, async_results: List[AsyncResult]):
+    def _wait_for_tasks(self, async_results: list[AsyncResult]):
         for res in async_results:
             try:
                 res.get()

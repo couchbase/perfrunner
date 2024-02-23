@@ -460,7 +460,7 @@ class RemoteWorkerManager:
     def abort_all_tasks(self):
         for result in self.fg_async_results + self.bg_async_results:
             logger.info('Terminating Celery task (SIGTERM): {}'.format(result))
-            result.revoke(terminate=True, signal='SIGTERM', wait=True)
+            result.revoke(terminate=True, signal='SIGTERM')
         logger.info('All Celery tasks have been sent SIGTERM')
 
     def terminate(self):

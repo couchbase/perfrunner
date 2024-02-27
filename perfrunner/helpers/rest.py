@@ -387,10 +387,7 @@ class DefaultRestHelper(RestBase):
         logger.info('Checking if cluster is balanced using rebalance counters ({})'.format(host))
         counters = self.get_counters(host)
         logger.info(f"counters : {counters}")
-        if not counters.get('rebalance_start') and counters.get('rebalance_success'):
-            return counters.get('rebalance_start') - counters.get('rebalance_success')
-        else:
-            return False
+        return counters.get('rebalance_start', 0) != counters.get('rebalance_success', 0)
 
     def get_failover_counter(self, host: str) -> int:
         logger.info('Checking failover counter ({})'.format(host))

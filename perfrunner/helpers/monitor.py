@@ -80,19 +80,22 @@ class Monitor:
             time.sleep(self.POLLING_INTERVAL)
 
             is_running, progress = self.rest.get_task_status(host,
-                                                        task_type='rebalance')
+                                                             task_type='rebalance')
             if progress == last_progress:
                 if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
-                    logger.error('Rebalance hung')
-                    break
+                    logger.interrupt('Rebalance hung')
             else:
                 last_progress = progress
                 last_progress_time = time.time()
 
             if progress is not None:
                 logger.info('Rebalance progress: {} %'.format(progress))
-
-        logger.info('Rebalance completed')
+        if self.rest.is_not_balanced(self.master_node):
+            rebalance_report = self.rest.get_rebalance_report(self.master_node)
+            completion_message = rebalance_report["completionMessage"]
+            logger.interrupt(f"Rebalance failed with message {completion_message}")
+        else:
+            logger.info('Rebalance completed')
 
     def _wait_for_empty_queues(self, host, bucket, queues, stats_function):
         metrics = list(queues)

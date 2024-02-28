@@ -2039,6 +2039,31 @@ class MetricHelper:
         raise Exception('Benchmark didnot recover from failure' if failure_start_found else
                     'No failures found, either no failover happened or timout is too large')
 
+    def vectordb_bench_metrics(self, metrics: dict, base_title: str, case_id: str) -> list[Metric]:
+        """Take vectorDBBench json metrics results and returns a list of showfast metrics."""
+        reported_metrics = []
+        proper_names = {
+            "qps": "Throughput (queries/sec)",
+            "serial_latency_p99": "99th percentile latency (ms)",
+            "load_duration": "Load duration (s)",
+        }
+        for name, result in metrics.items():
+            value = float(result)
+            if value == 0:
+                continue
+            if name == "serial_latency_p99":  # to ms
+                value = round(value * 1000)
+            else:
+                value = round(value, 2)
+            metric_id = f"{case_id}_{name}"
+            p_name = proper_names.get(name, name).replace("_", " ").capitalize()
+            title = f"{p_name}, {base_title}, {self._title}"
+            metric_info = self._metric_info(metric_id, title, order_by=name)
+
+            reported_metrics.append((value, self._snapshots, metric_info))
+
+        return reported_metrics
+
 
 class DailyMetricHelper(MetricHelper):
 

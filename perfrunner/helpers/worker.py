@@ -53,6 +53,7 @@ from perfrunner.workloads.tpcds import (
     tpcds_initial_data_load,
     tpcds_remaining_data_load,
 )
+from perfrunner.workloads.vectordb_bench import run_vectordb_bench_case
 from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
 
 try:
@@ -258,6 +259,11 @@ def syncgateway_e2e_multi_cb_task_run_test(*args):
 @celery.task
 def sdks_benchmark_task(*args):
     sdks_benchmark_workload(*args)
+
+
+@celery.task
+def vectordb_bench_task(*args):
+    run_vectordb_bench_case(*args)
 
 
 class WorkloadPhase:

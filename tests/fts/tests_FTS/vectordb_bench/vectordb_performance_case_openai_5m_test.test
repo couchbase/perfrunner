@@ -1,0 +1,19 @@
+[test_case]
+test = perfrunner.tests.vectordb.VectorDBBenchTest
+
+[showfast]
+title = 3 nodes, 1 bucket, FTS
+component = jts
+category = vectordb
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 25000
+
+[vectordb]
+cases = Performance1536D5M
+
+[profiling]
+services = fts

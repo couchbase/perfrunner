@@ -1639,3 +1639,24 @@ def download_dotnet_client(version: str):
             local('git checkout {}'.format(version))
         local('dotnet build --configuration Release couchbase-net-client.sln')
         return local('pwd', capture=True)
+
+
+def build_vectordb_bench():
+    # Build using Makefile. When using couchbase-client branch,
+    # this file is enhanced for easy of use
+    logger.info("Building VectorDB Bench")
+    with lcd("VectorDBBench"):
+        local("make")
+
+
+def run_vectordb_bench(options: str, dataset_dir: str, use_shuffled_data: bool = True):
+    with lcd("VectorDBBench"):
+        # Set `PYTHONPATH` to avoid package not found issues in some setup
+        vectordb_path = local("pwd", capture=True)
+        with shell_env(
+            USE_SHUFFLED_DATA=str(use_shuffled_data),
+            PYTHONPATH=vectordb_path,
+            DATASET_LOCAL_DIR=dataset_dir,
+        ):
+            # Run using a command line tool which may not exist in upstream version
+            local("env/bin/cmd_run {}".format(options))

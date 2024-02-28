@@ -3211,6 +3211,28 @@ class DiagEvalSettings:
             self.payloads = None
 
 
+class VectorDBBenchSettings(PhaseSettings):
+    REPO = "https://github.com/couchbaselabs/VectorDBBench.git"
+    BRANCH = "couchbase-client"
+    DEFAULT_CASE = "Performance1536D500K"
+
+    def __init__(self, options: dict):
+        super().__init__(options)
+        self.repo = options.get("repo", self.REPO)
+        self.branch = options.get("branch", self.BRANCH)
+        # The specified branch should have an implementation of specified database
+        self.database = options.get("database", "Couchbase")
+        # CaseType Enum from `{repo}vectordb_bench/backend/cases.py`
+        self.cases = options.get("cases", self.DEFAULT_CASE)
+        self.use_shuffled_data = maybe_atoi(options.get("shuffled", "True"))
+        self.dataset_local_path = options.get("dataset_path", "/tmp/vectordb_bench/dataset")
+        # Label is generated based on the job details
+        self.label = None
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class TestConfig(Config):
 
     def _configure_phase_settings(method):  # noqa: N805
@@ -3585,6 +3607,11 @@ class TestConfig(Config):
     def syncgateway_settings(self) -> SyncgatewaySettings:
         options = self._get_options_as_dict('syncgateway')
         return SyncgatewaySettings(options)
+
+    @property
+    def vectordb_settings(self) -> VectorDBBenchSettings:
+        options = self._get_options_as_dict("vectordb")
+        return VectorDBBenchSettings(options)
 
     def _get_mixed_phase_settings(self, base_section, base_settings):
         settings_cls = type(base_settings)

@@ -40,7 +40,7 @@ class Remote:
 
         with cd(worker_home):
             run('git clone -q {}'.format(REPO))
-            with cd('perfrunner'):
+            with cd("perfrunner"):
                 run('make')
 
     @all_clients
@@ -524,3 +524,40 @@ class Remote:
         cmd = " killall -9 TroublemakerProxy"
         with settings(quiet=True, warn_only=True):
             run(cmd)
+
+    @all_clients
+    def download_vectordb_bench(self, repo: str, branch: str, worker_home: str):
+        shutil.rmtree("VectorDBBench", ignore_errors=True)
+        self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
+
+    @all_clients
+    def build_vectordb_bench(self, worker_home: str):
+        logger.info("Building VectorDB Bench")
+        with cd(worker_home), cd("perfrunner"), cd("VectorDBBench"):
+            run("make")
+
+    @all_clients
+    def get_vectordb_result_files(self, worker_home: str, pattern: str):
+        logger.info("Collecting VectorDB result files")
+        with cd(worker_home), cd("perfrunner"):
+            r = run(f"stat {pattern}", quiet=True)
+            if not r.return_code:
+                get(pattern, local_path="VectorDBBench/")
+
+    @all_clients
+    def update_pyenv_and_install_python(self, py_version: str = None):
+        """Update pyenv and maybe install another python version if provided."""
+        logger.info("Updating pyenv ...")
+        with cd("/root/.pyenv/"):
+            run("git pull")
+
+        if py_version:
+            logger.info(f"Installing python {py_version} using pyenv")
+            run(f"pyenv install {py_version} -s")
+            # A workaround for ModuleNotFoundError pip._vendor.six issue
+            logger.info("Updating virtualenv")
+            # Remove any root installation of virtualenv
+            run("pip uninstall --yes virtualenv", warn_only=True)
+            run("pip3 uninstall --yes virtualenv", warn_only=True)
+            run("apt purge -y python3-virtualenv", warn_only=True)
+            run(f"pyenv local {py_version} && yes | pip install virtualenv", warn_only=True)

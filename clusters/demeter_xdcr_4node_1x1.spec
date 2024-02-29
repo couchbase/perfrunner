@@ -5,7 +5,7 @@ demeter_c1 =
 
 demeter_c2 =
     172.23.100.163:kv
-    172.23.100.164:kv
+    172.23.100.9:kv
 
 [clients]
 hosts =

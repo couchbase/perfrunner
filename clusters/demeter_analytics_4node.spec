@@ -2,7 +2,8 @@
 demeter =
     172.23.100.161:kv
     172.23.100.162:kv
-    172.23.100.163:index
+    172.23.100.163:cbas
+    172.23.100.9:cbas
 
 [clients]
 hosts =
@@ -11,8 +12,7 @@ credentials = root:couchbase
 
 [storage]
 data = /data
-index = /data
-backup = /data/workspace/backup
+analytics = /data
 
 [credentials]
 rest = Administrator:password

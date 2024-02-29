@@ -3,6 +3,7 @@ demeter =
     172.23.100.161:kv
     172.23.100.162:kv,fts
     172.23.100.163:kv,fts
+    172.23.100.9:kv,fts
 
 [clients]
 hosts =

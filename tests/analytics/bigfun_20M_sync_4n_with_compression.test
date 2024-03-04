@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunSyncWithCompressionTest
+test = perfrunner.tests.analytics.BigFunSyncTest
 use_workers = 0
 
 [showfast]
@@ -20,7 +20,7 @@ num_buckets = 1
 
 [analytics]
 num_io_devices = 4
-storage_compression_block = snappy
+storageCompressionBlock = snappy
 
 [bucket]
 eviction_policy = fullEviction
@@ -29,7 +29,3 @@ eviction_policy = fullEviction
 backup_storage = /backups
 backup_repo = bigfun20M
 threads = 8
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

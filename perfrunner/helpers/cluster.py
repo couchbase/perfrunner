@@ -184,6 +184,44 @@ class ClusterManager:
             check_replica = self.rest.get_analytics_replica(self.master_node)
             logger.info("Analytics replica setting: {}".format(check_replica))
 
+        if not (analytics_nodes := self.cluster_spec.servers_by_role('cbas')):
+            return
+
+        analytics_node = analytics_nodes[0]
+        if not (config_settings := self.test_config.analytics_settings.config_settings):
+            return
+
+        service_settings = self.rest.get_analytics_config(analytics_node, 'service')
+        node_settings = self.rest.get_analytics_config(analytics_node, 'node')
+
+        new_service_settings, new_node_settings = {}, {}
+        for setting, value in config_settings.items():
+            if setting in node_settings:
+                new_node_settings[setting] = value
+            elif setting in service_settings:
+                new_service_settings[setting] = value
+            else:
+                logger.warn(f'Unrecognised analytics config setting: {setting}')
+
+        if not (new_service_settings or new_node_settings):
+            return
+
+        if new_service_settings:
+            self.rest.set_analytics_config_settings(analytics_node, 'service', new_service_settings)
+
+        if new_node_settings:
+            for node in analytics_nodes:
+                self.rest.set_analytics_config_settings(node, 'node', new_node_settings)
+
+        self.rest.restart_analytics_cluster(analytics_node)
+
+        if new_service_settings:
+            self.rest.validate_analytics_settings(analytics_node, 'service', new_service_settings)
+
+        if new_node_settings:
+            for node in analytics_nodes:
+                self.rest.validate_analytics_settings(node, 'node', new_node_settings)
+
     def set_services(self):
         if self.capella_infra:
             return

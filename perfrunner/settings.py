@@ -2495,9 +2495,6 @@ class AnalyticsSettings:
 
     NUM_IO_DEVICES = 1
     REPLICA_ANALYTICS = 0
-    DEFAULT_LOG_LEVEL = "DEBUG"
-    CACHE_PAGE_SIZE = 131072
-    STORAGE_COMPRESSION_BLOCK = None
     QUERIES = ""
     ANALYTICS_CONFIG_FILE = ""
     DROP_DATASET = ""
@@ -2511,32 +2508,31 @@ class AnalyticsSettings:
     STORAGE_FORMAT = ""
 
     def __init__(self, options: dict):
-        self.num_io_devices = int(options.get('num_io_devices',
+        self.num_io_devices = int(options.pop('num_io_devices',
                                               self.NUM_IO_DEVICES))
         self.replica_analytics = int(
-            options.get('replica_analytics', self.REPLICA_ANALYTICS)
+            options.pop('replica_analytics', self.REPLICA_ANALYTICS)
         )
-        self.log_level = options.get("log_level", self.DEFAULT_LOG_LEVEL)
-        self.storage_buffer_cache_pagesize = options.get("cache_page_size", self.CACHE_PAGE_SIZE)
-        self.storage_compression_block = options.get("storage_compression_block",
-                                                     self.STORAGE_COMPRESSION_BLOCK)
-        self.queries = options.get("queries", self.QUERIES)
-        self.analytics_config_file = options.get("analytics_config_file",
+        self.queries = options.pop("queries", self.QUERIES)
+        self.analytics_config_file = options.pop("analytics_config_file",
                                                  self.ANALYTICS_CONFIG_FILE)
-        self.drop_dataset = options.get("drop_dataset", self.DROP_DATASET)
-        self.analytics_link = options.get("analytics_link", self.ANALYTICS_LINK)
-        self.external_dataset_type = options.get("external_dataset_type",
+        self.drop_dataset = options.pop("drop_dataset", self.DROP_DATASET)
+        self.analytics_link = options.pop("analytics_link", self.ANALYTICS_LINK)
+        self.external_dataset_type = options.pop("external_dataset_type",
                                                  self.EXTERNAL_DATASET_TYPE)
-        self.external_dataset_region = options.get("external_dataset_region",
+        self.external_dataset_region = options.pop("external_dataset_region",
                                                    self.EXTERNAL_DATASET_REGION)
-        self.external_bucket = options.get("external_bucket", self.EXTERNAL_BUCKET)
-        self.external_file_format = options.get("external_file_format", self.EXTERNAL_FILE_FORMAT)
-        self.external_file_include = options.get("external_file_include",
+        self.external_bucket = options.pop("external_bucket", self.EXTERNAL_BUCKET)
+        self.external_file_format = options.pop("external_file_format", self.EXTERNAL_FILE_FORMAT)
+        self.external_file_include = options.pop("external_file_include",
                                                  self.EXTERNAL_FILE_INCLUDE)
-        self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
-        self.storage_format = options.get('storage_format', self.STORAGE_FORMAT)
+        self.aws_credential_path = options.pop('aws_credential_path', self.AWS_CREDENTIAL_PATH)
+        self.storage_format = options.pop('storage_format', self.STORAGE_FORMAT)
 
-        self.goldfish_storage_partitions = int(options.get('goldfish_storage_partitions', 0))
+        self.goldfish_storage_partitions = int(options.pop('goldfish_storage_partitions', 0))
+
+        # Remaining settings are for analytics config REST API
+        self.config_settings = options
 
 
 class GoldfishKafkaLinksSettings:

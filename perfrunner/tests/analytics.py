@@ -141,26 +141,6 @@ class BigFunTest(PerfTest):
         for bucket in self.test_config.buckets:
             self.monitor.monitor_data_synced(self.data_node, bucket, self.analytics_node)
 
-    def set_analytics_logging_level(self):
-        log_level = self.analytics_settings.log_level
-        self.rest.set_analytics_logging_level(self.analytics_node, log_level)
-        self.rest.restart_analytics_cluster(self.analytics_node)
-        if not self.rest.validate_analytics_logging_level(self.analytics_node, log_level):
-            logger.error('Failed to set logging level {}'.format(log_level))
-
-    def set_buffer_cache_page_size(self):
-        page_size = self.analytics_settings.storage_buffer_cache_pagesize
-        self.rest.set_analytics_page_size(self.analytics_node, page_size)
-        self.rest.restart_analytics_cluster(self.analytics_node)
-
-    def set_storage_compression_block(self):
-        storage_compression_block = self.analytics_settings.storage_compression_block
-        self.rest.set_analytics_storage_compression_block(self.analytics_node,
-                                                          storage_compression_block)
-        self.rest.restart_analytics_cluster(self.analytics_node)
-        self.rest.validate_analytics_setting(self.analytics_node, 'storageCompressionBlock',
-                                             storage_compression_block)
-
     def get_dataset_items(self, dataset: str):
         logger.info('Get number of items in dataset {}'.format(dataset))
         statement = "SELECT COUNT(*) from `{}`;".format(dataset)
@@ -273,13 +253,6 @@ class BigFunDropDatasetTest(BigFunTest):
         drop_time = self.drop_dataset(drop_dataset)
 
         self.report_kpi(num_items, drop_time)
-
-
-class BigFunSyncWithCompressionTest(BigFunSyncTest):
-
-    def run(self):
-        self.set_storage_compression_block()
-        super().run()
 
 
 class BigFunSyncNoIndexTest(BigFunSyncTest):
@@ -401,13 +374,6 @@ class BigFunQueryNoIndexCloudTest(BigFunQueryCloudTest):
 
     def create_index_collections(self):
         pass
-
-
-class BigFunQueryWithCompressionTest(BigFunQueryTest):
-
-    def run(self):
-        self.set_storage_compression_block()
-        super().run()
 
 
 class BigFunQueryNoIndexTest(BigFunQueryTest):
@@ -647,15 +613,6 @@ class BigFunQueryFailoverTest(BigFunQueryTest):
         self.report_kpi(results)
 
 
-class BigFunQueryNoIndexWithCompressionTest(BigFunQueryWithCompressionTest):
-
-    def create_index(self):
-        pass
-
-    def create_index_collections(self):
-        pass
-
-
 class BigFunRebalanceTest(BigFunTest, RebalanceTest):
 
     ALL_HOSTNAMES = True
@@ -840,13 +797,6 @@ class TPCDSTest(PerfTest):
             local.init_tpcds_couchbase_loader(
                 repo=self.test_config.tpcds_loader_settings.repo,
                 branch=self.test_config.tpcds_loader_settings.branch)
-
-    def set_max_active_writable_datasets(self):
-        self.rest.set_analytics_max_active_writable_datasets(self.analytics_node, 24)
-        self.rest.restart_analytics_cluster(self.analytics_node)
-        self.rest.validate_analytics_setting(self.analytics_node,
-                                             'storageMaxActiveWritableDatasets', 24)
-        time.sleep(5)
 
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=tpcds_initial_data_load_task)

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunQueryNoIndexWithCompressionTest
+test = perfrunner.tests.analytics.BigFunQueryNoIndexTest
 use_workers = 0
 
 [showfast]
@@ -20,7 +20,7 @@ num_buckets = 1
 
 [analytics]
 num_io_devices = 4
-storage_compression_block = snappy
+storageCompressionBlock = snappy
 
 [bucket]
 eviction_policy = fullEviction
@@ -36,7 +36,3 @@ analytics_warmup_ops = 3
 analytics_warmup_workers = 1
 ops = 10
 workers = 1
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

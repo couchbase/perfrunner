@@ -4,7 +4,7 @@ import os
 import time
 from collections import namedtuple
 from json import JSONDecodeError
-from typing import Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
 import requests
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
@@ -1007,55 +1007,14 @@ class DefaultRestHelper(RestBase):
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
         return self.get(url=url).json()
 
-    def set_analytics_logging_level(self, analytics_node: str, log_level: str):
-        logger.info('Setting log level \"{}\" for analytics'.format(log_level))
-        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
-        data = {
-            'logLevel': log_level
-        }
-        r = self.put(url=api, data=data)
-        if r.status_code not in (200, 202,):
-            logger.warning('Unexpected request status code {}'.
-                           format(r.status_code))
-
-    def set_analytics_page_size(self, analytics_node: str, page_size: str):
-        logger.info('Setting buffer cache page size \"{}\" for analytics'.format(page_size))
-        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
-        data = {
-            'storageBuffercachePagesize': page_size
-        }
-        r = self.put(url=api, data=data)
-        if r.status_code not in (200, 202,):
-            logger.warning('Unexpected request status code {}'.
-                           format(r.status_code))
-
-    def set_analytics_storage_compression_block(self, analytics_node: str,
-                                                storage_compression_block: str):
-        logger.info('Setting storage compression block \"{}\" for analytics'
-                    .format(storage_compression_block))
-        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
-        data = {
-            'storageCompressionBlock': storage_compression_block
-        }
-        r = self.put(url=api, data=data)
-        if r.status_code not in (200, 202,):
-            logger.warning('Unexpected request status code {}'.
-                           format(r.status_code))
-
-    def set_analytics_max_active_writable_datasets(
-            self,
-            analytics_node: str,
-            max_writable: int):
-        logger.info('Setting max active writable datasets \"{}\" for analytics'
-                    .format(str(max_writable)))
-        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
-        data = {
-            'storageMaxActiveWritableDatasets': str(max_writable)
-        }
-        r = self.put(url=api, data=data)
-        if r.status_code not in (200, 202,):
-            logger.warning('Unexpected request status code {}'.
-                           format(r.status_code))
+    def set_analytics_config_settings(self, analytics_node: str, level: Literal["service", "node"],
+                                      settings: dict[str, str]):
+        logger.info(f'Updating analytics {level}-level parameters on {analytics_node}:\n'
+                    f'{pretty_dict(settings)}')
+        api = f'http://{analytics_node}:{ANALYTICS_PORT}/analytics/config/{level}'
+        r = self.put(url=api, data=settings)
+        if r.status_code not in (200, 202):
+            logger.warning(f'Unexpected request status code {r.status_code}')
 
     def restart_analytics_cluster(self, analytics_node: str):
         logger.info('Restarting analytics cluster')
@@ -1065,25 +1024,20 @@ class DefaultRestHelper(RestBase):
             logger.warning('Unexpected request status code {}'.
                            format(r.status_code))
 
-    def validate_analytics_logging_level(self, analytics_node: str, log_level: str):
-        logger.info('Checking that analytics log level is set to {}'.format(log_level))
-        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
+    def validate_analytics_settings(self, analytics_node: str, level: Literal["service", "node"],
+                                    settings: dict[str, str]):
+        logger.info(f'Verifying analytics {level}-level parameters on {analytics_node}:\n'
+                    f'{pretty_dict(settings)}')
+        api = f'http://{analytics_node}:{ANALYTICS_PORT}/analytics/config/{level}'
         response = self.get(url=api).json()
-        if "logLevel" in response:
-            return response["logLevel"] == log_level
-        return False
+        for setting, value in settings.items():
+            assert (str(response[setting]) == str(value))
 
-    def validate_analytics_setting(self, analytics_node: str, setting: str, value: str):
-        logger.info('Checking that analytics {} is set to {}'.format(setting, value))
-        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
-        response = self.get(url=api).json()
-        assert (str(response[setting]) == str(value))
-
-    def get_analytics_service_config(self, analytics_node: str):
-        logger.info('Grabbing analytics service config')
-        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
-        response = self.get(url=api).json()
-        return response
+    def get_analytics_config(self, analytics_node: str, level: Literal["service", "node"]) -> dict:
+        logger.info(f'Grabbing analytics {level} config from {analytics_node}')
+        api = f'http://{analytics_node}:{ANALYTICS_PORT}/analytics/config/{level}'
+        config = self.get(url=api).json()
+        return config
 
     def get_cbas_incoming_records_count(self, host: str) -> dict:
         api = 'http://{}:{}/pools/default/stats/range/cbas_incoming_records_count?' \

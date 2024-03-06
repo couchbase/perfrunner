@@ -88,8 +88,12 @@ class SGPerfTest(PerfTest):
         self.rest = RestHelper(cluster_spec, test_config)
         self.master_node = next(self.cluster_spec.masters)
         self.sgw_master_node = next(cluster_spec.sgw_masters)
-        self.build = self.rest.get_sgversion(self.sgw_master_node)
         self.metrics = MetricHelper(self)
+        if self.capella_infra:
+            self.build = "{} : {}".format(self.rest.get_sgversion(self.sgw_master_node),
+                                          self.rest.get_version(self.master_node))
+        else:
+            self.build = self.rest.get_sgversion(self.sgw_master_node)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build, sgw=True)
         if self.test_config.test_case.use_workers:
             self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)

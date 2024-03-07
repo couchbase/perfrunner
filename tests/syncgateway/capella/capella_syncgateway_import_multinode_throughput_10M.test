@@ -19,7 +19,7 @@ workload_path = workloads/workloada
 ycsb_client = couchbase3
 items = 10000000
 workers = 160
-workload_instances = 2
+workload_instances = 1
 ssl_mode = capella
 
 [access]

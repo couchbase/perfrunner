@@ -16,9 +16,22 @@ num_buckets = 1
 [collection]
 config = collections/1bucket_1scope_50collections_basic.json
 
+[load]
+workload_path = workloads/workloadca
+ycsb_client = couchbase3
+items = 4000000
+workers = 160
+workload_instances = 1
+
 [access]
+workload_path = workloads/workloadca
+ycsb_client = couchbase3
+items = 4000000
+ops = 40000000
+workers = 160
 time = 1200
-workers = 0
+workload_instances = 1
+kv_endpoints = 16
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized

@@ -1034,7 +1034,7 @@ def syncgateway_e2e_multi_cbl_run_test(
         cbl_throughput=sgs.cbl_throughput,
         doctype=sgs.doctype,
         doc_depth=sgs.doc_depth,
-        total_docs=docs_per_instance,
+        total_docs=sgs.documents,
         operations=operations,
         memcached_host=get_memcached_host(cluster, workload_settings),
         auth=sgs.auth,

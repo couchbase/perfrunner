@@ -13,9 +13,22 @@ index_mem_quota = 25000
 initial_nodes = 4
 num_buckets = 1
 
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 2000000
+workers = 160
+workload_instances = 1
+
 [access]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 2000000
+ops = 20000000
+workers = 160
 time = 1200
-workers = 0
+workload_instances = 1
+kv_endpoints = 16
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized

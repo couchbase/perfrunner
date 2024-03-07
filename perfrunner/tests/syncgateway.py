@@ -342,7 +342,7 @@ class SGPerfTest(PerfTest):
             stats = self.rest.get_sg_stats(host)
             warn_count = parse_prometheus_stat(stats, "sgw_resource_utilization_warn_count")
 
-        if warn_count > 100:
+        if warn_count > 1000:
             return warn_count
 
     def channel_list(self, number_of_channels: int):
@@ -2014,7 +2014,6 @@ class EndToEndTest(SGPerfTest):
                     str = sgw_stats[stat_list[i]:stat_list[i+1]]
                     a = str.find("}")
                     pull_count += int(float(str[a+2:]))
-                pull_count /= 2
 
                 stat = sgw_stats.find("sgw_replication_push_doc_push_count")
                 stat_list = []
@@ -2027,7 +2026,6 @@ class EndToEndTest(SGPerfTest):
                     str = sgw_stats[stat_list[i]:stat_list[i+1]]
                     a = str.find("}")
                     push_count += int(float(str[a+2:]))
-                push_count /= 2
                 break
         return dict(pull_count=pull_count, push_count=push_count)
 
@@ -2359,7 +2357,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
     @with_stats
     @with_profiles
     def push_update(self, post_load_writes, load_docs):
-        collections_count = len(self.collection_map.get('bucket-1', {'scope-1'})['scope-1'])
+        collections_count = len(self.collection_map.get('bucket-1', {'scope-1': {'_default'}})
+                                ['scope-1'])
         queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self.push_monitor, args=(queue, post_load_writes,
                                     int(load_docs) // collections_count))
@@ -2404,7 +2403,78 @@ class EndToEndMultiCBLTest(EndToEndTest):
         p.daemon = True
         p.start()
         try:
-            self.load_docs()
+            PerfTest.load(self, task=ycsb_data_load_task)
+            ret = queue.get(timeout=900)
+        except Exception as ex:
+            logger.info(str(ex))
+            p.terminate()
+            p.join()
+            self.get_cblite_info()
+            self.collect_execution_logs()
+            raise ex
+        else:
+            p.join()
+            sgw_load_time = ret[0]
+            observed_pushed = ret[1]
+            if sgw_load_time and observed_pushed:
+                return sgw_load_time, observed_pushed
+            else:
+                self.get_cblite_info()
+                self.collect_execution_logs()
+                raise Exception("failed to load docs")
+
+    def cloud_restore(self):
+        self.remote.extract_cb_any(filename='couchbase',
+                                   worker_home="/tmp")
+        self.remote.cbbackupmgr_version(worker_home="/tmp")
+
+        credential = local.read_aws_credential(
+            self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+        collection_map = self.test_config.collection.collection_map
+        restore_mapping = self.test_config.restore_settings.map_data
+        if restore_mapping is None and collection_map:
+            for target in self.target_iterator:
+                if not collection_map.get(
+                        target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
+                    restore_mapping = \
+                        "{0}._default._default={0}.scope-1.collection-1"\
+                        .format(target.bucket)
+        archive = self.test_config.restore_settings.backup_storage
+        if self.test_config.restore_settings.modify_storage_dir_name:
+            suffix_repo = "aws"
+            if self.cluster_spec.capella_infrastructure:
+                suffix_repo = self.cluster_spec.capella_backend
+            archive = archive + "/" + suffix_repo
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home="/tmp",
+                            archive=archive,
+                            repo=self.test_config.restore_settings.backup_repo,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            map_data=restore_mapping,
+                            encrypted=self.test_config.restore_settings.encrypted,
+                            passphrase=self.test_config.restore_settings.passphrase)
+        self.wait_for_persistence()
+        if self.test_config.collection.collection_map:
+            self.spread_data()
+
+    @with_stats
+    @with_profiles
+    def pull_restore(self, pre_load_writes, load_docs):
+        queue = multiprocessing.Queue()
+        p = multiprocessing.Process(target=self.pull_monitor, args=(queue, pre_load_writes,
+                                    load_docs))
+        p.daemon = True
+        p.start()
+        try:
+            self.cloud_restore()
             ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
@@ -2433,14 +2503,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
         p.daemon = True
         p.start()
         try:
-            self.run_sg_phase(
-                phase="run test",
-                task=syncgateway_task_run_test,
-                settings=self.settings,
-                target_iterator=None,
-                timer=self.settings.time,
-                distribute=True
-            )
+            PerfTest.access_bg(self, task=ycsb_task)
             ret = queue.get(timeout=900)
         except Exception as ex:
             logger.info(str(ex))
@@ -2495,7 +2558,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             settings.syncgateway_settings.documents = \
                 int(load_docs *
                     float(settings.syncgateway_settings.pullproportion))
-            self.load_docs()
+            PerfTest.load(self, task=ycsb_data_load_task)
             ret1 = queue.get(timeout=900)
             ret2 = queue.get(timeout=900)
         except Exception as ex:
@@ -2566,14 +2629,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             settings.syncgateway_settings.documents = \
                 int(load_docs *
                     float(settings.syncgateway_settings.pullproportion))
-            self.run_sg_phase(
-                phase="run test",
-                task=syncgateway_task_run_test,
-                settings=self.settings,
-                target_iterator=None,
-                timer=self.settings.time,
-                distribute=True
-            )
+            PerfTest.access_bg(self, task=ycsb_task)
             ret1 = queue.get(timeout=900)
             ret2 = queue.get(timeout=900)
         except Exception as ex:
@@ -2729,6 +2785,13 @@ class EndToEndMultiCBLTest(EndToEndTest):
             worker_home=self.worker_manager.WORKER_HOME,
             ycsb_instances=int(self.test_config.syncgateway_settings.instances_per_client))
         self.setup_cblite()
+        if self.test_config.syncgateway_settings.e2e:
+            sync_function = (
+                'function (doc) {{ channel("channel-".concat((Date.now()) % {0}));}}'.
+                format(self.sg_settings.channels)
+            )
+            self.rest.sgw_update_sync_function(self.sgw_master_node, "db-1", sync_function)
+            logger.info("Updated sync function")
         self.start_memcached()
         self.load_users()
         self.init_users()
@@ -2818,6 +2881,26 @@ class EndToEndMultiCBLPullTest(EndToEndMultiCBLTest):
 
         self.collect_execution_logs()
         self.report_kpi(sgw_load_tp, sgw_access_tp)
+
+
+class EndToEndMultiCBLPullRestoreTest(EndToEndMultiCBLTest):
+
+    def run_pull(self):
+        logger.info("Loading Docs Via Restore")
+        load_docs = int(self.settings.syncgateway_settings.documents)
+        pre_load_stats = self.post_delta_stats()
+        pre_load_reads = pre_load_stats['pull_count']
+        logger.info("initial pulled: {}".format(pre_load_reads))
+
+        sgw_load_time, observed_pulled_load = self.pull_restore(pre_load_reads, load_docs)
+        sgw_load_tp = observed_pulled_load / sgw_load_time
+
+        post_load_stats = self.post_delta_stats()
+        post_load_reads = post_load_stats['pull_count']
+        logger.info("post load pulled: {}".format(post_load_reads))
+
+        self.collect_execution_logs()
+        self.report_kpi(sgw_load_tp, 0)
 
 
 class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):

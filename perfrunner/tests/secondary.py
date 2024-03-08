@@ -1557,7 +1557,10 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
     def pre_rebalance(self):
         super().pre_rebalance()
         if self.shard_affinity:
-            self.monitor.wait_for_snapshot_persistence(self.index_nodes)
+            version, build_number = self.build.split('-')
+            build = tuple(map(int, version.split('.'))) + (int(build_number),)
+            if build > (7, 6, 0, 2037):
+                self.monitor.wait_for_snapshot_persistence(self.index_nodes)
 
     def run(self):
         self.remove_statsfile()

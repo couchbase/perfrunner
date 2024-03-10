@@ -88,7 +88,7 @@ def execute_jts_run(settings: PhaseSettings, target, full_index_name, index_map)
         params += f" -test_collection_query_mode {settings.test_collection_query_mode}"
         params += f" -test_collection_specific_count {settings.test_collection_specific_count}"
         params += f" -test_fts_index_map \'{json.dumps(index_map)}\'"
-    if settings.capella_infrastructure == 'capella':
+    if settings.capella_infrastructure:
         params += " -couchbase_ssl_mode capella"
     if settings.test_mutation_field and settings.test_mutation_field != 'None':
         params += f" -test_mutation_field {settings.test_mutation_field}"
@@ -148,7 +148,7 @@ def execute_jts_warmup(settings: PhaseSettings, target, full_index_name, index_m
         params += f" -test_collection_query_mode {settings.test_collection_query_mode}"
         params += f" -test_collection_specific_count {settings.test_collection_specific_count}"
         params += f" -test_fts_index_map \'{json.dumps(index_map)}\'"
-    if settings.capella_infrastructure == 'capella':
+    if settings.capella_infrastructure:
         params += " -couchbase_ssl_mode capella"
     if settings.test_mutation_field and settings.test_mutation_field != 'None':
         params += f" -test_mutation_field {settings.test_mutation_field}"

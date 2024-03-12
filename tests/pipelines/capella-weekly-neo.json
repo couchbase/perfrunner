@@ -1,104 +1,161 @@
 {
-    "AWS": [
+    "AWS_Analytics": [
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_6s_1c_c5_2xlarge_m5_2xlarge.spec", "test_config": "cloud/analytics/capella_bigfun_20M_sync_3n_1s_99c.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_6s_1c_c5_2xlarge_m5_2xlarge.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_6s_1c_c5_2xlarge_m5_2xlarge.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"}
+    ],
+    "AWS_FTS": [
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_fts_medium_template.spec", "test_config": "cloud/fts/jts_fts_1s_1c_latency_5node_1M_term_high.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_fts_medium_template.spec", "test_config": "cloud/fts/jts_fts_1s_1c_throughput_5node_1M_term_high.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_fts_medium_template.spec", "test_config": "cloud/fts/jts_fts_1s_1c_throughput_5node_1M_term_high.test", "groups": "P0"}
+    ],
+    "AWS_KV": [
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_5m.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_15kops_5m.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3x3s_1c_c5_2xlarge.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3x3s_1c_c5_2xlarge.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M_opt_with_advfilter_matchbody_100.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3x3s_1c_c5_2xlarge.spec", "test_config": "cloud/xdcr/capella_xdcr_ongoing_3x3_5M.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_c5_2xlarge_c5_4xlarge.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_lat_4kqueries_5m.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_c5_2xlarge_c5_4xlarge.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_5m.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_4s_1c_c5_2xlarge.spec", "test_config": "cloud/rebalance/capella_reb_in_150M.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_4s_1c_c5_2xlarge.spec", "test_config": "cloud/rebalance/capella_reb_out_150M.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/tools/tools_cloud_backup_capella.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/tools/tools_cloud_restore_capella.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_eventing_medium_template.spec", "test_config": "eventing/capella/latency50M_fun_noop.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_eventing_medium_template.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_eventing_medium_template.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_150m.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_15kops_150m.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_150m.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_4kops_150m.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_4kops_150m.test", "groups": "P0"}
+    ],
+    "AWS_N1QL": [
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_c5_2xlarge_c5_4xlarge.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_lat_4kqueries_5m.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_c5_2xlarge_c5_4xlarge.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_5m.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_7s_1c_c5_2xlarge_m5_2xlarge_sizing.spec", "test_config": "cloud/n1ql/capella_n1ql_lat_Q1_20M_10KQops_1s_1c.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_7s_1c_c5_2xlarge_m5_2xlarge_sizing.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q1_20M_1s_1c.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_7s_1c_c5_2xlarge_m5_2xlarge_sizing.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q2_20M_gsi_plasma_ok_1s_1c_1i.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_7s_1c_c5_2xlarge_m5_2xlarge_sizing.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q3_20M_gsi_plasma_false_1s_1c_1i.test", "groups": "P0"},
-        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_7s_1c_c5_2xlarge_m5_xlarge_c5_2xlarge.spec", "test_config": "cloud/kv/capella_yscb_workloada_3nodes_375m.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_7s_1c_c5_2xlarge_m5_2xlarge_sizing.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q3_20M_gsi_plasma_false_1s_1c_1i.test", "groups": "P0"}
+    ],
+    "AWS_Rebalance": [
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_4s_1c_c5_2xlarge.spec", "test_config": "cloud/rebalance/capella_reb_in_150M.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_4s_1c_c5_2xlarge.spec", "test_config": "cloud/rebalance/capella_reb_out_150M.test", "groups": "P0"}
+    ],
+    "AWS_XDCR": [
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3x3s_1c_c5_2xlarge.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3x3s_1c_c5_2xlarge.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M_opt_with_advfilter_matchbody_100.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3x3s_1c_c5_2xlarge.spec", "test_config": "cloud/xdcr/capella_xdcr_ongoing_3x3_5M.test", "groups": "P0"}
+    ],
+    "AWS_Eventing": [
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_eventing_medium_template.spec", "test_config": "eventing/capella/latency50M_fun_noop.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_eventing_medium_template.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_eventing_medium_template.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"}
+    ],
+    "AWS_GSI": [],
+    "AWS_Tools": [
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/tools/tools_cloud_backup_capella.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/tools/tools_cloud_restore_capella.test", "groups": "P0"}
+    ],
+    "AWS_SGW": [
         {"job": "CapellaAWSWeeklySGW", "cluster": "sync_gateway/capella/capella_aws_3s_2sgw_4c_c5_2xlarge.spec", "test_config": "syncgateway/capella/capella_syncgateway_load_2node.test", "groups": "P0"},
         {"job": "CapellaAWSWeeklySGW", "cluster": "sync_gateway/capella/capella_aws_3s_2sgw_4c_c5_2xlarge.spec", "test_config": "syncgateway/capella/capella_syncgateway_readwithrevs_2node_replicator2.test", "groups": "P0"},
         {"job": "CapellaAWSWeeklySGW", "cluster": "sync_gateway/capella/capella_aws_3s_2sgw_4c_c5_2xlarge.spec", "test_config": "syncgateway/capella/capella_syncgateway_write_2node_no_roundtripwrite_replicator2.test", "groups": "P0"},
         {"job": "CapellaAWSWeeklySGW", "cluster": "sync_gateway/capella/capella_aws_3s_4sgw_1c_c5_2xlarge.spec", "test_config": "syncgateway/capella/capella_syncgateway_import_multinode_throughput_10M.test", "groups": "P0"},
         {"job": "CapellaAWSWeeklySGW", "cluster": "sync_gateway/capella/capella_aws_3s_4sgw_20c_c5_4xlarge.spec", "test_config": "syncgateway/capella/capella_syncgateway_e2e_push_100cbl_4sgw_1kb_8M.test", "groups": "P0"}
     ],
-    "GCP": [
+    "AWS_Infrastructure": [
+        {"job": "CapellaAWSWeekly", "cluster": "capella_aws_7s_1c_c5_2xlarge_m5_xlarge_c5_2xlarge.spec", "test_config": "cloud/kv/capella_yscb_workloada_3nodes_375m.test", "groups": "P0"}
+    ],
+    "GCP_FTS": [
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_fts.spec", "test_config": "cloud/fts/jts_fts_1s_1c_latency_5node_1M_term_high.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_fts.spec", "test_config": "cloud/fts/jts_fts_1s_1c_throughput_5node_1M_term_high.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_fts.spec", "test_config": "cloud/fts/jts_fts_1s_1c_throughput_5node_1M_term_high.test", "groups": "P0"}
+    ],
+    "GCP_KV": [
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_5m.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_15kops_5m.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3x3s_1c_n2custom8.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3x3s_1c_n2custom8.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M_opt_with_advfilter_matchbody_100.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3x3s_1c_n2custom8.spec", "test_config": "cloud/xdcr/capella_xdcr_ongoing_3x3_5M.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom8_n2custom16.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_lat_4kqueries_5m.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom8_n2custom16.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_5m.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_6s_1c_n2custom8_n2Standard8.spec", "test_config": "cloud/analytics/capella_bigfun_20M_sync_3n_1s_99c.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_6s_1c_n2custom8_n2Standard8.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_4s_1c_n2custom8.spec", "test_config": "cloud/rebalance/capella_reb_in_150M.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_4s_1c_n2custom8.spec", "test_config": "cloud/rebalance/capella_reb_out_150M.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/tools/tools_cloud_backup_capella.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/tools/tools_cloud_restore_capella.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_eventing.spec", "test_config": "eventing/capella/latency50M_fun_noop.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_eventing.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_eventing.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_150m.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_15kops_150m.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_150m.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_4kops_150m.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_4kops_150m.test", "groups": "P0"}
+    ],
+    "GCP_XDCR": [
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3x3s_1c_n2custom8.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3x3s_1c_n2custom8.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M_opt_with_advfilter_matchbody_100.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3x3s_1c_n2custom8.spec", "test_config": "cloud/xdcr/capella_xdcr_ongoing_3x3_5M.test", "groups": "P0"}
+    ],
+    "GCP_N1QL": [
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom8_n2custom16.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_lat_4kqueries_5m.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom8_n2custom16.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_5m.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_7s_1c_3kv_n2_standard_8_2index_2n1ql_n2_custom_8_16384.spec", "test_config": "cloud/n1ql/capella_n1ql_lat_Q1_20M_10KQops_1s_1c.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_7s_1c_3kv_n2_standard_8_2index_2n1ql_n2_custom_8_16384.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q1_20M_1s_1c.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_7s_1c_3kv_n2_standard_8_2index_2n1ql_n2_custom_8_16384.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q2_20M_gsi_plasma_ok_1s_1c_1i.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_7s_1c_3kv_n2_standard_8_2index_2n1ql_n2_custom_8_16384.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q3_20M_gsi_plasma_false_1s_1c_1i.test", "groups": "P0"},
-        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_7s_1c_n2_custom_8_n2_standard_4_n2_standard_8.spec", "test_config": "cloud/kv/capella_yscb_workloada_3nodes_375m.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_7s_1c_3kv_n2_standard_8_2index_2n1ql_n2_custom_8_16384.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q3_20M_gsi_plasma_false_1s_1c_1i.test", "groups": "P0"}
+    ],
+    "GCP_Analytics": [
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_6s_1c_n2custom8_n2Standard8.spec", "test_config": "cloud/analytics/capella_bigfun_20M_sync_3n_1s_99c.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_6s_1c_n2custom8_n2Standard8.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"}
+    ],
+    "GCP_Rebalance": [
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_4s_1c_n2custom8.spec", "test_config": "cloud/rebalance/capella_reb_in_150M.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_4s_1c_n2custom8.spec", "test_config": "cloud/rebalance/capella_reb_out_150M.test", "groups": "P0"}
+    ],
+    "GCP_Tools": [
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/tools/tools_cloud_backup_capella.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8.spec", "test_config": "cloud/tools/tools_cloud_restore_capella.test", "groups": "P0"}
+    ],
+    "GCP_Eventing": [
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_eventing.spec", "test_config": "eventing/capella/latency50M_fun_noop.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_eventing.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_eventing.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"}
+    ],
+    "GCP_GSI": [],
+    "GCP_SGW": [
         {"job": "CapellaGCPWeeklySGW", "cluster": "sync_gateway/capella/capella_gcp_3s_2sgw_4c_n2_standard_8.spec", "test_config": "syncgateway/capella/capella_syncgateway_load_2node.test", "groups": "P0"},
         {"job": "CapellaGCPWeeklySGW", "cluster": "sync_gateway/capella/capella_gcp_3s_2sgw_4c_n2_standard_8.spec", "test_config": "syncgateway/capella/capella_syncgateway_readwithrevs_2node_replicator2.test", "groups": "P0"},
         {"job": "CapellaGCPWeeklySGW", "cluster": "sync_gateway/capella/capella_gcp_3s_2sgw_4c_n2_standard_8.spec", "test_config": "syncgateway/capella/capella_syncgateway_write_2node_no_roundtripwrite_replicator2.test", "groups": "P0"},
         {"job": "CapellaGCPWeeklySGW", "cluster": "sync_gateway/capella/capella_gcp_3s_4sgw_1c_n2_standard_16.spec", "test_config": "syncgateway/capella/capella_syncgateway_import_multinode_throughput_10M.test", "groups": "P0"},
         {"job": "CapellaGCPWeeklySGW", "cluster": "sync_gateway/capella/capella_gcp_3s_4sgw_10c_n2_standard_16.spec", "test_config": "syncgateway/capella/capella_syncgateway_e2e_push_100cbl_4sgw_1kb_8M.test", "groups": "P0"}
     ],
-    "Azure": [
+    "GCP_Infrastructure": [
+        {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_7s_1c_n2_custom_8_n2_standard_4_n2_standard_8.spec", "test_config": "cloud/kv/capella_yscb_workloada_3nodes_375m.test", "groups": "P0"}
+    ],
+    "Azure_KV": [
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_5m.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_15kops_5m.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3x3s_1c_standard_f8s_v2.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3x3s_1c_standard_f8s_v2.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M_opt_with_advfilter_matchbody_100.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3x3s_1c_standard_f8s_v2.spec", "test_config": "cloud/xdcr/capella_xdcr_ongoing_3x3_5M.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f8_v2_standard_f16_v2.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_lat_4kqueries_5m.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f8_v2_standard_f16_v2.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_5m.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_4s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/rebalance/capella_reb_in_150M.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_4s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/rebalance/capella_reb_out_150M.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/tools/tools_cloud_backup_capella.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/tools/tools_cloud_restore_capella.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f16s_v2_eventing.spec", "test_config": "eventing/capella/latency50M_fun_noop.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f16s_v2_eventing.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f16s_v2_eventing.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_fts_medium_template.spec", "test_config": "cloud/fts/jts_fts_1s_1c_latency_5node_1M_term_high.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_fts_medium_template.spec", "test_config": "cloud/fts/jts_fts_1s_1c_throughput_5node_1M_term_high.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_6s_1c_standard_f8s_v2_standard_d8s_v5.spec", "test_config": "cloud/analytics/capella_bigfun_20M_sync_3n_1s_99c.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_6s_1c_standard_f8s_v2_standard_d8s_v5.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_150m.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_15kops_150m.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_150m.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_4kops_150m.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_4kops_150m.test", "groups": "P0"}
+    ],
+    "Azure_XDCR": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3x3s_1c_standard_f8s_v2.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3x3s_1c_standard_f8s_v2.spec", "test_config": "cloud/xdcr/capella_xdcr_init_3x3_unidir_5M_opt_with_advfilter_matchbody_100.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3x3s_1c_standard_f8s_v2.spec", "test_config": "cloud/xdcr/capella_xdcr_ongoing_3x3_5M.test", "groups": "P0"}
+    ],
+    "Azure_N1QL": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f8_v2_standard_f16_v2.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_lat_4kqueries_5m.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f8_v2_standard_f16_v2.spec", "test_config": "cloud/n1ql/capella_ycsb_workloade_3nodes_5m.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_7s_1c_3kv_standard_d8s_v5_2index_2n1ql_standard_f8s_v2.spec", "test_config": "cloud/n1ql/capella_n1ql_lat_Q1_20M_10KQops_1s_1c.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_7s_1c_3kv_standard_d8s_v5_2index_2n1ql_standard_f8s_v2.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q1_20M_1s_1c.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_7s_1c_3kv_standard_d8s_v5_2index_2n1ql_standard_f8s_v2.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q2_20M_gsi_plasma_ok_1s_1c_1i.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_7s_1c_3kv_standard_d8s_v5_2index_2n1ql_standard_f8s_v2.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q3_20M_gsi_plasma_false_1s_1c_1i.test", "groups": "P0"},
-        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_7s_1c_standard_f8s_v2_standard_d4s_v5_standard_f8s_v2.spec", "test_config": "cloud/kv/capella_yscb_workloada_3nodes_375m.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_7s_1c_3kv_standard_d8s_v5_2index_2n1ql_standard_f8s_v2.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q3_20M_gsi_plasma_false_1s_1c_1i.test", "groups": "P0"}
+    ],
+    "Azure_Rebalance": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_4s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/rebalance/capella_reb_in_150M.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_4s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/rebalance/capella_reb_out_150M.test", "groups": "P0"}
+    ],
+    "Azure_Analytics": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_6s_1c_standard_f8s_v2_standard_d8s_v5.spec", "test_config": "cloud/analytics/capella_bigfun_20M_sync_3n_1s_99c.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_6s_1c_standard_f8s_v2_standard_d8s_v5.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"}
+    ],
+    "Azure_FTS": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_fts_medium_template.spec", "test_config": "cloud/fts/jts_fts_1s_1c_latency_5node_1M_term_high.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_fts_medium_template.spec", "test_config": "cloud/fts/jts_fts_1s_1c_throughput_5node_1M_term_high.test", "groups": "P0"}
+    ],
+    "Azure_Eventing": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f16s_v2_eventing.spec", "test_config": "eventing/capella/latency50M_fun_noop.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f16s_v2_eventing.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f16s_v2_eventing.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"}
+    ],
+    "Azure_GSI": [],
+    "Azure_Tools": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/tools/tools_cloud_backup_capella.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/tools/tools_cloud_restore_capella.test", "groups": "P0"}
+    ],
+    "Azure_SGW": [
         {"job": "CapellaAzureWeeklySGW", "cluster": "sync_gateway/capella/capella_azure_3s_2sgw_4c_f8s.spec", "test_config": "syncgateway/capella/capella_syncgateway_load_2node.test", "groups": "P0"},
         {"job": "CapellaAzureWeeklySGW", "cluster": "sync_gateway/capella/capella_azure_3s_2sgw_4c_f8s.spec", "test_config": "syncgateway/capella/capella_syncgateway_readwithrevs_2node_replicator2.test", "groups": "P0"},
         {"job": "CapellaAzureWeeklySGW", "cluster": "sync_gateway/capella/capella_azure_3s_2sgw_4c_f8s.spec", "test_config": "syncgateway/capella/capella_syncgateway_write_2node_no_roundtripwrite_replicator2.test", "groups": "P0"},
         {"job": "CapellaAzureWeeklySGW", "cluster": "sync_gateway/capella/capella_azure_3s_4sgw_1c_f16s.spec", "test_config": "syncgateway/capella/capella_syncgateway_import_multinode_throughput_10M.test", "groups": "P0"},
         {"job": "CapellaAzureWeeklySGW", "cluster": "sync_gateway/capella/capella_azure_3s_4sgw_10c_f16s.spec", "test_config": "syncgateway/capella/capella_syncgateway_e2e_push_100cbl_4sgw_1kb_8M.test", "groups": "P0"}
+    ],
+    "Azure_Infrastructure": [
+        {"job": "CapellaAzureWeekly", "cluster": "capella_azure_7s_1c_standard_f8s_v2_standard_d4s_v5_standard_f8s_v2.spec", "test_config": "cloud/kv/capella_yscb_workloada_3nodes_375m.test", "groups": "P0"}
     ]
 }

@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 3 nodes, 50/50 R/W, 512B JSON items, 1K batch size, s=1 c=1000, 10 buckets
+component = kvcloud
+category = max_ops
+sub_category = {provider}
+orderby = 6m
+
+[cluster]
+initial_nodes = 3
+num_buckets = 10
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[collection]
+config = collections/10buckets_1scope_100collections_basic.json
+
+[load]
+size = 512
+items = 2000000
+workers = 10
+doc_gen = json
+ssl_mode = capella
+
+[access]
+items = 2000000
+iterations = 4000
+workers = 5
+updates = 50
+ssl_mode = capella
+
+[clients]
+libcouchbase = 3.0.7

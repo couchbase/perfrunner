@@ -20,6 +20,7 @@ config = tests/collections/utils/configs/1bucket_1000scope_1000collections_even.
 
 [compaction]
 db_percentage = 100
+bucket_compaction = false
 
 [load]
 items = 100000000

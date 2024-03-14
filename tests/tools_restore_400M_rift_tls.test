@@ -17,6 +17,7 @@ num_buckets = 1
 
 [compaction]
 db_percentage = 100
+bucket_compaction = false
 
 [load]
 items = 400000000

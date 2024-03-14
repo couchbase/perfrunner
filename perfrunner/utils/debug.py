@@ -2,6 +2,7 @@ import glob
 import os
 import re
 import shutil
+import time
 import zipfile
 from argparse import ArgumentParser
 from collections import defaultdict
@@ -91,16 +92,21 @@ def create_bucket_hostname(node_name: str) -> str:
     return hostname
 
 
-def check_if_log_file_exists(bucket_name: str, file_key: str):
-    cmd = 'aws s3api wait object-exists \
-    --bucket {} \
-    --key {}'.format(bucket_name, file_key)
+def check_if_log_file_exists(path_name_pattern: str):
+    path_name_pattern = path_name_pattern.removesuffix(".zip")
+    file_key_pattern = path_name_pattern.split('/')[-1]
+    bucket_key = path_name_pattern.removesuffix(file_key_pattern)
+    cmd = f"aws s3 ls "\
+        f"{bucket_key} --recursive | grep "\
+        f"{file_key_pattern}"
     retries = 3
     while retries > 0:
         stdout, _, returncode = run_local_shell_command(cmd)
         if returncode == 0:
-            return
+            path_name = stdout.split()[-1]
+            return path_name
         retries -= 1
+        time.sleep(60)
     logger.interrupt('Log file not found due to the following error: {}'.format(stdout))
 
 
@@ -114,8 +120,9 @@ def get_capella_cluster_logs(cluster_spec: ClusterSpec, s3_bucket_name: str):
 
     for node_name, log_info in node_logs.items():
         file_key = create_s3_bucket_file_key(log_info[0], log_info[1])
+        path_name_pattern = 's3://{}/{}'.format(s3_bucket_name, file_key)
+        file_key = check_if_log_file_exists(path_name_pattern)
         path_name = 's3://{}/{}'.format(s3_bucket_name, file_key)
-        check_if_log_file_exists(s3_bucket_name, file_key)
 
         hostname = create_bucket_hostname(node_name)
         if re.search(hostname, log_info[1]) is not None:

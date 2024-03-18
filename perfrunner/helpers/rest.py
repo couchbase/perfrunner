@@ -1577,6 +1577,61 @@ class DefaultRestHelper(RestBase):
         api = 'http://{}:{}/{}'.format(cblite_host, cblite_port, cblite_db)
         return self.cblite_get(url=api).json()
 
+    def sgw_update_sync_function(self, host: str, keyspace: str, new_sync: str):
+        logger.info("Updating sync function")
+        api = self._get_api_url(
+            host=host,
+            path=f"{keyspace}/_config/sync",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.put(url=api, data=new_sync)
+        resp.raise_for_status()
+
+    def sgw_set_db_offline(self, host: str, db: str):
+        logger.info(f"Setting database {db} offline")
+        api = self._get_api_url(
+            host=host,
+            path=f"{db}/_offline",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.post(url=api)
+        resp.raise_for_status()
+
+    def sgw_set_db_online(self, host: str, db: str):
+        logger.info(f"Setting database {db} online")
+        api = self._get_api_url(
+            host=host,
+            path=f"{db}/_online",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.post(url=api)
+        resp.raise_for_status()
+
+    def sgw_start_resync(self, host: str, db: str):
+        logger.info(f"Starting resync for {db} on {host}")
+        api = self._get_api_url(
+            host=host,
+            path=f"{db}/_resync",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        data = {"data": "start"}
+        resp = self.post(url=api, json=data)
+        resp.raise_for_status()
+
+    def sgw_get_resync_status(self, host: str, db: str) -> dict:
+        api = self._get_api_url(
+            host=host,
+            path=f"{db}/_resync",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.get(url=api)
+        return resp.json()
+
     def get_kv_ops(self, host):
         url = self._get_api_url(host=host, path='pools/default/stats/range/kv_ops?start=-1')
         resp = self.get(url=url)

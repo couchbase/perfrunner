@@ -3073,7 +3073,6 @@ class SyncgatewaySettings:
     LOAD_THREADS = 1
     THREADS = 10
     INSERTSTART = 0
-    MAX_INSERTS_PER_INSTANCE = 1000000
     STAR = "false"
     GRANT_ACCESS = "false"
     GRANT_ACCESS_IN_SCAN = "false"
@@ -3123,6 +3122,9 @@ class SyncgatewaySettings:
     COLLECT_SGW_CONSOLE = 0
     DATA_INTEGRITY = 'false'
     REPLICATION_AUTH = 1
+    DEFAULT_RESYNC_NEW_FUNCTION = (
+        "function (doc) { channel(doc.channels); access(doc.accessTo, doc.access); }"
+    )
 
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
@@ -3133,7 +3135,7 @@ class SyncgatewaySettings:
         self.channels = options.get('channels', self.CHANNELS)
         self.channels_per_user = options.get('channels_per_user', self.CHANNLES_PER_USER)
         self.channels_per_doc = options.get('channels_per_doc', self.CHANNELS_PER_DOC)
-        self.documents = options.get('documents', self.DOCUMENTS)
+        self.documents = int(options.get("documents", self.DOCUMENTS))
         self.documents_workset = options.get("documents_workset", self.documents)
         self.documentspull = options.get('documentspull', self.DOCUMENTSPULL)
         self.documentspush = options.get('documentspush', self.DOCUMENTSPUSH)
@@ -3156,9 +3158,7 @@ class SyncgatewaySettings:
         self.threads_per_instance = 1
         self.load_threads = options.get('load_threads', self.LOAD_THREADS)
         self.threads = options.get('threads', self.THREADS)
-        self.insertstart = options.get('insertstart', self.INSERTSTART)
-        self.max_inserts_per_instance = options.get('max_inserts_per_instance',
-                                                    self.MAX_INSERTS_PER_INSTANCE)
+        self.insertstart = options.get("insertstart", self.INSERTSTART)
         self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
         self.load_clients = options.get('load_clients', self.LOAD_CLIENTS)
         self.clients = options.get('clients', self.CLIENTS)
@@ -3196,6 +3196,7 @@ class SyncgatewaySettings:
         self.sg_docsize = int(options.get("sg_docsize", self.SG_DOCSIZE))
         self.sgtool_changebatchset = int(options.get("sgtool_changebatchset",
                                                      self.SGTOOL_CHANGEBATCHSET))
+        self.resync_new_function = options.get("resync_new", self.DEFAULT_RESYNC_NEW_FUNCTION)
 
         self.delta_sync = self.DELTA_SYNC
         self.e2e = self.E2E

@@ -372,8 +372,7 @@ E2E_CB_MULTI_RUN_TEST_CMD = " run {ycsb_command} -s -P {workload} " \
                              "-p exportfile={exportfile}"
 
 
-def get_offset(workload_settings, worker_id):
-    max_inserts = int(workload_settings.syncgateway_settings.max_inserts_per_instance)
+def get_offset(workload_settings, worker_id, max_inserts: int = 1000000):
     local_offset = worker_id * max_inserts
     return int(workload_settings.syncgateway_settings.insertstart) + local_offset
 
@@ -529,33 +528,40 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
                           timer: int, worker_id: int,
                           cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
+    total_docs = int(sgs.documents)
+    load_clients = int(sgs.load_clients)
+    instances_per_client = int(sgs.instances_per_client)
+    if load_clients > 1:
+        total_docs = int(sgs.documents) // (load_clients * instances_per_client)
+
     bucket = target.bucket
     db = 'db-{}'.format(bucket.split('-')[1])
     log_file_name = "{}_loaddocs_{}_{}.log".format(sgs.log_title, worker_id, db)
     res_file_name = "{}_loaddocs_{}_{}.result".format(sgs.log_title, worker_id, db)
-    params = LOAD_DOCS_CMD.format(ycsb_command=sgs.ycsb_command,
-                                  workload=sgs.workload,
-                                  db=db,
-                                  hosts=get_hosts(cluster, workload_settings),
-                                  total_docs=sgs.documents,
-                                  fieldlength=sgs.fieldlength,
-                                  fieldcount=sgs.fieldcount,
-                                  memcached_host=get_memcached_host(cluster, workload_settings),
-                                  total_users=sgs.users,
-                                  sg_load_throughput=sgs.sg_load_throughput,
-                                  sg_docloader_thread=sgs.sg_docloader_thread,
-                                  roundtrip=sgs.roundtrip_write_load,
-                                  feedmode=sgs.feed_mode,
-                                  replicator2=sgs.replicator2,
-                                  basic_auth=sgs.basic_auth,
-                                  total_channels=sgs.channels,
-                                  insert_mode=sgs.insert_mode,
-                                  channels_per_user=sgs.channels_per_user,
-                                  channels_per_doc=sgs.channels_per_doc,
-                                  insertstart=get_offset(workload_settings, worker_id),
-                                  use_capella="true"
-                                              if cluster.capella_infrastructure else "false",
-                                  exportfile=res_file_name)
+    params = LOAD_DOCS_CMD.format(
+        ycsb_command=sgs.ycsb_command,
+        workload=sgs.workload,
+        db=db,
+        hosts=get_hosts(cluster, workload_settings),
+        total_docs=total_docs,
+        fieldlength=sgs.fieldlength,
+        fieldcount=sgs.fieldcount,
+        memcached_host=get_memcached_host(cluster, workload_settings),
+        total_users=sgs.users,
+        sg_load_throughput=sgs.sg_load_throughput,
+        sg_docloader_thread=sgs.sg_docloader_thread,
+        roundtrip=sgs.roundtrip_write_load,
+        feedmode=sgs.feed_mode,
+        replicator2=sgs.replicator2,
+        basic_auth=sgs.basic_auth,
+        total_channels=sgs.channels,
+        insert_mode=sgs.insert_mode,
+        channels_per_user=sgs.channels_per_user,
+        channels_per_doc=sgs.channels_per_doc,
+        insertstart=get_offset(workload_settings, worker_id, max_inserts=total_docs),
+        use_capella="true" if cluster.capella_infrastructure else "false",
+        exportfile=res_file_name,
+    )
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)

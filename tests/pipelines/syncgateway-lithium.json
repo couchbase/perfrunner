@@ -669,6 +669,13 @@
           "test": "tests/syncgateway/e2e/syncgateway_e2e_bidi_100cbl_4sgw_1kb_8M_1s_2c.test"}
 
     ],
+    "Resync": [
+      {
+        "job": "rhea-dev-sgw",
+        "cluster": "rhea_6kv_4n1ql_4index_4sgw.spec",
+        "test": "syncgateway_resync_4nodes_10M.test"
+      }
+    ],
     "ReadOnDemand": [
         {"job": "syncgteway-hebe-new",
           "sg_cluster_map": "hebe_1node",

@@ -375,6 +375,11 @@ class RemoteLinux(Remote):
         logger.info('Restarting server')
         run('systemctl restart couchbase-server', pty=False)
 
+    @syncgateway_servers
+    def restart_syncgateway(self):
+        logger.info("Restarting syncgateway")
+        run("systemctl restart sync_gateway", pty=False)
+
     @all_servers
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))

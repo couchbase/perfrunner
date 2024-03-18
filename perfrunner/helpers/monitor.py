@@ -24,6 +24,7 @@ class Monitor:
     POLLING_INTERVAL_FRAGMENTATION = 10
     POLLING_INTERVAL_SGW = 1
     POLLING_INTERVAL_SGW_LOGSTREAMING = 5
+    POLLING_INTERVAL_SGW_RESYNC = 60  # 1m delay is ok since this takes hours to complete
 
     REBALANCE_TIMEOUT = 3600 * 6
     TIMEOUT = 3600 * 12
@@ -1449,6 +1450,29 @@ class Monitor:
                         current_status)
                 )
             time.sleep(self.POLLING_INTERVAL_SGW_LOGSTREAMING)
+
+    def monitor_sgw_resync_status(self, host: str, db: str):
+        """Monitor the status of resync and return when it is completed."""
+        logger.info(f"Waiting for resync to complete for {db}")
+        failed_retries = 0
+        while True:
+            resync_status = self.rest.sgw_get_resync_status(host, db)
+            status = resync_status.get("status")
+            docs_processed = resync_status.get("docs_processed")
+            docs_changed = resync_status.get("docs_changed")
+            logger.info(
+                f"Resync status: {status}, docs processed: {docs_processed}, "
+                f"docs changed: {docs_changed}"
+            )
+            if status == "completed":
+                return
+            elif status != "running":
+                failed_retries += 1
+
+            if failed_retries >= self.MAX_RETRY:
+                raise Exception(f"Resync failed with status: {status}")
+
+            time.sleep(self.POLLING_INTERVAL_SGW_RESYNC)
 
     def wait_for_snapshot_persistence(self, index_nodes: list[str]):
         """Execute additional steps for shard based rebalance."""

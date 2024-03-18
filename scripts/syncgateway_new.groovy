@@ -180,6 +180,12 @@ pipeline {
                         buildComponent('E2E', testCases)
                     }
                 }
+                stage('Resync') {
+                    when { expression { return params.Resync } }
+                    steps {
+                        buildComponent('Resync', testCases)
+                    }
+                }
                 stage('ReadOnDemand') {
                     when { expression { return params.ReadOnDemand } }
                     steps {

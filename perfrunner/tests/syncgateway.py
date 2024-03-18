@@ -12,7 +12,7 @@ from decorator import decorator
 
 from logger import logger
 from perfrunner.helpers import local
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.memcached import MemcachedHelper
@@ -120,6 +120,8 @@ class SGPerfTest(PerfTest):
                 self.sgw_master_node, SGW_PUBLIC_PORT
             )
             self.memcached_port = "11211"
+
+        self.use_distributed_load = int(self.sg_settings.load_clients) > 1
 
     def enable_log_streaming(self, collector: str):
 
@@ -271,7 +273,7 @@ class SGPerfTest(PerfTest):
             settings=self.settings,
             target_iterator=None,
             timer=self.settings.time,
-            distribute=False
+            distribute=self.use_distributed_load,
         )
 
     @with_stats
@@ -2882,3 +2884,33 @@ class LogStreamingTest(SGWrite):
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec),")
         )
+
+
+class ResyncTest(SGImportThroughputTest):
+
+    def run(self):
+        self.download_ycsb()
+        self.load()
+        self.monitor_sg_import_multinode(phase="load", timeout=3600, sleep_delay=30)
+
+        self.rest.sgw_update_sync_function(
+            self.sgw_master_node, "db-1", self.test_config.syncgateway_settings.resync_new_function
+        )
+
+        self.remote.restart_syncgateway()
+        self.rest.sgw_set_db_offline(self.sgw_master_node, "db-1")
+        self.resync_time = self.resync()
+        self.rest.sgw_set_db_online(self.sgw_master_node, "db-1")
+
+        self.collect_execution_logs()
+        self.report_kpi()
+
+    @timeit
+    @with_profiles
+    @with_stats
+    def resync(self):
+        self.rest.sgw_start_resync(self.sgw_master_node, "db-1")
+        self.monitor.monitor_sgw_resync_status(self.sgw_master_node, "db-1")
+
+    def _report_kpi(self):
+        self.reporter.post(*self.metrics.elapsed_time(self.resync_time))

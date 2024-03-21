@@ -73,7 +73,12 @@
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloadc_3nodes_1rr_magma.test", "groups": "P0"},
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloada_3nodes_1rr_30k_magma.test", "groups": "P0"},
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloadb_3nodes_1rr_30k_magma.test", "groups": "P0"},
-        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloadc_3nodes_1rr_30k_magma.test", "groups": "P0"}
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloadc_3nodes_1rr_30k_magma.test", "groups": "P0"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloada_3nodes_5b_10rr_magma.test", "groups": "P0"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloadc_3nodes_5b_10rr_magma.test", "groups": "P0"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_5b_10rr_load_magma.test", "groups": "P0"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_5b_10rr_magma.test", "groups": "P0"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloadc_3nodes_5b_10rr_magma.test", "groups": "P0"}
     ],
     "GSI-Hemera": [
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_50M_1000_indexes_plasma_1s_100c.test", "groups": "P0"},

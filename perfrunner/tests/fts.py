@@ -536,8 +536,8 @@ class FTSTest(JTSTest):
         self.remote.create_aws_credential(credential)
         self.remote.client_drop_caches()
         collection_map = self.test_config.collection.collection_map
-        restore_mapping = None
-        if collection_map:
+        restore_mapping = self.test_config.restore_settings.map_data
+        if restore_mapping is None and collection_map:
             for target in self.target_iterator:
                 if not collection_map.get(
                         target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):

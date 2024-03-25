@@ -306,6 +306,11 @@ class BigFunIncrSyncTest(BigFunTest):
     def run(self):
         super().run()
 
+        if self.analytics_link != "Local":
+            rest_username, rest_password = self.cluster_spec.rest_credentials
+            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
+                                     rest_username, rest_password)
+
         self.sync()
 
         self.disconnect_link()

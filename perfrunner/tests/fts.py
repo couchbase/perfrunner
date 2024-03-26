@@ -285,7 +285,8 @@ class FTSTest(JTSTest):
                     index_type_mapping = \
                         copy.deepcopy(bucket_index_def["params"]["mapping"]["default_mapping"])
                     bucket_index_def["params"]["mapping"]["default_mapping"]["enabled"] = False
-                    bucket_index_def["params"]["mapping"]["default_mapping"].pop("properties")
+                    bucket_index_def["params"]["mapping"]["default_mapping"].pop("properties",
+                                                                                 None)
 
                 for scope_name in scope_names:
                     collection_name_list = list(collection_map[bucket_name][scope_name].keys())

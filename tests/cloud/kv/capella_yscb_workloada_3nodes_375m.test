@@ -8,12 +8,14 @@ category = clusterdeployment
 sub_category = {provider}
 orderby = 5m
 
+[deployment]
+monitor_deployment_time = true
+
 [cluster]
 initial_nodes = 7
 num_buckets = 5
 enable_cpu_cores = false
 enable_n2n_encryption = all
-monitor_deployment_time = true
 show_cp_version = true
 
 [bucket]

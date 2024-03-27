@@ -19,7 +19,6 @@ from perfrunner.helpers.misc import (
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
 REPO = 'https://github.com/couchbase/perfrunner'
-TIMING_FILE = 'timing.out' # Used for Capella Deployment Tests
 
 
 @decorator
@@ -775,6 +774,18 @@ class ShowFastSettings:
         self.threshold = int(options.get("threshold", self.THRESHOLD))
 
 
+class DeploymentSettings:
+
+    MONITOR_DEPLOYMENT_TIME = 'false'
+    CAPELLA_POLL_INTERVAL_SECS = 30
+
+    def __init__(self, options: dict):
+        self.monitor_deployment_time = maybe_atoi(options.get('monitor_deployment_time',
+                                                              self.MONITOR_DEPLOYMENT_TIME))
+        self.capella_poll_interval_secs = int(options.get('capella_poll_interval_secs',
+                                                          self.CAPELLA_POLL_INTERVAL_SECS))
+
+
 class ClusterSettings:
 
     NUM_BUCKETS = 1
@@ -800,7 +811,6 @@ class ClusterSettings:
     BUCKET_NAME = 'bucket-1'
     DISABLE_UI_HTTP = None
     SERVERLESS_MODE = None
-    MONITOR_DEPLOYMENT_TIME = None
     SHOW_CP_VERSION = None
 
     IPv6 = 0
@@ -844,8 +854,6 @@ class ClusterSettings:
                                                  self.ENABLE_N2N_ENCRYPTION)
         self.ui_http = options.get('ui_http', self.DISABLE_UI_HTTP)
         self.serverless_mode = options.get('serverless_mode', self.SERVERLESS_MODE)
-        self.monitor_deployment_time = options.get('monitor_deployment_time',
-                                                   self.MONITOR_DEPLOYMENT_TIME)
         self.show_cp_version = options.get('show_cp_version', self.SHOW_CP_VERSION)
         self.serverless_throttle = {'dataThrottleLimit': int(options.get('data_throttle',
                                                                          0)),
@@ -3264,6 +3272,11 @@ class TestConfig(Config):
     def showfast(self) -> ShowFastSettings:
         options = self._get_options_as_dict('showfast')
         return ShowFastSettings(options)
+
+    @property
+    def deployment(self) -> DeploymentSettings:
+        options = self._get_options_as_dict('deployment')
+        return DeploymentSettings(options)
 
     @property
     def cluster(self) -> ClusterSettings:

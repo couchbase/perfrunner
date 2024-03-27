@@ -14,6 +14,7 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.cluster import ClusterManager
+from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import parse_prometheus_stat, pretty_dict, target_hash
@@ -43,7 +44,6 @@ from perfrunner.helpers.worker import (
     ycsb_task,
 )
 from perfrunner.settings import (
-    TIMING_FILE,
     ClusterSpec,
     PhaseSettings,
     TargetIterator,
@@ -386,10 +386,10 @@ class SGLoad(SGPerfTest):
                 logger.info(f)
                 logger.info(fout.read())
 
-        if self.capella_infra and self.test_config.cluster.monitor_deployment_time:
-            with open(TIMING_FILE, 'r') as f:
-                deployment_time = f.readline()
-                creation_time = f.readline()
+        if self.capella_infra and self.test_config.deployment.monitor_deployment_time:
+            with TimeTrackingFile() as t:
+                deployment_time = t.config.get('app_services_cluster')
+                creation_time = t.config.get('app_services_db')
             logger.info("deployment_time is: {}".format(deployment_time))
             logger.info("creation_time is: {}".format(creation_time))
             self.reporter.post(

@@ -1,5 +1,6 @@
 import json
 from enum import Enum
+from pathlib import Path
 from typing import Callable
 
 import yaml
@@ -82,6 +83,11 @@ class ConfigFile:
         Returns a list of python dict objects as read from the file. For most file types, this will
         be just one object. Some YAML files may, however, contain more than one objetcs.
         """
+        # If the source file does not exist, return an empty dict.
+        # File will be created when calling write()
+        if not Path(self.source_file).is_file():
+            return [{}]
+
         if self.file_type != FileType.INI:
             with open(self.source_file) as file:
                 return (
@@ -101,7 +107,7 @@ class ConfigFile:
                 if self.file_type == FileType.YAML:
                     yaml.dump_all(self.all_configs, file)
                 else:
-                    json.dump(self.config, file)
+                    json.dump(self.config, file, indent=4)
         else:
             self.ini_config.update_spec_file(self.dest_file)
 
@@ -423,3 +429,16 @@ class CAOWorkerFile(CAOFiles):
                 }
             }
         )
+
+
+class TimeTrackingFile(ConfigFile):
+    """File for tracking time taken for resource management operations during a test.
+
+    'Resource management operations' include, but aren't limited to:
+      - Capella cluster deployment
+      - Bucket creation
+      - App Services deployment
+    """
+
+    def __init__(self):
+        super().__init__('timings.json', FileType.JSON)

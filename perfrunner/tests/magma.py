@@ -8,6 +8,7 @@ from decorator import decorator
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import (
@@ -16,7 +17,6 @@ from perfrunner.helpers.worker import (
     ycsb_data_load_task,
     ycsb_task,
 )
-from perfrunner.settings import TIMING_FILE
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.n1ql import N1QLThroughputTest
 from perfrunner.tests.rebalance import RebalanceKVTest
@@ -1071,10 +1071,10 @@ class YCSBLoadThroughputHIDDTest(YCSBThroughputHIDDTest):
         self.collect_export_files()
 
         if self.cluster_spec.capella_infrastructure and \
-           self.test_config.cluster.monitor_deployment_time:
-            with open(TIMING_FILE, 'r') as f:
-                deployment_time = f.readline()
-                creation_time = f.readline()
+           self.test_config.deployment.monitor_deployment_time:
+            with TimeTrackingFile() as t:
+                deployment_time = t.config.get('capella_provisioned_cluster')
+                creation_time = t.config.get('bucket')
             logger.info("deployment_time is: {}".format(deployment_time))
             logger.info("creation_time is: {}".format(creation_time))
             self.reporter.post(

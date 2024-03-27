@@ -4,8 +4,9 @@ from time import time
 
 from logger import logger
 from perfrunner.helpers.cluster import DefaultClusterManager, KubernetesClusterManager
+from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.settings import TIMING_FILE, ClusterSpec, TestConfig
+from perfrunner.settings import ClusterSpec, TestConfig
 
 set_start_method("fork")
 
@@ -72,19 +73,17 @@ def main():
             cm.init_nebula_ssh()
             cm.set_nebula_log_levels()
         elif not cm.cluster_spec.goldfish_infrastructure:
-            if cm.test_config.cluster.monitor_deployment_time:
+            if cm.test_config.deployment.monitor_deployment_time:
                 logger.info("Start timing the bucket creation")
                 t0 = time()
             cm.create_buckets()
             cm.create_eventing_buckets()
             cm.create_eventing_metadata_bucket()
-            if cm.test_config.cluster.monitor_deployment_time:
+            if cm.test_config.deployment.monitor_deployment_time:
                 deployment_time = time() - t0
                 logger.info("The total bucket creation time is: {}".format(deployment_time))
-
-                with open(TIMING_FILE, 'a') as f:
-                    l1 = "{}\n".format(str(deployment_time))
-                    f.writelines([l1])
+                with TimeTrackingFile() as t:
+                    t.config['bucket'] = deployment_time
             cm.capella_allow_client_ips()
 
         if cm.test_config.collection.collection_map:

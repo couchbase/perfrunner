@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import os
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from collections import Counter
 from time import sleep, time
 from typing import Dict
@@ -15,8 +15,9 @@ from fabric.api import local
 from requests.exceptions import HTTPError
 
 from logger import logger
+from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.misc import maybe_atoi, pretty_dict, remove_nulls, run_local_shell_command
-from perfrunner.settings import TIMING_FILE, ClusterSpec, TestConfig
+from perfrunner.settings import ClusterSpec, TestConfig
 
 CAPELLA_CREDS_FILE = '.capella_creds'
 DATADOG_LINK_TEMPLATE = (
@@ -99,7 +100,7 @@ class CloudDeployer:
         }
     }
 
-    def __init__(self, options):
+    def __init__(self, options: Namespace):
         self.options = options
         self.infra_spec = ClusterSpec()
         self.infra_spec.parse(self.options.cluster, override=options.override)
@@ -393,7 +394,7 @@ class CloudDeployer:
 
 class CapellaDeployer(CloudDeployer):
 
-    def __init__(self, options):
+    def __init__(self, options: Namespace):
         super().__init__(options)
 
         self.test_config = None
@@ -511,7 +512,7 @@ class CapellaDeployer(CloudDeployer):
             non_capella_output = self.terraform_output(self.backend)
             CloudDeployer.update_spec(self, non_capella_output)
 
-        if self.test_config.cluster.monitor_deployment_time:
+        if self.test_config.deployment.monitor_deployment_time:
             logger.info("Start timing capella cluster deployment")
             t0 = time()
         # Deploy capella cluster
@@ -528,13 +529,13 @@ class CapellaDeployer(CloudDeployer):
             network_info = non_capella_output['network']['value']
             self.peer_vpc(network_info, self.cluster_ids[0])
 
-        if self.test_config.cluster.monitor_deployment_time:
+        if self.test_config.deployment.monitor_deployment_time:
             logger.info("Finished timing capella cluster deployment")
             deployment_time = time() - t0
             logger.info("The total capella cluster deployment time is: {}".format(deployment_time))
-            with open(TIMING_FILE, 'w') as f:
-                l1 = "{}\n".format(str(deployment_time))
-                f.writelines([l1])
+
+            with TimeTrackingFile() as t:
+                t.config['capella_provisioned_cluster'] = deployment_time
 
     def destroy(self):
         # Tear down VPC peering connection
@@ -1023,7 +1024,7 @@ class ServerlessDeployer(CapellaDeployer):
 
     NEBULA_OVERRIDE_ARGS = ['override_count', 'min_count', 'max_count', 'instance_type']
 
-    def __init__(self, options):
+    def __init__(self, options: Namespace):
         CloudDeployer.__init__(self, options)
         if not options.test_config:
             logger.error('Test config required if deploying serverless infrastructure.')
@@ -1464,7 +1465,7 @@ class EKSDeployer(CloudDeployer):
 
 
 class AppServicesDeployer(CloudDeployer):
-    def __init__(self, options):
+    def __init__(self, options: Namespace):
         super().__init__(options)
 
         self.test_config = None
@@ -1515,13 +1516,13 @@ class AppServicesDeployer(CloudDeployer):
         logger.info("Started deploying the AS")
         # Deploy capella cluster
         # Create sgw backend(app services)
-        if self.test_config.cluster.monitor_deployment_time:
+        if self.test_config.deployment.monitor_deployment_time:
             logger.info("Started timing the app services deployment")
             t0 = time()
             logger.info("Deploying sgw backend")
         sgw_cluster_id = self.deploy_cluster_internal_api()
 
-        if self.test_config.cluster.monitor_deployment_time:
+        if self.test_config.deployment.monitor_deployment_time:
             logger.info("Finished timing the app services deployment")
             deployment_time = time() - t0
             logger.info("The app services deployment time is: {}".format(deployment_time))
@@ -1593,15 +1594,16 @@ class AppServicesDeployer(CloudDeployer):
             # Update cluster spec file
             self.update_spec(sgw_cluster_id, sgw_db_name)
 
-        if self.test_config.cluster.monitor_deployment_time:
+        if self.test_config.deployment.monitor_deployment_time:
             logger.info("Finished creating the app services databases")
             db_creation_time = time() - t0
             logger.info("The app services database creation time is: {}".format(db_creation_time))
 
-            with open(TIMING_FILE, 'w') as f:
-                l1 = "{}\n".format(str(deployment_time))
-                l2 = "{}\n".format(str(db_creation_time))
-                f.writelines([l1, l2])
+            with TimeTrackingFile() as t:
+                t.config.update({
+                    'app_services_cluster': deployment_time,
+                    'app_services_db': db_creation_time
+                })
 
     def destroy(self):
         # Destroy capella cluster
@@ -1837,8 +1839,15 @@ class AppServicesDeployer(CloudDeployer):
 
 class CapellaColumnarDeployer(CapellaDeployer):
 
-    def __init__(self, options):
+    def __init__(self, options: Namespace):
         CloudDeployer.__init__(self, options)
+
+        test_config = TestConfig()
+        if options.test_config:
+            test_config.parse(options.test_config, override=options.override)
+        else:
+            test_config.override(options.override)
+        self.test_config = test_config
 
         if public_api_url := self.options.capella_public_api_url:
             env = public_api_url.removeprefix('https://')\
@@ -1905,10 +1914,11 @@ class CapellaColumnarDeployer(CapellaDeployer):
 
     def deploy_goldfish_instances(self):
         instance_sizes = [len(servers) for _, servers in self.infra_spec.clusters]
-        names = ['perf-goldfish-{}'.format(self.uuid) for _ in instance_sizes]
+        names = [f'perf-goldfish-{self.uuid}' for _ in instance_sizes]
         if len(names) > 1:
-            names = ['{}-{}'.format(name, i) for i, name in enumerate(names)]
+            names = [f'{name}-{i}'for i, name in enumerate(names)]
 
+        deployment_durations = {}
         for name, size in zip(names, instance_sizes):
             config = {
                 "name": name,
@@ -1918,27 +1928,30 @@ class CapellaColumnarDeployer(CapellaDeployer):
                 "nodes": size
             }
 
-            logger.info('Deploying Goldfish instance with config: {}'.format(pretty_dict(config)))
+            logger.info(f'Deploying Goldfish instance with config: {pretty_dict(config)}')
             resp = self.columnar_api.create_columnar_instance(self.tenant_id, self.project_id,
                                                               **config)
             raise_for_status(resp)
 
             instance_id = resp.json().get('id')
+            deployment_durations[instance_id] = time()
             self.instance_ids.append(instance_id)
 
-            logger.info('Initialised Goldfish instance deployment {}'.format(instance_id))
+            logger.info(f'Initialised Goldfish instance deployment {instance_id}')
             logger.info('Saving Goldfish instance ID to spec file.')
             self.infra_spec.config.set('infrastructure', 'cbc_columnar',
                                        '\n'.join(self.instance_ids))
             self.infra_spec.update_spec_file()
 
         timeout_mins = self.capella_timeout
-        interval_secs = 30
+        interval_secs = self.test_config.deployment.capella_poll_interval_secs
         pending_instances = [instance_id for instance_id in self.instance_ids]
         logger.info('Waiting for Goldfish instance(s) to be deployed...')
         t0 = time()
+        poll_duration = 0
         while pending_instances and (time() - t0) < timeout_mins * 60:
-            sleep(interval_secs)
+            sleep(interval_secs - poll_duration if poll_duration < interval_secs else 0)
+            poll_start = time()
 
             statuses = []
             for instance_id in pending_instances:
@@ -1947,21 +1960,33 @@ class CapellaColumnarDeployer(CapellaDeployer):
                                                                         instance_id)
                 raise_for_status(resp)
                 status = resp.json()['data']['state']
-                logger.info('Instance state for {}: {}'.format(instance_id, status))
+                logger.info(f'Instance state for {instance_id}: {status}')
                 if status == 'deploy_failed':
-                    logger.error('Deployment failed for Goldfish instance {}.'.format(instance_id))
+                    logger.error(f'Deployment failed for Goldfish instance {instance_id}')
                     exit(1)
+                elif status == 'healthy':
+                    deployment_durations[instance_id] = time() - deployment_durations[instance_id]
+                    logger.info(f'Goldfish instance {instance_id} deployed successfully after '
+                                f'{deployment_durations[instance_id]}s')
                 statuses.append(status)
 
             pending_instances = [
                 pending_instances[i] for i, status in enumerate(statuses) if status != 'healthy'
             ]
 
+            poll_duration = time() - poll_start
+
         if pending_instances:
-            logger.error('Deployment timed out after {} mins'.format(timeout_mins))
+            logger.error(f'Deployment timed out after {timeout_mins} mins')
             exit(1)
 
         logger.info('Successfully deployed all Goldfish instances')
+        timing_results = '\n\t'.join(f'{iid}: [{duration-interval_secs:4.0f} - {duration:4.0f}]s'
+                                     for iid, duration in deployment_durations.items())
+        logger.info(f'Deployment timings:\n\t{timing_results}')
+
+        with TimeTrackingFile() as t:
+            t.config['columnar_instances'] = deployment_durations
 
     def destroy(self):
         if not self.options.capella_only:
@@ -1979,7 +2004,7 @@ class CapellaColumnarDeployer(CapellaDeployer):
 
     def destroy_goldfish_instance(self):
         for instance_id in self.instance_ids:
-            logger.info('Deleting Goldfish instance {}...'.format(instance_id))
+            logger.info(f'Deleting Goldfish instance {instance_id}...')
             resp = self.columnar_api.delete_columnar_instance(self.tenant_id, self.project_id,
                                                               instance_id)
             raise_for_status(resp)
@@ -2002,11 +2027,10 @@ class CapellaColumnarDeployer(CapellaDeployer):
             for instance in resp.json().get('data'):
                 if (instance_id := instance.get('data', {}).get('id')) in self.instance_ids:
                     pending_instances.append(instance_id)
-                    logger.info('Instance {} not destroyed yet'.format(instance_id))
+                    logger.info(f'Instance {instance_id} not destroyed yet')
 
         if pending_instances:
-            logger.error('Timed out after {} mins waiting for instances to delete.'
-                         .format(timeout_mins))
+            logger.error(f'Timed out after {timeout_mins} mins waiting for instances to delete.')
             return False
 
         logger.info('All Goldfish instances destroyed.')

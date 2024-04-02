@@ -166,10 +166,14 @@ def main():
         remote.collect_k8s_logs()
         return
     else:
-        remote.collect_info()
-        for hostname in cluster_spec.servers:
-            for fname in glob.glob('{}/*.zip'.format(hostname)):
-                shutil.move(fname, '{}.zip'.format(hostname))
+        _, _, returncode = run_local_shell_command("ls *.zip")
+        if returncode == 1:
+            remote.collect_info()
+            for hostname in cluster_spec.servers:
+                for fname in glob.glob('{}/*.zip'.format(hostname)):
+                    shutil.move(fname, '{}.zip'.format(hostname))
+        else:
+            logger.info("Logs already collected. Skipping cbcollect..")
 
     if cluster_spec.backup is not None:
         logs = os.path.join(cluster_spec.backup, 'logs')

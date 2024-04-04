@@ -16,6 +16,10 @@ def get_menu() -> dict:
     return requests.get(url=BASE_URL + '/static/menu.json').json()
 
 
+def get_cloud_menu() -> dict:
+    return requests.get(url=BASE_URL + '/static/cloud_menu.json').json()
+
+
 def get_benchmarks(component: str, category: str) -> List[dict]:
     api = '/api/v1/benchmarks/{}/{}'.format(component, category)
     return requests.get(url=BASE_URL + api).json() or []
@@ -27,7 +31,8 @@ def hide_benchmark(benchmark_id: str):
 
 
 def showfast_iterator(components: List[str]) -> Iterator:
-    for component, meta in get_menu()['components'].items():
+    all_components = (get_menu()['components'] | get_cloud_menu()['components']).items()
+    for component, meta in all_components:
         if component in components:
             for category in meta['categories']:
                 yield component, category['id']

@@ -44,6 +44,7 @@ RUN pip uninstall --yes virtualenv && pip3 uninstall --yes virtualenv && apt pur
 FROM worker_image AS perfrunner
 WORKDIR /opt
 RUN git clone https://github.com/couchbase/perfrunner.git
+RUN git config --global user.email 'you@example.com' &&  git config --global user.name 'Perf Team'
 WORKDIR /opt/perfrunner
 RUN make docker-cloud-worker
 # ---------------- END OF K8S WORKER IMAGE GENERATION --------------------

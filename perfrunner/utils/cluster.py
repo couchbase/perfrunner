@@ -50,6 +50,7 @@ def main():
         cm.deploy_couchbase_cluster()
         cm.add_rbac_users()
         cm.create_buckets()
+        cm.install_syncgateway()
         return
 
     if cluster_spec.capella_infrastructure:

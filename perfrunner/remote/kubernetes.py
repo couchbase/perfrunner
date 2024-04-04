@@ -14,7 +14,7 @@ from perfrunner.helpers.config_files import (
     CAOHorizontalAutoscalerFile,
 )
 from perfrunner.remote import Remote
-from perfrunner.settings import ClusterSpec
+from perfrunner.settings import ClusterSpec, SyncgatewaySettings
 
 
 class RemoteKubernetes(Remote):
@@ -384,6 +384,20 @@ class RemoteKubernetes(Remote):
                 return False
         return True
 
+    def wait_for_svc_deployment(
+        self, svc_name: str, namespace: str = "default", timeout: int = 120
+    ):
+        """Wait until a service is listed by k8s or a timeout is reached."""
+        self.wait_for(self.service_up, condition_params=(svc_name, namespace), timeout=timeout)
+
+    def service_up(self, condition_params: tuple[str, str]) -> bool:
+        """Check if service is listed by k8s."""
+        svc_name, namespace = condition_params
+        for svc in self.get_services(namespace):
+            if svc.get("metadata", {}).get("name") == svc_name:
+                return True
+        return False
+
     def get_broker_urls(self):
         ret = self.k8s_client(
             "get secret rabbitmq-rabbitmq-default-user -o jsonpath='{.data.username}'")
@@ -430,6 +444,21 @@ class RemoteKubernetes(Remote):
                           data=data,
                           auth=(username_password.split(":")[0],
                                 username_password.split(":")[1]))
+
+    def start_memcached(self, mem_limit: int = 20000, port: int = 11211):
+        # Deploy memcached and its headless service
+        logger.info(f"Starting memcached with mem_limit: {mem_limit} on port {port}")
+        self.create_from_file("cloud/operator/memcached.yaml")
+        self.wait_for_pods_ready("memcached", 1)
+        self.wait_for_svc_deployment("memcached-service")
+
+    def clone_ycsb(self, repo: str, branch: str, worker_home: str, ycsb_instances: int):
+        repo = repo.replace("git://", "https://")
+        self.init_ycsb(repo, branch, worker_home, None)
+        workers = self.get_worker_pods()
+        for worker in workers:
+            for instance in range(1, ycsb_instances + 1):
+                self.kubectl_exec(worker, f"cp -r YCSB YCSB_{instance}")
 
     def init_ycsb(self, repo: str, branch: str, worker_home: str, sdk_version: None):
         ret = self.k8s_client("get pods")
@@ -483,13 +512,21 @@ class RemoteKubernetes(Remote):
     def get_export_files(self, worker_home: str):
         logger.info('Collecting YCSB export files')
         for worker in self.get_worker_pods():
-            lines = self.kubectl_exec(worker, "ls YCSB")
-            for line in lines:
-                for member in line.decode("utf-8").split():
-                    if 'ycsb' in member and '.log' in member:
-                        cmd = "cp default/{0}:YCSB/{1} YCSB/{1}" \
-                            .format(worker, member)
-                        self.k8s_client(cmd)
+            self.get_worker_ycsb_files(worker, "ycsb*.log")
+
+    def get_worker_ycsb_files(self, worker: str, pattern: str):
+        lines = self.kubectl_exec(worker, f"ls YCSB*/{pattern}")
+        for line in lines:
+            for member in line.decode("utf-8").split():
+                filename = member.split("/")[-1]
+                cmd = f"cp default/{worker}:{member} YCSB/{filename}"
+                self.k8s_client(cmd)
+
+    def get_syncgateway_ycsb_logs(self, worker_home: str, sgs: SyncgatewaySettings, local_dir: str):
+        pattern = f"{sgs.log_title}*"
+        logger.info("Collecting YCSB logs")
+        for worker in self.get_worker_pods():
+            self.get_worker_ycsb_files(worker, pattern)
 
     def create_backup(self):
         # 2020-12-04T23:33:57Z
@@ -562,7 +599,7 @@ class RemoteKubernetes(Remote):
         for pod in pods:
             pod_name = pod.get("metadata", {}).get("name", "")
             # Collect logs for operator, backup and server pods (server, metrics & CNG)
-            pod_prefixes = ('couchbase-operator-', 'my-backup-', 'cb-example-perf-')
+            pod_prefixes = ("couchbase-operator-", "my-backup-", "cb-example-perf-", "sync-gateway")
             if pod_name.startswith(pod_prefixes) and 'admission' not in pod_name:
                 logger.info("Collecting pod '{}' logs".format(pod_name))
                 logs = self.get_logs(pod_name)
@@ -629,6 +666,23 @@ class RemoteKubernetes(Remote):
 
                         port_translation[pod_node_ip] = dict(ports, **forwarded_ports)
                         break
+            elif "sync-gateway" in pod_name:
+                pod_node = pod["spec"]["nodeName"]
+                pod_node_ip = host_to_ip[pod_node]
+                host_to_ip[pod_name] = pod_node_ip
+                host_to_ip[pod_node_ip] = pod_node_ip
+                for svc_dict in svcs:
+                    if svc_dict["metadata"]["name"] == "syncgateway-service":
+                        forwarded_ports = {
+                            str(port_dict["targetPort"]): str(port_dict["nodePort"])
+                            for port_dict in svc_dict["spec"]["ports"]
+                        }
+                        ports = {
+                            str(port_dict["nodePort"]): str(port_dict["nodePort"])
+                            for port_dict in svc_dict["spec"]["ports"]
+                        }
+                        port_translation[pod_node_ip] = dict(ports, **forwarded_ports)
+                        break
         return host_to_ip, port_translation
 
     def start_celery_worker(self,
@@ -653,6 +707,18 @@ class RemoteKubernetes(Remote):
             self.wait_for_pods_deleted("worker")
         except Exception as ex:
             logger.info(ex)
+
+    def pull_perfrunner_patch(self, cherrypick: str = None):
+        pull_cmd = "git pull origin master"
+        if cherrypick:
+            pull_cmd = f"{pull_cmd} && {cherrypick}"
+        workers = self.get_worker_pods()
+        for worker in workers:
+            self.kubectl_exec(
+                worker,
+                pull_cmd,
+            )
+            self.kubectl_exec(worker, "make docker-cloud-worker")
 
     def detect_core_dumps(self):
         return {}

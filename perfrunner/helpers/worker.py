@@ -390,6 +390,9 @@ class RemoteWorkerManager:
         num_workers = len(self.cluster_spec.workers)
         self.remote.create_from_file(self.worker_path)
         self.remote.wait_for_pods_ready("worker", num_workers)
+        # Keep the function here so it is known when to pull changes to remote workers
+        # i.e before starting celery workers on pods
+        self.remote.pull_perfrunner_patch()
         worker_idx = 0
         for pod in self.remote.get_pods():
             worker_name = pod.get("metadata", {}).get("name", "")

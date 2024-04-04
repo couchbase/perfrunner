@@ -2,6 +2,7 @@ import math
 
 from logger import logger
 from perfrunner.helpers.local import restart_memcached, run_cmd
+from perfrunner.helpers.misc import lookup_address
 from perfrunner.settings import ClusterSpec, PhaseSettings, TargetSettings
 
 BINARY_NAME = "pyenv local 2.7.18 && bin/ycsb"
@@ -391,18 +392,22 @@ def get_cb_hosts(cluster):
     return ','.join(cluster.servers[3])
 
 
-def get_memcached_host(cluster, workload_settings):
-    if cluster.cloud_infrastructure and cluster.infrastructure_settings['provider'] == 'gcp':
+def get_memcached_host(cluster: ClusterSpec, workload_settings: PhaseSettings):
+    if cluster.cloud_infrastructure and cluster.infrastructure_settings["provider"] == "gcp":
         memcached_ip = "10.0.0.{}".format(6 + int(workload_settings.syncgateway_settings.nodes))
-    elif cluster.cloud_infrastructure and (cluster.infrastructure_settings['provider'] == 'azure'
-                                           or (cluster.infrastructure_settings['provider'] ==
-                                               'capella' and
-                                               (cluster.capella_backend == 'azure' or
-                                                cluster.capella_backend == 'gcp'))):
+    elif cluster.cloud_infrastructure and (
+        cluster.infrastructure_settings["provider"] == "azure"
+        or (
+            cluster.infrastructure_settings["provider"] == "capella"
+            and (cluster.capella_backend == "azure" or cluster.capella_backend == "gcp")
+        )
+    ):
         memcached_ip = next(cluster.clients_private)[1][0]
+    elif cluster.dynamic_infrastructure:
+        memcached_ip = lookup_address("memcached-service")[0]
     else:
         memcached_ip = cluster.workers[0]
-    logger.info("The memcached ip is: {}".format(memcached_ip))
+    logger.info(f"memcached ip: {memcached_ip}, port {workload_settings.memcached_port}")
     return memcached_ip
 
 
@@ -462,6 +467,12 @@ def add_capella_password(cmd):
     return cmd
 
 
+def add_translated_ports(cmd: str, public_port: str, admin_port: str, memcached_port: str) -> str:
+    cmd += f" -p syncgateway.port.public={public_port} -p syncgateway.port.admin={admin_port} "
+    cmd += f" -p memcached.port={memcached_port} "
+    return cmd
+
+
 def syncgateway_start_memcached(workload_settings: PhaseSettings,
                                 target: TargetSettings,
                                 timer: int,
@@ -503,6 +514,12 @@ def syncgateway_load_users(workload_settings: PhaseSettings,
     if cluster.capella_infrastructure:
         params = add_capella_password(params)
 
+    params = add_translated_ports(
+        params,
+        workload_settings.public_port,
+        workload_settings.admin_port,
+        workload_settings.memcached_port,
+    )
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
@@ -546,6 +563,12 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
     if cluster.capella_infrastructure:
         params = add_capella_password(params)
 
+    params = add_translated_ports(
+        params,
+        workload_settings.public_port,
+        workload_settings.admin_port,
+        workload_settings.memcached_port,
+    )
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
@@ -578,6 +601,12 @@ def syncgateway_init_users(workload_settings: PhaseSettings, target: TargetSetti
     if cluster.capella_infrastructure:
         params = add_capella_password(params)
 
+    params = add_translated_ports(
+        params,
+        workload_settings.public_port,
+        workload_settings.admin_port,
+        workload_settings.memcached_port,
+    )
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
@@ -615,6 +644,12 @@ def syncgateway_grant_access(workload_settings: PhaseSettings,
     if cluster.capella_infrastructure:
         params = add_capella_password(params)
 
+    params = add_translated_ports(
+        params,
+        workload_settings.public_port,
+        workload_settings.admin_port,
+        workload_settings.memcached_port,
+    )
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
@@ -669,6 +704,12 @@ def syncgateway_run_test(workload_settings: PhaseSettings,
     if cluster.capella_infrastructure:
         params = add_capella_password(params)
 
+    params = add_translated_ports(
+        params,
+        workload_settings.public_port,
+        workload_settings.admin_port,
+        workload_settings.memcached_port,
+    )
     logger.info("The command to be run is: {}".format(params))
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)

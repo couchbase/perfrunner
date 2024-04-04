@@ -1,0 +1,64 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGImportThroughputTest
+
+[showfast]
+title = Import throughput, 2 nodes, CAO, 10M docs
+component = syncgateway
+category = import
+orderby = 000001
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 9216
+initial_nodes = 3
+num_buckets = 1
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 1000000
+workers = 300
+workload_instances = 2
+
+[access]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 1000000
+ops = 120000000
+workers = 160
+time = 1500
+workload_instances = 1
+kv_endpoints = 16
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 2
+import_nodes = 2
+threads = 400
+sg_docloader_thread = 30
+load_clients = 2
+clients = 2
+instances_per_client = 10
+ycsb_command = syncgateway
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+users = 10000
+channels = 1000
+channels_per_user = 100
+channels_per_doc = 1
+documents = 35000000
+roundtrip_write = true
+read_mode = changes
+feed_reading_mode = withdocs
+feed_mode = longpoll
+insert_mode = byuser
+auth = true
+readproportion=0.999
+updateproportion=0
+insertproportion=0.001
+requestdistribution = zipfian
+log_title = sync_gateway_4node_sync
+roundtrip_write_load = true

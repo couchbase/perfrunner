@@ -7,7 +7,11 @@ from uuid import uuid4
 
 from logger import logger
 from perfrunner.helpers import local
-from perfrunner.helpers.config_files import CAOCouchbaseBucketFile, CAOCouchbaseClusterFile
+from perfrunner.helpers.config_files import (
+    CAOCouchbaseBucketFile,
+    CAOCouchbaseClusterFile,
+    CAOSyncgatewayDeploymentFile,
+)
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import (
     SGPortRange,
@@ -1274,3 +1278,25 @@ class KubernetesClusterManager:
         self.remote.create_from_file('cloud/operator/bucket-user.yaml')
         self.remote.create_from_file('cloud/operator/rbac-admin-group.yaml')
         self.remote.create_from_file('cloud/operator/rbac-admin-role-binding.yaml')
+
+    def install_syncgateway(self):
+        if not self.cluster_spec.infrastructure_syncgateways:
+            return
+
+        logger.info("Deploying syncgateway")
+        sgw_deployment = ""
+        desired_size = len(self.cluster_spec.sgw_servers)
+        # Currently we dont have a convenient way to pass sgw version as we dont run `sgw_install`.
+        # As a workaround for these tests, we pass the sgw image as its own override section.
+        # Example: sgw.image."ghcr.io/cb-vanilla/sync-gateway:3.2.0-319-enterprise"
+        sgw_image = self.cluster_spec.infrastructure_section("sgw").get(
+            "image", "couchbase/sync-gateway:latest"
+        )
+        with CAOSyncgatewayDeploymentFile(sgw_image, desired_size) as sgw_config:
+            sgw_config.configure_sgw()
+            sgw_deployment = sgw_config.dest_file
+
+        self.remote.create_from_file(sgw_deployment)
+        logger.info("Waiting for syncgateway and its service...")
+        self.remote.wait_for_pods_ready("sync-gateway", desired_size)
+        self.remote.wait_for_svc_deployment("syncgateway-service")

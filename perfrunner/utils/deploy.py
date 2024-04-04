@@ -444,6 +444,10 @@ class AWSDeployer(Deployer):
                 for k, v in self.utilities.items():
                     if ('brokers' in k or 'operators' in k) and resource_path in v:
                         labels['NodeRoles'] = 'utilities'
+                for k, v in self.syncgateways.items():
+                    if resource_path in v:
+                        labels["NodeRoles"] = k
+                        break
                 node_group_spec = k8s_cluster_spec[node_group]
                 response = self.eksclient.create_nodegroup(
                     clusterName=k8s_cluster_name,
@@ -787,6 +791,10 @@ class AWSDeployer(Deployer):
                         WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
 
     def update_infrastructure_spec(self):
+        clusters = self.infra_spec.infrastructure_clusters
+        clients = self.infra_spec.infrastructure_clients
+        sgws = self.infra_spec.infrastructure_syncgateways
+        utilities = self.infra_spec.infrastructure_utilities
         if self.infra_spec.infrastructure_settings['type'] == 'kubernetes':
             remote = RemoteHelper(self.infra_spec)
 
@@ -843,13 +851,48 @@ class AWSDeployer(Deployer):
                     for replace_pair in address_replace_list:
                         s = s.replace(replace_pair[0], replace_pair[1], 1)
                     f.write(s)
+
+            for cluster, hosts in sgws.items():
+                address_replace_list = []
+                for host in hosts.split():
+                    node_group = host.split(".")[2]
+                    for node_name, node_spec in k8_nodes.items():
+                        if node_spec["labels"]["NodeRoles"] != cluster:
+                            continue
+                        if node_spec["labels"]["eks.amazonaws.com/nodegroup"] != node_group:
+                            continue
+
+                        replace_addr = None
+                        for node_addr_dict in node_spec["addresses"]:
+                            if node_addr_dict["type"] == "ExternalIP":
+                                replace_addr = node_addr_dict["address"]
+                        address_replace_list.append((host, replace_addr))
+                        del k8_nodes[node_name]
+                        break
+
+                logger.info(f"sgws: {cluster}, hosts: {str(address_replace_list)}")
+
+                sgw_list = ""
+                for sgw_tuple in address_replace_list:
+                    sgw_list += f"{sgw_tuple[1]}\n"
+
+                sgw_list = sgw_list.rstrip()
+
+                with open(self.cloud_ini) as f:
+                    s = f.read()
+                with open(self.cloud_ini, "w") as f:
+                    s = s.replace("sgw_list", sgw_list, 1)
+                    f.write(s)
+
+                with open(self.cluster_path) as f:
+                    s = f.read()
+                with open(self.cluster_path, "w") as f:
+                    for replace_pair in address_replace_list:
+                        s = s.replace(replace_pair[0], replace_pair[1], 1)
+                    f.write(s)
         else:
             with open(self.generated_cloud_config_path) as f:
                 self.deployed_infra = json.load(f)
-            clusters = self.infra_spec.infrastructure_clusters
-            clients = self.infra_spec.infrastructure_clients
-            sgws = self.infra_spec.infrastructure_syncgateways
-            utilities = self.infra_spec.infrastructure_utilities
             backup = self.infra_spec.backup
             node_group_ips = {}
             for node_group_name, ec2_dict in self.deployed_infra['vpc']['ec2'].items():

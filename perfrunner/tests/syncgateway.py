@@ -22,7 +22,7 @@ from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.profiler import ProfilerHelper, with_profiles
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
-from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.rest import SGW_ADMIN_PORT, SGW_PUBLIC_PORT, RestHelper
 from perfrunner.helpers.worker import (
     WorkerManager,
     pillowfight_data_load_task,
@@ -73,11 +73,7 @@ class SGPerfTest(PerfTest):
     LOCAL_DIR = "YCSB"
     CBLITE_LOG_DIR = "cblite_logs"
 
-    def __init__(self,
-                 cluster_spec: ClusterSpec,
-                 test_config: TestConfig,
-                 verbose: bool):
-        self.dynamic_infra = False
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
@@ -110,6 +106,20 @@ class SGPerfTest(PerfTest):
             self.collection_map = self.test_config.collection.collection_map
         else:
             self.collection_map = {}
+
+        # If we dont move to headless service for syncgateway, maybe move this to
+        # rest helper in the future
+        self.admin_port = SGW_ADMIN_PORT
+        self.public_port = SGW_PUBLIC_PORT
+        self.memcached_port = "8000"
+        if self.dynamic_infra:
+            _, self.admin_port = self.rest.translate_host_and_port(
+                self.sgw_master_node, SGW_ADMIN_PORT
+            )
+            _, self.public_port = self.rest.translate_host_and_port(
+                self.sgw_master_node, SGW_PUBLIC_PORT
+            )
+            self.memcached_port = "11211"
 
     def enable_log_streaming(self, collector: str):
 
@@ -197,19 +207,26 @@ class SGPerfTest(PerfTest):
         if target_iterator is None:
             target_iterator = self.target_iterator
         logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
+        settings.admin_port = self.admin_port
+        settings.public_port = self.public_port
+        settings.memcached_port = self.memcached_port
+
         self.worker_manager.run_sg_tasks(task, settings, target_iterator, timer, distribute, phase)
         if wait:
             self.worker_manager.wait_for_fg_tasks()
 
     def start_memcached(self):
-        self.run_sg_phase(
-            phase="start memcached",
-            task=syncgateway_task_start_memcached,
-            settings=self.settings,
-            target_iterator=None,
-            timer=self.settings.time,
-            distribute=False
-        )
+        if self.dynamic_infra:
+            self.remote.start_memcached()
+        else:
+            self.run_sg_phase(
+                phase="start memcached",
+                task=syncgateway_task_start_memcached,
+                settings=self.settings,
+                target_iterator=None,
+                timer=self.settings.time,
+                distribute=False,
+            )
 
     @with_stats
     def load_users(self):
@@ -367,6 +384,11 @@ class SGPerfTest(PerfTest):
 
         too_many_warnings = self.check_num_warnings()
 
+        if self.dynamic_infra:
+            if too_many_warnings:
+                raise Exception(f"Too many warnings: {too_many_warnings}")
+            return
+
         if self.settings.syncgateway_settings.collect_sgw_logs or too_many_warnings:
             self.compress_sg_logs()
             self.get_sg_logs()
@@ -375,7 +397,7 @@ class SGPerfTest(PerfTest):
             self.get_sg_console()
 
         if too_many_warnings:
-            raise Exception("Too many warnings: {}".format(too_many_warnings))
+            raise Exception(f"Too many warnings: {too_many_warnings}")
 
 
 class SGLoad(SGPerfTest):
@@ -713,7 +735,7 @@ class SGImportThroughputTest(SGPerfTest):
 
     @with_stats
     @with_profiles
-    def monitor_sg_import_multinode(self, phase: str):
+    def monitor_sg_import_multinode(self, phase: str, timeout: int = 1200, sleep_delay: int = 2):
         expected_docs = self.test_config.load_settings.items * self.test_config.cluster.num_buckets
         if phase == 'access':
             expected_docs = expected_docs * 2
@@ -730,7 +752,7 @@ class SGImportThroughputTest(SGPerfTest):
         start_time = time()
 
         while importing:
-            sleep(2)
+            sleep(sleep_delay)
             total_count = 0
             for i in range(self.test_config.syncgateway_settings.import_nodes):
                 server = self.cluster_spec.sgw_servers[i]
@@ -739,8 +761,8 @@ class SGImportThroughputTest(SGPerfTest):
                 total_count += import_count
             if total_count >= expected_docs:
                 importing = False
-            if time() - start_time > 1200:
-                raise Exception("timeout of 1200 exceeded")
+            if time() - start_time > timeout:
+                raise Exception(f"timeout of {timeout} exceeded")
 
         end_time = time()
 
@@ -759,8 +781,7 @@ class SGImportThroughputTest(SGPerfTest):
             time_elapsed_load, items_in_range_load = \
                 self.monitor_sg_import(phase='load')
         else:
-            time_elapsed_load, items_in_range_load = \
-                self.monitor_sg_import_multinode(phase='load')
+            time_elapsed_load, items_in_range_load = self.monitor_sg_import_multinode(phase="load")
 
         if items_in_range_load == 0:
             time_elapsed_load = time() - t0
@@ -772,8 +793,9 @@ class SGImportThroughputTest(SGPerfTest):
             time_elapsed_access, items_in_range_access = \
                 self.monitor_sg_import(phase='access')
         else:
-            time_elapsed_access, items_in_range_access = \
-                self.monitor_sg_import_multinode(phase='access')
+            time_elapsed_access, items_in_range_access = self.monitor_sg_import_multinode(
+                phase="access"
+            )
 
         self.report_kpi(time_elapsed_load, items_in_range_load,
                         time_elapsed_access, items_in_range_access)

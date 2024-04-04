@@ -431,6 +431,29 @@ class CAOWorkerFile(CAOFiles):
         )
 
 
+class CAOSyncgatewayDeploymentFile(CAOFiles):
+    """Deployment setup for syncgateway.
+
+    It configures:
+    - Syncgateway bootstrap configuration as a k8s secret
+    - Syncgateway deployment
+    - Syncgateway service
+    """
+
+    def __init__(self, syncgateway_image: str, node_count: int):
+        super().__init__("syncgateway_template", "")
+        self.syncgateway_image = syncgateway_image
+        self.node_count = node_count
+
+    def configure_sgw(self):
+        for config in self.all_configs:
+            if config["kind"] == "Deployment":
+                config["spec"]["template"]["spec"]["containers"][0][
+                    "image"
+                ] = self.syncgateway_image
+                config["spec"]["replicas"] = self.node_count
+
+
 class TimeTrackingFile(ConfigFile):
     """File for tracking time taken for resource management operations during a test.
 
@@ -441,4 +464,4 @@ class TimeTrackingFile(ConfigFile):
     """
 
     def __init__(self):
-        super().__init__('timings.json', FileType.JSON)
+        super().__init__("timings.json", FileType.JSON)

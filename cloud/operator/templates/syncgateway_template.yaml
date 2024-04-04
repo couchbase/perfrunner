@@ -1,0 +1,102 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sync-gateway
+stringData:
+  config.json: |-
+    {
+      "disable_persistent_config": true,
+      "server_tls_skip_verify": true,
+      "use_tls_server": false,
+      "admin_interface_authentication": false,
+      "metrics_interface_authentication": false,
+      "adminInterface": "0.0.0.0:4985",
+      "logging": {
+        "console": {
+          "enabled": true,
+          "log_level": "info",
+          "log_keys": [
+            "*"
+          ]
+        }
+      },
+      "databases": {
+        "db-1": {
+          "server": "couchbase://cb-example-perf-srv?network=default",
+          "bucket": "bucket-1",
+          "username": "Administrator",
+          "password": "password",
+          "users": {
+            "GUEST": {
+              "disabled": false,
+              "admin_channels": [
+                "*"
+              ]
+            }
+          },
+          "allow_conflicts": false,
+          "revs_limit": 20,
+          "enable_shared_bucket_access": true
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sync-gateway
+spec:
+  replicas: NODE_COUNT
+  selector:
+    matchLabels:
+      app: sync-gateway
+  template:
+    metadata:
+      labels:
+        app: sync-gateway
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: sync-gateway
+          image: IMAGE_TAG
+          volumeMounts:
+            - name: config
+              mountPath: /etc/sync_gateway
+              readOnly: true
+          ports:
+            - name: http-api
+              containerPort: 4984
+            - name: admin-api
+              containerPort: 4985
+            - name: http-metrics
+              containerPort: 4986
+      nodeSelector:
+        NodeRoles: syncgateways1
+      volumes:
+        - name: config
+          secret:
+            secretName: sync-gateway
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: syncgateway-service
+spec:
+  selector:
+    app: sync-gateway
+  ports:
+    - protocol: TCP
+      name: rest
+      port: 4984
+      targetPort: 4984
+    - protocol: TCP
+      name: admin
+      port: 4985
+      targetPort: 4985
+    - protocol: TCP
+      name: metrics
+      port: 4986
+      targetPort: 4986
+  type: NodePort

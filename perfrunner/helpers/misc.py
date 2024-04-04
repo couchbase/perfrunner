@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import time
 from dataclasses import dataclass
@@ -289,6 +290,23 @@ def parse_prometheus_stat(stats, stat_name: str):
 def create_build_tuple(build_str: str) -> tuple[int]:
     """Take a build string like '1.2.3-5678' and return corresponding tuple (1, 2, 3, 5678)."""
     return tuple(int(n) for n in re.split('\\.|-', build_str))
+
+
+def lookup_address(address: Union[bytes, str], port: Union[bytes, str, int] = None) -> list[str]:
+    """Resolve address and port combination into a list of IP adresses.
+
+    Rationale:
+       - Keep syncgateway, memcached and rabbitmq services headless and simplify
+         functionality to get pod IP in k8s deployment.
+       - Provide a lightweight unified way of resolving adresses, both external and internal to k8s.
+       - Avoid running nslookup, as it may not exist on a machine where this code is running.
+
+    Note: For this to work in a k8s internal deployment, it should be called from code
+    running inside a k8s cluster. For extrenal deployment, this will work from anywhere
+    where the ingress is accessible.
+    """
+    entries = socket.getaddrinfo(address, port)
+    return [entry[-1][0] for entry in entries]
 
 
 class SSLCertificate:

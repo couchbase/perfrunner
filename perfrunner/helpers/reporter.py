@@ -89,7 +89,7 @@ class ShowFastReporter(Reporter):
                 build_str = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + build_str
                 logger.info('build: {}'.format(self.build))
 
-        if self.cluster_spec.capella_infrastructure and \
+        if self.cluster_spec.has_any_capella and \
            self.test_config.cluster.show_cp_version:
             build_str = build_str + ' : ' + self.rest.get_cp_version()
 

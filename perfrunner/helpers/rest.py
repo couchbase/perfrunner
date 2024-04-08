@@ -50,8 +50,6 @@ SGW_APPSERVICE_METRICS_PORT = 4988
 ELASTICSEARCH_REST_PORT = 9200
 ELASTICSEARCH_REST_PORT_SSL = 19200
 
-GOLDFISH_NEBULA_ANALYTICS_PORT = 18001
-
 
 @decorator
 def retry(method: Callable, *args, **kwargs):
@@ -99,7 +97,7 @@ class RestBase:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.use_tls = test_config.cluster.enable_n2n_encryption or \
-            self.cluster_spec.capella_infrastructure
+            self.cluster_spec.has_any_capella
 
     def _set_auth(self, kwargs: dict) -> Tuple[str, str]:
         if (auth := kwargs.pop('auth', None)):
@@ -160,13 +158,6 @@ class DefaultRestHelper(RestBase):
 
     def __init__(self, cluster_spec, test_config):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
-
-    def hostname_rest_creds(self, host: str) -> Tuple[str, str]:
-        for _, nodes in self.cluster_spec.capella_columnar_instances:
-            if host in nodes:
-                return tuple(self.cluster_spec.goldfish_nebula_credentials[0])
-
-        return self.rest_username, self.rest_password
 
     def set_data_path(self, host: str, path: str):
         logger.info('Configuring data path on {}'.format(host))
@@ -975,14 +966,6 @@ class DefaultRestHelper(RestBase):
         cmd = "curl -v -u {}:{} -H \"Content-Type: application/json\" -d '{}' {}".\
             format(self.rest_username, self.rest_password, data_json, url)
         return local(cmd, capture=True)
-
-    def exec_analytics_statement_goldfish_nebula(self, endpoint: str,
-                                                 statement: str) -> requests.Response:
-        api = 'https://{}:{}/analytics/service'.format(endpoint, GOLDFISH_NEBULA_ANALYTICS_PORT)
-        data = {
-            'statement': statement
-        }
-        return self.post(url=api, data=data)
 
     def get_analytics_stats(self, analytics_node: str) -> dict:
         url = self._get_api_url(host=analytics_node, path='analytics/node/stats',

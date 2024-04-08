@@ -317,7 +317,13 @@ class ClusterSpec(Config):
 
     @property
     def capella_columnar_instance_ids(self) -> dict[str, str]:
-        if (section := 'cb.capella.columnar.id') in self.config:
+        if (section := 'cb.capella.columnar.instance.id') in self.config:
+            return dict(self.config.items(section))
+        return {}
+
+    @property
+    def capella_columnar_cluster_ids(self) -> dict[str, str]:
+        if (section := 'cb.capella.columnar.cluster.id') in self.config:
             return dict(self.config.items(section))
         return {}
 
@@ -734,13 +740,6 @@ class ClusterSpec(Config):
         return {}
 
     @property
-    def goldfish_nebula_credentials(self) -> List[List[str]]:
-        return [
-            creds.split(':')
-            for creds in self.config.get('credentials', 'goldfish_nebula', fallback='').split()
-        ]
-
-    @property
     def ssh_credentials(self) -> List[str]:
         return self.config.get('credentials', 'ssh').split(':')
 
@@ -777,7 +776,7 @@ class ClusterSpec(Config):
             pwds = {'provisioned': {}, 'serverless': {}, 'columnar': {}}
             cluster_ids = [self.capella_provisioned_cluster_ids,
                            self.capella_serverless_cluster_ids,
-                           self.capella_columnar_instance_ids]
+                           self.capella_columnar_cluster_ids]
 
             for k, cluster_id_map in zip(pwds.keys(), cluster_ids):
                 if not cluster_id_map:

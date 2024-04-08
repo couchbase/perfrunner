@@ -513,7 +513,7 @@ class ClientInstaller:
         # Check if we are using Capella to avoid evaluating the server version if we are using
         # Capella Columnar, as the "self.rest.get_version(...)" method doesn't work for
         # Capella Columnar yet...
-        mb45563_is_hit = ((not self.cluster_spec.capella_infrastructure) and
+        mb45563_is_hit = ((not self.cluster_spec.has_any_capella) and
                           self.cb_version >= (7, 1, 0, 1745) and
                           self.cb_version < (7, 1, 0, 1807))
 

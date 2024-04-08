@@ -1097,7 +1097,6 @@ def create_remote_link(
     username: str,
     password: str,
     use_secure_port: bool = False,
-    goldfish_nebula: bool = False,
     data_node_username: Optional[str] = None,
     data_node_password: Optional[str] = None
 ):
@@ -1109,9 +1108,6 @@ def create_remote_link(
     if use_secure_port:
         analytics_baseurl = 'https://{}:18095'.format(analytics_node)
         data_node_hostname = '{}:18091'.format(data_node)
-
-    if goldfish_nebula:
-        analytics_baseurl = 'https://{}:18001'.format(analytics_node)
 
     data_node_username = data_node_username or username
     data_node_password = data_node_password or password
@@ -1126,7 +1122,7 @@ def create_remote_link(
         'encryption': 'none'
     }
 
-    if use_secure_port or goldfish_nebula:
+    if use_secure_port:
         params['encryption'] = 'full'
         with open('root.pem', 'r') as f:
             params['certificate'] = f.read()
@@ -1134,7 +1130,8 @@ def create_remote_link(
     resp = requests.post(
         url='{}/analytics/link'.format(analytics_baseurl),
         auth=(username, password),
-        data=params
+        data=params,
+        verify=False
     )
 
     try:
@@ -1614,7 +1611,7 @@ def set_up_s3_link(username: str, password: str, baseurl: str, external_dataset_
                    external_dataset_region: str, access_key: str, secret_access_key: str):
     logger.info('Create analytics external link')
 
-    cmd = "curl -v -u {}:{} " \
+    cmd = "curl -v -k -u {}:{} " \
           "-X POST {}/analytics/link " \
           "-d dataverse=Default " \
           "-d name=external_link " \

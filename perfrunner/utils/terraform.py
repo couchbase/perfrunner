@@ -588,7 +588,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                                             self.test_config.cluster.initial_nodes)
             }
 
-        self.api_client = CapellaAPIDedicated(
+        self.provisioned_api = CapellaAPIDedicated(
             'https://cloudapi.{}.nonprod-project-avengers.com'.format(
                 self.cluster_spec.controlplane_settings['env']
             ),
@@ -608,8 +608,8 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                 access_key = creds.get('access')
                 secret_key = creds.get('secret')
 
-        self.api_client.ACCESS = access_key
-        self.api_client.SECRET = secret_key
+        self.provisioned_api.ACCESS = access_key
+        self.provisioned_api.SECRET = secret_key
 
         self.org_id = self.cluster_spec.controlplane_settings['org']
         self.project_id = self.cluster_spec.controlplane_settings['project']
@@ -658,7 +658,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         while pending_clusters and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            resp = self.api_client.get_clusters({'projectId': self.project_id, 'perPage': 100})
+            resp = self.provisioned_api.get_clusters({'projectId': self.project_id, 'perPage': 100})
             raise_for_status(resp)
 
             pending_clusters = []
@@ -802,7 +802,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             if release_id := self.options.release_id:
                 config['overRide'].update({'releaseId': release_id})
 
-            resp = self.api_client.create_cluster_customAMI(self.org_id, config)
+            resp = self.provisioned_api.create_cluster_customAMI(self.org_id, config)
             raise_for_status(resp)
             cluster_id = resp.json().get('id')
             self.cluster_ids[label] = cluster_id
@@ -822,7 +822,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
             statuses = []
             for cluster_id in pending_clusters:
-                status = self.api_client.get_cluster_status(cluster_id).json().get('status')
+                status = self.provisioned_api.get_cluster_status(cluster_id).json().get('status')
                 logger.info('Cluster state for {}: {}'.format(cluster_id, status))
                 if status == 'deploymentFailed':
                     logger.error('Deployment failed for cluster {}. DataDog link for debugging: {}'
@@ -844,23 +844,23 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
     def destroy_clusters(self):
         for cluster_id in self.cluster_ids.values():
             logger.info('Deleting Capella cluster {}...'.format(cluster_id))
-            resp = self.api_client.delete_cluster(cluster_id)
+            resp = self.provisioned_api.delete_cluster(cluster_id)
             raise_for_status(resp)
             logger.info('Capella cluster successfully queued for deletion.')
 
     def get_available_cidr(self):
-        resp = self.api_client.get_deployment_options(self.org_id,
-                                                      self.cluster_spec.cloud_provider.lower())
+        resp = self.provisioned_api.get_deployment_options(self.org_id,
+                                                           self.cluster_spec.cloud_provider.lower())
         return resp.json().get('suggestedCidr')
 
     def get_deployed_cidr(self, cluster_id):
-        resp = self.api_client.get_cluster_info(cluster_id)
+        resp = self.provisioned_api.get_cluster_info(cluster_id)
         return resp.json().get('place', {}).get('CIDR')
 
     def get_hostnames(self, cluster_id):
-        resp = self.api_client.get_nodes(tenant_id=self.org_id,
-                                         project_id=self.project_id,
-                                         cluster_id=cluster_id)
+        resp = self.provisioned_api.get_nodes(tenant_id=self.org_id,
+                                              project_id=self.project_id,
+                                              cluster_id=cluster_id)
         nodes = resp.json()['data']
         nodes = [node['data'] for node in nodes]
         services_per_node = {node['hostname']: node['services'] for node in nodes}
@@ -890,7 +890,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         self.cluster_spec.update_config_file()
 
     def disable_autoscaling(self):
-        if self.api_client.TOKEN_FOR_INTERNAL_SUPPORT is None:
+        if self.provisioned_api.TOKEN_FOR_INTERNAL_SUPPORT is None:
             logger.error('Cannot create circuit breaker to prevent auto-scaling. No value found '
                          'for CBC_TOKEN_FOR_INTERNAL_SUPPORT, so cannot authenticate with CP API.')
             return
@@ -901,10 +901,10 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                 .format(cluster_id)
             )
 
-            resp = self.api_client.create_circuit_breaker(cluster_id)
+            resp = self.provisioned_api.create_circuit_breaker(cluster_id)
             raise_for_status(resp)
 
-            resp = self.api_client.get_circuit_breaker(cluster_id)
+            resp = self.provisioned_api.get_circuit_breaker(cluster_id)
             raise_for_status(resp)
 
             logger.info('Circuit breaker created: {}'.format(pretty_dict(resp.json())))
@@ -953,13 +953,13 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         peering_connection_id = None
 
         try:
-            resp = self.api_client.create_private_network(
+            resp = self.provisioned_api.create_private_network(
                 self.org_id, self.project_id, cluster_id, data)
             private_network_id = resp.json()['id']
 
             # Get AWS CLI commands that we need to run to complete the peering process
             logger.info('Accepting peering request')
-            resp = self.api_client.get_private_network(
+            resp = self.provisioned_api.get_private_network(
                 self.org_id, self.project_id, cluster_id, private_network_id)
             aws_commands = resp.json()['data']['commands']
             peering_connection_id = resp.json()['data']['aws']['providerId']
@@ -1010,13 +1010,13 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         dns_managed_zone_name = None
 
         try:
-            resp = self.api_client.create_private_network(
+            resp = self.provisioned_api.create_private_network(
                 self.org_id, self.project_id, cluster_id, data)
             private_network_id = resp.json()['id']
 
             # Get gcloud commands that we need to run to complete the peering process
             logger.info('Accepting peering request')
-            resp = self.api_client.get_private_network(
+            resp = self.provisioned_api.get_private_network(
                 self.org_id, self.project_id, cluster_id, private_network_id)
             gcloud_commands = resp.json()['data']['commands']
 
@@ -1825,7 +1825,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
             self.cluster_spec.config.set('infrastructure', 'cbc_env', env)
             self.cluster_spec.update_config_file()
 
-        self.api_client = CapellaAPIColumnar(
+        api_client_args = (
             'https://cloudapi.{}.nonprod-project-avengers.com'.format(
                 self.cluster_spec.controlplane_settings['env']
             ),
@@ -1835,6 +1835,9 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
             os.getenv('CBC_PWD'),
             os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
         )
+
+        self.columnar_api = CapellaAPIColumnar(*api_client_args)
+        self.provisioned_api = CapellaAPIDedicated(*api_client_args)
 
         self.org_id = self.cluster_spec.controlplane_settings['org']
         self.project_id = self.cluster_spec.controlplane_settings['project']
@@ -1853,7 +1856,8 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
         if len(names) > 1:
             names = ['{}-{}'.format(name, i) for i, name in enumerate(names)]
 
-        self.cluster_spec.config.add_section('cb.capella.columnar.id')
+        self.cluster_spec.config.add_section('cb.capella.columnar.instance.id')
+        self.cluster_spec.config.add_section('cb.capella.columnar.cluster.id')
 
         for name, (label, nodes) in zip(names,
                                         self.cluster_spec.capella_columnar_instances):
@@ -1866,8 +1870,8 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
             }
 
             logger.info('Deploying Goldfish instance with config: {}'.format(pretty_dict(config)))
-            resp = self.api_client.create_columnar_instance(self.org_id, self.project_id,
-                                                            **config)
+            resp = self.columnar_api.create_columnar_instance(self.org_id, self.project_id,
+                                                              **config)
             raise_for_status(resp)
 
             instance_id = resp.json().get('id')
@@ -1875,7 +1879,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
 
             logger.info('Initialised Goldfish instance deployment {}'.format(instance_id))
             logger.info('Saving Goldfish instance ID to spec file.')
-            self.cluster_spec.config.set('cb.capella.columnar.id', label, instance_id)
+            self.cluster_spec.config.set('cb.capella.columnar.instance.id', label, instance_id)
             self.cluster_spec.update_config_file()
 
         timeout_mins = self.capella_timeout
@@ -1888,11 +1892,11 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
 
             statuses = []
             for instance_id in pending_instances:
-                resp = self.api_client.get_specific_columnar_instance(self.org_id,
-                                                                      self.project_id,
-                                                                      instance_id)
+                resp = self.columnar_api.get_specific_columnar_instance(self.org_id,
+                                                                        self.project_id,
+                                                                        instance_id)
                 raise_for_status(resp)
-                status = resp.json()['state']
+                status = resp.json()['data']['state']
                 logger.info('Instance state for {}: {}'.format(instance_id, status))
                 if status == 'deploy_failed':
                     logger.error('Deployment failed for Goldfish instance {}.'.format(instance_id))
@@ -1917,8 +1921,8 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
     def destroy_goldfish_instances(self):
         for instance_id in self.instance_ids.values():
             logger.info('Deleting Goldfish instance {}...'.format(instance_id))
-            resp = self.api_client.delete_columnar_instance(self.org_id, self.project_id,
-                                                            instance_id)
+            resp = self.columnar_api.delete_columnar_instance(self.org_id, self.project_id,
+                                                              instance_id)
             raise_for_status(resp)
             logger.info('Goldfish instance successfully queued for deletion.')
 
@@ -1932,7 +1936,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
         while pending_instances and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            resp = self.api_client.get_columnar_instances(self.org_id, self.project_id)
+            resp = self.columnar_api.get_columnar_instances(self.org_id, self.project_id)
             raise_for_status(resp)
 
             pending_instances = []
@@ -1952,47 +1956,19 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
 
         This includes:
         - Hostnames for compute nodes
-        - Nebula endpoints
-        - API keys
+        - Cluster IDs (distinct from the "instance" ID)
         """
-        if not self.cluster_spec.config.has_section('goldfish_nebula'):
-            self.cluster_spec.config.add_section('goldfish_nebula')
-
-        nebula_creds = []
-        cb_versions = []
-
         for label, instance_id in self.instance_ids.items():
-            nodes = self.cluster_spec.capella_columnar_instances_raw[label].strip().split()
-            hostnames = [
-                'multinodeapi-{}.{}.{}.aws.omnistrate.cloud:kv,cbas'.format(
-                    x, instance_id, self.region
-                )
-                for x, _ in enumerate(nodes)
-            ]
+            resp = self.columnar_api.get_specific_columnar_instance(self.org_id, self.project_id,
+                                                                    instance_id)
+            cluster_id = resp.json()['data']['config']['clusterId']
+            logger.info(f'Cluster ID for instance {instance_id}: {cluster_id}')
+            self.cluster_spec.config.set('cb.capella.columnar.cluster.id', label, cluster_id)
+
+            hostnames = self.get_hostnames(cluster_id)
+            logger.info(f'Cluster nodes for instance {instance_id}: {pretty_dict(hostnames)}')
             self.cluster_spec.config.set('cb.capella.columnar', label, '\n' + '\n'.join(hostnames))
 
-            resp = self.api_client.get_specific_columnar_instance(self.org_id, self.project_id,
-                                                                  instance_id)
-            raise_for_status(resp)
-            nebula_endpoint = resp.json()['config']['endpoint']
-            logger.info('Nebula endpoint for {}: {}'.format(instance_id, nebula_endpoint))
-            self.cluster_spec.config.set('goldfish_nebula', label, nebula_endpoint)
-
-            cb_version = resp.json()['config']['version']['server']
-            logger.info('Couchbase Server version for {}: {}'.format(instance_id, cb_version))
-            cb_versions.append(cb_version)
-
-            logger.info('Generating API keys for {}...'.format(instance_id))
-            resp = self.api_client.create_api_keys(self.org_id, self.project_id, instance_id)
-            raise_for_status(resp)
-            key_id, key_secret = resp.json()['apikeyId'], resp.json()['secret']
-            logger.info('API key ID for {}: {}'.format(instance_id, key_id))
-            nebula_creds.append('{}:{}'.format(key_id, key_secret))
-
-        self.cluster_spec.config.set('credentials', 'goldfish_nebula',
-                                   '\n'.join(nebula_creds).replace('%', '%%'))
-        self.cluster_spec.config.set('infrastructure', 'goldfish_cb_versions',
-                                     '\n'.join(cb_versions))
         self.cluster_spec.update_config_file()
 
 

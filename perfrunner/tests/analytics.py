@@ -3,8 +3,6 @@ import random
 import time
 from typing import List, Tuple
 
-import requests
-
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -14,7 +12,6 @@ from perfrunner.helpers.rest import (
     ANALYTICS_PORT_SSL,
     FTS_PORT,
     FTS_PORT_SSL,
-    GOLDFISH_NEBULA_ANALYTICS_PORT,
     QUERY_PORT,
     QUERY_PORT_SSL,
 )
@@ -477,26 +474,9 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
 
         self.is_capella_goldfish = self.cluster_spec.has_capella_columnar
 
-        if self.is_capella_goldfish:
-            self.nebula_endpoint = self.cluster_spec.config.items('goldfish_nebula')[0][1]
-            self.rest.rest_username, self.rest.rest_password = \
-                self.cluster_spec.goldfish_nebula_credentials[0]
-            cb_version = \
-                self.cluster_spec.infrastructure_settings['goldfish_cb_versions'].split()[0]
-            version_number, build_number = cb_version.split('-')
-            self.cb_build_tuple = tuple(map(int, version_number.split('.'))) + (int(build_number),)
-        else:
-            self.cb_build_tuple = self.cluster.build_tuple
-
         self.analytics_node = self.analytics_nodes[0]
 
         self.QUERIES = self.analytics_settings.queries
-
-    def exec_analytics_statement(self, statement: str) -> requests.Response:
-        if self.is_capella_goldfish:
-            return self.rest.exec_analytics_statement_goldfish_nebula(self.nebula_endpoint,
-                                                                      statement)
-        return self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     def set_up_s3_link(self):
         external_dataset_type = self.analytics_settings.external_dataset_type
@@ -504,11 +484,8 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         access_key_id, secret_access_key =\
             local.get_aws_credential(self.analytics_settings.aws_credential_path)
 
-        if self.is_capella_goldfish:
-            baseurl = 'https://{}:{}'.format(self.nebula_endpoint, GOLDFISH_NEBULA_ANALYTICS_PORT)
-        else:
-            baseurl = self.rest._get_api_url(self.analytics_node, '',
-                                             ANALYTICS_PORT, ANALYTICS_PORT_SSL)
+        baseurl = self.rest._get_api_url(self.analytics_node, '', ANALYTICS_PORT,
+                                         ANALYTICS_PORT_SSL)
 
         local.set_up_s3_link(self.rest.rest_username, self.rest.rest_password, baseurl,
                              external_dataset_type, external_dataset_region,
@@ -522,7 +499,7 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         for dataset in dataset_list:
             statement = "CREATE DATASET `{}` PRIMARY KEY (`key`: string)".format(dataset["Dataset"])
             logger.info("statement: {}".format(statement))
-            self.exec_analytics_statement(statement)
+            self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     @with_stats
     @timeit
@@ -536,7 +513,10 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         external_bucket = self.analytics_settings.external_bucket
         file_format = self.analytics_settings.external_file_format
         file_include = self.analytics_settings.external_file_include
-        path_keyword = 'USING' if self.cb_build_tuple < (8, 0, 0, 1452) else 'PATH'
+        if not self.is_capella_goldfish and self.cluster.build_tuple < (8, 0, 0, 1452):
+            path_keyword = 'USING'
+        else:
+            path_keyword = 'PATH'
 
         for dataset in dataset_list:
             statement = (
@@ -553,17 +533,13 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
             logger.info("statement: {}".format(statement))
 
             t0 = time.time()
-            self.exec_analytics_statement(statement)
+            self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info('Statement execution time: {}'.format(time.time() - t0))
 
     @with_stats
     def access(self) -> List[QueryLatencyPair]:
-        if self.is_capella_goldfish:
-            nodes = [self.nebula_endpoint]
-            query_method = QueryMethod.PYTHON_GOLDFISH_NEBULA
-        else:
-            nodes = self.analytics_nodes
-            query_method = QueryMethod.CURL_CBAS
+        nodes = self.analytics_nodes
+        query_method = QueryMethod.CURL_CBAS
 
         logger.info("analytics_nodes = {}".format(nodes))
         results = bigfun(self.rest,
@@ -1156,9 +1132,6 @@ class CH2Test(PerfTest):
             query_port = QUERY_PORT
             cbas_port = ANALYTICS_PORT
 
-        if self.test_config.has_capella_columnar:
-            cbas_port = GOLDFISH_NEBULA_ANALYTICS_PORT
-
         query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
         userid, password = self.cluster_spec.rest_credentials
 
@@ -1396,18 +1369,14 @@ class CH2CapellaGoldfishTest(CH2CloudRemoteLinkTest):
         self.analytics_link = self.test_config.analytics_settings.analytics_link
         self.data_node = next(self.cluster_spec.capella_provisioned_masters)
         self.analytics_node = next(self.cluster_spec.capella_columnar_masters)
-        self.nebula_endpoint = self.cluster_spec.config.items('goldfish_nebula')[0][1]
-        self.nebula_username, self.nebula_password = \
-            self.cluster_spec.goldfish_nebula_credentials[0]
+        self.analytics_cluster_username, self.analytics_cluster_password = \
+            next(iter(self.cluster_spec.capella_columnar_admin_credentials.values()))
         self.data_cluster_username, self.data_cluster_password = \
             next(iter(self.cluster_spec.capella_provisioned_admin_credentials.values()))
 
         self.analytics_statements = self.test_config.ch2_settings.analytics_statements
         self.storage_format = self.test_config.analytics_settings.storage_format
         self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
-
-    def exec_analytics_statement(self, statement: str) -> requests.Response:
-        return self.rest.exec_analytics_statement_goldfish_nebula(self.nebula_endpoint, statement)
 
     def wait_for_persistence(self):
         for bucket in self.test_config.buckets:
@@ -1417,17 +1386,15 @@ class CH2CapellaGoldfishTest(CH2CloudRemoteLinkTest):
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         query_port = QUERY_PORT_SSL
-        nebula_port = GOLDFISH_NEBULA_ANALYTICS_PORT
-
         query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
         userid, password = self.cluster_spec.rest_credentials
 
         return CH2ConnectionSettings(
             userid=userid,
             password=password,
-            userid_analytics=self.nebula_username,
-            password_analytics=self.nebula_password,
-            analytics_url='{}:{}'.format(self.nebula_endpoint, nebula_port),
+            userid_analytics=self.analytics_cluster_username,
+            password_analytics=self.analytics_cluster_password,
+            analytics_url='{}:{}'.format(self.analytics_node, ANALYTICS_PORT_SSL),
             query_url=query_urls[0],
             multi_query_url=",".join(query_urls),
             data_url=self.data_nodes[0],
@@ -1477,11 +1444,10 @@ class CH2CapellaGoldfishTest(CH2CloudRemoteLinkTest):
         local.create_remote_link(
             self.analytics_link,
             self.data_node,
-            self.nebula_endpoint,
-            self.nebula_username,
-            self.nebula_password,
+            self.analytics_node,
+            self.analytics_cluster_username,
+            self.analytics_cluster_password,
             use_secure_port=True,
-            goldfish_nebula=True,
             data_node_username=self.data_cluster_username,
             data_node_password=self.data_cluster_password
         )
@@ -1625,10 +1591,7 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
 
         self.num_items = sum(self.docs_per_collection.values())
 
-        self.is_capella_goldfish = self.cluster_spec.capella_infrastructure and \
-            self.cluster_spec.goldfish_infrastructure
-
-        if self.is_capella_goldfish:
+        if self.cluster_spec.has_capella_columnar:
             self.COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
 
     def count_collection_docs_mongodb(self, collection: str) -> int:
@@ -1693,7 +1656,7 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
             self.report_kpi(data_ingest_time)
         finally:
             if self.kafka_link_connected:
-                if not self.is_capella_goldfish:
+                if not self.cluster_spec.has_capella_columnar:
                     logger.info('Getting Connector ARNs to be able to look up logs')
                     if not self.cluster.get_msk_connect_connector_arns():
                         logger.warn('Failed to get Kafka Connect connector ARNs')

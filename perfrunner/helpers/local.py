@@ -1091,7 +1091,7 @@ def cbepctl(master_node: str, cluster_spec: ClusterSpec, bucket: str,
 
 def create_remote_link(analytics_link, data_node, analytics_node, username, password):
     logger.info('Create analytics remote link')
-    cmd = "curl -v -u {}:{} " \
+    cmd = "curl -v -k -u {}:{} " \
           "-X POST http://{}:8095/analytics/link " \
           "-d dataverse=Default " \
           "-d name={} " \
@@ -1573,7 +1573,7 @@ def set_up_s3_link(username: str, password: str, baseurl: str, external_dataset_
                    external_dataset_region: str, access_key: str, secret_access_key: str):
     logger.info('Create analytics external link')
 
-    cmd = "curl -v -u {}:{} " \
+    cmd = "curl -v -k -u {}:{} " \
           "-X POST {}/analytics/link " \
           "-d dataverse=Default " \
           "-d name=external_link " \

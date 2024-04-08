@@ -574,13 +574,6 @@ class ClusterSpec(Config):
         ]
 
     @property
-    def goldfish_nebula_credentials(self) -> List[List[str]]:
-        return [
-            creds.split(':')
-            for creds in self.config.get('credentials', 'goldfish_nebula', fallback='').split()
-        ]
-
-    @property
     def ssh_credentials(self) -> List[str]:
         return self.config.get('credentials', 'ssh').split(':')
 

@@ -16,8 +16,6 @@ from perfrunner.workloads.bigfun.query_gen import Query, new_queries
 class QueryMethod(Enum):
     PYTHON_CBAS = auto()
     CURL_CBAS = auto()
-    PYTHON_GOLDFISH_NEBULA = auto()
-
 
 def store_metrics(statement: str, metrics: dict):
     with open('bigfun.log', 'a') as fh:
@@ -43,14 +41,6 @@ def run_query_external(rest: RestHelper, node: str, query: Query) -> float:
     return latency
 
 
-def run_query_goldfish_nebula(rest: RestHelper, endpoint: str, query: Query) -> float:
-    t0 = time.time()
-    response = rest.exec_analytics_statement_goldfish_nebula(endpoint, query.statement)
-    latency = time.time() - t0  # Latency in seconds
-    store_metrics(query.statement, response.json()['metrics'])
-    return latency
-
-
 def run_concurrent_queries(rest: RestHelper,
                            nodes: List[str],
                            query: Query,
@@ -60,9 +50,7 @@ def run_concurrent_queries(rest: RestHelper,
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
         nodes = cycle(nodes)
 
-        if query_method == QueryMethod.PYTHON_GOLDFISH_NEBULA:
-            run_query_fn = run_query_goldfish_nebula
-        elif query_method == QueryMethod.CURL_CBAS:
+        if query_method == QueryMethod.CURL_CBAS:
             run_query_fn = run_query_external
         else:
             run_query_fn = run_query

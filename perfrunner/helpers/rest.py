@@ -46,8 +46,6 @@ SGW_APPSERVICE_METRICS_PORT = 4988
 ELASTICSEARCH_REST_PORT = 9200
 ELASTICSEARCH_REST_PORT_SSL = 19200
 
-GOLDFISH_NEBULA_ANALYTICS_PORT = 18001
-
 
 @decorator
 def retry(method: Callable, *args, **kwargs):
@@ -978,14 +976,6 @@ class DefaultRestHelper(RestBase):
         cmd = "curl -v -u {}:{} -H \"Content-Type: application/json\" -d '{}' {}".\
             format(self.rest_username, self.rest_password, data_json, url)
         return local(cmd, capture=True)
-
-    def exec_analytics_statement_goldfish_nebula(self, endpoint: str,
-                                                 statement: str) -> requests.Response:
-        api = 'https://{}:{}/analytics/service'.format(endpoint, GOLDFISH_NEBULA_ANALYTICS_PORT)
-        data = {
-            'statement': statement
-        }
-        return self.post(url=api, data=data)
 
     def get_analytics_stats(self, analytics_node: str) -> dict:
         url = self._get_api_url(host=analytics_node, path='analytics/node/stats',

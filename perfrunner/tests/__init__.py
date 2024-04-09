@@ -18,6 +18,7 @@ from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.worker import WorkerManager, WorkloadPhase, spring_task
 from perfrunner.settings import (
+    CBProfile,
     ClusterSpec,
     PhaseSettings,
     TargetIterator,
@@ -137,7 +138,7 @@ class PerfTest:
             self.remote.reset_num_vbuckets()
 
         if self.test_config.cluster.serverless_mode and not self.cloud_infra:
-            self.remote.disable_serverless_mode()
+            self.remote.set_cb_profile(CBProfile.DEFAULT)
 
     def collect_linux_perf_profiles(self):
         self.remote.generate_linux_perf_script()

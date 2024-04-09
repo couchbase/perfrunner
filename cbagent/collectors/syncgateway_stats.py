@@ -2,6 +2,7 @@ from cbagent.collectors import Collector
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
 from perfrunner.helpers import rest
+from perfrunner.helpers.misc import create_build_tuple
 
 
 class SyncGatewayStats(Collector):
@@ -285,12 +286,7 @@ class SyncGatewayStats(Collector):
 
         self.sgw_master_node = next(test.cluster_spec.sgw_masters)
         self.build = self.rest.get_sgversion(self.sgw_master_node)
-        if ('-' in self.build):
-            version, build_number = self.build.split('-')
-        else:
-            version = self.build
-            build_number = 0
-        self.build_tuple = tuple(map(int, version.split('.'))) + (int(build_number),)
+        self.build_tuple = create_build_tuple(self.build)
         if self.build_tuple > (3, 2, 0, 0):
             self.METRICS += (
                 "syncgateway__global__resource_utilization__node_cpu_percent_utilization",

@@ -12,7 +12,7 @@ from perfrunner.helpers.local import (
     read_aws_credential,
     run_cbindexperf,
 )
-from perfrunner.helpers.misc import SGPortRange, pretty_dict
+from perfrunner.helpers.misc import SGPortRange, create_build_tuple, pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.integration import EndToEndLatencyTest
@@ -334,19 +334,18 @@ class SecondaryIndexCloudTest(PerfTest):
 
     def print_average_rr(self):
         if self.storage == 'plasma':
-            version, build_number = self.build.split('-')
-            build = tuple(map(int, version.split('.'))) + (int(build_number),)
+            build = create_build_tuple(self.build)
             # MB - 43098 Caused missing stats from indexer - Hence this fails
             # before build 7.0.0-3951
-            if build > (7, 0, 0, 3951) and build < (7, 1, 0, 1887):
+            if (7, 0, 0, 3951) < build < (7, 1, 0, 1887):
                 storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
                 avg_rr = self.calc_avg_rr(storage_stats.json())
-                logger.info("Average RR over all Indexes  : {}".format(avg_rr))
+                logger.info(f'Average RR over all Indexes : {avg_rr}')
 
             if build >= (7, 1, 0, 1887):
                 storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
                 avg_rr = self.calc_avg_rr_compression(storage_stats.json())
-                logger.info("Average RR over all Indexes with compression  : {}".format(avg_rr))
+                logger.info(f'Average RR over all Indexes with compression : {avg_rr}')
 
     def print_index_disk_usage(self, text="", heap_profile=True):
         self.print_average_rr()

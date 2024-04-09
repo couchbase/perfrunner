@@ -1,5 +1,6 @@
 from cbagent.collectors.collector import Collector
 from perfrunner.helpers import rest
+from perfrunner.helpers.misc import create_build_tuple
 
 
 class AnalyticsStats(Collector):
@@ -25,8 +26,7 @@ class AnalyticsStats(Collector):
         self.rest = rest.RestHelper(test.cluster_spec, test.test_config)
         self.build = self.rest.get_version(host=self.master_node)
         self.servers = self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
-        version, build_number = self.build.split('-')
-        self.build_version_number = tuple(map(int, version.split('.'))) + (int(build_number),)
+        self.build_version_number = create_build_tuple(self.build)
 
     def update_metadata(self):
         self.mc.add_cluster()

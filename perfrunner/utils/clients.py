@@ -1,11 +1,14 @@
 from argparse import ArgumentParser
 from multiprocessing import set_start_method
-from re import split as re_split
 
 from fabric.api import cd, local, run
 
 from logger import logger
-from perfrunner.helpers.misc import get_python_sdk_installation, run_local_shell_command
+from perfrunner.helpers.misc import (
+    create_build_tuple,
+    get_python_sdk_installation,
+    run_local_shell_command,
+)
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.tableau import TableauTerminalHelper
@@ -352,10 +355,6 @@ LCB_CUSTOM_DEPS = {
 }
 
 
-def version_tuple(version: str):
-    return tuple(int(n) for n in re_split('\\.|-', version))
-
-
 class ClientInstaller:
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, options):
@@ -383,7 +382,7 @@ class ClientInstaller:
 
     @property
     def cb_version(self):
-        return version_tuple(self.rest.get_version(host=next(self.cluster_spec.masters)))
+        return create_build_tuple(self.rest.get_version(host=next(self.cluster_spec.masters)))
 
     @all_clients
     def detect_libcouchbase_versions(self):
@@ -419,11 +418,10 @@ class ClientInstaller:
             package_path = package_path.replace('ubuntu1604', 'ubuntu1804')
             package_path = package_path.replace('xenial', 'bionic')
         with cd('/tmp'):
-            run("rm -rf {}*".format(package))
-            run("wget {}/{}/{}.{}".format(LIBCOUCHBASE_BASE_URL, package_version, package,
-                                          package_format))
-            run("tar xf {}.{}".format(package, package_format))
-        with cd("/tmp/{}".format(package_path)):
+            run(f'rm -rf {package}*')
+            run(f'wget {LIBCOUCHBASE_BASE_URL}/{package_version}/{package}.{package_format}')
+            run(f'tar xf {package}.{package_format}')
+        with cd(f'/tmp/{package_path}'):
             for cmd in install_cmds:
                 run(cmd)
 
@@ -439,7 +437,7 @@ class ClientInstaller:
         with cd('/tmp/libcouchbase_custom'):
             run('git clone https://github.com/couchbase/libcouchbase.git')
         with cd('/tmp/libcouchbase_custom/libcouchbase'):
-            run('git checkout {}'.format(commit_id))
+            run(f'git checkout {commit_id}')
             run('mkdir build')
         with cd('/tmp/libcouchbase_custom/libcouchbase/build'):
             run('apt-get install cmake libevent-dev libevent-core-2.1 libev4 -y')
@@ -452,11 +450,11 @@ class ClientInstaller:
 
     def install_python_client(self, version: str):
         package = get_python_sdk_installation(version)
-        local("PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {} --no-cache-dir".format(package))
+        local(f'PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {package} --no-cache-dir')
 
     def uninstall_tableau_connectors(self):
-        local('rm -rf {}/*couchbase*'.format(self.jar_destination))
-        local('rm -rf {}/*couchbase*.taco'.format(self.taco_destination))
+        local(f'rm -rf {self.jar_destination}/*couchbase*')
+        local(f'rm -rf {self.taco_destination}/*couchbase*.taco')
 
     def install_cdata_tableau_connector(self):
         logger.info('Installing CData Tableau Connector')
@@ -466,13 +464,13 @@ class ClientInstaller:
         licensefile = 'cdata.tableau.couchbase.lic'
         cdata_dir = '/opt/cdata/lib/'
 
-        self.tableau_term.copy_file('{}/{}'.format(cdata_dir, jarfile), self.jar_destination)
-        self.tableau_term.copy_file('{}/{}'.format(cdata_dir, licensefile), self.jar_destination)
-        self.tableau_term.copy_file('{}/{}'.format(cdata_dir, tacofile), self.taco_destination)
+        self.tableau_term.copy_file(f'{cdata_dir}/{jarfile}', self.jar_destination)
+        self.tableau_term.copy_file(f'{cdata_dir}/{licensefile}', self.jar_destination)
+        self.tableau_term.copy_file(f'{cdata_dir}/{tacofile}', self.taco_destination)
 
         version = self.tableau_term.get_connector_version()
 
-        logger.info('CData Tableau Connector {} has been installed.'.format(version))
+        logger.info(f'CData Tableau Connector {version} has been installed.')
 
     def install_couchbase_tableau_connector(self, full_version: str):
         version, build = full_version.split('-')
@@ -482,33 +480,31 @@ class ClientInstaller:
             '{0}/{1}/couchbase-tableau-connector-{0}-{1}.zip'
         ).format(version, build)
 
-        logger.info('Installing Couchbase Tableau Connector using URL: {}'.format(url))
+        logger.info(f'Installing Couchbase Tableau Connector using URL: {url}')
         archive = 'tableau_connector.zip'
-        local('wget -nv {} -O {}'.format(url, archive))
+        local(f'wget -nv {url} -O {archive}')
 
         jarfile = 'couchbase-jdbc-driver-*.jar'
         tacofile = 'couchbase-analytics-*.taco'
-        local('unzip {} {} {}'.format(archive, jarfile, tacofile))
+        local(f'unzip {archive} {jarfile} {tacofile}')
 
         self.tableau_term.copy_file(jarfile, self.jar_destination)
         self.tableau_term.copy_file(tacofile, self.taco_destination)
 
         tms_config_cmds = [
-            'configuration set -frc -k native_api.connect_plugins_path -v {}'.format(
-                self.taco_destination
-            ),
+            f'configuration set -frc -k native_api.connect_plugins_path -v {self.taco_destination}',
             'configuration set -k JdbcDriverCustomLoad -v false --force-keys',
         ]
 
         for cmd in tms_config_cmds:
             self.tableau_term.run_tsm_command(cmd)
 
-        logger.info('Couchbase Tableau Connector {} has been installed.'.format(full_version))
+        logger.info(f'Couchbase Tableau Connector {full_version} has been installed.')
 
     def install(self):
         lcb_version = self.client_settings.libcouchbase
         py_version = self.client_settings.python_client
-        logger.info("Desired clients: lcb={}, py={}".format(lcb_version, py_version))
+        logger.info(f'Desired clients: lcb={lcb_version}, py={py_version}')
 
         # Check if we are using Capella to avoid evaluating the server version if we are using
         # Capella Columnar, as the "self.rest.get_version(...)" method doesn't work for
@@ -520,7 +516,7 @@ class ClientInstaller:
         if not py_version:
             logger.info("No python SDK version provided. "
                         "Defaulting to version specified in requirements.txt")
-        elif mb45563_is_hit and version_tuple(py_version) < (3, 2, 0):
+        elif mb45563_is_hit and create_build_tuple(py_version) < (3, 2, 0):
             # SDK compatibility changed with 7.1.0-1745
             # see https://issues.couchbase.com/browse/MB-45563
             logger.warn("python SDK >= 3.2.0 required for Couchbase Server builds "
@@ -531,7 +527,7 @@ class ClientInstaller:
         if not lcb_version and self.cluster_spec.workers:
             logger.info("No libcouchbase version provided. Uninstalling libcouchbase.")
             self.uninstall_lcb()
-        elif mb45563_is_hit and version_tuple(lcb_version) < (3, 2, 0):
+        elif mb45563_is_hit and create_build_tuple(lcb_version) < (3, 2, 0):
             # SDK compatibility changed with 7.1.0-1745
             # see https://issues.couchbase.com/browse/MB-45563
             logger.warn("libcouchbase >= 3.2.0 required for Couchbase Server builds "
@@ -555,7 +551,7 @@ class ClientInstaller:
                 else:
                     logger.info("libcouchbase is not installed")
 
-                logger.info("Installing libcouchbase {}".format(lcb_version))
+                logger.info(f'Installing libcouchbase {lcb_version}')
 
                 if 'commit' in lcb_version:
                     self.install_lcb_from_commit(lcb_version)
@@ -567,16 +563,15 @@ class ClientInstaller:
         if self.cluster_spec.workers:
             detected = self.detect_libcouchbase_versions()
             for ip, version in detected.items():
-                logger.info("\t{}:\t{}".format(ip, version))
+                logger.info(f'\t{ip}:\t{version}')
 
         # Install Python SDK
         if py_version:
-            logger.info("Installing python_client {}".format(py_version))
+            logger.info(f'Installing python_client {py_version}')
             self.install_python_client(py_version)
 
         detected = self.detect_python_client_version()
-        logger.info("Python client detected (pip freeze): {}"
-                    .format(detected))
+        logger.info(f'Python client detected (pip freeze): {detected}')
 
         # Install Tableau Connector
         tableau_connector_vendor = self.test_config.tableau_settings.connector_vendor
@@ -587,8 +582,8 @@ class ClientInstaller:
 
             if tableau_connector_vendor == 'couchbase':
                 connector_version = self.client_settings.tableau_connector
-                logger.info("Desired Tableau Connector: vendor=couchbase, version={}"
-                            .format(connector_version))
+                logger.info('Desired Tableau Connector: vendor=couchbase, '
+                            f'version={connector_version}')
                 self.install_couchbase_tableau_connector(connector_version)
             elif tableau_connector_vendor == 'cdata':
                 logger.info("Desired Tableau Connector: vendor=cdata")

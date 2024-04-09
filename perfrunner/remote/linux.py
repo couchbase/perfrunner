@@ -1,6 +1,7 @@
 import os
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -23,7 +24,7 @@ from perfrunner.remote.context import (
     servers_by_role,
     syncgateway_servers,
 )
-from perfrunner.settings import CH2, CH2ConnectionSettings, ClusterSpec
+from perfrunner.settings import CH2, CBProfile, CH2ConnectionSettings, ClusterSpec
 
 
 class RemoteLinux(Remote):
@@ -347,24 +348,22 @@ class RemoteLinux(Remote):
     def upload_iss_files(self, release: str):
         pass
 
-    @all_servers
-    def install_couchbase(self, url: str):
-        self.wget(url, outdir='/tmp')
-        filename = urlparse(url).path.split('/')[-1]
-
+    def _install_couchbase(self, filename: str):
         logger.info('Installing Couchbase Server')
         if self.package == 'deb':
-            run('yes | apt install -y /tmp/{}'.format(filename))
+            run(f'yes | apt install -y /tmp/{filename}')
         else:
-            run('yes | yum localinstall -y /tmp/{}'.format(filename))
+            run(f'yes | yum localinstall -y /tmp/{filename}')
+
+    @all_servers
+    def download_and_install_couchbase(self, url: str):
+        self.wget(url, outdir='/tmp')
+        filename = Path(urlparse(url).path).name
+        self._install_couchbase(filename)
 
     @all_servers
     def install_uploaded_couchbase(self, filename: str):
-        logger.info('Installing Couchbase Server')
-        if self.package == 'deb':
-            run('yes | apt install -y /tmp/{}'.format(filename))
-        else:
-            run('yes | yum localinstall -y /tmp/{}'.format(filename))
+        self._install_couchbase(filename)
 
     @all_servers
     def restart(self):
@@ -848,14 +847,9 @@ class RemoteLinux(Remote):
             "{}:8091 -u Administrator -p password".format(host))
 
     @all_servers
-    def enable_serverless_mode(self):
-        # Enable serverless profile.
-        run('systemctl set-environment CB_FORCE_PROFILE=serverless')
-
-    @all_servers
-    def disable_serverless_mode(self):
-        # Disabling serverless mode.
-        run('systemctl unset-environment CB_FORCE_PROFILE')
+    def set_cb_profile(self, profile: CBProfile):
+        logger.info(f'Setting ns_server profile to "{profile.value}"')
+        run(f'systemctl set-environment CB_FORCE_PROFILE={profile.value}')
 
     @master_server
     def run_magma_benchmark(self, cmd: str, stats_file: str):

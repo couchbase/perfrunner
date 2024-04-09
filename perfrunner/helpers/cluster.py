@@ -10,6 +10,7 @@ from perfrunner.helpers import local
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import (
     SGPortRange,
+    create_build_tuple,
     maybe_atoi,
     pretty_dict,
     run_aws_cli_command,
@@ -36,20 +37,13 @@ class ClusterManager:
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.master_node = next(self.cluster_spec.masters)
-        if self.dynamic_infra:
-            self.initial_nodes = None
-            # During cluster creation in k8s, we dont have a cluster yet,
-            # so provide an arbitrary build
-            self.build = '1.0.0-100'
-        else:
-            self.initial_nodes = [
-                num_nodes for i, num_nodes in enumerate(test_config.cluster.initial_nodes)
-                if i not in self.cluster_spec.inactive_cluster_idxs
-            ]
-            self.build = self.rest.get_version(self.master_node)
-            version, build_number = self.build.split('-')
-            self.build_tuple = tuple(map(int, version.split('.'))) + (int(build_number),)
-
+        self.initial_nodes = [
+            num_nodes
+            for i, num_nodes in enumerate(test_config.cluster.initial_nodes)
+            if i not in self.cluster_spec.inactive_cluster_idxs
+        ]
+        self.build = self.rest.get_version(self.master_node)
+        self.build_tuple = create_build_tuple(self.build)
         self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote, self.build)
 
     def is_compatible(self, min_release: str) -> bool:
@@ -1334,7 +1328,9 @@ class ClusterManager:
         self.remote.add_aws_credential(access_key_id, secret_access_key)
 
     def set_goldfish_storage_partitions(self):
-        if self.build_tuple < (8, 0, 0, 1547):
+        storage_partitions = self.test_config.analytics_settings.goldfish_storage_partitions
+
+        if ((8, 0, 0, 0) < self.build_tuple < (8, 0, 0, 1547)) and storage_partitions:
             logger.warning('Cannot set storage partitions for Goldfish. '
                            'Couchbase Server 8.0.0-1547 or later required.')
             return
@@ -1411,7 +1407,7 @@ class ClusterManager:
             'kafkaConnectVersion': '2.7.1',
             'vendor': 'AWS_KAFKA',
             # Settings that MSK Connect needs for creating connectors
-            'brokersUrl': ','.join(['{}:9092'.format(k) for k in self.cluster_spec.kafka_brokers]),
+            'brokersUrl': ','.join([f'{k}:9092' for k in self.cluster_spec.kafka_brokers]),
             'subnets': ','.join(self.cluster_spec.kafka_broker_subnet_ids),
             'region': os.environ.get('AWS_REGION', 'us-east-1'),
             # Settings for CBAS sink connector
@@ -1458,8 +1454,8 @@ class ClusterManager:
             'COUCHBASE_ANALYTICS': cbas_plugin_arn
         })
 
-        logger.info('Setting Kafka Links settings: {}'.format(pretty_dict(settings)))
-        if self.build_tuple < (8, 0, 0, 1428):
+        logger.info(f'Setting Kafka Links settings: {pretty_dict(settings)}')
+        if (8, 0, 0, 0) < self.build_tuple < (8, 0, 0, 1428):
             # Set settings using environment variables
             self.remote.set_kafka_links_env_vars(settings)
             self.remote.restart()

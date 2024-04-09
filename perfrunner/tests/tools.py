@@ -3,6 +3,7 @@ import os
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import create_build_tuple
 from perfrunner.settings import LoadSettings, TargetIterator
 from perfrunner.tests import PerfTest
 
@@ -37,10 +38,7 @@ class BackupRestoreTest(PerfTest):
     def compact(self):
         # Pre build 6.5.0-3524 there was no threads flag in compact. To ensure
         # tests run across versions, omit this flag pre this build.
-        version, build_number = self.build.split('-')
-        build = tuple(map(int, version.split('.'))) + (int(build_number),)
-
-        if build < (6, 5, 0, 3524):
+        if create_build_tuple(self.build) < (6, 5, 0, 3524):
             threads = None
         else:
             threads = self.test_config.backup_settings.threads
@@ -337,10 +335,7 @@ class MergeTest(BackupRestoreTest):
 
         # Pre build 6.5.0-3198 there was no threads flag in merge. To ensure
         # tests run across versions, omit this flag pre this build.
-        version, build_number = self.build.split('-')
-        build = tuple(map(int, version.split('.'))) + (int(build_number),)
-
-        if build < (6, 5, 0, 3198):
+        if create_build_tuple(self.build) < (6, 5, 0, 3198):
             threads = None
         else:
             threads = self.test_config.backup_settings.threads

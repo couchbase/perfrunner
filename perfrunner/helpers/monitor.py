@@ -53,8 +53,7 @@ class Monitor:
         self.rest = rest
         self.master_node = next(cluster_spec.masters)
         self.build = build
-        version, build_number = self.build.split('-')
-        self.build_version_number = tuple(map(int, version.split('.'))) + (int(build_number),)
+        self.build_version_number = misc.create_build_tuple(self.build)
 
     def wait_for_rebalance_to_begin(self, host):
         logger.info('Waiting for rebalance to start')

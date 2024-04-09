@@ -14,7 +14,7 @@ from fabric.api import local
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import create_build_tuple, pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec, TestConfig
 from perfrunner.utils.terraform import CAPELLA_CREDS_FILE, SERVICES_CAPELLA_TO_PERFRUNNER
@@ -684,10 +684,7 @@ class DefaultRestHelper(RestBase):
         logger.info('Getting remote certificate')
 
         build = self.get_version(host)
-        version, _ = build.split('-')
-        version_number = tuple(map(int, version.split('.')))
-
-        if version_number < (7, 1, 0):
+        if create_build_tuple(build) < (7, 1, 0, 0):
             return self.get(url=self._get_api_url(host=host, path='pools/default/certificate')).text
         else:
             r = self.get(url=self._get_api_url(host=host, path='pools/default/trustedCAs'))
@@ -1244,54 +1241,32 @@ class DefaultRestHelper(RestBase):
                                 .format(valid_cipher_list, service))
 
     def set_minimum_tls_version(self, node: str, tls_version: str):
-        logger.info("Setting minimum TLS version of {}".format(tls_version))
+        logger.info(f'Setting minimum TLS version of {tls_version}')
         # ClusterManager does not support tlsv1.3, so tlsv1.3 cannot be set as the global
         # minimum tls version. As a result, for all the services that support tlsv1.3
         # (Data, Search, Index, Query, Eventing, Analytics, Backup),
         # the minimum tls version must be set separately.
+        url_prefix = f'http://{node}:{REST_PORT}/settings/security'
         if tls_version != 'tlsv1.3':
-            api = 'http://{}:{}/settings/security'.format(node, REST_PORT)
-            data = {
-                'tlsMinVersion': tls_version
-            }
+            api = url_prefix
+            data = {'tlsMinVersion': tls_version}
             self.post(url=api, data=data)
         else:
             build = self.get_version(node)
-            version, build_number = build.split('-')
-            build_version_number = tuple(map(int, version.split('.'))) + (int(build_number),)
-            if build_version_number < (7, 1, 0, 0):
+            if create_build_tuple(build) < (7, 1, 0, 0):
                 logger.info("TLSv1.3 is not supported by this version of couchbase server")
                 logger.info("Reverting to TLSv1.2")
-                api = 'http://{}:{}/settings/security'.format(node, REST_PORT)
-                data = {
-                    'tlsMinVersion': 'tlsv1.2'
-                }
+                api = url_prefix
+                data = {'tlsMinVersion': 'tlsv1.2'}
                 self.post(url=api, data=data)
             else:
-                data = {
-                    'tlsMinVersion': tls_version
-                }
-                # Data
-                api = 'http://{}:{}/settings/security/data'.format(node, REST_PORT)
-                self.post(url=api, data=data)
-                # Search
-                api = 'http://{}:{}/settings/security/fullTextSearch'.format(node, REST_PORT)
-                self.post(url=api, data=data)
-                # Index
-                api = 'http://{}:{}/settings/security/index'.format(node, REST_PORT)
-                self.post(url=api, data=data)
-                # Query
-                api = 'http://{}:{}/settings/security/query'.format(node, REST_PORT)
-                self.post(url=api, data=data)
-                # Eventing
-                api = 'http://{}:{}/settings/security/eventing'.format(node, REST_PORT)
-                self.post(url=api, data=data)
-                # Analytics
-                api = 'http://{}:{}/settings/security/analytics'.format(node, REST_PORT)
-                self.post(url=api, data=data)
-                # Backup
-                api = 'http://{}:{}/settings/security/backup'.format(node, REST_PORT)
-                self.post(url=api, data=data)
+                data = {'tlsMinVersion': tls_version}
+
+                for suffix in [
+                    'data', 'fullTextSearch', 'index', 'query', 'eventing', 'analytics', 'backup'
+                ]:
+                    api = f'{url_prefix}/{suffix}'
+                    self.post(url=api, data=data)
 
     def create_scope(self, host, bucket, scope):
         logger.info("Creating scope {}:{}".format(bucket, scope))

@@ -1,15 +1,18 @@
+import itertools
 import os
+import re
 from argparse import ArgumentParser, Namespace
 from collections import namedtuple
 from functools import cached_property
 from multiprocessing import Process, set_start_method
+from pathlib import Path
 from typing import Iterator, Optional
+from urllib.parse import urlparse
 
 import paramiko
 import requests
 import validators
 from fabric.api import cd, run
-from requests.exceptions import ConnectionError
 
 from logger import logger
 from perfrunner.helpers.config_files import CAOConfigFile, CAOCouchbaseClusterFile, CAOWorkerFile
@@ -19,18 +22,18 @@ from perfrunner.helpers.local import (
     extract_any,
     run_custom_cmd,
 )
-from perfrunner.helpers.misc import url_exist
+from perfrunner.helpers.misc import create_build_tuple, maybe_atoi, pretty_dict, url_exist
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.context import master_client
-from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.settings import CBProfile, ClusterSpec, TestConfig
 
 set_start_method("fork")
 
-LOCATIONS = (
+SERVER_LOCATIONS = (
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/trinity/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/elixir/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/morpheus/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/neo/{build}/',
+    'http://172.23.126.166/builds/latestbuilds/couchbase-server/morpheus/{build}/',
+    'http://172.23.126.166/builds/latestbuilds/couchbase-server/elixir/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/magma-preview/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/cheshire-cat/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/mad-hatter/{build}/',
@@ -43,18 +46,23 @@ LOCATIONS = (
     'http://172.23.126.166/builds/releases/{release}/ce/',
 )
 
+COLUMNAR_LOCATIONS = (
+    'http://172.23.126.166/builds/latestbuilds/couchbase-columnar/1.0.0/{build}/',
+    'http://172.23.126.166/builds/latestbuilds/capella-analytics/1.0.0/{build}/',
+)
+
 PKG_PATTERNS = {
     'rpm': (
-        'couchbase-server-{edition}-{release}-{build}-linux.{arch}.rpm',
-        'couchbase-server-{edition}-{release}-{build}-{os_name}{os_version}.{arch}.rpm',
-        'couchbase-server-{edition}-{release}-linux.{arch}.rpm',
-        'couchbase-server-{edition}-{release}-{os_name}{os_version}.{arch}.rpm',
+        'couchbase-{product}-{edition}-{release}-{build}-linux.{arch}.rpm',
+        'couchbase-{product}-{edition}-{release}-{build}-{os_name}{os_version}.{arch}.rpm',
+        'couchbase-{product}-{edition}-{release}-linux.{arch}.rpm',
+        'couchbase-{product}-{edition}-{release}-{os_name}{os_version}.{arch}.rpm',
     ),
     'deb': (
-        'couchbase-server-{edition}_{release}-{build}-linux_{arch}.deb',
-        'couchbase-server-{edition}_{release}-{build}-{os_name}{os_version}_{arch}.deb',
-        'couchbase-server-{edition}_{release}-linux_{arch}.deb',
-        'couchbase-server-{edition}_{release}-{os_name}{os_version}_{arch}.deb',
+        'couchbase-{product}-{edition}_{release}-{build}-linux_{arch}.deb',
+        'couchbase-{product}-{edition}_{release}-{build}-{os_name}{os_version}_{arch}.deb',
+        'couchbase-{product}-{edition}_{release}-linux_{arch}.deb',
+        'couchbase-{product}-{edition}_{release}-{os_name}{os_version}_{arch}.deb',
     ),
     'exe': (
         'couchbase-server-{edition}_{release}-{build}-windows_amd64.msi',
@@ -95,7 +103,7 @@ def upload_file(file: str, to_host: str, to_user: str, to_password: str, to_dire
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(to_host, username=to_user, password=to_password)
     sftp = client.open_sftp()
-    sftp.put(file, "{}/{}".format(to_directory, file))
+    sftp.put(file, f'{to_directory}/{file}')
     sftp.close()
 
 
@@ -429,8 +437,11 @@ class CouchbaseInstaller:
 
     @cached_property
     def url(self) -> str:
-        if validators.url(self.options.couchbase_version):
-            return self.options.couchbase_version
+        if validators.url(url := self.options.couchbase_version):
+            logger.info('Checking if provided package URL is valid.')
+            if url_exist(url):
+                return url
+            logger.interrupt(f'Invalid URL: {url}')
 
         return self.find_package(edition=self.options.edition)
 
@@ -442,62 +453,86 @@ class CouchbaseInstaller:
         elif self.url.endswith('.deb'):
             debuginfo_str = '-dbg'
 
-        search_str = 'couchbase-server-{}'.format(self.options.edition)
-
-        return self.url.replace(search_str, search_str + debuginfo_str)
+        return re.sub(
+            rf'couchbase-(server|columnar)-{self.options.edition}',
+            rf'couchbase-\1-{self.options.edition}{debuginfo_str}',
+            self.url
+        )
 
     @property
     def release(self) -> str:
         return self.options.couchbase_version.split('-')[0]
 
     @property
-    def build(self) -> str:
-        split = self.options.couchbase_version.split('-')
-        if len(split) > 1:
-            return split[1]
+    def build(self) -> Optional[str]:
+        _, *build = self.options.couchbase_version.split('-')
+        return build[0] if build else None
+
+    @property
+    def build_tuple(self) -> tuple:
+        if validators.url(self.options.couchbase_version):
+            return ()
+
+        return create_build_tuple(self.options.couchbase_version)
 
     def find_package(self, edition: str, package: Optional[str] = None,
-                     os_name: Optional[str] = None,
-                     os_version: Optional[str] = None) -> Optional[str]:
-        for url in self.url_iterator(edition, package, os_name, os_version):
-            if self.is_exist(url):
-                return url
-        logger.interrupt('Target build not found')
-
-    def url_iterator(self, edition: str, package: Optional[str] = None,
-                     os_name: Optional[str] = None,
-                     os_version: Optional[str] = None) -> Iterator[str]:
+                     os_name: Optional[str] = None, os_version: Optional[str] = None,
+                     arch: Optional[str] = None) -> Optional[str]:
         package = package or self.remote.package  # package type based on server OS
         os_name = os_name or self.remote.distro
         os_version = os_version or self.remote.distro_version
+        arch = arch or self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
 
+        for url in self.url_iterator(edition, package, os_name, os_version, arch):
+            if url_exist(url):
+                return url
+
+        logger.interrupt(
+            'Package URL not found for following criteria:\n' +
+            pretty_dict({
+                'edition': edition,
+                'release': self.release,
+                'build': self.build,
+                'os_name': os_name,
+                'os_version': os_version,
+                'arch': arch,
+                'package': package
+            }, sort_keys=False)
+        )
+
+    def url_iterator(self, edition: str, package: Optional[str] = None,
+                     os_name: Optional[str] = None, os_version: Optional[str] = None,
+                     arch: Optional[str] = None) -> Iterator[str]:
         arch_strings = ['x86_64', 'amd64']
-        arch = self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
         if arch == 'arm':
             arch_strings = [ARM_ARCHS[package]]
 
-        for pkg_pattern in PKG_PATTERNS[package]:
-            for loc_pattern in LOCATIONS:
-                for arch_string in arch_strings:
-                    url = loc_pattern + pkg_pattern
-                    yield url.format(release=self.release, build=self.build, edition=edition,
-                                     os_name=os_name, os_version=os_version, arch=arch_string)
+        products = ['server']
+        locations = SERVER_LOCATIONS
+        if self.cluster_spec.goldfish_infrastructure:
+            products.insert(0, 'columnar')
+            locations = COLUMNAR_LOCATIONS + locations
 
-    @staticmethod
-    def is_exist(url: str) -> bool:
-        try:
-            status_code = requests.head(url).status_code
-        except ConnectionError:
-            return False
-
-        return status_code == 200
+        for loc_pattern, product, pkg_pattern, arch_str in itertools.product(
+            locations, products, PKG_PATTERNS[package], arch_strings
+        ):
+            url = loc_pattern + pkg_pattern
+            yield url.format(
+                product=product,
+                edition=edition,
+                release=self.release,
+                build=self.build,
+                os_name=os_name,
+                os_version=os_version,
+                arch=arch_str
+            )
 
     def download_local(self, local_copy_url: Optional[str] = None):
         """Download and save a copy of the specified package."""
         try:
             url = local_copy_url or self.url
-            logger.info('Saving a local copy of {}'.format(url))
-            download_file(url, 'couchbase.{}'.format(self.remote.package))
+            logger.info(f'Saving a local copy of {url}')
+            download_file(url, f'couchbase.{self.remote.package}')
 
         except (Exception, BaseException):
             logger.info("Saving local copy for ubuntu failed, package may not present")
@@ -505,18 +540,18 @@ class CouchbaseInstaller:
     def download_remote(self):
         """Download and save a copy of the specified package on a remote client."""
         if self.remote.package == 'deb':
-            logger.info('Saving a remote copy of {}'.format(self.url))
+            logger.info(f'Saving a remote copy of {self.url}')
             self.wget(url=self.url)
         else:
             logger.interrupt('Unsupported package format')
 
     @master_client
     def wget(self, url: str):
-        logger.info('Fetching {}'.format(url))
+        logger.info(f'Fetching {url}')
         with cd('/tmp'):
-            run('wget -nc "{}"'.format(url))
+            run(f'wget -nc "{url}"')
             package = url.split('/')[-1]
-            run('mv {} couchbase.deb'.format(package))
+            run(f'mv {package} couchbase.deb')
 
     def kill_processes(self):
         self.remote.kill_processes()
@@ -529,28 +564,39 @@ class CouchbaseInstaller:
 
     def install_debuginfo(self):
         if not url_exist(self.debuginfo_url):
-            logger.interrupt('Debuginfo package not found for url {}'.format(self.debuginfo_url))
+            logger.interrupt(f'Debuginfo package not found for url {self.debuginfo_url}')
 
         self.remote.install_cb_debug_package(url=self.debuginfo_url)
 
     def install_package(self):
-        logger.info('Using this URL: {}'.format(self.url))
+        logger.info(f'Using this URL: {self.url}')
         self.remote.upload_iss_files(self.release)
-        self.remote.install_couchbase(self.url)
+        self.remote.download_and_install_couchbase(self.url)
 
-    def check_for_serverless(self, serverless_enabled: str):
-        if (str(serverless_enabled).lower() == 'true' or
-                self.cluster_spec.goldfish_infrastructure):
-            logger.info("Enabling Serverless mode")
-            self.remote.enable_serverless_mode()
-        else:
-            logger.info("Disabling Serverless profile")
-            self.remote.disable_serverless_mode()
+    def set_cb_profile(self):
+        profile = CBProfile.DEFAULT
+        if self.options.serverless_profile:
+            profile = CBProfile.SERVERLESS
+        elif self.options.columnar_profile:
+            profile = CBProfile.COLUMNAR
+        elif self.cluster_spec.goldfish_infrastructure:
+            if (
+                (7, 6, 100) <= self.build_tuple < (8, 0, 0) or
+                Path(urlparse(self.url).path).name.startswith('couchbase-columnar')
+            ):
+                profile = CBProfile.COLUMNAR
+            else:
+                profile = CBProfile.SERVERLESS
+
+        self.remote.set_cb_profile(profile)
 
     def install(self):
+        logger.info('Finding package to use...')
+        logger.info(f'Package URL: {self.url}')
         self.kill_processes()
         self.uninstall_package()
         self.clean_data()
+        self.set_cb_profile()
         self.install_package()
 
 
@@ -566,41 +612,41 @@ class CloudInstaller(CouchbaseInstaller):
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             client.connect(to_host, username=to_user, password=to_password)
             sftp = client.open_sftp()
-            sftp.put(package, "/tmp/{}".format(package))
+            sftp.put(package, f'/tmp/{package}')
             sftp.close()
 
         user, password = self.cluster_spec.ssh_credentials
 
         self.remote.upload_iss_files(self.release)
-        package_name = "couchbase.{}".format(self.remote.package)
+        package_name = f'couchbase.{self.remote.package}'
 
         if self.options.remote_copy:
             url = self.url
             if self.options.local_copy_url:
                 url = self.options.local_copy_url
-                logger.info('Saving a local url {}'.format(url))
+                logger.info(f'Saving a local url {url}')
             elif 'aarch64' in self.url:
                 url = self.url.replace('aarch64', 'x86_64')
-                logger.info('Saving a local copy of x86_64 {}'.format(url))
+                logger.info(f'Saving a local copy of x86_64 {url}')
             else:
-                logger.info('Saving a local copy of {}'.format(url))
+                logger.info(f'Saving a local copy of {url}')
 
             download_file(url, package_name)
 
             for client in self.cluster_spec.workers:
-                logger.info('uploading client package {} to {} '.format(package_name, client))
+                logger.info(f'uploading client package {package_name} to {client}')
                 upload_couchbase(client, user, password, package_name)
 
-        logger.info('Server URL: {}'.format(self.url))
+        logger.info(f'Server URL: {self.url}')
         download_file(self.url, package_name)
 
         if not self.cluster_spec.capella_infrastructure:
-            logger.info('Uploading {} to servers'.format(package_name))
+            logger.info(f'Uploading {package_name} to servers')
             uploads = []
             hosts = self.cluster_spec.servers
 
             for host in hosts:
-                logger.info('Uploading {} to {}'.format(package_name, host))
+                logger.info(f'Uploading {package_name} to {host}')
                 args = (host, user, password, package_name)
 
                 worker_process = Process(target=upload_couchbase, args=args)
@@ -612,28 +658,33 @@ class CloudInstaller(CouchbaseInstaller):
                 process.join()
 
             self.remote.install_uploaded_couchbase(package_name)
+            self.remote.start_server()
 
 
 class ClientUploader(CouchbaseInstaller):
 
     @cached_property
     def url(self) -> str:
-        if validators.url(self.options.couchbase_version):
-            return self.options.couchbase_version
+        for url in (self.options.couchbase_version, self.options.local_copy_url):
+            if validators.url(url):
+                logger.info('Checking if provided package URL is valid.')
+                if url_exist(url):
+                    return url
+                logger.interrupt(f'Invalid URL: {url}')
 
-        return self.options.local_copy_url or self.find_package(edition=self.options.edition,
-                                                                package='deb',
-                                                                os_name='ubuntu',
-                                                                os_version='20.04')
+        return self.find_package(edition=self.options.edition,
+                                 package='deb',
+                                 os_name='ubuntu',
+                                 os_version='20.04')
 
     def upload(self, package_name: str):
-        logger.info('Using this URL: {}'.format(self.url))
-        logger.info('Uploading {} to clients'.format(package_name))
+        logger.info(f'Using this URL: {self.url}')
+        logger.info(f'Uploading {package_name} to clients')
         uploads = []
         user, password = self.cluster_spec.ssh_credentials
         hosts = self.cluster_spec.workers
         for host in hosts:
-            logger.info('Uploading {} to {}'.format(package_name, host))
+            logger.info(f'Uploading {package_name} to {host}')
             args = (package_name, host, user, password, "/tmp")
 
             worker_process = Process(target=upload_file, args=args)
@@ -647,7 +698,7 @@ class ClientUploader(CouchbaseInstaller):
     def install(self):
         package_name = 'couchbase.rpm' if self.url.endswith('.rpm') else 'couchbase.deb'
 
-        logger.info('Saving a local copy of {}'.format(self.url))
+        logger.info(f'Saving a local copy of {self.url}')
         download_file(self.url, package_name)
 
         self.upload(package_name)
@@ -710,9 +761,15 @@ def get_args():
                         action='store_true',
                         help='uninstall the installed build')
     parser.add_argument('--serverless-profile',
+                        type=maybe_atoi,
                         default=False,
                         help='use to convert the cb-server profile to \
                         serverless on non-capella machines')
+    parser.add_argument('--columnar-profile',
+                        type=maybe_atoi,
+                        default=False,
+                        help='use to convert the cb-server profile to \
+                        columnar on non-capella machines')
     parser.add_argument('override',
                         nargs='*',
                         help='custom cluster settings')
@@ -737,13 +794,11 @@ def main():
             elif infra_provider == 'gcp':
                 installer = GKEInstaller(cluster_spec, args)
             else:
-                raise Exception("{} is not a valid infrastructure provider"
-                                .format(infra_provider))
+                raise Exception(f'{infra_provider} is not a valid infrastructure provider')
         elif cluster_spec.capella_infrastructure:
             installer = ClientUploader(cluster_spec, args)
         else:
             installer = CloudInstaller(cluster_spec, args)
-            installer.check_for_serverless(args.serverless_profile)
 
         if args.uninstall:
             installer.uninstall()
@@ -751,7 +806,6 @@ def main():
             installer.install()
     else:
         installer = CouchbaseInstaller(cluster_spec, args)
-        installer.check_for_serverless(args.serverless_profile)
         installer.install()
         if args.local_copy:
             installer.download_local(args.local_copy_url)

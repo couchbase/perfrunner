@@ -4,6 +4,7 @@ import os
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from dataclasses import dataclass
+from enum import Enum
 from itertools import chain, combinations, permutations
 from typing import Iterable, Iterator, Optional, Tuple
 
@@ -19,6 +20,13 @@ from perfrunner.helpers.misc import (
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
 REPO = 'https://github.com/couchbase/perfrunner'
+
+
+class CBProfile(Enum):
+    DEFAULT = 'default'
+    PROVISIONED = 'provisioned'
+    SERVERLESS = 'serverless'
+    COLUMNAR = 'columnar'
 
 
 @decorator

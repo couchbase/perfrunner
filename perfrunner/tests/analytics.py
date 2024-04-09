@@ -492,28 +492,26 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         external_bucket = self.analytics_settings.external_bucket
         file_format = self.analytics_settings.external_file_format
         file_include = self.analytics_settings.external_file_include
-        if not self.is_capella_goldfish and self.cluster.build_tuple < (8, 0, 0, 1452):
+
+        path_keyword = 'PATH'
+        if (
+            not self.is_capella_goldfish and
+            ((8, 0, 0, 0) < self.cluster.build_tuple < (8, 0, 0, 1452))
+        ):
             path_keyword = 'USING'
-        else:
-            path_keyword = 'PATH'
 
         for dataset in dataset_list:
+            source, dest = dataset['Collection'], dataset['Dataset']
             statement = (
-                "COPY INTO `{}` FROM `{}` AT `external_link` {} '{}' "
-                "WITH {{ 'format': '{}', 'include': '*.{}' }};"
-            ).format(
-                dataset["Dataset"],
-                external_bucket,
-                path_keyword,
-                dataset["Collection"],
-                file_format,
-                file_include
+                f"COPY INTO `{dest}` FROM `{external_bucket}` "
+                f"AT `external_link` {path_keyword} '{source}' "
+                f"WITH {{ 'format': '{file_format}', 'include': '*.{file_include}' }};"
             )
-            logger.info("statement: {}".format(statement))
+            logger.info(f'statement: {statement}')
 
             t0 = time.time()
             self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info('Statement execution time: {}'.format(time.time() - t0))
+            logger.info(f'Statement execution time: {time.time() - t0}')
 
     @with_stats
     def access(self) -> list[QueryLatencyPair]:

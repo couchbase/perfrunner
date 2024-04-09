@@ -2,6 +2,7 @@ import datetime
 import ipaddress
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -67,8 +68,8 @@ def uhex() -> str:
     return uuid4().hex
 
 
-def pretty_dict(d: Any) -> str:
-    return json.dumps(d, indent=4, sort_keys=True,
+def pretty_dict(d: Any, sort_keys: bool = True) -> str:
+    return json.dumps(d, indent=4, sort_keys=sort_keys,
                       default=lambda o: o.__dict__)
 
 
@@ -283,6 +284,11 @@ def parse_prometheus_stat(stats, stat_name: str):
         a = stat_str.find("}")
         stat_count += int(float(stat_str[a+2:]))
     return stat_count
+
+
+def create_build_tuple(build_str: str) -> tuple[int]:
+    """Take a build string like '1.2.3-5678' and return corresponding tuple (1, 2, 3, 5678)."""
+    return tuple(int(n) for n in re.split('\\.|-', build_str))
 
 
 class SSLCertificate:

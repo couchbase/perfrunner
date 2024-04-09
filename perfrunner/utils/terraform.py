@@ -659,7 +659,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             sleep(interval_secs)
 
             resp = self.provisioned_api.get_clusters({'projectId': self.project_id, 'perPage': 100})
-            raise_for_status(resp)
+            if not resp.ok:
+                logger.warning(f'Failed to get clusters: {resp.content}')
+                continue
 
             pending_clusters = []
             for cluster in resp.json()['data'].get('items', []):

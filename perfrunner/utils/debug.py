@@ -167,7 +167,7 @@ def main():
         return
     else:
         _, _, returncode = run_local_shell_command("ls *.zip")
-        if returncode == 1:
+        if returncode:
             remote.collect_info()
             for hostname in cluster_spec.servers:
                 for fname in glob.glob('{}/*.zip'.format(hostname)):

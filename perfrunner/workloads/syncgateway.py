@@ -372,7 +372,7 @@ E2E_CB_MULTI_RUN_TEST_CMD = " run {ycsb_command} -s -P {workload} " \
                              "-p exportfile={exportfile}"
 
 
-def get_offset(workload_settings, worker_id, max_inserts: int = 1000000):
+def get_offset(workload_settings, worker_id, max_inserts: int = 10000000):
     local_offset = worker_id * max_inserts
     return int(workload_settings.syncgateway_settings.insertstart) + local_offset
 
@@ -431,12 +431,9 @@ def add_collections(cmd, workload_settings: PhaseSettings, target: TargetSetting
     else:
         records_per_collection = int(sgs.documents) // len(target_collections)
 
-    cmd += ' -p recordspercollection={recordspercollection} '\
-        .format(recordspercollection=records_per_collection)
-    cmd += ' -p collectioncount={num_of_collections} '\
-        .format(num_of_collections=len(target_collections))
-    cmd += ' -p scopecount={num_of_scopes} '\
-        .format(num_of_scopes=len(target_scopes))
+    cmd += f' -p recordspercollection={records_per_collection} '
+    cmd += f' -p collectioncount={len(target_collections)} '
+    cmd += f' -p scopecount={len(target_scopes)} '
 
     collection_string = ''
 
@@ -445,7 +442,7 @@ def add_collections(cmd, workload_settings: PhaseSettings, target: TargetSetting
 
     collections_param = collection_string[:-1]
 
-    cmd += ' -p collectionsparam={collectionsparam} '.format(collectionsparam=collections_param)
+    cmd += f' -p collectionsparam={collections_param} '
 
     scope_string = ''
 
@@ -454,8 +451,7 @@ def add_collections(cmd, workload_settings: PhaseSettings, target: TargetSetting
 
     scopes_param = scope_string[:-1]
 
-    cmd += ' -p scopesparam={scopesparam} '.format(scopesparam=scopes_param)
-    logger.info("The command is now: {}".format(cmd))
+    cmd += f' -p scopesparam={scopes_param} '
     return cmd
 
 
@@ -477,7 +473,7 @@ def syncgateway_start_memcached(workload_settings: PhaseSettings,
                                 timer: int,
                                 worker_id: int,
                                 cluster: ClusterSpec):
-    restart_memcached(get_memcached_host(cluster, workload_settings), mem_limit=20000, port=8000)
+    restart_memcached(get_memcached_host(cluster, workload_settings), mem_limit=40000, port=8000)
 
 
 def syncgateway_load_users(workload_settings: PhaseSettings,
@@ -487,9 +483,9 @@ def syncgateway_load_users(workload_settings: PhaseSettings,
                            cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_loadusers_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_loadusers_{}_{}.result".format(sgs.log_title, worker_id, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_loadusers_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_loadusers_{worker_id}_{db}.result'
     params = LOAD_USERS_CMD.format(ycsb_command=sgs.ycsb_command,
                                    workload=sgs.workload,
                                    db=db,
@@ -562,7 +558,6 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
         use_capella="true" if cluster.capella_infrastructure else "false",
         exportfile=res_file_name,
     )
-
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)
 
@@ -583,9 +578,9 @@ def syncgateway_init_users(workload_settings: PhaseSettings, target: TargetSetti
                            timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_initusers_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_initusers_{}_{}.result".format(sgs.log_title, worker_id, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_initusers_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_initusers_{worker_id}_{db}.result'
     params = INIT_USERS_CMD.format(ycsb_command=sgs.ycsb_command,
                                    workload=sgs.workload,
                                    db=db,
@@ -624,9 +619,9 @@ def syncgateway_grant_access(workload_settings: PhaseSettings,
                              cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_grantaccess_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_grantaccess_{}_{}.result".format(sgs.log_title, worker_id, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_grantaccess_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_grantaccess_{worker_id}_{db}.result'
     params = GRANT_ACCESS_CMD.format(ycsb_command=sgs.ycsb_command,
                                      workload=sgs.workload,
                                      db=db,
@@ -667,9 +662,9 @@ def syncgateway_run_test(workload_settings: PhaseSettings,
                          cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_runtest_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_runtest_{}_{}.result".format(sgs.log_title, worker_id, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_runtest_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_runtest_{worker_id}_{db}.result'
     params = RUN_TEST_CMD.format(ycsb_command=sgs.ycsb_command,
                                  workload=sgs.workload,
                                  db=db,
@@ -716,7 +711,6 @@ def syncgateway_run_test(workload_settings: PhaseSettings,
         workload_settings.admin_port,
         workload_settings.memcached_port,
     )
-    logger.info("The command to be run is: {}".format(params))
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
@@ -728,9 +722,9 @@ def syncgateway_delta_sync_load_docs(
         cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_loaddocs_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_loaddocs_{}_{}.result".format(sgs.log_title, worker_id, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_loaddocs_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_loaddocs_{worker_id}_{db}.result'
     if sgs.replication_type == 'PUSH':
         phosts = '172.23.100.194'
     else:
@@ -774,9 +768,9 @@ def syncgateway_delta_sync_run_test(
         cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_runtest_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_runtest_{}_{}.result".format(sgs.log_title, worker_id, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_runtest_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_runtest_{worker_id}_{db}.result'
     if sgs.replication_type == 'PUSH':
         phosts = '172.23.100.194'
     else:
@@ -832,9 +826,9 @@ def syncgateway_e2e_cbl_load_docs(
         cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_loaddocs_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_loaddocs_{}_{}.result".format(sgs.log_title, worker_id, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_loaddocs_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_loaddocs_{worker_id}_{db}.result'
     if sgs.replication_type == 'E2E_PUSH':
         phosts = '172.23.100.194'
     else:
@@ -891,9 +885,9 @@ def syncgateway_e2e_cbl_run_test(
         cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_runtest_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_runtest_{}_{}.result".format(sgs.log_title, worker_id, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_runtest_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_runtest_{worker_id}_{db}.result'
     if sgs.replication_type == 'E2E_PUSH':
         phosts = '172.23.100.194'
     else:
@@ -953,8 +947,8 @@ def syncgateway_e2e_multi_cbl_load_docs(
         timer: int, worker_id: int,
         cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
-    log_file_name = "{}_loaddocs_{}.log".format(sgs.log_title, worker_id)
-    res_file_name = "{}_loaddocs_{}.result".format(sgs.log_title, worker_id)
+    log_file_name = f'{sgs.log_title}_loaddocs_{worker_id}.log'
+    res_file_name = f'{sgs.log_title}_loaddocs_{worker_id}.result'
     instances = int(sgs.clients) * int(sgs.instances_per_client)
     docs = int(sgs.documents)
     docs_per_instance = math.ceil(docs / instances)
@@ -967,9 +961,9 @@ def syncgateway_e2e_multi_cbl_load_docs(
         ycsb_command=sgs.ycsb_command,
         workload=sgs.workload,
         hosts=sgs.cbl_target,
-        db="db_{}".format(q),
-        user="sg-user-{}".format(worker_id-1),
-        channellist="channel-{}".format(worker_id-1),
+        db=f'db_{q}',
+        user=f'sg-user-{worker_id-1}',
+        channellist=f'channel-{worker_id-1}',
         port=target_port,
         delta_sync=sgs.delta_sync,
         e2e=sgs.e2e,
@@ -1009,8 +1003,8 @@ def syncgateway_e2e_multi_cbl_run_test(
         worker_id: int,
         cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
-    log_file_name = "{}_runtest_{}.log".format(sgs.log_title, worker_id)
-    res_file_name = "{}_runtest_{}.result".format(sgs.log_title, worker_id)
+    log_file_name = f'{sgs.log_title}_runtest_{worker_id}.log'
+    res_file_name = f'{sgs.log_title}_runtest_{worker_id}.result'
     instances = int(sgs.clients) * int(sgs.instances_per_client)
     docs = int(sgs.documents)
     docs_per_instance = math.ceil(docs / instances)
@@ -1029,9 +1023,9 @@ def syncgateway_e2e_multi_cbl_run_test(
         ycsb_command=sgs.ycsb_command,
         workload=sgs.workload,
         hosts=sgs.cbl_target,
-        db="db_{}".format(q),
-        user="sg-user-{}".format(worker_id-1),
-        channellist="channel-{}".format(worker_id-1),
+        db=f'db_{q}',
+        user=f'sg-user-{worker_id-1}',
+        channellist=f'channel-{worker_id-1}',
         port=target_port,
         writeallfields=sgs.writeallfields,
         readallfields=sgs.readallfields,
@@ -1086,9 +1080,9 @@ def syncgateway_e2e_multi_cb_load_docs(
     sgs = workload_settings.syncgateway_settings
     replication_type = sgs.replication_type
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_loaddocs_{}_{}.log".format(sgs.log_title, worker_id+100, db)
-    res_file_name = "{}_loaddocs_{}_{}.result".format(sgs.log_title, worker_id+100, db)
+    db = f'db-{bucket.split("-")[1]}'.format()
+    log_file_name = f'{sgs.log_title}_loaddocs_{worker_id+100}_{db}.log'
+    res_file_name = f'{sgs.log_title}_loaddocs_{worker_id+100}_{db}.result'
     instances = int(sgs.clients) * int(sgs.instances_per_client)
     docs = int(sgs.documents)
     docs_per_instance = math.ceil(docs / instances)
@@ -1133,9 +1127,9 @@ def syncgateway_e2e_multi_cb_run_test(
     sgs = workload_settings.syncgateway_settings
     replication_type = sgs.replication_type
     bucket = target.bucket
-    db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_runtest_{}_{}.log".format(sgs.log_title, worker_id+100, db)
-    res_file_name = "{}_runtest_{}_{}.result".format(sgs.log_title, worker_id+100, db)
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_runtest_{worker_id+100}_{db}.log'
+    res_file_name = f'{sgs.log_title}_runtest_{worker_id+100}_{db}.result'
     instances = int(sgs.clients) * int(sgs.instances_per_client)
     docs = int(sgs.documents)
     docs_per_instance = math.ceil(docs / instances)
@@ -1183,5 +1177,5 @@ def get_instance_home(workload_settings, worker_id):
     if worker_id:
         instances = int(workload_settings.syncgateway_settings.clients)
         instance_id = int((worker_id + instances - 1) / instances)
-        path = "{}_{}".format(path, instance_id)
+        path = f'{path}_{instance_id}'
     return path

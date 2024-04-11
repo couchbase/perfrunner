@@ -1,0 +1,71 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGImportThroughputTest
+
+[showfast]
+title = 3 node (multinode import), 10M docs, 1KB docsize, 48 vCPU, s=1 c=250
+component = syncgatewaycloud
+category = import
+sub_category = {provider}
+orderby = c10
+
+[cluster]
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[collection]
+config = collections/1bucket_1scope_250collections_basic.json
+
+[load]
+workload_path = workloads/workloadca
+ycsb_client = couchbase3
+items = 5000000
+workers = 160
+workload_instances = 2
+ssl_mode = capella
+
+[access]
+workload_path = workloads/workloadca
+ycsb_client = couchbase3
+items = 5000000
+ops = 90000000
+workers = 160
+time = 1500
+workload_instances = 1
+kv_endpoints = 16
+ssl_mode = capella
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[ycsb]
+branch = tmp-sqw-weekly-updated-c3
+
+[syncgateway]
+nodes = 4
+threads = 10
+clients = 1
+instances_per_client = 5
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+users = 1000
+channels = 1
+channels_per_user = 1
+channels_per_doc = 1
+documents = 5000000
+roundtrip_write = true
+read_mode = documents
+feed_reading_mode = idsonly
+feed_mode = normal
+insert_mode = bykey
+auth = true
+instance = c5.4xlarge
+readproportion=0
+updateproportion=1
+insertproportion=0
+requestdistribution = zipfian
+log_title = sync_gateway_1node_reads
+import_nodes = 3
+ssl_mode_sgw = capella

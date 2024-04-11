@@ -55,7 +55,6 @@ class Remote:
                 if need_pymongo:
                     run("env/bin/pip install pymongo --no-cache-dir", warn_only=True)
 
-
     @master_client
     def remote_copy(self, worker_home: str):
         with cd(worker_home):

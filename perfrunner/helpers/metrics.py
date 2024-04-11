@@ -1244,19 +1244,11 @@ class MetricHelper:
 
         return time_elapsed, self._snapshots, metric_info
 
-    def cluster_deployment_time(self, deployment_time, title) -> Metric:
-        metric_id = '{}_cluster_deployment_time'.format(self.test_config.name)
-        metric_title = "{},{}".format(title, ",".join(self._title.split(",")[2:]))
+    def cluster_deployment_time(self, deployment_time, prefix, title) -> Metric:
+        metric_id = f'{self.test_config.name}_{prefix}'
+        metric_title = f'{title},{",".join(self._title.split(",")[2:])}'
         metric_info = self._metric_info(metric_id, metric_title)
         time = round(float(deployment_time), 2)
-
-        return time, self._snapshots, metric_info
-
-    def bucket_creation_time(self, creation_time, title) -> Metric:
-        metric_id = '{}_bucket_creation_time'.format(self.test_config.name)
-        metric_title = "{},{}".format(title, ",".join(self._title.split(",")[2:]))
-        metric_info = self._metric_info(metric_id, metric_title)
-        time = round(float(creation_time), 2)
 
         return time, self._snapshots, metric_info
 
@@ -1869,8 +1861,15 @@ class MetricHelper:
 
         db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                      collector='syncgateway_cluster_stats')
-        values += self.store.get_values(
-            db, metric='syncgateway__global__resource_utilization__process_cpu_percent_utilization')
+
+        if self.cluster_spec.capella_infrastructure:
+            values += self.store.get_values(
+                db,
+                metric='sgw_resource_utilization_process_cpu_percent_utilization')
+        else:
+            values += self.store.get_values(
+                db,
+                metric='syncgateway__global__resource_utilization__process_cpu_percent_utilization')
         avg_cpu = round(np.average(values) / 100, 2)
         return avg_cpu, self._snapshots, metric_info
 
@@ -1882,8 +1881,14 @@ class MetricHelper:
 
         db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                      collector=' syncgateway_cluster_stats')
-        values += self.store.get_values(
-            db, metric='syncgateway__global__resource_utilization__process_memory_resident')
+        if self.cluster_spec.capella_infrastructure:
+            values += self.store.get_values(
+                db,
+                metric='sgw_resource_utilization_process_memory_resident')
+        else:
+            values += self.store.get_values(
+                db,
+                metric='syncgateway__global__resource_utilization__process_memory_resident')
         avg_mem = round(np.average(values), 2)
         avg_mem = int(avg_mem / (1024 ** 2))
         return avg_mem, self._snapshots, metric_info

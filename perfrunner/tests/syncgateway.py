@@ -1,5 +1,6 @@
 import copy
 import glob
+import json
 import multiprocessing
 import os
 import re
@@ -86,8 +87,8 @@ class SGPerfTest(PerfTest):
         self.sgw_master_node = next(cluster_spec.sgw_masters)
         self.metrics = MetricHelper(self)
         if self.capella_infra:
-            self.build = "{} : {}".format(self.rest.get_sgversion(self.sgw_master_node),
-                                          self.rest.get_version(self.master_node))
+            self.build = f'{self.rest.get_sgversion(self.sgw_master_node)}:' \
+                         f'{self.rest.get_version(self.master_node)}'
         else:
             self.build = self.rest.get_sgversion(self.sgw_master_node)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build, sgw=True)
@@ -143,15 +144,15 @@ class SGPerfTest(PerfTest):
 
         # Get the log streaming options
         options = self.rest.get_log_streaming_options()
-        logger.info("The log streaming options are: {}".format(options))
+        logger.info(f'The log streaming options are: {options}')
 
         # Get logging options
         log_options = self.rest.get_logging_options()
-        logger.info("The logging options are: {}".format(log_options))
+        logger.info(f'The logging options are: {log_options}')
 
         # Get logging config for the db
         log_config = self.rest.get_logging_config()
-        logger.info("The deployed logging config for this db is: {}" .format(log_config))
+        logger.info(f'The deployed logging config for this db is: {log_config}')
 
     def disable_log_streaming(self):
 
@@ -162,10 +163,10 @@ class SGPerfTest(PerfTest):
         self.rest.disable_log_streaming()
 
     def _get_collector_url(self, collector: str) -> str:
-        return os.getenv('COLLECTOR_URL_{}'.format(collector.upper()))
+        return os.getenv(f'COLLECTOR_URL_{collector.upper()}')
 
     def _get_collector_api_key(self, collector: str) -> str:
-        return os.getenv('COLLECTOR_API_KEY_{}'.format(collector.upper()))
+        return os.getenv(f'COLLECTOR_API_KEY_{collector.upper()}')
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
@@ -208,11 +209,11 @@ class SGPerfTest(PerfTest):
                      wait: bool = True) -> None:
         if target_iterator is None:
             target_iterator = self.target_iterator
-        logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
         settings.admin_port = self.admin_port
         settings.public_port = self.public_port
         settings.memcached_port = self.memcached_port
 
+        logger.info(f'Running {phase}: {pretty_dict(settings)}')
         self.worker_manager.run_sg_tasks(task, settings, target_iterator, timer, distribute, phase)
         if wait:
             self.worker_manager.wait_for_fg_tasks()
@@ -403,9 +404,34 @@ class SGPerfTest(PerfTest):
 
 
 class SGLoad(SGPerfTest):
+    def unlink_collections(self):
+        # When the test is done, unlink the collections
+        # (update the app endpoint specs with only 1 coll) and time it
+        collections_map = self.test_config.collection.collection_map
+        if collections_map:
+            logger.info("Unlinking collections")
+            t0 = time.time()
+            for bucket_name in self.test_config.buckets:
+                sgw_db_name = f'db-{bucket_name.split("-")[1]}'
+                config = {
+                    "scopes": {
+                        "scope-1": {
+                            "collections": {
+                                "collection-1": {
+                                    "sync": "function(doc1){channel(doc1.channels);}",
+                                    "import_filter": "function(doc1){return true;}"
+                                }
+                            }
+                        }
+                    }
+                }
+                self.rest.sgw_update_db(sgw_db_name, config)
+            coll_unlink_time = time.time() - t0
+            logger.info(f'Coll unlink time is: {coll_unlink_time}')
+
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*loaddocs*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*loaddocs*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -413,21 +439,39 @@ class SGLoad(SGPerfTest):
         if self.capella_infra and self.test_config.deployment.monitor_deployment_time:
             with TimeTrackingFile() as t:
                 deployment_time = t.config.get('app_services_cluster')
+                collection_time = t.config.get('app_services_coll')
                 creation_time = t.config.get('app_services_db')
-            logger.info("deployment_time is: {}".format(deployment_time))
-            logger.info("creation_time is: {}".format(creation_time))
+            logger.info(f'deployment_time is: {deployment_time}')
             self.reporter.post(
-                *self.metrics.cluster_deployment_time(deployment_time,
+                *self.metrics.cluster_deployment_time(deployment_time, "cluster_deployment_time",
                                                       "App Services Deployment Time (sec)")
             )
 
+            if self.collections:
+                logger.info(f'collection_time is: {collection_time}')
+                self.reporter.post(
+                    *self.metrics.cluster_deployment_time(collection_time,
+                                                          "collection_creation_time",
+                                                          "Collection Creation Time (sec)")
+                )
+
+            logger.info(f'creation_time is: {creation_time}')
             self.reporter.post(
-                *self.metrics.bucket_creation_time(creation_time, "Database Creation Time (sec)")
+                *self.metrics.cluster_deployment_time(creation_time, "bucket_creation_time",
+                                                      "Database Creation Time (sec)")
             )
 
         self.reporter.post(
             *self.metrics.sg_load_throughput("Load Throughput (docs/sec)")
         )
+
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
 
     def run(self):
         self.remote.remove_sglogs()
@@ -438,13 +482,16 @@ class SGLoad(SGPerfTest):
         self.load_users()
         self.load_docs()
 
+        self.unlink_collections()
+        # sleep(600)
+
         self.report_kpi()
 
 
 class SGRead(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -464,7 +511,7 @@ class SGRead(SGPerfTest):
 class SGReadLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -478,7 +525,7 @@ class SGReadLatency(SGPerfTest):
 class SGAuthThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -498,7 +545,7 @@ class SGAuthThroughput(SGPerfTest):
 class SGAuthLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -512,7 +559,7 @@ class SGAuthLatency(SGPerfTest):
 class SGSync(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -537,7 +584,7 @@ class SGSync(SGPerfTest):
 class SGSyncQueryThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -557,7 +604,7 @@ class SGSyncQueryThroughput(SGPerfTest):
 class SGSyncQueryLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -571,7 +618,7 @@ class SGSyncQueryLatency(SGPerfTest):
 class SGWrite(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -591,7 +638,7 @@ class SGWrite(SGPerfTest):
 class SGWriteLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -605,7 +652,7 @@ class SGWriteLatency(SGPerfTest):
 class SGMixQueryThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -714,13 +761,13 @@ class SGImportThroughputTest(SGPerfTest):
         expected_docs = self.test_config.load_settings.items * self.test_config.cluster.num_buckets
         if phase == 'access':
             expected_docs = expected_docs * 2
-        logger.info("expected docs :{}".format(expected_docs))
+        logger.info(f'expected docs :{expected_docs}')
 
         initial_docs = self.initial_import_count()
-        logger.info("initial docs imported :{}".format(initial_docs))
+        logger.info(f'initial docs imported :{initial_docs}')
 
         remaining_docs = expected_docs - initial_docs
-        logger.info("remaining_docs :{}".format(remaining_docs))
+        logger.info(f'remaining_docs :{remaining_docs}')
 
         time_elapsed, items_in_range = self.monitor.monitor_sgimport_queues(host, expected_docs)
         return time_elapsed, items_in_range
@@ -741,13 +788,13 @@ class SGImportThroughputTest(SGPerfTest):
         expected_docs = self.test_config.load_settings.items * self.test_config.cluster.num_buckets
         if phase == 'access':
             expected_docs = expected_docs * 2
-        logger.info("expected docs :{}".format(expected_docs))
+        logger.info(f'expected docs :{expected_docs}')
 
         initial_docs = self.initial_import_count()
-        logger.info("initial docs imported :{}".format(initial_docs))
+        logger.info(f'initial docs imported :{initial_docs}')
 
         remaining_docs = expected_docs - initial_docs
-        logger.info("remaining_docs :{}".format(remaining_docs))
+        logger.info(f'remaining_docs :{remaining_docs}')
 
         importing = True
 
@@ -759,7 +806,7 @@ class SGImportThroughputTest(SGPerfTest):
             for i in range(self.test_config.syncgateway_settings.import_nodes):
                 server = self.cluster_spec.sgw_servers[i]
                 import_count = self.monitor.get_import_count(host=server)
-                logger.info('import count : {} , host : {}'.format(import_count, server))
+                logger.info(f'import count : {import_count} , host : {server}')
                 total_count += import_count
             if total_count >= expected_docs:
                 importing = False
@@ -778,6 +825,14 @@ class SGImportThroughputTest(SGPerfTest):
         t0 = time()
 
         self.load()
+
+        if self.sg_settings.db_config_path:
+            with open(self.sg_settings.db_config_path) as file:
+                config = json.load(file).get('databases', {})
+                for db_name, db_config in config.items():
+                    self.rest.sgw_create_db(db_name, db_config, self.sgw_master_node)
+
+        sleep(120)
 
         if self.test_config.syncgateway_settings.import_nodes == 1 or self.capella_infra:
             time_elapsed_load, items_in_range_load = \
@@ -865,7 +920,7 @@ class SGSyncByUserWithAuth(SGSync):
 
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -920,11 +975,11 @@ class SGReplicateThroughputTest1(SGPerfTest):
     def start_replication(self, sg1_master, sg2_master):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'https://{sg1_master}:4985/db-1'
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'http://{sg1_master}:4985/db-1'
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -977,11 +1032,11 @@ class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
     def start_replication(self, sg1_master, sg2_master):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'https://{sg1_master}:4985/db-1'
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'http://{sg1_master}:4985/db-1'
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -1030,11 +1085,11 @@ class SGReplicateThroughputTest2(SGPerfTest):
     def start_replication(self, sg1_master, sg2_master):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'https://{sg1_master}:4985/db-1'
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'http://{sg1_master}:4985/db-1'
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -1095,11 +1150,11 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
     def start_replication(self, sg1_master, sg2_master):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'https://{sg1_master}:4985/db-1'
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'http://{sg1_master}:4985/db-1'
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -1143,9 +1198,9 @@ class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
     def start_replication(self, sg1_master, sg2_master):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -1202,11 +1257,11 @@ class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
     def start_replication(self, sg1_master, sg2_master):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'https://{sg1_master}:4985/db-1'
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'http://{sg1_master}:4985/db-1'
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -1254,9 +1309,9 @@ class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
     def start_replication(self, sg1_master, sg2_master):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = self.channel_list(int(self.sg_settings.channels))
 
@@ -1298,11 +1353,11 @@ class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
     def start_replication(self, sg1_master, sg2_master, channel):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'https://{sg1_master}:4985/db-1'
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'http://{sg1_master}:4985/db-1'
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = [("channel-" + str(channel + 1))]
         replication_id = "sgr1_" + self.sg_settings.sg_replication_type + str(channel+1)
@@ -1363,11 +1418,11 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
     def start_replication(self, sg1_master, sg2_master, channel):
         if self.cluster_spec.capella_infrastructure or \
            self.test_config.cluster.enable_n2n_encryption:
-            sg1 = 'https://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'https://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'https://{sg1_master}:4985/db-1'
+            sg2 = f'https://{sg2_master}:4985/db-1'
         else:
-            sg1 = 'http://{}:4985/db-1'.format(sg1_master)
-            sg2 = 'http://{}:4985/db-1'.format(sg2_master)
+            sg1 = f'http://{sg1_master}:4985/db-1'
+            sg2 = f'http://{sg2_master}:4985/db-1'
 
         channels = [("channel-" + str(channel+1))]
         replication_id = "sgr2_" + self.sg_settings.sg_replication_type + str(channel+1)
@@ -1432,8 +1487,6 @@ class SGReplicateMultiClusterPull(SGPerfTest):
 
     def download_blockholepuller_tool(self):
         if self.worker_manager.is_remote:
-            logger.info('printing elf.worker_manager.WORKER_HOME{}'.format(
-                self.worker_manager.WORKER_HOME))
             self.remote.download_blackholepuller(worker_home=self.worker_manager.WORKER_HOME)
         else:
             local.download_blockholepuller()
@@ -1520,8 +1573,6 @@ class SGReplicateMultiClusterPush(SGPerfTest):
 
     def download_newdocpusher_tool(self):
         if self.worker_manager.is_remote:
-            logger.info('printing elf.worker_manager.WORKER_HOME{}'.format(
-                self.worker_manager.WORKER_HOME))
             self.remote.download_newdocpusher(worker_home=self.worker_manager.WORKER_HOME)
         else:
             local.download_newdocpusher()
@@ -1630,10 +1681,10 @@ class DeltaSync(SGPerfTest):
         elif replication_type == 'PULL':
             ret_str = local.replicate_pull(self.cluster_spec, cblite_db, sgw_ip)
         else:
-            raise Exception("incorrect replication type: {}".format(replication_type))
+            raise Exception(f'incorrect replication type: {replication_type}')
 
         if ret_str.find('Completed'):
-            logger.info('cblite message:{}'.format(ret_str))
+            logger.info(f'cblite message:{ret_str}')
             replication_time = float((re.search('docs in (.*) secs;', ret_str)).group(1))
             docs_replicated = int((re.search('Completed (.*) docs in', ret_str)).group(1))
             if docs_replicated == int(self.test_config.syncgateway_settings.documents):
@@ -1641,11 +1692,11 @@ class DeltaSync(SGPerfTest):
             else:
                 success_code = 'FAILED'
                 logger.info(
-                    "Replication failed due to partial replication. Number of docs replicated: {}".
-                    format(docs_replicated)
+                    f'Replication failed due to partial replication. Number of docs replicated: \
+                    {docs_replicated}'
                 )
         else:
-            logger.info('Replication failed with error message:{}'.format(ret_str))
+            logger.info(f'Replication failed with error message:{ret_str}')
             replication_time = 0
             docs_replicated = 0
             success_code = 'FAILED'
@@ -1657,7 +1708,7 @@ class DeltaSync(SGPerfTest):
                     bandwidth: float,
                     synced_bytes: float):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())
@@ -1689,9 +1740,9 @@ class DeltaSync(SGPerfTest):
     def post_deltastats(self):
         sg_server = self.cluster_spec.sgw_servers[0]
         for count in range(1, self.test_config.cluster.num_buckets + 1):
-            db = 'db-{}'.format(count)
+            db = f'db-{count}'
             stats = self.monitor.deltasync_stats(host=sg_server, db=db)
-            logger.info('Sync-gateway Stats for {} are:{}'.format(db, stats))
+            logger.info(f'Sync-gateway Stats for {db} are:{stats}')
 
     def calc_bandwidth_usage(self, synced_bytes: float, time_taken: float):
         # in Mb
@@ -1776,9 +1827,9 @@ class DeltaSyncParallel(DeltaSync):
     @with_profiles
     def multiple_replicate(self, num_agents: int, cblite_dbs: list):
         with Pool(processes=num_agents) as pool:
-            logger.info('starting cb replicate parallel with {}'.format(num_agents))
+            logger.info(f'starting cb replicate parallel with {num_agents}')
             results = pool.map(func=self.cblite_replicate, iterable=cblite_dbs)
-        logger.info('end of multiple replicate: {}'.format(results))
+        logger.info(f'end of multiple replicate: {results}')
         return results
 
     def cblite_replicate(self, cblite_db: str):
@@ -1789,10 +1840,10 @@ class DeltaSyncParallel(DeltaSync):
         elif replication_type == 'PULL':
             ret_str = local.replicate_pull(self.cluster_spec, cblite_db, sgw_ip)
         else:
-            raise Exception("incorrect replication type: {}".format(replication_type))
+            raise Exception(f'incorrect replication type: {replication_type}')
 
         if ret_str.find('Completed'):
-            logger.info('cblite message: {}'.format(ret_str))
+            logger.info(f'cblite message: {ret_str}')
             replication_time = float((re.search('docs in (.*) secs;', ret_str)).group(1))
             docs_replicated = int((re.search('Completed (.*) docs in', ret_str)).group(1))
             if docs_replicated == int(self.test_config.syncgateway_settings.documents):
@@ -1800,11 +1851,11 @@ class DeltaSyncParallel(DeltaSync):
             else:
                 success_code = 'FAILED'
                 logger.info(
-                    "Replication failed due to partial replication. Number of docs replicated: {}".
-                    format(docs_replicated)
+                    f'Replication failed due to partial replication. Number of docs replicated: \
+                    {docs_replicated}'
                 )
         else:
-            logger.info('Replication failed with error message:{}'.format(ret_str))
+            logger.info(f'Replication failed with error message:{ret_str}')
             replication_time = 0
             docs_replicated = 0
             success_code = 'FAILED'
@@ -1828,7 +1879,7 @@ class DeltaSyncParallel(DeltaSync):
         for result in results:
             if result[2] == 'SUCCESS':
                 success_count += 1
-        logger.info('success_count :{}'.format(success_count))
+        logger.info(f'success_count :{success_count}')
         if success_count == len(results):
             return 1
         else:
@@ -1903,7 +1954,7 @@ class EndToEndTest(SGPerfTest):
             local.replicate_pull_continuous(self.cluster_spec, db, sgw_ip)
         else:
             raise Exception(
-                "replication type must be either E2E_PUSH or E2E_PULL: {}".format(replication_type)
+                f'replication type must be either E2E_PUSH or E2E_PULL: {replication_type}'
             )
 
     def wait_for_docs_pushed(self, initial_docs, target_docs):
@@ -1915,22 +1966,22 @@ class EndToEndTest(SGPerfTest):
                                                                  initial_docs+target_docs)
         sgw_time = sgw_t1 - sgw_t0
         observed_pushed = end_push_count-start_push_count
-        logger.info("sgw_time: {}, observed_pushed: {}, throughput: {}"
-                    .format(sgw_time, observed_pushed, observed_pushed/sgw_time))
+        logger.info(f'sgw_time: {sgw_time}, observed_pushed: {observed_pushed}, \
+                    throughput: {observed_pushed/sgw_time}')
         return sgw_time, observed_pushed
 
     def wait_for_docs_pulled(self, initial_docs, target_docs):
         sgw_servers = self.settings.syncgateway_settings.nodes
         sg_servers = self.cluster_spec.sgw_servers[0:sgw_servers]
-        logger.info("Initial docs: {}, Target docs: {}".format(initial_docs, target_docs))
+        logger.info(f'Initial docs: {initial_docs}, Target docs: {target_docs}')
         sgw_t0, start_pull_count = self.monitor.wait_sgw_pull_start(sg_servers, initial_docs)
         logger.info("waiting for pull complete...")
         sgw_t1, end_pull_count = self.monitor.wait_sgw_pull_docs(sg_servers,
                                                                  initial_docs+target_docs)
         sgw_time = sgw_t1 - sgw_t0
         observed_pulled = end_pull_count - start_pull_count
-        logger.info("sgw_time: {}, observed_pulled: {}, throughput: {}"
-                    .format(sgw_time, observed_pulled, observed_pulled/sgw_time))
+        logger.info(f'sgw_time: {sgw_time}, observed_pulled: {observed_pulled}, \
+                    throughput: {observed_pulled/sgw_time}')
         return sgw_time, observed_pulled
 
     def post_delta_stats(self):
@@ -1939,13 +1990,12 @@ class EndToEndTest(SGPerfTest):
         pull_count = 0
         push_count = 0
         for host in sg_servers:
-            logger.info("The host is: {}".format(host))
             sgw_stats = self.rest.get_sg_stats(host)
             if not self.cluster_spec.capella_infrastructure:
-                logger.info('Sync-gateway Stats for host {}: {}'.format(host,
-                            pretty_dict(sgw_stats['syncgateway']['per_db'])))
+                logger.info(f'Sync-gateway Stats for host {host}: \
+                            {pretty_dict(sgw_stats["syncgateway"]["per_db"])}')
                 for count in range(1, self.test_config.cluster.num_buckets + 1):
-                    db = 'db-{}'.format(count)
+                    db = f'db-{count}'
                     pull_count += \
                         int(sgw_stats['syncgateway']['per_db'][db]
                                      ['cbl_replication_pull']['rev_send_count'])
@@ -1982,7 +2032,7 @@ class EndToEndTest(SGPerfTest):
         return dict(pull_count=pull_count, push_count=push_count)
 
     def print_ycsb_logs(self):
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as f_out:
                 logger.info(f)
                 logger.info(f_out.read())
@@ -2135,9 +2185,9 @@ class EndToEndSingleCBLTest(EndToEndTest):
             self.run_bidi()
         else:
             raise Exception(
-                "Replication type must be "
-                "E2E_PUSH, E2E_PULL or E2E_BIDI: "
-                "{}".format(replication_type)
+                'Replication type must be '
+                'E2E_PUSH, E2E_PULL or E2E_BIDI: '
+                f'{replication_type}'
             )
 
 
@@ -2147,20 +2197,20 @@ class EndToEndSingleCBLPushTest(EndToEndSingleCBLTest):
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
         pre_load_writes = pre_load_stats['push_count']
-        logger.info("initial writes: {}".format(pre_load_writes))
+        logger.info(f'initial writes: {pre_load_writes}')
 
         sgw_load_time, observed_pushed_load = self.e2e_cbl_load_bg(pre_load_writes, load_docs)
 
         post_load_stats = self.post_delta_stats()
         post_load_writes = post_load_stats['push_count']
-        logger.info("post load writes: {}".format(post_load_writes))
+        logger.info(f'post load writes: {post_load_writes}')
 
         sgw_access_time, observed_pushed_access = self.e2e_cbl_update_bg(post_load_writes,
                                                                          load_docs)
 
         post_access_stats = self.post_delta_stats()
         post_access_writes = post_access_stats['push_count']
-        logger.info("post access writes: {}".format(post_access_writes))
+        logger.info(f'post access writes: {post_access_writes}')
 
         sgw_load_tp = observed_pushed_load / sgw_load_time
         sgw_access_tp = observed_pushed_access / sgw_access_time
@@ -2195,19 +2245,19 @@ class EndToEndSingleCBLPullTest(EndToEndSingleCBLTest):
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
         pre_load_writes = pre_load_stats['pull_count']
-        logger.info("initial writes: {}".format(pre_load_writes))
+        logger.info(f'initial writes: {pre_load_writes}')
 
         sgw_load_time = self.e2e_cb_load_bg(pre_load_writes, load_docs)
 
         post_load_stats = self.post_delta_stats()
         post_load_writes = post_load_stats['pull_count']
-        logger.info("post load writes: {}".format(post_load_writes))
+        logger.info(f'post load writes: {post_load_writes}')
 
         sgw_access_time = self.e2e_cb_update_bg(post_load_writes)
 
         post_access_stats = self.post_delta_stats()
         post_access_writes = post_access_stats['pull_count']
-        logger.info("post access writes: {}".format(post_access_writes))
+        logger.info(f'post access writes: {post_access_writes}')
 
         docs_accessed = post_access_writes - post_load_writes
         sgw_load_tp = load_docs / sgw_load_time
@@ -2238,12 +2288,11 @@ class EndToEndMultiCBLTest(EndToEndTest):
     def get_cblite_info(self):
         for client in self.cluster_spec.workers[:int(self.settings.syncgateway_settings.clients)]:
             for instance_id in range(int(self.settings.syncgateway_settings.instances_per_client)):
-                db_name = "db_{}".format(instance_id)
+                db_name = f'db_{instance_id}'
                 port = 4985+instance_id
                 info = self.rest.get_cblite_info(
                     client, port, db_name)
-                logger.info("client: {}, port: {}, db: {}, \n info: {}".format(
-                    client, port, db_name, info))
+                logger.info(f'client: {client}, port: {port}, db: {db_name}, \n info: {info}')
 
     def push_monitor(self, queue, pre_load_writes, load_docs):
         try:
@@ -2476,9 +2525,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 return sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, \
                     sgw_pull_load_docs
             else:
-                logger.info("PUSH time: {}, PUSH docs: {}, PULL time: {}, PULL docs: {}".format(
-                    sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, sgw_pull_load_docs
-                ))
+                logger.info(f'PUSH time: {sgw_push_load_time}, PUSH docs: {sgw_push_load_docs}, \
+                             PULL time: {sgw_pull_load_time}, PULL docs: {sgw_pull_load_docs}')
                 self.get_cblite_info()
                 self.collect_execution_logs()
                 raise Exception("failed to load docs")
@@ -2555,9 +2603,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 return sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, \
                     sgw_pull_load_docs
             else:
-                logger.info("PUSH time: {}, PUSH docs: {}, PULL time: {}, PULL docs: {}".format(
-                    sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, sgw_pull_load_docs
-                ))
+                logger.info(f'PUSH time: {sgw_push_load_time}, PUSH docs: {sgw_push_load_docs}, \
+                             PULL time: {sgw_pull_load_time}, PULL docs: {sgw_pull_load_docs}')
                 self.get_cblite_info()
                 self.collect_execution_logs()
                 raise Exception("failed to update docs")
@@ -2568,7 +2615,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             for client in self.cluster_spec.workers[:int(
                                                     self.settings.syncgateway_settings.clients)]:
                 port = 4985 + instance_id
-                db_name = "db_{}".format(instance_id)
+                db_name = f'db_{instance_id}'
                 self.remote.start_cblitedb_continuous(client, db_name, port, verbose,
                                                       self.collection_map
                                                       .get('bucket-1', {}))
@@ -2579,23 +2626,23 @@ class EndToEndMultiCBLTest(EndToEndTest):
         cblites_on_current_sgw = 0
         sgw_ip = self.cluster_spec.sgw_servers[current_sgw]
 
-        logger.info("The sgw_ip is: {}".format(sgw_ip))
+        logger.info(f'The sgw_ip is: {sgw_ip}')
         total_users = int(self.settings.syncgateway_settings.users)
         user_id = 0
-        logger.info("The number of users is: {}".format(total_users))
+        logger.info(f'The number of users is: {total_users}')
         instances_per_sgw = int(self.settings.syncgateway_settings.threads) \
             / int(self.settings.syncgateway_settings.nodes)
         if self.capella_infra:
             instances_per_sgw = int(self.settings.syncgateway_settings.threads)
-        logger.info("Instances per sgw: {}".format(instances_per_sgw))
+        logger.info(f'Instances per sgw: {instances_per_sgw}')
         for instance_id in range(int(self.settings.syncgateway_settings.instances_per_client)):
             for client in self.cluster_spec.workers[:int(
                                                     self.settings.syncgateway_settings.clients)]:
-                db_name = "db_{}".format(instance_id)
+                db_name = f'db_{instance_id}'
                 user_num = user_id % total_users
                 user_id += 1
                 if self.settings.syncgateway_settings.replication_auth:
-                    username = "sg-user-{}".format(user_num)
+                    username = f'sg-user-{user_num}'
                     if total_users > 1:
                         if self.capella_infra:
                             password = "Password123!"
@@ -2608,7 +2655,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
                     password = None
                 port = 4985 + instance_id
                 cblites_on_current_sgw += 1
-                logger.info("Cblites on current sgw: {}".format(cblites_on_current_sgw))
+                logger.info(f'Cblites on current sgw: {cblites_on_current_sgw}')
                 if cblites_on_current_sgw > instances_per_sgw and \
                         current_sgw < int(self.settings.syncgateway_settings.nodes) - 1:
                     cblites_on_current_sgw = 0
@@ -2624,7 +2671,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
                         if scope == '_default':
                             continue
                         for col_name, _ in coll.items():
-                            collections.append("{}.{}".format(scope, col_name))
+                            collections.append(f'{scope}.{col_name}')
 
                 if replication_type == 'E2E_PUSH':
                     sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
@@ -2643,24 +2690,23 @@ class EndToEndMultiCBLTest(EndToEndTest):
                         collections=collections)
                 else:
                     raise Exception(
-                        "replication type must be either E2E_PUSH or E2E_PULL: {}".
-                        format(replication_type)
+                        f'replication type must be either E2E_PUSH or E2E_PULL: {replication_type}'
                     )
 
     def setup_cblite(self):
         try:
             self.remote.create_cblite_directory()
         except Exception as ex:
-            logger.info("{}".format(ex))
+            logger.info(ex)
         if self.settings.syncgateway_settings.ramdisk_size != 0:
             try:
                 self.remote.create_cblite_ramdisk(self.settings.syncgateway_settings.ramdisk_size)
             except Exception as ex:
-                logger.info("{}".format(ex))
+                logger.info(ex)
         try:
             self.remote.clone_cblite()
         except Exception as ex:
-            logger.info("{}".format(ex))
+            logger.info(ex)
         self.remote.build_cblite()
 
     def run_push(self):
@@ -2706,36 +2752,36 @@ class EndToEndMultiCBLTest(EndToEndTest):
             raise Exception(
                 "Replication type must be "
                 "E2E_PUSH, E2E_PULL or E2E_BIDI: "
-                "{}".format(replication_type)
+                f"{replication_type}"
             )
 
 
 class EndToEndMultiCBLPushTest(EndToEndMultiCBLTest):
 
     def run_push(self):
-        logger.info("Loading Docs")
+        logger.info('Loading Docs')
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
         pre_load_writes = pre_load_stats['push_count']
-        logger.info("initial pushed: {}".format(pre_load_writes))
+        logger.info(f'initial pushed: {pre_load_writes}')
 
         sgw_load_time, observed_pushed_load = self.push_load(pre_load_writes, load_docs)
         sgw_load_tp = observed_pushed_load / sgw_load_time
 
         post_load_stats = self.post_delta_stats()
         post_load_writes = post_load_stats['push_count']
-        logger.info("post load pushed: {}".format(post_load_writes))
+        logger.info(f'post load pushed: {post_load_writes}')
 
         try:
             sgw_access_time, observed_pushed_access = self.push_update(post_load_writes, load_docs)
 
             post_access_stats = self.post_delta_stats()
             post_access_writes = post_access_stats['push_count']
-            logger.info("post access pushed: {}".format(post_access_writes))
+            logger.info(f'post access pushed: {post_access_writes}')
 
             sgw_access_tp = observed_pushed_access / sgw_access_time
         except Exception as ex:
-            logger.warn('PUSH access phase failed: {}'.format(ex))
+            logger.warn(f'PUSH access phase failed: {ex}')
             sgw_access_tp = 0
 
         self.collect_execution_logs()
@@ -2745,29 +2791,29 @@ class EndToEndMultiCBLPushTest(EndToEndMultiCBLTest):
 class EndToEndMultiCBLPullTest(EndToEndMultiCBLTest):
 
     def run_pull(self):
-        logger.info("Loading Docs")
+        logger.info('Loading Docs')
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
         pre_load_reads = pre_load_stats['pull_count']
-        logger.info("initial pulled: {}".format(pre_load_reads))
+        logger.info(f'initial pulled: {pre_load_reads}')
 
         sgw_load_time, observed_pulled_load = self.pull_load(pre_load_reads, load_docs)
         sgw_load_tp = observed_pulled_load / sgw_load_time
 
         post_load_stats = self.post_delta_stats()
         post_load_reads = post_load_stats['pull_count']
-        logger.info("post load pulled: {}".format(post_load_reads))
+        logger.info(f'post load pulled: {post_load_reads}')
 
         try:
             sgw_access_time, observed_pulled_access = self.pull_update(post_load_reads, load_docs)
 
             post_access_stats = self.post_delta_stats()
             post_access_reads = post_access_stats['pull_count']
-            logger.info("post access pulled: {}".format(post_access_reads))
+            logger.info(f'post access pulled: {post_access_reads}')
 
             sgw_access_tp = observed_pulled_access / sgw_access_time
         except Exception as ex:
-            logger.warn('PULL access phase failed: {}'.format(ex))
+            logger.warn(f'PULL access phase failed: {ex}')
             sgw_access_tp = 0
 
         self.collect_execution_logs()
@@ -2806,10 +2852,10 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
         pre_load_stats = self.post_delta_stats()
 
         pre_load_writes = pre_load_stats['push_count']
-        logger.info("initial pushed: {}".format(pre_load_writes))
+        logger.info(f'initial pushed: {pre_load_writes}')
 
         pre_load_reads = pre_load_stats['pull_count']
-        logger.info("initial pulled: {}".format(pre_load_reads))
+        logger.info(f'initial pulled: {pre_load_reads}')
 
         try:
             sgw_push_load_time, sgw_push_load_docs, sgw_pull_load_time, sgw_pull_load_docs = \
@@ -2820,13 +2866,13 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
             self.report_kpi(sgw_push_load_tp, "PUSH_INSERT")
             self.report_kpi(sgw_pull_load_tp, "PULL_INSERT")
         except Exception as ex:
-            logger.warn('BIDI load phase failed: {}'.format(ex))
+            logger.warn(f'BIDI load phase failed: {ex}')
 
         post_load_stats = self.post_delta_stats()
         post_load_writes = post_load_stats['push_count']
-        logger.info("post load pushed: {}".format(post_load_writes))
+        logger.info(f'post load pushed: {post_load_writes}')
         post_load_reads = post_load_stats['pull_count']
-        logger.info("post load pulled: {}".format(post_load_reads))
+        logger.info(f'post load pulled: {post_load_reads}')
 
         try:
             sgw_push_access_time, sgw_push_access_docs, \
@@ -2837,13 +2883,13 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
 
             post_access_stats = self.post_delta_stats()
             post_access_writes = post_access_stats['push_count']
-            logger.info("post access pushed: {}".format(post_access_writes))
+            logger.info(f'post access pushed: {post_access_writes}')
             post_access_reads = post_access_stats['pull_count']
-            logger.info("post access pulled: {}".format(post_access_reads))
+            logger.info(f'post access pulled: {post_access_reads}')
             self.report_kpi(sgw_push_access_tp, "PUSH_UPDATE")
             self.report_kpi(sgw_pull_access_tp, "PULL_UPDATE")
         except Exception as ex:
-            logger.warn('BIDI access phase failed: {}'.format(ex))
+            logger.warn(f'BIDI access phase failed: {ex}')
 
         self.collect_execution_logs()
 
@@ -2876,7 +2922,7 @@ class LogStreamingTest(SGWrite):
 
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())

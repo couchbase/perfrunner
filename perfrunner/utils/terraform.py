@@ -1571,9 +1571,9 @@ class AppServicesDeployer(CloudVMDeployer):
         self.cluster_ids = self.infra_spec.controlplane_settings.get("cluster_ids", "").split()
         self.cluster_id = self.cluster_ids[0]
 
-        logger.info("The tenant id is: {}".format(self.tenant_id))
-        logger.info("The project id is: {}".format(self.project_id))
-        logger.info("The cluster id is: {}".format(self.cluster_id))
+        logger.info(f'The tenant id is: {self.tenant_id}')
+        logger.info(f'The project id is: {self.project_id}')
+        logger.info(f'The cluster id is: {self.cluster_id}')
 
         self.api_client = CapellaAPIDedicated(
             self.infra_spec.controlplane_settings["public_api_url"],
@@ -1590,60 +1590,55 @@ class AppServicesDeployer(CloudVMDeployer):
 
     def deploy(self):
         # Configure terraform
-        logger.info("Started deploying the AS")
+        logger.info('Started deploying the AS')
         # Deploy capella cluster
         # Create sgw backend(app services)
         if self.test_config.deployment.monitor_deployment_time:
-            logger.info("Started timing the app services deployment")
+            logger.info('Started timing the app services deployment')
             t0 = time()
-            logger.info("Deploying sgw backend")
+            logger.info('Deploying sgw backend')
         sgw_cluster_id = self.deploy_cluster_internal_api()
 
         if self.test_config.deployment.monitor_deployment_time:
-            logger.info("Finished timing the app services deployment")
+            logger.info('Finished timing the app services deployment')
             deployment_time = time() - t0
-            logger.info("The app services deployment time is: {}".format(deployment_time))
-            logger.info("Started timing the app service database creation")
+            logger.info(f'The app services deployment time is: {deployment_time}')
+            logger.info('Started timing the app service database creation')
             t0 = time()
         for bucket_name in self.test_config.buckets:
             # Create sgw database(app endpoint)
-            logger.info("Deploying sgw database")
-            sgw_db_id, sgw_db_name = self.deploy_sgw_db(sgw_cluster_id, bucket_name)
+            logger.info('Deploying sgw database')
+            sgw_db_id, sgw_db_name, coll_creation_time = self.deploy_sgw_db(sgw_cluster_id,
+                                                                            bucket_name)
 
             # Set sync function
-            logger.info("Setting sync function")
-            sync_function = "function (doc) { channel(doc.channels); }"
+            logger.info('Setting sync function')
+            sync_function = 'function (doc) { channel(doc.channels); }'
             self.api_client.update_sync_function_sgw(self.tenant_id, self.project_id,
                                                      self.cluster_id, sgw_cluster_id,
                                                      sgw_db_name, sync_function)
 
-            # Resume sgw database
-            logger.info("Resuming sgw database")
-            self.api_client.resume_sgw_database(self.tenant_id, self.project_id,
-                                                self.cluster_id, sgw_cluster_id,
-                                                sgw_db_name)
-
             # Allow my IP
-            logger.info("Whitelisting own IP on sgw backend")
+            logger.info('Whitelisting own IP on sgw backend')
             self.api_client.allow_my_ip_sgw(self.tenant_id, self.project_id,
                                             self.cluster_id, sgw_cluster_id)
 
             # Add allowed IPs
-            logger.info("Whitelisting IPs")
+            logger.info('Whitelisting IPs')
             client_ips = self.infra_spec.clients
             logger.info("The client list is: {}".format(client_ips))
             if self.csp == "aws":
                 client_ips = [
                     dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
                 ]
-            logger.info("The client list is: {}".format(client_ips))
+            logger.info(f'The client list is: {client_ips}')
             for client_ip in client_ips:
                 self.api_client.add_allowed_ip_sgw(self.tenant_id, self.project_id,
                                                    sgw_cluster_id, self.cluster_id,
                                                    client_ip)
 
             # Add app roles
-            logger.info("Adding app roles")
+            logger.info('Adding app roles')
             app_role = {"name": "moderator", "admin_channels": []}
             self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
                                              self.cluster_id, sgw_cluster_id,
@@ -1654,7 +1649,7 @@ class AppServicesDeployer(CloudVMDeployer):
                                              sgw_db_name, app_role)
 
             # Add user
-            logger.info("Adding user")
+            logger.info('Adding user')
             user = {"email": "", "password": "Password123!", "name": "guest",
                     "disabled": False, "admin_channels": ["*"], "admin_roles": []}
             self.api_client.add_user_sgw(self.tenant_id, self.project_id,
@@ -1662,7 +1657,7 @@ class AppServicesDeployer(CloudVMDeployer):
                                          sgw_db_name, user)
 
             # Add admin user
-            logger.info("Adding admin user")
+            logger.info('Adding admin user')
             admin_user = {"name": "Administrator", "password": "Password123!"}
             self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
                                                self.cluster_id, sgw_cluster_id,
@@ -1672,13 +1667,15 @@ class AppServicesDeployer(CloudVMDeployer):
             self.update_spec(sgw_cluster_id, sgw_db_name)
 
         if self.test_config.deployment.monitor_deployment_time:
-            logger.info("Finished creating the app services databases")
-            db_creation_time = time() - t0
-            logger.info("The app services database creation time is: {}".format(db_creation_time))
+            logger.info('Finished creating the app services databases')
+            # Collection creation is a part of database creation, and we don't want to count twice
+            db_creation_time = time() - t0 - coll_creation_time
+            logger.info(f"The app services database creation time is: {db_creation_time}")
 
             with TimeTrackingFile() as t:
                 t.config.update({
                     'app_services_cluster': deployment_time,
+                    'app_services_coll': coll_creation_time,
                     'app_services_db': db_creation_time
                 })
 
@@ -1693,9 +1690,9 @@ class AppServicesDeployer(CloudVMDeployer):
                                              self.cluster_id, sgw_cluster_id,
                                              sgw_db_name)
 
-        logger.info("The connect response is: {}".format(resp))
+        logger.info(f'The connect response is: {resp}')
         adminurl = resp.json().get('data').get('adminURL').split(':')[1].split('//')[1]
-        logger.info("The admin url is: {}".format(adminurl))
+        logger.info(f'The admin url is: {adminurl}')
         self.infra_spec.config.add_section('sgw_schemas')
         for option, value in self.infra_spec.infrastructure_syncgateways.items():
             self.infra_spec.config.set('sgw_schemas', option, value)
@@ -1704,7 +1701,7 @@ class AppServicesDeployer(CloudVMDeployer):
         sgw_list = []
         for i in range(0, self.test_config.syncgateway_settings.nodes):
             sgw_list.append(adminurl)
-        logger.info("the sgw list is: {}".format(sgw_list))
+        logger.info(f'the sgw list is: {sgw_list}')
         self.infra_spec.config.set('syncgateways', sgw_option, '\n' + '\n'.join(sgw_list))
         self.infra_spec.update_spec_file()
 
@@ -1753,7 +1750,7 @@ class AppServicesDeployer(CloudVMDeployer):
             "compute": {"type": self.test_config.syncgateway_settings.instance}
         }
 
-        logger.info("The payload is: {}".format(config))
+        logger.info(f'The payload is: {config}')
 
         if self.options.capella_cb_version and self.options.capella_sgw_ami:
             config['overRide'] = {
@@ -1761,12 +1758,12 @@ class AppServicesDeployer(CloudVMDeployer):
                 'server': self.options.capella_cb_version,
                 'image': self.options.capella_sgw_ami
             }
-            logger.info('Deploying with custom AMI: {}'.format(self.options.capella_sgw_ami))
+            logger.info(f'Deploying with custom AMI: {self.options.capella_sgw_ami}')
 
         resp = self.api_client.create_sgw_backend(self.tenant_id, config)
         raise_for_status(resp)
         sgw_cluster_id = resp.json().get('id')
-        logger.info('Initialised app services deployment {}'.format(sgw_cluster_id))
+        logger.info(f'Initialised app services deployment {sgw_cluster_id}')
         logger.info('Saving app services ID to spec file.')
 
         self.infra_spec.config.set('infrastructure', 'app_services_cluster', sgw_cluster_id)
@@ -1784,7 +1781,7 @@ class AppServicesDeployer(CloudVMDeployer):
                                                                                   .get('data') \
                                                                                   .get('status') \
                                                                                   .get('state')
-            logger.info('Cluster state for {}: {}'.format(pending_sgw_cluster, status))
+            logger.info(f'Cluster state for {pending_sgw_cluster}: {status}')
             if status == "deploymentFailed":
                 logger.error('Deployment failed for cluster {}. DataDog link for debugging: {}'
                              .format(pending_sgw_cluster,
@@ -1807,7 +1804,7 @@ class AppServicesDeployer(CloudVMDeployer):
             "import_filter": ""
         }
         """
-        sgw_db_name = "db-{}".format(bucket_name.split("-")[1])
+        sgw_db_name = f'db-{bucket_name.split("-")[1]}'
         logger.info("The sgw db name is: {}".format(sgw_db_name))
         config = {
             "name": sgw_db_name,
@@ -1815,7 +1812,7 @@ class AppServicesDeployer(CloudVMDeployer):
             "delta_sync": False,
         }
         collections_map = self.test_config.collection.collection_map
-        logger.info("The collections map is: {}".format(collections_map))
+        logger.info(f'The collections map is: {collections_map}')
         if collections_map:
             """Add collection parameters
             "scopes": {
@@ -1844,28 +1841,33 @@ class AppServicesDeployer(CloudVMDeployer):
             scope_count = len(target_scopes)
             collection_count = len(target_collections)
 
-            logger.info("The number of scopes is: {}".format(scope_count))
+            logger.info(f'The number of scopes is: {scope_count}')
 
-            logger.info("The number of collections is: {}".format(collection_count))
+            logger.info(f'The number of collections is: {collection_count}')
             config["scopes"] = {}
             scopes = {}
             for scope in target_scopes:
-                logger.info("The current scope is: {}".format(scope))
+                logger.info(f'The current scope is: {scope}')
                 collections = {}
+                collections["collections"] = {}
                 for collection in target_collections:
-                    collections[collection] = {
-                        "import_filter": "function(doc) {return true}",
+                    collections["collections"][collection] = {
+                        "import_filter": "",
                         "sync": "function (doc) { channel(doc.channels); }"
                     }
                 scopes[scope] = collections
             config["scopes"] = scopes
-        logger.info("The configuration is: {}".format(config))
+        logger.info(f'The configuration is: {config}')
+
+        logger.info('Started timing the collection creation')
+        t0 = time()
 
         resp = self.api_client.create_sgw_database(self.tenant_id, self.project_id,
                                                    self.cluster_id, sgw_cluster_id, config)
         # raise_for_status(resp)
+        logger.info(f'The response for creating the sgw db is: {resp}')
         sgw_db_id = resp.json().get('id')
-        logger.info('Initialised sgw database deployment {}'.format(sgw_db_id))
+        logger.info(f'Initialised sgw database deployment {sgw_db_id}')
         logger.info('Saving sgw db ID to spec file.')
 
         num_sgw = 0
@@ -1874,20 +1876,36 @@ class AppServicesDeployer(CloudVMDeployer):
             sleep(10)
             resp = self.api_client.get_sgw_databases(self.tenant_id, self.project_id,
                                                      self.cluster_id, sgw_cluster_id).json()
-            logger.info("The response_data is: {}".format(resp))
             new_resp = resp.get('data')
-            logger.info("The new resp is: {}".format(new_resp))
             if new_resp is not None:
                 num_sgw = 0
                 for resp_bit in new_resp:
-                    logger.info(resp_bit)
-                    num_sgw += 1
-            count += 1
-            if count > 25:
-                break
+                    data_resp = resp_bit.get('data')
+                    state = data_resp.get('state')
+                    logger.info(f'The state is: {state}')
 
-        logger.info("SGW databases successfully created")
-        return sgw_db_id, sgw_db_name
+                    if state == 'Offline':
+                        # Resume sgw database
+                        logger.info('Resuming sgw database')
+                        self.api_client.resume_sgw_database(self.tenant_id, self.project_id,
+                                                            self.cluster_id, sgw_cluster_id,
+                                                            sgw_db_name)
+
+                    if state == 'Online':
+                        num_sgw += 1
+            count += 1
+            if count > 1000:
+                logger.error('Collection deployment timed out')
+                exit(1)
+
+        logger.info('Finished creating the app services collections')
+        coll_creation_time = time() - t0
+        if not collections_map:
+            coll_creation_time = 0
+        logger.info(f'The app services collection creation time is: {coll_creation_time}')
+
+        logger.info('SGW databases successfully created')
+        return sgw_db_id, sgw_db_name, coll_creation_time
 
     def destroy_cluster_internal_api(self, sgw_cluster_id):
         logger.info('Deleting Capella App Services cluster...')
@@ -1904,9 +1922,9 @@ class AppServicesDeployer(CloudVMDeployer):
                 status = self.api_client.get_sgw_info(self.tenant_id, self.project_id,
                                                       self.cluster_id, sgw_cluster_id)
                 status = status.json().get('data').get('status').get('state')
-                logger.info('Cluster state for {}: {}'.format(pending_sgw_cluster, status))
+                logger.info(f'Cluster state for {pending_sgw_cluster}: {status}')
             except Exception as e:
-                logger.info("The exception is: {}".format(e))
+                logger.info(f'The exception is: {e}')
                 sleep(30)
                 break
 

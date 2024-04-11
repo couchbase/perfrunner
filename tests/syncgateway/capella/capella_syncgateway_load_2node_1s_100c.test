@@ -2,11 +2,11 @@
 test = perfrunner.tests.syncgateway.SGLoad
 
 [showfast]
-title = ,, 2 nodes, 10M docs, 10 fields, 1.5KB docSize
+title = ,, 2 nodes, 10M docs, 10 fields, 1.5KB docSize, s=1 c=100
 component = infracloud
 category = sgwdeployment
 sub_category = {provider}
-orderby = b21
+orderby = b26
 
 [deployment]
 monitor_deployment_time = true
@@ -18,6 +18,9 @@ enable_cpu_cores = false
 enable_n2n_encryption = all
 show_cp_version = true
 
+[collection]
+config = collections/1bucket_1scope_100collections_basic.json
+
 [secondary]
 indexer.settings.storage_mode = memory_optimized
 
@@ -26,9 +29,10 @@ nodes = 2
 threads = 200
 clients = 4
 instances_per_client = 5
-workload_path = workloads/syncgateway_blank
+workload_path = workloads/syncgateway_coll
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = tmp-sqw-weekly-updated-c3
+ycsb_command = syncgateway3
 users = 1000
 channels = 1
 channels_per_user = 1

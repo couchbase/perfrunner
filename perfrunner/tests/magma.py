@@ -1078,12 +1078,13 @@ class YCSBLoadThroughputHIDDTest(YCSBThroughputHIDDTest):
             logger.info("deployment_time is: {}".format(deployment_time))
             logger.info("creation_time is: {}".format(creation_time))
             self.reporter.post(
-                *self.metrics.cluster_deployment_time(deployment_time,
+                *self.metrics.cluster_deployment_time(deployment_time, "cluster_deployment_time",
                                                       "Cluster Deployment Time (sec)")
             )
 
             self.reporter.post(
-                *self.metrics.bucket_creation_time(creation_time, "Bucket Creation Time (sec)")
+                *self.metrics.cluster_deployment_time(creation_time, "bucket_creation_time",
+                                                      "Bucket Creation Time (sec)")
             )
 
         self.reporter.post(

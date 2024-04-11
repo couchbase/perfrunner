@@ -3245,6 +3245,7 @@ class SyncgatewaySettings:
         self.sgtool_changebatchset = int(options.get("sgtool_changebatchset",
                                                      self.SGTOOL_CHANGEBATCHSET))
         self.resync_new_function = options.get("resync_new", self.DEFAULT_RESYNC_NEW_FUNCTION)
+        self.db_config_path = options.get("db_config_path", None)
 
         self.delta_sync = self.DELTA_SYNC
         self.e2e = self.E2E

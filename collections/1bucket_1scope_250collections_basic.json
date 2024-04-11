@@ -699,6 +699,10 @@
         "access":1,
         "load":1
       },
+      "collection-3":{
+        "access":1,
+        "load":1
+      },
       "collection-30":{
         "access":1,
         "load":1
@@ -788,10 +792,6 @@
         "load":1
       },
       "collection-50":{
-        "access":1,
-        "load":1
-      },
-      "collection-500":{
         "access":1,
         "load":1
       },

@@ -1616,6 +1616,17 @@ class DefaultRestHelper(RestBase):
         api = 'http://{}:{}/{}'.format(cblite_host, cblite_port, cblite_db)
         return self.cblite_get(url=api).json()
 
+    def sgw_create_db(self, db_name: str, db_config: dict, host: str):
+        logger.info(f'Creating database: {db_name} using {host}')
+        api = self._get_api_url(
+            host=host,
+            path=f"{db_name}/",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.put(url=api, data=db_config)
+        resp.raise_for_status()
+
     def sgw_update_sync_function(self, host: str, keyspace: str, new_sync: str):
         logger.info("Updating sync function")
         api = self._get_api_url(
@@ -2202,6 +2213,17 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         resp = self.dedicated_client.update_logging_config(self.tenant_id, self.project_id,
                                                            cluster_id, sgw_cluster_id,
                                                            "db-1", config)
+        resp.raise_for_status()
+
+    def sgw_update_db(self, sgw_db_name: str, config: dict):
+        logger.info(f'Updating db: {sgw_db_name}')
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.update_sgw_database(self.tenant_id, self.project_id,
+                                                         cluster_id, sgw_cluster_id,
+                                                         sgw_db_name, config)
+        logger.info(f'The resp is: {resp}')
         resp.raise_for_status()
 
 

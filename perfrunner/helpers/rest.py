@@ -955,10 +955,7 @@ class DefaultRestHelper(RestBase):
         return cluster_info["state"] == "ACTIVE"
 
     def exec_analytics_statement(self, analytics_node: str, statement: str) -> requests.Response:
-        data = {
-            'statement': statement
-        }
-
+        data = {'statement': statement}
         url = self._get_api_url(host=analytics_node, path='analytics/service',
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
         return self.post(url=url, data=data)
@@ -966,12 +963,12 @@ class DefaultRestHelper(RestBase):
     def exec_analytics_statement_curl(self, analytics_node: str, statement: str) -> str:
         url = self._get_api_url(host=analytics_node, path='analytics/service',
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
-        data = {
-            'statement': statement
-        }
+        data = {'statement': statement}
         data_json = json.dumps(data)
-        cmd = "curl -v -u {}:{} -H \"Content-Type: application/json\" -d '{}' {}".\
-            format(self.rest_username, self.rest_password, data_json, url)
+        cmd = (
+            f"curl -v -k -u {self.rest_username}:{self.rest_password} "
+            f"-H \"Content-Type: application/json\" -d '{data_json}' {url}"
+        )
         return local(cmd, capture=True)
 
     def get_analytics_stats(self, analytics_node: str) -> dict:

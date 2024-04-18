@@ -75,9 +75,8 @@ def all_clients(task: Callable, *args, **kwargs):
     """Execute the decorated function on all remote client machines."""
     helper = args[0]
 
-    hosts = helper.cluster_spec.workers
-
-    return execute(parallel(task), *args, hosts=hosts, **kwargs)
+    if hosts := helper.cluster_spec.workers:
+        return execute(parallel(task), *args, hosts=hosts, **kwargs)
 
 
 @decorator
@@ -85,17 +84,18 @@ def all_clients_batch(task: Callable, *args, **kwargs):
     """Execute the decorated function on all remote client machines."""
     helper = args[0]
 
-    hosts = helper.cluster_spec.workers
-    with settings(pool_size=40):
-        return execute(parallel(task), *args, hosts=hosts, **kwargs)
+    if hosts := helper.cluster_spec.workers:
+        with settings(pool_size=40):
+            return execute(parallel(task), *args, hosts=hosts, **kwargs)
 
 
 @decorator
 def master_client(task: Callable, *args, **kwargs):
     """Execute the decorated function on master client."""
     self = args[0]
-    with settings(host_string=self.cluster_spec.workers[0]):
-        return task(*args, **kwargs)
+    if hosts := self.cluster_spec.workers:
+        with settings(host_string=hosts[0]):
+            return task(*args, **kwargs)
 
 
 @decorator

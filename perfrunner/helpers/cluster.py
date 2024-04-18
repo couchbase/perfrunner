@@ -1124,11 +1124,13 @@ class ClusterManager:
 
         logger.info('Adding client node IPs to allow list')
         if self.cluster_spec.infrastructure_settings.get('peering_connection', None) is None:
-            client_ips = self.cluster_spec.clients
             if self.cluster_spec.cloud_provider == 'aws':
                 client_ips = [
-                    dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
+                    dns.split('.')[0].removeprefix('ec2-').replace('-', '.')
+                    for dns in self.cluster_spec.clients
                 ]
+            else:
+                client_ips = self.cluster_spec.clients
             self.rest.add_allowed_ips_all_clusters(client_ips)
 
     def capella_allow_columnar_ips(self):

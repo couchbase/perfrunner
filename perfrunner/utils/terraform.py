@@ -1851,6 +1851,27 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
     def deploy(self):
         self.deploy_goldfish_instances()
         self.update_spec()
+        self.update_allowlists()
+
+    def update_allowlists(self):
+        logger.info('Updating allowlists for Columnar instances')
+        resp = requests.get('https://ifconfig.me')
+        if not resp.ok:
+            logger.interrupt('Failed to fetch own IP address')
+        myip = resp.content.decode()
+
+        client_ips = [
+            dns.split('.')[0].removeprefix('ec2-').replace('-', '.')
+            for dns in self.cluster_spec.clients
+        ]
+
+        all_ips = [myip] + client_ips
+        logger.info(f'Allowing IPs: {pretty_dict(all_ips)}')
+
+        for instance_id in self.instance_ids.values():
+            logger.info(f'Updating allowlist for instance {instance_id}')
+            for ip in all_ips:
+                self.columnar_api.allow_ip(self.org_id, self.project_id, instance_id, f'{ip}/32')
 
     def deploy_goldfish_instances(self):
         names = ['perf-goldfish-{}'.format(self.uuid)

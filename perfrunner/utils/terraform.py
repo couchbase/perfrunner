@@ -658,14 +658,18 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         while pending_clusters and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            resp = self.provisioned_api.get_clusters({'projectId': self.project_id, 'perPage': 100})
+            api_url = (
+                f'{self.provisioned_api.internal_url}/v2/organizations/{self.org_id}/clusters'
+                '?page=1&perPage=100'
+            )
+            resp = self.provisioned_api.do_internal_request(api_url, 'GET')
             if not resp.ok:
                 logger.warning(f'Failed to get clusters: {resp.content}')
                 continue
 
             pending_clusters = []
-            for cluster in resp.json()['data'].get('items', []):
-                if (cluster_id := cluster['id']) in self.cluster_ids.values():
+            for cluster in resp.json()['data']:
+                if (cluster_id := cluster['data']['id']) in self.cluster_ids.values():
                     pending_clusters.append(cluster_id)
                     logger.info('Cluster {} not destroyed yet'.format(cluster_id))
 

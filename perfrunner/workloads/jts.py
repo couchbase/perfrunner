@@ -16,7 +16,7 @@ CMD = " -test_duration {test_duration}" \
       " -test_debug {test_debug}" \
       " -test_query_type {test_query_type} " \
       " -test_query_limit {test_query_limit}" \
-      " -test_query_field {test_query_field}" \
+      " -test_query_field \'{test_query_field}\'" \
       " -test_worker_type {test_worker_type}" \
       " -test_geo_polygon_coord_list {test_geo_polygon_coord_list}"\
       " -test_query_lon_width {test_query_lon_width}"\

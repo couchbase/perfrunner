@@ -174,7 +174,7 @@ class RemoteWindows(Remote):
             time.sleep(5)
 
     @all_servers
-    def install_couchbase(self, url: str):
+    def download_and_install_couchbase(self, url: str):
         logger.info('Installing the package')
         local_ip = self.detect_ip()
 
@@ -290,4 +290,9 @@ class RemoteWindows(Remote):
         pass
 
     def add_system_limit_config(self):
+        pass
+
+    def set_cb_profile(self, *args):
+        logger.info('Perfrunner cannot set ns_server profile on Windows. '
+                    'Default profile will be used.')
         pass

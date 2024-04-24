@@ -145,7 +145,7 @@ def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec, threads: int
              '--threads {}'.format(threads) if threads else None,
              '--storage {}'.format(storage_type) if storage_type else None,
              '--sink {}'.format(sink_type) if sink_type else None,
-             '--value-compression compressed' if compression else '--value-compression unchanged'
+             '--value-compression compressed' if compression else '--value-compression unchanged',
              '--shards {}'.format(shards) if shards else None,
              '--passphrase {}'.format(passphrase) if encrypted else None]
 

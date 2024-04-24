@@ -1795,7 +1795,7 @@ def get_args():
                         choices=[
                             'us-central1-a',
                             'us-central1-b',
-                            'us-central1-c'
+                            'us-central1-c',
                             'us-central1-f',
                             'us-west1-a',
                             'us-west1-b',

@@ -610,6 +610,59 @@ class GoldfishCopyToS3Test(GoldfishCopyFromS3Test):
         self.access()
 
 
+class GoldfishCopyToKVRemoteLinkTest(GoldfishCopyFromS3Test):
+    COLLECTORS = {"ns_server": True, "active_tasks": False, "analytics": True}
+
+    def __init__(self, *args, **kwargs):
+        PerfTest.__init__(self, *args, **kwargs)
+
+        self.num_items = 0
+        self.analytics_settings = self.test_config.analytics_settings
+        self.config_file = self.analytics_settings.analytics_config_file
+        self.analytics_link = self.analytics_settings.analytics_link
+
+        self.is_capella_goldfish = (
+            self.cluster_spec.capella_infrastructure and self.cluster_spec.goldfish_infrastructure
+        )
+
+        self.data_node, self.analytics_node = self.cluster_spec.masters
+
+    @with_stats
+    def access(self):
+        with open(self.test_config.copy_to_kv_settings.query_file, "r") as f:
+            queries = json.load(f)
+
+        query_template = f"COPY {{}} TO {{}} AT `{self.analytics_link}` KEY {{}}"
+
+        for query in queries:
+            statement = query_template.format(
+                query["source_def"], query["dest_coll_qualified_name"], query["key"]
+            )
+            logger.info(f"statement: {statement}")
+
+            t0 = time.time()
+            resp = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            latency = time.time() - t0
+
+            logger.info(resp.json())
+            logger.info(f"client-side query response time (s): {latency}")
+
+    def run(self):
+        self.set_up_s3_link()
+        self.create_standalone_datasets()
+
+        copy_from_time = self.ingest_data()
+        logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
+
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        local.create_remote_link(
+            self.analytics_link, self.data_node, self.analytics_node, rest_username, rest_password
+        )
+        self.connect_link()
+
+        self.access()
+
+
 class BigFunQueryFailoverTest(BigFunQueryTest):
 
     def failover(self):

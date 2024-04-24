@@ -2615,6 +2615,11 @@ class CopyToS3Settings:
         self.query_file = options.get('query_file')
 
 
+class CopyToKVSettings:
+    def __init__(self, options: dict):
+        self.query_file = options.get("query_file")
+
+
 class AuditSettings:
 
     ENABLED = True
@@ -3582,6 +3587,11 @@ class TestConfig(Config):
     def copy_to_s3_settings(self) -> CopyToS3Settings:
         options = self._get_options_as_dict('copy_to_s3')
         return CopyToS3Settings(options)
+
+    @property
+    def copy_to_kv_settings(self) -> CopyToKVSettings:
+        options = self._get_options_as_dict("copy_to_kv")
+        return CopyToKVSettings(options)
 
     @property
     def audit_settings(self) -> AuditSettings:

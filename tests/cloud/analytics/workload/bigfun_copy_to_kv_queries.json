@@ -1,0 +1,20 @@
+[
+    {
+        "id": "q01",
+        "source_def": "`ChirpMessages-1` cm",
+        "dest_coll_qualified_name": "`bucket-1`.`scope-1`.`ChirpMessages-1`",
+        "key": "cm.chirpid"
+    },
+    {
+        "id": "q02",
+        "source_def": "`GleambookMessages-1` gm",
+        "dest_coll_qualified_name": "`bucket-1`.`scope-1`.`GleambookMessages-1`",
+        "key": "gm.message_id"
+    },
+    {
+        "id": "q03",
+        "source_def": "`GleambookUsers-1` gu",
+        "dest_coll_qualified_name": "`bucket-1`.`scope-1`.`GleambookUsers-1`",
+        "key": "gu.id"
+    }
+]

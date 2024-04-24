@@ -1,0 +1,23 @@
+[test_case]
+test = perfrunner.tests.analytics.GoldfishCopyToKVRemoteLinkTest
+
+[showfast]
+title = 2 nodes, BigFUN 20M users (320M docs), s=1 c=3, Simulated Goldfish, COPY TO KV
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4 2
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[collection]
+config = collections/1bucket_1scope_3collections_analytics.json
+
+[clients]
+python_client = 4.2.0

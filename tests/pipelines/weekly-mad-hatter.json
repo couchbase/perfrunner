@@ -252,8 +252,8 @@
         {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_persist_majority.test", "groups": "P0"}
     ],
     "Rebalance-Large-Scale": [],
-    "Rebalance-Hestia": [
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_30bucket_100M_dgm_kv_hard.test", "groups": "P0"}
+    "Rebalance-Demeter": [
+        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_failover_30bucket_100M_dgm_kv_hard.test", "groups": "P0"}
     ],
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift.test", "groups": "P0"},

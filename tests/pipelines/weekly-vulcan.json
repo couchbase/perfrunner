@@ -147,8 +147,8 @@
     "Rebalance-Large-Scale": [],
     "Rebalance-Large-Scale-C1": [],
     "Rebalance-Large-Scale-C2": [],
-    "Rebalance-Hestia": [
-        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test", "groups": "P0"}
+    "Rebalance-Demeter": [
+        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test", "groups": "P0"}
     ],
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_sqlite.test", "groups": "P1"},

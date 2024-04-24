@@ -242,10 +242,10 @@ pipeline {
                         buildComponent('Rebalance-Large-Scale-C2', testCases)
                     }
                 }
-                stage('Rebalance-Hestia') {
-                    when { expression { return params.Rebalance_Hestia } }
+                stage('Rebalance-Demeter') {
+                    when { expression { return params.Rebalance_Demeter } }
                     steps {
-                        buildComponent('Rebalance-Hestia', testCases)
+                        buildComponent('Rebalance-Demeter', testCases)
                     }
                 }
                 stage('Rebalance-Windows') {
@@ -272,10 +272,10 @@ pipeline {
                         buildComponent('Rebalance-OnDemand', testCases)
                     }
                 }
-                stage('Rebalance-Hestia-OnDemand') {
+                stage('Rebalance-Demeter-OnDemand') {
                     when { expression { return params.Rebalance_OnDemand } }
                     steps {
-                        buildComponent('Rebalance-Hestia-OnDemand', testCases)
+                        buildComponent('Rebalance-Demeter-OnDemand', testCases)
                     }
                 }
                 stage('Views') {

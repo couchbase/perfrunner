@@ -670,7 +670,7 @@ class PipelineTest(TestCase):
                   'GSI', 'GSI-DGM',
                   'N1QL', 'N1QL-Windows', 'N1QL-Arke', 'YCSB', 'YCSB-Hebe',
                   'KV', 'KV-DGM', 'KV-Windows', 'KV-Athena', 'KV-Hercules',
-                  'Rebalance', 'Rebalance-C1', 'Rebalance-C2', 'Rebalance-Hestia',
+                  'Rebalance', 'Rebalance-C1', 'Rebalance-C2', 'Rebalance-Demeter',
                   'Rebalance-Large-Scale', 'Rebalance-Large-Scale-C1', 'Rebalance-Large-Scale-C2',
                   'XDCR', 'XDCR-Windows', 'XDCR-C1', 'XDCR-C2'}
         for pipeline in ('tests/pipelines/weekly-watson.json',

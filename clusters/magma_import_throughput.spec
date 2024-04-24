@@ -25,7 +25,7 @@ rest = Administrator:password
 ssh = root:couchbase
 
 [parameters]
-OS = CentOS 7
+OS = Ubuntu 20.04
 CPU = E5-2680 v3 (16 vCPU)
 Memory = 32GB
 Disk = Samsung DCT883

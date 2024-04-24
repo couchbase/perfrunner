@@ -255,10 +255,10 @@ pipeline {
                         buildComponent('Rebalance-Large-Scale-C2', testCases)
                     }
                 }
-                stage('Rebalance-Hestia') {
-                    when { expression { return params.Rebalance_Hestia } }
+                stage('Rebalance-Demeter') {
+                    when { expression { return params.Rebalance_Demeter } }
                     steps {
-                        buildComponent('Rebalance-Hestia', testCases)
+                        buildComponent('Rebalance-Demeter', testCases)
                     }
                 }
                 stage('Rebalance-Windows') {

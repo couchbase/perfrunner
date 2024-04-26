@@ -1,0 +1,15 @@
+services:
+  perfrunner:
+    container_name: perfrunner
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      target: compose
+    volumes:
+      - .:/opt/perfrunner
+    networks:
+      - perf-network
+networks:
+  perf-network:
+    name: local-perf-testing
+    external: true

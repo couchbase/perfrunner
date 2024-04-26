@@ -66,7 +66,7 @@ loader:
 	go build ./go/loader
 
 docker:
-	docker build -t docker.io/perflab/perfrunner docker
+	docker build --target perfrunner -t perflab/perfrunner docker
 
 docker-cloud-worker:
 	pyenv local 3.9.7 && \
@@ -78,7 +78,8 @@ docker-cloud-worker:
 
 CONTAINER_PASSWORD := puppet
 docker-compose:
-	docker-compose up -d --build perfrunner
+	docker compose up -d --build perfrunner
+	docker exec -it perfrunner rm -rf ${ENV}
 	docker exec -it perfrunner make
 	docker exec -it perfrunner sh -c "echo 'root:${CONTAINER_PASSWORD}' | chpasswd"
 	docker exec -it perfrunner /bin/bash

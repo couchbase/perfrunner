@@ -5,10 +5,13 @@ perfrunner
 
 Installation
 ------------
+### Using Docker
+For local testing and development, you can use docker. See details in [docker directory](docker/README.md).
 
+### Installing on bare metal
 Before using perfrunner you should install the requirements listed in the requirements section. At a minimum you need
 
-* Python 3.5
+* Python 3.9
 * virtualenv
 * libcouchbase
 * libcurl4-gnutls-dev
@@ -16,12 +19,14 @@ Before using perfrunner you should install the requirements listed in the requir
 * libsnappy
 * libssl
 
-Note, you should be able to install both client and server system dependencies using the Ansible playbooks (namely, clients.yml and servers.yml).
+## Preparing workers and servers
+
+You should be able to install both client and server system dependencies using the Ansible playbooks (namely, clients.yml and servers.yml).
 
     ansible-playbook ${playbook} -i ${ini_file}
-    
+
 For instance:
-    
+
     ansible-playbook  playbooks/servers.yml -i clusters/vesta.ini
 
 First clone the perfrunner repo with the command below:
@@ -35,7 +40,6 @@ Once inside the perfrunner directory create a virtual environment for all of the
 
     make
 
-Alternatively, you can make use of the supplied docker-compose file to run perfrunner in a Ubuntu Docker container, if you wish to avoid installing dependencies on your host machine. See [DOCKER-COMPOSE.md](docker/DOCKER-COMPOSE.md).
 
 Cluster installation and setup
 ------------------------------

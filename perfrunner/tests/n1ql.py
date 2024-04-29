@@ -12,6 +12,7 @@ from perfrunner.helpers.misc import pretty_dict, run_aws_cli_command
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import CapellaRebalanceTest
+from perfrunner.tests.tools import CapellaSnapshotBackupRestoreTest
 from perfrunner.utils.terraform import CapellaProvisionedDeployer
 
 
@@ -1621,3 +1622,49 @@ class N1qlVectorSearchWithFilterTest(N1qlVectorSearchTest):
         super().cloud_restore()
         self.wait_for_persistence()
         self.access()
+
+
+class CapellaSnapshotBackupWithN1QLTest(CapellaSnapshotBackupRestoreTest, N1QLTest):
+    # To avoid circular import, this tools test resides here
+    COLLECTORS = {
+        "iostat": False,
+        "memory": False,
+        "n1ql_latency": False,
+        "n1ql_stats": True,
+        "ns_server_system": True,
+    }
+
+    @timeit
+    def warmup(self):
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
+        self.wait_for_indexing()
+
+    @with_stats
+    def access(self) -> dict:
+        self.access_n1ql_bg()
+        time.sleep(self.test_config.access_settings.time)
+        self.worker_manager.abort_all_tasks()
+        latencies = {}
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            latencies[f"{percentile}"] = self.metrics._query_latency(percentile)
+        return latencies
+
+    def run(self):
+        self.enable_stats()
+        PerfTest.load(self)
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+        self.store_plans()
+
+        self.latencies_before = self.access()
+        self.run_backup_restore()
+        self.latencies_after = self.access()
+
+        self.report_kpi()
+        logger.info(f"\n{self.latencies_before=}\n{self.latencies_after=}")

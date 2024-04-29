@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.tools.CapellaSnapshotBackupRestoreTest
+
+[showfast]
+title = Snapshot backups, 3 nodes, 1 bucket x 100M x 1KB, Idle
+component = toolscloud
+category = backup
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+backend_storage = magma
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 100000000
+size = 1024
+workers = 180
+ssl_mode = capella
+
+[hot_load]
+items = 100000000
+workers = 100
+working_set = 5
+ssl_mode = capella
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+throughput = 10000
+items = 100000000
+time = 1200
+workers = 20
+working_set = 5
+working_set_access = 90
+ssl_mode = capella

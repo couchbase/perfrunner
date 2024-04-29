@@ -2070,12 +2070,13 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         return self.cluster_spec.servers_by_cluster_and_role(role)[cluster_idx]
 
     def create_db_user_all_clusters(self, username: str, password: str):
+        logger.info("Adding DB credentials")
         for cluster_id in self.cluster_ids:
-            self.create_db_user(cluster_id, username, password)
+            resp = self.create_db_user(cluster_id, username, password)
+            logger.info(f"Cluster {cluster_id}, user: {resp.content}")
 
     @retry
     def create_db_user(self, cluster_id: str, username: str, password: str):
-        logger.info('Adding DB credential')
         resp = self.dedicated_client.create_db_user(self.tenant_id, self.project_id, cluster_id,
                                                     username, password)
         return resp
@@ -2260,6 +2261,42 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             if resp.json()['status'] == 'complete':
                 break
 
+    def get_cluster_info(self, cluster_id: Optional[str] = None) -> dict:
+        """Get a Capella cluster information."""
+        if not cluster_id:
+            cluster_id = self.cluster_ids[0]
+        resp = self.dedicated_client.get_cluster_internal(
+            self.tenant_id, self.project_id, cluster_id
+        )
+        resp.raise_for_status()
+        return resp.json().get("data", {})
+
+    def sgw_get_app_service_info(self, sgw_cluster_id: Optional[str] = None) -> dict:
+        """Get AppService information."""
+        if not sgw_cluster_id:
+            sgw_cluster_id = self.cluster_spec.infrastructure_settings.get("app_services_cluster")
+
+        return (
+            self.dedicated_client.get_sgw_info(
+                self.tenant_id, self.project_id, self.cluster_ids[0], sgw_cluster_id
+            )
+            .json()
+            .get("data", {})
+        )
+
+    def sgw_get_app_service_dbs(self, sgw_cluster_id: Optional[str] = None) -> dict:
+        """Get AppService associated databases information."""
+        if not sgw_cluster_id:
+            sgw_cluster_id = self.cluster_spec.infrastructure_settings.get("app_services_cluster")
+
+        return (
+            self.dedicated_client.get_sgw_databases(
+                self.tenant_id, self.project_id, self.cluster_ids[0], sgw_cluster_id
+            )
+            .json()
+            .get("data", {})
+        )
+
     def get_sgversion(self, host: str) -> str:
         logger.info('Getting SG Server version on server: {}'.format(host))
         cluster_id = self.cluster_ids[0]
@@ -2428,6 +2465,87 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                                                                  db_name)
         logger.info(f'The resp is: {resp}')
         return resp
+
+    def sgw_delete_backend(self):
+        logger.info("Deleting Capella App Services cluster...")
+
+        sgw_cluster_id = self.cluster_spec.infrastructure_settings["app_services_cluster"]
+        resp = self.dedicated_client.delete_sgw_backend(
+            self.tenant_id, self.project_id, self.cluster_ids[0], sgw_cluster_id
+        )
+        resp.raise_for_status()
+
+    def sgw_add_allowed_ip(self, ips: list[str], include_mine: bool = True):
+        sgw_cluster_id = self.cluster_spec.infrastructure_settings["app_services_cluster"]
+        if include_mine:
+            resp = self.dedicated_client.allow_my_ip_sgw(
+                self.tenant_id, self.project_id, self.cluster_ids[0], sgw_cluster_id
+            )
+            resp.raise_for_status()
+        logger.info(f"Adding to allowed IPs: {ips}")
+        for ip in ips:
+            self.dedicated_client.add_allowed_ip_sgw(
+                self.tenant_id, self.project_id, sgw_cluster_id, self.cluster_ids[0], ip
+            )
+
+    def list_cluster_backups(self, host: str) -> list[str]:
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.list_cluster_backups(
+            self.tenant_id, self.project_id, cluster_id
+        )
+        return resp.json().get("data", [])
+
+    def start_ondemand_cluster_backup(self, host: str) -> str:
+        """Start an on-demand cluster backup and return the backup id."""
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.start_ondemand_cluster_backup(
+            self.tenant_id, self.project_id, cluster_id
+        )
+        logger.info(f"Ondemand backup: {resp.json()}")
+        return resp.json().get("id")
+
+    def restore_cluster_backup(self, host: str, backup_id: str) -> str:
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.restore_cluster_backup(
+            self.tenant_id, self.project_id, cluster_id, backup_id
+        )
+        logger.info(f"Restoring {backup_id}: {resp}")
+        return resp.json().get("restoreId")
+
+    def get_job_status(self, host: str, job_type: str) -> tuple[bool, float]:
+        """Return a job running status and its progress percentage."""
+        cluster_id = self.hostname_to_cluster_id(host)
+        # Cluster status should reach healthy for a complete deployment/rebalance tasks
+        status = self.dedicated_client.get_cluster_status(cluster_id).json().get("status")
+        is_running = status != "healthy"
+        if not is_running:
+            return is_running, None  # No job will be there, no need to check for progress
+
+        # The deployer will create task per each node that need to be rebalanced plus other pre
+        # and post tasks. The cummulative progress of these tasks is tracked through a list of jobs.
+        # For example, to swap rebalance two nodes, CP will create a rebalance task for each node,
+        # plus auxiliary tasks to prepare rebalance and waiting for nodes to be ready afterwards.
+        # Individual tasks will only monitor the progress of each task from 0% to 100%.
+        current_step, progress = self.get_job_progress(host, job_type)
+        if current_step:
+            logger.info(f"Current step: {current_step}")
+        return is_running, progress
+
+    def get_job_progress(self, host: str, job_type: str) -> tuple[str, float]:
+        """Get the progress and current step of the job type."""
+        cluster_id = self.hostname_to_cluster_id(host)
+        jobs = (
+            self.dedicated_client.jobs(
+                tenant_id=self.tenant_id, project_id=self.project_id, cluster_id=cluster_id
+            )
+            .json()
+            .get("data", [])
+        )
+        for job in jobs:
+            job_details = job.get("data", {})
+            if job_details.get("jobType") == job_type:
+                return job_details.get("currentStep"), job_details.get("completionPercentage")
+        return None, None
 
 
 class CapellaServerlessRestHelper(CapellaRestBase):

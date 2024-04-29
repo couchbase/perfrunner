@@ -1,12 +1,15 @@
 import os
+import time
 from typing import Optional
 
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import create_build_tuple
+from perfrunner.helpers.misc import create_build_tuple, human_format, pretty_dict
+from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import LoadSettings, TargetIterator
 from perfrunner.tests import PerfTest
+from perfrunner.tests.syncgateway import SGRead
 
 
 class BackupRestoreTest(PerfTest):
@@ -828,3 +831,219 @@ class ProvisionedCapellaRestore(ProvisionedCapellaBackup):
         self.trigger_restore()
         time_elapsed = self.restore()
         self.report_kpi(time_elapsed)
+
+
+class CapellaSnapshotBackupRestoreTest(ProvisionedCapellaRestore):
+    """Base class for cluster level backup snapshots."""
+
+    @timeit
+    def backup(self):
+        self.backup_id = self.rest.start_ondemand_cluster_backup(self.master_node)
+        self.backup_size = self.monitor.wait_for_cluster_backup_complete(
+            self.master_node, self.backup_id
+        )
+
+    @timeit
+    def restore(self):
+        self.restore_id = self.rest.restore_cluster_backup(self.master_node, self.backup_id)
+        self.monitor.monitor_cluster_snapshot_restore(self.master_node)
+
+    @timeit
+    def warmup(self):
+        self.wait_for_persistence()
+        self.check_num_items()
+
+    def run_backup_restore(self):
+        self.backup_time = self.backup()
+        self._post_backup()
+        self.flush_buckets()
+        self.restore_time = self.restore()
+        self._post_restore()
+        self.warmup_time = self.warmup()
+        logger.info(
+            f"Backup time: {self.backup_time:.2f}s, Restore time: {self.restore_time:.2f}s,"
+            f" Warmup time: {self.warmup_time:.2f}s, Backup size: {human_format(self.backup_size)}"
+        )
+
+    def _post_backup(self):
+        time.sleep(60)
+
+    def _post_restore(self):
+        time.sleep(60)
+        self._refresh()
+
+    @with_stats
+    def access(self) -> dict:
+        self.access_bg()
+        time.sleep(self.test_config.access_settings.time)
+        self.worker_manager.abort_all_tasks()
+        latencies = {}
+
+        for operation in ("get", "set", "durable_set"):
+            latencies[f"{operation}"] = self.metrics._kv_latency(
+                operation, self.test_config.access_settings.latency_percentiles, "spring_latency"
+            )
+        return latencies
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.latencies_before = self.access()
+        self.run_backup_restore()
+
+        self.hot_load()
+        self.latencies_after = self.access()
+
+        self.report_kpi()
+        logger.info(f"\n{self.latencies_before=}\n{self.latencies_after=}")
+
+    def _refresh(self):
+        self.rest.allow_my_ip_all_clusters()
+        self.cluster.capella_allow_client_ips()
+        self.rest.create_db_user_all_clusters(*self.cluster_spec.rest_credentials)
+        self._maybe_update_master()
+        self.monitor.master_node = self.master_node
+        self.rest = RestHelper(self.cluster_spec, self.test_config)
+
+    def _maybe_update_master(self):
+        # If rebalance removed the master node, get a new one
+        try:
+            for _, nodes in self.rest.get_all_cluster_nodes().items():
+                logger.info(f"New nodes: {nodes}")
+                self.master_node = nodes[0].split(":")[0]
+                logger.info(f"Master node updated, new master: {self.master_node}")
+                return
+        except Exception:
+            pass
+
+    def _report_kpi(self):
+        # Backup time
+        self._report_time(self.backup_time, "Backup time", "backup")
+        # Restore time
+        self._report_time(self.restore_time, "Restore time", "restore")
+        # Warmup time
+        self._report_time(self.warmup_time, "Warmup time", "warmup")
+
+    def _report_time(self, time_s: float, title: str, category: str):
+        value, snapshot, metric = self.metrics.elapsed_time(time_s)
+        metric["title"] = f"{title} (min), {metric['title']}"
+        metric["category"] = category
+        metric["id"] = f"{metric['id']}_{category}"
+        self.reporter.post(value, snapshot, metric)
+
+
+class CapellaSnapshotBackupWithSGWTest(SGRead, CapellaSnapshotBackupRestoreTest):
+    COLLECTORS = {
+        "disk": False,
+        "ns_server": False,
+        "ns_server_overview": False,
+        "active_tasks": False,
+        "syncgateway_stats": True,
+    }
+
+    ALL_HOSTNAMES = True
+
+    def load_sgw_docs(self):
+        self.start_memcached()
+        self.load_users()
+        self.load_docs()
+        self.init_users()
+        self.grant_access()
+
+    def sgw_access(self) -> float:
+        self.run_test()
+        self.collect_execution_logs()
+        return self.metrics._parse_sg_throughput()
+
+    @timeit
+    def warmup(self):
+        self.wait_for_persistence()
+
+    def run(self):
+        self.throughputs = []
+        self.download_ycsb()
+        self.load_sgw_docs()
+
+        self.sgw_throughput_before = self.sgw_access()
+
+        self.run_backup_restore()
+
+        self.sgw_throughput_after = self.sgw_access()
+
+        self.report_kpi()
+
+    def _post_backup(self):
+        super()._post_backup()
+        self.rest.sgw_delete_backend()
+        try:
+            self._wait_for_app_service_status(None, None)
+        except Exception:
+            pass  # Deletion complete
+
+    def _wait_for_app_service_status(
+        self, sgw_cluster_id: Optional[str], expected_state: Optional[str]
+    ):
+        while True:
+            status = (
+                self.rest.sgw_get_app_service_info(sgw_cluster_id).get("status", {}).get("state")
+            )
+            logger.info(f"AppService cluster state: {status}")
+            if status == "deploymentFailed":
+                logger.error(f"Re-deployment failed for cluster {sgw_cluster_id}")
+
+            if status == expected_state:
+                break
+            time.sleep(30)
+
+    @timeit
+    def _wait_for_appservice_ready(self):
+        logger.info("Waiting for AppService to be ready")
+        # Get new appService Id
+        sgw_cluster_id = self.rest.get_cluster_info().get("appService", {}).get("id")
+        while not sgw_cluster_id:
+            sgw_cluster_id = self.rest.get_cluster_info().get("appService", {}).get("id")
+            time.sleep(30)
+        self.cluster_spec.config.set("infrastructure", "app_services_cluster", sgw_cluster_id)
+
+        # Wait for AppService redeployment
+        self._wait_for_app_service_status(sgw_cluster_id, "healthy")
+
+        # Wait for AppServices endpoint ready
+        logger.info("Waiting for AppService dbs to come online")
+        db_status = False
+        while db_status:
+            time.sleep(15)
+            dbs = self.rest.sgw_get_app_service_dbs(sgw_cluster_id)
+            if not dbs:
+                continue
+            db_status = all([db.get("data", {}).get("state") == "Online" for db in dbs])
+            logger.info(f"AppService DBs: {pretty_dict(dbs)}")
+
+    def _post_restore(self):
+        super()._post_restore()
+        self.app_service_deployment_time = self._wait_for_appservice_ready()
+        self.cluster_spec.update_spec_file()
+        logger.info(f"AppService deployment time: {self.app_service_deployment_time:.2f}s")
+
+        client_ips = self.cluster_spec.clients
+        if self.cluster_spec.capella_backend == "aws":
+            client_ips = [
+                dns.split(".")[0].removeprefix("ec2-").replace("-", ".") for dns in client_ips
+            ]
+
+        self.rest.sgw_add_allowed_ip(client_ips)
+
+    def _report_kpi(self):
+        CapellaSnapshotBackupRestoreTest._report_kpi(self)
+        # AppService redeployment time
+        self._report_time(
+            self.app_service_deployment_time, "AppService re-deployment time", "redeployment"
+        )
+
+        # Throughput delta
+        throughput_delta = self.sgw_throughput_before - self.sgw_throughput_after
+        logger.info(
+            f"{self.sgw_throughput_before=}, {self.sgw_throughput_after=}, {throughput_delta=}"
+        )

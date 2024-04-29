@@ -1633,3 +1633,65 @@ class Monitor:
         """Monitor CAO deployed server upgrade."""
         self.remote.wait_for_cluster_upgrade()
         logger.info(f"Final version: {self.remote.get_current_server_version()}")
+
+    def wait_for_cluster_backup_complete(self, host: str, backup_id: str) -> int:
+        """Wait until a specified backup complete or timeout and return its size."""
+        retries = 0
+        while True:
+            is_complete, backup_data = self._get_cluster_backup(host, backup_id)
+            if is_complete:
+                return backup_data.get("databaseSize", 0)
+            retries += 1
+            if retries >= self.MAX_RETRY_RECOVERY:
+                # If backup timeout, log all backups for debugging
+                backups = self.rest.list_cluster_backups(host)
+                logger.warn(f"All backups: {misc.pretty_dict(backups)}")
+                raise Exception("Backup timeout")
+
+            time.sleep(self.MONITORING_DELAY)
+
+    def _get_cluster_backup(self, host: str, backup_id: str) -> tuple[bool, dict]:
+        backups = self.rest.list_cluster_backups(host)
+        if not backups:
+            return False, {}
+
+        for backup in backups:
+            backup_data = backup.get("data", {})
+            if backup_data.get("id") != backup_id:
+                continue
+            status = backup_data.get("progress", {}).get("status")
+            complete = status == "complete"
+            if complete:
+                logger.info(f"Backup completed: {misc.pretty_dict(backup_data)}")
+            else:
+                logger.info(f"Backup in progress, status {status}")
+
+            return complete, backup_data
+        return False, {}
+
+    def monitor_cluster_snapshot_restore(self, host):
+        logger.info("Waiting for snapshot restore to start")
+
+        is_running = True
+        is_started = False
+        last_progress = 0
+        last_progress_time = time.time()
+        while is_running or not is_started:
+            time.sleep(self.MONITORING_DELAY * 3)  # 15sec delays
+
+            is_running, progress = self.rest.get_job_status(host, job_type="snapshot_restore")
+            if not progress:
+                # Keep waiting until there is some progress
+                continue
+
+            is_started = True
+            logger.info(f"Snapshot restore progress: {progress} %")
+
+            if progress == last_progress:
+                if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
+                    logger.interrupt("Snapshot restore hung")
+            else:
+                last_progress = progress
+                last_progress_time = time.time()
+
+        logger.info("Snapshot restore completed")

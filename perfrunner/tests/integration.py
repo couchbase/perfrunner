@@ -204,10 +204,15 @@ class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
             PerfTest.access_bg(self, settings=n1ql_settings)
 
     def report_rebalance_kpi(self):
-        self.reporter.post(
-            *self.metrics.rebalance_time(self.rebalance_timings['total_time'],
-                                         update_category=True)
+        value, snapshots, metric = self.metrics.rebalance_time(
+            self.rebalance_timings.get("total_time")
         )
+        metric["category"] = "rebcloud"
+        if "Rebalance" not in metric.get("title"):
+            title_split = metric["title"].split(sep=",", maxsplit=1)
+            title = "Rebalance Time(min)," + title_split[1]
+            metric["title"] = title
+        self.reporter.post(value, snapshots, metric)
 
     def run(self):
         access_settings = self.test_config.access_settings

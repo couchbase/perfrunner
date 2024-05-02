@@ -29,26 +29,34 @@ from perfrunner.settings import CBProfile, ClusterSpec, TestConfig
 
 set_start_method("fork")
 
-SERVER_LOCATIONS = (
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/trinity/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/neo/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/morpheus/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/elixir/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/magma-preview/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/cheshire-cat/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/mad-hatter/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/alice/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/vulcan/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/spock/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/watson/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/couchbase-server/master/{build}/',
-    'http://172.23.126.166/builds/releases/{release}/',
-    'http://172.23.126.166/builds/releases/{release}/ce/',
+LATESTBUILDS_BASE_URL = "http://latestbuilds.service.couchbase.com/builds"
+
+SERVER_INTERNAL_LOCATIONS = (
+    f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-server/{codename}/{{build}}/"
+    for codename in (
+        "trinity",
+        "neo",
+        "morpheus",
+        "elixir",
+        "magma-preview",
+        "cheshire-cat",
+        "mad-hatter",
+        "alice",
+        "vulcan",
+        "spock",
+        "watson",
+        "master",
+    )
+)
+
+SERVER_RELEASE_LOCATIONS = (
+    f"{LATESTBUILDS_BASE_URL}/releases/{{release}}/",
+    f"{LATESTBUILDS_BASE_URL}/releases/{{release}}/ce/",
 )
 
 COLUMNAR_LOCATIONS = (
-    'http://172.23.126.166/builds/latestbuilds/couchbase-columnar/1.0.0/{build}/',
-    'http://172.23.126.166/builds/latestbuilds/capella-analytics/1.0.0/{build}/',
+    f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-columnar/1.0.0/{{build}}/",
+    f"{LATESTBUILDS_BASE_URL}/latestbuilds/capella-analytics/1.0.0/{{build}}/",
 )
 
 PKG_PATTERNS = {
@@ -73,8 +81,8 @@ PKG_PATTERNS = {
 }
 
 OPERATOR_LOCATIONS = {
-    "internal": "http://172.23.126.166/builds/latestbuilds/couchbase-operator/{release}/{build}/",
-    "release": "http://172.23.126.166/builds/releases/couchbase-operator/{release}/",
+    "internal": f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-operator/{{release}}/{{build}}/",
+    "release": f"{LATESTBUILDS_BASE_URL}/releases/couchbase-operator/{{release}}/",
 }
 
 OPERATOR_PACKAGES = {
@@ -508,10 +516,18 @@ class CouchbaseInstaller:
             arch_strings = [ARM_ARCHS[package]]
 
         products = ['server']
-        locations = SERVER_LOCATIONS
-        if self.cluster_spec.goldfish_infrastructure:
+        if self.build is None:
+            locations = SERVER_RELEASE_LOCATIONS
+            logger.info("No build specified; searching only release packages...")
+        elif self.cluster_spec.goldfish_infrastructure:
             products.insert(0, 'columnar')
-            locations = COLUMNAR_LOCATIONS + locations
+            locations = COLUMNAR_LOCATIONS + SERVER_INTERNAL_LOCATIONS
+            logger.info(
+                "Cluster spec specifies Columnar infrastructure; including couchbase-columnar "
+                "packages in search..."
+            )
+        else:
+            locations = SERVER_INTERNAL_LOCATIONS
 
         for loc_pattern, product, pkg_pattern, arch_str in itertools.product(
             locations, products, PKG_PATTERNS[package], arch_strings
@@ -569,7 +585,6 @@ class CouchbaseInstaller:
         self.remote.install_cb_debug_package(url=self.debuginfo_url)
 
     def install_package(self):
-        logger.info(f'Using this URL: {self.url}')
         self.remote.upload_iss_files(self.release)
         self.remote.download_and_install_couchbase(self.url)
 
@@ -591,7 +606,7 @@ class CouchbaseInstaller:
         self.remote.set_cb_profile(profile)
 
     def install(self):
-        logger.info('Finding package to use...')
+        logger.info("Finding package to install...")
         logger.info(f'Package URL: {self.url}')
         self.kill_processes()
         self.uninstall_package()
@@ -606,7 +621,6 @@ class CloudInstaller(CouchbaseInstaller):
         super().__init__(cluster_spec, options)
 
     def install_package(self):
-
         def upload_couchbase(to_host, to_user, to_password, package):
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -637,7 +651,6 @@ class CloudInstaller(CouchbaseInstaller):
                 logger.info(f'uploading client package {package_name} to {client}')
                 upload_couchbase(client, user, password, package_name)
 
-        logger.info(f'Server URL: {self.url}')
         download_file(self.url, package_name)
 
         if not self.cluster_spec.capella_infrastructure:
@@ -666,7 +679,7 @@ class ClientUploader(CouchbaseInstaller):
     @cached_property
     def url(self) -> str:
         for url in (self.options.couchbase_version, self.options.local_copy_url):
-            if validators.url(url):
+            if url and validators.url(url):
                 logger.info('Checking if provided package URL is valid.')
                 if url_exist(url):
                     return url

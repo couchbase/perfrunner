@@ -444,6 +444,7 @@ def run_cbc_pillowfight(host: str,
                         doc_gen: str = 'binary',
                         ssl_mode: str = 'none',
                         populate: bool = False,
+                        time: int = 0,
                         collections: dict = None,
                         custom_pillowfight: bool = False):
 
@@ -501,6 +502,10 @@ def run_cbc_pillowfight(host: str,
         cmd += '--durability {durability} '
 
     cmd += ' > /dev/null 2>&1'
+
+    if time > 0:
+        # Use SIGINT (Ctrl+C) to exit pillowfight gracefully
+        cmd = f'timeout --preserve-status --signal INT {time} {cmd}'
 
     params = urllib.parse.urlencode(connstr_params)
 

@@ -775,7 +775,7 @@ class RemoteKubernetes(Remote):
     def enable_cpu(self):
         pass
 
-    def collect_info(self):
+    def collect_info(self, timeout: int = 1200, task_regexp: str = None):
         pass
 
     def reset_memory_settings(self, host_string: str):

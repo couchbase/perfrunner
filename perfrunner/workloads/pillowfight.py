@@ -63,5 +63,6 @@ def pillowfight_workload(workload_settings: PhaseSettings,
                         connstr_params=workload_settings.connstr_params,
                         doc_gen=workload_settings.doc_gen,
                         ssl_mode=workload_settings.ssl_mode,
+                        time=workload_settings.time,
                         collections=workload_settings.collections,
                         custom_pillowfight=workload_settings.custom_pillowfight)

@@ -149,7 +149,8 @@ class PerfTest:
         self.remote.get_linuxperf_files()
 
     def collect_logs(self):
-        self.remote.collect_info()
+        self.remote.collect_info(timeout=self.test_config.access_settings.cbcollect_timeout,
+                                 regexp=self.test_config.access_settings.cbcollect_regexp)
         for hostname in self.cluster_spec.servers:
             for fname in glob.glob('{}/*.zip'.format(hostname)):
                 shutil.move(fname, '{}.zip'.format(hostname))

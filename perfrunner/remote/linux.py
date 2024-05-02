@@ -2,6 +2,7 @@ import os
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from shlex import quote
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -270,15 +271,21 @@ class RemoteLinux(Remote):
         run('iptables -F && ip6tables -F')
 
     @all_servers
-    def collect_info(self):
+    def collect_info(self, timeout: int = 1200, task_regexp: str = None):
         logger.info('Running cbcollect_info with redaction')
 
         run('rm -f /tmp/*.zip')
 
         fname = '/tmp/{}.zip'.format(uhex())
         try:
-            r = run('{}/bin/cbcollect_info {}'
-                    .format(self.CB_DIR, fname), warn_only=True, timeout=1200)
+            params = [fname]
+            if task_regexp is not None:
+                task_regexp = quote(task_regexp)
+                params.append(f'--task-regexp {task_regexp}')
+            param_string = ' '.join(params)
+            r = run(f'{self.CB_DIR}/bin/cbcollect_info {param_string}',
+                     warn_only=True, timeout=timeout)
+
         except CommandTimeout:
             logger.error('cbcollect_info timed out')
             return

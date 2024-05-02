@@ -1382,6 +1382,7 @@ class PhaseSettings:
     TIMESERIES = 0
 
     CBCOLLECT = 0
+    CBCOLLECT_TIMEOUT = 1200
 
     CONNSTR_PARAMS = "{'ipv6': 'allow', 'enable_tracing': 'false'}"
 
@@ -1442,6 +1443,7 @@ class PhaseSettings:
     N1QL_SHUTDOWN_TYPE = None
 
     LATENCY_PERCENTILES = [99.9]
+    THROUGHPUT_PERCENTILES = [90]
 
     WORKLOAD_MIX = []
     NUM_BUCKETS = []
@@ -1534,6 +1536,11 @@ class PhaseSettings:
         self.latency_percentiles = options.get('latency_percentiles', self.LATENCY_PERCENTILES)
         if isinstance(self.latency_percentiles, str):
             self.latency_percentiles = [float(x) for x in self.latency_percentiles.split(',')]
+
+        self.throughput_percentiles = options.get('throughput_percentiles',
+                                                  self.THROUGHPUT_PERCENTILES)
+        if isinstance(self.throughput_percentiles, str):
+            self.throughput_percentiles = [float(x) for x in self.throughput_percentiles.split(',')]
 
         # Views settings
         self.ddocs = None
@@ -1664,6 +1671,8 @@ class PhaseSettings:
         # CbCollect Setting
         self.cbcollect = int(options.get('cbcollect',
                                          self.CBCOLLECT))
+        self.cbcollect_timeout = int(options.get('cbcollect_timeout', self.CBCOLLECT_TIMEOUT))
+        self.cbcollect_regexp = options.get("cbcollect_task_regexp")
         # Latency Setting
         self.timeseries = int(options.get('timeseries',
                                           self.TIMESERIES))

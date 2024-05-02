@@ -338,7 +338,8 @@ class MetricHelper:
                  cluster_idx: int = 0,
                  collector: str = 'ns_server',
                  stat_group: str = '',
-                 metric: str = 'ops') -> int:
+                 metric: str = 'ops',
+                 percentile: Number = 90) -> int:
         """Calculate P90 total ops/sec over a given set of buckets on a given cluster.
 
         Calculation:
@@ -356,7 +357,7 @@ class MetricHelper:
         If no cluster_idx is specified, use the first cluster (the default).
         """
         if values := self._ops_data(buckets, cluster_idx, collector, stat_group, metric):
-            return int(np.percentile(values, 90))
+            return int(np.percentile(values, percentile))
         return -1
 
     def _construct_ops_metrics(self,
@@ -419,7 +420,9 @@ class MetricHelper:
                                            stat_group_throughputs,
                                            cluster_idx)
 
-    def max_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> List[Metric]:
+    def max_ops(self, buckets: List[str] = [],
+                cluster_idx: int = 0,
+                percentiles: Iterable[Number] = [90]) -> List[Metric]:
         """Generate P90 total ops/sec metrics over a given set of buckets on a given cluster.
 
         Generates overall P90 ops/sec and per-stat-group P90 ops/sec metrics (if stat groups are
@@ -432,19 +435,42 @@ class MetricHelper:
 
         If no cluster_idx is specified, use the first cluster (the default).
         """
-        overall_throughput = self._max_ops(buckets=buckets, cluster_idx=cluster_idx)
-        stat_group_throughputs = {
-            stat_group: self._max_ops(buckets=buckets,
-                                      cluster_idx=cluster_idx,
-                                      collector='metrics_rest_api_collection_throughput',
-                                      stat_group=stat_group,
-                                      metric='kv_collection_ops')
-            for stat_group in self.test_config.collection.collection_stat_groups
-        }
-        return self._construct_ops_metrics('Max Throughput (ops/sec)',
-                                           overall_throughput,
-                                           stat_group_throughputs,
-                                           cluster_idx)
+        metrics = []
+        stat_groups = self.test_config.collection.collection_stat_groups or ['']
+        for stat_group in stat_groups:
+            for percentile in percentiles:
+                logger.info(f'percentile is: {percentile}')
+                overall_throughput = self._max_ops(buckets=buckets,
+                                                   cluster_idx=cluster_idx,
+                                                   percentile=percentile)
+                logger.info(f'overall throughput is: {overall_throughput}')
+                stat_group_throughput = self._max_ops(buckets=buckets,
+                                                      cluster_idx=cluster_idx,
+                                                      collector='metrics_rest_api_collection_throughput',
+                                                      stat_group=stat_group,
+                                                      metric='kv_collection_ops',
+                                                      percentile=percentile)
+                logger.info(f'stat group throughput is: {stat_group_throughput}')
+                extra_ = '_' + stat_group if stat_group != '' else ''
+                metric_id = f"{self.test_config.name}_{extra_}_{percentile:g}th"
+                metric_id = metric_id.replace('.', '')
+
+                title_prefix = f'{percentile:g}th percentile {extra_}'
+
+                if len(self.test.cbmonitor_clusters) > 1:
+                    metric_id = f'{metric_id}_cluster{cluster_idx + 1}'
+                    title_prefix = f'{title_prefix} (cluster {cluster_idx + 1})'
+
+                title = f'{title_prefix} {self._title}'
+
+                metric_info = self._metric_info(metric_id, title, chirality=-1,
+                                                stat_group=stat_group)
+                metric_info.update({'percentile': percentile})
+
+                metrics.append((overall_throughput if stat_group == '' else stat_group_throughput,
+                                self._snapshots, metric_info))
+
+        return metrics
 
     def get_percentile_value_of_node_metric(self, collector, metric, server, percentile):
         values = []

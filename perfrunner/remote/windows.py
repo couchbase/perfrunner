@@ -1,4 +1,5 @@
 import time
+from shlex import quote
 
 from fabric.api import get, put, run, settings, show
 from fabric.exceptions import CommandTimeout
@@ -55,14 +56,19 @@ class RemoteWindows(Remote):
         return run('ipconfig | findstr IPv4').split(': ')[1]
 
     @all_servers
-    def collect_info(self):
+    def collect_info(self, timeout: int = 1200, task_regexp: str = None):
         logger.info('Running cbcollect_info')
 
         run('rm -f *.zip')
 
         fname = '{}.zip'.format(uhex())
-        r = run('{}/bin/cbcollect_info.exe {}'.format(self.CB_DIR, fname),
-                warn_only=True)
+        params = [fname]
+        if task_regexp is not None:
+            task_regexp = quote(task_regexp)
+            params.append(f'--task-regexp {task_regexp}')
+        param_string = ' '.join(params)
+        r = run(f'{self.CB_DIR}/bin/cbcollect_info.exe {param_string}',
+                warn_only=True, timeout=timeout)
         if not r.return_code:
             get('{}'.format(fname))
             run('rm -f {}'.format(fname))

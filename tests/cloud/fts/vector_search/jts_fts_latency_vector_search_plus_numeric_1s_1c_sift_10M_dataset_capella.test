@@ -25,7 +25,7 @@ ssl_mode = capella
 config = collections/1bucket_1scope_1collection_basic.json
 
 [bucket]
-replica_number = 0
+replica_number = 1
 
 [jts]
 jts_repo_branch = multi_query_support

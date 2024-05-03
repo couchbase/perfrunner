@@ -27,7 +27,7 @@ view_percentage = 100
 [bucket]
 bucket_type = ephemeral
 eviction_policy = nruEviction
-replica_number=0
+replica_number=1
 replica_index=0
 
 [collection]

@@ -20,7 +20,7 @@ enable_n2n_encryption = all
 
 
 [bucket]
-replica_number=0
+replica_number=1
 replica_index=0
 
 [collection]

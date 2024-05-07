@@ -85,13 +85,32 @@ class RemoteKubernetes(Remote):
     def delete_namespace(self, name):
         self.k8s_client("delete namespace {}".format(name))
 
-    def get_pods(self, namespace="default"):
-        raw_pods = self.k8s_client(
-            "get pods -o json -n {}".format(namespace),
-            split_lines=False
-        )
-        pods = json.loads(raw_pods.decode('utf8'))
-        return pods["items"]
+    def get_pods(self, namespace: str = "default", output: str = "json", selector: str = None):
+        cmd = [f"get pods -o {output} -n {namespace}", f"-l {selector}" if selector else ""]
+        raw_pods = self.k8s_client(" ".join(cmd), split_lines=False)
+        try:
+            pods = json.loads(raw_pods.decode("utf8"))
+            return pods["items"]
+        except Exception:
+            return raw_pods.decode("utf8")
+
+    def get_cb_cluster_pod_nodes(self) -> list[str]:
+        """Return a list of ec2 nodes currently having a couchbase cluster pod."""
+        return [
+            pod["spec"]["nodeName"]
+            for pod in self.get_pods()
+            if "cb-example-perf" in pod.get("metadata", {}).get("name", "")
+        ]
+
+    def get_all_server_nodes(self) -> dict:
+        """Return a dictionary of server reserved nodes and their associated zone."""
+        return {
+            node["metadata"]["name"]: node.get("metadata", {})
+            .get("labels", {})
+            .get("topology.kubernetes.io/zone", "")
+            for node in self.get_nodes()
+            if "couchbase1" in node.get("metadata", {}).get("labels", {}).get("NodeRoles", "")
+        }
 
     def get_services(self, namespace="default"):
         raw_svcs = self.k8s_client(
@@ -275,7 +294,7 @@ class RemoteKubernetes(Remote):
     def delete_all_pods(self):
         self.k8s_client('delete pods --all')
 
-    def wait_for(self, condition_func, condition_params=None, timeout=1200):
+    def wait_for(self, condition_func, condition_params=None, timeout: int = 1200, delay: int = 30):
         start_time = time.time()
         while time.time() - start_time < timeout:
             if condition_params:
@@ -284,32 +303,44 @@ class RemoteKubernetes(Remote):
             else:
                 if condition_func():
                     return
-            time.sleep(1)
+            time.sleep(delay)
         raise Exception('timeout: condition not reached')
 
-    def wait_for_cluster_ready(self, timeout=1200):
+    def wait_for_cluster_ready(self, timeout: int = 1200):
         self.wait_for(self.cluster_ready, timeout=timeout)
 
-    def cluster_ready(self):
+    def wait_for_cluster_upgrade(self):
+        # Wait for upgrading to start before monitoring for cluster ready as there may be a delay
+        # in starting the upgrade, in which time, the cluster is ready and balanced
+        self.wait_for(self.condition_started, condition_params="Upgrading", timeout=300)
+        self.wait_for(self.cluster_ready, timeout=99999, delay=60)
+
+    def condition_started(self, condition_params: str) -> bool:
+        """Check if the specified condition is present and has a `True` status."""
         cluster = self.get_cluster()
-        status = cluster.get('status', {})
-        conditions = status.get('conditions', {})
+        conditions = cluster.get("status", {}).get("conditions", {})
+        for condition in conditions:
+            if condition.get("type") == condition_params and condition.get("status") == "True":
+                return True
+        return False
+
+    def cluster_ready(self) -> bool:
+        cluster = self.get_cluster()
+        conditions = cluster.get("status", {}).get("conditions", {})
         if not conditions:
             return False
 
+        # In a ready state, the cluster should have exactly two conditions left,
+        # 'Available' and 'Balanced', both with status = 'True'
+        statuses = []
         for condition in conditions:
-            if condition['type'] == 'Available':
-                if condition['status'] != 'True':
-                    return False
-            elif condition['type'] == 'Balanced':
-                if condition['status'] != 'True':
-                    return False
+            if condition.get("type") in ("Available", "Balanced"):
+                statuses.append(condition.get("status") == "True")
             else:
-                logger.info(
-                    'condition type unknown: {} : {}'.format(condition['type'],
-                                                             condition['status']))
-                return False
-        return True
+                logger.info(f'{condition.get("reason")}: {condition.get("message")}')
+                statuses.append(False)
+
+        return all(statuses)
 
     def wait_for_pods_ready(self, pod, desired_num, namespace="default", timeout=1200):
         self.wait_for(self.pods_ready,
@@ -687,6 +718,22 @@ class RemoteKubernetes(Remote):
                         break
         return host_to_ip, port_translation
 
+    def get_nodes_with_service(self, service: str) -> list[str]:
+        server_pods = self.get_pods(selector=f"app=couchbase,couchbase_service_{service}=enabled")
+        service_ips = []
+        for pod in server_pods:
+            try:
+                node_name = pod["spec"]["nodeName"]
+                node_ip = self.k8s_client(
+                    f"get node {node_name} "
+                    '-o jsonpath={.status.addresses[?(@.type=="ExternalIP")].address}'
+                )[0].decode("utf-8")
+                service_ips.append(node_ip)
+            except Exception:
+                pass
+
+        return service_ips
+
     def start_celery_worker(self,
                             worker_name,
                             worker_hostname,
@@ -733,3 +780,24 @@ class RemoteKubernetes(Remote):
 
     def reset_memory_settings(self, host_string: str):
         pass
+
+    def upgrade_couchbase_server(self, target_version: str):
+        new_spec = json.dumps({"spec": {"image": target_version}}, separators=(",", ":"))
+        cmd = f"patch --type=merge cbc cb-example-perf -p {new_spec}"
+        self.k8s_client(cmd)
+
+    def get_current_server_version(self) -> str:
+        cluster = self.get_cluster()
+        return cluster.get("status", {}).get("currentVersion")
+
+    def cordon_a_node(self, node: str):
+        logger.info(f"Cordoning node {node}")
+        self.k8s_client(f"cordon {node}")
+
+    def uncordon_a_node(self, node: str):
+        logger.info(f"Uncordoning node {node}")
+        self.k8s_client(f"uncordon {node}")
+
+    def drain_a_node(self, node: str):
+        logger.info(f"Draining node {node}")
+        self.k8s_client(f"drain --ignore-daemonsets --delete-emptydir-data {node}")

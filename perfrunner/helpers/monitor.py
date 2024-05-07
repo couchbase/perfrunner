@@ -1534,3 +1534,8 @@ class Monitor:
         self._wait_for_columnar_instance_state(
             instance_id, "healthy", "turning_on", poll_interval_secs, timeout_secs
         )
+
+    def monitor_server_upgrade(self):
+        """Monitor CAO deployed server upgrade."""
+        self.remote.wait_for_cluster_upgrade()
+        logger.info(f"Final version: {self.remote.get_current_server_version()}")

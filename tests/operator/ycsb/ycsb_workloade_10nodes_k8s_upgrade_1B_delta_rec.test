@@ -1,0 +1,62 @@
+[test_case]
+test = perfrunner.tests.operator.OperatorUpgradeTest
+
+[showfast]
+title = Kubernetes Upgrade simulated with cordon/drain, Upgrade time (min), Delta Recovery, Workload E, 10 Buckets, 10 nodes
+component = operator
+category = throughput
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 20480
+initial_nodes = 10
+num_buckets = 10
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 1
+failover_min = 5
+eviction_policy = fullEviction
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+workload_path = workloads/workloade
+ycsb_client = couchbase3
+items = 5000000
+workers = 1400
+field_count = 20
+
+[index]
+indexes_per_collection = 10
+statements =
+    CREATE PRIMARY INDEX primary_idx{} ON `{}` WITH {{"num_replica": 1}};
+
+[access]
+workload_path = workloads/workloade
+ycsb_client = couchbase3
+items = 5000000
+target = 1000
+ops = 0
+workers = 10
+time = 3600
+workload_instances = 2
+kv_endpoints = 6
+field_count = 20
+timeseries = 1
+
+[upgrade]
+type = k8s
+target_version = sim
+process = DeltaRecovery
+start_after = 300
+
+[ycsb]
+branch = couchbase3
+sdk_version = 3.6.2
+
+[stats]
+client_processes = java

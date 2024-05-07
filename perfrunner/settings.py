@@ -1233,6 +1233,29 @@ class RebalanceSettings:
             self.fts_node_level_parameters["maxFeedsPerDCPAgent"] = self.fts_max_dcp_partitions
 
 
+class UpgradeSettings(RebalanceSettings):
+    DEFAULT_PROCESS = "SwapRebalance"  # Alt: DeltaRecovery
+    DEFAULT_STRATEGY = "RollingUpgrade"  # Alt: ImmediateUpgrade
+    # Alt: k8s - Specifies to either upgrade Couchbase cluster or k8s cluster
+    DEFAULT_UPGRADE_TYPE = "couchbase"
+    # For k8s upgrades, either do a simulated upgrade or a full upgrade
+    DEFAULT_UPGRADE_MODE = "simulated"
+
+    def __init__(self, options: dict):
+        super().__init__(options)
+        self.upgrade_process = options.get("process", self.DEFAULT_PROCESS)
+        self.upgrade_strategy = options.get("strategy", self.DEFAULT_STRATEGY)
+        self.upgrade_type = options.get("type", self.DEFAULT_UPGRADE_TYPE)
+        self.target_version = options.get("target_version")
+        self.k8s_upgrade_mode = options.get("mode", self.DEFAULT_UPGRADE_MODE)
+
+    def is_server_upgrade(self) -> bool:
+        return self.upgrade_type == self.DEFAULT_UPGRADE_TYPE
+
+    def is_simulated_upgrade(self) -> bool:
+        return self.k8s_upgrade_mode == self.DEFAULT_UPGRADE_MODE
+
+
 class PhaseSettings:
 
     TIME = 3600 * 24
@@ -3550,6 +3573,11 @@ class TestConfig(Config):
     def rebalance_settings(self) -> RebalanceSettings:
         options = self._get_options_as_dict('rebalance')
         return RebalanceSettings(options)
+
+    @property
+    def upgrade_settings(self) -> UpgradeSettings:
+        options = self._get_options_as_dict("upgrade")
+        return UpgradeSettings(options)
 
     @property
     def stats_settings(self) -> StatsSettings:

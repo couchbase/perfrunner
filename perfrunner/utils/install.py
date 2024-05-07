@@ -146,7 +146,6 @@ class OperatorInstaller:
         )
         _, self.exporter_tag = self._get_image_tag_for("exporter", self.exporter_version)
 
-        self.node_count = len(cluster_spec.infrastructure_clusters["couchbase1"].split())
         self.refresh_rate = int(cluster_spec.infrastructure_settings.get("refresh_rate", "60"))
 
         self.remote = RemoteHelper(cluster_spec)
@@ -260,7 +259,7 @@ class OperatorInstaller:
     def create_cluster_config(self):
         logger.info("preparing couchbase cluster config")
         with CAOCouchbaseClusterFile(self.couchbase_release, self.cluster_spec) as cb_config:
-            cb_config.set_server_spec(self.couchbase_tag, self.node_count)
+            cb_config.set_server_spec(self.couchbase_tag)
             cb_config.set_backup(self.operator_backup_tag)
             cb_config.set_exporter(self.exporter_tag, self.refresh_rate)
 

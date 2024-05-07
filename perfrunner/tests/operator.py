@@ -138,3 +138,109 @@ class OperatorBackupRestoreYCSBTest(YCSBTest, OperatorBackupRestoreTest):
         self.flush_buckets()
         time_elapsed_restore = self.restore()
         self.report_kpi(time_elapsed_backup, time_elapsed_restore, backup_size)
+
+
+class OperatorUpgradeTest(YCSBTest):
+    def delay(self):
+        # Delay to wait for the next reconcilliation loop
+        time.sleep(60)
+
+    def k8s_cordon_drain(self) -> bool:
+        active_server_nodes = self.remote.get_cb_cluster_pod_nodes()
+        all_server_nodes = self.remote.get_all_server_nodes()
+        # Nodes designated for server pods but currently dont have a running pod
+        empty_nodes = list(set(all_server_nodes.keys()).difference(active_server_nodes))
+        if not empty_nodes:
+            logger.warn("No free node is available to perform cordon/drain")
+            return False
+
+        # Need the node to be drained coming from the same AZ as the free node.
+        # This way the CSI driver can access the attached PVC to perform recovery.
+        logger.info(f"Server nodes: {all_server_nodes}")
+        logger.info(f"Empty nodes: {empty_nodes}")
+        used_empty_node = empty_nodes[0]
+        available_az = all_server_nodes.get(used_empty_node)
+        target_server_node = None
+        for node in active_server_nodes:
+            if all_server_nodes.get(node) == available_az and node not in self.processed_nodes:
+                target_server_node = node
+                self.processed_nodes.append(node)
+                if used_empty_node not in self.processed_nodes:
+                    self.processed_nodes.append(used_empty_node)
+                break
+
+        if not target_server_node:
+            return False
+
+        logger.info(f"Simulating k8s upgrade using node {target_server_node} on az {available_az}")
+        self.remote.cordon_a_node(target_server_node)
+        self.delay()
+        self.remote.drain_a_node(target_server_node)
+        self.delay()  # Give time for the operator to react to a pod eviction
+        self.remote.wait_for_cluster_ready(timeout=7200)
+        self.delay()
+        self.remote.uncordon_a_node(target_server_node)
+        return True
+
+    @timeit
+    def upgrade(self):
+        upgrade_settings = self.test_config.upgrade_settings
+
+        logger.info(f"Pods before: \n{self.remote.get_pods(output='wide')}")
+        if upgrade_settings.is_server_upgrade():
+            if not upgrade_settings.target_version:
+                logger.warn("No target version specified. No upgrade will be performed.")
+                return
+
+            logger.info(
+                f"Upgrading server from {self.remote.get_current_server_version()} "
+                f"to {upgrade_settings.target_version}"
+            )
+            self.remote.upgrade_couchbase_server(upgrade_settings.target_version)
+            self.monitor.monitor_server_upgrade()
+        else:
+            # Cordon/drain simulation
+            self.processed_nodes = []
+            # Simulate individual upgrade of all possible nodes one by one
+            while self.k8s_cordon_drain():
+                self.delay()
+                logger.info(f"Current pods state: \n{self.remote.get_pods(output='wide')}")
+
+        logger.info(f"Pods after: \n{self.remote.get_pods(output='wide')}")
+
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == "data":
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        try:
+            self.load()
+        except Exception as e:
+            logger.error(f"Load failed: {e}")
+
+        self.wait_for_indexing()
+        self.access_bg()
+
+        time.sleep(self.test_config.upgrade_settings.start_after)
+        upgrade_time = self.upgrade()
+        logger.info(f"Upgrade took {round(upgrade_time/ 60, 1)} min")
+
+        self.worker_manager.wait_for_bg_tasks()
+
+        self.collect_export_files()
+        self.report_kpi(upgrade_time)
+
+    def _report_kpi(self, upgrade_time: float):
+        self.reporter.post(*self.metrics.elapsed_time(upgrade_time))
+
+    def create_indexes(self):
+        for statement_template in self.test_config.index_settings.statements:
+            for bucket in self.test_config.buckets:
+                for indx in range(self.test_config.index_settings.indexes_per_collection):
+                    statement = statement_template.format(indx, bucket)
+                    logger.info("Creating index: " + statement)
+                    self.rest.exec_n1ql_statement(self.query_nodes[0], statement)

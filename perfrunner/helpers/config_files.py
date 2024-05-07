@@ -166,9 +166,11 @@ class CAOCouchbaseClusterFile(CAOFiles):
     def get_cluster_name(self) -> str:
         return self.config["metadata"]["name"]
 
-    def set_server_spec(self, server_tag: str, server_count: int):
+    def set_server_spec(self, server_tag: str):
         self.config["spec"]["image"] = server_tag
-        self.config["spec"]["servers"][0]["size"] = server_count
+
+    def set_server_count(self):
+        self.config["spec"]["servers"][0]["size"] = self.test_config.cluster.initial_nodes[0]
 
     def set_backup(self, backup_tag: str):
         # Only setup backup for backup tests
@@ -219,6 +221,10 @@ class CAOCouchbaseClusterFile(CAOFiles):
         server_types = dict()
         server_roles = self.cluster_spec.roles
         for _, role in server_roles.items():
+            # Ignore any empty services coming from overprovisioned nodes
+            if "empty" in role:
+                continue
+
             role = role.replace("kv", "data").replace("n1ql", "query")
             server_type_count = server_types.get(role, 0)
             server_types[role] = server_type_count + 1
@@ -328,6 +334,18 @@ class CAOCouchbaseClusterFile(CAOFiles):
         for server_group in server_groups:
             if server_group["name"] == server_group:
                 server_group.update({"autoscaleEnabled": True})
+
+    def configure_upgrade(self):
+        upgrade_settings = self.test_config.upgrade_settings
+        if not upgrade_settings.target_version:
+            return
+
+        self.config["spec"].update(
+            {
+                "upgradeProcess": upgrade_settings.upgrade_process,
+                "upgradeStrategy": upgrade_settings.upgrade_strategy,
+            }
+        )
 
     @supported_for(since=(2, 6, 0), feature="CNG")
     def set_cng_version(self, cng_tag: str):

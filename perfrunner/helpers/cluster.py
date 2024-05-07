@@ -1204,6 +1204,7 @@ class KubernetesClusterManager:
         logger.info('Preparing cluster configuration file')
         with CAOCouchbaseClusterFile(self.cao_version, self.cluster_spec, self.test_config) as cm:
             cm.reload_from_dest()  # Installer will have set image tags in the dest file
+            cm.set_server_count()
             cm.set_memory_quota()
             cm.set_services()
             cm.set_memory_settings()
@@ -1211,6 +1212,7 @@ class KubernetesClusterManager:
             cm.set_index_settings()
             cm.set_auto_failover()
             cm.configure_auto_compaction()
+            cm.configure_upgrade()
             self.cluster_file = cm.dest_file
             logger.info(f"Cluster config stored at {self.cluster_file}")
 

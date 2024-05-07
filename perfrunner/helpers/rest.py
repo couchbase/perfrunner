@@ -1735,6 +1735,14 @@ class DefaultRestHelper(RestBase):
 
 
 class KubernetesRestHelper(DefaultRestHelper):
+    SERVICES_PERFRUNNER_TO_CAO = {
+        "kv": "data",
+        "cbas": "analytics",
+        "n1ql": "query",
+        "index": "index",
+        "fts": "search",
+        "eventing": "eventing",
+    }
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
@@ -1764,10 +1772,7 @@ class KubernetesRestHelper(DefaultRestHelper):
         return {'num_docs_queued': 0, 'num_docs_pending': 0}
 
     def get_active_nodes_by_role(self, master_node: str, role: str) -> list[str]:
-        active_nodes_by_role = []
-        for node in self.cluster_spec.servers_by_role(role):
-            active_nodes_by_role.append(node)
-        return active_nodes_by_role
+        return self.remote.get_nodes_with_service(self.SERVICES_PERFRUNNER_TO_CAO.get(role, role))
 
 
 class CapellaRestBase(DefaultRestHelper):

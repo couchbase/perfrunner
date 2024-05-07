@@ -234,14 +234,14 @@ class MetricHelper:
             lat = round(lat)
         return lat, self._snapshots, metric_info
 
-    def jts_recall_and_accuracy(self,value, metric, k_nearest_neighbour):
+    def jts_recall_and_accuracy(self, value, metric, k_nearest_neighbour):
         metric_id = '{}_{}at{}'.format(self.test_config.name, metric, k_nearest_neighbour)
         title_prefix = "Average {}@{} across 1000 queries".format(metric, k_nearest_neighbour)
         metric_id = metric_id.replace('.', '')
         title = "{}, {}".format(title_prefix, self._title)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
         metric_info['subCategory'] = metric
-        return value, self._snapshots, metric_info
+        return round(value, 3), self._snapshots, metric_info
 
     def _jts_metric(self, collector, metric, percentile=None):
         timings = []

@@ -144,12 +144,12 @@ def main():
     spec = ClusterSpec()
     spec.parse(args.cluster)
 
-    cluster_id = spec.infrastructure_settings.get('cbc_cluster')
+    cluster_id = spec.controlplane_settings.get("cluster_ids")
 
     end = datetime.now()
     start = datetime.now() - timedelta(hours=24)
 
-    sandbox = spec.infrastructure_settings.get('cbc_env').split('.')[0]
+    sandbox = spec.controlplane_settings.get("env").split(".")[0]
     if update_kubeconfig(sandbox) != 0:
         exit(1)
 

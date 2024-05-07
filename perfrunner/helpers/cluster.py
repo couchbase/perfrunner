@@ -1002,7 +1002,7 @@ class DefaultClusterManager:
         rule_name = 'AllowPerfrunnerInbound-{}'.format(uuid4().hex[:6])
 
         err = set_azure_capella_subscription(
-            self.cluster_spec.infrastructure_settings.get('cbc_env', 'sandbox')
+            self.cluster_spec.controlplane_settings.get("env", "sandbox")
         )
         if not err:
             for cluster_id in self.rest.cluster_ids:

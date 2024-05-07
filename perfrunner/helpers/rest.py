@@ -17,7 +17,10 @@ from logger import logger
 from perfrunner.helpers.misc import create_build_tuple, pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec, TestConfig
-from perfrunner.utils.terraform import CAPELLA_CREDS_FILE, SERVICES_CAPELLA_TO_PERFRUNNER
+from perfrunner.utils.terraform import (
+    SERVICES_CAPELLA_TO_PERFRUNNER,
+    ControlPlaneManager,
+)
 
 MAX_RETRY = 20
 RETRY_DELAY = 10
@@ -1677,18 +1680,16 @@ class CapellaRestBase(DefaultRestHelper):
 
     def __init__(self, cluster_spec, test_config):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
-        self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
-            self.cluster_spec.infrastructure_settings['cbc_env']
+        self.base_url = "https://cloudapi.{}.nonprod-project-avengers.com".format(
+            self.cluster_spec.controlplane_settings["env"]
         )
-        self.tenant_id = self.cluster_spec.infrastructure_settings['cbc_tenant']
-        self.project_id = self.cluster_spec.infrastructure_settings['cbc_project']
-        self.cluster_ids = self.cluster_spec.infrastructure_settings['cbc_cluster'].split()
+        self.tenant_id = self.cluster_spec.controlplane_settings["org"]
+        self.project_id = self.cluster_spec.controlplane_settings["project"]
+        self.cluster_ids = self.cluster_spec.controlplane_settings["cluster_ids"].split()
 
-        access, secret = os.getenv('CBC_ACCESS_KEY'), os.getenv('CBC_SECRET_KEY')
-        if (not access or not secret) and os.path.isfile(CAPELLA_CREDS_FILE):
-            with open(CAPELLA_CREDS_FILE, 'r') as f:
-                creds = json.load(f)
-            access, secret = creds.get('access'), creds.get('secret')
+        access, secret = None, None
+        if api_keys := ControlPlaneManager.get_api_keys():
+            access, secret = api_keys
 
         self.dedicated_client = CapellaAPIDedicated(
             self.base_url, secret, access, self._cbc_user, self._cbc_pwd, self._cbc_token
@@ -1790,8 +1791,8 @@ class CapellaRestBase(DefaultRestHelper):
         return resp.json()
 
     def get_cp_version(self) -> str:
-        api = 'https://api.{}.nonprod-project-avengers.com/status'.format(
-            self.cluster_spec.infrastructure_settings['cbc_env']
+        api = "https://api.{}.nonprod-project-avengers.com/status".format(
+            self.cluster_spec.controplane_settings["env"]
         )
         response = self.get(url=api)
         return response.json()["commit"]
@@ -2165,10 +2166,10 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
 class ServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
-        self.base_url = 'https://cloudapi.{}.nonprod-project-avengers.com'.format(
-            self.cluster_spec.infrastructure_settings['cbc_env']
+        self.base_url = "https://cloudapi.{}.nonprod-project-avengers.com".format(
+            self.cluster_spec.controlplane_settings["env"]
         )
-        self.dp_id = self.cluster_spec.infrastructure_settings['cbc_dataplane']
+        self.dp_id = self.cluster_spec.controlplane_settings["dataplane_id"]
         self.serverless_client = CapellaAPIServerless(
             self.base_url, self._cbc_user, self._cbc_pwd, self._cbc_token
         )

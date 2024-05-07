@@ -135,6 +135,10 @@ class ClusterSpec(Config):
         return None
 
     @property
+    def controlplane_settings(self) -> dict[str, str]:
+        return self.infrastructure_section("controlplane")
+
+    @property
     def infrastructure_settings(self):
         if self.config.has_section('infrastructure'):
             return {k: v for k, v in self.config.items('infrastructure')}
@@ -189,7 +193,7 @@ class ClusterSpec(Config):
                 k8s_clusters += v.split(",")
         return k8s_clusters
 
-    def infrastructure_section(self, section: str):
+    def infrastructure_section(self, section: str) -> dict[str, str]:
         if section in self.config.sections():
             return {k: v for k, v in self.config.items(section)}
         return {}
@@ -616,7 +620,7 @@ class ClusterSpec(Config):
                 '--output text'
             )
 
-            for cluster_id in self.infrastructure_settings.get('cbc_cluster').split():
+            for cluster_id in self.controlplane_settings.get("cluster_ids").split():
                 pwd = run_aws_cli_command(command_template, cluster_id)
                 if pwd is not None:
                     pwds.append(pwd)
@@ -666,12 +670,12 @@ class ClusterSpec(Config):
             region = os.environ.get('AWS_REGION', 'us-east-1')
 
             command_template = (
-                'ec2 describe-instances --region {} '
+                "ec2 describe-instances --region {} "
                 '--filters "Name=tag-key,Values={{}}" '
                 '"Name=tag:couchbase-cloud-dataplane-id,Values={}" '
                 '--query "Reservations[].Instances[].InstanceId" '
-                '--output text'
-            ).format(region, self.infrastructure_settings['cbc_dataplane'])
+                "--output text"
+            ).format(region, self.controlplane_settings["dataplane_id"])
 
             stdout = run_aws_cli_command(command_template, 'couchbase-cloud-nebula')
             dn_iids = stdout.split()
@@ -698,9 +702,9 @@ class ClusterSpec(Config):
                 '--query "Reservations[].Instances[].InstanceId" '
                 '--output text'
             )
-            stdout = run_aws_cli_command(command_template,
-                                         region,
-                                         self.infrastructure_settings['cbc_cluster'])
+            stdout = run_aws_cli_command(
+                command_template, region, self.controlplane_settings["cluster_ids"]
+            )
             sgids = stdout.split()
             logger.info("Found Instance IDs for sgw: {}".format(', '.join(sgids)))
             self.config.set('sgw_instance_ids', 'sync_gateways', '\n', + '\n'.join(sgids))

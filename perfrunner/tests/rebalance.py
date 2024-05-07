@@ -15,7 +15,7 @@ from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import DestTargetIterator, UniDirXdcrInitTest
-from perfrunner.utils.terraform import CapellaDeployer
+from perfrunner.utils.terraform import CapellaProvisionedDeployer
 from perfrunner.workloads.sdks_bench import get_sdk_build_command
 
 
@@ -155,7 +155,7 @@ class CapellaRebalanceTest(RebalanceTest):
                 nodes_after_rebalance = schemas[:nodes_after]
 
                 new_cluster_config = {
-                    'specs': CapellaDeployer.construct_capella_server_groups(
+                    "specs": CapellaProvisionedDeployer.construct_capella_server_groups(
                         self.cluster_spec, nodes_after_rebalance
                     )[0]
                 }

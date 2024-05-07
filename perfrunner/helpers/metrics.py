@@ -1593,6 +1593,7 @@ class MetricHelper:
 
     def ch2_metric(self, duration: float, logfile: str):
         filename = logfile + '.log'
+        total_time, rate = 0, 0
         test_duration = duration
         with open(filename) as fh:
             for line in fh.readlines():

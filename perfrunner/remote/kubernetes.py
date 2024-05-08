@@ -23,12 +23,14 @@ class RemoteKubernetes(Remote):
 
     def __init__(self, cluster_spec: ClusterSpec):
         super().__init__(cluster_spec)
-        self.kube_config_path = "cloud/infrastructure/generated/kube_configs/k8s_cluster_1"
-
         if cluster_spec.cloud_provider == 'openshift':
             self.k8s_client = self._oc
         else:
             self.k8s_client = self._kubectl
+
+        self.kube_config_path = "cloud/infrastructure/generated/kube_configs/k8s_cluster_1"
+        with open(cluster_spec.generated_cloud_config_path) as f:
+            self.kube_config_path = json.load(f).get("kubeconfigs", [self.kube_config_path])[0]
 
     @property
     def _git_access_token(self):

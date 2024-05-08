@@ -22,8 +22,7 @@ set_start_method("fork")
 
 
 class Deployer:
-
-    def __init__(self, infra_spec, options):
+    def __init__(self, infra_spec: ClusterSpec, options):
         self.options = options
         self.cluster_path = options.cluster
         self.infra_spec = infra_spec
@@ -60,7 +59,11 @@ class AWSDeployer(Deployer):
         self.ebs_csi_iam_policy_path = "cloud/infrastructure/aws/eks/ebs-csi-iam-policy.json"
         self.cloud_ini = self.settings.get('cloud_ini', 'cloud/infrastructure/cloud.ini')
         self.os_arch = self.settings.get('os_arch', 'x86_64')
-        self.deployment_id = uuid4().hex
+        self.deployment_id = uuid4().hex[:6]
+        name_prefix = options.tag.replace("jenkins-", "").lower()
+        self.k8s_cluster_name = f"{name_prefix}-{self.deployment_id}"
+        self.deployed_infra["kubeconfigs"] = []
+        self.deployed_infra["cluster_map"] = {}
 
     def gen_desired_infrastructure_config(self):
         desired_infra = {'k8s': {}, 'ec2': {}}
@@ -153,7 +156,7 @@ class AWSDeployer(Deployer):
         subnets = 0
         self.deployed_infra['vpc']['subnets'] = {}
         for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
-            cluster_name = 'k8s_cluster_{}'.format(i)
+            cluster_name = f"{self.k8s_cluster_name}_{i}"
             if self.region == 'us-east-1':
                 availability_zones = ['us-east-1a', 'us-east-1b']
             else:
@@ -286,42 +289,48 @@ class AWSDeployer(Deployer):
         if not self.desired_infra['k8s']:
             return
         logger.info("Creating cloudformation eks roles...")
+        node_role_stack_name = f"CloudPerfTestingEKSNodeRole-{self.deployment_id}"
+        cluster_role_stack_name = f"CloudPerfTestingEKSClusterRole-{self.deployment_id}"
         with open(self.eks_cluster_role_path, 'r') as cf_file:
             cft_template = cf_file.read()
             response = self.cloudformation_client.create_stack(
-                StackName='CloudPerfTestingEKSClusterRole',
+                StackName=cluster_role_stack_name,
                 TemplateBody=cft_template,
-                Capabilities=['CAPABILITY_IAM'],
+                Capabilities=["CAPABILITY_IAM"],
                 DisableRollback=True,
-                EnableTerminationProtection=False)
+                EnableTerminationProtection=False,
+            )
             self.deployed_infra['vpc']['eks_cluster_role_stack_arn'] = response['StackId']
             self.write_infra_file()
         with open(self.eks_node_role_path, 'r') as cf_file:
             cft_template = cf_file.read()
             response = self.cloudformation_client.create_stack(
-                StackName='CloudPerfTestingEKSNodeRole',
+                StackName=node_role_stack_name,
                 TemplateBody=cft_template,
-                Capabilities=['CAPABILITY_IAM'],
+                Capabilities=["CAPABILITY_IAM"],
                 DisableRollback=True,
-                EnableTerminationProtection=False)
+                EnableTerminationProtection=False,
+            )
             self.deployed_infra['vpc']['eks_node_role_stack_arn'] = response['StackId']
             self.write_infra_file()
         waiter = self.cloudformation_client.get_waiter('stack_create_complete')
         waiter.wait(
-            StackName='CloudPerfTestingEKSClusterRole',
-            WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
+            StackName=cluster_role_stack_name,
+            WaiterConfig={"Delay": 10, "MaxAttempts": 120},
+        )
         waiter.wait(
-            StackName='CloudPerfTestingEKSNodeRole',
-            WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
-        response = self.cloudformation_client.describe_stacks(
-            StackName='CloudPerfTestingEKSClusterRole')
+            StackName=node_role_stack_name,
+            WaiterConfig={"Delay": 10, "MaxAttempts": 120},
+        )
+        response = self.cloudformation_client.describe_stacks(StackName=cluster_role_stack_name)
         self.deployed_infra['vpc']['eks_cluster_role_iam_arn'] = \
             response['Stacks'][0]['Outputs'][0]['OutputValue']
         self.write_infra_file()
-        response = self.cloudformation_client.describe_stacks(
-            StackName='CloudPerfTestingEKSNodeRole')
+        response = self.cloudformation_client.describe_stacks(StackName=node_role_stack_name)
         self.deployed_infra['vpc']['eks_node_role_iam_arn'] = \
             response['Stacks'][0]['Outputs'][0]['OutputValue']
+        self.deployed_infra["node_role_stack"] = node_role_stack_name
+        self.deployed_infra["cluster_role_stack"] = cluster_role_stack_name
         self.write_infra_file()
 
     def create_eks_clusters(self):
@@ -330,30 +339,34 @@ class AWSDeployer(Deployer):
         logger.info("Creating eks clusters...")
         self.deployed_infra['vpc']['eks_clusters'] = {}
         for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
-            cluster_name = 'k8s_cluster_{}'.format(i)
-            cluster_version = self.infra_spec.kubernetes_version(cluster_name)
+            cluster_name = f"{self.k8s_cluster_name}_{i}"
+            desired_name = f"k8s_cluster_{i}"
+            cluster_version = self.infra_spec.kubernetes_version(desired_name)
             eks_subnets = []
             for subnet_id, subnet_info in self.deployed_infra['vpc']['subnets'].items():
                 for tag in subnet_info['Tags']:
-                    if tag['Key'] == 'Role' and tag['Value'] == cluster_name:
+                    if tag["Key"] == "Role" and tag["Value"] == cluster_name:
                         eks_subnets.append(subnet_id)
             if len(eks_subnets) < 2:
                 raise Exception("EKS requires 2 or more subnets")
             response = self.eksclient.create_cluster(
                 name=cluster_name,
                 version=cluster_version,
-                roleArn=self.deployed_infra['vpc']['eks_cluster_role_iam_arn'],
+                roleArn=self.deployed_infra["vpc"]["eks_cluster_role_iam_arn"],
                 resourcesVpcConfig={
-                    'subnetIds': eks_subnets,
-                    'endpointPublicAccess': True,
-                    'endpointPrivateAccess': False},
-                kubernetesNetworkConfig={'serviceIpv4Cidr': '172.{}.0.0/16'.format(20+i)},
-                tags={'Use': 'CloudPerfTesting', 'Role': cluster_name})
+                    "subnetIds": eks_subnets,
+                    "endpointPublicAccess": True,
+                    "endpointPrivateAccess": False,
+                },
+                kubernetesNetworkConfig={"serviceIpv4Cidr": "172.{}.0.0/16".format(20 + i)},
+                tags={"Use": "CloudPerfTesting", "Role": cluster_name},
+            )
             self.deployed_infra['vpc']['eks_clusters'][response['cluster']['name']] = \
                 response['cluster']
+            self.deployed_infra["cluster_map"].update({desired_name: cluster_name})
             self.write_infra_file()
         for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
-            cluster_name = 'k8s_cluster_{}'.format(i)
+            cluster_name = f"{self.k8s_cluster_name}_{i}"
             waiter = self.eksclient.get_waiter('cluster_active')
             waiter.wait(name=cluster_name,
                         WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
@@ -399,6 +412,7 @@ class AWSDeployer(Deployer):
             yaml.dump(cluster_config, fp, default_flow_style=False)
         self.deployed_infra['vpc']['eks_clusters'][cluster_name]['kube_config'] = cluster_config
         self.deployed_infra['vpc']['eks_clusters'][cluster_name]['kube_config_path'] = config_path
+        self.deployed_infra["kubeconfigs"].append(config_path)
         self.write_infra_file()
 
     def _get_ami_type_from_instance_name(self, instance_type):
@@ -414,12 +428,13 @@ class AWSDeployer(Deployer):
             return
         logger.info("Creating eks node groups...")
         for k8s_cluster_name, k8s_cluster_spec in self.desired_infra['k8s'].items():
-            cluster_infra = self.deployed_infra['vpc']['eks_clusters'][k8s_cluster_name]
+            deployed_cluster_name = self.deployed_infra["cluster_map"].get(k8s_cluster_name)
+            cluster_infra = self.deployed_infra["vpc"]["eks_clusters"][deployed_cluster_name]
             cluster_infra['node_groups'] = {}
             eks_subnets = []
             for subnet_id, subnet_info in self.deployed_infra['vpc']['subnets'].items():
                 for tag in subnet_info['Tags']:
-                    if tag['Key'] == 'Role' and tag['Value'] == k8s_cluster_name:
+                    if tag["Key"] == "Role" and tag["Value"] == deployed_cluster_name:
                         eks_subnets.append(subnet_id)
             if len(eks_subnets) < 2:
                 raise Exception("EKS requires 2 or more subnets")
@@ -450,41 +465,47 @@ class AWSDeployer(Deployer):
                         break
                 node_group_spec = k8s_cluster_spec[node_group]
                 response = self.eksclient.create_nodegroup(
-                    clusterName=k8s_cluster_name,
+                    clusterName=deployed_cluster_name,
                     nodegroupName=node_group,
                     scalingConfig={
-                        'minSize': int(node_group_spec['instance_capacity']),
-                        'maxSize': int(node_group_spec['instance_capacity']),
-                        'desiredSize': int(node_group_spec['instance_capacity'])
+                        "minSize": int(node_group_spec["instance_capacity"]),
+                        "maxSize": int(node_group_spec["instance_capacity"]),
+                        "desiredSize": int(node_group_spec["instance_capacity"]),
                     },
-                    diskSize=int(node_group_spec['volume_size']),
+                    diskSize=int(node_group_spec["volume_size"]),
                     subnets=eks_subnets,
-                    instanceTypes=[node_group_spec['instance_type']],
-                    amiType=self._get_ami_type_from_instance_name(node_group_spec['instance_type']),
-                    remoteAccess={'ec2SshKey': self.infra_spec.aws_key_name},
-                    nodeRole=self.deployed_infra['vpc']['eks_node_role_iam_arn'],
+                    instanceTypes=[node_group_spec["instance_type"]],
+                    amiType=self._get_ami_type_from_instance_name(node_group_spec["instance_type"]),
+                    remoteAccess={"ec2SshKey": self.infra_spec.aws_key_name},
+                    nodeRole=self.deployed_infra["vpc"]["eks_node_role_iam_arn"],
                     labels=labels,
-                    tags={'Use': 'CloudPerfTesting',
-                          'Role': k8s_cluster_name,
-                          'SubRole': node_group})
+                    tags={
+                        "Use": "CloudPerfTesting",
+                        "Role": deployed_cluster_name,
+                        "SubRole": node_group,
+                    },
+                )
                 cluster_infra['node_groups'][node_group] = response['nodegroup']
-                self.deployed_infra['vpc']['eks_clusters'][k8s_cluster_name] = cluster_infra
+                self.deployed_infra["vpc"]["eks_clusters"][deployed_cluster_name] = cluster_infra
                 self.write_infra_file()
         waiter = self.eksclient.get_waiter('nodegroup_active')
         for k8s_cluster_name, k8s_cluster_spec in self.desired_infra['k8s'].items():
+            deployed_cluster_name = self.deployed_infra["cluster_map"].get(k8s_cluster_name)
             for node_group in k8s_cluster_spec['node_groups'].split(','):
                 waiter.wait(
-                    clusterName=k8s_cluster_name,
+                    clusterName=deployed_cluster_name,
                     nodegroupName=node_group,
-                    WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
+                    WaiterConfig={"Delay": 10, "MaxAttempts": 600},
+                )
         for k8s_cluster_name, k8s_cluster_spec in self.desired_infra['k8s'].items():
-            cluster_infra = self.deployed_infra['vpc']['eks_clusters'][k8s_cluster_name]
+            deployed_cluster_name = self.deployed_infra["cluster_map"].get(k8s_cluster_name)
+            cluster_infra = self.deployed_infra["vpc"]["eks_clusters"][deployed_cluster_name]
             for node_group in k8s_cluster_spec['node_groups'].split(','):
                 response = self.eksclient.describe_nodegroup(
-                    clusterName=k8s_cluster_name,
-                    nodegroupName=node_group)
+                    clusterName=deployed_cluster_name, nodegroupName=node_group
+                )
                 cluster_infra['node_groups'][node_group] = response['nodegroup']
-                self.deployed_infra['vpc']['eks_clusters'][k8s_cluster_name] = cluster_infra
+                self.deployed_infra["vpc"]["eks_clusters"][deployed_cluster_name] = cluster_infra
                 self.write_infra_file()
 
         # Tag all instances created by the cluster node groups
@@ -752,9 +773,9 @@ class AWSDeployer(Deployer):
             self.iam_policy = json.load(f)
         self.iam_policy = json.dumps(self.iam_policy)
         response = self.iamclient.create_policy(
-            PolicyName='CloudPerfTesting-Amazon_EBS_CSI_Driver',
+            PolicyName=f"CloudPerfTesting-Amazon_EBS_CSI_Driver-{self.deployment_id}",
             PolicyDocument=self.iam_policy,
-            Description='Cloud Perf Testing IAM Policy to enable EKS EBS Persistent Volumes'
+            Description="Cloud Perf Testing IAM Policy to enable EKS EBS Persistent Volumes",
         )
         self.deployed_infra['vpc']['ebs_csi_policy_arn'] = response['Policy']['Arn']
         self.write_infra_file()
@@ -768,8 +789,7 @@ class AWSDeployer(Deployer):
         ebs_csi_driver_addon = 'aws-ebs-csi-driver'
         logger.info('Adding EBS CSI driver addon')
         for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
-            cluster_name = 'k8s_cluster_{}'.format(i)
-
+            cluster_name = f"{self.k8s_cluster_name}_{i}"
             self.eksclient.create_addon(
                 clusterName=cluster_name,
                 addonName=ebs_csi_driver_addon,
@@ -785,7 +805,7 @@ class AWSDeployer(Deployer):
 
         waiter = self.eksclient.get_waiter('addon_active')
         for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
-            cluster_name = 'k8s_cluster_{}'.format(i)
+            cluster_name = f"{self.k8s_cluster_name}_{i}"
             waiter.wait(clusterName=cluster_name,
                         addonName=ebs_csi_driver_addon,
                         WaiterConfig={'Delay': 10, 'MaxAttempts': 120})

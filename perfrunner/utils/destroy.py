@@ -155,15 +155,18 @@ class AWSDestroyer(Destroyer):
 
     def delete_eks_roles(self):
         logger.info("Deleting EKS roles")
+
         try:
             self.cloudformation_client.delete_stack(
-                StackName='CloudPerfTestingEKSNodeRole')
+                StackName=self.deployed_infra["node_role_stack"]
+            )
         except Exception as ex:
             logger.info(ex)
 
         try:
             self.cloudformation_client.delete_stack(
-                StackName='CloudPerfTestingEKSClusterRole')
+                StackName=self.deployed_infra["cluster_role_stack"]
+            )
         except Exception as ex:
             logger.info(ex)
 

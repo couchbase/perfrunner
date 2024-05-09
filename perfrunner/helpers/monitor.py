@@ -54,6 +54,7 @@ class Monitor:
         self.master_node = next(cluster_spec.masters)
         self.build = build
         self.build_version_number = misc.create_build_tuple(self.build)
+        self.is_columnar = self.rest.is_columnar(self.master_node)
 
     def wait_for_rebalance_to_begin(self, host):
         logger.info('Waiting for rebalance to start')
@@ -850,7 +851,7 @@ class Monitor:
         while True:
             num_items = 0
             try:
-                if self.build_version_number < (7, 0, 0, 4622):
+                if self.build_version_number < (7, 0, 0, 4622) and not self.is_columnar:
                     stats = self.rest.get_pending_mutations(analytics_node)
                     for dataset in stats['Default']:
                         if self.build_version_number < (7, 0, 0, 4310):
@@ -873,10 +874,10 @@ class Monitor:
 
         num_items = self._get_num_items(data_node, bucket)
         while True:
-            if self.build_version_number < (7, 0, 0, 0):
+            if self.build_version_number < (7, 0, 0, 0) and not self.is_columnar:
                 num_analytics_items = self.get_num_analytics_items(analytics_node, bucket)
             else:
-                if self.build_version_number < (7, 0, 0, 4990):
+                if self.build_version_number < (7, 0, 0, 4990) and not self.is_columnar:
                     incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node)
                 else:
                     incoming_records = self.rest.get_cbas_incoming_records_count_v2(analytics_node)
@@ -885,11 +886,11 @@ class Monitor:
             logger.info('Analytics has {:,} docs (target is {:,})'.format(
                 num_analytics_items, num_items))
 
-            if self.build_version_number < (6, 5, 0, 0):
+            if self.build_version_number < (6, 5, 0, 0) and not self.is_columnar:
                 if num_analytics_items == num_items:
                     break
             else:
-                if self.build_version_number > (7, 0, 0, 4853):
+                if self.build_version_number > (7, 0, 0, 4853) or self.is_columnar:
                     ingestion_progress = self.get_ingestion_progress(analytics_node)
                     logger.info('Ingestion progress: {:.2f}%'.format(ingestion_progress))
                     if int(ingestion_progress) == 100:

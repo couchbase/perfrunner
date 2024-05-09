@@ -55,12 +55,12 @@ class DefaultClusterManager:
         ]
         self.build = self.rest.get_version(self.master_node)
         self.build_tuple = create_build_tuple(self.build)
+        self.is_columnar = self.rest.is_columnar(self.master_node)
         self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote, self.build)
 
     def is_compatible(self, min_release: str) -> bool:
         for master in self.cluster_spec.masters:
-            version = self.rest.get_version(master)
-            return version >= min_release
+            return (self.rest.get_version(master) >= min_release) or self.rest.is_columnar(master)
 
     def set_data_path(self):
         if self.capella_infra:
@@ -833,7 +833,7 @@ class DefaultClusterManager:
         if self.capella_infra:
             return
         if self.test_config.cluster.ipv6:
-            if self.build_tuple < (6, 5, 0, 0):
+            if self.build_tuple < (6, 5, 0, 0) and not self.is_columnar:
                 self.remote.update_ip_family_rest()
             else:
                 self.remote.update_ip_family_cli()
@@ -878,7 +878,11 @@ class DefaultClusterManager:
             logger.info('new tls version: {}'.format(check_tls_version))
 
     def enable_developer_preview(self):
-        if self.build_tuple > (7, 0, 0, 4698) or self.build_tuple < (1, 0, 0, 0):
+        if (
+            self.build_tuple > (7, 0, 0, 4698)
+            or self.build_tuple < (1, 0, 0, 0)
+            or self.is_columnar
+        ):
             self.remote.enable_developer_preview()
 
     def set_magma_min_quota(self):

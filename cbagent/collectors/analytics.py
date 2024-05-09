@@ -27,6 +27,7 @@ class AnalyticsStats(Collector):
         self.build = self.rest.get_version(host=self.master_node)
         self.servers = self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
         self.build_version_number = create_build_tuple(self.build)
+        self.is_columnar = self.rest.is_columnar(self.master_node)
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -35,7 +36,7 @@ class AnalyticsStats(Collector):
             self.mc.add_server(server)
 
     def get_stats(self, server: str, build) -> dict:
-        if build < (7, 0, 0, 0):
+        if build < (7, 0, 0, 0) and not self.is_columnar:
             return self.get_http(path='/analytics/node/stats',
                                  server=server,
                                  port=self.PORT)

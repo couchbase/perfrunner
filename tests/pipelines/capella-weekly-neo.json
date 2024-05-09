@@ -43,7 +43,13 @@
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_eventing_medium_template.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_5s_1c_eventing_medium_template.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"}
     ],
-    "AWS_GSI": [],
+    "AWS_GSI": [
+        {"job": "CapellaAWSWeekly3", "cluster": "capella_aws_6s_1c_index_medium_template.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned_capella.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly3", "cluster": "capella_aws_6s_1c_index_medium_template.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned_capella_withScans.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly3", "cluster": "capella_aws_6s_1c_index_medium_template.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned_capella.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly3", "cluster": "capella_aws_6s_1c_index_medium_template.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned_capella_withScans.test", "groups": "P0"},
+        {"job": "CapellaAWSWeekly3", "cluster": "capella_aws_5s_1c_index_medium_default_template.spec", "test_config": "gsi/capella/aws/secondary_scanlatency50M_plasma_1000_indexes_1s_100c_10kops_capella.test", "groups": "P0"}
+    ],
     "AWS_Tools": [
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/tools/tools_cloud_backup_capella.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/tools/tools_cloud_restore_capella.test", "groups": "P0"}
@@ -106,7 +112,13 @@
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_eventing.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_5s_1c_n2custom16_eventing.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"}
     ],
-    "GCP_GSI": [],
+    "GCP_GSI": [
+        {"job": "CapellaGCPWeekly3", "cluster": "capella_gcp_7s_1c_n2custom16_gsi.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned_capella.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly3", "cluster": "capella_gcp_7s_1c_n2custom16_gsi.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned_capella_withScans.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly3", "cluster": "capella_gcp_7s_1c_n2custom16_gsi.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned_capella.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly3", "cluster": "capella_gcp_7s_1c_n2custom16_gsi.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned_capella_withScans.test", "groups": "P0"},
+        {"job": "CapellaGCPWeekly3", "cluster": "capella_gcp_5s_1c_n2custom16_gsi.spec", "test_config": "gsi/capella/aws/secondary_scanlatency50M_plasma_1000_indexes_1s_100c_10kops_capella.test", "groups": "P0"}
+    ],
     "GCP_SGW": [
         {"job": "CapellaGCPWeeklySGW", "cluster": "sync_gateway/capella/capella_gcp_3s_2sgw_4c_n2_standard_8.spec", "test_config": "syncgateway/capella/capella_syncgateway_load_2node.test", "groups": "P0"},
         {"job": "CapellaGCPWeeklySGW", "cluster": "sync_gateway/capella/capella_gcp_3s_2sgw_4c_n2_standard_8.spec", "test_config": "syncgateway/capella/capella_syncgateway_readwithrevs_2node_replicator2.test", "groups": "P0"},
@@ -161,7 +173,13 @@
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f16s_v2_eventing.spec", "test_config": "eventing/capella/throughput50M_fun_noop.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_5s_1c_standard_f16s_v2_eventing.spec", "test_config": "eventing/capella/throughput50M_timer_noop.test", "groups": "P0"}
     ],
-    "Azure_GSI": [],
+    "Azure_GSI": [
+        {"job": "CapellaAzureWeekly3", "cluster": "capella_azure_7s_1c_standard_f16s_v2_gsi.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned_capella.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly3", "cluster": "capella_azure_7s_1c_standard_f16s_v2_gsi.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned_capella_withScans.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly3", "cluster": "capella_azure_7s_1c_standard_f16s_v2_gsi.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned_capella.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly3", "cluster": "capella_azure_7s_1c_standard_f16s_v2_gsi.spec", "test_config": "cloud/gsi/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_out_partitioned_capella_withScans.test", "groups": "P0"},
+        {"job": "CapellaAzureWeekly3", "cluster": "capella_azure_5s_1c_standard_f16s_v2_gsi.spec", "test_config": "gsi/capella/aws/secondary_scanlatency50M_plasma_1000_indexes_1s_100c_10kops_capella.test", "groups": "P0"}
+    ],
     "Azure_Tools": [
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/tools/tools_cloud_backup_capella.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/tools/tools_cloud_restore_capella.test", "groups": "P0"}

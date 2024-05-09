@@ -37,6 +37,7 @@
       - linux-tools-common
       - linux-tools-generic
       - zip
+      - lbzip2
 
   - name: disable thp
     shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"

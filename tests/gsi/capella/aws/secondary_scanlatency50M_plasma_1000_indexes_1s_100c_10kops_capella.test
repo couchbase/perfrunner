@@ -5,7 +5,7 @@ test = perfrunner.tests.secondary.CloudSecondaryIndexingScanTest
 title = Secondary index scan latency(ms), 1 bucket x 50M x 1KB, 10K KV ops/sec, 1000 indexes, Plasma, s=1 c=100
 component = secondarycloud
 category = lat
-sub_category = AWS
+sub_category = {provider}
 
 [stats]
 server_processes = projector

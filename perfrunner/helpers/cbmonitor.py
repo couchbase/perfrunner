@@ -188,7 +188,9 @@ class CbAgent:
             self.add_collector(FTSUtilisationCollector, self.test)
 
         if ns_server_overview:
-            if (major == 6 and minor < 6) or (major < 6 and major != 0):
+            if (
+                (major == 6 and minor < 6) or (major < 6 and major != 0)
+            ) and not self.test.is_columnar:
                 self.add_collector(NSServerOverview)
 
         if latency:

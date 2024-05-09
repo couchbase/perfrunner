@@ -608,13 +608,21 @@ class DefaultRestHelper(RestBase):
                                                                                view_name))
         self.get(url=url, params=params)
 
+    def _get_version_raw(self, host: str) -> str:
+        r = self.get(url=self._get_api_url(host=host, path="pools")).json()
+        return r["implementationVersion"]
+
     def get_version(self, host: str) -> str:
-        logger.info('Getting Couchbase Server version on server {}'.format(host))
-        r = self.get(url=self._get_api_url(host=host, path='pools')).json()
-        return r['implementationVersion'] \
-            .replace('-rel-enterprise', '') \
-            .replace('-enterprise', '') \
-            .replace('-community', '')
+        logger.info(f"Getting Couchbase Server version on server {host}")
+        version = (
+            self._get_version_raw(host)
+            .replace("-rel-enterprise", "")
+            .replace("-enterprise", "")
+            .replace("-community", "")
+            .replace("-columnar", "")
+        )
+        logger.info(f"Couchbase Server version: {version}")
+        return version
 
     def supports_rbac(self, host: str) -> bool:
         """Return true if the cluster supports RBAC."""
@@ -622,10 +630,13 @@ class DefaultRestHelper(RestBase):
         r = requests.get(auth=self.auth, url=rbac_url)
         return r.status_code == requests.codes.ok
 
+    def is_columnar(self, host: str) -> bool:
+        logger.info("Checking if using a Couchbase Columnar build")
+        return "columnar" in self._get_version_raw(host)
+
     def is_community(self, host: str) -> bool:
         logger.info('Getting Couchbase Server edition')
-        r = self.get(url=self._get_api_url(host=host, path='pools')).json()
-        return 'community' in r['implementationVersion']
+        return "community" in self._get_version_raw(host)
 
     def get_memcached_port(self, host: str) -> int:
         logger.info('Getting memcached port from {}'.format(host))
@@ -674,7 +685,7 @@ class DefaultRestHelper(RestBase):
         logger.info('Getting remote certificate')
 
         build = self.get_version(host)
-        if create_build_tuple(build) < (7, 1, 0, 0):
+        if create_build_tuple(build) < (7, 1, 0, 0) and not self.is_columnar(host):
             return self.get(url=self._get_api_url(host=host, path='pools/default/certificate')).text
         else:
             r = self.get(url=self._get_api_url(host=host, path='pools/default/trustedCAs'))
@@ -1289,7 +1300,7 @@ class DefaultRestHelper(RestBase):
             self.post(url=api, data=data)
         else:
             build = self.get_version(node)
-            if create_build_tuple(build) < (7, 1, 0, 0):
+            if create_build_tuple(build) < (7, 1, 0, 0) and not self.is_columnar(node):
                 logger.info("TLSv1.3 is not supported by this version of couchbase server")
                 logger.info("Reverting to TLSv1.2")
                 api = url_prefix

@@ -54,6 +54,7 @@ class PerfTest:
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.rest = RestHelper(cluster_spec, test_config)
         self.build = self.rest.get_version(self.master_node)
+        self.is_columnar = self.rest.is_columnar(self.master_node)
         self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote, self.build)
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)

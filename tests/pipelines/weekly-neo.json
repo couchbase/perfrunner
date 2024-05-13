@@ -95,7 +95,7 @@
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_memcached.test", "groups": "P0"}
     ],
     "Tools": [
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift_encrypted.test", "groups": "P0"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_rift_encrypted.test", "groups": "P0"}
+        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_100M_rift_encrypted.test", "groups": "P0"},
+        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_400M_rift_encrypted.test", "groups": "P0"}
     ]
 }

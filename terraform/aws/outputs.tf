@@ -57,3 +57,7 @@ output "cloud_storage" {
     storage_bucket = length(aws_s3_bucket.perf-storage-bucket) != 0 ? "s3://${one(aws_s3_bucket.perf-storage-bucket).id}" : null
   }
 }
+
+output "az" {
+  value = one(random_shuffle.az[*].result)[0]
+}

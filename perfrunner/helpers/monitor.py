@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 
 from logger import logger
 from perfrunner.helpers import misc
@@ -1482,3 +1483,54 @@ class Monitor:
             time.sleep(self.MONITORING_DELAY)
             is_snapshot_ready = all(self.rest.is_persistence_active(host=host) == "done" for host
                                     in index_nodes)
+
+    def _wait_for_columnar_instance_state(
+        self,
+        instance_id: str,
+        end_state: str,
+        temp_state: str,
+        poll_interval_secs: Optional[int] = None,
+        timeout_secs: Optional[int] = None,
+    ):
+        poll_interval_secs = poll_interval_secs or self.POLLING_INTERVAL_ANALYTICS
+        timeout_secs = timeout_secs or self.TIMEOUT
+        logger.info(f'Waiting for columnar instance {instance_id} to be in state "{end_state}"...')
+        t0 = time.time()
+        while time.time() - t0 < timeout_secs:
+            instance_info = self.rest.get_instance_info(instance_id)
+            state = instance_info.get("data", {}).get("state")
+            logger.info(f"Columnar instance state: {state}")
+
+            if state == end_state:
+                logger.info(f'Columnar instance has reached state "{end_state}".')
+                return
+            elif state != temp_state:
+                logger.interrupt(f"Unexpected columnar instance state: {state}")
+                return
+
+            time.sleep(poll_interval_secs)
+
+        logger.interrupt(
+            f"Timed out after {timeout_secs} seconds waiting for columnar instance "
+            f'to reach state "{end_state}".'
+        )
+
+    def wait_for_columnar_instance_turn_off(
+        self,
+        instance_id: str,
+        poll_interval_secs: Optional[int] = None,
+        timeout_secs: Optional[int] = None,
+    ):
+        self._wait_for_columnar_instance_state(
+            instance_id, "turned_off", "turning_off", poll_interval_secs, timeout_secs
+        )
+
+    def wait_for_columnar_instance_turn_on(
+        self,
+        instance_id: str,
+        poll_interval_secs: Optional[int] = None,
+        timeout_secs: Optional[int] = None,
+    ):
+        self._wait_for_columnar_instance_state(
+            instance_id, "healthy", "turning_on", poll_interval_secs, timeout_secs
+        )

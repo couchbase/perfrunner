@@ -1524,6 +1524,55 @@ class CH2GoldfishPauseResumeTest(CH2CloudRemoteLinkTest):
             self.report_kpi()
 
 
+class CapellaColumnarManualOnOffTest(PerfTest):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance_id = self.cluster_spec.controlplane_settings["columnar_ids"].split()[0]
+        self.on_off_settings = self.test_config.columnar_on_off_settings
+
+    def run(self):
+        on_duration = self.on_off_settings.on_duration
+        off_duration = self.on_off_settings.off_duration
+        poll_interval = self.on_off_settings.poll_interval
+        timeout = self.on_off_settings.timeout
+
+        turn_on_times, turn_off_times = [], []
+        for i in range(max(cycles := self.on_off_settings.cycles, 1)):
+            logger.info(f"Starting on/off cycle {i + 1}/{cycles}")
+
+            logger.info(f"Waiting {on_duration} seconds before turning columnar instance off.")
+            time.sleep(on_duration)
+
+            self.rest.turn_off_instance(self.instance_id)
+            t0 = time.time()
+            self.monitor.wait_for_columnar_instance_turn_off(
+                self.instance_id, poll_interval_secs=poll_interval, timeout_secs=timeout
+            )
+            turn_off_time = time.time() - t0
+            logger.info(f"Time to turn columnar instance off (seconds): {turn_off_time:.2f}")
+            turn_off_times.append(turn_off_time)
+
+            logger.info(f"Waiting {off_duration} seconds before turning columnar instance on.")
+            time.sleep(off_duration)
+
+            self.rest.turn_on_instance(self.instance_id)
+            t0 = time.time()
+            self.monitor.wait_for_columnar_instance_turn_on(
+                self.instance_id, poll_interval_secs=poll_interval, timeout_secs=timeout
+            )
+            turn_on_time = time.time() - t0
+            logger.info(f"Time to turn columnar instance on (seconds): {turn_on_time:.2f}")
+            turn_on_times.append(turn_on_time)
+
+        for times, action in [(turn_off_times, "off"), (turn_on_times, "on")]:
+            logger.info(f"All times (seconds) to turn columnar instance {action}: {times}")
+            if times:
+                logger.info(
+                    f"Average time to turn columnar instance {action} (seconds): "
+                    f"{sum(times) / len(times):.2f}"
+                )
+
+
 class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
 
     def __init__(self, *args, **kwargs):

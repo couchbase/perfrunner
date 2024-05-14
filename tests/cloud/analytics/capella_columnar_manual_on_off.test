@@ -1,0 +1,12 @@
+[test_case]
+test = perfrunner.tests.analytics.CapellaColumnarManualOnOffTest
+
+[showfast]
+title = Average turn on time (seconds), {nodes} nodes, manual on/off, Capella Columnar
+component = analyticscloud
+category = columnar
+sub_category = on_off
+
+[cluster]
+initial_nodes = 2
+enable_n2n_encryption = all

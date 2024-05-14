@@ -20,6 +20,7 @@ from perfrunner.helpers.misc import (
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
 REPO = 'https://github.com/couchbase/perfrunner'
+CAPELLA_PUBLIC_API_URL_TEMPLATE = "https://cloudapi.{}.nonprod-project-avengers.com"
 
 
 class CBProfile(Enum):
@@ -136,7 +137,10 @@ class ClusterSpec(Config):
 
     @property
     def controlplane_settings(self) -> dict[str, str]:
-        return self.infrastructure_section("controlplane")
+        settings = self.infrastructure_section("controlplane")
+        if env := settings.get("env"):
+            settings["public_api_url"] = CAPELLA_PUBLIC_API_URL_TEMPLATE.format(env)
+        return settings
 
     @property
     def infrastructure_settings(self):
@@ -2620,6 +2624,21 @@ class CopyToKVSettings:
         self.query_file = options.get("query_file")
 
 
+class ColumnarOnOffSettings:
+    CYCLES = 3
+    ON_DURATION_SECS = 120
+    OFF_DURATION_SECS = 300
+    POLL_INTERVAL_SECS = 10
+    TIMEOUT_SECS = 1200
+
+    def __init__(self, options: dict):
+        self.cycles = int(options.get("cycles", self.CYCLES))
+        self.on_duration = int(options.get("on_duration", self.ON_DURATION_SECS))
+        self.off_duration = int(options.get("off_duration", self.OFF_DURATION_SECS))
+        self.poll_interval = int(options.get("poll_interval", self.POLL_INTERVAL_SECS))
+        self.timeout = int(options.get("timeout", self.TIMEOUT_SECS))
+
+
 class AuditSettings:
 
     ENABLED = True
@@ -3593,6 +3612,11 @@ class TestConfig(Config):
     def copy_to_kv_settings(self) -> CopyToKVSettings:
         options = self._get_options_as_dict("copy_to_kv")
         return CopyToKVSettings(options)
+
+    @property
+    def columnar_on_off_settings(self) -> ColumnarOnOffSettings:
+        options = self._get_options_as_dict("columnar_on_off")
+        return ColumnarOnOffSettings(options)
 
     @property
     def audit_settings(self) -> AuditSettings:

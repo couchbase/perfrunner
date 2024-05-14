@@ -7,6 +7,7 @@ from json import JSONDecodeError
 from typing import Callable, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
 import requests
+from capella.columnar.CapellaAPI import CapellaAPI as CapellaAPIColumnar
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
 from capella.serverless.CapellaAPI import CapellaAPI as CapellaAPIServerless
 from decorator import decorator
@@ -81,9 +82,11 @@ class RestHelper:
         if cluster_spec.dynamic_infrastructure:
             return KubernetesRestHelper(cluster_spec, test_config)
         elif cluster_spec.serverless_infrastructure:
-            return ServerlessRestHelper(cluster_spec, test_config)
+            return CapellaServerlessRestHelper(cluster_spec, test_config)
         elif cluster_spec.capella_infrastructure:
-            return ProvisionedCapellaRestHelper(cluster_spec, test_config)
+            if cluster_spec.goldfish_infrastructure:
+                return CapellaColumnarRestHelper(cluster_spec, test_config)
+            return CapellaProvisionedRestHelper(cluster_spec, test_config)
         else:
             return DefaultRestHelper(cluster_spec, test_config)
 
@@ -1735,9 +1738,7 @@ class CapellaRestBase(DefaultRestHelper):
 
     def __init__(self, cluster_spec, test_config):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
-        self.base_url = "https://cloudapi.{}.nonprod-project-avengers.com".format(
-            self.cluster_spec.controlplane_settings["env"]
-        )
+        self.base_url = self.cluster_spec.controlplane_settings["public_api_url"]
         self.tenant_id = self.cluster_spec.controlplane_settings["org"]
         self.project_id = self.cluster_spec.controlplane_settings["project"]
         self.cluster_ids = self.cluster_spec.controlplane_settings["cluster_ids"].split()
@@ -1846,15 +1847,12 @@ class CapellaRestBase(DefaultRestHelper):
         return resp.json()
 
     def get_cp_version(self) -> str:
-        api = "https://api.{}.nonprod-project-avengers.com/status".format(
-            self.cluster_spec.controlplane_settings["env"]
-        )
+        api = f"{self.dedicated_client.internal_url}/status"
         response = self.get(url=api)
         return response.json()["commit"]
 
 
-class ProvisionedCapellaRestHelper(CapellaRestBase):
-
+class CapellaProvisionedRestHelper(CapellaRestBase):
     def hostname_to_cluster_id(self, host: str):
         if len(self.cluster_ids) == 1:
             return self.cluster_ids[0]
@@ -2218,16 +2216,13 @@ class ProvisionedCapellaRestHelper(CapellaRestBase):
                 logger.warn('Skipping unknown option: {}'.format(option))
 
 
-class ServerlessRestHelper(CapellaRestBase):
+class CapellaServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
-        self.base_url = "https://cloudapi.{}.nonprod-project-avengers.com".format(
-            self.cluster_spec.controlplane_settings["env"]
-        )
-        self.dp_id = self.cluster_spec.controlplane_settings["dataplane_id"]
         self.serverless_client = CapellaAPIServerless(
             self.base_url, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
+        self.dp_id = self.cluster_spec.controlplane_settings["dataplane_id"]
 
     def get_db_info(self, db_id):
         logger.info('Getting debug info for DB {}'.format(db_id))
@@ -2379,6 +2374,42 @@ class ServerlessRestHelper(CapellaRestBase):
         return response.json()
 
 
+class CapellaColumnarRestHelper(CapellaRestBase):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+        self.columnar_client = CapellaAPIColumnar(
+            self.base_url,
+            self.dedicated_client.SECRET,
+            self.dedicated_client.ACCESS,
+            self._cbc_user,
+            self._cbc_pwd,
+            self._cbc_token,
+        )
+        self.instance_ids = self.cluster_spec.controlplane_settings["columnar_ids"].split()
+
+    def get_instance_info(self, instance_id: str) -> dict:
+        resp = self.columnar_client.get_specific_columnar_instance(
+            self.tenant_id, self.project_id, instance_id
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def turn_on_instance(self, instance_id: str):
+        logger.info(f"Turning on columnar instance {instance_id}")
+        resp = self.columnar_client.turn_on_instance(self.tenant_id, self.project_id, instance_id)
+        resp.raise_for_status()
+
+    def turn_off_instance(self, instance_id: str):
+        logger.info(f"Turning off columnar instance {instance_id}")
+        resp = self.columnar_client.turn_off_instance(self.tenant_id, self.project_id, instance_id)
+        resp.raise_for_status()
+
+
 # For type hinting rest classes
-RestType = Union[KubernetesRestHelper, ServerlessRestHelper,
-                 ProvisionedCapellaRestHelper, DefaultRestHelper]
+RestType = Union[
+    DefaultRestHelper,
+    KubernetesRestHelper,
+    CapellaProvisionedRestHelper,
+    CapellaServerlessRestHelper,
+    CapellaColumnarRestHelper,
+]

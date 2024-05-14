@@ -415,14 +415,12 @@ class ControlPlaneManager:
         if "controlplane" not in self.infra_spec.config:
             self.infra_spec.config.add_section("controlplane")
 
-        if public_api_url is None:
+        if not public_api_url:
             logger.info(
                 "No Capella public API URL provided. "
                 "Looking for Capella environment info in cluster spec."
             )
-            if env := self.infra_spec.controlplane_settings.get("env"):
-                public_api_url = f"https://cloudapi.{env}.nonprod-project-avengers.com"
-            else:
+            if not (public_api_url := self.infra_spec.controlplane_settings.get("public_api_url")):
                 logger.interrupt(
                     "No Capella environment info specified in cluster spec. "
                     "Cannot determine Capella public API URL to proceed."
@@ -622,9 +620,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         self.backend = self.infra_spec.infrastructure_settings['backend']
 
         self.provisioned_api = CapellaAPIDedicated(
-            "https://cloudapi.{}.nonprod-project-avengers.com".format(
-                self.infra_spec.controlplane_settings["env"]
-            ),
+            self.infra_spec.controlplane_settings["public_api_url"],
             None,
             None,
             os.getenv("CBC_USER"),
@@ -1164,23 +1160,19 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
 
         self.backend = self.infra_spec.infrastructure_settings['backend']
 
-        public_api_url = "https://cloudapi.{}.nonprod-project-avengers.com".format(
-            self.infra_spec.controlplane_settings["env"]
-        )
-
         self.serverless_client = CapellaAPIServerless(
-            public_api_url,
+            self.infra_spec.controlplane_settings["public_api_url"],
             os.getenv("CBC_USER"),
             os.getenv("CBC_PWD"),
             os.getenv("CBC_TOKEN_FOR_INTERNAL_SUPPORT"),
         )
 
         self.dedicated_client = CapellaAPIDedicated(
-            public_api_url,
+            self.infra_spec.controlplane_settings["public_api_url"],
             None,  # Don't need access key and secret key for creating a project or getting tenant
             None,  # IDs (which are the only things we need it for)
-            os.getenv('CBC_USER'),
-            os.getenv('CBC_PWD')
+            os.getenv("CBC_USER"),
+            os.getenv("CBC_PWD"),
         )
 
         self.tenant_id = self.infra_spec.controlplane_settings["org"]
@@ -1548,9 +1540,7 @@ class AppServicesDeployer(CloudVMDeployer):
         logger.info("The cluster id is: {}".format(self.cluster_id))
 
         self.api_client = CapellaAPIDedicated(
-            "https://cloudapi.{}.nonprod-project-avengers.com".format(
-                self.infra_spec.controlplane_settings["env"]
-            ),
+            self.infra_spec.controlplane_settings["public_api_url"],
             None,
             None,
             os.getenv("CBC_USER"),
@@ -1906,9 +1896,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
             access, secret = api_keys
 
         api_client_args = (
-            "https://cloudapi.{}.nonprod-project-avengers.com".format(
-                self.infra_spec.controlplane_settings["env"]
-            ),
+            self.infra_spec.controlplane_settings["public_api_url"],
             secret,
             access,
             os.getenv("CBC_USER"),

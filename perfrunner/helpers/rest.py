@@ -802,7 +802,10 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=host, path='query/service', plain_port=QUERY_PORT,
                                 ssl_port=QUERY_PORT_SSL)
         response = self.post(url=url, data=data)
-        return response.json()
+        resp_data = response.json()
+        if errors := resp_data.get("errors"):
+            logger.warn(f"Query failed: {errors}")
+        return resp_data
 
     def set_serverless_throttle(self, node, values):
         api = self._get_api_url(host=node, path='settings/serverless')

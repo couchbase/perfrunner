@@ -291,7 +291,7 @@ def main():
         get_capella_cluster_logs(cluster_spec, args.s3_bucket_name)
     elif cluster_spec.dynamic_infrastructure:
         remote.collect_k8s_logs()
-        return
+        local.collect_cbopinfo_logs(remote.kube_config_path)
     else:
         _, _, returncode = run_local_shell_command("ls *.zip")
         if returncode:

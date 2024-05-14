@@ -42,13 +42,19 @@ def extract_cb_any(filename: str):
         extract_cb("{}.rpm".format(filename))
 
 
-def extract_any(filename: str, to_path: str = None):
+def extract_any(filename: str, to_path: str = None, remove_after: bool = True):
+    """Extract the given file and store the content to the specified path.
+
+    If `remove_after` is specified, delete the file after extraction.
+    """
     cmd = [
         f"tar xfv {filename}",
         f"--one-top-level={to_path} --strip-components 1" if to_path else "",
     ]
     with warn_only():
         local(" ".join(cmd))
+        if remove_after:
+            local(f"rm -f {filename}")
 
 
 def cleanup(backup_dir: str):
@@ -1676,3 +1682,10 @@ def run_vectordb_bench(options: str, dataset_dir: str, use_shuffled_data: bool =
         ):
             # Run using a command line tool which may not exist in upstream version
             local("env/bin/cmd_run {}".format(options))
+
+
+def collect_cbopinfo_logs(kubeconfig: str):
+    """Collect operator logs using cbopinfo."""
+    # If the cao binaries exists, use them to collect extra logs
+    with settings(warn_only=True), shell_env(KUBECONFIG=kubeconfig):
+        local("couchbase-operator/bin/cao collect-logs --collectinfo --collectinfo-collect=all")

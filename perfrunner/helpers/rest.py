@@ -1792,7 +1792,7 @@ class CapellaRestBase(DefaultRestHelper):
 
     def get_cp_version(self) -> str:
         api = "https://api.{}.nonprod-project-avengers.com/status".format(
-            self.cluster_spec.controplane_settings["env"]
+            self.cluster_spec.controlplane_settings["env"]
         )
         response = self.get(url=api)
         return response.json()["commit"]

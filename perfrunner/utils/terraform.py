@@ -523,7 +523,7 @@ class ControlPlaneManager:
             return access_key, secret_key
 
         if not os.path.isfile(CAPELLA_CREDS_FILE):
-            logger.warning("No creds file found and no API keys set as env vars.")
+            logger.info("No creds file found and no API keys set as env vars.")
             return None
 
         with open(CAPELLA_CREDS_FILE, "r") as f:
@@ -533,7 +533,7 @@ class ControlPlaneManager:
             if access_key and secret_key:
                 logger.info("Found API keys in creds file.")
                 return access_key, secret_key
-            logger.warning("No API keys found in creds file.")
+            logger.info("No API keys found in creds file.")
 
         return None
 

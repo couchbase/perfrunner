@@ -1,7 +1,6 @@
 [infrastructure]
 provider = aws
 type = ec2
-os_arch = al2
 cloud_storage = 1
 
 [clusters]
@@ -22,7 +21,7 @@ clusters = ec2_cluster_1
 
 [ec2_cluster_1]
 node_groups = ec2_node_group_1,ec2_node_group_2
-storage_class = gp2
+storage_class = gp3
 
 [ec2_node_group_1]
 instance_type = m5.4xlarge
@@ -36,10 +35,9 @@ volume_size = 100
 
 [storage]
 data = /data
-backup = s3://cb-backup-to-s3-perftest
 
 [parameters]
-OS = Amazon Linux 2
-CPU = m5.4xlarge (16 vCPU)
-Memory = 64 GB
-Disk = EBS 1000GB
+OS = Ubuntu 20
+CPU = cluster: m5.4xlarge (16 vCPU), client: c5.24xlarge (96 vCPU)
+Memory = cluster: 64 GB, client: 192 GB
+Disk = cluster: EBS 1000GB GP3 3000 IOPS, client: EBS 100GB GP3 3000 IOPS

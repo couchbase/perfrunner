@@ -40,6 +40,7 @@ couchbase_index_name = perf_fts_index
 test_data_file = ../tests/fts/data/vector/testData/cohere_10M_100Numeric_9935To11500TextHits.txt
 test_query_type = vector
 test_query_field = emb
+vector_index_optimized_for = recall
 couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_only_vector_index.json
 raw_query_map_file = tests/fts/data/vector/raw_vector_match_none_query.json
 report_percentiles = 80,95,99

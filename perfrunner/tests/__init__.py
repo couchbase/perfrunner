@@ -140,6 +140,8 @@ class PerfTest:
         if self.test_config.test_case.use_workers:
             self.worker_manager.download_celery_logs()
             self.worker_manager.terminate()
+            if self.worker_manager.is_remote:
+                self.remote.get_pprof_files(self.worker_manager.WORKER_HOME)
 
         if self.test_config.cluster.online_cores:
             self.remote.enable_cpu()
@@ -308,6 +310,7 @@ class PerfTest:
             disable_analytics=(
                 True if self.test_config.access_settings.sql_suite is not None else False
             ),
+            env_vars=self.test_config.restore_settings.env_vars,
         )
 
     def load_tpcds_json_data(self):

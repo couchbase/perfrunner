@@ -176,6 +176,17 @@ class Remote:
                 get('worker_*.log', local_path='celery/')
 
     @all_clients
+    def get_pprof_files(self, worker_home: str):
+        logger.info("Collecting remote pprof files")
+        target_dir = "pprof"
+        with cd(worker_home), cd("perfrunner"):
+            r = run("stat *.pprof", quiet=True)
+            if not r.return_code:
+                if not os.path.exists(target_dir):
+                    os.mkdir(target_dir)
+                get("*.pprof", local_path=target_dir)
+
+    @all_clients
     def get_export_files(self, worker_home: str):
         logger.info('Collecting YCSB export files')
         with cd(worker_home), cd('perfrunner'):

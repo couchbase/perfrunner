@@ -2732,19 +2732,22 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 suffix_repo = self.cluster_spec.capella_backend
             archive = archive + "/" + suffix_repo
 
-        self.remote.restore(cluster_spec=self.cluster_spec,
-                            master_node=self.master_node,
-                            threads=self.test_config.restore_settings.threads,
-                            worker_home="/tmp",
-                            archive=archive,
-                            repo=self.test_config.restore_settings.backup_repo,
-                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region,
-                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
-                            use_tls=self.test_config.restore_settings.use_tls,
-                            map_data=restore_mapping,
-                            encrypted=self.test_config.restore_settings.encrypted,
-                            passphrase=self.test_config.restore_settings.passphrase)
+        self.remote.restore(
+            cluster_spec=self.cluster_spec,
+            master_node=self.master_node,
+            threads=self.test_config.restore_settings.threads,
+            worker_home="/tmp",
+            archive=archive,
+            repo=self.test_config.restore_settings.backup_repo,
+            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+            obj_region=self.test_config.backup_settings.obj_region,
+            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+            use_tls=self.test_config.restore_settings.use_tls,
+            map_data=restore_mapping,
+            encrypted=self.test_config.restore_settings.encrypted,
+            passphrase=self.test_config.restore_settings.passphrase,
+            env_vars=self.test_config.restore_settings.env_vars,
+        )
         self.wait_for_persistence()
         if self.test_config.collection.collection_map:
             self.spread_data()

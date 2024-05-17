@@ -170,20 +170,23 @@ class SecondaryIndexTest(PerfTest):
                 suffix_repo = self.cluster_spec.capella_backend
             archive = archive + "/" + suffix_repo
 
-        self.remote.restore(cluster_spec=self.cluster_spec,
-                            master_node=self.master_node,
-                            threads=self.test_config.restore_settings.threads,
-                            worker_home=self.worker_manager.WORKER_HOME,
-                            archive=archive,
-                            repo=self.test_config.restore_settings.backup_repo,
-                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region,
-                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
-                            use_tls=self.test_config.restore_settings.use_tls,
-                            map_data=restore_mapping,
-                            encrypted=self.test_config.restore_settings.encrypted,
-                            passphrase=self.test_config.restore_settings.passphrase,
-                            filter_keys=self.test_config.restore_settings.filter_keys)
+        self.remote.restore(
+            cluster_spec=self.cluster_spec,
+            master_node=self.master_node,
+            threads=self.test_config.restore_settings.threads,
+            worker_home=self.worker_manager.WORKER_HOME,
+            archive=archive,
+            repo=self.test_config.restore_settings.backup_repo,
+            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+            obj_region=self.test_config.backup_settings.obj_region,
+            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+            use_tls=self.test_config.restore_settings.use_tls,
+            map_data=restore_mapping,
+            encrypted=self.test_config.restore_settings.encrypted,
+            passphrase=self.test_config.restore_settings.passphrase,
+            filter_keys=self.test_config.restore_settings.filter_keys,
+            env_vars=self.test_config.restore_settings.env_vars,
+        )
         self.wait_for_persistence()
 
     def batch_create_index_collection_options(self, indexes, storage):

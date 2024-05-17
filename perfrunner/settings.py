@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 from itertools import chain, combinations, permutations
 from typing import Any, Iterable, Iterator, Optional, Tuple
+from uuid import uuid4
 
 from decorator import decorator
 
@@ -1090,6 +1091,8 @@ class ProfilingSettings:
 
     LINUX_PERF_DELAY_MULTIPLIER = 2
 
+    COLLECT_CBBACKUPMGR_PROFILES = "false"
+
     def __init__(self, options: dict):
         self.services = options.get('services',
                                     self.SERVICES).split()
@@ -1113,6 +1116,29 @@ class ProfilingSettings:
 
         self.linux_perf_delay_multiplier = int(options.get('linux_perf_delay_multiplier',
                                                            self.LINUX_PERF_DELAY_MULTIPLIER))
+
+        self.collect_cbbackupmgr_profiles = maybe_atoi(
+            options.get("collect_cbbackupmgr_profiles", self.COLLECT_CBBACKUPMGR_PROFILES)
+        )
+
+    def get_cbbackupmgr_profiling_env(
+        self, operation: str, base_dir: Optional[str] = None
+    ) -> dict[str, str]:
+        if not self.collect_cbbackupmgr_profiles:
+            return {}
+
+        env = {}
+        base_dir = base_dir if base_dir is not None else "."
+
+        # In case cbbackupmgr is run multiple times, to avoid overwriting profiles
+        tag = uuid4().hex[:4]
+
+        if "cpu" in self.profiles:
+            env["CB_GOLANG_PPROF"] = f"{base_dir}/{operation}_cpu_{tag}.pprof"
+        if "mem" in self.profiles:
+            env["CB_GOLANG_MEM_PROF"] = f"{base_dir}/{operation}_mem_{tag}.pprof"
+
+        return env
 
 
 class BucketSettings:
@@ -2122,65 +2148,6 @@ class XattrLoadSettings(LoadSettings):
     def configure(self, test_config):
         self.configure_bucket_list(test_config.buckets)
 
-
-class RestoreSettings:
-
-    BACKUP_STORAGE = '/backups'
-    BACKUP_REPO = ''
-    IMPORT_FILE = ''
-    DOCS_PER_COLLECTION = 0
-    THREADS = 16
-    MAP_DATA = None
-    USE_TLS = False
-    SHOW_TLS_VERSION = False
-    MIN_TLS_VERSION = None
-    ENCRYPTED = False
-    PASSPHRASE = 'couchbase'
-    CLOUD = None
-
-    def __init__(self, options):
-        self.docs_per_collections = int(options.get('docs_per_collection',
-                                                    self.DOCS_PER_COLLECTION))
-        self.backup_storage = options.get('backup_storage', self.BACKUP_STORAGE)
-        self.backup_repo = options.get('backup_repo', self.BACKUP_REPO)
-        self.import_file = options.get('import_file', self.IMPORT_FILE)
-        self.threads = options.get('threads', self.THREADS)
-        self.map_data = options.get('map_data', self.MAP_DATA)
-        self.include_data = options.get("include_data", None)
-        self.use_tls = int(options.get('use_tls', self.USE_TLS))
-        self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
-        self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
-        self.encrypted = int(options.get('encrypted', self.ENCRYPTED))
-        self.passphrase = options.get('passphrase', self.PASSPHRASE)
-        self.modify_storage_dir_name = bool(options.get('modify_storage_dir_name', 0))
-        self.filter_keys = options.get('filter_keys', None)
-        self.cloud = self.CLOUD
-        if self.backup_storage:
-            if self.backup_storage.startswith('s3://'):
-                self.cloud = 'aws'
-            elif self.backup_storage.startswith('gs://'):
-                self.cloud = 'gcp'
-            elif self.backup_storage.startswith('az://'):
-                self.cloud = 'azure'
-
-    def __str__(self) -> str:
-        return str(self.__dict__)
-
-
-class ImportSettings:
-
-    IMPORT_FILE = ''
-    DOCS_PER_COLLECTION = 0
-
-    def __init__(self, options):
-        self.docs_per_collections = int(options.get('docs_per_collection',
-                                                    self.DOCS_PER_COLLECTION))
-        self.import_file = options.get('import_file', self.IMPORT_FILE)
-
-    def __str__(self) -> str:
-        return str(self.__dict__)
-
-
 class XDCRSettings:
 
     WAN_DELAY = 0
@@ -2604,17 +2571,32 @@ class ExtraAccessSettings(PhaseSettings):
         self.configure_bucket_list(test_config.buckets)
 
 
-class BackupSettings:
-
-    COMPRESSION = False
+class CbbackupmgrSettings:
+    THREADS = None
     USE_TLS = False
     SHOW_TLS_VERSION = False
     MIN_TLS_VERSION = None
     ENCRYPTED = False
-    PASSPHRASE = 'couchbase'
+    PASSPHRASE = "couchbase"
+    CLOUD = None
 
-    # Undefined test parameters will use backup's default
-    THREADS = None
+    def __init__(self, options: dict):
+        self.threads = options.get("threads", self.THREADS)
+        self.use_tls = int(options.get("use_tls", self.USE_TLS))
+        self.show_tls_version = int(options.get("show_tls_version", self.SHOW_TLS_VERSION))
+        self.min_tls_version = options.get("min_tls_version", self.MIN_TLS_VERSION)
+        self.encrypted = int(options.get("encrypted", self.ENCRYPTED))
+        self.passphrase = options.get("passphrase", self.PASSPHRASE)
+        self.env_vars = dict(
+            tuple(kv.split("="))
+            for kv in options.get("env_vars", "").replace(" ", "").split(",")
+            if kv
+        )
+        self.cloud = self.CLOUD
+
+
+class BackupSettings(CbbackupmgrSettings):
+    COMPRESSION = False
     STORAGE_TYPE = None
     SINK_TYPE = None
     SHARDS = None
@@ -2624,34 +2606,72 @@ class BackupSettings:
     AWS_CREDENTIAL_PATH = None
     INCLUDE_DATA = None
     BACKUP_DIRECTORY = None
-    CLOUD = None
 
     def __init__(self, options: dict):
-        self.compression = int(options.get('compression', self.COMPRESSION))
-        self.threads = options.get('threads', self.THREADS)
-        self.storage_type = options.get('storage_type', self.STORAGE_TYPE)
-        self.sink_type = options.get('sink_type', self.SINK_TYPE)
-        self.shards = options.get('shards', self.SHARDS)
-        self.obj_staging_dir = options.get('obj_staging_dir', self.OBJ_STAGING_DIR)
-        self.obj_region = options.get('obj_region', self.OBJ_REGION)
-        self.obj_access_key_id = options.get('obj_access_key_id', self.OBJ_ACCESS_KEY_ID)
-        self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
-        self.include_data = options.get('include_data', self.INCLUDE_DATA)
-        self.backup_directory = options.get('backup_directory', self.BACKUP_DIRECTORY)
-        self.use_tls = int(options.get('use_tls', self.USE_TLS))
-        self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
-        self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
-        self.encrypted = int(options.get('encrypted', self.ENCRYPTED))
-        self.passphrase = options.get('passphrase', self.PASSPHRASE)
+        super().__init__(options)
+        self.compression = int(options.get("compression", self.COMPRESSION))
+        self.storage_type = options.get("storage_type", self.STORAGE_TYPE)
+        self.sink_type = options.get("sink_type", self.SINK_TYPE)
+        self.shards = options.get("shards", self.SHARDS)
+        self.obj_staging_dir = options.get("obj_staging_dir", self.OBJ_STAGING_DIR)
+        self.obj_region = options.get("obj_region", self.OBJ_REGION)
+        self.obj_access_key_id = options.get("obj_access_key_id", self.OBJ_ACCESS_KEY_ID)
+        self.aws_credential_path = options.get("aws_credential_path", self.AWS_CREDENTIAL_PATH)
+        self.include_data = options.get("include_data", self.INCLUDE_DATA)
+        self.backup_directory = options.get("backup_directory", self.BACKUP_DIRECTORY)
 
-        self.cloud = self.CLOUD
         if self.backup_directory:
-            if self.backup_directory.startswith('s3://'):
-                self.cloud = 'aws'
-            elif self.backup_directory.startswith('gs://'):
-                self.cloud = 'gcp'
-            elif self.backup_directory.startswith('az://'):
-                self.cloud = 'azure'
+            if self.backup_directory.startswith("s3://"):
+                self.cloud = "aws"
+            elif self.backup_directory.startswith("gs://"):
+                self.cloud = "gcp"
+            elif self.backup_directory.startswith("az://"):
+                self.cloud = "azure"
+
+
+class RestoreSettings(CbbackupmgrSettings):
+    DOCS_PER_COLLECTION = 0
+    BACKUP_STORAGE = "/backups"
+    BACKUP_REPO = ""
+    IMPORT_FILE = ""
+    THREADS = 16
+    MAP_DATA = None
+
+    def __init__(self, options):
+        super().__init__(options)
+        self.docs_per_collections = int(
+            options.get("docs_per_collection", self.DOCS_PER_COLLECTION)
+        )
+        self.backup_storage = options.get("backup_storage", self.BACKUP_STORAGE)
+        self.backup_repo = options.get("backup_repo", self.BACKUP_REPO)
+        self.import_file = options.get("import_file", self.IMPORT_FILE)
+        self.map_data = options.get("map_data", self.MAP_DATA)
+        self.modify_storage_dir_name = bool(options.get("modify_storage_dir_name", 0))
+
+        if self.backup_storage:
+            if self.backup_storage.startswith("s3://"):
+                self.cloud = "aws"
+            elif self.backup_storage.startswith("gs://"):
+                self.cloud = "gcp"
+            elif self.backup_storage.startswith("az://"):
+                self.cloud = "azure"
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
+class ImportSettings:
+    IMPORT_FILE = ""
+    DOCS_PER_COLLECTION = 0
+
+    def __init__(self, options):
+        self.docs_per_collections = int(
+            options.get("docs_per_collection", self.DOCS_PER_COLLECTION)
+        )
+        self.import_file = options.get("import_file", self.IMPORT_FILE)
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
 
 
 class ExportSettings:
@@ -3962,7 +3982,9 @@ class TestConfig(Config):
     @property
     def restore_settings(self) -> RestoreSettings:
         options = self._get_options_as_dict('restore')
-        return RestoreSettings(options)
+        settings = RestoreSettings(options)
+        settings.env_vars |= self.profiling_settings.get_cbbackupmgr_profiling_env("restore")
+        return settings
 
     @property
     def import_settings(self) -> ImportSettings:
@@ -4055,7 +4077,9 @@ class TestConfig(Config):
     @property
     def backup_settings(self) -> BackupSettings:
         options = self._get_options_as_dict('backup')
-        return BackupSettings(options)
+        settings = BackupSettings(options)
+        settings.env_vars |= self.profiling_settings.get_cbbackupmgr_profiling_env("backup")
+        return settings
 
     @property
     def export_settings(self) -> ExportSettings:

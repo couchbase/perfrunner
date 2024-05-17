@@ -462,6 +462,7 @@ class AnalyticsTest(PerfTest):
             encrypted=self.test_config.restore_settings.encrypted,
             passphrase=self.test_config.restore_settings.passphrase,
             include_data=self.test_config.restore_settings.include_data,
+            env_vars=self.test_config.restore_settings.env_vars,
         )
 
     def restore_data(self):

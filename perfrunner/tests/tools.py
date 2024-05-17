@@ -36,7 +36,8 @@ class BackupRestoreTest(PerfTest):
             include_data=self.test_config.backup_settings.include_data,
             use_tls=self.test_config.backup_settings.use_tls,
             encrypted=self.test_config.backup_settings.encrypted,
-            passphrase=self.test_config.backup_settings.passphrase
+            passphrase=self.test_config.backup_settings.passphrase,
+            env_vars=self.test_config.backup_settings.env_vars,
         )
 
     def compact(self):
@@ -56,15 +57,18 @@ class BackupRestoreTest(PerfTest):
     def restore(self, master_node: Optional[str] = None):
         local.drop_caches()
 
-        local.restore(cluster_spec=self.cluster_spec,
-                      master_node=master_node or self.master_node,
-                      threads=self.test_config.restore_settings.threads,
-                      wrapper=self.rest.is_community(master_node or self.master_node),
-                      include_data=self.test_config.backup_settings.include_data,
-                      use_tls=self.test_config.restore_settings.use_tls,
-                      encrypted=self.test_config.backup_settings.encrypted,
-                      passphrase=self.test_config.backup_settings.passphrase,
-                      disable_hlv=True if self.test_config.xdcr_settings.mobile else False)
+        local.restore(
+            cluster_spec=self.cluster_spec,
+            master_node=master_node or self.master_node,
+            threads=self.test_config.restore_settings.threads,
+            wrapper=self.rest.is_community(master_node or self.master_node),
+            include_data=self.test_config.backup_settings.include_data,
+            use_tls=self.test_config.restore_settings.use_tls,
+            encrypted=self.test_config.backup_settings.encrypted,
+            passphrase=self.test_config.backup_settings.passphrase,
+            disable_hlv=True if self.test_config.xdcr_settings.mobile else False,
+            env_vars=self.test_config.restore_settings.env_vars,
+        )
 
     def backup_list(self):
         snapshots = local.get_backup_snapshots(self.cluster_spec)
@@ -600,22 +604,26 @@ class CloudBackupRestoreTest(BackupRestoreTest):
             obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
             use_tls=self.test_config.backup_settings.use_tls,
             encrypted=self.test_config.backup_settings.encrypted,
-            passphrase=self.test_config.backup_settings.passphrase
+            passphrase=self.test_config.backup_settings.passphrase,
+            env_vars=self.test_config.backup_settings.env_vars,
         )
 
     def restore(self, master_node=None):
         self.remote.client_drop_caches()
 
-        self.remote.restore(cluster_spec=self.cluster_spec,
-                            master_node=master_node if master_node else self.master_node,
-                            threads=self.test_config.restore_settings.threads,
-                            worker_home=self.worker_manager.WORKER_HOME,
-                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region,
-                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
-                            use_tls=self.test_config.restore_settings.use_tls,
-                            encrypted=self.test_config.backup_settings.encrypted,
-                            passphrase=self.test_config.backup_settings.passphrase)
+        self.remote.restore(
+            cluster_spec=self.cluster_spec,
+            master_node=master_node if master_node else self.master_node,
+            threads=self.test_config.restore_settings.threads,
+            worker_home=self.worker_manager.WORKER_HOME,
+            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+            obj_region=self.test_config.backup_settings.obj_region,
+            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+            use_tls=self.test_config.restore_settings.use_tls,
+            encrypted=self.test_config.backup_settings.encrypted,
+            passphrase=self.test_config.backup_settings.passphrase,
+            env_vars=self.test_config.restore_settings.env_vars,
+        )
 
     def collectlogs(self):
         staging_dir = './stage'

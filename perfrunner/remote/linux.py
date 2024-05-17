@@ -11,7 +11,11 @@ from fabric.contrib.files import append
 from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
-from perfrunner.helpers.misc import pretty_dict, run_local_shell_command, uhex
+from perfrunner.helpers.misc import (
+    pretty_dict,
+    run_local_shell_command,
+    uhex,
+)
 from perfrunner.remote import Remote
 from perfrunner.remote.context import (
     all_clients,
@@ -951,20 +955,46 @@ class RemoteLinux(Remote):
         return round(backup_size, 2) if rounded else backup_size
 
     @master_client
-    def backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,
-               compression: bool = False, storage_type: Optional[str] = None,
-               sink_type: Optional[str] = None, shards: Optional[int] = None,
-               obj_staging_dir: Optional[str] = None, obj_region: Optional[str] = None,
-               obj_access_key_id: Optional[str] = None, use_tls: bool = False,
-               encrypted: bool = False, passphrase: str = 'couchbase'):
-        logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
+    def backup(
+        self,
+        master_node: str,
+        cluster_spec: ClusterSpec,
+        threads: int,
+        worker_home: str,
+        compression: bool = False,
+        storage_type: Optional[str] = None,
+        sink_type: Optional[str] = None,
+        shards: Optional[int] = None,
+        obj_staging_dir: Optional[str] = None,
+        obj_region: Optional[str] = None,
+        obj_access_key_id: Optional[str] = None,
+        use_tls: bool = False,
+        encrypted: bool = False,
+        passphrase: str = "couchbase",
+        env_vars: dict[str, str] = {},
+    ):
+        logger.info(f"Creating a new backup: {cluster_spec.backup}")
 
         self.cbbackupmgr_config(cluster_spec, worker_home, obj_staging_dir, obj_region,
                                 obj_access_key_id, encrypted, passphrase)
 
-        self.cbbackupmgr_backup(master_node, cluster_spec, threads, compression, storage_type,
-                                sink_type, shards, worker_home, obj_staging_dir, obj_region,
-                                obj_access_key_id, use_tls, encrypted, passphrase)
+        self.cbbackupmgr_backup(
+            master_node,
+            cluster_spec,
+            threads,
+            compression,
+            storage_type,
+            sink_type,
+            shards,
+            worker_home,
+            obj_staging_dir,
+            obj_region,
+            obj_access_key_id,
+            use_tls,
+            encrypted,
+            passphrase,
+            env_vars,
+        )
 
     @master_client
     def cleanup(self, backup_dir: str):
@@ -1021,36 +1051,52 @@ class RemoteLinux(Remote):
             run(cmd)
 
     @master_client
-    def cbbackupmgr_backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
-                           compression: bool, storage_type: str, sink_type: str, shards: int,
-                           worker_home: str, obj_staging_dir: Optional[str] = None,
-                           obj_region: Optional[str] = None,
-                           obj_access_key_id: Optional[str] = None, use_tls: bool = False,
-                           encrypted: bool = False, passphrase: str = 'couchbase'):
+    def cbbackupmgr_backup(
+        self,
+        master_node: str,
+        cluster_spec: ClusterSpec,
+        threads: int,
+        compression: bool,
+        storage_type: str,
+        sink_type: str,
+        shards: int,
+        worker_home: str,
+        obj_staging_dir: Optional[str] = None,
+        obj_region: Optional[str] = None,
+        obj_access_key_id: Optional[str] = None,
+        use_tls: bool = False,
+        encrypted: bool = False,
+        passphrase: str = "couchbase",
+        env_vars: dict[str, str] = {},
+    ):
         with cd(worker_home), cd('perfrunner'):
-            flags = [
-                f"--archive {cluster_spec.backup}",
-                "--repo default",
-                f"--cluster http{'s' if use_tls else ''}://{master_node}",
-                "--cacert root.pem" if use_tls else None,
-                f"--username {cluster_spec.rest_credentials[0]}",
-                f"--password '{cluster_spec.rest_credentials[1]}'",
-                f"--threads {threads}" if threads else None,
-                f"--storage {storage_type}" if storage_type else None,
-                f"--sink {sink_type}" if sink_type else None,
-                "--value-compression compressed" if compression else None,
-                f"--shards {shards}" if shards else None,
-                f"--obj-region {obj_region}" if obj_region else None,
-                f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
-                f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
-                f"--passphrase '{passphrase}'" if encrypted else None,
-                "--no-progress-bar",
-            ]
+            flags = filter(
+                None,
+                [
+                    f"--archive {cluster_spec.backup}",
+                    "--repo default",
+                    f"--cluster http{'s' if use_tls else ''}://{master_node}",
+                    "--cacert root.pem" if use_tls else None,
+                    f"--username {cluster_spec.rest_credentials[0]}",
+                    f"--password '{cluster_spec.rest_credentials[1]}'",
+                    f"--threads {threads}" if threads else None,
+                    f"--storage {storage_type}" if storage_type else None,
+                    f"--sink {sink_type}" if sink_type else None,
+                    "--value-compression compressed" if compression else None,
+                    f"--shards {shards}" if shards else None,
+                    f"--obj-region {obj_region}" if obj_region else None,
+                    f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
+                    f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
+                    f"--passphrase '{passphrase}'" if encrypted else None,
+                    "--no-progress-bar",
+                ],
+            )
 
-            cmd = f"./opt/couchbase/bin/cbbackupmgr backup {' '.join(filter(None, flags))}"
+            cmd = f"./opt/couchbase/bin/cbbackupmgr backup {' '.join(flags)}"
 
-            logger.info(f"Running: {cmd}")
-            run(cmd)
+            logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
+            with shell_env(**env_vars):
+                run(cmd)
 
     @master_client
     def client_drop_caches(self):
@@ -1064,7 +1110,6 @@ class RemoteLinux(Remote):
         logger.info(f"Running.. {cmd}")
         run(cmd, warn_only=True)
 
-    @master_client
     def restore(
         self,
         master_node: str,
@@ -1077,11 +1122,12 @@ class RemoteLinux(Remote):
         obj_region: Optional[str] = None,
         obj_access_key_id: Optional[str] = None,
         use_tls: bool = False,
-        map_data: Optional[str] = None,
+        map_data: str = None,
         encrypted: bool = False,
         passphrase: str = "couchbase",
         filter_keys: Optional[str] = None,
         include_data: Optional[str] = None,
+        env_vars: dict[str, str] = {},
     ):
         logger.info(f"Restore from {archive or cluster_spec.backup}")
 
@@ -1101,6 +1147,7 @@ class RemoteLinux(Remote):
             passphrase,
             filter_keys,
             include_data,
+            env_vars,
         )
 
     @master_client
@@ -1121,6 +1168,7 @@ class RemoteLinux(Remote):
         passphrase: str = "couchbase",
         filter_keys: Optional[str] = None,
         include_data: Optional[str] = None,
+        env_vars: dict[str, str] = {},
     ):
         restore_to_capella = cluster_spec.capella_infrastructure
         use_tls = use_tls or restore_to_capella
@@ -1132,31 +1180,35 @@ class RemoteLinux(Remote):
         )
 
         with cd(worker_home), cd('perfrunner'):
-            flags = [
-                f"--archive {archive or cluster_spec.backup}",
-                f"--repo {repo}".format(repo),
-                f"--cluster http{'s' if use_tls else ''}://{master_node}",
-                "--cacert root.pem" if use_tls else None,
-                f"--username {user}",
-                f"--password '{pwd}'",
-                f"--threads {threads}" if threads else None,
-                f"--obj-region {obj_region}" if obj_region else None,
-                f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
-                f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
-                f"--map-data {map_data}" if map_data else None,
-                "--disable-analytics --disable-cluster-analytics" if restore_to_capella else None,
-                f"--passphrase '{passphrase}'" if encrypted else None,
-                f'--filter-keys "{filter_keys}"' if filter_keys else None,
-                "--no-progress-bar --purge --disable-gsi-indexes --disable-ft-indexes",
-                f"--include-data {include_data}" if include_data else None,
-            ]
-
-            cmd = "./opt/couchbase/bin/cbbackupmgr restore --force-updates " + " ".join(
-                filter(None, flags)
+            flags = filter(
+                None,
+                [
+                    f"--archive {archive or cluster_spec.backup}",
+                    f"--repo {repo}",
+                    f"--cluster http{'s' if use_tls else ''}://{master_node}",
+                    "--cacert root.pem" if use_tls else None,
+                    f"--username {user}",
+                    f"--password '{pwd}'",
+                    f"--threads {threads}" if threads else None,
+                    f"--obj-region {obj_region}" if obj_region else None,
+                    f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
+                    f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
+                    f"--map-data {map_data}" if map_data else None,
+                    "--disable-analytics --disable-cluster-analytics"
+                    if restore_to_capella
+                    else None,
+                    f"--passphrase '{passphrase}'" if encrypted else None,
+                    f'--filter-keys "{filter_keys}"' if filter_keys else None,
+                    "--no-progress-bar --purge --disable-gsi-indexes --disable-ft-indexes",
+                    f"--include-data {include_data}" if include_data else None,
+                ],
             )
 
-            logger.info(f"Running: {cmd}")
-            run(cmd)
+            cmd = f"./opt/couchbase/bin/cbbackupmgr restore --force-updates {' '.join(flags)}"
+
+            logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
+            with shell_env(**env_vars):
+                run(cmd)
 
     def _install_cb_debug_package(self, url: str, quiet: bool = False):
         logger.info("Installing Couchbase Debug package")

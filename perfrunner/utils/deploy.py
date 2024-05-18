@@ -439,26 +439,19 @@ class AWSDeployer(Deployer):
             if len(eks_subnets) < 2:
                 raise Exception("EKS requires 2 or more subnets")
             for node_group in k8s_cluster_spec['node_groups'].split(','):
-                resource_path = 'k8s.{}.{}'.format(k8s_cluster_name, node_group)
-                labels = {'NodeRoles': None}
+                resource_path = f"k8s.{k8s_cluster_name}.{node_group}"
+                labels = {"NodeRoles": None}
                 for k, v in self.clusters.items():
-                    if 'couchbase' in k:
-                        for host in v.split():
-                            host_resource, services = host.split(":")
-                            if resource_path in host_resource:
-                                labels['NodeRoles'] = k
-                                for service in services.split(","):
-                                    labels['{}_enabled'.format(service)] = 'true'
-                for k, v in self.clients.items():
-                    if 'workers' in k and resource_path in v:
-                        labels['NodeRoles'] = k
+                    if "couchbase" in k and resource_path in v:
+                        labels["NodeRoles"] = k
                         break
-                    if 'backups' in k and resource_path in v:
-                        labels['NodeRoles'] = k
+                for k, v in self.clients.items():
+                    if ("workers" in k or "backups" in k) and resource_path in v:
+                        labels["NodeRoles"] = k
                         break
                 for k, v in self.utilities.items():
-                    if ('brokers' in k or 'operators' in k) and resource_path in v:
-                        labels['NodeRoles'] = 'utilities'
+                    if ("brokers" in k or "operators" in k) and resource_path in v:
+                        labels["NodeRoles"] = "utilities"
                 for k, v in self.syncgateways.items():
                     if resource_path in v:
                         labels["NodeRoles"] = k
@@ -833,35 +826,23 @@ class AWSDeployer(Deployer):
             clusters = self.infra_spec.infrastructure_clusters
             for cluster, hosts in clusters.items():
                 for host in hosts.split():
-                    address, services = host.split(":")
+                    address, _ = host.split(":")
                     node_group = address.split(".")[2]
-                    matching_node = None
                     for node_name, node_spec in k8_nodes.items():
                         if node_spec['labels']['NodeRoles'] != cluster:
                             continue
                         if node_spec['labels']['eks.amazonaws.com/nodegroup'] != node_group:
                             continue
 
-                        has_all_services = True
-                        for service in services.split(","):
-                            service_enabled = node_spec['labels'].get("{}_enabled"
-                                                                      .format(service), 'false')
-                            if service_enabled != 'true':
-                                has_all_services = False
-
-                        if has_all_services:
-                            replace_addr = None
-                            for node_addr_dict in node_spec['addresses']:
-                                if node_addr_dict['type'] == "ExternalIP":
-                                    replace_addr = node_addr_dict['address']
-                            if not replace_addr:
-                                raise Exception("no replace address found")
-                            address_replace_list.append((address, replace_addr))
-                            del k8_nodes[node_name]
-                            matching_node = node_name
-                            break
-                    if not matching_node:
-                        raise Exception("no matching node found")
+                        replace_addr = None
+                        for node_addr_dict in node_spec["addresses"]:
+                            if node_addr_dict["type"] == "ExternalIP":
+                                replace_addr = node_addr_dict["address"]
+                        if not replace_addr:
+                            raise Exception("no replace address found")
+                        address_replace_list.append((address, replace_addr))
+                        del k8_nodes[node_name]
+                        break
 
                 logger.info("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
 

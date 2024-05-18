@@ -489,7 +489,7 @@ class RemoteKubernetes(Remote):
             line = line.decode("utf-8")
             if "worker" in line:
                 worker_name = line.split()[0]
-                cmd = 'pyenv local system && bin/ycsb build {}'.format(ycsb_client)
+                cmd = f"pyenv local 2.7.18 && bin/ycsb build {ycsb_client}"
 
                 logger.info('Running: {}'.format(cmd))
                 self.kubectl_exec(worker_name, 'cd YCSB; {}'.format(cmd))

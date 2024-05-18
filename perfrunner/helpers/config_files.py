@@ -228,11 +228,7 @@ class CAOCouchbaseClusterFile(CAOFiles):
         cluster_servers = []
         volume_claims = []
         for server_role, server_role_count in server_types.items():
-            node_selector = {
-                f"{service.replace('data', 'kv').replace('query', 'n1ql')}_enabled": "true"
-                for service in server_role.split(",")
-            }
-            node_selector["NodeRoles"] = "couchbase1"
+            node_selector = {"NodeRoles": "couchbase1"}
             spec = {
                 "imagePullSecrets": [{"name": "regcred"}],
                 "nodeSelector": node_selector,

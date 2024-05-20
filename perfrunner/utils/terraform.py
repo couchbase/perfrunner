@@ -1965,21 +1965,50 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
 
     def deploy_goldfish_instances(self):
         instance_sizes = [len(servers) for _, servers in self.infra_spec.clusters]
+        node_groups = [servers[0].split(".")[2] for _, servers in self.infra_spec.clusters]
         names = [f'perf-goldfish-{self.uuid}' for _ in instance_sizes]
         if len(names) > 1:
             names = [f'{name}-{i}'for i, name in enumerate(names)]
 
+        logger.info("Fetching deployment options for Goldfish instances.")
+        resp = self.columnar_api.get_deployment_options(
+            self.tenant_id, self.backend.lower(), self.region, free_tier=False
+        )
+        raise_for_status(resp)
+        deployment_options = resp.json()
+        instance_type_options = {
+            c.pop("key"): c
+            for compute in deployment_options["compute"]
+            if (c := compute["compute"])
+        }
+
         deployment_durations = {}
-        for name, size in zip(names, instance_sizes):
+        for name, size, node_group in zip(names, instance_sizes, node_groups):
+            node_group_info = self.infra_spec.infrastructure_section(node_group)
+            instance_type = node_group_info.get("instance_type", "m7gd.4xlarge")
+
+            if not (instance_type_info := instance_type_options.get(instance_type)):
+                logger.interrupt(
+                    f"Invalid instance type: {instance_type}\n"
+                    f"Valid options: {pretty_dict(instance_type_options)}"
+                )
+
             config = {
                 "name": name,
                 "description": "",
-                "provider": self.infra_spec.capella_backend,
+                "provider": self.backend,
                 "region": self.region,
-                "nodes": size
+                "nodes": size,
+                "instance_types": instance_type_info,
+                "availability_zone": "multi" if self.options.multi_az else "single",
+                "support_package": {"key": "enterprise", "timezone": "PT"},
             }
 
-            logger.info(f'Deploying Goldfish instance with config: {pretty_dict(config)}')
+            logger.info(f"Deploying Goldfish instance with config: {pretty_dict(config)}")
+            logger.warn(
+                "Instance type is not yet taken into account by control plane. "
+                "CP will deploy c7gd.4xlarge (16vCPUs, 32GB RAM) regardless of above config."
+            )
             resp = self.columnar_api.create_columnar_instance(self.tenant_id, self.project_id,
                                                               **config)
             raise_for_status(resp)

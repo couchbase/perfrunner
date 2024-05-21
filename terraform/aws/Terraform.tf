@@ -2,6 +2,10 @@ variable "cloud_region" {
   type = string
 }
 
+variable "cloud_zone" {
+  type = string
+}
+
 variable "cluster_nodes" {
   type = map(object({
     node_group        = string
@@ -155,10 +159,14 @@ data "aws_ami" "kafka_ami" {
 }
 
 resource "random_shuffle" "az" {
-  count = (length(data.aws_ec2_instance_type_offerings.available.instance_types) != 0 &&
-           length(data.aws_ec2_instance_type_offerings.available.locations) != 0) ? 1 : 0
+  count = (
+    (
+      length(data.aws_ec2_instance_type_offerings.available.instance_types) != 0 &&
+      length(data.aws_ec2_instance_type_offerings.available.locations) != 0
+    ) || var.cloud_zone != ""
+  ) ? 1 : 0
 
-  input = setintersection([
+  input = var.cloud_zone != "" ? [var.cloud_zone] : setintersection([
     for instance_type in distinct(data.aws_ec2_instance_type_offerings.available.instance_types) : [
       for idx, loc in data.aws_ec2_instance_type_offerings.available.locations : loc
         if data.aws_ec2_instance_type_offerings.available.instance_types[idx] == instance_type

@@ -1,5 +1,7 @@
 cloud_region = <CLOUD_REGION>
 
+cloud_zone = <CLOUD_ZONE>
+
 cluster_nodes = <CLUSTER_NODES>
 
 client_nodes = <CLIENT_NODES>

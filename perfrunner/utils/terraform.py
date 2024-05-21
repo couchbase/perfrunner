@@ -46,6 +46,37 @@ SERVICES_PERFRUNNER_TO_CAPELLA = {
     'eventing': 'eventing'
 }
 
+AWS_DEFAULT_REGION = "us-east-1"
+AWS_REGIONS = [
+    "us-east-1",
+    "us-east-2",
+    "us-west-2",
+    "ca-central-1",
+    "ap-northeast-1",
+    "ap-northeast-2",
+    "ap-southeast-1",
+    "ap-south-1",
+    "eu-west-1",
+    "eu-west-2",
+    "eu-west-3",
+    "eu-central-1",
+    "sa-east-1",
+]
+
+GCP_DEFAULT_ZONE = "us-west1-b"
+GCP_ZONES = [
+    "us-west1-b",
+    "us-west1-a",
+    "us-west1-c",
+    "us-central1-a",
+    "us-central1-b",
+    "us-central1-c",
+    "us-central1-f",
+]
+
+AZURE_DEFAULT_REGION = "eastus"
+AZURE_REGIONS = ["eastus", "eastus2", "westus2", "westeurope", "uksouth"]
+
 
 def raise_for_status(resp: requests.Response):
     try:
@@ -103,9 +134,13 @@ class CloudVMDeployer:
         self.options = options
         self.infra_spec = ClusterSpec()
         self.infra_spec.parse(self.options.cluster, override=options.override)
-        self.provider = self.infra_spec.cloud_provider
-        self.backend = None
-        self.os_arch = self.infra_spec.infrastructure_settings.get('os_arch', 'x86_64')
+        self.os_arch = self.infra_spec.infrastructure_settings.get("os_arch", "x86_64")
+
+        self.csp = (
+            self.infra_spec.capella_backend.lower()
+            if (csp := self.infra_spec.cloud_provider.lower()) == "capella"
+            else csp
+        )
 
         self.uuid = self.infra_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
         self.infra_spec.config.set("infrastructure", "uuid", self.uuid)
@@ -125,32 +160,49 @@ class CloudVMDeployer:
             int(self.infra_spec.infrastructure_settings.get('cloud_storage', 0))
         )
 
-        if self.provider == 'gcp' or \
-           (self.provider == 'capella' and self.infra_spec.capella_backend == 'gcp'):
-            self.zone = self.options.zone
-            self.region = self.zone.rsplit('-', 1)[0]
-        else:
-            self.zone = None
-            if self.provider == 'aws' or \
-               (self.provider == 'capella' and self.infra_spec.capella_backend == 'aws'):
-                self.region = self.options.aws_region
+        zone = self.options.zone or GCP_DEFAULT_ZONE
+        if self.csp == "gcp":
+            if zone not in GCP_ZONES:
+                logger.interrupt(f"Invalid GCP zone. Please choose from: {pretty_dict(GCP_ZONES)}")
+
+            self.zone, self.region = zone, zone.rsplit("-", 1)[0]
+        elif self.csp == "aws":
+            if (region := zone[:-1]) in AWS_REGIONS:
+                logger.info("Valid AWS zone provided. Overriding region with zone.")
+                self.zone, self.region = zone, region
+            elif (region := self.options.region or AWS_DEFAULT_REGION) in AWS_REGIONS:
+                logger.info("No valid AWS zone provided. Ignoring zone.")
+                self.zone, self.region = None, region
             else:
-                self.region = self.options.azure_region
+                logger.interrupt(
+                    "No valid AWS region or zone provided. "
+                    f"Valid regions: {pretty_dict(AWS_REGIONS)}"
+                )
+        elif self.csp == "azure":
+            if (region := self.options.region or AZURE_DEFAULT_REGION) not in AZURE_REGIONS:
+                logger.interrupt(
+                    f"Invalid Azure region. Please choose from: {pretty_dict(AZURE_REGIONS)}"
+                )
+            self.zone, self.region = None, region
+        else:
+            logger.interrupt(f"Unrecognised cloud service provider: {self.csp}")
+
+        logger.info(f"Deployer region, zone: {self.region}, {self.zone}")
 
     def deploy(self):
         # Configure terraform
         self.populate_tfvars()
-        self.terraform_init(self.provider)
+        self.terraform_init(self.csp)
 
         # Deploy resources
-        self.terraform_apply(self.provider)
+        self.terraform_apply(self.csp)
 
         # Get info about deployed resources and update cluster spec file
-        output = self.terraform_output(self.provider)
+        output = self.terraform_output(self.csp)
         self.update_spec(output)
 
     def destroy(self):
-        self.terraform_destroy(self.provider)
+        self.terraform_destroy(self.csp)
 
     def create_tfvar_nodes(self) -> Dict[str, Dict]:
         tfvar_nodes = {
@@ -161,11 +213,11 @@ class CloudVMDeployer:
             'kafka_brokers': {}
         }
 
-        cloud_provider = self.backend if self.provider == 'capella' else self.provider
-
         for role, nodes in self.node_list.items():
             # If this is a capella test, skip cluster nodes
-            if self.provider == 'capella' and (role == 'clusters' or role == 'syncgateways'):
+            if self.infra_spec.capella_infrastructure and (
+                role == "clusters" or role == "syncgateways"
+            ):
                 continue
 
             i = 0
@@ -186,8 +238,8 @@ class CloudVMDeployer:
 
                 # If image name isn't provided as cli param, use hardcoded defaults
                 if image is None:
-                    image = self.IMAGE_MAP[cloud_provider][role]
-                    if cloud_provider == 'aws' and role == 'clusters':
+                    image = self.IMAGE_MAP[self.csp][role]
+                    if self.csp == "aws" and role == "clusters":
                         image = image.get(self.os_arch, image['x86_64'])
 
                 parameters['image'] = image
@@ -202,12 +254,12 @@ class CloudVMDeployer:
                 parameters['storage_class'] = storage_class
 
                 # Set CSP-specific options
-                if cloud_provider == 'azure':
+                if self.csp == "azure":
                     parameters['disk_tier'] = parameters.get('disk_tier', '')
                 else:
                     # AWS and GCP
                     parameters['iops'] = int(parameters.get('iops', 0))
-                    if cloud_provider == 'aws':
+                    if self.csp == "aws":
                         parameters['volume_throughput'] = int(parameters.get('volume_throughput',
                                                                              0))
                     else:
@@ -221,10 +273,9 @@ class CloudVMDeployer:
         return tfvar_nodes
 
     def populate_tfvars(self) -> bool:
-        logger.info('Setting tfvars')
-        cloud_provider = self.backend if self.provider == 'capella' else self.provider
+        logger.info("Setting tfvars")
         global_tag = self.options.tag if self.options.tag else ''
-        if cloud_provider.lower() == 'gcp':
+        if self.csp == "gcp":
             # GCP doesn't allow uppercase letters in tags
             global_tag = global_tag.lower()
 
@@ -236,6 +287,7 @@ class CloudVMDeployer:
 
         replacements = {
             "<CLOUD_REGION>": self.region,
+            "<CLOUD_ZONE>": self.zone or "",
             "<CLUSTER_NODES>": tfvar_nodes["clusters"],
             "<CLIENT_NODES>": tfvar_nodes["clients"],
             "<UTILITY_NODES>": tfvar_nodes["utilities"],
@@ -246,10 +298,7 @@ class CloudVMDeployer:
             "<UUID>": self.uuid,
         }
 
-        if self.zone:
-            replacements['<CLOUD_ZONE>'] = self.zone
-
-        with open('terraform/{}/terraform.tfvars'.format(cloud_provider), 'r+') as tfvars:
+        with open(f"terraform/{self.csp}/terraform.tfvars", "r+") as tfvars:
             file_string = tfvars.read()
 
             for k, v in replacements.items():
@@ -262,38 +311,39 @@ class CloudVMDeployer:
         return True
 
     # Initializes terraform environment.
-    def terraform_init(self, provider):
+    def terraform_init(self, csp: str):
         logger.info('Initializating Terraform (terraform init)')
-        local('cd terraform/{} && terraform init >> terraform.log'.format(provider))
+        local(f"cd terraform/{csp} && terraform init >> terraform.log")
 
     # Apply and output terraform deployment.
-    def terraform_apply(self, provider):
+    def terraform_apply(self, csp: str):
         logger.info('Building and executing Terraform deployment plan '
                     '(terraform plan, terraform apply)')
-        local('cd terraform/{} && '
-              'terraform plan -out tfplan.out >> terraform.log && '
-              'terraform apply -auto-approve tfplan.out'
-              .format(provider))
-
-    def terraform_output(self, provider):
-        output = json.loads(
-            local('cd terraform/{} && terraform output -json'.format(provider), capture=True)
+        local(
+            f"cd terraform/{csp} && "
+            "terraform plan -out tfplan.out >> terraform.log && "
+            "terraform apply -auto-approve tfplan.out"
         )
+
+    def terraform_output(self, csp: str):
+        output = json.loads(local(f"cd terraform/{csp} && terraform output -json", capture=True))
         return output
 
-    def terraform_destroy(self, provider):
+    def terraform_destroy(self, csp: str):
         logger.info('Building and executing Terraform destruction plan '
                     '(terraform plan -destroy, terraform apply)')
-        _, _, returncode = run_local_shell_command('cd terraform/{} && terraform validate'
-                                                   .format(provider), quiet=True)
+        _, _, returncode = run_local_shell_command(
+            f"cd terraform/{csp} && terraform validate", quiet=True
+        )
         if returncode != 0:
             logger.info('No resources to destroy with Terraform.')
             return
 
-        local('cd terraform/{} && '
-              'terraform plan -destroy -out tfplan_destroy.out >> terraform.log && '
-              'terraform apply -auto-approve tfplan_destroy.out'
-              .format(provider))
+        local(
+            f"cd terraform/{csp} && "
+            "terraform plan -destroy -out tfplan_destroy.out >> terraform.log && "
+            "terraform apply -auto-approve tfplan_destroy.out"
+        )
 
     # Update spec file with deployed infrastructure.
     def update_spec(self, output):
@@ -324,9 +374,10 @@ class CloudVMDeployer:
                                                                       cluster_dicts,
                                                                       output_keys,
                                                                       private_sections):
-            if (section not in self.infra_spec.config.sections()) or \
-               (self.provider == 'capella' and (section == 'clusters' or
-                                                section == 'syncgateways')):
+            if (section not in self.infra_spec.config.sections()) or (
+                self.infra_spec.capella_infrastructure
+                and (section == "clusters" or section == "syncgateways")
+            ):
                 continue
 
             for cluster, nodes in cluster_dict.items():
@@ -373,7 +424,7 @@ class CloudVMDeployer:
             cloud_storage_info = output['cloud_storage']['value']
             bucket_url = cloud_storage_info['storage_bucket']
             self.infra_spec.config.set('storage', 'backup', bucket_url)
-            if self.provider == 'azure':
+            if self.csp == "azure":
                 storage_acc = cloud_storage_info['storage_account']
                 self.infra_spec.config.set('storage', 'storage_acc', storage_acc)
 
@@ -381,7 +432,7 @@ class CloudVMDeployer:
 
         with open('cloud/infrastructure/cloud.ini', 'r+') as f:
             s = f.read()
-            if self.provider != 'capella':
+            if not self.infra_spec.capella_infrastructure:
                 s = s.replace("server_list", "\n".join(self.infra_spec.servers))
             s = s.replace("worker_list", "\n".join(self.infra_spec.clients))
             if self.infra_spec.sgw_servers:
@@ -617,8 +668,6 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                 for node in nodes.strip().split()[:initial_num]
             ]
 
-        self.backend = self.infra_spec.infrastructure_settings['backend']
-
         self.provisioned_api = CapellaAPIDedicated(
             self.infra_spec.controlplane_settings["public_api_url"],
             None,
@@ -641,11 +690,11 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         if not self.options.capella_only:
             # Configure terraform
             self.populate_tfvars()
-            self.terraform_init(self.backend)
+            self.terraform_init(self.csp)
 
             # Deploy non-capella resources
-            self.terraform_apply(self.backend)
-            non_capella_output = self.terraform_output(self.backend)
+            self.terraform_apply(self.csp)
+            non_capella_output = self.terraform_output(self.csp)
             CloudVMDeployer.update_spec(self, non_capella_output)
 
         if self.test_config.deployment.monitor_deployment_time:
@@ -678,7 +727,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         self.destroy_peering_connection()
 
         # Destroy non-capella resources
-        self.terraform_destroy(self.backend)
+        self.terraform_destroy(self.csp)
 
         # Destroy capella cluster
         if not self.options.keep_cluster:
@@ -1158,8 +1207,6 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
 
         self.infra_spec.update_spec_file()
 
-        self.backend = self.infra_spec.infrastructure_settings['backend']
-
         self.serverless_client = CapellaAPIServerless(
             self.infra_spec.controlplane_settings["public_api_url"],
             os.getenv("CBC_USER"),
@@ -1186,11 +1233,11 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
             logger.info('Deploying non-Capella resources')
             # Configure terraform
             CloudVMDeployer.populate_tfvars(self)
-            self.terraform_init(self.backend)
+            self.terraform_init(self.csp)
 
             # Deploy non-capella resources
-            self.terraform_apply(self.backend)
-            non_capella_output = self.terraform_output(self.backend)
+            self.terraform_apply(self.csp)
+            non_capella_output = self.terraform_output(self.csp)
             CloudVMDeployer.update_spec(self, non_capella_output)
         else:
             logger.info('Skipping deploying non-Capella resources as --capella-only flag is set')
@@ -1207,7 +1254,7 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
 
     def destroy(self):
         # Destroy non-capella resources
-        self.terraform_destroy(self.backend)
+        self.terraform_destroy(self.csp)
 
         dbs_destroyed = False
 
@@ -1340,17 +1387,13 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
         logger.info('Adding new serverless DB: {}'.format(name))
 
         data = {
-            'name': name,
-            'tenantId': self.tenant_id,
-            'projectId': self.project_id,
-            'provider': self.backend,
-            'region': self.region,
-            'overRide': {
-                'width': width,
-                'weight': weight,
-                'dataplaneId': self.dp_id
-            },
-            'dontImportSampleData': True
+            "name": name,
+            "tenantId": self.tenant_id,
+            "projectId": self.project_id,
+            "provider": self.csp,
+            "region": self.region,
+            "overRide": {"width": width, "weight": weight, "dataplaneId": self.dp_id},
+            "dontImportSampleData": True,
         }
 
         logger.info('DB configuration: {}'.format(pretty_dict(data)))
@@ -1527,8 +1570,6 @@ class AppServicesDeployer(CloudVMDeployer):
             test_config = TestConfig()
             test_config.parse(options.test_config, override=options.override)
             self.test_config = test_config
-
-        self.backend = self.infra_spec.infrastructure_settings['backend']
 
         self.tenant_id = self.infra_spec.controlplane_settings["org"]
         self.project_id = self.infra_spec.controlplane_settings["project"]
@@ -1889,8 +1930,6 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
             test_config.override(options.override)
         self.test_config = test_config
 
-        self.backend = self.infra_spec.infrastructure_settings["backend"]
-
         access, secret = None, None
         if api_keys := ControlPlaneManager.get_api_keys():
             access, secret = api_keys
@@ -1960,7 +1999,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
 
         logger.info("Fetching deployment options for Goldfish instances.")
         resp = self.columnar_api.get_deployment_options(
-            self.tenant_id, self.backend.lower(), self.region, free_tier=False
+            self.tenant_id, self.csp, self.region, free_tier=False
         )
         raise_for_status(resp)
         deployment_options = resp.json()
@@ -1984,7 +2023,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
             config = {
                 "name": name,
                 "description": "",
-                "provider": self.backend,
+                "provider": self.csp,
                 "region": self.region,
                 "nodes": size,
                 "instance_types": instance_type_info,
@@ -2127,143 +2166,111 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
 def get_args():
     parser = ArgumentParser()
 
-    parser.add_argument('-c', '--cluster',
-                        required=True,
-                        help='the path to a infrastructure specification file')
-    parser.add_argument('--test-config',
-                        required=False,
-                        help='the path to the test configuration file')
-    parser.add_argument('--verbose',
-                        action='store_true',
-                        help='enable verbose logging')
-    parser.add_argument('--azure-region',
-                        choices=[
-                            'eastus',
-                            'westeurope',
-                            'eastus2',
-                            'westus2',
-                            'uksouth'
-                        ],
-                        default='eastus',
-                        help='the cloud region (Azure)')
-    parser.add_argument('-r', '--aws-region',
-                        choices=[
-                            'us-east-1',
-                            'us-east-2',
-                            'us-west-2',
-                            'ca-central-1',
-                            'ap-northeast-1',
-                            'ap-northeast-2',
-                            'ap-southeast-1',
-                            'ap-south-1',
-                            'eu-west-1',
-                            'eu-west-2',
-                            'eu-west-3',
-                            'eu-central-1',
-                            'sa-east-1'
-                        ],
-                        default='us-east-1',
-                        help='the cloud region (AWS)')
-    parser.add_argument('-z', '--gcp-zone',
-                        choices=[
-                           'us-central1-a',
-                           'us-central1-b',
-                           'us-central1-c',
-                           'us-central1-f',
-                           'us-west1-a',
-                           'us-west1-b',
-                           'us-west1-c'
-                        ],
-                        default='us-west1-b',
-                        dest='zone',
-                        help='the cloud zone (GCP)')
-    parser.add_argument('--cluster-image',
-                        help='Image/AMI name to use for cluster nodes')
-    parser.add_argument('--client-image',
-                        help='Image/AMI name to use for client nodes')
-    parser.add_argument('--utility-image',
-                        help='Image/AMI name to use for utility nodes')
-    parser.add_argument('--sgw-image',
-                        help='Image/AMI name to use for sync gateway nodes')
-    parser.add_argument('--kafka-image',
-                        help='Image/AMI name to use for Kafka nodes')
-    parser.add_argument('--capella-public-api-url',
-                        help='public API URL for Capella environment')
-    parser.add_argument('--capella-tenant',
-                        help='tenant ID for Capella deployment')
-    parser.add_argument('--capella-project',
-                        help='project ID for Capella deployment')
-    parser.add_argument('--capella-dataplane',
-                        help='serverless dataplane ID to use for serverless database deployment')
-    parser.add_argument('--capella-cb-version',
-                        help='cb version to use for Capella deployment')
-    parser.add_argument('--capella-ami',
-                        help='custom AMI to use for Capella deployment')
-    parser.add_argument('--capella-sgw-ami',
-                        help='custom AMI to use for App Services Capella Deployment')
-    parser.add_argument('--release-id',
-                        help='release id for managing releases')
-    parser.add_argument('--dapi-ami',
-                        help='AMI to use for Data API deployment (serverless)')
-    parser.add_argument('--dapi-override-count',
-                        type=int,
-                        help='number of DAPI nodes to deploy')
-    parser.add_argument('--dapi-min-count',
-                        type=int,
-                        help='minimum number of DAPI nodes in autoscaling group')
-    parser.add_argument('--dapi-max-count',
-                        type=int,
-                        help='maximum number of DAPI nodes in autoscaling group')
-    parser.add_argument('--dapi-instance-type',
-                        help='instance type to use for DAPI nodes')
-    parser.add_argument('--nebula-ami',
-                        help='AMI to use for Direct Nebula deployment (serverless)')
-    parser.add_argument('--nebula-override-count',
-                        type=int,
-                        help='number of Direct Nebula nodes to deploy')
-    parser.add_argument('--nebula-min-count',
-                        type=int,
-                        help='minimum number of Direct Nebula nodes in autoscaling group')
-    parser.add_argument('--nebula-max-count',
-                        type=int,
-                        help='maximum number of Direct Nebula nodes in autoscaling group')
-    parser.add_argument('--nebula-instance-type',
-                        help='instance type to use for Direct Nebula nodes')
-    parser.add_argument('--vpc-peering',
-                        action='store_true',
-                        help='enable VPC peering for Capella deployment')
-    parser.add_argument('--capella-timeout',
-                        type=int,
-                        default=20,
-                        help='Timeout (minutes) for Capella deployment when using internal API')
-    parser.add_argument('--disable-autoscaling',
-                        action='store_true',
-                        help='Disable cluster auto-scaling for Capella clusters by creating a '
-                             'deployment circuit breaker for the cluster.')
-    parser.add_argument('--keep-cluster',
-                        action='store_true',
-                        help='Don\'t destroy cluster or serverless dataplane, only the clients '
-                             'and utilities')
-    parser.add_argument('--no-serverless-dbs',
-                        action='store_true',
-                        help='Don\'t deploy serverless databases, only deploy serverless dataplane')
-    parser.add_argument('--capella-only',
-                        action='store_true',
-                        help='Only deploy Capella resources (provisioned cluster or serverless '
-                             'dataplane). Will not deploy perf client or utility nodes.')
-    parser.add_argument('-t', '--tag',
-                        help='Global tag for launched instances.')
-    parser.add_argument('--enable-disk-autoscaling',
-                        action='store_true',
-                        default=True,
-                        help='Enables Capella disk autoscaling')
-    parser.add_argument('--multi-az',
-                        action="store_true",
-                        default=False,
-                        help="Deploy Capella cluster to multiple Availability Zones")
-    parser.add_argument('override',
-                        nargs='*',
-                        help='custom cluster and/or test settings')
+    parser.add_argument(
+        "-c", "--cluster", required=True, help="the path to a infrastructure specification file"
+    )
+    parser.add_argument(
+        "--test-config", required=False, help="the path to the test configuration file"
+    )
+    parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
+    parser.add_argument(
+        "-r", "--aws-region", "--azure-region", dest="region", help="the cloud region (AWS, Azure)"
+    )
+    parser.add_argument(
+        "-z",
+        "--gcp-zone",
+        dest="zone",
+        help="the cloud zone (AWS, GCP)",
+    )
+    parser.add_argument("--cluster-image", help="Image/AMI name to use for cluster nodes")
+    parser.add_argument("--client-image", help="Image/AMI name to use for client nodes")
+    parser.add_argument("--utility-image", help="Image/AMI name to use for utility nodes")
+    parser.add_argument("--sgw-image", help="Image/AMI name to use for sync gateway nodes")
+    parser.add_argument("--kafka-image", help="Image/AMI name to use for Kafka nodes")
+    parser.add_argument("--capella-public-api-url", help="public API URL for Capella environment")
+    parser.add_argument("--capella-tenant", help="tenant ID for Capella deployment")
+    parser.add_argument("--capella-project", help="project ID for Capella deployment")
+    parser.add_argument(
+        "--capella-dataplane",
+        help="serverless dataplane ID to use for serverless database deployment",
+    )
+    parser.add_argument("--capella-cb-version", help="cb version to use for Capella deployment")
+    parser.add_argument("--capella-ami", help="custom AMI to use for Capella deployment")
+    parser.add_argument(
+        "--capella-sgw-ami", help="custom AMI to use for App Services Capella Deployment"
+    )
+    parser.add_argument("--release-id", help="release id for managing releases")
+    parser.add_argument("--dapi-ami", help="AMI to use for Data API deployment (serverless)")
+    parser.add_argument("--dapi-override-count", type=int, help="number of DAPI nodes to deploy")
+    parser.add_argument(
+        "--dapi-min-count", type=int, help="minimum number of DAPI nodes in autoscaling group"
+    )
+    parser.add_argument(
+        "--dapi-max-count", type=int, help="maximum number of DAPI nodes in autoscaling group"
+    )
+    parser.add_argument("--dapi-instance-type", help="instance type to use for DAPI nodes")
+    parser.add_argument("--nebula-ami", help="AMI to use for Direct Nebula deployment (serverless)")
+    parser.add_argument(
+        "--nebula-override-count", type=int, help="number of Direct Nebula nodes to deploy"
+    )
+    parser.add_argument(
+        "--nebula-min-count",
+        type=int,
+        help="minimum number of Direct Nebula nodes in autoscaling group",
+    )
+    parser.add_argument(
+        "--nebula-max-count",
+        type=int,
+        help="maximum number of Direct Nebula nodes in autoscaling group",
+    )
+    parser.add_argument(
+        "--nebula-instance-type", help="instance type to use for Direct Nebula nodes"
+    )
+    parser.add_argument(
+        "--vpc-peering", action="store_true", help="enable VPC peering for Capella deployment"
+    )
+    parser.add_argument(
+        "--capella-timeout",
+        type=int,
+        default=20,
+        help="Timeout (minutes) for Capella deployment when using internal API",
+    )
+    parser.add_argument(
+        "--disable-autoscaling",
+        action="store_true",
+        help="Disable cluster auto-scaling for Capella clusters by creating a "
+        "deployment circuit breaker for the cluster.",
+    )
+    parser.add_argument(
+        "--keep-cluster",
+        action="store_true",
+        help="Don't destroy cluster or serverless dataplane, only the clients " "and utilities",
+    )
+    parser.add_argument(
+        "--no-serverless-dbs",
+        action="store_true",
+        help="Don't deploy serverless databases, only deploy serverless dataplane",
+    )
+    parser.add_argument(
+        "--capella-only",
+        action="store_true",
+        help="Only deploy Capella resources (provisioned cluster or serverless "
+        "dataplane). Will not deploy perf client or utility nodes.",
+    )
+    parser.add_argument("-t", "--tag", help="Global tag for launched instances.")
+    parser.add_argument(
+        "--enable-disk-autoscaling",
+        action="store_true",
+        default=True,
+        help="Enables Capella disk autoscaling",
+    )
+    parser.add_argument(
+        "--multi-az",
+        action="store_true",
+        default=False,
+        help="Deploy Capella cluster to multiple Availability Zones",
+    )
+    parser.add_argument("override", nargs="*", help="custom cluster and/or test settings")
 
     return parser.parse_args()
 

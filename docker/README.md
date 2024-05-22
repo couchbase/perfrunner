@@ -1,17 +1,19 @@
 # Generating Perfrunner Docker Images
 
 ## Deploying with docker-compose
+
 **_Note:_** this isn't recommended for production deployments. However, this is useful for development where you don't wish to install the client dependencies on your machine, or have an incompatible OS.
 
-Running perfrunner with docker-compose allows the perfrunner repo to be mounted as a volume, so live changes you make inside the repo, on your host machine, will be reflected in the container. 
+Running perfrunner with docker-compose allows the perfrunner repo to be mounted as a volume, so live changes you make inside the repo, on your host machine, will be reflected in the container.
 Anything outside the repo (for example, system packages), will not be mirrored between container and host. This gives you a self-contained development environment.
 
-#### Requirements ####
+#### Requirements
 
-* Recent version of [docker](https://docs.docker.com/install/)
-* Docker compose should be integrated, if not, check [compose migration](https://docs.docker.com/compose/migrate/)
+-   Recent version of [docker](https://docs.docker.com/install/)
+-   Docker compose should be integrated, if not, check [compose migration](https://docs.docker.com/compose/migrate/)
 
-#### Setup ####
+#### Setup
+
 First create a local testing network. This provides isolation and you only have to do it once:
 
     docker network create local-perf-testing
@@ -26,25 +28,53 @@ Simply disconnect with `exit` when done.
 
 **Other useful commands include:**
 
-* Exec back into the container:
+-   Exec back into the container:
 
-        docker exec -it perfrunner /bin/bash
+          docker exec -it perfrunner /bin/bash
 
-* Kill the perfrunner container:
+-   Kill the perfrunner container:
 
-        docker kill perfrunner
+          docker kill perfrunner
 
-* Restart the perfrunner container:
+-   Restart the perfrunner container:
 
-        docker start perfrunner
+          docker start perfrunner
 
-### Installing and Connecting to Couchbase Server
+## Installing and Connecting to Couchbase Server
 
-#### Installing Couchbase server using Docker
+### Installing Couchbase server using Docker
 
-Follow the instructions from the [documentations](https://docs.couchbase.com/server/current/install/getting-started-docker.html) on how to install a couchbase server locally using docker. Remember to add ` --network local-perf-testing` in your docker run command when starting the couchbase server. 
+Follow the instructions from the [documentations](https://docs.couchbase.com/server/current/install/getting-started-docker.html) on how to install a couchbase server locally using docker. Remember to add ` --network local-perf-testing` in your docker run command when starting the couchbase server.
 
-#### Preparing a local docker cluster spec file
+### Configuring Server Containers
+
+By installing and enabling the SSH server on the server nodes, you ensure that Perfrunner can securely interact with the Couchbase cluster, execute commands, and perform data operations seamlessly throughout the performance testing phases.
+
+Install SSH Server:
+
+```
+apt-get update
+apt-get install -y openssh-server
+```
+
+Once installed, start the SSH service using `service ssh start`. These commands ensure that the SSH server is installed and running within the container, allowing secure remote connections.
+
+#### Permitting Root Login
+
+Set Password:
+
+Use the `passwd` command to set a password for the SSH server. This command prompts you to enter and confirm the new password.
+
+Configure SSH:
+
+Use your preferred editor to open the SSH configuration file located at `/etc/ssh/sshd_config`. Within the SSH configuration file, locate the PermitRootLogin line and uncomment it if it exists or add it if it's not present. Set the value to yes to allow root login via SSH. Save and exit the editor.
+
+Restart SSH Service:
+
+Finally, restart the SSH service using `service ssh restart` to apply the changes made to the SSH server configuration.
+
+### Preparing a local docker cluster spec file
+
 To run a perfrunner test in a container, you can run commands as normal, eg:
 
     env/bin/perfrunner -c clusters/cluster_spec.spec -t tests/comp_bucket_20M.test
@@ -66,19 +96,21 @@ The client hosts should be `localhost` or `127.0.0.1`. The server IP can be obta
         docker inspect couchbase | grep IPAddress -
 
 ## Generating docker images for Kubernetes workers
-To generate docker images available at [docker hub](https://hub.docker.com/r/perflab/perfrunner),  run the following commands:
-* Make sure the image is built for `linux/amd64`. This is what we use for our client machines. You can skip this step if running on `linux/amd64` platform or building for local testing.
 
-        export DOCKER_DEFAULT_PLATFORM=linux/amd64
+To generate docker images available at [docker hub](https://hub.docker.com/r/perflab/perfrunner), run the following commands:
 
-* Optionaly also specify `PYTHON_VERSIONS` and `PYENV_VERSION` build arguments (with `--build-arg`) to specify which Python versions and Pyenv version to install in the image.
-* Build perfrunner image:
+-   Make sure the image is built for `linux/amd64`. This is what we use for our client machines. You can skip this step if running on `linux/amd64` platform or building for local testing.
 
-        docker build --target perfrunner docker/
+          export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
-* Tag the image appropriately
+-   Optionaly also specify `PYTHON_VERSIONS` and `PYENV_VERSION` build arguments (with `--build-arg`) to specify which Python versions and Pyenv version to install in the image.
+-   Build perfrunner image:
 
-        docker tag <generated-image-tag> perflab/perfrunner
+          docker build --target perfrunner docker/
+
+-   Tag the image appropriately
+
+          docker tag <generated-image-tag> perflab/perfrunner
 
     The generated image tag will be displaed at the end of the previous build step.
 

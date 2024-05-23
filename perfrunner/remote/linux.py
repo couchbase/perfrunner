@@ -139,54 +139,65 @@ class RemoteLinux(Remote):
 
         return bucket_indexes
 
-    def batch_create_index_collection(self, index_nodes, options, is_ssl, auth, is_cloud):
-        port = 8091
-        if is_ssl:
-            port = 18091
-        batch_options = \
-            "-auth='{}:{}' " \
-            "-server {index_node}:{port} " \
-            "-type batch_process " \
-            "-input /tmp/batch.txt".format(auth[0], auth[1], port=port, index_node=index_nodes[0])
+    def batch_create_index_collection(
+        self, index_nodes, options, is_ssl, auth, is_cloud, refresh_settings=True
+    ):
+        batch_options = " ".join(
+            filter(
+                None,
+                [
+                    f"-auth='{auth[0]}:{auth[1]}'",
+                    f"-server {index_nodes[0]}:{18091 if is_ssl else 8091}",
+                    "-type batch_process",
+                    "-input /tmp/batch.txt",
+                    "-refresh_settings true" if refresh_settings else None,
+                    "-use_tls" if is_ssl and not is_cloud else None,
+                    "-cacert ./root.pem" if is_ssl or is_cloud else None,
+                    "-use_tools=true" if is_cloud else None,
+                ],
+            )
+        )
+
         with open("/tmp/batch.txt", "w+") as bf:
             bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
-        if is_ssl and not is_cloud:
+
+        if is_ssl or is_cloud:
             put("root.pem", "/root/root.pem")
-            batch_options = batch_options + " -refresh_settings true -use_tls -cacert ./root.pem"
-            self.run_cbindex_command(batch_options)
-        elif is_cloud:
-            put("root.pem", "/root/root.pem")
-            batch_options = batch_options + (" -use_tools=true -refresh_settings true"
-                                             " -cacert ./root.pem")
+
+        if is_cloud:
             self.run_cbindex_command_cloud(batch_options)
         else:
-            batch_options = batch_options + " -refresh_settings true"
             self.run_cbindex_command(batch_options)
 
-    def batch_build_index_collection(self, index_nodes, options, is_ssl, auth, is_cloud):
-        port = 8091
-        if is_ssl:
-            port = 18091
-        batch_options = \
-            "-auth='{}:{}' " \
-            "-server {index_node}:{port} " \
-            "-type batch_build " \
-            "-input /tmp/batch.txt".format(auth[0], auth[1], port=port, index_node=index_nodes[0])
+    def batch_build_index_collection(self, index_nodes, options, is_ssl, auth, is_cloud,
+                                     refresh_settings=True):
+        batch_options = " ".join(
+            filter(
+                None,
+                [
+                    f"-auth='{auth[0]}:{auth[1]}'",
+                    f"-server {index_nodes[0]}:{18091 if is_ssl else 8091}",
+                    "-type batch_build",
+                    "-input /tmp/batch.txt",
+                    "-refresh_settings true" if refresh_settings else None,
+                    "-use_tls" if is_ssl and not is_cloud else None,
+                    "-cacert ./root.pem" if is_ssl or is_cloud else None,
+                    "-use_tools=true" if is_cloud else None,
+                ],
+            )
+        )
+
         with open("/tmp/batch.txt", "w+") as bf:
             bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
-        if is_ssl and not is_cloud:
+
+        if is_ssl or is_cloud:
             put("root.pem", "/root/root.pem")
-            batch_options = batch_options + " -refresh_settings true -use_tls -cacert ./root.pem"
-            self.run_cbindex_command(batch_options)
-        elif is_cloud:
-            put("root.pem", "/root/root.pem")
-            batch_options = batch_options + (" -use_tools=true -refresh_settings true"
-                                             " -cacert ./root.pem")
+
+        if is_cloud:
             self.run_cbindex_command_cloud(batch_options)
         else:
-            batch_options = batch_options + " -refresh_settings true"
             self.run_cbindex_command(batch_options)
 
     @master_server
@@ -200,24 +211,32 @@ class RemoteLinux(Remote):
         self.build_index(index_nodes[0], bucket_indexes, is_ssl, auth)
 
     @master_server
-    def create_secondary_index_collections(self, index_nodes, options, is_ssl, auth):
+    def create_secondary_index_collections(self, index_nodes, options, is_ssl, auth,
+                                           refresh_settings):
         logger.info('creating secondary indexes')
-        self.batch_create_index_collection(index_nodes, options, is_ssl, auth, is_cloud=False)
+        self.batch_create_index_collection(index_nodes, options, is_ssl, auth, is_cloud=False,
+                                           refresh_settings=refresh_settings)
 
     @master_client
-    def create_secondary_index_collections_cloud(self, index_nodes, options, is_ssl, auth):
+    def create_secondary_index_collections_cloud(self, index_nodes, options, is_ssl, auth,
+                                                 refresh_settings):
         logger.info('creating secondary indexes')
-        self.batch_create_index_collection(index_nodes, options, is_ssl, auth, is_cloud=True)
+        self.batch_create_index_collection(index_nodes, options, is_ssl, auth, is_cloud=True,
+                                           refresh_settings=refresh_settings)
 
     @master_server
-    def build_secondary_index_collections(self, index_nodes, options, is_ssl, auth):
+    def build_secondary_index_collections(self, index_nodes, options, is_ssl, auth,
+                                          refresh_settings):
         logger.info('building secondary indexes')
-        self.batch_build_index_collection(index_nodes, options, is_ssl, auth, is_cloud=False)
+        self.batch_build_index_collection(index_nodes, options, is_ssl, auth, is_cloud=False,
+                                          refresh_settings=refresh_settings)
 
     @master_client
-    def build_secondary_index_collections_cloud(self, index_nodes, options, is_ssl, auth):
+    def build_secondary_index_collections_cloud(self, index_nodes, options, is_ssl, auth,
+                                                refresh_settings):
         logger.info('building secondary indexes')
-        self.batch_build_index_collection(index_nodes, options, is_ssl, auth, is_cloud=True)
+        self.batch_build_index_collection(index_nodes, options, is_ssl, auth, is_cloud=True,
+                                          refresh_settings=refresh_settings)
 
     @all_servers
     def reset_swap(self):

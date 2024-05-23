@@ -96,6 +96,9 @@ class SecondaryIndexCloudTest(PerfTest):
             self.remote.client_drop_caches()
 
         self.build = self.rest.get_version(self.master_node)
+        self.refresh_settings = False
+        if create_build_tuple(self.build) >= (7, 6, 0, 1874):
+            self.refresh_settings = True
 
         self.download_certificate()
         self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
@@ -226,13 +229,15 @@ class SecondaryIndexCloudTest(PerfTest):
         if self.test_config.collection.collection_map:
             create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
             self.remote.create_secondary_index_collections(
-                self.index_nodes, create_options, self.is_ssl)
+                self.index_nodes, create_options, self.is_ssl,
+                refresh_settings=self.refresh_settings)
 
             build_options = self.batch_build_index_collection_options(self.indexes)
 
             build_start = time.time()
             self.remote.build_secondary_index_collections(
-                self.index_nodes, build_options, self.is_ssl)
+                self.index_nodes, build_options, self.is_ssl,
+                refresh_settings=self.refresh_settings)
             self.monitor.wait_for_secindex_init_build_collections(
                 self.index_nodes[0],
                 self.indexes)

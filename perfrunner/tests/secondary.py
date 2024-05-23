@@ -108,6 +108,9 @@ class SecondaryIndexTest(PerfTest):
             self.admin_auth = 'Administrator', 'password'
         self.shard_affinity = self.test_config.gsi_settings.settings.get(
                               "indexer.settings.enable_shard_affinity", False)
+        self.refresh_settings = False
+        if create_build_tuple(self.build) >= (7, 6, 0, 1874):
+            self.refresh_settings = True
 
     def admin_creds(self, host: str):
         admin_credentials = self.cluster_spec.capella_admin_credentials
@@ -225,20 +228,24 @@ class SecondaryIndexTest(PerfTest):
             create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
             if not self.is_cloud:
                 self.remote.create_secondary_index_collections(
-                    self.index_nodes, create_options, self.is_ssl, self.admin_auth)
+                    self.index_nodes, create_options, self.is_ssl, self.admin_auth,
+                    self.refresh_settings)
             else:
                 self.remote.create_secondary_index_collections_cloud(
-                    self.index_nodes, create_options, self.is_ssl, self.admin_auth)
+                    self.index_nodes, create_options, self.is_ssl, self.admin_auth,
+                    self.refresh_settings)
 
             build_options = self.batch_build_index_collection_options(self.indexes)
 
             build_start = time.time()
             if not self.is_cloud:
                 self.remote.build_secondary_index_collections(
-                    self.index_nodes, build_options, self.is_ssl, self.admin_auth)
+                    self.index_nodes, build_options, self.is_ssl, self.admin_auth,
+                    self.refresh_settings)
             else:
                 self.remote.build_secondary_index_collections_cloud(
-                    self.index_nodes, build_options, self.is_ssl, self.admin_auth)
+                    self.index_nodes, build_options, self.is_ssl, self.admin_auth,
+                    self.refresh_settings)
             self.monitor.wait_for_secindex_init_build_collections(
                 self.index_nodes[0],
                 self.indexes)

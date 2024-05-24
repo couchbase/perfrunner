@@ -2173,15 +2173,8 @@ def get_args():
         "--test-config", required=False, help="the path to the test configuration file"
     )
     parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
-    parser.add_argument(
-        "-r", "--aws-region", "--azure-region", dest="region", help="the cloud region (AWS, Azure)"
-    )
-    parser.add_argument(
-        "-z",
-        "--gcp-zone",
-        dest="zone",
-        help="the cloud zone (AWS, GCP)",
-    )
+    parser.add_argument("-r", "--region", help="the cloud region (AWS, Azure)")
+    parser.add_argument("-z", "--zone", help="the cloud zone (AWS, GCP)")
     parser.add_argument("--cluster-image", help="Image/AMI name to use for cluster nodes")
     parser.add_argument("--client-image", help="Image/AMI name to use for client nodes")
     parser.add_argument("--utility-image", help="Image/AMI name to use for utility nodes")

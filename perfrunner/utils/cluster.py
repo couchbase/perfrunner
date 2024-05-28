@@ -3,7 +3,11 @@ from multiprocessing import set_start_method
 from time import time
 
 from logger import logger
-from perfrunner.helpers.cluster import DefaultClusterManager, KubernetesClusterManager
+from perfrunner.helpers.cluster import (
+    CapellaClusterManager,
+    DefaultClusterManager,
+    KubernetesClusterManager,
+)
 from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
@@ -63,9 +67,8 @@ def main():
             rest.allow_my_ip_all_clusters()
             rest.create_db_user_all_clusters(*cluster_spec.rest_credentials)
 
-    cm = DefaultClusterManager(cluster_spec, test_config, args.verbose)
+        cm = CapellaClusterManager(cluster_spec, test_config, args.verbose)
 
-    if cm.cluster_spec.capella_infrastructure:
         if cm.cluster_spec.serverless_infrastructure:
             cm.allow_ips_for_serverless_dbs()
             cm.provision_serverless_db_keys()
@@ -91,50 +94,51 @@ def main():
             cm.create_collections()
 
         return
-    else:
+
+    cm = DefaultClusterManager(cluster_spec, test_config, args.verbose)
+    if cm.cluster_spec.infrastructure_kafka_clusters:
+        cm.configure_kafka()
+        cm.start_kafka()
+
+    # Individual nodes
+    if cm.cluster_spec.goldfish_infrastructure:
         if cm.cluster_spec.infrastructure_kafka_clusters:
-            cm.configure_kafka()
-            cm.start_kafka()
+            cm.set_kafka_links_settings()
+        cm.set_goldfish_s3_bucket()
+        cm.add_aws_credential()
+        cm.set_goldfish_storage_partitions()
 
-        # Individual nodes
-        if cm.cluster_spec.goldfish_infrastructure:
-            if cm.cluster_spec.infrastructure_kafka_clusters:
-                cm.set_kafka_links_settings()
-            cm.set_goldfish_s3_bucket()
-            cm.add_aws_credential()
-            cm.set_goldfish_storage_partitions()
+    cm.disable_wan()
+    cm.clear_login_history()
+    cm.tune_memory_settings()
+    cm.throttle_cpu()
+    cm.enable_ipv6()
+    cm.tune_logging()
+    cm.restart_with_alternative_num_vbuckets()
+    cm.flush_iptables()
+    cm.clear_system_limit_config()
 
-        cm.disable_wan()
-        cm.clear_login_history()
-        cm.tune_memory_settings()
-        cm.throttle_cpu()
-        cm.enable_ipv6()
-        cm.tune_logging()
-        cm.restart_with_alternative_num_vbuckets()
-        cm.flush_iptables()
-        cm.clear_system_limit_config()
+    cm.configure_internal_settings()
+    cm.set_data_path()
+    cm.set_index_path()
+    cm.set_analytics_path()
+    cm.set_mem_quotas()
+    cm.set_services()
+    cm.rename()
+    cm.set_auth()
+    cm.configure_xdcr_settings()
 
-        cm.configure_internal_settings()
-        cm.set_data_path()
-        cm.set_index_path()
-        cm.set_analytics_path()
-        cm.set_mem_quotas()
-        cm.set_services()
-        cm.rename()
-        cm.set_auth()
-        cm.configure_xdcr_settings()
-
-        # Cluster
-        cm.add_server_groups()
-        cm.add_nodes()
-        cm.change_group_membership()
-        cm.rebalance()
-        # Configure NS Server and enable auto-failover after the new configuration are applied
-        cm.configure_ns_server()
-        cm.configure_auto_compaction()
-        cm.enable_audit()
-        cm.set_magma_min_quota()
-        cm.serverless_throttle()
+    # Cluster
+    cm.add_server_groups()
+    cm.add_nodes()
+    cm.change_group_membership()
+    cm.rebalance()
+    # Configure NS Server and enable auto-failover after the new configuration are applied
+    cm.configure_ns_server()
+    cm.configure_auto_compaction()
+    cm.enable_audit()
+    cm.set_magma_min_quota()
+    cm.serverless_throttle()
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()

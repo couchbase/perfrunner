@@ -425,22 +425,23 @@ class DefaultRestHelper(RestBase):
         logger.info('Deleting new bucket: {}'.format(name))
         self.delete(url=self._get_api_url(host=host, path='pools/default/buckets/{}'.format(name)))
 
-    def create_bucket(self,
-                      host: str,
-                      name: str,
-                      password: str,
-                      ram_quota: int,
-                      replica_number: int,
-                      replica_index: int,
-                      eviction_policy: str,
-                      bucket_type: str,
-                      magma_seq_tree_data_block_size: int = 0,
-                      backend_storage: Optional[str] = None,
-                      conflict_resolution_type: Optional[str] = None,
-                      compression_mode: Optional[str] = None,
-                      history_seconds: int = 0,
-                      history_bytes: int = 0,
-                      max_ttl: int = 0) -> requests.Response:
+    def create_bucket(
+        self,
+        host: str,
+        name: str,
+        ram_quota: int,
+        replica_number: int,
+        replica_index: int,
+        eviction_policy: str,
+        bucket_type: str,
+        magma_seq_tree_data_block_size: int = 0,
+        backend_storage: Optional[str] = None,
+        conflict_resolution_type: Optional[str] = None,
+        compression_mode: Optional[str] = None,
+        history_seconds: int = 0,
+        history_bytes: int = 0,
+        max_ttl: int = 0,
+    ) -> requests.Response:
         logger.info('Adding new bucket: {}'.format(name))
 
         data = {

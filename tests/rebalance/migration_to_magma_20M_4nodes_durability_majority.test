@@ -38,6 +38,3 @@ nodes_after = 4
 start_after = 300
 stop_after = 300
 swap = 1
-
-[clients]
-python_client = 4.1.9

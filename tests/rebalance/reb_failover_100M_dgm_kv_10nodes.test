@@ -41,6 +41,3 @@ working_set_access = 98
 failed_nodes = 1
 start_after = 300
 stop_after = 300
-
-[clients]
-python_client = 3.2.1

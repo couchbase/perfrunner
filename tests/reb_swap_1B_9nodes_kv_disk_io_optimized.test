@@ -49,7 +49,3 @@ stop_after = 1800
 [bucket_extras]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

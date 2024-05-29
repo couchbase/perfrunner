@@ -47,7 +47,3 @@ nodes_after = 3
 swap = 1
 start_after = 1200
 stop_after = 1200
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

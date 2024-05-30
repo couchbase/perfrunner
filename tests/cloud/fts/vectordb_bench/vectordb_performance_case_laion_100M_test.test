@@ -1,0 +1,26 @@
+[test_case]
+test = perfrunner.tests.vectordb.VectorDBBenchTest
+
+[showfast]
+title = 7 nodes, 1 bucket, FTS
+component = jtscloud
+category = vectordb
+sub_category = {provider}
+
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 7
+num_buckets = 1
+fts_index_mem_quota = 51200
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[vectordb]
+cases = Performance768D100M
+ssl_mode = capella
+dataset_path = /stage
+
+
+[profiling]
+services = fts

@@ -876,19 +876,15 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                 "name": name,
                 "description": "",
                 "projectId": self.project_id,
-                "provider": {
-                    'aws': 'hostedAWS',
-                    'gcp': 'hostedGCP',
-                    'azure': 'hostedAzure'
-                }[self.infra_spec.capella_backend.lower()],
+                "provider": {"aws": "hostedAWS", "gcp": "hostedGCP", "azure": "hostedAzure"}[
+                    self.csp
+                ],
                 "region": self.region,
                 "singleAZ": not self.options.multi_az,
                 "server": self.options.capella_cb_version,
-                'configurationType': "multiNode"
-                                     if int(spec[0]['count']) != 1
-                                     else "singleNode",
+                "configurationType": "multiNode" if int(spec[0]["count"]) != 1 else "singleNode",
                 "specs": spec,
-                "package": "enterprise"
+                "package": "enterprise",
             }
 
             logger.info(pretty_dict(config))
@@ -952,8 +948,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             logger.info('Capella cluster successfully queued for deletion.')
 
     def get_available_cidr(self):
-        resp = self.provisioned_api.get_deployment_options(self.tenant_id,
-                                                           self.infra_spec.capella_backend.lower())
+        resp = self.provisioned_api.get_deployment_options(self.tenant_id, self.csp)
         return resp.json().get('suggestedCidr')
 
     def get_deployed_cidr(self, cluster_id):
@@ -1014,9 +1009,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
     def peer_vpc(self, network_info, cluster_id):
         logger.info('Setting up VPC peering...')
-        if self.infra_spec.capella_backend == 'aws':
+        if self.csp == "aws":
             peering_connection = self._peer_vpc_aws(network_info, cluster_id)
-        elif self.infra_spec.capella_backend == 'gcp':
+        elif self.csp == "gcp":
             peering_connection, dns_managed_zone, client_vpc = self._peer_vpc_gcp(network_info,
                                                                                   cluster_id)
             self.infra_spec.config.set('infrastructure', 'dns_managed_zone', dns_managed_zone)
@@ -1152,9 +1147,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
     def destroy_peering_connection(self):
         logger.info("Destroying peering connection...")
-        if self.infra_spec.capella_backend == 'aws':
+        if self.csp == "aws":
             self._destroy_peering_connection_aws()
-        elif self.infra_spec.capella_backend == 'gcp':
+        elif self.csp == "gcp":
             self._destroy_peering_connection_gcp()
 
     def _destroy_peering_connection_aws(self):
@@ -1637,7 +1632,7 @@ class AppServicesDeployer(CloudVMDeployer):
             logger.info("Whitelisting IPs")
             client_ips = self.infra_spec.clients
             logger.info("The client list is: {}".format(client_ips))
-            if self.infra_spec.capella_backend == 'aws':
+            if self.csp == "aws":
                 client_ips = [
                     dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
                 ]
@@ -1956,11 +1951,11 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
         if not self.options.capella_only:
             # Configure terraform
             if self.populate_tfvars():
-                self.terraform_init(self.infra_spec.capella_backend)
+                self.terraform_init(self.csp)
 
                 # Deploy non-capella resources
-                self.terraform_apply(self.infra_spec.capella_backend)
-                non_capella_output = self.terraform_output(self.infra_spec.capella_backend)
+                self.terraform_apply(self.csp)
+                non_capella_output = self.terraform_output(self.csp)
                 CloudVMDeployer.update_spec(self, non_capella_output)
 
         # Deploy capella cluster(s)
@@ -2097,7 +2092,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
     def destroy(self):
         if not self.options.capella_only:
             # Destroy non-capella resources
-            self.terraform_destroy(self.infra_spec.capella_backend)
+            self.terraform_destroy(self.csp)
 
         # Destroy Goldfish instance(s)
         if not self.options.keep_cluster:

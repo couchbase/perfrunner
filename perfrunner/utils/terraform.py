@@ -130,10 +130,9 @@ class CloudVMDeployer:
         }
     }
 
-    def __init__(self, options: Namespace):
+    def __init__(self, infra_spec: ClusterSpec, options: Namespace):
+        self.infra_spec = infra_spec
         self.options = options
-        self.infra_spec = ClusterSpec()
-        self.infra_spec.parse(self.options.cluster, override=options.override)
         self.os_arch = self.infra_spec.infrastructure_settings.get("os_arch", "x86_64")
 
         self.csp = (
@@ -266,7 +265,7 @@ class CloudVMDeployer:
                         # GCP
                         parameters['local_nvmes'] = int(parameters.get('local_nvmes', 0))
 
-                del parameters['instance_capacity']
+                parameters.pop("instance_capacity", None)
 
                 tfvar_nodes[role][str(i := i+1)] = parameters
 
@@ -651,8 +650,8 @@ class ControlPlaneManager:
 
 
 class CapellaProvisionedDeployer(CloudVMDeployer):
-    def __init__(self, options: Namespace):
-        super().__init__(options)
+    def __init__(self, infra_spec: ClusterSpec, options: Namespace):
+        super().__init__(infra_spec, options)
 
         self.test_config = None
         if options.test_config:
@@ -682,7 +681,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
         self.tenant_id = self.infra_spec.controlplane_settings["org"]
         self.project_id = self.infra_spec.controlplane_settings["project"]
-        self.cluster_ids = self.infra_spec.controlplane_settings.get("cluster_ids", "").split()
+        self.cluster_ids = self.infra_spec.capella_cluster_ids
 
         self.capella_timeout = max(0, self.options.capella_timeout)
 
@@ -1185,8 +1184,8 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 class CapellaServerlessDeployer(CapellaProvisionedDeployer):
     NEBULA_OVERRIDE_ARGS = ['override_count', 'min_count', 'max_count', 'instance_type']
 
-    def __init__(self, options: Namespace):
-        CloudVMDeployer.__init__(self, options)
+    def __init__(self, infra_spec: ClusterSpec, options: Namespace):
+        CloudVMDeployer.__init__(self, infra_spec, options)
         if not options.test_config:
             logger.error('Test config required if deploying serverless infrastructure.')
             exit(1)
@@ -1221,7 +1220,7 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
         self.dp_id = self.infra_spec.controlplane_settings["dataplane_id"]
 
         self.project_id = self.infra_spec.controlplane_settings.get("project")
-        self.cluster_id = self.infra_spec.controlplane_settings.get("cluster_ids")
+        self.cluster_id = self.infra_spec.capella_cluster_ids[0]
 
     def deploy(self):
         if not self.options.capella_only:
@@ -1557,8 +1556,8 @@ class EKSDeployer(CloudVMDeployer):
 
 
 class AppServicesDeployer(CloudVMDeployer):
-    def __init__(self, options: Namespace):
-        super().__init__(options)
+    def __init__(self, infra_spec: ClusterSpec, options: Namespace):
+        super().__init__(infra_spec, options)
 
         self.test_config = None
         if options.test_config:
@@ -1568,7 +1567,7 @@ class AppServicesDeployer(CloudVMDeployer):
 
         self.tenant_id = self.infra_spec.controlplane_settings["org"]
         self.project_id = self.infra_spec.controlplane_settings["project"]
-        self.cluster_ids = self.infra_spec.controlplane_settings.get("cluster_ids", "").split()
+        self.cluster_ids = self.infra_spec.capella_cluster_ids
         self.cluster_id = self.cluster_ids[0]
 
         logger.info(f'The tenant id is: {self.tenant_id}')
@@ -1933,8 +1932,8 @@ class AppServicesDeployer(CloudVMDeployer):
 
 
 class CapellaColumnarDeployer(CloudVMDeployer):
-    def __init__(self, options: Namespace):
-        super().__init__(options)
+    def __init__(self, infra_spec: ClusterSpec, options: Namespace):
+        super().__init__(infra_spec, options)
 
         test_config = TestConfig()
         if options.test_config:
@@ -2186,7 +2185,11 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 "clusters", cluster_label, "\n" + "\n".join(hostnames_with_services)
             )
 
-        self.infra_spec.config.set("controlplane", "cluster_ids", "\n".join(cluster_ids))
+        existing_cluster_ids = self.infra_spec.controlplane_settings.get("cluster_ids", "")
+        self.infra_spec.config["controlplane"]["cluster_ids"] = (
+            existing_cluster_ids + "\n" + "\n".join(cluster_ids)
+        )
+
         self.infra_spec.update_spec_file()
 
 
@@ -2301,16 +2304,23 @@ def destroy():
     args = get_args()
     infra_spec = ClusterSpec()
     infra_spec.parse(fname=args.cluster, override=args.override)
+
     if infra_spec.cloud_provider != 'capella':
-        deployer = CloudVMDeployer(args)
+        deployer = CloudVMDeployer(infra_spec, args)
     elif infra_spec.serverless_infrastructure:
-        deployer = CapellaServerlessDeployer(args)
+        deployer = CapellaServerlessDeployer(infra_spec, args)
     elif infra_spec.app_services == 'true':
-        deployer = AppServicesDeployer(args)
+        deployer = AppServicesDeployer(infra_spec, args)
     elif infra_spec.goldfish_infrastructure:
-        deployer = CapellaColumnarDeployer(args)
+        if prov_cluster := infra_spec.prov_cluster_in_columnar_test:
+            infra_spec.set_inactive_clusters_by_name([prov_cluster])
+            CapellaColumnarDeployer(infra_spec, args).destroy()
+            infra_spec.set_active_clusters_by_name([prov_cluster])
+            deployer = CapellaProvisionedDeployer(infra_spec, args)
+        else:
+            deployer = CapellaColumnarDeployer(infra_spec, args)
     else:
-        deployer = CapellaProvisionedDeployer(args)
+        deployer = CapellaProvisionedDeployer(infra_spec, args)
 
     deployer.destroy()
 
@@ -2334,7 +2344,7 @@ def main():
     infra_spec.parse(fname=args.cluster, override=args.override)
 
     if infra_spec.cloud_provider != 'capella':
-        deployer = CloudVMDeployer(args)
+        deployer = CloudVMDeployer(infra_spec, args)
     else:
         cp_prepper = ControlPlaneManager(
             infra_spec,
@@ -2349,12 +2359,17 @@ def main():
             cp_prepper.save_project_id()
 
         if infra_spec.serverless_infrastructure:
-            deployer = CapellaServerlessDeployer(args)
+            deployer = CapellaServerlessDeployer(infra_spec, args)
         elif infra_spec.app_services == "true":
-            deployer = AppServicesDeployer(args)
+            deployer = AppServicesDeployer(infra_spec, args)
         elif infra_spec.goldfish_infrastructure:
-            deployer = CapellaColumnarDeployer(args)
+            if prov_cluster := infra_spec.prov_cluster_in_columnar_test:
+                infra_spec.set_active_clusters_by_name([prov_cluster])
+                CapellaProvisionedDeployer(infra_spec, args).deploy()
+                infra_spec.set_inactive_clusters_by_name([prov_cluster])
+                args.capella_only = True
+            deployer = CapellaColumnarDeployer(infra_spec, args)
         else:
-            deployer = CapellaProvisionedDeployer(args)
+            deployer = CapellaProvisionedDeployer(infra_spec, args)
 
     deployer.deploy()

@@ -87,7 +87,7 @@ class ClusterSpec(Config):
         self.inactive_cluster_idxs = set()
 
     @property
-    def dynamic_infrastructure(self):
+    def dynamic_infrastructure(self) -> bool:
         return self.cloud_infrastructure and self.kubernetes_infrastructure
 
     @property
@@ -107,27 +107,34 @@ class ClusterSpec(Config):
         return self.config.get('infrastructure', 'app_services', fallback='')
 
     @property
-    def kubernetes_infrastructure(self):
+    def kubernetes_infrastructure(self) -> bool:
         if self.cloud_infrastructure and not self.capella_infrastructure:
             return self.infrastructure_settings.get("type", "kubernetes") == "kubernetes"
         return False
 
     @property
-    def capella_infrastructure(self):
+    def capella_infrastructure(self) -> bool:
         if self.cloud_infrastructure:
             return self.infrastructure_settings.get("provider", "aws") == "capella"
         return False
 
     @property
-    def serverless_infrastructure(self):
+    def serverless_infrastructure(self) -> bool:
         return self.capella_infrastructure and \
             self.infrastructure_settings.get('capella_arch', 'dedicated') == 'serverless'
 
     @property
-    def goldfish_infrastructure(self):
+    def goldfish_infrastructure(self) -> bool:
         if self.cloud_infrastructure:
             return self.infrastructure_settings.get("service", "") == "goldfish"
         return False
+
+    @property
+    def prov_cluster_in_columnar_test(self) -> Optional[str]:
+        """For Columnar tests that use a provisioned cluster, return provisioned cluster name."""
+        if self.goldfish_infrastructure:
+            return self.infrastructure_settings.get("provisioned_cluster")
+        return None
 
     @property
     def generated_cloud_config_path(self):
@@ -618,6 +625,14 @@ class ClusterSpec(Config):
         return self._get_options_as_dict('parameters')
 
     @property
+    def capella_cluster_ids(self) -> list[str]:
+        return [
+            cid
+            for i, cid in enumerate(self.controlplane_settings.get("cluster_ids", "").split())
+            if i not in self.inactive_cluster_idxs
+        ]
+
+    @property
     def server_group_map(self) -> dict:
         server_grp_map = {}
         for servers in self.infrastructure_clusters.values():
@@ -640,18 +655,16 @@ class ClusterSpec(Config):
                 '--output text'
             )
 
-            for cluster_id in self.controlplane_settings.get("cluster_ids").split():
+            for cluster_id in self.capella_cluster_ids:
                 pwd = run_aws_cli_command(command_template, cluster_id)
                 if pwd is not None:
                     pwds.append(pwd)
 
-            creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
+            creds = "\n".join(f"{user}:{pwd}" for pwd in pwds)
             if "credentials" not in self.config:
                 self.config.add_section("credentials")
-            if self.goldfish_infrastructure:
-                self.config.set('credentials', 'rest', creds)
-            else:
-                self.config.set('credentials', 'admin', creds)
+            existing_creds = self.config["credentials"].get("admin", "")
+            self.config["credentials"]["admin"] = f"{existing_creds}\n{creds}".replace("%", "%%")
             self.update_spec_file()
 
     def get_aws_iid(self, hostname: str, region: str) -> str:
@@ -2599,6 +2612,7 @@ class AnalyticsSettings:
     AWS_CREDENTIAL_PATH = None
     STORAGE_FORMAT = ""
     USE_CBO = "false"
+    INGEST_DURING_LOAD = "false"
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.pop('num_io_devices',
@@ -2625,6 +2639,9 @@ class AnalyticsSettings:
         self.goldfish_storage_partitions = int(options.pop('goldfish_storage_partitions', 0))
         self.use_cbo = maybe_atoi(options.pop("use_cbo", self.USE_CBO))
         self.cbo_sample_size = AnalyticsCBOSampleSize(options.pop("cbo_sample_size", "").lower())
+        self.ingest_during_load = maybe_atoi(
+            options.pop("ingest_during_load", self.INGEST_DURING_LOAD)
+        )
 
         # Remaining settings are for analytics config REST API
         self.config_settings = options
@@ -2882,6 +2899,8 @@ class TPCDSLoaderSettings:
 class CH2ConnectionSettings:
     userid: str
     password: str
+    userid_analytics: Optional[str] = None
+    password_analytics: Optional[str] = None
     query_url: Optional[str] = None
     multi_query_url: Optional[str] = None
     analytics_url: Optional[str] = None
@@ -2895,6 +2914,12 @@ class CH2ConnectionSettings:
 
         if self.use_tls:
             flags += ["--tls"]
+
+        if self.userid_analytics:
+            flags += [f"--userid-analytics {self.userid_analytics}"]
+
+        if self.password_analytics:
+            flags += [f"--password-analytics '{self.password_analytics}'"]
 
         return flags
 
@@ -2939,8 +2964,8 @@ class CH2:
     TCLIENTS = 0
     ITERATIONS = 1
     WARMUP_ITERATIONS = 0
-    WARMUP_DURATION = 0
-    DURATION = 0
+    WARMUP_DURATION_SECS = 0
+    DURATION_SECS = 0
     WORKLOAD = "ch2_mixed"
     ANALYTICS_STATEMENTS = ""
     USE_BACKUP = "true"
@@ -2949,6 +2974,7 @@ class CH2:
     LOAD_MODE = "datasvc-bulkload"
     CREATE_GSI_INDEX = "true"
     DEBUG = "false"
+    TXTIMEOUT_SECS = 3
     USE_UNOPTIMIZED_QUERIES = "false"
     IGNORE_SKIP_INDEX_HINTS = "false"
 
@@ -2963,12 +2989,13 @@ class CH2:
         self.load_mode = options.get("load_mode", self.LOAD_MODE)
         self.iterations = int(options.get("iterations", self.ITERATIONS))
         self.warmup_iterations = int(options.get("warmup_iterations", self.WARMUP_ITERATIONS))
-        self.warmup_duration = int(options.get("warmup_duration", self.WARMUP_DURATION))
-        self.duration = int(options.get("duration", self.DURATION))
+        self.warmup_duration = int(options.get("warmup_duration", self.WARMUP_DURATION_SECS))
+        self.duration = int(options.get("duration", self.DURATION_SECS))
         self.workload = options.get("workload", self.WORKLOAD)
         self.use_backup = maybe_atoi(options.get("use_backup", self.USE_BACKUP))
         self.create_gsi_index = maybe_atoi(options.get("create_gsi_index", self.CREATE_GSI_INDEX))
         self.debug = maybe_atoi(options.get("debug", self.DEBUG))
+        self.txtimeout = float(options.get("txtimeout", self.TXTIMEOUT_SECS))
         self.unoptimized_queries = maybe_atoi(
             options.get("unoptimized_queries", self.USE_UNOPTIMIZED_QUERIES)
         )
@@ -3002,6 +3029,7 @@ class CH2:
             f"--warmup-query-iterations {self.warmup_iterations}"
             if self.warmup_iterations
             else None,
+            f"--txtimeout {self.txtimeout}",
             "--no-load",
             "--unoptimized_queries" if self.unoptimized_queries else None,
             "--ignore-skip-index-hints" if self.ignore_skip_index_hints else None,

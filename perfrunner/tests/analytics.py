@@ -436,9 +436,7 @@ class BigFunSyncTest(BigFunTest):
         self.wait_for_persistence()
 
         if self.analytics_link != "Local":
-            rest_username, rest_password = self.cluster_spec.rest_credentials
-            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
-                                     rest_username, rest_password)
+            self.rest.create_remote_link(self.analytics_node, self.data_node, self.analytics_link)
 
         sync_time = self.sync()
 
@@ -734,10 +732,7 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromS3Test):
         copy_from_time = self.copy_data_from_s3()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
 
-        rest_username, rest_password = self.cluster_spec.rest_credentials
-        local.create_remote_link(
-            self.analytics_link, self.data_node, self.analytics_node, rest_username, rest_password
-        )
+        self.rest.create_remote_link(self.analytics_node, self.data_node, self.analytics_link)
         self.connect_link()
 
         self.access()
@@ -855,9 +850,7 @@ class BigFunConnectTest(BigFunTest):
         self.wait_for_persistence()
 
         if self.analytics_link != "Local":
-            rest_username, rest_password = self.cluster_spec.rest_credentials
-            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
-                                     rest_username, rest_password)
+            self.rest.create_remote_link(self.analytics_node, self.data_node, self.analytics_link)
 
         self.sync()
 
@@ -1154,24 +1147,25 @@ class CH2Test(AnalyticsTest):
         return time.time() - t0
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
-        if self.test_config.cluster.enable_n2n_encryption:
+        query_port = QUERY_PORT
+        cbas_port = ANALYTICS_PORT
+
+        if use_tls := self.test_config.cluster.enable_n2n_encryption:
             query_port = QUERY_PORT_SSL
             cbas_port = ANALYTICS_PORT_SSL
-        else:
-            query_port = QUERY_PORT
-            cbas_port = ANALYTICS_PORT
 
-        query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
+        query_urls = [f"{node}:{query_port}" for node in self.query_nodes]
         userid, password = self.cluster_spec.rest_credentials
 
         return CH2ConnectionSettings(
             userid=userid,
             password=password,
-            analytics_url='{}:{}'.format(self.analytics_nodes[0], cbas_port),
-            query_url=query_urls[0],
+            analytics_url=f"{self.analytics_node}:{cbas_port}",
+            query_url=query_urls[0] if query_urls else None,
             multi_query_url=",".join(query_urls),
             data_url=self.data_nodes[0],
-            multi_data_url=",".join(self.data_nodes)
+            multi_data_url=",".join(self.data_nodes),
+            use_tls=use_tls,
         )
 
     def _distributed_ch2_load(self):
@@ -1251,7 +1245,7 @@ class CH2Test(AnalyticsTest):
 
     def init_ch2_repo(self):
         if self.worker_manager.is_remote:
-            self.remote.clone_git_repo(
+            self.remote.init_ch2(
                 repo=self.test_config.ch2_settings.repo,
                 branch=self.test_config.ch2_settings.branch,
                 worker_home=self.worker_manager.WORKER_HOME,
@@ -1315,15 +1309,15 @@ class CH2RemoteLinkTest(CH2Test):
     def report_sync_kpi(self, sync_time: int):
         logger.info(f"Sync time (s): {sync_time}")
 
-        if not self.test_config.stats_settings.enabled:
-            self.reporter.post(*self.metrics.avg_ingestion_rate(self.num_items, sync_time))
+        if self.test_config.stats_settings.enabled:
+            v, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
+            metric_info["category"] = "sync"
+            metric_info["title"] = "Avg. ingestion rate (items/sec), " + metric_info["title"]
+            self.reporter.post(v, snapshots, metric_info)
 
     @with_stats
     def sync(self) -> float:
-        rest_username, rest_password = self.cluster_spec.rest_credentials
-        local.create_remote_link(
-            self.analytics_link, self.data_node, self.analytics_node, rest_username, rest_password
-        )
+        self.rest.create_remote_link(self.analytics_node, self.data_node, self.analytics_link)
         sync_time = super().sync()
         self.report_sync_kpi(sync_time)
 
@@ -1465,6 +1459,102 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
     def run(self):
         self.setup()
         self.benchmark()
+
+
+class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
+    COLLECTORS = {
+        "iostat": False,
+        "memory": False,
+        "n1ql_latency": False,
+        "n1ql_stats": True,
+        "secondary_stats": False,
+        "ns_server_system": True,
+        "analytics": True,
+        "active_tasks": False,
+        "ns_server": False,
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        (self.data_cluster_user, self.data_cluster_pwd), (self.columnar_user, self.columnar_pwd) = (
+            self.cluster_spec.capella_admin_credentials
+        )
+        self.reporter.build += f" : {self.rest.get_version(self.analytics_node)}"
+
+    @with_stats
+    def restore_data(self):
+        super().restore_data()
+
+    @with_stats
+    def sync(self) -> float:
+        return CH2Test.sync(self)
+
+    def wait_for_persistence(self):
+        """Wait for data persistence on the KV cluster."""
+        for bucket in self.test_config.buckets:
+            self.monitor.monitor_disk_queues(self.data_node, bucket)
+            self.monitor.monitor_dcp_queues(self.data_node, bucket)
+            self.monitor.monitor_replica_count(self.data_node, bucket)
+
+    def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
+        query_port = QUERY_PORT_SSL
+        query_urls = [f"{node}:{query_port}" for node in self.query_nodes]
+        return CH2ConnectionSettings(
+            userid=self.data_cluster_user,
+            password=self.data_cluster_pwd,
+            userid_analytics=self.columnar_user,
+            password_analytics=self.columnar_pwd,
+            analytics_url=f"{self.analytics_node}:{ANALYTICS_PORT_SSL}",
+            query_url=query_urls[0] if query_urls else None,
+            multi_query_url=",".join(query_urls),
+            data_url=self.data_nodes[0],
+            multi_data_url=",".join(self.data_nodes),
+            use_tls=True,
+        )
+
+    def run(self):
+        self.init_ch2_repo()
+
+        instance_id = self.rest.instance_ids[0]
+        self.rest.create_capella_remote_link(
+            instance_id, self.analytics_link, self.cluster_spec.capella_cluster_ids[0]
+        )
+        self.monitor.wait_for_columnar_remote_link_ready(
+            instance_id, self.analytics_link, timeout_secs=1200
+        )
+        self.disconnect_link()
+
+        if self.test_config.analytics_settings.ingest_during_load:
+            self.create_datasets()
+            self.create_analytics_indexes()
+            self.connect_link()
+
+        if self.test_config.ch2_settings.use_backup:
+            self.restore_data()
+        else:
+            self.load_ch2()
+
+        if not self.test_config.analytics_settings.ingest_during_load:
+            # Only wait for the KV cluster
+            self.wait_for_persistence()
+            sync_time = self.sync()
+            self.report_sync_kpi(sync_time)
+        else:
+            for bucket in self.test_config.buckets:
+                self.num_items += self.monitor.monitor_data_synced(
+                    self.data_node, bucket, self.analytics_node
+                )
+
+        if self.test_config.ch2_settings.create_gsi_index:
+            self.create_gsi_indexes()
+
+        if self.test_config.analytics_settings.use_cbo:
+            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
+
+        self.run_ch2()
+        self.report_kpi()
+
+        self.report_columnar_s3_stats()
 
 
 class CapellaColumnarManualOnOffTest(PerfTest):

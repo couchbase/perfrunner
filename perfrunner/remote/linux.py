@@ -6,7 +6,7 @@ from shlex import quote
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
-from fabric.api import cd, get, put, quiet, run, settings
+from fabric.api import cd, get, put, quiet, run, settings, shell_env
 from fabric.contrib.files import append
 from fabric.exceptions import CommandTimeout, NetworkError
 
@@ -1069,24 +1069,31 @@ class RemoteLinux(Remote):
                             map_data: Optional[str] = None, encrypted: bool = False,
                             passphrase: str = 'couchbase', filter_keys: str = None):
         restore_to_capella = cluster_spec.capella_infrastructure
+        use_tls = use_tls or restore_to_capella
+
+        user, pwd = (
+            cluster_spec.capella_admin_credentials[0]
+            if restore_to_capella
+            else cluster_spec.rest_credentials
+        )
 
         with cd(worker_home), cd('perfrunner'):
             flags = [
-                '--archive {}'.format(archive or cluster_spec.backup),
-                '--repo {}'.format(repo),
-                '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
-                '--cacert root.pem' if use_tls else None,
-                '--username {}'.format(cluster_spec.rest_credentials[0]),
-                '--password {}'.format(cluster_spec.rest_credentials[1]),
-                '--threads {}'.format(threads) if threads else None,
-                '--obj-region {}'.format(obj_region) if obj_region else None,
-                '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-                '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
-                '--map-data {}'.format(map_data) if map_data else None,
-                '--disable-analytics --disable-cluster-analytics' if restore_to_capella else None,
-                '--passphrase {}'.format(passphrase) if encrypted else None,
-                '--no-progress-bar --purge',
-                '--filter-keys "{}"'.format(filter_keys) if filter_keys else None
+                f"--archive {archive or cluster_spec.backup}",
+                f"--repo {repo}".format(repo),
+                f"--cluster http{'s' if use_tls else ''}://{master_node}",
+                "--cacert root.pem" if use_tls else None,
+                f"--username {user}",
+                f"--password {pwd}",
+                f"--threads {threads}" if threads else None,
+                f"--obj-region {obj_region}" if obj_region else None,
+                f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
+                f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
+                f"--map-data {map_data}" if map_data else None,
+                "--disable-analytics --disable-cluster-analytics" if restore_to_capella else None,
+                f"--passphrase {passphrase}" if encrypted else None,
+                f'--filter-keys "{filter_keys}"' if filter_keys else None,
+                "--no-progress-bar --purge",
             ]
 
             cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
@@ -1230,7 +1237,10 @@ class RemoteLinux(Remote):
             log_file
         )
 
-        with cd(worker_home), cd('perfrunner'), cd('ch2/ch2driver/pytpcc/'):
+        with (
+            cd(f"{worker_home}/perfrunner/ch2/ch2driver/pytpcc/"),
+            shell_env(PYTHONWARNINGS="ignore:Unverified HTTPS request"),
+        ):
             logger.info('Running: {}'.format(cmd))
             run(cmd)
 

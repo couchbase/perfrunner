@@ -58,8 +58,18 @@ def main():
         return
 
     if cluster_spec.capella_infrastructure:
+        # To get admin creds we need to use CP AWS account creds
         cluster_spec.set_capella_admin_credentials()
-        if not cluster_spec.serverless_infrastructure and not cluster_spec.goldfish_infrastructure:
+
+        if (prov_cluster := cluster_spec.prov_cluster_in_columnar_test) and (
+            not args.cluster_name or args.cluster_name == prov_cluster
+        ):
+            cluster_spec.set_active_clusters_by_name([prov_cluster])
+            cluster_spec.config["infrastructure"].pop("service")
+
+        if (
+            not cluster_spec.serverless_infrastructure and not cluster_spec.goldfish_infrastructure
+        ) or cluster_spec.prov_cluster_in_columnar_test:
             # If on provisioned Capella, we need to do two things before anything else:
             # 1. Create some DB credentials
             # 2. Whitelist the local IP
@@ -76,7 +86,10 @@ def main():
             cm.serverless_throttle()
             cm.init_nebula_ssh()
             cm.set_nebula_log_levels()
-        elif not cm.cluster_spec.goldfish_infrastructure:
+        elif (
+            not cm.cluster_spec.goldfish_infrastructure
+            or cm.cluster_spec.prov_cluster_in_columnar_test
+        ):
             if cm.test_config.deployment.monitor_deployment_time:
                 logger.info("Start timing the bucket creation")
                 t0 = time()
@@ -90,8 +103,12 @@ def main():
                     t.config['bucket'] = deployment_time
             cm.capella_allow_client_ips()
 
-        if cm.test_config.collection.collection_map:
-            cm.create_collections()
+        if (
+            not cm.cluster_spec.goldfish_infrastructure
+            or cm.cluster_spec.prov_cluster_in_columnar_test
+        ):
+            if cm.test_config.collection.collection_map:
+                cm.create_collections()
 
         return
 

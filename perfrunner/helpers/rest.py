@@ -1080,19 +1080,16 @@ class DefaultRestHelper(RestBase):
         config = self.get(url=api).json()
         return config
 
-    def get_cbas_incoming_records_count(self, host: str) -> dict:
+    def get_cbas_incoming_records_count(
+        self,
+        host: str,
+        metric: str = "cbas_incoming_records_total",
+    ) -> dict:
         api = self._get_api_url(
             host=host,
-            path="pools/default/stats/range/cbas_incoming_records_count?aggregationFunction=sum",
+            path=f"pools/default/stats/range/{metric}?nodesAggregation=sum",
         )
         return self.get(url=api).json()
-
-    def get_cbas_incoming_records_count_v2(self, host: str) -> dict:
-        url = self._get_api_url(
-            host=host,
-            path="pools/default/stats/range/cbas_incoming_records_count?nodesAggregation=sum",
-        )
-        return self.get(url=url).json()
 
     def pause_analytics_cluster(self, analytics_node: str):
         url = self._get_api_url(host=analytics_node, path='analytics/cluster/pause',
@@ -1115,6 +1112,48 @@ class DefaultRestHelper(RestBase):
         # The Analytics Links API returns a list, even though there is only one link returned
         # So we just return the single list element
         return resp.json()[0]
+
+    def create_remote_link(
+        self,
+        analytics_node: str,
+        data_node: str,
+        link_name: str,
+        data_node_username: Optional[str] = None,
+        data_node_password: Optional[str] = None,
+    ):
+        logger.info(
+            f"Creating analytics remote link '{link_name}' "
+            f"between {analytics_node} (analytics) and {data_node} (data)"
+        )
+
+        url = self._get_api_url(
+            host=analytics_node,
+            path="analytics/link",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
+
+        default_auth = self._set_auth()
+
+        params = {
+            "dataverse": "Default",
+            "name": link_name,
+            "type": "couchbase",
+            "hostname": f"{data_node}:{REST_PORT_SSL if self.use_tls else REST_PORT}",
+            "username": data_node_username or default_auth[0],
+            "password": data_node_password or default_auth[1],
+            "encryption": "none",
+        }
+
+        if url.startswith("https"):
+            with open("root.pem", "r") as f:
+                params |= {
+                    "encryption": "full",
+                    "certificate": f.read(),
+                }
+
+        resp = self.post(url=url, data=params)
+        resp.raise_for_status()
 
     def deploy_function(self, node: str, func: dict, name: str):
         logger.info('Deploying function on node {}: {}'.format(node, pretty_dict(func)))
@@ -1840,7 +1879,8 @@ class CapellaRestBase(DefaultRestHelper):
         self.base_url = self.cluster_spec.controlplane_settings["public_api_url"]
         self.tenant_id = self.cluster_spec.controlplane_settings["org"]
         self.project_id = self.cluster_spec.controlplane_settings["project"]
-        self.cluster_ids = self.cluster_spec.controlplane_settings["cluster_ids"].split()
+
+        self.cluster_ids = self.cluster_spec.capella_cluster_ids
 
         access, secret = None, None
         if api_keys := ControlPlaneManager.get_api_keys():
@@ -2463,6 +2503,16 @@ class CapellaColumnarRestHelper(CapellaRestBase):
     def turn_off_instance(self, instance_id: str):
         logger.info(f"Turning off columnar instance {instance_id}")
         resp = self.columnar_client.turn_off_instance(self.tenant_id, self.project_id, instance_id)
+        resp.raise_for_status()
+
+    def create_capella_remote_link(self, instance_id: str, link_name: str, prov_cluster_id: str):
+        logger.info(
+            f'Creating remote link "{link_name}" for instance {instance_id} '
+            f"to cluster {prov_cluster_id}"
+        )
+        resp = self.columnar_client.create_link(
+            self.tenant_id, self.project_id, instance_id, link_name, prov_cluster_id
+        )
         resp.raise_for_status()
 
 

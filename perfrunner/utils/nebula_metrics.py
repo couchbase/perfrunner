@@ -144,7 +144,7 @@ def main():
     spec = ClusterSpec()
     spec.parse(args.cluster)
 
-    cluster_id = spec.controlplane_settings.get("cluster_ids")
+    cluster_id = spec.capella_cluster_ids[0]
 
     end = datetime.now()
     start = datetime.now() - timedelta(hours=24)

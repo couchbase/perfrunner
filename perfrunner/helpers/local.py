@@ -1119,21 +1119,6 @@ def cbepctl(master_node: str, cluster_spec: ClusterSpec, bucket: str,
     local(cmd)
 
 
-def create_remote_link(analytics_link, data_node, analytics_node, username, password):
-    logger.info('Create analytics remote link')
-    cmd = "curl -v -k -u {}:{} " \
-          "-X POST http://{}:8095/analytics/link " \
-          "-d dataverse=Default " \
-          "-d name={} " \
-          "-d type=couchbase " \
-          "-d hostname={}:8091 " \
-          "-d username={} " \
-          "-d password={} " \
-          "-d encryption=none ".format(username, password, analytics_node, analytics_link,
-                                       data_node, username, password)
-    local(cmd)
-
-
 def download_pytppc(repo: str, branch: str):
     cmd = 'git clone -q -b {} {}'.format(branch, repo)
     local(cmd)

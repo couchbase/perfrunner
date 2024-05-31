@@ -1,5 +1,5 @@
 import time
-from typing import Optional
+from typing import Callable, Optional
 
 from logger import logger
 from perfrunner.helpers import misc
@@ -942,34 +942,35 @@ class Monitor:
         logger.info('Waiting for data to be synced from {}'.format(data_node))
         time.sleep(self.MONITORING_DELAY * 3)
 
+        analytics_node_version = misc.create_build_tuple(self.rest.get_version(analytics_node))
+        is_columnar = self.rest.is_columnar(analytics_node)
+
         num_items = self._get_num_items(data_node, bucket)
         while True:
-            if self.build_version_number < (7, 0, 0, 0) and not self.is_columnar:
-                num_analytics_items = self.get_num_analytics_items(analytics_node, bucket)
+            if (analytics_node_version > (8, 0, 0, 0)) or (
+                is_columnar and analytics_node_version >= (1, 0, 1, 0)
+            ):
+                metric = "cbas_incoming_records_total"
             else:
-                if self.build_version_number < (7, 0, 0, 4990) and not self.is_columnar:
-                    incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node)
-                else:
-                    incoming_records = self.rest.get_cbas_incoming_records_count_v2(analytics_node)
+                metric = "cbas_incoming_records_count"
+
+            incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node, metric)
+
+            try:
                 num_analytics_items = int(incoming_records["data"][0]["values"][-1][1])
+            except (IndexError, KeyError):
+                num_analytics_items = 0
+                logger.error(
+                    "Failed to get incoming records count. "
+                    f"REST API response: {incoming_records}"
+                )
 
-            logger.info('Analytics has {:,} docs (target is {:,})'.format(
-                num_analytics_items, num_items))
+            logger.info(f"Analytics has {num_analytics_items:,} docs (target is {num_items:,})")
 
-            if self.build_version_number < (6, 5, 0, 0) and not self.is_columnar:
-                if num_analytics_items == num_items:
-                    break
-            else:
-                if self.build_version_number > (7, 0, 0, 4853) or self.is_columnar:
-                    ingestion_progress = self.get_ingestion_progress(analytics_node)
-                    logger.info('Ingestion progress: {:.2f}%'.format(ingestion_progress))
-                    if int(ingestion_progress) == 100:
-                        break
-                else:
-                    num_remaining_mutations = self.get_num_remaining_mutations(analytics_node)
-                    logger.info('Number of remaining mutations: {}'.format(num_remaining_mutations))
-                    if num_remaining_mutations == 0:
-                        break
+            ingestion_progress = self.get_ingestion_progress(analytics_node)
+            logger.info(f"Ingestion progress: {ingestion_progress:.2f}%")
+            if int(ingestion_progress) == 100:
+                break
 
             time.sleep(self.POLLING_INTERVAL_ANALYTICS)
 
@@ -1555,29 +1556,34 @@ class Monitor:
         instance_id: str,
         end_state: str,
         temp_state: str,
+        state_func: Callable[[dict], Optional[str]],
+        state_object: Optional[str] = None,
         poll_interval_secs: Optional[int] = None,
         timeout_secs: Optional[int] = None,
     ):
+        state_func = state_func or (lambda info: info.get("data", {}).get("state"))
+        state_object = state_object or f"columnar instance {instance_id}"
         poll_interval_secs = poll_interval_secs or self.POLLING_INTERVAL_ANALYTICS
         timeout_secs = timeout_secs or self.TIMEOUT
-        logger.info(f'Waiting for columnar instance {instance_id} to be in state "{end_state}"...')
+
+        logger.info(f'Waiting for {state_object} to be in state "{end_state}"...')
         t0 = time.time()
         while time.time() - t0 < timeout_secs:
             instance_info = self.rest.get_instance_info(instance_id)
-            state = instance_info.get("data", {}).get("state")
-            logger.info(f"Columnar instance state: {state}")
+            state = state_func(instance_info)
+            logger.info(f"State of {state_object}: {state}")
 
             if state == end_state:
-                logger.info(f'Columnar instance has reached state "{end_state}".')
+                logger.info(f'{state_object} has reached state "{end_state}"')
                 return
             elif state != temp_state:
-                logger.interrupt(f"Unexpected columnar instance state: {state}")
+                logger.interrupt(f"Unexpected state for {state_object}: {state}")
                 return
 
             time.sleep(poll_interval_secs)
 
         logger.interrupt(
-            f"Timed out after {timeout_secs} seconds waiting for columnar instance "
+            f"Timed out after {timeout_secs} seconds waiting for {state_object} "
             f'to reach state "{end_state}".'
         )
 
@@ -1588,7 +1594,11 @@ class Monitor:
         timeout_secs: Optional[int] = None,
     ):
         self._wait_for_columnar_instance_state(
-            instance_id, "turned_off", "turning_off", poll_interval_secs, timeout_secs
+            instance_id,
+            "turned_off",
+            "turning_off",
+            poll_interval_secs=poll_interval_secs,
+            timeout_secs=timeout_secs,
         )
 
     def wait_for_columnar_instance_turn_on(
@@ -1598,7 +1608,37 @@ class Monitor:
         timeout_secs: Optional[int] = None,
     ):
         self._wait_for_columnar_instance_state(
-            instance_id, "healthy", "turning_on", poll_interval_secs, timeout_secs
+            instance_id,
+            "healthy",
+            "turning_on",
+            poll_interval_secs=poll_interval_secs,
+            timeout_secs=timeout_secs,
+        )
+
+    def wait_for_columnar_remote_link_ready(
+        self,
+        instance_id: str,
+        link_name: str,
+        poll_interval_secs: Optional[int] = None,
+        timeout_secs: Optional[int] = None,
+    ):
+        def get_link_state(info: dict) -> Optional[str]:
+            links = info.get("data", {}).get("config", {}).get("links", [])
+            link = next((link for link in links if link.get("name") == link_name), None)
+            if not link:
+                logger.interrupt(
+                    f'Link "{link_name}" not found for columnar instance {instance_id}.'
+                )
+            return link.get("status")
+
+        self._wait_for_columnar_instance_state(
+            instance_id,
+            "ready",
+            "pending",
+            state_func=get_link_state,
+            state_object=f'link "{link_name}" on columnar instance {instance_id}',
+            poll_interval_secs=poll_interval_secs,
+            timeout_secs=timeout_secs,
         )
 
     def monitor_server_upgrade(self):

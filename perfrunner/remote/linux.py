@@ -1034,6 +1034,17 @@ class RemoteLinux(Remote):
         run('sync && echo 3 > /proc/sys/vm/drop_caches')
 
     @master_client
+    def delete_existing_staging_dir(self, staging_dir:str):
+        logger.info(f"Deleting staging directory {staging_dir}")
+        cmd = f"rm -rf {staging_dir}"
+        logger.info(f"Running.. {cmd}")
+        run(cmd)
+        logger.info(f"Recreating staging directory {staging_dir}")
+        cmd = f"mkdir {staging_dir}"
+        logger.info(f"Running.. {cmd}")
+        run(cmd)
+
+    @master_client
     def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,
                 archive: str = '', repo: str = 'default', obj_staging_dir: Optional[str] = None,
                 obj_region: Optional[str] = None, obj_access_key_id: Optional[str] = None,
@@ -1069,7 +1080,7 @@ class RemoteLinux(Remote):
                 '--map-data {}'.format(map_data) if map_data else None,
                 '--disable-analytics --disable-cluster-analytics' if restore_to_capella else None,
                 '--passphrase {}'.format(passphrase) if encrypted else None,
-                '--no-progress-bar'
+                '--no-progress-bar --purge'
             ]
 
             cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(

@@ -533,9 +533,10 @@ class FTSTest(JTSTest):
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         credential = local.read_aws_credential(
-            self.test_config.backup_settings.aws_credential_path)
+            self.test_config.backup_settings.aws_credential_path, self.cloud_infra)
         self.remote.create_aws_credential(credential)
         self.remote.client_drop_caches()
+        self.remote.delete_existing_staging_dir(self.test_config.backup_settings.obj_staging_dir)
         collection_map = self.test_config.collection.collection_map
         restore_mapping = self.test_config.restore_settings.map_data
         if restore_mapping is None and collection_map:

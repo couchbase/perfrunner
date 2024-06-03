@@ -1065,12 +1065,13 @@ def run_cbstats(command: str, server: str, port: int, username: str, password: s
     return stdout, returncode
 
 
-def read_aws_credential(credential_path: str):
+def read_aws_credential(credential_path: str, delete_file: bool = True) -> str:
     logger.info("Reading AWS credential")
-    cmd = 'cat {}/aws_credential'.format(credential_path)
+    cmd = f'cat {credential_path}/aws_credential'
     credential = local(cmd, capture=True)
-    cmd = 'rm {}/aws_credential'.format(credential_path)
-    local(cmd)
+    if delete_file:
+        cmd = f'rm {credential_path}/aws_credential'
+        local(cmd)
     return credential
 
 

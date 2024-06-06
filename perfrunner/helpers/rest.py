@@ -4,7 +4,8 @@ import os
 import time
 from collections import namedtuple
 from json import JSONDecodeError
-from typing import Callable, Dict, Iterator, List, Literal, Optional, Tuple, Union
+from typing import Callable, Iterator, Literal, Optional, Union
+from urllib.parse import urlparse
 
 import requests
 from capella.columnar.CapellaAPI import CapellaAPI as CapellaAPIColumnar
@@ -101,30 +102,33 @@ class RestBase:
         self.use_tls = test_config.cluster.enable_n2n_encryption or \
             self.cluster_spec.capella_infrastructure
 
+    def _set_auth(self, **kwargs) -> tuple[str, str]:
+        return self.auth
+
     @retry
     def get(self, **kwargs) -> requests.Response:
-        auth = kwargs.pop('auth', self.auth)
-        return requests.get(auth=auth, verify=False, **kwargs)
+        kwargs.setdefault("auth", self._set_auth(**kwargs))
+        return requests.get(verify=False, **kwargs)
 
     def _post(self, **kwargs) -> requests.Response:
-        auth = kwargs.pop('auth', self.auth)
-        return requests.post(auth=auth, verify=False, **kwargs)
+        kwargs.setdefault("auth", self._set_auth(**kwargs))
+        return requests.post(verify=False, **kwargs)
 
     @retry
     def post(self, **kwargs) -> requests.Response:
         return self._post(**kwargs)
 
     def _put(self, **kwargs) -> requests.Response:
-        auth = kwargs.pop('auth', self.auth)
-        return requests.put(auth=auth, verify=False, **kwargs)
+        kwargs.setdefault("auth", self._set_auth(**kwargs))
+        return requests.put(verify=False, **kwargs)
 
     @retry
     def put(self, **kwargs) -> requests.Response:
         return self._put(**kwargs)
 
     def _delete(self, **kwargs) -> requests.Response:
-        auth = kwargs.pop('auth', self.auth)
-        return requests.delete(auth=auth, verify=False, **kwargs)
+        kwargs.setdefault("auth", self._set_auth(**kwargs))
+        return requests.delete(verify=False, **kwargs)
 
     def delete(self, **kwargs) -> requests.Response:
         return self._delete(**kwargs)
@@ -142,8 +146,7 @@ class RestBase:
         """Return a url in the form of `{proto}://{host}:{port}/{path}`."""
         port, proto = (ssl_port, 'https') if self.use_tls else (plain_port, 'http')
 
-        return '{proto}://{host}:{port}/{path}'.format(
-            proto=proto, host=host, port=port, path=path)
+        return f"{proto}://{host}:{port}/{path.lstrip('/')}"
 
 
 class DefaultRestHelper(RestBase):
@@ -151,109 +154,93 @@ class DefaultRestHelper(RestBase):
     def __init__(self, cluster_spec, test_config):
         super().__init__(cluster_spec=cluster_spec, test_config=test_config)
 
-    def set_data_path(self, host: str, path: str):
-        logger.info('Configuring data path on {}'.format(host))
+    def _set_service_path(
+        self, host: str, service: Literal["data", "index", "cbas"], path: Union[str, list[str]]
+    ):
+        logger.info(f"Configuring {service} path on {host}: {path}")
 
-        api = 'http://{}:{}/nodes/self/controller/settings'.format(host, REST_PORT)
-        data = {
-            'path': path,
-        }
+        api = self._get_api_url(host=host, path="nodes/self/controller/settings")
+        setting = f"{service}_path" if service != "data" else "path"
+        data = {setting: path}
         self.post(url=api, data=data)
+
+    def set_data_path(self, host: str, path: str):
+        self._set_service_path(host, "data", path)
 
     def set_index_path(self, host: str, path: str):
-        logger.info('Configuring index path on {}'.format(host))
+        self._set_service_path(host, "index", path)
 
-        api = 'http://{}:{}/nodes/self/controller/settings'.format(host, REST_PORT)
-        data = {
-            'index_path': path,
-        }
-        self.post(url=api, data=data)
-
-    def set_analytics_paths(self, host: str, paths: List[str]):
-        logger.info('Configuring analytics path on {}: {}'.format(host, paths))
-
-        api = 'http://{}:{}/nodes/self/controller/settings'.format(host, REST_PORT)
-        data = {
-            'cbas_path': paths,
-        }
-        self.post(url=api, data=data)
+    def set_analytics_paths(self, host: str, paths: list[str]):
+        self._set_service_path(host, "cbas", paths)
 
     def set_auth(self, host: str):
-        logger.info('Configuring cluster authentication: {}'.format(host))
+        logger.info(f"Configuring cluster authentication: {host}")
 
-        api = 'http://{}:{}/settings/web'.format(host, REST_PORT)
-        data = {
-            'username': self.rest_username, 'password': self.rest_password,
-            'port': 'SAME'
-        }
+        api = self._get_api_url(host=host, path="settings/web")
+        data = {"username": self.rest_username, "password": self.rest_password, "port": "SAME"}
         self.post(url=api, data=data)
 
     def rename(self, host: str, new_host: str = None):
-        if not new_host:
-            new_host = host
+        new_host = new_host or host
+        logger.info(f"Changing server name: {host} -> {new_host}")
 
-        logger.info('Changing server name: {} -> {}'.format(host, new_host))
-
-        api = 'http://{}:{}/node/controller/rename'.format(host, REST_PORT)
-        data = {'hostname': new_host}
-
+        api = self._get_api_url(host=host, path="node/controller/rename")
+        data = {"hostname": new_host}
         self.post(url=api, data=data)
 
-    def set_mem_quota(self, host: str, mem_quota: str):
-        logger.info('Configuring data RAM quota: {} MB'.format(mem_quota))
+    def _set_service_mem_quota(
+        self,
+        host: str,
+        service: Literal["data", "index", "fts", "cbas", "eventing"],
+        mem_quota: int,
+    ):
+        logger.info(f"Configuring {service} RAM quota: {mem_quota} MB")
 
-        api = 'http://{}:{}/pools/default'.format(host, REST_PORT)
-        data = {'memoryQuota': mem_quota}
+        api = self._get_api_url(host=host, path="pools/default")
+        setting = f"{service}MemoryQuota" if service != "data" else "memoryQuota"
+        data = {setting: mem_quota}
         self.post(url=api, data=data)
+
+    def set_kv_mem_quota(self, host: str, mem_quota: str):
+        self._set_service_mem_quota(host, "data", mem_quota)
 
     def set_index_mem_quota(self, host: str, mem_quota: int):
-        logger.info('Configuring index RAM quota: {} MB'.format(mem_quota))
-
-        api = 'http://{}:{}/pools/default'.format(host, REST_PORT)
-        data = {'indexMemoryQuota': mem_quota}
-        self.post(url=api, data=data)
+        self._set_service_mem_quota(host, "index", mem_quota)
 
     def set_fts_index_mem_quota(self, host: str, mem_quota: int):
-        logger.info('Configuring FTS RAM quota: {} MB'.format(mem_quota))
-
-        api = 'http://{}:{}/pools/default'.format(host, REST_PORT)
-        data = {'ftsMemoryQuota': mem_quota}
-        self.post(url=api, data=data)
+        self._set_service_mem_quota(host, "fts", mem_quota)
 
     def set_analytics_mem_quota(self, host: str, mem_quota: int):
-        logger.info('Configuring Analytics RAM quota: {} MB'.format(mem_quota))
-
-        api = 'http://{}:{}/pools/default'.format(host, REST_PORT)
-        data = {'cbasMemoryQuota': mem_quota}
-        self.post(url=api, data=data)
+        self._set_service_mem_quota(host, "cbas", mem_quota)
 
     def set_eventing_mem_quota(self, host: str, mem_quota: int):
-        logger.info('Configuring eventing RAM quota: {} MB'.format(mem_quota))
-
-        api = 'http://{}:{}/pools/default'.format(host, REST_PORT)
-        data = {'eventingMemoryQuota': mem_quota}
-        self.post(url=api, data=data)
+        self._set_service_mem_quota(host, "eventing", mem_quota)
 
     def set_query_settings(self, host: str, override_settings: dict):
-        api = 'http://{}:{}/admin/settings'.format(host, QUERY_PORT)
+        api = self._get_api_url(
+            host=host, path="admin/settings", plain_port=QUERY_PORT, ssl_port=QUERY_PORT_SSL
+        )
 
         settings = self.get(url=api).json()
         for override, value in override_settings.items():
             if override not in settings:
-                logger.error('Cannot change query setting {} to {}, setting invalid'
-                             .format(override, value))
+                logger.error(f"Cannot change query setting {override} to {value}, setting invalid")
                 continue
             settings[override] = value
-            logger.info('Changing {} to {}'.format(override, value))
+            logger.info(f"Changing {override} to {value}")
         self.post(url=api, data=json.dumps(settings))
 
-    def get_query_settings(self, host: str):
-        api = 'http://{}:{}/admin/settings'.format(host, QUERY_PORT)
+    def get_query_settings(self, host: str) -> dict:
+        api = self._get_api_url(
+            host=host, path="admin/settings", plain_port=QUERY_PORT, ssl_port=QUERY_PORT_SSL
+        )
 
         return self.get(url=api).json()
 
     def set_index_settings(self, host: str, settings: dict):
-        api = 'http://{}:{}/settings'.format(host, INDEXING_PORT)
+        api = self._get_api_url(
+            host=host, path="settings", plain_port=INDEXING_PORT, ssl_port=INDEXING_PORT_SSL
+        )
         count = 0
         curr_settings = self.get_index_settings(host)
         for option, value in settings.items():
@@ -262,7 +249,7 @@ class DefaultRestHelper(RestBase):
                     while count <= 10:
                         compression = self.get_index_settings(host)[option]
                         if compression:
-                            logger.info("current compression settings {}".format(compression))
+                            logger.info(f"current compression settings {compression}")
                             break
                         else:
                             time.sleep(30)
@@ -270,10 +257,10 @@ class DefaultRestHelper(RestBase):
                         count += 1
                     if count == 10:
                         raise Exception("Unable to set compression disabled after 5 min")
-                logger.info('Changing {} to {}'.format(option, value))
+                logger.info(f"Changing {option} to {value}")
                 self.post(url=api, data=json.dumps({option: value}))
             else:
-                logger.warn('Skipping unknown option: {}'.format(option))
+                logger.warn(f"Skipping unknown option: {option}")
 
     def set_planner_settings(self, host: str, settings: dict):
         logger.info('Changing host {} to {}'.format(host, settings))
@@ -323,9 +310,9 @@ class DefaultRestHelper(RestBase):
         self.post(url=url, data=json.dumps(data))
 
     def set_services(self, host: str, services: str):
-        logger.info('Configuring services on {}: {}'.format(host, services))
+        logger.info(f"Configuring services on {host}: {services}")
 
-        api = 'http://{}:{}/node/controller/setupServices'.format(host, REST_PORT)
+        api = self._get_api_url(host=host, path="node/controller/setupServices")
         data = {'services': services}
         self.post(url=api, data=data)
 
@@ -359,7 +346,7 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=host, path=add_node_uri[1:])
         self.post(url=url, data=data)
 
-    def rebalance(self, host: str, known_nodes: List[str], ejected_nodes: List[str]):
+    def rebalance(self, host: str, known_nodes: list[str], ejected_nodes: list[str]):
         logger.info('Starting rebalance')
         known_nodes = ','.join(map(self.get_otp_node_name, known_nodes))
         ejected_nodes = ','.join(map(self.get_otp_node_name, ejected_nodes))
@@ -569,7 +556,7 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=local_host, path='pools/default/remoteClusters')
         self.post(url=url, data=payload)
 
-    def get_remote_clusters(self, host: str) -> List[Dict]:
+    def get_remote_clusters(self, host: str) -> list[dict]:
         logger.info('Getting remote clusters')
         url = self._get_api_url(host=host, path='pools/default/remoteClusters')
         return self.get(url=url).json()
@@ -632,8 +619,8 @@ class DefaultRestHelper(RestBase):
 
     def supports_rbac(self, host: str) -> bool:
         """Return true if the cluster supports RBAC."""
-        rbac_url = 'http://{}:{}/settings/rbac/roles'.format(host, REST_PORT)
-        r = requests.get(auth=self.auth, url=rbac_url)
+        rbac_url = self._get_api_url(host=host, path="settings/rbac/roles")
+        r = self.get(url=rbac_url)
         return r.status_code == requests.codes.ok
 
     def is_columnar(self, host: str) -> bool:
@@ -665,11 +652,8 @@ class DefaultRestHelper(RestBase):
         self.post(url=url, data=data)
 
     def enable_cross_clustering_versioning(self, host: str, bucket: str):
-        logger.info("Enabling cross clustering versioning on node: {}".format(host))
-        if self.test_config.cluster.enable_n2n_encryption:
-            api = 'https://{}:18091/pools/default/buckets/{}'.format(host, bucket)
-        else:
-            api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
+        logger.info(f"Enabling cross clustering versioning on node: {host}")
+        api = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
         data = {
             'enableCrossClusterVersioning': 'true'
         }
@@ -758,7 +742,7 @@ class DefaultRestHelper(RestBase):
 
         return data['vBucketServerMap']['vBucketMap']
 
-    def get_server_list(self, host: str, bucket: str) -> List[str]:
+    def get_server_list(self, host: str, bucket: str) -> list[str]:
         data = self.get_bucket_info(host, bucket)
 
         return [server.split(':')[0]
@@ -899,7 +883,7 @@ class DefaultRestHelper(RestBase):
         response = self.get(url=url)
         return response.json()
 
-    def get_index_stats(self, hosts: List[str]) -> dict:
+    def get_index_stats(self, hosts: list[str]) -> dict:
         data = {}
         for host in hosts:
             url = self._get_api_url(host=host, path='stats', plain_port=INDEXING_PORT,
@@ -914,7 +898,7 @@ class DefaultRestHelper(RestBase):
         response = self.get(url=url).json()
         return response['num_connections']
 
-    def get_index_storage_stats(self, host: str) -> str:
+    def get_index_storage_stats(self, host: str) -> requests.Response:
         url = self._get_api_url(host=host, path='stats/storage', plain_port=INDEXING_PORT,
                                 ssl_port=INDEXING_PORT_SSL)
         return self.get(url=url)
@@ -928,7 +912,7 @@ class DefaultRestHelper(RestBase):
         logger.info('Getting current audit settings')
         return self.get(url=self._get_api_url(host=host, path='settings/audit')).json()
 
-    def enable_audit(self, host: str, disabled: List[str]):
+    def enable_audit(self, host: str, disabled: list[str]):
         logger.info('Enabling audit')
         data = {
             'auditdEnabled': 'true',
@@ -939,7 +923,7 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=host, path='settings/audit')
         self.post(url=url, data=data)
 
-    def get_rbac_roles(self, host: str) -> List[dict]:
+    def get_rbac_roles(self, host: str) -> list[dict]:
         logger.info('Getting the existing RBAC roles')
         return self.get(url=self._get_api_url(host=host, path='settings/rbac/roles')).json()
 
@@ -951,7 +935,7 @@ class DefaultRestHelper(RestBase):
             if r.status_code == 200:
                 break
 
-    def add_rbac_user(self, host: str, user: str, password: str, roles: List[str]):
+    def add_rbac_user(self, host: str, user: str, password: str, roles: list[str]):
         logger.info('Adding an RBAC user: {}, roles: {}'.format(user, roles))
         data = {
             'password': password,
@@ -1016,14 +1000,24 @@ class DefaultRestHelper(RestBase):
                                       settings: dict[str, str]):
         logger.info(f'Updating analytics {level}-level parameters on {analytics_node}:\n'
                     f'{pretty_dict(settings)}')
-        api = f'http://{analytics_node}:{ANALYTICS_PORT}/analytics/config/{level}'
+        api = self._get_api_url(
+            host=analytics_node,
+            path=f"analytics/config/{level}",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
         r = self.put(url=api, data=settings)
         if r.status_code not in (200, 202):
             logger.warning(f'Unexpected request status code {r.status_code}')
 
     def restart_analytics_cluster(self, analytics_node: str):
         logger.info('Restarting analytics cluster')
-        api = 'http://{}:{}/analytics/cluster/restart'.format(analytics_node, ANALYTICS_PORT)
+        api = self._get_api_url(
+            host=analytics_node,
+            path="analytics/cluster/restart",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
         r = self.post(url=api)
         if r.status_code not in (200, 202,):
             logger.warning('Unexpected request status code {}'.
@@ -1033,25 +1027,39 @@ class DefaultRestHelper(RestBase):
                                     settings: dict[str, str]):
         logger.info(f'Verifying analytics {level}-level parameters on {analytics_node}:\n'
                     f'{pretty_dict(settings)}')
-        api = f'http://{analytics_node}:{ANALYTICS_PORT}/analytics/config/{level}'
+        api = self._get_api_url(
+            host=analytics_node,
+            path=f"analytics/config/{level}",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
         response = self.get(url=api).json()
         for setting, value in settings.items():
             assert (str(response[setting]) == str(value))
 
     def get_analytics_config(self, analytics_node: str, level: Literal["service", "node"]) -> dict:
         logger.info(f'Grabbing analytics {level} config from {analytics_node}')
-        api = f'http://{analytics_node}:{ANALYTICS_PORT}/analytics/config/{level}'
+        api = self._get_api_url(
+            host=analytics_node,
+            path=f"analytics/config/{level}",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
         config = self.get(url=api).json()
         return config
 
     def get_cbas_incoming_records_count(self, host: str) -> dict:
-        api = 'http://{}:{}/pools/default/stats/range/cbas_incoming_records_count?' \
-              'aggregationFunction=sum'.format(host, REST_PORT)
+        api = self._get_api_url(
+            host=host,
+            path="pools/default/stats/range/cbas_incoming_records_count?aggregationFunction=sum",
+        )
         return self.get(url=api).json()
 
     def get_cbas_incoming_records_count_v2(self, host: str) -> dict:
-        url = self._get_api_url(host=host,
-                                path='pools/default/stats/range/cbas_incoming_records_count?nodesAggregation=sum')
+        url = self._get_api_url(
+            host=host,
+            path="pools/default/stats/range/cbas_incoming_records_count?nodesAggregation=sum",
+        )
         return self.get(url=url).json()
 
     def pause_analytics_cluster(self, analytics_node: str):
@@ -1138,7 +1146,7 @@ class DefaultRestHelper(RestBase):
                                 ssl_port=EVENTING_PORT_SSL)
         return self.get(url=url).json()
 
-    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> list[str]:
         active_nodes = self.node_statuses(master_node)
         active_nodes_by_role = []
 
@@ -1153,8 +1161,10 @@ class DefaultRestHelper(RestBase):
         return active_nodes_by_role
 
     def fts_set_node_level_parameters(self, parameter: dict, host: str):
-        logger.info("Adding in the parameter {} ".format(parameter))
-        api = "http://{}:{}/api/managerOptions".format(host, FTS_PORT)
+        logger.info(f"Adding in the parameter {parameter}")
+        api = self._get_api_url(
+            host=host, path="api/managerOptions", plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL
+        )
         headers = {'Content-Type': 'application/json'}
         data = json.dumps(parameter, ensure_ascii=False)
         self.put(url=api, data=data, headers=headers)
@@ -1166,13 +1176,13 @@ class DefaultRestHelper(RestBase):
         self.post(url=url, data=data)
 
     def reload_cluster_certificate(self, node: str):
-        logger.info("Reloading certificate on {}".format(node))
-        api = 'http://{}:{}/node/controller/reloadCertificate'.format(node, REST_PORT)
+        logger.info(f"Reloading certificate on {node}")
+        api = self._get_api_url(host=node, path="node/controller/reloadCertificate")
         self.post(url=api)
 
     def enable_certificate_auth(self, node: str):
-        logger.info("Enabling certificate-based client auth on {}".format(node))
-        api = 'http://{}:{}/settings/clientCertAuth'.format(node, REST_PORT)
+        logger.info(f"Enabling certificate-based client auth on {node}")
+        api = self._get_api_url(host=node, path="settings/clientCertAuth")
         data = {
             'state': 'enable',
             'prefixes': [
@@ -1181,14 +1191,14 @@ class DefaultRestHelper(RestBase):
         }
         self.post(url=api, json=data)
 
-    def get_minimum_tls_version(self, node: str):
+    def get_minimum_tls_version(self, node: str) -> str:
         # Because tlsv1.3 cannot be the global tls min version (unlike previous tls versions),
         # we must add additional checks to ensure that version is correctly identified
-        logger.info("Getting TLS version of {}".format(node))
-        api = 'http://{}:{}/settings/security'.format(node, REST_PORT)
+        logger.info(f"Getting TLS version of {node}")
+        api = self._get_api_url(host=node, path="settings/security")
         global_tls_min_version = self.get(url=api).json()['tlsMinVersion']
         try:
-            api = 'http://{}:{}/settings/security/data'.format(node, REST_PORT)
+            api = self._get_api_url(host=node, path="settings/security/data")
             local_tls_min_version = self.get(url=api).json()['tlsMinVersion']
             if local_tls_min_version == global_tls_min_version:
                 return global_tls_min_version
@@ -1198,21 +1208,21 @@ class DefaultRestHelper(RestBase):
             return global_tls_min_version
 
     def set_num_threads(self, node: str, thread_type: str, thread: int):
-        logger.info('Setting {} to {}'.format(thread_type, thread))
-        api = 'http://{}:{}/pools/default/settings/memcached/global'.format(node, REST_PORT)
+        logger.info(f"Setting {thread_type} to {thread}")
+        api = self._get_api_url(host=node, path="pools/default/settings/memcached/global")
         data = {
             thread_type: thread
         }
         self.post(url=api, data=data)
 
-    def get_supported_ciphers(self, node: str, service: str):
-        logger.info("Getting the supported ciphers for the {} service".format(service))
-        api = api = 'http://{}:{}/settings/security/{}'.format(node, REST_PORT, service)
+    def get_supported_ciphers(self, node: str, service: str) -> list[str]:
+        logger.info(f"Getting the supported ciphers for the {service} service")
+        api = self._get_api_url(host=node, path=f"settings/security/{service}")
         return self.get(url=api).json()['supportedCipherSuites']
 
-    def get_cipher_suite(self, node: str):
-        logger.info("Getting cipher suites of {}".format(node))
-        api = 'http://{}:{}/settings/security'.format(node, REST_PORT)
+    def get_cipher_suite(self, node: str) -> list[str]:
+        logger.info(f"Getting cipher suites of {node}")
+        api = self._get_api_url(host=node, path="settings/security")
         return self.get(url=api).json()['cipherSuites']
 
     def set_cipher_suite(self, node: str, cipher_list: list):
@@ -1224,9 +1234,9 @@ class DefaultRestHelper(RestBase):
         # "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
         # "TLS_AES_256_GCM_SHA384", "TLS_AES_128_GCM_SHA256". If we want to set any other cipher,
         # it needs to be set individually for each service that supports the cipher.
-        logger.info("Setting cipher suite of {}".format(cipher_list))
+        logger.info(f"Setting cipher suite of {cipher_list}")
         try:
-            api = 'http://{}:{}/settings/security'.format(node, REST_PORT)
+            api = self._get_api_url(host=node, path="settings/security")
             data = {
                 'cipherSuites': json.dumps(cipher_list)
             }
@@ -1234,29 +1244,34 @@ class DefaultRestHelper(RestBase):
             logger.info("The entire cipher suite has been set globally")
         except Exception:
             logger.info("The cipher suite cannot be set globally, will be set for each service")
-            service_list = ['data', 'fullTextSearch', 'index', 'query', 'eventing', 'analytics',
-                            'backup', 'clusterManager']
+            service_list = [
+                "data",
+                "fullTextSearch",
+                "index",
+                "query",
+                "eventing",
+                "analytics",
+                "backup",
+                "clusterManager",
+            ]
             for service in service_list:
-                api = 'http://{}:{}/settings/security/{}'.format(node, REST_PORT, service)
+                api = self._get_api_url(host=node, path=f"settings/security/{service}")
                 try:
-                    data = {
-                        'cipherSuites': json.dumps(cipher_list)
-                    }
+                    data = {"cipherSuites": json.dumps(cipher_list)}
                     self.post(url=api, data=data)
-                    logger.info("The entire cipher suite has been set for the {} service"
-                                .format(service))
+                    logger.info(f"The entire cipher suite has been set for the {service} service")
                 except Exception:
                     valid_cipher_list = []
                     supported_cipher_list = self.get_supported_ciphers(node, service)
                     for cipher in cipher_list:
                         if cipher in supported_cipher_list:
                             valid_cipher_list.append(cipher)
-                    data = {
-                        'cipherSuites': json.dumps(valid_cipher_list)
-                    }
+                    data = {"cipherSuites": json.dumps(valid_cipher_list)}
                     self.post(url=api, data=data)
-                    logger.info("The following cipher suite: {} has been set for the {} service"
-                                .format(valid_cipher_list, service))
+                    logger.info(
+                        f"The following cipher suite: {valid_cipher_list} "
+                        f"has been set for the {service} service"
+                    )
 
     def set_minimum_tls_version(self, node: str, tls_version: str):
         logger.info(f'Setting minimum TLS version of {tls_version}')
@@ -1323,79 +1338,96 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=host, path='pools/default/buckets/{}/scopes'.format(bucket))
         self.put(url=url, data=json.dumps(collection_map))
 
-    def create_server_group(self, host, server_group):
-        logger.info('Creating Server Group {}'.format(server_group))
-        api = 'http://{}:{}/pools/default/serverGroups'.format(host, REST_PORT)
+    def create_server_group(self, host: str, server_group: str) -> requests.Response:
+        logger.info(f"Creating Server Group {server_group}")
+        api = self._get_api_url(host=host, path="pools/default/serverGroups")
         data = {
             'name': server_group
         }
         return self.post(url=api, data=data)
 
-    def get_server_group_info(self, host):
-        api = 'http://{}:{}/pools/default/serverGroups'.format(host, REST_PORT)
+    def get_server_group_info(self, host: str) -> dict:
+        api = self._get_api_url(host=host, path="pools/default/serverGroups")
         return self.get(url=api).json()
 
-    def change_group_membership(self, host, uri, node_json):
-        api = 'http://{}:{}{}'.format(host, REST_PORT, uri)
+    def change_group_membership(self, host: str, uri: str, node_json: dict):
+        api = self._get_api_url(host=host, path=uri)
         self.put(url=api, data=json.dumps(node_json))
 
-    def delete_server_group(self, host, uri):
-        api = 'http://{}:{}{}'.format(host, REST_PORT, uri)
+    def delete_server_group(self, host: str, uri: str):
+        api = self._get_api_url(host=host, uri=uri)
         self.delete(url=api)
 
-    def indexes_per_node(self, host: str):
-        api = 'http://{}:{}/stats'.format(host, INDEXING_PORT)
+    def indexes_per_node(self, host: str) -> int:
+        api = self._get_api_url(
+            host=host, path="stats", plain_port=INDEXING_PORT, ssl_port=INDEXING_PORT_SSL
+        )
         return self.get(url=api).json()['num_indexes']
 
-    def indexes_instances_per_node(self, host: str):
-        api = 'http://{}:{}/stats'.format(host, INDEXING_PORT)
+    def indexes_instances_per_node(self, host: str) -> int:
+        api = self._get_api_url(
+            host=host, path="stats", plain_port=INDEXING_PORT, ssl_port=INDEXING_PORT_SSL
+        )
         return self.get(url=api).json()['num_storage_instances']
 
-    def backup_index(self, host, bucket):
-        logger.info("Backing up index metadata on host {} bucket {}"
-                    .format(host, bucket))
-        api = 'http://{}:{}/api/v1/bucket/{}/backup?keyspace={}' \
-            .format(host, INDEXING_PORT, bucket, bucket)
+    def backup_index(self, host: str, bucket: str) -> dict:
+        logger.info(f"Backing up index metadata on host {host} bucket {bucket}")
+        api = self._get_api_url(
+            host=host,
+            path=f"api/v1/bucket/{bucket}/backup?keyspace={bucket}",
+            plain_port=INDEXING_PORT,
+            ssl_port=INDEXING_PORT_SSL,
+        )
         return self.get(url=api).json()["result"]
 
-    def restore_index(self, host, bucket, metadata, from_keyspace, to_keyspace):
-        logger.info("Restoring indexes on host {} bucket {}".format(host, bucket))
-        api = 'http://{}:{}/api/v1/bucket/{}/backup?keyspace={}:{}'. \
-            format(host, INDEXING_PORT, bucket, from_keyspace, to_keyspace)
+    def restore_index(
+        self, host: str, bucket: str, metadata: dict, from_keyspace: str, to_keyspace: str
+    ) -> requests.Response:
+        logger.info(f"Restoring indexes on host {host} bucket {bucket}")
+        api = self._get_api_url(
+            host=host,
+            path=f"api/v1/bucket/{bucket}/backup?keyspace={from_keyspace}:{to_keyspace}",
+            plain_port=INDEXING_PORT,
+            ssl_port=INDEXING_PORT_SSL,
+        )
         return self.post(url=api, data=json.dumps(metadata))
 
     def set_plasma_diag(self, host: str, cmd: str, arg: str):
-        logger.info('setting plasma diag to {} for {}'.format(cmd, arg))
-        api = 'http://{}:{}/plasmaDiag'.format(host, INDEXING_PORT)
+        logger.info(f"setting plasma diag to {cmd} for {arg}")
+        api = self._get_api_url(
+            host=host, path="plasmaDiag", plain_port=INDEXING_PORT, ssl_port=INDEXING_PORT_SSL
+        )
         data = {
             'Cmd': cmd, "Args": [arg]
         }
         r = self.post(url=api, data=json.dumps(data))
         if r.status_code not in (200, 202):
-            logger.warning('Unexpected request status code {}'.format(r.status_code))
+            logger.warning(f"Unexpected request status code {r.status_code}")
 
-    def get_plasma_dbs(self, host: str):
-        api = 'http://{}:{}/plasmaDiag'.format(host, INDEXING_PORT)
+    def get_plasma_dbs(self, host: str) -> list[str]:
+        api = self._get_api_url(
+            host=host, path="plasmaDiag", plain_port=INDEXING_PORT, ssl_port=INDEXING_PORT_SSL
+        )
         data = {
             'Cmd': 'listDBs'
         }
         r = self.post(url=api, data=json.dumps(data))
         if r.status_code not in (200, 202):
-            logger.warning('Unexpected request status code {}'.format(r.status_code))
+            logger.warning(f"Unexpected request status code {r.status_code}")
         ids = [line.split()[-1] for line in r.text.split("\n")[1:-1]]
-        logger.info('Plasma db list {}'.format(ids))
+        logger.info(f"Plasma db list {ids}")
         return ids
 
     def set_analytics_replica(self, host: str, analytics_replica: int):
-        logger.info('Setting analytics replica to: {}'.format(analytics_replica))
-        api = 'http://{}:{}/settings/analytics'.format(host, REST_PORT)
+        logger.info(f"Setting analytics replica to: {analytics_replica}")
+        api = self._get_api_url(host=host, path="settings/analytics")
         data = {
             'numReplicas': analytics_replica,
         }
         self.post(url=api, data=data)
 
-    def get_analytics_replica(self, host: str):
-        api = 'http://{}:{}/settings/analytics'.format(host, REST_PORT)
+    def get_analytics_replica(self, host: str) -> dict:
+        api = self._get_api_url(host=host, path="settings/analytics")
         return self.get(url=api).json()
 
     def get_sgversion(self, host: str) -> str:
@@ -1731,7 +1763,7 @@ class KubernetesRestHelper(DefaultRestHelper):
     def get_gsi_stats(self, host: str) -> dict:
         return {'num_docs_queued': 0, 'num_docs_pending': 0}
 
-    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> list[str]:
         active_nodes_by_role = []
         for node in self.cluster_spec.servers_by_role(role):
             active_nodes_by_role.append(node)
@@ -1754,14 +1786,17 @@ class CapellaRestBase(DefaultRestHelper):
         self.dedicated_client = CapellaAPIDedicated(
             self.base_url, secret, access, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
-        self.admin_credentials = self.cluster_spec.capella_admin_credentials
 
-    def _admin_creds(self, host: str) -> Tuple[str, str]:
-        for i, (_, hostnames) in enumerate(self.cluster_spec.clusters):
-            if host in hostnames:
-                username, password = self.admin_credentials[i]
-                return (username, password)
-        return (self.rest_username, self.rest_password)
+    def _set_auth(self, **kwargs) -> tuple[str, str]:
+        hostname = urlparse(kwargs["url"]).netloc.split(":")[0]
+        for (_, nodes), creds in zip(
+            self.cluster_spec.clusters, self.cluster_spec.capella_admin_credentials
+        ):
+            if hostname in nodes:
+                return creds
+
+        # Backup is to use non-admin credentials
+        return self.auth
 
     @property
     def _cbc_user(self):
@@ -1845,11 +1880,6 @@ class CapellaRestBase(DefaultRestHelper):
             log_nodes = log_nodes | self.get_node_log_info(cluster_id)
         return log_nodes
 
-    def get_rebalance_report(self, host: str) -> dict:
-        auth = self._admin_creds(host)
-        resp = self.get(url=self._get_api_url(host=host, path='logs/rebalanceReport'), auth=auth)
-        return resp.json()
-
     def get_cp_version(self) -> str:
         api = f"{self.dedicated_client.internal_url}/status"
         response = self.get(url=api)
@@ -1866,14 +1896,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                 return self.cluster_ids[i]
         return None
 
-    def get_remote_clusters(self, host: str) -> List[Dict]:
-        logger.info('Getting remote clusters')
-        api = 'https://{}:{}/pools/default/remoteClusters'.format(host, REST_PORT_SSL)
-        auth = self._admin_creds(host)
-        response = self.get(url=api, auth=auth)
-        return response.json()
-
-    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> list[str]:
         cluster_idx = self.cluster_ids.index(self.hostname_to_cluster_id(master_node))
         return self.cluster_spec.servers_by_cluster_and_role(role)[cluster_idx]
 
@@ -2176,49 +2199,6 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                                                            "db-1", config)
         resp.raise_for_status()
 
-    def get_index_storage_stats_mm(self, host: str) -> str:
-        auth = self._admin_creds(host)
-        url = self._get_api_url(host=host, path='stats/storage/mm', plain_port=INDEXING_PORT,
-                                ssl_port=INDEXING_PORT_SSL)
-        return self.get(url=url, auth=auth).text
-
-    def is_persistence_active(self, host: str) -> str:
-        url = self._get_api_url(host=host, path='isPersistanceActive', plain_port=INDEXING_PORT,
-                                ssl_port=INDEXING_PORT_SSL)
-        auth = self._admin_creds(host)
-        resp = self.get(url=url, auth=auth)
-        return resp.text
-
-    def get_index_settings(self, host: str) -> dict:
-        url = self._get_api_url(host=host, path='settings?internal=ok',
-                                plain_port=INDEXING_PORT, ssl_port=INDEXING_PORT_SSL)
-        auth = self._admin_creds(host=host)
-        return self.get(url=url, auth=auth).json()
-
-    def set_index_settings(self, host: str, settings: dict):
-        api = 'https://{}:{}/settings'.format(host, INDEXING_PORT_SSL)
-        count = 0
-        curr_settings = self.get_index_settings(host)
-        for option, value in settings.items():
-            if option in curr_settings:
-                if "enableInMemoryCompression" in option and not value:
-                    while count <= 10:
-                        compression = self.get_index_settings(host)[option]
-                        if compression:
-                            logger.info("current compression settings {}".format(compression))
-                            break
-                        else:
-                            time.sleep(30)
-                            compression = self.get_index_settings(host)[option]
-                        count += 1
-                    if count == 10:
-                        raise Exception("Unable to set compression disabled after 5 min")
-                logger.info('Changing {} to {}'.format(option, value))
-                auth = self._admin_creds(host=host)
-                self.post(url=api, auth = auth, data=json.dumps({option: value}))
-            else:
-                logger.warn('Skipping unknown option: {}'.format(option))
-
 
 class CapellaServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
@@ -2354,7 +2334,7 @@ class CapellaServerlessRestHelper(CapellaRestBase):
 
         return response.json()
 
-    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> list[str]:
         resp = self.get_dataplane_info()
         node_list = resp['couchbase']['nodes']
         has_role = []
@@ -2367,13 +2347,6 @@ class CapellaServerlessRestHelper(CapellaRestBase):
         url = self._get_api_url(host=host, path='api/nsstats/index/{}'.format(index),
                                 plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
         auth = self.test_config.serverless_db.bucket_creds(bucket)
-        response = self.get(url=url, auth=auth)
-        return response.json()
-
-    def get_fts_stats(self, host: str) -> dict:
-        url = self._get_api_url(host=host, path='api/nsstats', plain_port=FTS_PORT,
-                                ssl_port=FTS_PORT_SSL)
-        auth = self._admin_creds(host)
         response = self.get(url=url, auth=auth)
         return response.json()
 

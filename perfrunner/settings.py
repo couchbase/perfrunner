@@ -583,10 +583,11 @@ class ClusterSpec(Config):
         return self.config.get('credentials', 'rest').split(':')
 
     @property
-    def capella_admin_credentials(self) -> list[list[str]]:
+    def capella_admin_credentials(self) -> list[tuple[str, str]]:
         return [
-            creds.split(':')
-            for creds in self.config.get('credentials', 'admin', fallback='').split()
+            tuple(creds.split(":"))
+            for i, creds in enumerate(self.config.get("credentials", "admin", fallback="").split())
+            if i not in self.inactive_cluster_idxs
         ]
 
     @property

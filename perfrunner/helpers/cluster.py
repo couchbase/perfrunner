@@ -252,7 +252,7 @@ class DefaultClusterManager(ClusterManagerBase):
 
     def set_mem_quotas(self):
         for master in self.cluster_spec.masters:
-            self.rest.set_mem_quota(master, self.test_config.cluster.mem_quota)
+            self.rest.set_kv_mem_quota(master, self.test_config.cluster.mem_quota)
             self.rest.set_index_mem_quota(master, self.test_config.cluster.index_mem_quota)
             if self.test_config.cluster.fts_index_mem_quota:
                 self.rest.set_fts_index_mem_quota(

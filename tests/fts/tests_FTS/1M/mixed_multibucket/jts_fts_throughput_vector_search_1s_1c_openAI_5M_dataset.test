@@ -37,6 +37,7 @@ test_query_field = emb
 couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_only_vector_index.json
 raw_query_map_file = tests/fts/data/vector/raw_vector_match_none_query.json
 vector_dimension = 1536
+search_query_timeout_in_sec = 100
 
 [restore]
 backup_storage = /data2

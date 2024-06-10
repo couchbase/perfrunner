@@ -42,6 +42,3 @@ use_tls = 1
 nodes_after = 6
 start_after = 300
 stop_after = 300
-
-[clients]
-python_client = 3.2.7

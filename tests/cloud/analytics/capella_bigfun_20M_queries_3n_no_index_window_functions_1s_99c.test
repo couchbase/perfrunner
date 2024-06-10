@@ -47,6 +47,3 @@ analytics_warmup_ops = 10
 analytics_warmup_workers = 1
 ops = 100
 workers = 1
-
-[clients]
-python_client = 3.2.7

@@ -34,7 +34,3 @@ analytics_warmup_ops = 10
 analytics_warmup_workers = 1
 ops = 30
 workers = 1
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

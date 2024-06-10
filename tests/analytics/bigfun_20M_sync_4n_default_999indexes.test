@@ -29,7 +29,3 @@ eviction_policy = fullEviction
 backup_storage = /data3/backup/default999dataset
 backup_repo = default
 threads = 8
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

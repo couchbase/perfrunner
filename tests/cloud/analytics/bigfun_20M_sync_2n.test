@@ -35,7 +35,3 @@ aws_credential_path = /root/.ssh
 backup_storage = s3://analytics-bigfun20m
 backup_repo = bigfun20M
 threads = 8
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

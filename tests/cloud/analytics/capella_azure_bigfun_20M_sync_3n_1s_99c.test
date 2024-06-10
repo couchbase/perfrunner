@@ -37,6 +37,3 @@ backup_repo = default
 threads = 8
 map_data = bucket-1.scope-1=bucket-1.scope-1
 use_tls = 1
-
-[clients]
-python_client = 3.2.7

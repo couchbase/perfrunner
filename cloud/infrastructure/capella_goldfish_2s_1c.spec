@@ -23,9 +23,8 @@ node_groups = ec2_node_group_1,ec2_node_group_2,ec2_node_group_3
 storage_class = gp3
 
 [ec2_node_group_1]
-instance_type = c7gd.4xlarge
+instance_type = m7gd.4xlarge
 instance_capacity = 2
-volume_size = 100
 
 [ec2_node_group_2]
 instance_type = c5.24xlarge
@@ -48,6 +47,6 @@ aws_key_name = korry
 
 [parameters]
 OS = Amazon Linux 2
-CPU = c7gd.4xlarge (16 vCPU)
-Memory = 32GB
+CPU = m7gd.4xlarge (16 vCPU)
+Memory = 64GB
 Disk = NVMe SSD 950 GB

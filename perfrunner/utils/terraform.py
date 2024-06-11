@@ -2027,10 +2027,6 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
             }
 
             logger.info(f"Deploying Goldfish instance with config: {pretty_dict(config)}")
-            logger.warn(
-                "Instance type is not yet taken into account by control plane. "
-                "CP will deploy c7gd.4xlarge (16vCPUs, 32GB RAM) regardless of above config."
-            )
             resp = self.columnar_api.create_columnar_instance(self.tenant_id, self.project_id,
                                                               **config)
             raise_for_status(resp)

@@ -3,7 +3,7 @@ hebe =
     172.23.100.190:kv,index,n1ql
     172.23.100.191:kv,index,n1ql
     172.23.100.192:kv,index,n1ql
-    172.23.100.193:kv,index,n1ql
+    172.23.100.193:eventing
 
 [syncgateways]
 syncgateways =
@@ -23,7 +23,6 @@ credentials = root:couchbase
 [storage]
 data = /data
 index = /data
-backup = /workspace/backup
 
 [credentials]
 rest = Administrator:password

@@ -1165,6 +1165,22 @@ class Monitor:
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info('Function {} failed to {}...!!!'.format(function, status))
 
+    def monitor_eventing(self, eventing_nodes: list[str], bucket_name: str, bucket_replica: int):
+        previous_docs = 0
+        while True:
+            events_remaining = 0
+            for node in eventing_nodes:
+                stats = self.rest.get_eventing_stats(node=node)
+                for fun_stat in stats:
+                    events_remaining += fun_stat.get("events_remaining", {}).get("dcp_backlog", 0)
+            docs = self.get_num_items(host=self.cluster_spec.servers[0], bucket=bucket_name,
+                                      bucket_replica=bucket_replica)
+            logger.info(f"Events remaining: {events_remaining}")
+            if events_remaining == 0 and docs == previous_docs:
+                return
+            previous_docs = docs
+            time.sleep(self.POLLING_INTERVAL_EVENTING)
+
     def wait_for_fragmentation_stable(self, host: str, bucket: str,
                                       target_fragmentation: int = 50):
         while True:
@@ -1195,7 +1211,7 @@ class Monitor:
                 import_count = int(stats['syncGateway_import']['import_count'])
             else:
                 for count in range(1, num_buckets + 1):
-                    db = 'db-{}'.format(count)
+                    db = f'db-{count}'
                     if 'shared_bucket_import' in (db_stats :=
                                                   stats['syncgateway']['per_db'][db]):
                         import_count += int(db_stats['shared_bucket_import']['import_count'])

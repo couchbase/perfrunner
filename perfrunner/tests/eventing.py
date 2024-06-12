@@ -76,6 +76,7 @@ class EventingTest(PerfTest):
         self.timer_timeout = self.test_config.eventing_settings.timer_timeout
         self.timer_fuzz = self.test_config.eventing_settings.timer_fuzz
         self.config_file = self.test_config.eventing_settings.config_file
+        self.cursor_aware = self.test_config.eventing_settings.cursor_aware
         self.time = self.test_config.access_settings.time
         self.rebalance_settings = self.test_config.rebalance_settings
         self.request_url = self.test_config.eventing_settings.request_url
@@ -136,10 +137,16 @@ class EventingTest(PerfTest):
         time_to_deploy = 0
         for func_settings in func:
 
-            func_settings["settings"]["worker_count"] = self.worker_count
-            func_settings["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
-            func_settings["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
-            func_settings["settings"]["worker_queue_cap"] = self.worker_queue_cap
+            func_settings["settings"].update({
+                "worker_count": self.worker_count,
+                "cpp_worker_thread_count": self.cpp_worker_thread_count,
+                "timer_worker_pool_size": self.timer_worker_pool_size,
+                "worker_queue_cap": self.worker_queue_cap,
+                "allow_sync_documents": False,
+                "deployment_status": True,
+                "processing_status": True,
+                "cursor_aware": self.cursor_aware
+            })
 
             if "curl" in func_settings["depcfg"]:
                 func_settings["depcfg"]["curl"][0]["hostname"] = self.request_url

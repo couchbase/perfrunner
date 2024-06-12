@@ -1523,10 +1523,19 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
+    def function_throughput_sg(self, time: int, event_name: str, events_processed: int) -> Metric:
+        metric_id = f'{self.test_config.name}_eventing_throughput'
+        metric_title = f'Eventing Throughput{self._title}'
+        metric_info = self._metric_info(metric_id, metric_title, chirality=1)
+
+        throughput = self.get_functions_throughput(time, event_name, events_processed)
+
+        return throughput, self._snapshots, metric_info
+
     def eventing_rebalance_time(self, time: int) -> Metric:
         title_split = self._title.split(sep=",", maxsplit=1)
         title = "Rebalance Time(sec)," + title_split[1]
-        metric_id = '{}_rebalance_time'.format(self.test_config.name)
+        metric_id = f'{self.test_config.name}_rebalance_time'
         metric_info = self._metric_info(metric_id=metric_id, title=title, chirality=-1)
         return time, self._snapshots, metric_info
 
@@ -1568,10 +1577,10 @@ class MetricHelper:
         for name, stats in latency_stats.items():
             if name.startswith("curl_latency_"):
                 curl_latency = self.eventing_get_percentile_latency(percentile, stats)
-                logger.info("Curl percentile latency is {}ms".format(curl_latency))
+                logger.info(f'Curl percentile latency is {curl_latency}ms')
             else:
                 latency = self.eventing_get_percentile_latency(percentile, stats)
-                logger.info("On update percentile latency is {}ms".format(latency))
+                logger.info(f'On update percentile latency is {latency}ms')
 
         latency -= curl_latency
         latency = round(latency, 1)
@@ -1579,7 +1588,7 @@ class MetricHelper:
 
     def function_time(self, time: int, time_type: str, initials: str, unit: str = "min") -> Metric:
         title = initials + ", " + self._title
-        metric_id = '{}_{}'.format(self.test_config.name, time_type.lower())
+        metric_id = f'{self.test_config.name}_{time_type.lower()}'
         metric_info = self._metric_info(metric_id=metric_id, title=title, chirality=-1)
         if unit == "min":
             time = s2m(seconds=time)

@@ -9,7 +9,7 @@ rhea =
     172.23.97.129:index
     172.23.97.130:index
     172.23.97.131:index
-    172.23.97.132:index
+    172.23.97.132:eventing
 
 [syncgateways]
 syncgateways =

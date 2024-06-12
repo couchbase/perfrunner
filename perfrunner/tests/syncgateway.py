@@ -53,6 +53,7 @@ from perfrunner.settings import (
     TestConfig,
 )
 from perfrunner.tests import PerfTest
+from perfrunner.tests.eventing import FunctionsTimeTest
 
 
 @decorator
@@ -740,6 +741,92 @@ class SGInsertUsers(SGPerfTest):
         self.report_kpi()
 
 
+class SGEventingTest(SGPerfTest, FunctionsTimeTest):
+
+    def __init__(self, *args, **kwargs):
+        FunctionsTimeTest.__init__(self, *args, **kwargs)
+        SGPerfTest.__init__(self, *args, **kwargs)
+
+    @with_stats
+    @with_profiles
+    @timeit
+    def load_access_and_wait(self):
+        self.load_docs()
+        self.run_test()
+
+    def get_sgw_writes(self, host: str, num_buckets: int):
+        stats = self.rest.get_sg_stats(host=host)
+        sg_writes = 0
+        if not self.cluster_spec.capella_infrastructure:
+            for count in range(1, num_buckets + 1):
+                db = f'db-{count}'
+                if 'database' in (db_stats := stats['syncgateway']['per_db'][db]):
+                    sg_writes += int(db_stats['database']['num_doc_writes'])
+        else:
+            sg_writes = parse_prometheus_stat(stats, "sgw_database_num_doc_writes")
+        return sg_writes
+
+    def print_stats(self):
+        total_import_count = 0
+        total_writes = 0
+        num_buckets = self.test_config.cluster.num_buckets
+        for i in range(self.test_config.syncgateway_settings.import_nodes):
+            server = self.cluster_spec.sgw_servers[i]
+            import_count = self.monitor.get_import_count(host=server, num_buckets=num_buckets)
+            total_import_count += import_count
+        for i in range(self.test_config.syncgateway_settings.nodes):
+            server = self.cluster_spec.sgw_servers[i]
+            writes = self.get_sgw_writes(host=server, num_buckets=num_buckets)
+            total_writes += writes
+        logger.info(f"Total docs imported: {total_import_count}")
+        logger.info(f"Total SGW docs written: {total_writes}")
+        bucket_replica = self.test_config.bucket.replica_number
+        num_items = 0
+        for bucket_name in self.test_config.buckets:
+            num_items += self.monitor.get_num_items(host=self.cluster_spec.servers[0],
+                                                    bucket=bucket_name,
+                                                    bucket_replica=bucket_replica)
+        num_items = num_items / (bucket_replica + 1)
+
+        logger.info(f"Total items in bucket: {num_items}")
+
+    def _report_kpi(self, time_elapsed):
+        self.collect_execution_logs()
+
+        events_successfully_processed = self.get_on_update_success()
+        logger.info(f"Events successfully processed: {format(events_successfully_processed)}")
+        self.print_stats()
+
+        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+        self.reporter.post(
+            *self.metrics.sg_throughput("Throughput (req/sec), POST doc")
+        )
+
+        self.reporter.post(
+            *self.metrics.function_throughput_sg(time=time_elapsed,
+                                                 event_name=None,
+                                                 events_processed=events_successfully_processed)
+        )
+
+    def run(self):
+
+        self.download_ycsb()
+
+        self.start_memcached()
+        self.load_users()
+
+        self.set_functions()
+
+        time_elapsed = self.load_access_and_wait()
+
+        logger.info(f"time elapsed is: {time_elapsed}")
+
+        self.report_kpi(time_elapsed)
+
+
 class SGMixQueryThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
@@ -1012,6 +1099,60 @@ class SGImportLatencyTest(SGPerfTest):
         self.download_ycsb()
         self.load()
         self.report_kpi()
+
+
+class SGEventingImportTest(SGEventingTest, SGImportThroughputTest):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def _report_kpi(self, time_elapsed_load, items_in_range_load, time_elapsed,
+                    events_successfully_processed):
+        self.collect_execution_logs()
+        logger.info(f"Events successfully processed: {events_successfully_processed}")
+        self.print_stats()
+
+        self.reporter.post(
+            *self.metrics.sgimport_items_per_sec(time_elapsed=time_elapsed_load,
+                                                 items_in_range=items_in_range_load,
+                                                 operation="INSERT")
+        )
+
+        self.reporter.post(
+            *self.metrics.function_throughput_sg(time=time_elapsed,
+                                                 event_name=None,
+                                                 events_processed=events_successfully_processed)
+        )
+
+    def run(self):
+
+
+        self.download_ycsb()
+
+        self.set_functions()
+
+        self.load()
+
+        if self.test_config.syncgateway_settings.import_nodes == 1 or self.capella_infra:
+            time_elapsed_load, items_in_range_load = \
+                self.monitor_sg_import(phase='load')
+        else:
+            time_elapsed_load, items_in_range_load = self.monitor_sg_import_multinode(phase="load")
+
+        t0 = time()
+        self.access()
+
+        sleep(30)
+        events_successfully_processed = self.get_on_update_success() - items_in_range_load
+        time_elapsed = time() - t0
+        logger.info(f"Time elapsed: {time_elapsed}")
+        logger.info(f"Events successfully processed: {events_successfully_processed}")
+
+        # Wait for SGW to import docs
+        sleep(1200)
+
+        self.report_kpi(time_elapsed_load, items_in_range_load,
+                        time_elapsed, events_successfully_processed)
 
 
 class SGSyncByUserWithAuth(SGSync):

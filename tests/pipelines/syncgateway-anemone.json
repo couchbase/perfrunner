@@ -694,6 +694,20 @@
         "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions_1s_2c.config",
         "test": "tests/syncgateway/e2e/syncgateway_e2e_push_100cbl_4sgw_1kb_8M_1s_2c_8vCPU.test"}
     ],
+    "EventingSGW": [
+      {"job": "hebe-eventing-sgw-dev",
+        "cb_cluster_map": "hebe_4nodes_colocated_eventing.spec",
+        "test": "syncgateway_eventing_5M_1s_1c.test",
+        "sg_config": "3.1/hebe_channel_xattr_import_1db_1s_1c_48partitions"},
+      {"job": "hebe-eventing-sgw-dev",
+        "cb_cluster_map": "hebe_4nodes_colocated_eventing.spec",
+        "test": "syncgateway_import_multinode_throughput_5M_eventing_1s_1c.test",
+        "sg_config": "3.1/hebe_channel_xattr_import_1db_1s_1c_48partitions"},
+      {"job": "hebe-eventing-sgw-dev",
+        "cb_cluster_map": "hebe_4nodes_colocated_eventing.spec",
+        "test": "syncgateway_import_multinode_throughput_5M_eventing_cursor_aware_1s_1c.test",
+        "sg_config": "3.1/hebe_channel_xattr_import_1db_1s_1c_48partitions"}
+    ],
     "ReadOnDemand": [
         {"job": "syncgteway-hebe-new",
           "sg_cluster_map": "hebe_1node",

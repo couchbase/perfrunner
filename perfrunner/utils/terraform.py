@@ -1694,10 +1694,12 @@ class AppServicesDeployer(CloudVMDeployer):
             bucket_count = bucket_name.split("-")[1]
             admin_name = f"admin{bucket_count}"
             logger.info("The admin name is: {}".format(admin_name))
-            admin_user = {"name": admin_name, "password": "Password123!", "endpoints": sgw_db_name}
-            self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
-                                               self.cluster_id, sgw_cluster_id,
-                                               admin_user)
+            admin_user = {"name": admin_name, "password": "Password123!",
+                          "allEndpoints": True,"endpoints": []}
+            resp = self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
+                                                      self.cluster_id, sgw_cluster_id,
+                                                      admin_user)
+            logger.info(f'The response is: {resp}')
 
             # Update cluster spec file
             self.update_spec(sgw_cluster_id, sgw_db_name)

@@ -1,0 +1,77 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGEventingImportTest
+
+[showfast]
+title = , 2 node (multinode import), 10M docs, 1KB docsize, 48 vCPU, Eventing, Cursor Aware False
+component = syncgatewaycloud
+category = write
+sub_category = {provider}
+orderby = 000203
+
+[cluster]
+initial_nodes = 5
+num_buckets = 1
+eventing_bucket_mem_quota = 5000
+eventing_metadata_bucket_mem_quota = 1024
+eventing_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[stats]
+server_processes = eventing-produc
+
+[eventing]
+functions = perf-test1:tests/eventing/code/add_time_field.js
+worker_count = 24
+cpp_worker_thread_count = 2
+config_file = tests/eventing/config/function_sample_bkt.json
+
+[load]
+workload_path = workloads/workloadl
+ycsb_client = couchbase3
+items = 5000000
+workers = 160
+workload_instances = 1
+ssl_mode = capella
+
+[access]
+workload_path = workloads/workloadl
+ycsb_client = couchbase3
+items = 5000000
+ops = 0
+workers = 160
+time = 300
+workload_instances = 1
+kv_endpoints = 16
+ssl_mode = capella
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 2
+threads = 200
+clients = 4
+instances_per_client = 5
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+users = 1000
+channels = 100
+channels_per_user = 10
+channels_per_doc = 10
+documents = 5000000
+roundtrip_write = false
+feed_reading_mode = idsonly
+insert_mode = byuser
+auth = true
+instance = c5.4xlarge
+readproportion=0
+updateproportion=0
+insertproportion=1
+requestdistribution = zipfian
+log_title = sync_gateway_4node_writes
+replicator2 = true
+basic_auth = true
+import_nodes = 2
+ssl_mode_sgw = capella

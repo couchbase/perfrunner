@@ -194,6 +194,12 @@ pipeline {
                         buildComponent('LowEnd', testCases)
                     }
                 }
+                stage('EventingSGW') {
+                    when { expression { return params.EventingSGW } }
+                    steps {
+                        buildComponent('EventingSGW', testCases)
+                    }
+                }
                 stage('ReadOnDemand') {
                     when { expression { return params.ReadOnDemand } }
                     steps {

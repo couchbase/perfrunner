@@ -457,7 +457,7 @@ def add_collections(cmd, workload_settings: PhaseSettings, target: TargetSetting
 
 def add_capella_password(cmd):
     cmd += ' -p syncgateway.password=Password123! '
-    cmd += ' -p syncgateway.adminname=Administrator '
+    cmd += ' -p syncgateway.adminname=admin1 '
     cmd += ' -p syncgateway.adminpassword=Password123! '
     return cmd
 

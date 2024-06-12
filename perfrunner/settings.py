@@ -2608,6 +2608,7 @@ class EventingSettings:
     CONFIG_FILE = "tests/eventing/config/function_sample.json"
     REQUEST_URL = "http://172.23.99.247:8080/cgi-bin/text/1kb_text_200"
     EVENTING_DEST_BKT_DOC_GEN = "basic"
+    CURSOR_AWARE = False
 
     def __init__(self, options: dict):
         self.functions = {}
@@ -2631,6 +2632,7 @@ class EventingSettings:
         self.request_url = options.get("request_url", self.REQUEST_URL)
         self.eventing_dest_bkt_doc_gen = options.get("eventing_dest_bkt_doc_gen",
                                                      self.EVENTING_DEST_BKT_DOC_GEN)
+        self.cursor_aware = options.get("cursor_aware", self.CURSOR_AWARE)
 
     def __str__(self) -> str:
         return str(self.__dict__)

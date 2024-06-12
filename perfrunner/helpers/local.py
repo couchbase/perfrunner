@@ -1520,8 +1520,11 @@ def cleanup_cblite_db():
 def clone_cblite():
     with lcd('/tmp/'):
         local('rm -rf couchbase-mobile-tools/')
-        local('git clone https://github.com/couchbaselabs/couchbase-mobile-tools -b'
-              'perf/no_compression')
+        local('mkdir /tmp/couchbase-mobile-tools/')
+        local('chmod 777 /tmp/couchbase-mobile-tools')
+        with lcd("couchbase-mobile-tools"):
+            local('git clone https://github.com/couchbaselabs/couchbase-mobile-tools .')
+            local('git checkout 1755d395131073e173f9a4f984e84084c144c18f')
 
 
 def build_cblite():

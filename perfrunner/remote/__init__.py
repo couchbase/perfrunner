@@ -346,7 +346,7 @@ class Remote:
         logger.info('Cloning cblite')
         with cd('/tmp/couchbase-mobile-tools/'):
             run('git clone https://github.com/couchbaselabs/couchbase-mobile-tools .')
-            run('git checkout 08e3ef3179a56c7fb8fbbead304db743aac8ab87')
+            run('git checkout 1755d395131073e173f9a4f984e84084c144c18f')
 
     def build_cblite(self):
         logger.info('Building cblite: updating submodule...')

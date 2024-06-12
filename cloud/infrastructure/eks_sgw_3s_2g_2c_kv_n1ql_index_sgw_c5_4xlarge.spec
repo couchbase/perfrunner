@@ -42,7 +42,7 @@ instance_capacity = 2
 volume_size = 100
 
 [k8s_node_group_3]
-instance_type = c5.4xlarge
+instance_type = t3a.large
 instance_capacity = 1
 volume_size = 100
 

@@ -43,7 +43,7 @@ instance_capacity = 1
 volume_size = 100
 
 [azurerm_node_group_4]
-instance_type = Standard_D16as_v4
+instance_type = Standard_B2as_v2
 instance_capacity = 1
 volume_size = 100
 

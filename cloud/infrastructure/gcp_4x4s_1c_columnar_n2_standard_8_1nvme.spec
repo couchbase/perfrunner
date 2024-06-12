@@ -46,7 +46,7 @@ instance_capacity = 1
 volume_size = 200
 
 [gce_node_group_3]
-instance_type = n2-standard-4
+instance_type = e2-standard-2
 instance_capacity = 1
 volume_size = 0
 

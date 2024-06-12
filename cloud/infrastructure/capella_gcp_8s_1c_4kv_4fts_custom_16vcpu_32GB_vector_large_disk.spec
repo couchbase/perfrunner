@@ -45,7 +45,7 @@ volume_size = 1000
 volume_type = pd-ssd
 
 [gce_node_group_4]
-instance_type = n2-standard-8
+instance_type = e2-standard-2
 instance_capacity = 1
 
 [storage]

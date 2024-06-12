@@ -40,7 +40,7 @@ disk_tier = P50
 volume_size = 1000
 
 [azurerm_node_group_3]
-instance_type = Standard_D4as_v4
+instance_type = Standard_B2as_v2
 instance_capacity = 1
 volume_size = 100
 

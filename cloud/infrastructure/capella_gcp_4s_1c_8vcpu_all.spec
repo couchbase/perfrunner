@@ -36,7 +36,7 @@ volume_size = 500
 volume_type = pd-extreme
 
 [gce_node_group_3]
-instance_type = n2-standard-32
+instance_type = e2-standard-2
 instance_capacity = 1
 
 [storage]

@@ -44,7 +44,7 @@ instance_capacity = 3
 volume_size = 100
 
 [ec2_node_group_2]
-instance_type = c5.4xlarge
+instance_type = t3a.large
 instance_capacity = 1
 volume_size = 100
 

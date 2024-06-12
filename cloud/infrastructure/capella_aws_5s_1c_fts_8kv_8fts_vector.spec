@@ -49,7 +49,7 @@ volume_size = 1000
 iops = 3000
 
 [ec2_node_group_3]
-instance_type = c5.4xlarge
+instance_type = t3a.large
 instance_capacity = 1
 volume_size = 1000
 iops = 3000

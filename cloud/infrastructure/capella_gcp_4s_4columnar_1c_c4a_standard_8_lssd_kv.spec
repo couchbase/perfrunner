@@ -47,7 +47,7 @@ instance_type = n2-standard-64
 volume_size = 100
 
 [gce_node_group_4]
-instance_type = n2-standard-4
+instance_type = e2-standard-2
 volume_size = 50
 
 [credentials]

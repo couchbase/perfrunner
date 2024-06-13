@@ -1355,7 +1355,7 @@ class DefaultRestHelper(RestBase):
         self.put(url=api, data=json.dumps(node_json))
 
     def delete_server_group(self, host: str, uri: str):
-        api = self._get_api_url(host=host, uri=uri)
+        api = self._get_api_url(host=host, path=uri)
         self.delete(url=api)
 
     def indexes_per_node(self, host: str) -> int:

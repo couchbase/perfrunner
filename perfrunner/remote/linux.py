@@ -150,10 +150,10 @@ class RemoteLinux(Remote):
                     f"-server {index_nodes[0]}:{18091 if is_ssl else 8091}",
                     "-type batch_process",
                     "-input /tmp/batch.txt",
-                    "-refresh_settings true" if refresh_settings else None,
                     "-use_tls" if is_ssl and not is_cloud else None,
                     "-cacert ./root.pem" if is_ssl or is_cloud else None,
                     "-use_tools=true" if is_cloud else None,
+                    "-refresh_settings true" if refresh_settings else None,
                 ],
             )
         )
@@ -180,10 +180,10 @@ class RemoteLinux(Remote):
                     f"-server {index_nodes[0]}:{18091 if is_ssl else 8091}",
                     "-type batch_build",
                     "-input /tmp/batch.txt",
-                    "-refresh_settings true" if refresh_settings else None,
                     "-use_tls" if is_ssl and not is_cloud else None,
                     "-cacert ./root.pem" if is_ssl or is_cloud else None,
                     "-use_tools=true" if is_cloud else None,
+                    "-refresh_settings true" if refresh_settings else None,
                 ],
             )
         )

@@ -2021,14 +2021,15 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
                 "provider": self.csp,
                 "region": self.region,
                 "nodes": size,
-                "instance_types": instance_type_info,
-                "availability_zone": "multi" if self.options.multi_az else "single",
-                "support_package": {"key": "enterprise", "timezone": "PT"},
+                "instanceTypes": instance_type_info,
+                "availabilityZone": "multi" if self.options.multi_az else "single",
+                "package": {"key": "enterprise", "timezone": "PT"},
             }
 
             logger.info(f"Deploying Goldfish instance with config: {pretty_dict(config)}")
-            resp = self.columnar_api.create_columnar_instance(self.tenant_id, self.project_id,
-                                                              **config)
+            resp = self.columnar_api.create_columnar_instance(
+                self.tenant_id, self.project_id, config
+            )
             raise_for_status(resp)
 
             instance_id = resp.json().get('id')

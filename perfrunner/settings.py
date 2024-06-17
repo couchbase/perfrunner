@@ -2548,6 +2548,7 @@ class AnalyticsSettings:
     EXTERNAL_FILE_INCLUDE = 'json'
     AWS_CREDENTIAL_PATH = None
     STORAGE_FORMAT = ""
+    USE_CBO = "false"
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.pop('num_io_devices',
@@ -2572,6 +2573,7 @@ class AnalyticsSettings:
         self.storage_format = options.pop('storage_format', self.STORAGE_FORMAT)
 
         self.goldfish_storage_partitions = int(options.pop('goldfish_storage_partitions', 0))
+        self.use_cbo = maybe_atoi(options.pop("use_cbo", self.USE_CBO))
 
         # Remaining settings are for analytics config REST API
         self.config_settings = options
@@ -2824,50 +2826,54 @@ class CH2ConnectionSettings:
     analytics_url: Optional[str] = None
     data_url: Optional[str] = None
     multi_data_url: Optional[str] = None
+    use_tls: bool = False
+
+    @property
+    def cli_args_common(self) -> list[str]:
+        flags = [f"--userid {self.userid}", f"--password {self.password}"]
+
+        if self.use_tls:
+            flags += ["--tls"]
+
+        return flags
 
     def cli_args_str_run(self, tclients: int, aclients: int) -> str:
         """Return a string of connection-related CLI arguments for running benchmark phase."""
-        flags = [
-            '--userid {}'.format(self.userid),
-            '--password {}'.format(self.password)
-        ]
+        flags = self.cli_args_common
 
         if tclients > 0:
             flags += [
-                '--query-url {}'.format(self.query_url),
-                '--multi-query-url {}'.format(self.multi_query_url)
+                f"--query-url {self.query_url}",
+                f"--multi-query-url {self.multi_query_url}",
             ]
 
         if aclients > 0:
-            flags += ['--analytics-url {}'.format(self.analytics_url)]
+            flags += [f"--analytics-url {self.analytics_url}"]
 
-        return ' '.join(flags)
+        return " ".join(flags)
 
     def cli_args_str_load(self, load_mode: str) -> str:
         """Return a string of connection-related CLI arguments for running load phase."""
-        flags = [
-            '--userid {}'.format(self.userid),
-            '--password {}'.format(self.password)
-        ]
+        flags = self.cli_args_common
 
         if load_mode == "qrysvc-load":
             flags += [
-                '--query-url {}'.format(self.query_url),
-                '--multi-query-url {}'.format(self.multi_query_url),
+                f"--query-url {self.query_url}",
+                f"--multi-query-url {self.multi_query_url}",
             ]
         else:
             flags += [
-                '--data-url {}'.format(self.data_url),
-                '--multi-data-url {}'.format(self.multi_data_url),
+                f"--data-url {self.data_url}",
+                f"--multi-data-url {self.multi_data_url}",
             ]
 
-        return ' '.join(flags)
+        return " ".join(flags)
 
 
 class CH2:
 
-    REPO = 'https://github.com/couchbaselabs2/ch2.git'
-    BRANCH = 'main'
+    REPO = "https://github.com/couchbaselabs2/ch2.git"
+    BRANCH = "main"
     WAREHOUSES = 1000
     ACLIENTS = 0
     TCLIENTS = 0
@@ -2875,36 +2881,44 @@ class CH2:
     WARMUP_ITERATIONS = 0
     WARMUP_DURATION = 0
     DURATION = 0
-    WORKLOAD = 'ch2_mixed'
-    ANALYTICS_STATEMENTS = ''
-    USE_BACKUP = 'true'
+    WORKLOAD = "ch2_mixed"
+    ANALYTICS_STATEMENTS = ""
+    USE_BACKUP = "true"
     LOAD_TCLIENTS = 0
     LOAD_TASKS = 1
-    LOAD_MODE = 'datasvc-bulkload'
-    CREATE_GSI_INDEX = 'true'
+    LOAD_MODE = "datasvc-bulkload"
+    CREATE_GSI_INDEX = "true"
+    DEBUG = "false"
+    USE_UNOPTIMIZED_QUERIES = "false"
 
     def __init__(self, options: dict):
-        self.repo = options.get('repo', self.REPO)
-        self.branch = options.get('branch', self.BRANCH)
-        self.warehouses = int(options.get('warehouses', self.WAREHOUSES))
-        self.aclients = int(options.get('aclients', self.ACLIENTS))
-        self.tclients = int(options.get('tclients', self.TCLIENTS))
-        self.load_tclients = int(options.get('load_tclients', self.LOAD_TCLIENTS))
-        self.load_tasks = int(options.get('load_tasks', self.LOAD_TASKS))
-        self.load_mode = options.get('load_mode', self.LOAD_MODE)
-        self.iterations = int(options.get('iterations', self.ITERATIONS))
-        self.warmup_iterations = int(options.get('warmup_iterations', self.WARMUP_ITERATIONS))
-        self.warmup_duration = int(options.get('warmup_duration', self.WARMUP_DURATION))
-        self.duration = int(options.get('duration', self.DURATION))
-        self.workload = options.get('workload', self.WORKLOAD)
-        self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
-        self.raw_analytics_statements = options.get('analytics_statements',
-                                                    self.ANALYTICS_STATEMENTS)
-        self.create_gsi_index = maybe_atoi(options.get('create_gsi_index', self.CREATE_GSI_INDEX))
+        self.repo = options.get("repo", self.REPO)
+        self.branch = options.get("branch", self.BRANCH)
+        self.warehouses = int(options.get("warehouses", self.WAREHOUSES))
+        self.aclients = int(options.get("aclients", self.ACLIENTS))
+        self.tclients = int(options.get("tclients", self.TCLIENTS))
+        self.load_tclients = int(options.get("load_tclients", self.LOAD_TCLIENTS))
+        self.load_tasks = int(options.get("load_tasks", self.LOAD_TASKS))
+        self.load_mode = options.get("load_mode", self.LOAD_MODE)
+        self.iterations = int(options.get("iterations", self.ITERATIONS))
+        self.warmup_iterations = int(options.get("warmup_iterations", self.WARMUP_ITERATIONS))
+        self.warmup_duration = int(options.get("warmup_duration", self.WARMUP_DURATION))
+        self.duration = int(options.get("duration", self.DURATION))
+        self.workload = options.get("workload", self.WORKLOAD)
+        self.use_backup = maybe_atoi(options.get("use_backup", self.USE_BACKUP))
+        self.create_gsi_index = maybe_atoi(options.get("create_gsi_index", self.CREATE_GSI_INDEX))
+        self.debug = maybe_atoi(options.get("debug", self.DEBUG))
+        self.unoptimized_queries = maybe_atoi(
+            options.get("unoptimized_queries", self.USE_UNOPTIMIZED_QUERIES)
+        )
+
+        self.raw_analytics_statements = options.get(
+            "analytics_statements", self.ANALYTICS_STATEMENTS
+        )
         if self.raw_analytics_statements:
-            self.analytics_statements = self.raw_analytics_statements.strip().split('\n')
+            self.analytics_statements = self.raw_analytics_statements.strip().split("\n")
         else:
-            self.analytics_statements = ''
+            self.analytics_statements = ""
 
         self.starting_warehouse = 1
 
@@ -2914,28 +2928,32 @@ class CH2:
     def cli_args_str_run(self) -> str:
         """Return a string of workload-related CLI arguments for running benchmark phase."""
         flags = [
-            '--warehouses {}'.format(self.warehouses),
-            '--aclients {}'.format(self.aclients) if self.aclients else None,
-            '--tclients {}'.format(self.tclients) if self.tclients else None,
-            '--duration {}'.format(self.duration) if self.duration else None,
-            '--warmup-duration {}'.format(self.warmup_duration) if self.warmup_duration else None,
-            '--query-iterations {}'.format(self.iterations) if self.iterations else None,
-            '--warmup-query-iterations {}'.format(self.warmup_iterations)
-            if self.warmup_iterations else None,
-            '--no-load'
+            "--debug" if self.debug else None,
+            f"--warehouses {self.warehouses}",
+            f"--aclients {self.aclients}" if self.aclients else None,
+            f"--tclients {self.tclients}" if self.tclients else None,
+            f"--duration {self.duration}" if self.duration else None,
+            f"--warmup-duration {self.warmup_duration}" if self.warmup_duration else None,
+            f"--query-iterations {self.iterations}" if self.iterations else None,
+            f"--warmup-query-iterations {self.warmup_iterations}"
+            if self.warmup_iterations
+            else None,
+            "--no-load",
+            "--unoptimized_queries" if self.unoptimized_queries else None,
         ]
-        return ' '.join(filter(None, flags))
+        return " ".join(filter(None, flags))
 
     def cli_args_str_load(self) -> str:
         """Return a string of workload-related CLI arguments for running load phase."""
         flags = [
-            '--starting_warehouse {}'.format(self.starting_warehouse),
-            '--warehouses {}'.format(self.warehouses),
-            '--tclients {}'.format(self.load_tclients),
-            '--no-execute',
-            '--{}'.format(self.load_mode)
+            "--debug" if self.debug else None,
+            f"--starting_warehouse {self.starting_warehouse}",
+            f"--warehouses {self.warehouses}",
+            f"--tclients {self.load_tclients}",
+            "--no-execute",
+            f"--{self.load_mode}",
         ]
-        return ' '.join(filter(None, flags))
+        return " ".join(filter(None, flags))
 
 
 @dataclass
@@ -2947,43 +2965,26 @@ class CH3ConnectionSettings(CH2ConnectionSettings):
         args_str = super().cli_args_str_run(tclients, aclients)
 
         if fclients > 0:
-            args_str += ' --fts-url {}'.format(self.fts_url)
+            args_str += f" --fts-url {self.fts_url}"
 
         return args_str
 
 
 class CH3(CH2):
-
-    REPO = 'https://github.com/couchbaselabs/ch3.git'
+    REPO = "https://github.com/couchbaselabs/ch3.git"
     FCLIENTS = 0
-    WORKLOAD = 'ch3_mixed'
-    DEBUG = 'false'
+    WORKLOAD = "ch3_mixed"
 
     def __init__(self, options: dict):
         super().__init__(options)
-        self.fclients = int(options.get('fclients', self.FCLIENTS))
-        self.debug = maybe_atoi(options.get('debug', self.DEBUG))
+        self.fclients = int(options.get("fclients", self.FCLIENTS))
 
     def __str__(self) -> str:
         return str(self.__dict__)
 
     def cli_args_str_run(self) -> str:
         """Return a string of workload-related CLI arguments for running benchmark phase."""
-        args_str = '{} --fclients {}'.format(super().cli_args_str_run(), self.fclients)
-
-        if self.debug:
-            args_str += ' --debug'
-
-        return args_str
-
-    def cli_args_str_load(self) -> str:
-        """Return a string of workload-related CLI arguments for running load phase."""
-        args_str = super().cli_args_str_load()
-
-        if self.debug:
-            args_str += ' --debug'
-
-        return args_str
+        return f"{super().cli_args_str_run()} --fclients {self.fclients}"
 
 
 class PYTPCCSettings:

@@ -1,6 +1,6 @@
 from cbagent.collectors.collector import Collector
-from perfrunner.helpers import rest
 from perfrunner.helpers.misc import create_build_tuple
+from perfrunner.helpers.rest import RestHelper
 
 
 class AnalyticsStats(Collector):
@@ -23,7 +23,7 @@ class AnalyticsStats(Collector):
     def __init__(self, settings, test):
         super().__init__(settings)
 
-        self.rest = rest.RestHelper(test.cluster_spec, test.test_config)
+        self.rest = RestHelper(test.cluster_spec, test.test_config)
         self.build = self.rest.get_version(host=self.master_node)
         self.servers = self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
         self.build_version_number = create_build_tuple(self.build)
@@ -37,21 +37,13 @@ class AnalyticsStats(Collector):
 
     def get_stats(self, server: str, build) -> dict:
         if build < (7, 0, 0, 0) and not self.is_columnar:
-            return self.get_http(path='/analytics/node/stats',
-                                 server=server,
-                                 port=self.PORT)
-        else:
-            stats = {}
-            api = 'http://{}:8095/_prometheusMetrics'.format(server)
-            api_return = self.rest.get(url=api)
-            for line in api_return.text.splitlines():
-                if "#" not in line:
-                    metric_line = line.split()
-                    metric = metric_line[0]
-                    value = metric_line[1]
-                    if metric in self.METRICS_MAPPING:
-                        stats[self.METRICS_MAPPING[metric]] = float(value)
-            return stats
+            return self.get_http(path="/analytics/node/stats", server=server, port=self.PORT)
+
+        return {
+            self.METRICS_MAPPING[metric]: value
+            for metric, value in self.rest.get_analytics_prometheus_stats(server).items()
+            if metric in self.METRICS_MAPPING
+        }
 
     def sample(self):
         for server in self.servers:

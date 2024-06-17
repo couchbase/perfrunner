@@ -3,8 +3,11 @@ import itertools
 import json
 import random
 import time
+from urllib.parse import urlparse
 
+import requests
 from celery import group
+from requests_toolbelt.adapters import socket_options
 
 from logger import logger
 from perfrunner.helpers import local
@@ -450,7 +453,6 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
 
         self.num_items = 0
         self.analytics_settings = self.test_config.analytics_settings
-        self.config_file = self.analytics_settings.analytics_config_file
         self.analytics_link = self.analytics_settings.analytics_link
 
         self.is_capella_goldfish = self.cluster_spec.capella_infrastructure and \
@@ -459,6 +461,9 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         self.analytics_node = self.analytics_nodes[0]
 
         self.QUERIES = self.analytics_settings.queries
+
+        with open(self.analytics_settings.analytics_config_file, "r") as f:
+            self.dataset_list = json.load(f)["Analytics"]
 
     def set_up_s3_link(self):
         external_dataset_type = self.analytics_settings.external_dataset_type
@@ -475,12 +480,9 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
 
     def create_standalone_datasets(self):
         logger.info('Creating standalone datasets')
-        with open(self.config_file, "r") as json_file:
-            analytics_config = json.load(json_file)
-        dataset_list = analytics_config["Analytics"]
-        for dataset in dataset_list:
-            statement = "CREATE DATASET `{}` PRIMARY KEY (`key`: string)".format(dataset["Dataset"])
-            logger.info("statement: {}".format(statement))
+        for dataset in self.dataset_list:
+            statement = f"CREATE DATASET `{dataset['Dataset']}` PRIMARY KEY (`key`: string)"
+            logger.info(f"statement: {statement}")
             self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     @with_stats
@@ -488,10 +490,6 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
     def ingest_data(self):
         logger.info('Ingesting data from S3 using COPY FROM')
 
-        with open(self.config_file, "r") as json_file:
-            analytics_config = json.load(json_file)
-
-        dataset_list = analytics_config["Analytics"]
         external_bucket = self.analytics_settings.external_bucket
         file_format = self.analytics_settings.external_file_format
         file_include = self.analytics_settings.external_file_include
@@ -503,7 +501,20 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         ):
             path_keyword = 'USING'
 
-        for dataset in dataset_list:
+        url = self.rest._get_api_url(
+            host=self.analytics_node,
+            path="analytics/service",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
+
+        # Use TCP keep-alive for the session so that long-running COPY FROM statements don't hang
+        session = requests.Session()
+        keep_alive = socket_options.TCPKeepAliveAdapter(idle=120, count=20, interval=30)
+        url_ = urlparse(url)
+        session.mount(f"{url_.scheme}://{url_.netloc}", keep_alive)
+
+        for dataset in self.dataset_list:
             source, dest = dataset['Collection'], dataset['Dataset']
             statement = (
                 f"COPY INTO `{dest}` FROM `{external_bucket}` "
@@ -512,8 +523,9 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
             )
             logger.info(f'statement: {statement}')
 
+            data = {"statement": statement}
             t0 = time.time()
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
+            self.rest.session_post(session, url=url, data=data)
             logger.info(f'Statement execution time: {time.time() - t0}')
 
     @with_stats
@@ -1108,26 +1120,29 @@ class CH2Test(PerfTest):
         self.storage_format = self.test_config.analytics_settings.storage_format
 
     def _report_kpi(self):
-        measure_time = self.test_config.ch2_settings.duration - \
-                       self.test_config.ch2_settings.warmup_duration
-        total_time, rate, test_duration = \
-            self.metrics.ch2_metric(duration=measure_time,
-                                    logfile=self.test_config.ch2_settings.workload)
-        tpm = round(rate*60/test_duration, 2)
-        response_time = round(total_time/1000000/rate, 2)
-
-        self.reporter.post(
-            *self.metrics.ch2_tmp(tpm, self.test_config.ch2_settings.tclients)
+        measure_time = (
+            self.test_config.ch2_settings.duration - self.test_config.ch2_settings.warmup_duration
+        )
+        total_time, rate, test_duration = self.metrics.ch2_metric(
+            duration=measure_time, logfile=self.test_config.ch2_settings.workload
         )
 
-        self.reporter.post(
-            *self.metrics.ch2_response_time(response_time, self.test_config.ch2_settings.tclients)
-        )
+        if self.test_config.ch2_settings.tclients:
+            tpm = round(rate * 60 / test_duration, 2)
+            response_time = round(total_time / 1000000 / rate, 2) if rate > 0 else float("inf")
 
-        if self.test_config.ch2_settings.workload == 'ch2_mixed':
+            self.reporter.post(*self.metrics.ch2_tmp(tpm, self.test_config.ch2_settings.tclients))
             self.reporter.post(
-                *self.metrics.ch2_analytics_query_time(test_duration,
-                                                       self.test_config.ch2_settings.tclients)
+                *self.metrics.ch2_response_time(
+                    response_time, self.test_config.ch2_settings.tclients
+                )
+            )
+
+        if self.test_config.ch2_settings.aclients:
+            self.reporter.post(
+                *self.metrics.ch2_analytics_query_time(
+                    test_duration, self.test_config.ch2_settings.tclients
+                )
             )
 
     def create_datasets(self):
@@ -1144,6 +1159,14 @@ class CH2Test(PerfTest):
             res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
+
+    def analyze_datasets(self):
+        logger.info("Analyzing datasets for CBO")
+        for dataset in self.CH2_DATASETS:
+            statement = f"ANALYZE ANALYTICS COLLECTION {dataset};"
+            logger.info(f"Running: {statement}")
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info(f"Result: {res}".format(str(res)))
 
     def create_analytics_indexes(self):
         if self.analytics_statements:
@@ -1317,6 +1340,9 @@ class CH2Test(PerfTest):
         self.sync()
         self.create_indexes()
 
+        if self.test_config.analytics_settings.use_cbo:
+            self.analyze_datasets()
+
         self.run_ch2_local()
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
@@ -1361,6 +1387,9 @@ class CH2CloudTest(CH2Test):
         if (self.test_config.ch2_settings.create_gsi_index and
                 not self.cluster_spec.goldfish_infrastructure):
             self.create_indexes()
+
+        if self.test_config.analytics_settings.use_cbo:
+            self.analyze_datasets()
 
         self.run_ch2_remote()
         self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
@@ -1469,6 +1498,9 @@ class CH2CloudRemoteLinkTest(CH2CloudTest):
                 not self.cluster_spec.goldfish_infrastructure):
             self.create_indexes()
 
+        if self.test_config.analytics_settings.use_cbo:
+            self.analyze_datasets()
+
         self.run_ch2_remote()
         self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
                                     logfile=self.test_config.ch2_settings.workload)
@@ -1562,10 +1594,67 @@ class CH2GoldfishPauseResumeTest(CH2CloudRemoteLinkTest):
         self.data_node, self.analytics_node = self.cluster_spec.masters
 
         log_file = '{}_post_resume'.format(self.test_config.ch2_settings.workload)
+
+        if self.test_config.analytics_settings.use_cbo:
+            self.analyze_datasets()
+
         self.run_ch2_remote(log_file=log_file)
         self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME, logfile=log_file)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
+
+
+class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, GoldfishCopyFromS3Test):
+    COLLECTORS = {
+        "ns_server": False,
+        "ns_server_system": True,
+        "active_tasks": False,
+        "analytics": True,
+    }
+
+    def __init__(self, *args, **kwargs):
+        PerfTest.__init__(self, *args, **kwargs)
+        self.analytics_settings = self.test_config.analytics_settings
+        self.analytics_node = self.analytics_nodes[0]
+        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
+
+        self.dataset_list = [{"Dataset": coll, "Collection": coll} for coll in self.CH2_DATASETS]
+
+        self.is_capella_goldfish = (
+            self.cluster_spec.capella_infrastructure and self.cluster_spec.goldfish_infrastructure
+        )
+
+    def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
+        userid, password = self.cluster_spec.rest_credentials
+
+        use_tls = self.test_config.cluster.enable_n2n_encryption or self.is_capella_goldfish
+        port = ANALYTICS_PORT_SSL if use_tls else ANALYTICS_PORT
+
+        return CH2ConnectionSettings(
+            userid=userid,
+            password=password,
+            analytics_url=f"{self.analytics_node}:{port}",
+            use_tls=use_tls,
+        )
+
+    def run(self):
+        local.clone_git_repo(
+            repo=self.test_config.ch2_settings.repo, branch=self.test_config.ch2_settings.branch
+        )
+
+        self.set_up_s3_link()
+        self.create_standalone_datasets()
+
+        self.create_analytics_indexes()
+
+        copy_from_time = self.ingest_data()
+        logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
+
+        if self.test_config.analytics_settings.use_cbo:
+            self.analyze_datasets()
+
+        self.run_ch2_local()
+        self.report_kpi()
 
 
 class CapellaColumnarManualOnOffTest(PerfTest):

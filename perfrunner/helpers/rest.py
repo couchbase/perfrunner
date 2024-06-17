@@ -118,6 +118,11 @@ class RestBase:
     def post(self, **kwargs) -> requests.Response:
         return self._post(**kwargs)
 
+    @retry
+    def session_post(self, session: requests.Session, **kwargs) -> requests.Response:
+        kwargs.setdefault("auth", self._set_auth(**kwargs))
+        return session.post(verify=False, **kwargs)
+
     def _put(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
         return requests.put(verify=False, **kwargs)
@@ -1429,6 +1434,21 @@ class DefaultRestHelper(RestBase):
     def get_analytics_replica(self, host: str) -> dict:
         api = self._get_api_url(host=host, path="settings/analytics")
         return self.get(url=api).json()
+
+    def get_analytics_prometheus_stats(self, host: str) -> dict[str, float]:
+        url = self._get_api_url(
+            host=host,
+            path="_prometheusMetrics",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
+        resp = self.get(url=url)
+        stats = {
+            s[0]: float(s[1])
+            for line in resp.text.splitlines()
+            if not line.startswith("#") and (s := line.split())
+        }
+        return stats
 
     def get_sgversion(self, host: str) -> str:
         logger.info('Getting SG Server version on server: {}'.format(host))

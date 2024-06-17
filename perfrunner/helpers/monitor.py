@@ -907,24 +907,22 @@ class Monitor:
 
         return num_items
 
-    def monitor_cbas_pending_ops(self, analytics_nodes):
-        logger.info('Wait until cbas_pending_ops reaches 0')
-        cbas_pending_ops_list = ['cbas_pending_flush_ops',
-                                 'cbas_pending_merge_ops',
-                                 'cbas_pending_replicate_ops']
+    def monitor_cbas_pending_ops(self, analytics_nodes: list[str]):
+        logger.info("Wait until cbas_pending_ops reaches 0")
+        cbas_pending_ops_list = [
+            "cbas_pending_flush_ops",
+            "cbas_pending_merge_ops",
+            "cbas_pending_replicate_ops",
+        ]
 
         while True:
             pending_ops = 0
             for analytics_node in analytics_nodes:
-                api = 'http://{}:8095/_prometheusMetrics'.format(analytics_node)
-                api_return = self.rest.get(url=api)
-                for line in api_return.text.splitlines():
-                    if "#" not in line:
-                        metric_line = line.split()
-                        metric = metric_line[0]
-                        if metric in cbas_pending_ops_list:
-                            pending_ops += int(float(metric_line[1]))
-            logger.info("cbas pending ops= {}".format(pending_ops))
+                stats = self.rest.get_analytics_prometheus_stats(analytics_node)
+                for metric in cbas_pending_ops_list:
+                    pending_ops += int(stats.get(metric, 0))
+
+            logger.info(f"cbas pending ops = {pending_ops}")
             if pending_ops == 0:
                 break
 

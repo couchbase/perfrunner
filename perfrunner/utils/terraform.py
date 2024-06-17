@@ -1914,9 +1914,9 @@ class AppServicesDeployer(CloudVMDeployer):
         logger.info('Capella App Services cluster successfully queued for deletion.')
 
 
-class CapellaColumnarDeployer(CapellaProvisionedDeployer):
+class CapellaColumnarDeployer(CloudVMDeployer):
     def __init__(self, options: Namespace):
-        CloudVMDeployer.__init__(self, options)
+        super().__init__(options)
 
         test_config = TestConfig()
         if options.test_config:
@@ -1929,7 +1929,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
         if api_keys := ControlPlaneManager.get_api_keys():
             access, secret = api_keys
 
-        api_client_args = (
+        self.columnar_api = CapellaAPIColumnar(
             self.infra_spec.controlplane_settings["public_api_url"],
             secret,
             access,
@@ -1937,9 +1937,6 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
             os.getenv("CBC_PWD"),
             os.getenv("CBC_TOKEN_FOR_INTERNAL_SUPPORT"),
         )
-
-        self.columnar_api = CapellaAPIColumnar(*api_client_args)
-        self.provisioned_api = CapellaAPIDedicated(*api_client_args)
 
         self.tenant_id = self.infra_spec.controlplane_settings["org"]
         self.project_id = self.infra_spec.controlplane_settings["project"]
@@ -1956,7 +1953,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
                 # Deploy non-capella resources
                 self.terraform_apply(self.csp)
                 non_capella_output = self.terraform_output(self.csp)
-                CloudVMDeployer.update_spec(self, non_capella_output)
+                super().update_spec(non_capella_output)
 
         # Deploy capella cluster(s)
         self.deploy_goldfish_instances()
@@ -2023,7 +2020,7 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
                 "nodes": size,
                 "instanceTypes": instance_type_info,
                 "availabilityZone": "multi" if self.options.multi_az else "single",
-                "package": {"key": "enterprise", "timezone": "PT"},
+                "package": {"key": "Enterprise", "timezone": "PT"},
             }
 
             logger.info(f"Deploying Goldfish instance with config: {pretty_dict(config)}")
@@ -2140,15 +2137,20 @@ class CapellaColumnarDeployer(CapellaProvisionedDeployer):
         for i, instance_id in enumerate(self.instance_ids):
             resp = self.columnar_api.get_specific_columnar_instance(self.tenant_id, self.project_id,
                                                                     instance_id)
+            resp.raise_for_status()
+            instance_config = resp.json()["data"]["config"]
 
-            cluster_id = resp.json()['data']['config']['clusterId']
+            cluster_id = instance_config["clusterId"]
             logger.info(f'Cluster ID for instance {instance_id}: {cluster_id}')
             cluster_ids.append(cluster_id)
 
+            endpoint = instance_config["endpoint"]  # this is the SRV url
+            hostname_suffix = endpoint.removeprefix("cb.")
+            node_count = instance_config["nodeCount"]
+            nodes = [f"svc-da-node-{i+1:03d}.{hostname_suffix}:kv,cbas" for i in range(node_count)]
             cluster, _ = list(self.infra_spec.clusters)[i]
-            hostnames = self.get_hostnames(cluster_id)
-            logger.info(f'Cluster nodes for instance {instance_id}: {pretty_dict(hostnames)}')
-            self.infra_spec.config.set('clusters', cluster, '\n' + '\n'.join(hostnames))
+            logger.info(f"Cluster nodes for instance {instance_id}: {pretty_dict(nodes)}")
+            self.infra_spec.config.set("clusters", cluster, "\n" + "\n".join(nodes))
 
         self.infra_spec.config.set("controlplane", "cluster_ids", "\n".join(cluster_ids))
         self.infra_spec.update_spec_file()

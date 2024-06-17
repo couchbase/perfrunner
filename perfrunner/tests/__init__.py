@@ -2,6 +2,7 @@ import copy
 import glob
 import shutil
 import time
+import traceback
 from multiprocessing import set_start_method
 from typing import Callable, Iterable, List, Optional
 
@@ -81,6 +82,11 @@ class PerfTest:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type or exc_val or exc_tb:
+            logger.info(f"{exc_type=}")
+            logger.info(f"{exc_val=}")
+            logger.info(f"traceback: {''.join(traceback.format_tb(exc_tb))}")
+
         failure = self.debug()
 
         self.tear_down()
@@ -170,11 +176,11 @@ class PerfTest:
 
     def check_rebalance(self) -> str:
         if self.dynamic_infra:
-            pass
-        else:
-            for master in self.cluster_spec.masters:
-                if self.rest.is_not_balanced(master):
-                    return 'The cluster is not balanced'
+            return
+
+        for master in self.cluster_spec.masters:
+            if not self.rest.is_balanced(master):
+                return "The cluster is not balanced"
 
     def check_failover(self) -> Optional[str]:
         if self.dynamic_infra:

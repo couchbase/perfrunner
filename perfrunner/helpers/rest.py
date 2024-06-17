@@ -371,11 +371,11 @@ class DefaultRestHelper(RestBase):
     def get_counters(self, host: str) -> dict:
         return self.get(url=self._get_api_url(host=host, path='pools/default')).json()['counters']
 
-    def is_not_balanced(self, host: str) -> int:
-        logger.info('Checking if cluster is balanced using rebalance counters ({})'.format(host))
+    def is_balanced(self, host: str) -> bool:
+        logger.info(f"Checking if cluster is balanced using rebalance counters ({host})")
         counters = self.get_counters(host)
         logger.info(f"counters : {counters}")
-        return counters.get('rebalance_start', 0) != counters.get('rebalance_success', 0)
+        return counters.get("rebalance_start", 0) == counters.get("rebalance_success", 0)
 
     def get_failover_counter(self, host: str) -> int:
         logger.info('Checking failover counter ({})'.format(host))
@@ -1900,6 +1900,16 @@ class CapellaRestBase(DefaultRestHelper):
         api = f"{self.dedicated_client.internal_url}/status"
         response = self.get(url=api)
         return response.json()["commit"]
+
+    def is_balanced(self, host: str) -> bool:
+        logger.info(f"Getting rebalance counters ({host})")
+        counters = self.get_counters(host)
+        logger.info(f"counters : {counters}")
+
+        # Don't return balanced status based on counters, due to issues such as
+        # AV-78172 and AV-79807
+        logger.info(f"Checking if cluster is balanced without counters ({host})")
+        return self.get(url=self._get_api_url(host=host, path="pools/default")).json()["balanced"]
 
 
 class CapellaProvisionedRestHelper(CapellaRestBase):

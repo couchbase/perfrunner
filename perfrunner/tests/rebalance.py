@@ -48,7 +48,7 @@ class RebalanceTest(PerfTest):
 
     def is_balanced(self):
         for master in self.cluster_spec.masters:
-            if self.rest.is_not_balanced(master):
+            if not self.rest.is_balanced(master):
                 return False
         return True
 

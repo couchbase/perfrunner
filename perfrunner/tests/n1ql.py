@@ -331,7 +331,7 @@ class N1QLLatencyRebalanceTest(N1QLLatencyTest):
 
     def is_balanced(self):
         for master in self.cluster_spec.masters:
-            if self.rest.is_not_balanced(master):
+            if not self.rest.is_balanced(master):
                 return False
         return True
 
@@ -581,7 +581,7 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
 
     def is_balanced(self):
         for master in self.cluster_spec.masters:
-            if self.rest.is_not_balanced(master):
+            if not self.rest.is_balanced(master):
                 return False
         return True
 
@@ -881,7 +881,7 @@ class N1QLXattrThroughputRebalanceTest(N1QLXattrThroughputTest):
 
     def is_balanced(self):
         for master in self.cluster_spec.masters:
-            if self.rest.is_not_balanced(master):
+            if not self.rest.is_balanced(master):
                 return False
         return True
 

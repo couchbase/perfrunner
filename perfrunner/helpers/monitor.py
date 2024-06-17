@@ -92,7 +92,7 @@ class Monitor:
 
             if progress is not None:
                 logger.info('Rebalance progress: {} %'.format(progress))
-        if self.rest.is_not_balanced(self.master_node):
+        if not self.rest.is_balanced(self.master_node):
             rebalance_report = self.rest.get_rebalance_report(self.master_node)
             completion_message = rebalance_report["completionMessage"]
             logger.interrupt(f"Rebalance failed with message {completion_message}")

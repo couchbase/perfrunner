@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from logger import logger
 from perfrunner.helpers import local
@@ -13,17 +14,17 @@ class BackupRestoreTest(PerfTest):
     def extract_tools(self):
         local.extract_cb_any(filename='couchbase')
 
-    def flush_buckets(self):
+    def flush_buckets(self, master_node: Optional[str] = None):
         for i in range(self.test_config.cluster.num_buckets):
             bucket = 'bucket-{}'.format(i + 1)
-            self.rest.flush_bucket(self.master_node, bucket)
+            self.rest.flush_bucket(master_node or self.master_node, bucket)
 
-    def backup(self, mode=None):
+    def backup(self, master_node: Optional[str] = None, mode: Optional[str] = None):
         local.backup(
-            master_node=self.master_node,
+            master_node=master_node or self.master_node,
             cluster_spec=self.cluster_spec,
             threads=self.test_config.backup_settings.threads,
-            wrapper=self.rest.is_community(self.master_node),
+            wrapper=self.rest.is_community(master_node or self.master_node),
             mode=mode,
             compression=self.test_config.backup_settings.compression,
             storage_type=self.test_config.backup_settings.storage_type,
@@ -49,17 +50,18 @@ class BackupRestoreTest(PerfTest):
                       threads,
                       self.rest.is_community(self.master_node))
 
-    def restore(self):
+    def restore(self, master_node: Optional[str] = None):
         local.drop_caches()
 
         local.restore(cluster_spec=self.cluster_spec,
-                      master_node=self.master_node,
+                      master_node=master_node or self.master_node,
                       threads=self.test_config.restore_settings.threads,
-                      wrapper=self.rest.is_community(self.master_node),
+                      wrapper=self.rest.is_community(master_node or self.master_node),
                       include_data=self.test_config.backup_settings.include_data,
                       use_tls=self.test_config.restore_settings.use_tls,
                       encrypted=self.test_config.backup_settings.encrypted,
-                      passphrase=self.test_config.backup_settings.passphrase)
+                      passphrase=self.test_config.backup_settings.passphrase,
+                      disable_hlv=True if self.test_config.xdcr_settings.mobile else False)
 
     def backup_list(self):
         snapshots = local.get_backup_snapshots(self.cluster_spec)
@@ -385,8 +387,8 @@ class RestoreTest(BackupRestoreTest):
 
     @with_stats
     @timeit
-    def restore(self):
-        super().restore()
+    def restore(self, master_node: Optional[str] = None):
+        super().restore(master_node)
 
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
@@ -580,7 +582,7 @@ class ImportSampleDataTest(ImportTest):
 class CloudBackupRestoreTest(BackupRestoreTest):
     COLLECTORS = {'iostat': False}
 
-    def backup(self, master_node=None):
+    def backup(self, master_node: Optional[str] = None):
         self.remote.backup(
             master_node=master_node if master_node else self.master_node,
             cluster_spec=self.cluster_spec,

@@ -1,0 +1,41 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrInitRestoreTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 2 -> 2 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, Mobile Mode Enabled, Restore
+component = xdcr
+category = init_single
+orderby = aa
+
+[stats]
+server_processes = goxdcr
+client_processes = cbbackupmgr
+
+[cluster]
+mem_quota = 24000
+initial_nodes = 2 2
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[xdcr]
+mobile = active
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+
+[compaction]
+db_percentage = 100
+bucket_compaction = false
+
+[backup]
+threads = 16
+storage_type = rift
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = large

@@ -2,7 +2,7 @@
 test = perfrunner.tests.xdcr.UniDirXdcrInitTest
 
 [showfast]
-title = Avg. initial XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, Mobile Mode Enabled
+title = Avg. initial XDCR rate (items/sec), 2 -> 2 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, Mobile Mode Enabled
 component = xdcr
 category = init_single
 orderby = aa
@@ -12,7 +12,7 @@ server_processes = goxdcr
 
 [cluster]
 mem_quota = 24000
-initial_nodes = 1 1
+initial_nodes = 2 2
 num_buckets = 1
 
 [bucket]

@@ -76,7 +76,7 @@ def drop_caches():
     local('sync && echo 3 > /proc/sys/vm/drop_caches')
 
 
-def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int, wrapper: bool = False,
+def backup(master_node: str, cluster_spec: ClusterSpec, threads: int, wrapper: bool = False,
            mode: Optional[str] = None, compression: bool = False,
            storage_type: Optional[str] = None, sink_type: Optional[str] = None,
            shards: Optional[int] = None, include_data: Optional[str] = None, use_tls: bool = False,
@@ -228,7 +228,7 @@ def calc_backup_size(cluster_spec: ClusterSpec,
 
 def restore(master_node: str, cluster_spec: ClusterSpec, threads: int, wrapper: bool = False,
             include_data: Optional[str] = None, use_tls: bool = False, encrypted: bool = False,
-            passphrase: str = 'couchbase'):
+            passphrase: str = 'couchbase', disable_hlv: bool = False):
 
     logger.info('Restore from {}'.format(cluster_spec.backup))
 
@@ -238,7 +238,7 @@ def restore(master_node: str, cluster_spec: ClusterSpec, threads: int, wrapper: 
         cbrestorewrapper(master_node, cluster_spec)
     else:
         cbbackupmgr_restore(master_node, cluster_spec, threads, include_data, use_tls=use_tls,
-                            encrypted=encrypted, passphrase=passphrase)
+                            encrypted=encrypted, passphrase=passphrase, disable_hlv=disable_hlv)
 
 
 def purge_restore_progress(cluster_spec: ClusterSpec, archive: str = '',
@@ -266,7 +266,8 @@ def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
 def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
                         include_data: str, archive: str = '', repo: str = 'default',
                         map_data: Optional[str] = None, use_tls: bool = False,
-                        encrypted: bool = False, passphrase: str = 'couchbase'):
+                        encrypted: bool = False, passphrase: str = 'couchbase',
+                        disable_hlv: bool = False):
 
     flags = ['--archive {}'.format(archive or cluster_spec.backup),
              '--repo {}'.format(repo),
@@ -277,7 +278,8 @@ def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec, threads: in
              '--username {}'.format(cluster_spec.rest_credentials[0]),
              '--password {}'.format(cluster_spec.rest_credentials[1]),
              '--map-data {}'.format(map_data) if map_data else None,
-             '--passphrase {}'.format(passphrase) if encrypted else None]
+             '--passphrase {}'.format(passphrase) if encrypted else None,
+             '--disable-hlv' if disable_hlv else None]
 
     cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
         ' '.join(filter(None, flags)))

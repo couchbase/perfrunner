@@ -576,6 +576,11 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=host, path='settings/replications/{}'.format(replicationid))
         self.post(url=url, data=params)
 
+    def delete_replication(self, host: str, replicationid: str):
+        logger.info(f"Deleting replication {replicationid}")
+        url = self._get_api_url(host=host, path=f'controller/cancelXDCR/{replicationid}')
+        self.delete(url=url)
+
     def trigger_bucket_compaction(self, host: str, bucket: str):
         logger.info('Triggering bucket {} compaction'.format(bucket))
         url = self._get_api_url(host=host,
@@ -661,6 +666,14 @@ class DefaultRestHelper(RestBase):
         api = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
         data = {
             'enableCrossClusterVersioning': 'true'
+        }
+        self.post(url=api, data=data)
+
+    def disable_cross_clustering_versioning(self, host: str, bucket: str):
+        logger.info(f"Enabling cross clustering versioning on node: {host}")
+        api = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
+        data = {
+            'enableCrossClusterVersioning': 'false'
         }
         self.post(url=api, data=data)
 

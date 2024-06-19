@@ -7,6 +7,7 @@ from perfrunner.helpers.misc import target_hash
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.tests.tools import RestoreTest
 from perfrunner.utils.terraform import raise_for_status
 
 
@@ -67,6 +68,10 @@ class XdcrTest(PerfTest):
             params = self.replication_params(from_bucket=bucket,
                                              to_bucket=bucket)
             self.rest.create_replication(self.master_node, params)
+
+    def delete_replications(self, replication_id: str):
+        for bucket in self.test_config.buckets:
+            self.rest.delete_replication(self.master_node, replication_id)
 
     def monitor_replication(self):
         for target in self.target_iterator:
@@ -350,6 +355,57 @@ class UniDirXdcrInitTest(XdcrInitTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.load_target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+
+
+class UniDirXdcrInitRestoreTest(RestoreTest, UniDirXdcrInitTest):
+
+    def __init__(self, *args, **kwargs):
+        XdcrInitTest.__init__(self, *args, **kwargs)
+        self.load_target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+
+    def run(self):
+
+        self.extract_tools()
+
+        if self.test_config.backup_settings.use_tls or \
+           self.test_config.restore_settings.use_tls:
+            self.download_certificate()
+
+        self.get_tool_versions()
+
+        self.load()
+        self.wait_for_persistence()
+        # check_num_items doesn't work when SGW is connected to server, as SGW adds its own
+        # documents (sync, config, heartbeat)
+        if not self.xdcr_settings.mobile:
+            self.check_num_items()
+        self.compact_bucket(wait=True)
+
+        self.configure_wan()
+
+        time_elapsed = self.init_xdcr()
+
+        logger.info(f"XDCR replication took: {time_elapsed}")
+
+        xdcr_replication_rate = self.test_config.cluster.num_buckets \
+            * self.test_config.load_settings.items / time_elapsed
+        logger.info(f"XDCR replication rate is: {xdcr_replication_rate}")
+
+        for bucket in self.test_config.buckets:
+            m1, m2 = self.cluster_spec.masters
+            self.backup(m2)
+            replication_id = self.rest.get_xdcr_replication_id(host=m1)
+            self.delete_replications(replication_id)
+            self.flush_buckets(m1)
+            self.flush_buckets(m2)
+
+            try:
+                time_elapsed = self.restore(m2)
+            finally:
+                self.collectlogs()
+            break
+
+        self.report_kpi(time_elapsed)
 
 
 class CapellaUniDirXdcrInitTest(UniDirXdcrInitTest, CapellaXdcrInitTest):

@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
+title = Bulk get
+component = n1ql
+category = Q1_Q3
+sub_category = MOI
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+
+[index]
+statements =
+    CREATE INDEX by_email ON `bucket-1`(email);
+
+[access]
+items = 20000000
+workers = 0
+time = 1200
+n1ql_queries = bulk-get
+n1ql_workers = 240
+workload_instances = 2
+
+[bulk-get]
+statement = SELECT * FROM `bucket-1` WHERE email >= SUBSTR($1,0,5) AND email <= SUBSTR($1,0,5)||'~' LIMIT 10;
+scan_consistency = not_bounded
+args = ["{email}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

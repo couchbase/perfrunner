@@ -641,37 +641,37 @@
         {"job": "sgw-cloud",
           "sg_cluster_map": "cloud/infrastructure/cloud.ini",
           "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
-          "sg_config": "perfrunner/utils/syncgateway/configs/3.0/hebe_e2e_basic_96partitions.config",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions.config",
           "test": "tests/syncgateway/e2e/syncgateway_e2e_push_100cbl_4sgw_1kb_8M.test"},
 
         {"job": "sgw-cloud",
           "sg_cluster_map": "cloud/infrastructure/cloud.ini",
           "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
-          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_channel_xattr_1db_1s_2c.config",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions_1s_2c.config",
           "test": "tests/syncgateway/e2e/syncgateway_e2e_push_100cbl_4sgw_1kb_8M_1s_2c.test"},
 
         {"job": "sgw-cloud",
           "sg_cluster_map": "cloud/infrastructure/cloud.ini",
           "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
-          "sg_config": "perfrunner/utils/syncgateway/configs/3.0/hebe_e2e_basic_96partitions.config",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions.config",
           "test": "tests/syncgateway/e2e/syncgateway_e2e_pull_100cbl_4sgw_1kb_8M.test"},
 
         {"job": "sgw-cloud",
           "sg_cluster_map": "cloud/infrastructure/cloud.ini",
           "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
-          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_channel_xattr_1db_1s_2c.config",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions_1s_2c.config",
           "test": "tests/syncgateway/e2e/syncgateway_e2e_pull_100cbl_4sgw_1kb_8M_1s_2c.test"},
 
         {"job": "sgw-cloud",
           "sg_cluster_map": "cloud/infrastructure/cloud.ini",
           "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
-          "sg_config": "perfrunner/utils/syncgateway/configs/3.0/hebe_e2e_basic_96partitions.config",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions.config",
           "test": "tests/syncgateway/e2e/syncgateway_e2e_bidi_100cbl_4sgw_1kb_8M.test"},
 
         {"job": "sgw-cloud",
           "sg_cluster_map": "cloud/infrastructure/cloud.ini",
           "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
-          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_channel_xattr_1db_1s_2c.config",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions_1s_2c.config",
           "test": "tests/syncgateway/e2e/syncgateway_e2e_bidi_100cbl_4sgw_1kb_8M_1s_2c.test"}
 
     ],

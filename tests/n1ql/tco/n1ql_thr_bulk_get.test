@@ -36,11 +36,11 @@ statements =
 items = 20000000
 workers = 0
 time = 1200
-n1ql_queries = bulk-get
+n1ql_queries = bulk_get
 n1ql_workers = 240
 workload_instances = 2
 
-[bulk-get]
+[n1ql-bulk_get]
 statement = SELECT * FROM `bucket-1` WHERE email >= SUBSTR($1,0,5) AND email <= SUBSTR($1,0,5)||'~' LIMIT 10;
 scan_consistency = not_bounded
 args = ["{email}"]

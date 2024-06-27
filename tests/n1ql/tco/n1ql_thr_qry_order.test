@@ -36,11 +36,11 @@ statements =
 items = 20000000
 workers = 0
 time = 1200
-n1ql_queries = singleton-unique-lookup
+n1ql_queries = singleton_unique_lookup
 n1ql_workers = 240
 workload_instances = 2
 
-[n1ql-singleton-unique-lookup]
+[n1ql-singleton_unique_lookup]
 statement = SELECT x.alt_email FROM (SELECT alt_email FROM `bucket-1` WHERE email >= SUBSTR($1,0,3) AND email <= SUBSTR($1,0,3)||'~' LIMIT 1000) x ORDER BY x.alt_email;
 scan_consistency = not_bounded
 args = ["{email}"]

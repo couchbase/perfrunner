@@ -2152,23 +2152,29 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         """
         cluster_ids = []
 
-        for i, instance_id in enumerate(self.instance_ids):
-            resp = self.columnar_api.get_specific_columnar_instance(self.tenant_id, self.project_id,
-                                                                    instance_id)
+        for instance_id, (cluster_label, _) in zip(self.instance_ids, self.infra_spec.clusters):
+            resp = self.columnar_api.get_columnar_nodes(instance_id)
             resp.raise_for_status()
-            instance_config = resp.json()["data"]["config"]
+            nodes = resp.json()
 
-            cluster_id = instance_config["clusterId"]
-            logger.info(f'Cluster ID for instance {instance_id}: {cluster_id}')
+            cluster_id = nodes[0]["clusterId"]
+            logger.info(f"Cluster ID for instance {instance_id}: {cluster_id}")
             cluster_ids.append(cluster_id)
 
-            endpoint = instance_config["endpoint"]  # this is the SRV url
-            hostname_suffix = endpoint.removeprefix("cb.")
-            node_count = instance_config["nodeCount"]
-            nodes = [f"svc-da-node-{i+1:03d}.{hostname_suffix}:kv,cbas" for i in range(node_count)]
-            cluster, _ = list(self.infra_spec.clusters)[i]
-            logger.info(f"Cluster nodes for instance {instance_id}: {pretty_dict(nodes)}")
-            self.infra_spec.config.set("clusters", cluster, "\n" + "\n".join(nodes))
+            hostnames_with_services = []
+            for n in nodes:
+                hostname = n["config"]["hostname"]
+                services = ",".join(s["type"] for s in n["config"]["services"])
+                hostnames_with_services.append(f"{hostname}:{services}")
+
+            logger.info(
+                f"Cluster nodes for instance {instance_id}: "
+                f"{pretty_dict(hostnames_with_services)}"
+            )
+
+            self.infra_spec.config.set(
+                "clusters", cluster_label, "\n" + "\n".join(hostnames_with_services)
+            )
 
         self.infra_spec.config.set("controlplane", "cluster_ids", "\n".join(cluster_ids))
         self.infra_spec.update_spec_file()

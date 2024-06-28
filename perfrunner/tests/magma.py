@@ -49,7 +49,7 @@ class MagmaBenchmarkTest(PerfTest):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.tear_down()
 
-        if exc_type == KeyboardInterrupt:
+        if isinstance(exc_type, KeyboardInterrupt):
             logger.warn('The test was interrupted')
             return True
 

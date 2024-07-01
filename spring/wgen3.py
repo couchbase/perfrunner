@@ -35,6 +35,7 @@ from spring.docgen import (
     EventingSmallCounterDocument,
     EventingSmallDocument,
     ExtReverseLookupDocument,
+    FixedTextAndVectorDocument,
     FTSDocument,
     FTSRebalanceDocument,
     GroupedDocument,
@@ -61,6 +62,7 @@ from spring.docgen import (
     MovingWorkingSetKey,
     MultiBucketDocument,
     MultiVectorDocument,
+    MutateVectorDocument,
     NestedDocument,
     NewOrderedKey,
     PackageDocument,
@@ -854,7 +856,7 @@ class SeqFetchModifyUpsertsWorker(Worker):
         self.default_load(sid)
 
     def init_doc_modifier(self, sid, ws, target):
-        if ws.modify_doc_loader == "multi_vector":
+        if ws.modify_doc_loader == "multi_vector" or ws.modify_doc_loader == "mutate_vector":
             knn_list = deque()
             for seq_id in range(sid, ws.items, ws.workers):
                 doc = self.cb.get(target, str(seq_id))
@@ -863,7 +865,13 @@ class SeqFetchModifyUpsertsWorker(Worker):
                 knn_list.append(knn)
                 if len(knn_list) >= 10:
                     break
-            self.doc_modifier = MultiVectorDocument(knn_list)
+            if ws.modify_doc_loader == "multi_vector":
+                self.doc_modifier = MultiVectorDocument(knn_list)
+            else:
+                self.doc_modifier = MutateVectorDocument(knn_list)
+        elif ws.modify_doc_loader == "filter_vector":
+            filtering = int((ws.items * ws.filtering_percentage)/100)
+            self.doc_modifier = FixedTextAndVectorDocument(filtering = filtering)
         else :
             self.doc_modifier = TextAndVectorDocument()
 

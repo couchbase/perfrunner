@@ -59,6 +59,8 @@ class SecondaryIndexTest(PerfTest):
         self.cbindexperf_repeat = self.test_config.gsi_settings.cbindexperf_repeat
         self.cbindexperf_clients = self.test_config.gsi_settings.cbindexperf_clients
         self.cbindexperf_limit = self.test_config.gsi_settings.cbindexperf_limit
+        self.vector_filter_percentage  = int(self.test_config.gsi_settings.vector_filter_percentage)
+        self.vector_scan_probes = int(self.test_config.gsi_settings.vector_scan_probes)
         self.local_path_to_cbindex = './opt/couchbase/bin/cbindex'
         self.is_ssl = False
         if self.test_config.cluster.enable_n2n_encryption:
@@ -78,6 +80,14 @@ class SecondaryIndexTest(PerfTest):
                         scan_spec["Limit"] = self.cbindexperf_limit
                 if self.cbindexperf_clients:
                     cbindexperf_contents["Clients"] = self.cbindexperf_clients
+                if self.vector_filter_percentage:
+                    filter_data = [{"Low": "eligible" , "High": "eligible", "Inclusion":3}]
+                    for scan_spec in cbindexperf_contents["ScanSpecs"]:
+                        scan_spec["Scans"][0]["Filter"] = filter_data + \
+                                                          scan_spec["Scans"][0]["Filter"]
+                if self.vector_scan_probes:
+                    for scan_spec in cbindexperf_contents["ScanSpecs"]:
+                        scan_spec["IndexVector"]["Probes"] =  self.vector_scan_probes
 
             with open(self.configfile, 'w') as f:
                 json.dump(cbindexperf_contents, f, indent=4)
@@ -128,6 +138,48 @@ class SecondaryIndexTest(PerfTest):
             raise Exception('existing 2i latency stats file could not be removed')
         else:
             logger.info('Existing 2i latency stats file removed')
+
+    def cloud_restore(self):
+        self.remote.extract_cb_any(filename='couchbase',
+                                   worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+
+        credential = read_aws_credential(
+            self.test_config.backup_settings.aws_credential_path, self.cloud_infra)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+        self.remote.delete_existing_staging_dir(self.test_config.backup_settings.obj_staging_dir)
+        collection_map = self.test_config.collection.collection_map
+        restore_mapping = self.test_config.restore_settings.map_data
+        if restore_mapping is None and collection_map:
+            for target in self.target_iterator:
+                if not collection_map.get(
+                        target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
+                    restore_mapping = \
+                        "{0}._default._default={0}.scope-1.collection-1"\
+                        .format(target.bucket)
+        archive = self.test_config.restore_settings.backup_storage
+        if self.test_config.restore_settings.modify_storage_dir_name:
+            suffix_repo = "aws"
+            if self.cluster_spec.capella_infrastructure:
+                suffix_repo = self.cluster_spec.capella_backend
+            archive = archive + "/" + suffix_repo
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            archive=archive,
+                            repo=self.test_config.restore_settings.backup_repo,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            map_data=restore_mapping,
+                            encrypted=self.test_config.restore_settings.encrypted,
+                            passphrase=self.test_config.restore_settings.passphrase,
+                            filter_keys=self.test_config.restore_settings.filter_keys)
+        self.wait_for_persistence()
 
     def batch_create_index_collection_options(self, indexes, storage):
         indexes_copy = copy.deepcopy(indexes)
@@ -2437,3 +2489,108 @@ class IndexerFailureDetectionTest(AutoFailoverAndFailureDetectionTest, Secondary
 
         if self.is_balanced():
             self.report_kpi()
+
+
+class InitialVectorSecondaryIndexTest(InitialandIncrementalandRecoverySecondaryIndexTest):
+
+    def load(self):
+       self.cloud_restore()
+
+    def batch_create_index_collection_options(self, indexes, storage):
+        indexes_copy = copy.deepcopy(indexes)
+        all_options = ""
+        ddl_statement = 'CREATE INDEX `{index}` ON `{bucket}`.`{scope}`.`{collection}`({fields})'
+        for bucket_name, scope_map in indexes_copy.items():
+            for scope_name, collection_map in scope_map.items():
+                for collection_name, index_map in collection_map.items():
+                    for index, index_config in index_map.items():
+                        configs = ""
+                        if isinstance(index_config, dict):
+                            index_def = index_config.pop("field")
+                            if index_config.get("dimension", None):
+                                if self.test_config.gsi_settings.vector_dimension == 0:
+                                    logger.interrupt("Cannot create index. Vector " \
+                                                     "Dimensions not assigned in test file")
+                                index_config["dimension"] = \
+                                    self.test_config.gsi_settings.vector_dimension
+                                if self.test_config.gsi_settings.vector_description:
+                                    index_config["description"] = \
+                                    f"\'{self.test_config.gsi_settings.vector_description}\'"
+                                if self.test_config.gsi_settings.vector_similarity:
+                                    index_config["similarity"] = \
+                                        f"\'{self.test_config.gsi_settings.vector_similarity}\'"
+                            for config, value in index_config.items():
+                                configs = configs + "'{}':{}, ".format(config, value)
+                        else:
+                            index_def = index_config
+                        if self.test_config.gsi_settings.index_def_prefix:
+                            index_def = self.test_config.gsi_settings.index_def_prefix +\
+                                ", "+index_def
+                        if self.test_config.gsi_settings.override_index_def:
+                            index_def = self.test_config.gsi_settings.override_index_def
+                        options = "-type n1ql "
+                        ddl_statement = ddl_statement.format(index=index,
+                                             bucket=bucket_name,
+                                             scope=scope_name,
+                                             collection=collection_name,
+                                             fields=index_def)
+
+                        ddl_statement = ddl_statement + \
+                            " WITH {{ {config}'defer_build':true}}".format(config=configs)
+                        options = options + '-index_ddl "{}"'.format(ddl_statement)
+                        options = options.rstrip(',')
+                        all_options = all_options + options
+                        logger.info(all_options)
+        return all_options
+
+
+class VectorSecondaryIndexingScanTest(SecondaryIndexingScanTest, InitialVectorSecondaryIndexTest):
+
+    def batch_create_index_collection_options(self, indexes, storage):
+        return InitialVectorSecondaryIndexTest.batch_create_index_collection_options(
+            self, indexes, storage
+        )
+
+    def run(self):
+        self.remove_statsfile()
+        self.cloud_restore()
+        self.wait_for_persistence()
+        initial_index_time = self.build_secondaryindex()
+        logger.info(f"Initial index build time is {initial_index_time}")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf", is_ssl=self.is_ssl)
+        scan_thr, row_thr = self.read_scanresults()
+        percentile_latencies = self.calculate_scan_latencies()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(percentile_latencies, scan_thr, 0)
+        self.validate_num_connections()
+
+
+class VectorSecondaryScanWithEqualityFiltersTest(VectorSecondaryIndexingScanTest):
+
+    def cloud_restore(self):
+        super().cloud_restore()
+        access_settings = self.test_config.access_settings
+        access_settings.filtering_percentage = self.vector_filter_percentage
+        self.access(settings=access_settings)
+
+
+class VectorSecondaryScanWithLThanOpFiltersTest(VectorSecondaryIndexingScanTest):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        if self.configfile:
+            with open(self.configfile, 'r') as f:
+                cbindexperf_contents = json.load(f)
+                if self.vector_filter_percentage:
+                    total_docs = self.test_config.load_settings.items
+                    filter_data = [{"Low": 0,
+                                    "High": total_docs*int(self.vector_filter_percentage)//100,
+                                    "Inclusion":1}]
+                    for scan_spec in cbindexperf_contents["ScanSpecs"]:
+                        scan_spec["Scans"][0]["Filter"] = filter_data + \
+                            scan_spec["Scans"][0]["Filter"]
+
+            with open(self.configfile, 'w') as f:
+                json.dump(cbindexperf_contents, f, indent=4)

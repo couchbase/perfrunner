@@ -1,0 +1,60 @@
+[test_case]
+test = perfrunner.tests.secondary.VectorSecondaryScanWithLThanOpFiltersTest
+
+[showfast]
+title = 10%% filter With LThan Operator, Vector Search, 1 bucket x 100M doc 128dims ,single 2i index, SIFT Dataset, no replica
+sub_category = Plasma
+component = secondary
+category = vector
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 100000
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+backend_storage = magma
+eviction_policy = fullEviction
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[load]
+items = 100000000
+size = 1024
+workers = 50
+key_fmtr = no_hash
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index.json
+indexer.settings.storage_mode = plasma
+vector_dimension = 128
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanLatency_concurrency_1_1B_1s_1c.json
+disable_perindex_stats = False
+vector_filter_percentage = 10
+index_def_prefix = scalar
+override_index_def = emb Vector, scalar
+
+[restore]
+backup_storage = s3://fts-vector-100m-sift-128-dims
+backup_repo = fts_vector_100m_sift_128_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+num_reader_threads = disk_io_optimized

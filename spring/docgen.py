@@ -2507,6 +2507,7 @@ class TimeSeriesDocument(Document):
 
         return doc
 
+
 class MultiVectorDocument:
     def __init__(self, knn_list: deque) -> None:
         self.knn_list = knn_list
@@ -2517,6 +2518,7 @@ class MultiVectorDocument:
          self.knn_list.appendleft(doc["emb"])
          return doc
 
+
 class TextAndVectorDocument:
     def __init__(self) -> None:
         self.fk = Faker()
@@ -2526,4 +2528,28 @@ class TextAndVectorDocument:
         doc = doc.content
         text = self.fk.sentence(20)
         doc["text"] = text
+        return doc
+
+
+class MutateVectorDocument(MultiVectorDocument):
+
+    def next(self, doc):
+        doc = doc.content
+        self.knn_list.appendleft(doc["emb"])
+        doc["emb"] = self.knn_list.pop()
+        return doc
+
+
+class FixedTextAndVectorDocument:
+    def __init__(self, filtering:int) -> None:
+        self.filtering = filtering
+
+    '''it expects a doc with field field "id" which is sequential'''
+    def next(self, doc):
+        doc = doc.content
+        if int(doc["id"]) < self.filtering:
+            scalar = "eligible"
+        else:
+            scalar = "not_eligible"
+        doc["scalar"] = scalar
         return doc

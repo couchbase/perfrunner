@@ -1054,12 +1054,12 @@ class RemoteLinux(Remote):
                 archive: str = '', repo: str = 'default', obj_staging_dir: Optional[str] = None,
                 obj_region: Optional[str] = None, obj_access_key_id: Optional[str] = None,
                 use_tls: bool = False, map_data: str = None, encrypted: bool = False,
-                passphrase: str = 'couchbase'):
+                passphrase: str = 'couchbase', filter_keys=None):
         logger.info('Restore from {}'.format(archive or cluster_spec.backup))
 
         self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home,
                                  archive, repo, obj_staging_dir, obj_region, obj_access_key_id,
-                                 use_tls, map_data, encrypted, passphrase)
+                                 use_tls, map_data, encrypted, passphrase, filter_keys)
 
     @master_client
     def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
@@ -1067,7 +1067,7 @@ class RemoteLinux(Remote):
                             obj_staging_dir: Optional[str] = None, obj_region: Optional[str] = None,
                             obj_access_key_id: Optional[str] = None, use_tls: bool = False,
                             map_data: Optional[str] = None, encrypted: bool = False,
-                            passphrase: str = 'couchbase'):
+                            passphrase: str = 'couchbase', filter_keys: str = None):
         restore_to_capella = cluster_spec.capella_infrastructure
 
         with cd(worker_home), cd('perfrunner'):
@@ -1085,7 +1085,8 @@ class RemoteLinux(Remote):
                 '--map-data {}'.format(map_data) if map_data else None,
                 '--disable-analytics --disable-cluster-analytics' if restore_to_capella else None,
                 '--passphrase {}'.format(passphrase) if encrypted else None,
-                '--no-progress-bar --purge'
+                '--no-progress-bar --purge',
+                '--filter-keys "{}"'.format(filter_keys) if filter_keys else None
             ]
 
             cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(

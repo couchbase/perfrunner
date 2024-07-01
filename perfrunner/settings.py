@@ -2008,7 +2008,7 @@ class RestoreSettings:
         self.encrypted = int(options.get('encrypted', self.ENCRYPTED))
         self.passphrase = options.get('passphrase', self.PASSPHRASE)
         self.modify_storage_dir_name = bool(options.get('modify_storage_dir_name', 0))
-
+        self.filter_keys = options.get('filter_keys', None)
         self.cloud = self.CLOUD
         if self.backup_storage:
             if self.backup_storage.startswith('s3://'):
@@ -2151,6 +2151,11 @@ class GSISettings:
         self.disable_perindex_stats = options.get('disable_perindex_stats',
                                                   self.DISABLE_PERINDEX_STATS)
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
+        self.vector_dimension = int(options.get('vector_dimension', 0))
+        self.vector_description = options.get('vector_description', None)
+        self.vector_similarity = options.get('vector_similarity', None)
+        self.index_def_prefix = options.get("index_def_prefix", None)
+        self.override_index_def = options.get("override_index_def", None)
 
         self.settings = {}
         for option in options:
@@ -2174,6 +2179,8 @@ class GSISettings:
         if self.settings.get('planner.excludeNode'):
             self.excludeNode = self.settings.get('planner.excludeNode')
             self.settings.pop('planner.excludeNode')
+        self.vector_filter_percentage = options.get('vector_filter_percentage', 0)
+        self.vector_scan_probes = options.get('vector_scan_probes', 0)
 
     def __str__(self) -> str:
         return str(self.__dict__)

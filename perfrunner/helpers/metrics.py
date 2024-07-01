@@ -32,9 +32,9 @@ DailyMetric = Tuple[
 ]
 
 
-def s2m(seconds: float) -> float:
+def s2m(seconds: float, precision:int = 1) -> float:
     """Convert seconds to minutes."""
-    return round(seconds / 60, 1)
+    return round(seconds / 60, precision)
 
 
 def strip(s: str) -> str:

@@ -1,0 +1,61 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialVectorSecondaryIndexTest
+
+[showfast]
+title = Vector Search, 1 bucket x 10M doc 768dims,single 2i index, Cohere Dataset, no replica, 10M mutations during incremental phase
+sub_category = Plasma
+component = secondary
+category = vector
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 100000
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+backend_storage = magma
+eviction_policy = fullEviction
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[load]
+items = 10000000
+size = 1024
+workers = 50
+key_fmtr = no_hash
+
+[access]
+items = 10000000
+workers = 50
+modify_doc_loader = mutate_vector
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index.json
+indexer.settings.storage_mode = plasma
+vector_dimension = 768
+run_recovery_test = 1
+
+[restore]
+backup_storage = s3://fts-cohere-large-10m-768-dims
+backup_repo = fts_cohere_large_10m_768_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+num_reader_threads = disk_io_optimized

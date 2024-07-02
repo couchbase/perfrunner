@@ -1,5 +1,4 @@
 from datetime import timedelta
-from urllib import parse
 
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
@@ -10,7 +9,7 @@ from couchbase.options import QueryOptions
 from couchbase.views import ViewQuery
 from txcouchbase.cluster import TxCluster
 
-from spring.cbgen_helpers import backoff, quiet, time_all, timeit
+from spring.cbgen_helpers import backoff, get_connection, quiet, time_all, timeit
 
 
 class CBAsyncGen4:
@@ -18,16 +17,13 @@ class CBAsyncGen4:
     TIMEOUT = 120  # seconds
 
     def __init__(self, **kwargs):
-        connstr = 'couchbase://{host}?'
-        connstr = connstr.format(host=kwargs['host'])
-
-        if kwargs["ssl_mode"] == 'n2n':
-            connstr = connstr.replace('couchbase', 'couchbases')
-            connstr += '&certpath=root.pem'
+        connection_string, cert_path = get_connection(**kwargs)
 
         self.cluster = TxCluster(
-            connstr,
-            authenticator=PasswordAuthenticator(kwargs['username'], kwargs['password']),
+            connection_string,
+            authenticator=PasswordAuthenticator(
+                kwargs["username"], kwargs["password"], cert_path=cert_path
+            ),
             kv_timeout=timedelta(seconds=self.TIMEOUT),
         )
 
@@ -101,25 +97,19 @@ class CBGen4(CBAsyncGen4):
     TIMEOUT = 600  # seconds
     N1QL_TIMEOUT = 600
 
-    def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
-        connstr = 'couchbase://{host}?{params}'
-
-        enable_tracing = kwargs["connstr_params"].pop('enable_tracing', 'false').lower() == 'true'
-
-        connstr_params = parse.urlencode(kwargs["connstr_params"])
-
-        if ssl_mode == 'data' or ssl_mode == 'n2n':
-            connstr = connstr.replace('couchbase', 'couchbases')
-            connstr += '&certpath=root.pem'
-
-        connstr = connstr.format(host=kwargs['host'], params=connstr_params)
-
+    def __init__(self, **kwargs):
+        enable_tracing = (
+            kwargs.get("connstr_params", {}).pop("enable_tracing", "false").lower() == "true"
+        )
+        connection_string, cert_path = get_connection(**kwargs)
         self.cluster = Cluster(
-            connstr,
-            authenticator=PasswordAuthenticator(kwargs['username'], kwargs['password']),
+            connection_string,
+            authenticator=PasswordAuthenticator(
+                kwargs["username"], kwargs["password"], cert_path=cert_path
+            ),
             kv_timeout=timedelta(seconds=self.TIMEOUT),
-            query_timeout=timedelta(seconds=n1ql_timeout if n1ql_timeout else self.N1QL_TIMEOUT),
-            enable_tracing=enable_tracing
+            query_timeout=timedelta(seconds=kwargs.get("n1ql_timeout") or self.N1QL_TIMEOUT),
+            enable_tracing=enable_tracing,
         )
         self.bucket_name = kwargs['bucket']
         self.bucket = None

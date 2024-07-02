@@ -2,7 +2,8 @@ import random
 from collections import defaultdict
 from threading import Timer
 from time import sleep, time
-from typing import Callable, Union
+from typing import Callable, Optional, Union
+from urllib import parse
 
 import pkg_resources
 from decorator import decorator
@@ -124,3 +125,22 @@ def time_all(method: Callable, *args, **kwargs):
         error_tracker.track(method.__name__, e)
     except HTTPError as e:
         error_tracker.track(method.__name__, e)
+
+
+def get_connection(**kwargs) -> tuple[str, Optional[str]]:
+    """Create a desired combination of connection string and certificate from the kwargs input."""
+    scheme = "couchbase"
+    cert_path = None
+    connstr_params: dict = kwargs.get("connstr_params", {})
+    ssl_mode = kwargs.get("ssl_mode", "none")
+    if ssl_mode in ["data", "n2n", "capella", "nebula", "dapi"]:
+        scheme = "couchbases"
+        if ssl_mode in ["nebula", "dapi"]:
+            connstr_params.update({"ssl": "no_verify"})
+        else:
+            cert_path = "root.pem"
+        connstr_params.update({"sasl_mech_force": "PLAIN"})
+
+    encoded_params = parse.urlencode(connstr_params)
+    host = kwargs.get("host", "localhost")
+    return f"{scheme}://{host}?{encoded_params}", cert_path

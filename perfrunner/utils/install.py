@@ -646,9 +646,17 @@ class CloudInstaller(CouchbaseInstaller):
 
             download_file(url, package_name)
 
+            uploads = []
             for client in self.cluster_spec.workers:
                 logger.info(f'uploading client package {package_name} to {client}')
-                upload_couchbase(client, user, password, package_name)
+                args = (client, user, password, package_name)
+
+                worker_process = Process(target=upload_couchbase, daemon=True, args=args)
+                worker_process.start()
+                uploads.append(worker_process)
+
+            for process in uploads:
+                process.join()
 
         download_file(self.url, package_name)
 

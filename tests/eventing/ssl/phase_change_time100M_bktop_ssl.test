@@ -44,6 +44,3 @@ updates = 100
 items = 100000000
 workers = 100
 ssl_mode = n2n
-
-[clients]
-python_client = 3.0.8

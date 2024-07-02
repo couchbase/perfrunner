@@ -48,6 +48,3 @@ items = 100000000
 workers = 20
 time = 1200
 ssl_mode = n2n
-
-[clients]
-python_client = 3.0.8

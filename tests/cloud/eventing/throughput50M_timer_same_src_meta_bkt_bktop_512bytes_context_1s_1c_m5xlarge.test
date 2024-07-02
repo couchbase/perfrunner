@@ -51,7 +51,3 @@ config_file = tests/eventing/config/function_same_src_metadata_bkt_1s_1c.json
 time = 600
 ssl_mode = n2n
 min_tls_version = tlsv1.2
-
-[clients]
-libcouchbase = 3.2.0
-python_client = 3.2.0

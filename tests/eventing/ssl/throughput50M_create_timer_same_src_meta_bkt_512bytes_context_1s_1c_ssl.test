@@ -52,6 +52,3 @@ workers = 1
 throughput = 100
 time = 600
 ssl_mode = n2n
-
-[clients]
-python_client = 3.0.8

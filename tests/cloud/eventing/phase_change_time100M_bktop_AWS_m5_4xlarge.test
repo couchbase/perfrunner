@@ -47,7 +47,3 @@ items = 100000000
 workers = 100
 ssl_mode = n2n
 min_tls_version = tlsv1.2
-
-[clients]
-libcouchbase = 3.2.0
-python_client = 3.2.0

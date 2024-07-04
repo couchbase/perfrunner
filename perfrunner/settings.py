@@ -2854,7 +2854,7 @@ class CH2ConnectionSettings:
 
     @property
     def cli_args_common(self) -> list[str]:
-        flags = [f"--userid {self.userid}", f"--password {self.password}"]
+        flags = [f"--userid {self.userid}", f"--password '{self.password}'"]
 
         if self.use_tls:
             flags += ["--tls"]

@@ -148,12 +148,13 @@ def maybe_atoi(a: str, t=int) -> Union[int, float, str, bool]:
             return a
 
 
-def human_format(number: float) -> str:
+def human_format(number: float, p: int = 0) -> str:
+    p = max(0, p)
     magnitude = 0
     while abs(number) >= 1e3:
         magnitude += 1
         number /= 1e3
-    return '{:.0f}{}'.format(number, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
+    return f'{number:.{p}f}{["", "K", "M", "G", "T", "P"][magnitude]}'
 
 
 def copy_template(source, dest):
@@ -307,6 +308,21 @@ def lookup_address(address: Union[bytes, str], port: Union[bytes, str, int] = No
     """
     entries = socket.getaddrinfo(address, port)
     return [entry[-1][0] for entry in entries]
+
+
+def get_s3_bucket_stats(bucket_name: str) -> tuple[int, int]:
+    """Return the number of objects and total size in bytes of an S3 bucket.
+
+    Returns (-1, -1) on failure to get stats.
+    """
+    logger.info(f"Getting stats for S3 bucket: {bucket_name}")
+    stdout = run_aws_cli_command(f"s3 ls s3://{bucket_name} --recursive --summarize | tail -2")
+    if stdout is not None:
+        objects, size = [int(line.split()[-1]) for line in stdout.splitlines()]
+        return objects, size
+
+    logger.error(f"Failed to get stats for S3 bucket: {bucket_name}")
+    return -1, -1
 
 
 class SSLCertificate:

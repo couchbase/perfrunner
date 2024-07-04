@@ -1444,7 +1444,7 @@ class DefaultRestHelper(RestBase):
         }
         self.post(url=api, data=data)
 
-    def get_analytics_replica(self, host: str) -> dict:
+    def get_analytics_settings(self, host: str) -> dict:
         api = self._get_api_url(host=host, path="settings/analytics")
         return self.get(url=api).json()
 

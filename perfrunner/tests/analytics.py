@@ -14,7 +14,11 @@ from requests_toolbelt.adapters import socket_options
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import (
+    get_s3_bucket_stats,
+    human_format,
+    pretty_dict,
+)
 from perfrunner.helpers.rest import (
     ANALYTICS_PORT,
     ANALYTICS_PORT_SSL,
@@ -320,6 +324,21 @@ class AnalyticsTest(PerfTest):
             t0 = time.time()
             self.rest.session_post(session, url=url, data=data)
             logger.info(f"Statement execution time: {time.time() - t0}")
+
+    def report_columnar_s3_stats(self):
+        """Report S3 bucket stats for Columnar tests."""
+        bucket_name = self.rest.get_analytics_settings(self.analytics_node).get("blobStorageBucket")
+        if bucket_name is None:
+            logger.warning(
+                "No S3 bucket found in analytics settings. Cannot report S3 bucket stats."
+            )
+            return
+
+        objects, size = get_s3_bucket_stats(bucket_name)
+        if objects > 0:
+            logger.info(
+                f"S3 bucket stats: {objects} objects, {size} bytes ({human_format(size, 2)}B)"
+            )
 
 
 class BigFunTest(AnalyticsTest):
@@ -1400,6 +1419,8 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
 
         self.run_ch2()
         self.report_kpi()
+
+        self.report_columnar_s3_stats()
 
 
 class CapellaColumnarManualOnOffTest(PerfTest):

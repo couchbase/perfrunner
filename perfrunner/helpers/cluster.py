@@ -67,7 +67,7 @@ class ClusterManagerBase:
         if replica_analytics:
             self.rest.set_analytics_replica(self.master_node, replica_analytics)
             self.rebalance()
-            check_replica = self.rest.get_analytics_replica(self.master_node)
+            check_replica = self.rest.get_analytics_settings(self.master_node)
             logger.info("Analytics replica setting: {}".format(check_replica))
 
         if not (analytics_nodes := self.cluster_spec.servers_by_role("cbas")):

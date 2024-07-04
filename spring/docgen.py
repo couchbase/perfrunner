@@ -13,6 +13,7 @@ import spooky
 from faker import Faker
 
 from fastdocgen import build_achievements
+from perfrunner.settings import PhaseSettings as WorkloadSettings
 from perfrunner.workloads.bigfun import query_gen
 from spring.dictionary import (
     CATEGORIES,
@@ -30,7 +31,6 @@ from spring.dictionary import (
     YEARS,
     ZIP_CODES,
 )
-from spring.settings import WorkloadSettings
 
 PRIME = 4889388631
 

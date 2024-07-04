@@ -16,6 +16,8 @@ from psutil import cpu_count
 
 from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
+from perfrunner.settings import PhaseSettings as WorkloadSettings
+from perfrunner.settings import TargetSettings
 from spring.dapigen import DAPIGen
 from spring.docgen import (
     AdvFilterDocument,
@@ -141,7 +143,13 @@ class Worker:
 
     NAME = 'worker'
 
-    def __init__(self, workload_settings, target_settings, shutdown_event=None, workload_id=0):
+    def __init__(
+        self,
+        workload_settings: WorkloadSettings,
+        target_settings: TargetSettings,
+        shutdown_event=None,
+        workload_id: int = 0,
+    ):
         self.ws = workload_settings
         self.ts = target_settings
         self.shutdown_event = shutdown_event

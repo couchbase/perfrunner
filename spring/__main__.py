@@ -1,111 +1,74 @@
+import json
 from argparse import ArgumentParser
+from urllib.parse import urlparse
 
-from spring.settings import TargetSettings, WorkloadSettings
-from spring.wgen import WorkloadGen
+from perfrunner.settings import TargetSettings, TestConfig
+from spring.wgen3 import WorkloadGen
+
+PROG = "spring"
+USAGE = "%(prog)s -t <test file> [OPTIONS]"
 
 
-class CLIParser(ArgumentParser):
-
-    PROG = 'spring'
-    USAGE = (
-        '%(prog)s [-crud PERCENTAGE] [-o #OPS] [-i #ITEMS] [-n #WORKERS] '
-        '[cb://user:pass@host:port/bucket]')
-
-    def __init__(self):
-        super().__init__(prog=self.PROG, usage=self.USAGE)
-        self._add_arguments()
-
-    def _add_arguments(self):
-        self.add_argument(
-            'uri', metavar='URI', nargs='?',
-            default='cb://127.0.0.1:8091/default',
-            help='Connection URI'
-        )
-        self.add_argument(
-            '-c', dest='creates', type=int, default=0, metavar='',
-            help='percentage of "create" operations (0 by default)',
-        )
-        self.add_argument(
-            '-r', dest='reads', type=int, default=0, metavar='',
-            help='percentage of "read" operations (0 by default)',
-        )
-        self.add_argument(
-            '-u', dest='updates', type=int, default=0, metavar='',
-            help='percentage of "update" operations (0 by default)',
-        )
-        self.add_argument(
-            '-d', dest='deletes', type=int, default=0, metavar='',
-            help='percentage of "delete" operations (0 by default)',
-        )
-        self.add_argument(
-            '-o', dest='ops', type=int, default=float('inf'), metavar='',
-            help='total number of operations (infinity by default)'
-        )
-        self.add_argument(
-            '-t', dest='throughput', type=int, default=float('inf'),
-            metavar='',
-            help='target operations throughput (infinity by default)'
-        )
-        self.add_argument(
-            '-s', dest='size', type=int, default=2048, metavar='',
-            help='average value size in bytes (2048 by default)'
-        )
-        self.add_argument(
-            '-p', dest='prefix', type=str, default='', metavar='',
-            help='key prefix (no prefix by default)'
-        )
-        self.add_argument(
-            '-i', dest='items', type=int, default=0, metavar='',
-            help='number of existing items (0 by default)',
-        )
-        self.add_argument(
-            '-w', dest='working_set', type=int, default=100, metavar='',
-            help='percentage of items in working set, 100 by default'
-        )
-        self.add_argument(
-            '-W', dest='working_set_access', type=int, default=100, metavar='',
-            help=('percentage of operations that hit working set, '
-                  '100 by default')
-        )
-        self.add_argument(
-            '-n', dest='workers', type=int, default=1, metavar='',
-            help='number of workers (1 by default)'
-        )
-        self.add_argument(
-            '-g', dest='generator', type=str, default='basic', metavar='',
-            help='document generator (e.g., "basic" or "nested")'
-        )
-        self.add_argument('--async', action='store_true', default=False,
-                          help='enable asynchronous mode')
-
-    def parse_args(self, *args):
-        args = super().parse_args()
-
-        percentages = [args.creates, args.reads, args.updates, args.deletes]
-        if list(filter(lambda p: not 0 <= p <= 100, percentages)) or \
-                sum(percentages) != 100:
-            self.error('Invalid operation [-c, -r, -u, -d] percentage')
-
-        if not 0 <= args.working_set <= 100:
-            self.error('Invalid working set [-w] percentage.')
-
-        if not 0 <= args.working_set_access <= 100:
-            self.error('Invalid access percentage [-W].')
-
-        if (args.reads or args.updates) and not args.items:
-            self.error('Trying to read/update indefinite dataset. '
-                       'Please specify number of items in dataset (-i)')
-
-        return args
+def get_args():
+    parser = ArgumentParser(prog=PROG, usage=USAGE)
+    parser.add_argument(
+        "--uri",
+        default="cb://Administrator:password@127.0.0.1/default",
+        help="connection URI in the form of: cb://[user:pass]@host:[port]/<bucket>",
+    )
+    parser.add_argument(
+        "-t",
+        "--test",
+        required=True,
+        help="path to a test configuration file",
+    )
+    parser.add_argument(
+        "-f",
+        "--prefix",
+        default="",
+        help="id prefix",
+    )
+    parser.add_argument(
+        "-p",
+        "--phase",
+        default="access",
+        help="phase to run. Example: load, access",
+    )
+    parser.add_argument(
+        "-c",
+        "--cloud",
+        default="{}",
+        help="cloud target settings such as 'cluster_svc' as a json string",
+    )
+    parser.add_argument("override", nargs="*", help="custom test settings")
+    return parser.parse_args()
 
 
 def main():
-    parser = CLIParser()
-    args = parser.parse_args()
+    args = get_args()
+    test_config = TestConfig()
+    test_config.parse(args.test, args.override)
 
-    ws = WorkloadSettings(args)
-    ts = TargetSettings(args.uri, args.prefix)
-    wg = WorkloadGen(ws, ts)
+    phase = f"{args.phase}_settings"
+    if not hasattr(test_config, phase):
+        print(f"Unknown phase settings: {phase}")
+        exit(1)
+
+    phase_settings = getattr(test_config, phase)
+    params = urlparse(args.uri)
+    if not params.hostname or not params.path:
+        print("Invalid connection URI")
+        exit(1)
+
+    target_settings = TargetSettings(
+        host=params.hostname,
+        bucket=params.path[1:],
+        username=params.username or "Administrator",
+        password=params.password or "password",
+        prefix=args.prefix,
+        cloud=json.loads(args.cloud),
+    )
+    wg = WorkloadGen(phase_settings, target_settings)
     wg.run()
 
 

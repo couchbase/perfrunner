@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2GoldfishKafkaLinksIngestionTest
+test = perfrunner.tests.analytics.CH2ColumnarKafkaLinksIngestionTest
 
 [showfast]
 title = Kafka Links Ingestion rate (avg. items/sec), CH2 1000 warehouses, c=11, 2 Analytics nodes, Capella Goldfish, AWS

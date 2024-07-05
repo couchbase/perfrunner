@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2GoldfishPauseResumeTest
+test = perfrunner.tests.analytics.CH2ColumnarSimulatedPauseResumeTest
 
 [showfast]
 title = Pause/Resume, 2A, c=11, analytics only, AWS, Goldfish (remote link)

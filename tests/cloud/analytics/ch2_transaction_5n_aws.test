@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2CloudTest
+test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
 title = CH2 Queries, 3Q x 2A, c=11, transaction only, AWS

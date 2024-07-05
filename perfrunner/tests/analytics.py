@@ -3,6 +3,8 @@ import itertools
 import json
 import random
 import time
+from dataclasses import dataclass
+from typing import Callable, Literal, Optional, Union
 from urllib.parse import urlparse
 
 import requests
@@ -33,111 +35,343 @@ from perfrunner.workloads.tpcdsfun.driver import tpcds
 QueryLatencyPair = tuple[Query, int]
 
 
-class BigFunTest(PerfTest):
+def sqlpp_escape(*identifiers: str) -> Union[str, tuple[str, ...]]:
+    """Return identifiers escaped with backticks for use in SQL++ queries.
 
-    COLLECTORS = {'analytics': True}
+    Assumes that "." characters are bucket/scope/collection separators.
+    """
+    result = tuple(
+        ".".join(f"`{i.strip('`')}`" for i in identifier.split(".")) for identifier in identifiers
+    )
+    return result if len(result) > 1 else result[0]
 
+
+@dataclass(frozen=True)
+class DatasetDef:
+    name: str
+    source: Optional[str] = None
+    where: Optional[str] = None
+
+    def create_at_link_statement(self, link_name: str, storage_format: Optional[str] = None) -> str:
+        name, source, link_name = sqlpp_escape(self.name, self.source or self.name, link_name)
+
+        with_clause = ""
+        if storage_format:
+            with_clause = f' WITH {{"storage-format": {{"format": "{storage_format}"}}}}'
+
+        return f"CREATE DATASET {name}{with_clause} ON {source} AT {link_name} {self.where or ''}"
+
+    def create_standalone_statement(self, pk_field: str = "key", pk_type: str = "string") -> str:
+        name, pk_field, pk_type = sqlpp_escape(self.name, pk_field, pk_type)
+        return f"CREATE DATASET {name} PRIMARY KEY ({pk_field}: {pk_type})"
+
+    def create_external_statement(
+        self,
+        external_bucket: str,
+        file_format: Literal["json", "parquet"],
+        file_ext: str,
+    ) -> str:
+        name, external_bucket = sqlpp_escape(self.name, external_bucket)
+        return (
+            f"CREATE EXTERNAL DATASET {name} ON {external_bucket} AT `external_link` "
+            f"USING '{self.source or self.name}' "
+            f"WITH {{ 'format': '{file_format}', 'include': '*.{file_ext}' }};"
+        )
+
+    def copy_into_statement(
+        self,
+        external_bucket: str,
+        file_format: Literal["json", "parquet"],
+        file_ext: str,
+        path_keyword: Literal["PATH", "USING"] = "PATH",
+    ) -> str:
+        name, external_bucket = sqlpp_escape(self.name, external_bucket)
+        return (
+            f"COPY INTO {name} FROM {external_bucket} "
+            f"AT `external_link` {path_keyword} '{self.source or self.name}' "
+            f"WITH {{ 'format': '{file_format}', 'include': '*.{file_ext}' }};"
+        )
+
+    def create_primary_idx_statement(self) -> str:
+        return f"CREATE PRIMARY INDEX ON {sqlpp_escape(self.name)}"
+
+    def drop_primary_idx_statement(self) -> str:
+        return f"DROP INDEX {self.name}.primary_idx_{self.name}"
+
+    def analyze_statement(self) -> str:
+        return f"ANALYZE ANALYTICS COLLECTION {sqlpp_escape(self.name)}"
+
+
+@dataclass(frozen=True)
+class IndexDef:
+    name: str
+    collection: str
+    fields: tuple[str]
+
+    def create_statement(self) -> str:
+        name, collection = sqlpp_escape(self.name, self.collection)
+        return f"CREATE INDEX {name} ON {collection}({', '.join(self.fields)})"
+
+
+class AnalyticsTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.num_items = 0
         self.analytics_settings = self.test_config.analytics_settings
-        self.config_file = self.analytics_settings.analytics_config_file
         self.analytics_link = self.analytics_settings.analytics_link
-        if self.analytics_link == "Local":
-            self.data_node = self.master_node
-            self.analytics_node = self.analytics_nodes[0]
-        else:
-            self.data_node, self.analytics_node = self.cluster_spec.masters
+        self.storage_format = self.test_config.analytics_settings.storage_format
+        self.config_file = self.analytics_settings.analytics_config_file
 
-    def create_datasets(self, bucket: str):
-        self.disconnect_link()
-        logger.info('Creating datasets')
-        for dataset, key in (
-            ('GleambookUsers-1', 'id'),
-            ('GleambookMessages-1', 'message_id'),
-            ('ChirpMessages-1', 'chirpid'),
-        ):
-            statement = "CREATE DATASET `{}` ON `{}` AT `{}` WHERE `{}` IS NOT UNKNOWN;"\
-                .format(dataset, bucket, self.analytics_link, key)
-            self.rest.exec_analytics_statement(self.analytics_node,
-                                               statement)
+        if self.config_file:
+            with open(self.config_file, "r") as f:
+                self.dataset_config = json.load(f)
 
-    def create_datasets_collections(self, bucket: str):
-        self.disconnect_link()
-        logger.info('Creating datasets')
-        with open(self.config_file, "r") as json_file:
-            analytics_config = json.load(json_file)
-        dataset_list = analytics_config["Analytics"]
-        if analytics_config["DefaultCollection"]:
-            for dataset in dataset_list:
-                statement = "CREATE DATASET `{}` ON `{}` AT `{}` " \
-                            "WHERE `type` = \"{}\" and meta().id like \"%-{}\";"\
-                    .format(dataset["Dataset"], bucket, self.analytics_link,
-                            dataset["Type"], dataset["Group"])
+    @property
+    def is_capella_goldfish(self) -> bool:
+        return (
+            self.cluster_spec.capella_infrastructure and self.cluster_spec.goldfish_infrastructure
+        )
+
+    @property
+    def data_node(self) -> str:
+        return next(self.cluster_spec.masters)
+
+    @property
+    def analytics_node(self) -> str:
+        # If we have several clusters, we assume the second cluster to be the analytics cluster
+        if len(masters := list(self.cluster_spec.masters)) > 1:
+            return masters[1]
+
+        return self.analytics_nodes[0]
+
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        return []
+
+    @property
+    def indexes(self) -> list[IndexDef]:
+        return []
+
+    def exec_and_log_analytics_statement(self, host: str, statement: str) -> requests.Response:
+        """Wrap RestHelper.exec_analytics_statement with logging."""
+        logger.info(f"Running: {statement}")
+        res = self.rest.exec_analytics_statement(host, statement)
+        logger.info(f"Result: {res}")
+        return res
+
+    def _run_statements(
+        self,
+        defs: list[Union[DatasetDef, IndexDef]],
+        get_statement: Callable[[Union[DatasetDef, IndexDef]], str],
+        *,
+        verbose: bool = False,
+    ):
+        """Run analytics statements for each given dataset or index."""
+        for def_ in defs:
+            statement = get_statement(def_)
+            if verbose:
+                self.exec_and_log_analytics_statement(self.analytics_node, statement)
+            else:
                 self.rest.exec_analytics_statement(self.analytics_node, statement)
-        else:
-            for dataset in dataset_list:
-                statement = "CREATE DATASET `{}` ON `{}`.`scope-1`.`{}` AT `{}`;"\
-                    .format(dataset["Dataset"], bucket, dataset["Collection"], self.analytics_link)
-                self.rest.exec_analytics_statement(self.analytics_node, statement)
 
-    def create_index(self):
-        logger.info('Creating indexes')
-        for statement in (
-            "CREATE INDEX usrSinceIdx   ON `GleambookUsers-1`(user_since: string);",
-            "CREATE INDEX gbmSndTimeIdx ON `GleambookMessages-1`(send_time: string);",
-            "CREATE INDEX cmSndTimeIdx  ON `ChirpMessages-1`(send_time: string);",
-        ):
-            self.rest.exec_analytics_statement(self.analytics_node,
-                                               statement)
+    def create_datasets_at_link(self, *, verbose: bool = False):
+        logger.info("Creating datasets")
+        self._run_statements(
+            self.datasets,
+            lambda dataset: dataset.create_at_link_statement(
+                self.analytics_link, self.storage_format
+            ),
+            verbose=verbose,
+        )
 
-    def create_index_collections(self):
-        logger.info('Creating indexes')
-        with open(self.config_file, "r") as json_file:
-            analytics_config = json.load(json_file)
-        index_list = analytics_config["Analytics"]
+    def create_standalone_datasets(self, *, verbose: bool = False):
+        logger.info("Creating standalone datasets")
+        self._run_statements(
+            self.datasets, lambda dataset: dataset.create_standalone_statement(), verbose=verbose
+        )
 
-        for index in index_list:
-            statement = "CREATE INDEX `{}` ON `{}`({}: string);"\
-                .format(index["Index"], index["Dataset"], index["Field"])
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
+    def create_external_datasets(self, *, verbose: bool = False):
+        logger.info("Creating external datasets")
+        self._run_statements(
+            self.datasets,
+            lambda dataset: dataset.create_external_statement(
+                self.analytics_settings.external_bucket,
+                self.analytics_settings.external_file_format,
+                self.analytics_settings.external_file_include,
+            ),
+            verbose=verbose,
+        )
 
-    def disconnect_bucket(self, bucket: str):
-        logger.info('Disconnecting the bucket: {}'.format(bucket))
-        statement = 'DISCONNECT BUCKET `{}`;'.format(bucket)
-        self.rest.exec_analytics_statement(self.analytics_node,
-                                           statement)
+    def create_analytics_indexes(self, *, verbose: bool = False):
+        logger.info("Creating indexes")
+        self._run_statements(self.indexes, lambda index: index.create_statement(), verbose=verbose)
 
-    def connect_link(self):
-        logger.info('Connecting Link {}'.format(self.analytics_link))
-        statement = "CONNECT link {}".format(self.analytics_link)
-        self.rest.exec_analytics_statement(self.analytics_node,
-                                           statement)
+    def create_primary_indexes(self, *, verbose: bool = False):
+        logger.info("Creating primary indexes")
+        self._run_statements(
+            self.datasets, lambda dataset: dataset.create_primary_idx_statement(), verbose=verbose
+        )
 
-    def disconnect_link(self):
-        logger.info('DISCONNECT LINK {}'.format(self.analytics_link))
-        statement = "DISCONNECT LINK {}".format(self.analytics_link)
-        self.rest.exec_analytics_statement(self.analytics_node,
-                                           statement)
+    def drop_primary_indexes(self, *, verbose: bool = False):
+        logger.info("Dropping primary indexes")
+        self._run_statements(
+            self.datasets, lambda dataset: dataset.drop_primary_idx_statement(), verbose=verbose
+        )
 
-    def disconnect(self):
-        for target in self.target_iterator:
-            self.disconnect_bucket(target.bucket)
+    def analyze_datasets(self, *, verbose: bool = False):
+        logger.info("Analyzing datasets for CBO")
+        self._run_statements(
+            self.datasets, lambda dataset: dataset.analyze_statement(), verbose=verbose
+        )
 
     def sync(self):
-        for bucket in self.test_config.buckets:
-            if self.config_file:
-                self.create_datasets_collections(bucket)
-                self.create_index_collections()
-            else:
-                self.create_datasets(bucket)
-                self.create_index()
+        self.disconnect_link()
+        self.create_datasets_at_link()
+        self.create_analytics_indexes()
         self.connect_link()
         for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(self.data_node,
-                                                               bucket,
-                                                               self.analytics_node)
+            self.num_items += self.monitor.monitor_data_synced(
+                self.data_node, bucket, self.analytics_node
+            )
+
+    def connect_link(self):
+        logger.info(f"Connecting Link {self.analytics_link}")
+        statement = f"CONNECT LINK {self.analytics_link}"
+        self.rest.exec_analytics_statement(self.analytics_node, statement)
+
+    def disconnect_link(self):
+        logger.info(f"Disconnecting Link {self.analytics_link}")
+        statement = f"DISCONNECT LINK {self.analytics_link}"
+        self.rest.exec_analytics_statement(self.analytics_node, statement)
+
+    def _restore_remote(self):
+        self.remote.extract_cb_any(
+            filename="couchbase", worker_home=self.worker_manager.WORKER_HOME
+        )
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+
+        archive = self.test_config.restore_settings.backup_storage
+        if self.test_config.restore_settings.modify_storage_dir_name:
+            suffix_repo = "aws"
+            if self.cluster_spec.capella_infrastructure:
+                suffix_repo = self.cluster_spec.capella_backend
+            archive += f"/{suffix_repo}"
+
+        self.remote.restore(
+            cluster_spec=self.cluster_spec,
+            master_node=self.master_node,
+            threads=self.test_config.restore_settings.threads,
+            worker_home=self.worker_manager.WORKER_HOME,
+            archive=archive,
+            repo=self.test_config.restore_settings.backup_repo,
+            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+            obj_region=self.test_config.backup_settings.obj_region,
+            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+            use_tls=self.test_config.restore_settings.use_tls,
+            map_data=self.test_config.restore_settings.map_data,
+            encrypted=self.test_config.restore_settings.encrypted,
+            passphrase=self.test_config.restore_settings.passphrase,
+        )
+
+    def restore_data(self):
+        if self.cluster_spec.cloud_infrastructure:
+            self._restore_remote()
+        else:
+            self.restore_local()
+
+    def copy_data_from_s3(self):
+        logger.info("Ingesting data from S3 using COPY FROM")
+
+        external_bucket = self.analytics_settings.external_bucket
+        file_format = self.analytics_settings.external_file_format
+        file_include = self.analytics_settings.external_file_include
+
+        path_keyword = "PATH"
+        if not self.is_capella_goldfish and (
+            (8, 0, 0, 0) < self.cluster.build_tuple < (8, 0, 0, 1452)
+        ):
+            path_keyword = "USING"
+
+        url = self.rest._get_api_url(
+            host=self.analytics_node,
+            path="analytics/service",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
+
+        # Use TCP keep-alive for the session so that long-running COPY FROM statements don't hang
+        session = requests.Session()
+        keep_alive = socket_options.TCPKeepAliveAdapter(idle=120, count=20, interval=30)
+        url_ = urlparse(url)
+        session.mount(f"{url_.scheme}://{url_.netloc}", keep_alive)
+
+        for dataset in self.datasets:
+            statement = dataset.copy_into_statement(
+                external_bucket, file_format, file_include, path_keyword
+            )
+            logger.info(f"statement: {statement}")
+
+            data = {"statement": statement}
+            t0 = time.time()
+            self.rest.session_post(session, url=url, data=data)
+            logger.info(f"Statement execution time: {time.time() - t0}")
+
+
+class BigFunTest(AnalyticsTest):
+    COLLECTORS = {"analytics": True}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.QUERIES = self.analytics_settings.queries
+
+    @property
+    def indexes(self) -> list[IndexDef]:
+        if self.config_file:
+            return [
+                IndexDef(index["Index"], index["Dataset"], (f"{index['Field']}: string",))
+                for index in self.dataset_config["Analytics"]
+            ]
+
+        return [
+            IndexDef("usrSinceIdx", "GleambookUsers-1", ("user_since: string",)),
+            IndexDef("gbmSndTimeIdx", "GleambookMessages-1", ("send_time: string",)),
+            IndexDef("cmSndTimeIdx", "ChirpMessages-1", ("send_time: string",)),
+        ]
+
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        datasets = []
+        for bucket in self.test_config.buckets:
+            if self.config_file:
+                for dataset in self.dataset_config["Analytics"]:
+                    name = dataset["Dataset"]
+                    where = None
+                    if self.dataset_config["DefaultCollection"]:
+                        source = f"`{bucket}`"
+                        where = (
+                            f"WHERE `type` = \"{dataset['Type']}\" "
+                            f"AND meta().id LIKE \"%-{dataset['Group']}\";"
+                        )
+                    else:
+                        source = f"`{bucket}`.`scope-1`.`{dataset['Collection']}`"
+
+                    datasets.append(DatasetDef(name, source, where))
+            else:
+                datasets += [
+                    DatasetDef(dataset, f"`{bucket}`", f"WHERE `{key}` IS NOT UNKNOWN;")
+                    for dataset, key in (
+                        ("GleambookUsers-1", "id"),
+                        ("GleambookMessages-1", "message_id"),
+                        ("ChirpMessages-1", "chirpid"),
+                    )
+                ]
+
+        return datasets
 
     def re_sync(self):
         self.connect_link()
@@ -151,42 +385,6 @@ class BigFunTest(PerfTest):
         num_items = result.json()['results'][0]['$1']
         logger.info("Number of items in dataset {}: {}".format(dataset, num_items))
         return num_items
-
-    def restore_remote_storage(self):
-        self.remote.extract_cb_any(filename='couchbase',
-                                   worker_home=self.worker_manager.WORKER_HOME)
-        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
-
-        credential = local.read_aws_credential(
-            self.test_config.backup_settings.aws_credential_path)
-        self.remote.create_aws_credential(credential)
-        self.remote.client_drop_caches()
-
-        archive = self.test_config.restore_settings.backup_storage
-        if self.test_config.restore_settings.modify_storage_dir_name:
-            suffix_repo = "aws"
-            if self.cluster_spec.capella_infrastructure:
-                suffix_repo = self.cluster_spec.capella_backend
-            archive = archive + "/" + suffix_repo
-
-        self.remote.restore(cluster_spec=self.cluster_spec,
-                            master_node=self.master_node,
-                            threads=self.test_config.restore_settings.threads,
-                            worker_home=self.worker_manager.WORKER_HOME,
-                            archive=archive,
-                            repo=self.test_config.restore_settings.backup_repo,
-                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region,
-                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
-                            use_tls=self.test_config.restore_settings.use_tls,
-                            map_data=self.test_config.restore_settings.map_data,
-                            encrypted=self.test_config.restore_settings.encrypted,
-                            passphrase=self.test_config.restore_settings.passphrase)
-        self.wait_for_persistence()
-
-    def run(self):
-        self.restore_local()
-        self.wait_for_persistence()
 
 
 class BigFunSyncTest(BigFunTest):
@@ -202,7 +400,8 @@ class BigFunSyncTest(BigFunTest):
         super().sync()
 
     def run(self):
-        super().run()
+        super().restore_data()
+        self.wait_for_persistence()
 
         if self.analytics_link != "Local":
             rest_username, rest_password = self.cluster_spec.rest_credentials
@@ -214,19 +413,18 @@ class BigFunSyncTest(BigFunTest):
         self.report_kpi(sync_time)
 
 
-class BigFunSyncCloudTest(BigFunSyncTest):
+class BigFunIncrSyncTest(BigFunSyncTest):
+    @with_stats
+    @timeit
+    def re_sync(self):
+        super().re_sync()
 
-    def run(self):
-        self.restore_remote_storage()
-
-        if self.analytics_link != "Local":
-            rest_username, rest_password = self.cluster_spec.rest_credentials
-            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
-                                     rest_username, rest_password)
-
-        sync_time = self.sync()
-
-        self.report_kpi(sync_time)
+    def sync(self) -> float:
+        super().sync()
+        self.disconnect_link()
+        super().restore_data()
+        self.wait_for_persistence()
+        return self.re_sync()
 
 
 class BigFunDropDatasetTest(BigFunTest):
@@ -247,7 +445,8 @@ class BigFunDropDatasetTest(BigFunTest):
         self.monitor.monitor_dataset_drop(self.analytics_node, drop_dataset)
 
     def run(self):
-        super().run()
+        super().restore_data()
+        self.wait_for_persistence()
         super().sync()
 
         drop_dataset = self.analytics_settings.drop_dataset
@@ -258,51 +457,7 @@ class BigFunDropDatasetTest(BigFunTest):
         self.report_kpi(num_items, drop_time)
 
 
-class BigFunSyncNoIndexTest(BigFunSyncTest):
-
-    def create_index(self):
-        pass
-
-    def create_index_collections(self):
-        pass
-
-
-class BigFunIncrSyncTest(BigFunTest):
-
-    def _report_kpi(self, sync_time: int):
-        self.reporter.post(
-            *self.metrics.avg_ingestion_rate(self.num_items, sync_time)
-        )
-
-    @with_stats
-    @timeit
-    def re_sync(self):
-        super().re_sync()
-
-    def run(self):
-        super().run()
-
-        if self.analytics_link != "Local":
-            rest_username, rest_password = self.cluster_spec.rest_credentials
-            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
-                                     rest_username, rest_password)
-
-        self.sync()
-
-        self.disconnect_link()
-
-        super().run()
-
-        sync_time = self.re_sync()
-
-        self.report_kpi(sync_time)
-
-
 class BigFunQueryTest(BigFunTest):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.QUERIES = self.analytics_settings.queries
 
     def warmup(self, nodes: list = []) -> list[QueryLatencyPair]:
         if len(nodes) == 0:
@@ -340,7 +495,8 @@ class BigFunQueryTest(BigFunTest):
 
     def run(self):
         random.seed(8095)
-        super().run()
+        super().restore_data()
+        self.wait_for_persistence()
 
         self.sync()
 
@@ -351,40 +507,10 @@ class BigFunQueryTest(BigFunTest):
         results = self.access()
 
         self.report_kpi(results)
-
-
-class BigFunQueryCloudTest(BigFunQueryTest):
-
-    def run(self):
-        random.seed(8095)
-        self.restore_remote_storage()
-
-        self.sync()
-
-        logger.info('Running warmup phase')
-        self.warmup()
-
-        logger.info('Running access phase')
-        results = self.access()
-
-        self.report_kpi(results)
-
-
-class BigFunQueryNoIndexCloudTest(BigFunQueryCloudTest):
-
-    def create_index(self):
-        pass
-
-    def create_index_collections(self):
-        pass
 
 
 class BigFunQueryNoIndexTest(BigFunQueryTest):
-
-    def create_index(self):
-        pass
-
-    def create_index_collections(self):
+    def create_analytics_indexes(self, *args, **kwargs):
         pass
 
 
@@ -402,21 +528,12 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
                              external_dataset_type, external_dataset_region,
                              access_key_id, secret_access_key)
 
-    def create_external_datasets(self):
-        logger.info('Creating external datasets')
-        with open(self.config_file, "r") as json_file:
-            analytics_config = json.load(json_file)
-        dataset_list = analytics_config["Analytics"]
-        external_bucket = self.analytics_settings.external_bucket
-        file_format = self.analytics_settings.external_file_format
-        file_include = self.analytics_settings.external_file_include
-        for dataset in dataset_list:
-            statement = "CREATE EXTERNAL DATASET `{}` ON `{}` AT `external_link` " \
-                        "USING '{}' WITH {{ 'format': '{}', 'include': '*.{}' }};"\
-                .format(dataset["Dataset"], external_bucket, dataset["Collection"],
-                        file_format, file_include)
-            logger.info("statement: {}".format(statement))
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        return [
+            DatasetDef(dataset["Dataset"], dataset["Collection"])
+            for dataset in self.dataset_config["Analytics"]
+        ]
 
     @with_stats
     def access(self, nodes: list = [], *args, **kwargs) -> list[QueryLatencyPair]:
@@ -444,89 +561,13 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
         self.report_kpi(results)
 
 
-class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
-
+class ColumnarCopyFromS3Test(BigFunQueryNoIndexExternalTest):
     COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
-
-    def __init__(self, *args, **kwargs):
-        PerfTest.__init__(self, *args, **kwargs)
-
-        self.num_items = 0
-        self.analytics_settings = self.test_config.analytics_settings
-        self.analytics_link = self.analytics_settings.analytics_link
-
-        self.is_capella_goldfish = self.cluster_spec.capella_infrastructure and \
-            self.cluster_spec.goldfish_infrastructure
-
-        self.analytics_node = self.analytics_nodes[0]
-
-        self.QUERIES = self.analytics_settings.queries
-
-        with open(self.analytics_settings.analytics_config_file, "r") as f:
-            self.dataset_list = json.load(f)["Analytics"]
-
-    def set_up_s3_link(self):
-        external_dataset_type = self.analytics_settings.external_dataset_type
-        external_dataset_region = self.analytics_settings.external_dataset_region
-        access_key_id, secret_access_key =\
-            local.get_aws_credential(self.analytics_settings.aws_credential_path)
-
-        baseurl = self.rest._get_api_url(self.analytics_node, '', ANALYTICS_PORT,
-                                         ANALYTICS_PORT_SSL)
-
-        local.set_up_s3_link(self.rest.rest_username, self.rest.rest_password, baseurl,
-                             external_dataset_type, external_dataset_region,
-                             access_key_id, secret_access_key)
-
-    def create_standalone_datasets(self):
-        logger.info('Creating standalone datasets')
-        for dataset in self.dataset_list:
-            statement = f"CREATE DATASET `{dataset['Dataset']}` PRIMARY KEY (`key`: string)"
-            logger.info(f"statement: {statement}")
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     @with_stats
     @timeit
-    def ingest_data(self):
-        logger.info('Ingesting data from S3 using COPY FROM')
-
-        external_bucket = self.analytics_settings.external_bucket
-        file_format = self.analytics_settings.external_file_format
-        file_include = self.analytics_settings.external_file_include
-
-        path_keyword = 'PATH'
-        if (
-            not self.is_capella_goldfish and
-            ((8, 0, 0, 0) < self.cluster.build_tuple < (8, 0, 0, 1452))
-        ):
-            path_keyword = 'USING'
-
-        url = self.rest._get_api_url(
-            host=self.analytics_node,
-            path="analytics/service",
-            plain_port=ANALYTICS_PORT,
-            ssl_port=ANALYTICS_PORT_SSL,
-        )
-
-        # Use TCP keep-alive for the session so that long-running COPY FROM statements don't hang
-        session = requests.Session()
-        keep_alive = socket_options.TCPKeepAliveAdapter(idle=120, count=20, interval=30)
-        url_ = urlparse(url)
-        session.mount(f"{url_.scheme}://{url_.netloc}", keep_alive)
-
-        for dataset in self.dataset_list:
-            source, dest = dataset['Collection'], dataset['Dataset']
-            statement = (
-                f"COPY INTO `{dest}` FROM `{external_bucket}` "
-                f"AT `external_link` {path_keyword} '{source}' "
-                f"WITH {{ 'format': '{file_format}', 'include': '*.{file_include}' }};"
-            )
-            logger.info(f'statement: {statement}')
-
-            data = {"statement": statement}
-            t0 = time.time()
-            self.rest.session_post(session, url=url, data=data)
-            logger.info(f'Statement execution time: {time.time() - t0}')
+    def copy_data_from_s3(self):
+        super().copy_data_from_s3()
 
     @with_stats
     def access(self) -> list[QueryLatencyPair]:
@@ -546,17 +587,16 @@ class GoldfishCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         random.seed(8095)
 
         self.set_up_s3_link()
-        self.create_standalone_datasets()
+        self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.ingest_data()
-        logger.info('Total data ingestion time using COPY FROM: {}'.format(copy_from_time))
+        copy_from_time = self.copy_data_from_s3()
+        logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
 
         results = self.access()
         self.report_kpi(results)
 
 
-class GoldfishCopyToS3Test(GoldfishCopyFromS3Test):
-
+class ColumnarCopyToS3Test(ColumnarCopyFromS3Test):
     @with_stats
     def access(self):
         with open(self.test_config.copy_to_s3_settings.query_file, 'r') as f:
@@ -617,30 +657,16 @@ class GoldfishCopyToS3Test(GoldfishCopyFromS3Test):
         random.seed(8095)
 
         self.set_up_s3_link()
-        self.create_standalone_datasets()
+        self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.ingest_data()
+        copy_from_time = self.copy_data_from_s3()
         logger.info(f'Total data ingestion time using COPY FROM: {copy_from_time}')
 
         self.access()
 
 
-class GoldfishCopyToKVRemoteLinkTest(GoldfishCopyFromS3Test):
+class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromS3Test):
     COLLECTORS = {"ns_server": True, "active_tasks": False, "analytics": True}
-
-    def __init__(self, *args, **kwargs):
-        PerfTest.__init__(self, *args, **kwargs)
-
-        self.num_items = 0
-        self.analytics_settings = self.test_config.analytics_settings
-        self.config_file = self.analytics_settings.analytics_config_file
-        self.analytics_link = self.analytics_settings.analytics_link
-
-        self.is_capella_goldfish = (
-            self.cluster_spec.capella_infrastructure and self.cluster_spec.goldfish_infrastructure
-        )
-
-        self.data_node, self.analytics_node = self.cluster_spec.masters
 
     @with_stats
     def access(self):
@@ -664,9 +690,9 @@ class GoldfishCopyToKVRemoteLinkTest(GoldfishCopyFromS3Test):
 
     def run(self):
         self.set_up_s3_link()
-        self.create_standalone_datasets()
+        self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.ingest_data()
+        copy_from_time = self.copy_data_from_s3()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
 
         rest_username, rest_password = self.cluster_spec.rest_credentials
@@ -738,22 +764,8 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
         )
 
     def run(self):
-        super().run()
-
-        self.sync()
-
-        self.rebalance_cbas()
-
-        if self.is_balanced():
-            self.report_kpi()
-
-
-class BigFunRebalanceCloudTest(BigFunRebalanceTest):
-
-    ALL_HOSTNAMES = True
-
-    def run(self):
-        self.restore_remote_storage()
+        super().restore_data()
+        self.wait_for_persistence()
 
         self.sync()
 
@@ -764,18 +776,7 @@ class BigFunRebalanceCloudTest(BigFunRebalanceTest):
 
 
 class BigFunRebalanceCapellaTest(BigFunRebalanceTest, CapellaRebalanceKVTest):
-
-    ALL_HOSTNAMES = True
-
-    def run(self):
-        self.restore_remote_storage()
-
-        self.sync()
-
-        self.rebalance_cbas()
-
-        if self.is_balanced():
-            self.report_kpi()
+    pass
 
 
 class BigFunConnectTest(BigFunTest):
@@ -811,7 +812,8 @@ class BigFunConnectTest(BigFunTest):
         return total_connect_time/ops, total_disconnect_time/ops
 
     def run(self):
-        super().run()
+        super().restore_data()
+        self.wait_for_persistence()
 
         if self.analytics_link != "Local":
             rest_username, rest_password = self.cluster_spec.rest_credentials
@@ -826,8 +828,7 @@ class BigFunConnectTest(BigFunTest):
         self.report_kpi(avg_connect_time, avg_disconnect_time)
 
 
-class TPCDSTest(PerfTest):
-
+class TPCDSTest(AnalyticsTest):
     TPCDS_DATASETS = [
         "call_center",
         "catalog_page",
@@ -855,49 +856,32 @@ class TPCDSTest(PerfTest):
         "web_site",
     ]
 
-    TPCDS_INDEXES = [("c_customer_sk_idx",
-                      "customer(c_customer_sk:STRING)",
-                      "customer"),
-                     ("d_date_sk_idx",
-                      "date_dim(d_date_sk:STRING)",
-                      "date_dim"),
-                     ("d_date_idx",
-                      "date_dim(d_date:STRING)",
-                      "date_dim"),
-                     ("d_month_seq_idx",
-                      "date_dim(d_month_seq:BIGINT)",
-                      "date_dim"),
-                     ("d_year_idx",
-                      "date_dim(d_year:BIGINT)",
-                      "date_dim"),
-                     ("i_item_sk_idx",
-                      "item(i_item_sk:STRING)",
-                      "item"),
-                     ("s_state_idx",
-                      "store(s_state:STRING)",
-                      "store"),
-                     ("s_store_sk_idx",
-                      "store(s_store_sk:STRING)",
-                      "store"),
-                     ("sr_returned_date_sk_idx",
-                      "store_returns(sr_returned_date_sk:STRING)",
-                      "store_returns"),
-                     ("ss_sold_date_sk_idx",
-                      "store_sales(ss_sold_date_sk:STRING)",
-                      "store_sales")]
+    TPCDS_INDEXES = [
+        IndexDef("c_customer_sk_idx", "customer", ("c_customer_sk:STRING",)),
+        IndexDef("d_date_sk_idx", "date_dim", ("d_date_sk:STRING",)),
+        IndexDef("d_date_idx", "date_dim", ("d_date:STRING",)),
+        IndexDef("d_month_seq_idx", "date_dim", ("d_month_seq:BIGINT",)),
+        IndexDef("d_year_idx", "date_dim", ("d_year:BIGINT",)),
+        IndexDef("i_item_sk_idx", "item", ("i_item_sk:STRING",)),
+        IndexDef("s_state_idx", "store", ("s_state:STRING",)),
+        IndexDef("s_store_sk_idx", "store", ("s_store_sk:STRING",)),
+        IndexDef("sr_returned_date_sk_idx", "store_returns", ("sr_returned_date_sk:STRING",)),
+        IndexDef("ss_sold_date_sk_idx", "store_sales", ("ss_sold_date_sk:STRING",)),
+    ]
 
     COLLECTORS = {'analytics': True}
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    @property
+    def indexes(self) -> list[IndexDef]:
+        return self.TPCDS_INDEXES
 
-        self.num_items = 0
-        self.analytics_link = self.test_config.analytics_settings.analytics_link
-        if self.analytics_link == "Local":
-            self.data_node = self.master_node
-            self.analytics_node = self.analytics_nodes[0]
-        else:
-            self.data_node, self.analytics_node = self.cluster_spec.masters
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        return [
+            DatasetDef(name, f"`{bucket}`", f"WHERE table_name = '{name}'")
+            for bucket in self.test_config.buckets
+            for name in self.TPCDS_DATASETS
+        ]
 
     def download_tpcds_couchbase_loader(self):
         if self.worker_manager.is_remote:
@@ -913,70 +897,10 @@ class TPCDSTest(PerfTest):
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=tpcds_initial_data_load_task)
 
-    def create_datasets(self, bucket: str):
-        logger.info('Creating datasets')
-        for dataset in self.TPCDS_DATASETS:
-            statement = "CREATE DATASET `{}` ON `{}` WHERE table_name = '{}';" \
-                .format(dataset, bucket, dataset)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def create_indexes(self):
-        logger.info('Creating indexes')
-        for index in self.TPCDS_INDEXES:
-            statement = "CREATE INDEX {} ON {};".format(index[0], index[1])
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def drop_indexes(self):
-        logger.info('Dropping indexes')
-        for index in self.TPCDS_INDEXES:
-            statement = "DROP INDEX {}.{};".format(index[2], index[0])
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def disconnect_link(self):
-        logger.info('DISCONNECT LINK {}'.format(self.analytics_link))
-        statement = "DISCONNECT LINK {}".format(self.analytics_link)
-        self.rest.exec_analytics_statement(self.analytics_node,
-                                           statement)
-
-    def connect_buckets(self):
-        logger.info('Connecting Link {}'.format(self.analytics_link))
-        statement = "CONNECT link {}".format(self.analytics_link)
-        res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-        logger.info("Result: {}".format(str(res)))
-        time.sleep(5)
-
-    def create_primary_indexes(self):
-        logger.info('Creating primary indexes')
-        for dataset in self.TPCDS_DATASETS:
-            statement = "CREATE PRIMARY INDEX ON {};".format(dataset)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def drop_primary_indexes(self):
-        logger.info('Dropping primary indexes')
-        for dataset in self.TPCDS_DATASETS:
-            statement = "DROP INDEX {}.primary_idx_{};".format(dataset, dataset)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
     def sync(self):
         self.disconnect_link()
-        for bucket in self.test_config.buckets:
-            self.create_datasets(bucket)
-        self.connect_buckets()
+        self.create_datasets_at_link()
+        self.connect_link()
         for bucket in self.test_config.buckets:
             self.num_items += self.monitor.monitor_data_synced(self.data_node,
                                                                bucket,
@@ -1027,7 +951,7 @@ class TPCDSQueryTest(TPCDSTest):
             query_set=self.QUERIES)
         without_index_results = [(query, latency) for query, latency in results]
 
-        self.create_indexes()
+        self.create_analytics_indexes()
 
         logger.info('Running queries with index')
         results = tpcds(
@@ -1064,9 +988,10 @@ class TPCDSQueryTest(TPCDSTest):
         self.report_kpi(results_with_index, with_index=True)
 
 
-class CH2Test(PerfTest):
+class CH2Test(AnalyticsTest):
+    SCOPE = "bench.ch2"
 
-    CH2_DATASETS = [
+    DATASETS = [
         "customer",
         "district",
         "history",
@@ -1080,24 +1005,14 @@ class CH2Test(PerfTest):
         "region",
     ]
 
-    CH2_INDEXES = [("cu_w_id_d_id_last",
-                    "customer(c_w_id, c_d_id, c_last)",
-                    "customer"),
-                   ("di_id_w_id",
-                    "district(d_id, d_w_id)",
-                    "district"),
-                   ("no_o_id_d_id_w_id",
-                    "neworder(no_o_id, no_d_id, no_w_id)",
-                    "neworder"),
-                   ("or_id_d_id_w_id_c_id",
-                    "orders(o_id, o_d_id, o_w_id, o_c_id)",
-                    "orders"),
-                   ("or_w_id_d_id_c_id",
-                    "orders(o_w_id, o_d_id, o_c_id)",
-                    "orders"),
-                   ("wh_id",
-                    "warehouse(w_id)",
-                    "warehouse")]
+    GSI_INDEXES = [
+        ("cu_w_id_d_id_last", "customer", ("c_w_id", "c_d_id", "c_last")),
+        ("di_id_w_id", "district", ("d_id", "d_w_id")),
+        ("no_o_id_d_id_w_id", "neworder", ("no_o_id", "no_d_id", "no_w_id")),
+        ("or_id_d_id_w_id_c_id", "orders", ("o_id", "o_d_id", "o_w_id", "o_c_id")),
+        ("or_w_id_d_id_c_id", "orders", ("o_w_id", "o_d_id", "o_c_id")),
+        ("wh_id", "warehouse", ("w_id",)),
+    ]
 
     COLLECTORS = {
         'iostat': False,
@@ -1111,13 +1026,18 @@ class CH2Test(PerfTest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.num_items = 0
-        self.analytics_link = self.test_config.analytics_settings.analytics_link
-        self.data_node = self.master_node
-        self.analytics_node = self.analytics_nodes[0]
         self.analytics_statements = self.test_config.ch2_settings.analytics_statements
-        self.storage_format = self.test_config.analytics_settings.storage_format
+
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        return [DatasetDef(name, f"{self.SCOPE}.{name}") for name in self.DATASETS]
+
+    @property
+    def indexes(self) -> list[IndexDef]:
+        return [
+            IndexDef(name, f"{self.SCOPE}.{coll}", fields)
+            for name, coll, fields in self.GSI_INDEXES
+        ]
 
     def _report_kpi(self):
         measure_time = (
@@ -1145,94 +1065,33 @@ class CH2Test(PerfTest):
                 )
             )
 
-    def create_datasets(self):
-        logger.info('Creating datasets')
-        for dataset in self.CH2_DATASETS:
-            if self.storage_format:
-                statement = 'CREATE DATASET `{}` WITH {{"storage-format": {{"format": "{}"}}}} ' \
-                            'ON bench.ch2.{} AT `{}`;' \
-                    .format(dataset, self.storage_format, dataset, self.analytics_link)
-            else:
-                statement = "CREATE DATASET `{}` ON bench.ch2.{} AT `{}`;" \
-                    .format(dataset, dataset, self.analytics_link)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def analyze_datasets(self):
-        logger.info("Analyzing datasets for CBO")
-        for dataset in self.CH2_DATASETS:
-            statement = f"ANALYZE ANALYTICS COLLECTION {dataset};"
-            logger.info(f"Running: {statement}")
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info(f"Result: {res}".format(str(res)))
-
     def create_analytics_indexes(self):
         if self.analytics_statements:
             logger.info('Creating analytics indexes')
             for statement in self.analytics_statements:
-                logger.info('Running: {}'.format(statement))
-                self.rest.exec_analytics_statement(self.analytics_node,
-                                                   statement)
+                self.exec_and_log_analytics_statement(self.analytics_node, statement)
 
-    def create_indexes(self):
-        logger.info('Creating indexes')
-        for index in self.CH2_INDEXES:
-            statement = "CREATE INDEX {} ON bench.ch2.{} using gsi;".format(index[0], index[1])
-            logger.info('Running: {}'.format(statement))
+    def create_gsi_indexes(self):
+        logger.info("Creating indexes")
+        for index_def in self.indexes:
+            statement = f"{index_def.create_statement()} using gsi;"
+            logger.info(f"Running: {statement}")
             res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
-            logger.info("Result: {}".format(str(res)))
+            logger.info(f"Result: {res}")
             time.sleep(5)
 
-    def drop_indexes(self):
-        logger.info('Dropping indexes')
-        for index in self.CH2_INDEXES:
-            statement = "DROP INDEX {} ON bench.ch2.{} using gsi;".format(index[0], index[2])
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def disconnect_link(self):
-        logger.info('DISCONNECT LINK {}'.format(self.analytics_link))
-        statement = "DISCONNECT LINK {}".format(self.analytics_link)
-        self.rest.exec_analytics_statement(self.analytics_node,
-                                           statement)
-
-    def connect_link(self):
-        logger.info('Connecting Link {}'.format(self.analytics_link))
-        statement = "CONNECT link {}".format(self.analytics_link)
-        self.rest.exec_analytics_statement(self.analytics_node,
-                                           statement)
-
-    def create_primary_indexes(self):
-        logger.info('Creating primary indexes')
-        for dataset in self.CH2_DATASETS:
-            statement = "CREATE PRIMARY INDEX ON {};".format(dataset)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def drop_primary_indexes(self):
-        logger.info('Dropping primary indexes')
-        for dataset in self.CH2_DATASETS:
-            statement = "DROP INDEX {}.primary_idx_{};".format(dataset, dataset)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def sync(self):
+    def sync(self) -> float:
         self.disconnect_link()
-        self.create_datasets()
+        self.create_datasets_at_link(verbose=True)
         self.create_analytics_indexes()
         self.connect_link()
+
+        t0 = time.time()
         for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(self.data_node,
-                                                               bucket,
-                                                               self.analytics_node)
+            self.num_items += self.monitor.monitor_data_synced(
+                self.data_node, bucket, self.analytics_node
+            )
+        return time.time() - t0
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         if self.test_config.cluster.enable_n2n_encryption:
@@ -1290,33 +1149,39 @@ class CH2Test(PerfTest):
         async_result.get()
         logger.info("CH2 load task group finished")
 
-    @with_stats
-    def run_ch2_local(self, log_file: str = ''):
-        logger.info("running {}".format(self.test_config.ch2_settings.workload))
-        local.ch2_run_task(self._create_ch2_conn_settings(), self.test_config.ch2_settings,
-                           log_file=log_file or self.test_config.ch2_settings.workload)
-
-    def load_ch2_local(self):
+    def load_ch2(self):
         logger.info("load CH2 docs")
-        if (ch2_settings := self.test_config.ch2_settings).load_tasks == 1:
+        if (ch2_settings := self.test_config.ch2_settings).load_tasks > 1:
+            self._distributed_ch2_load()
+        elif self.worker_manager.is_remote:
+            self.remote.ch2_load_task(
+                self._create_ch2_conn_settings(),
+                ch2_settings,
+                worker_home=self.worker_manager.WORKER_HOME,
+            )
+        else:
             local.ch2_load_task(self._create_ch2_conn_settings(), ch2_settings)
-        else:
-            self._distributed_ch2_load()
 
     @with_stats
-    def run_ch2_remote(self, log_file: str = ''):
-        logger.info("running {}".format(self.test_config.ch2_settings.workload))
-        self.remote.ch2_run_task(self._create_ch2_conn_settings(), self.test_config.ch2_settings,
-                                 self.worker_manager.WORKER_HOME,
-                                 log_file=log_file or self.test_config.ch2_settings.workload)
-
-    def load_ch2_remote(self):
-        logger.info("load CH2 docs")
-        if (ch2_settings := self.test_config.ch2_settings).load_tasks == 1:
-            self.remote.ch2_load_task(self._create_ch2_conn_settings(), ch2_settings,
-                                      worker_home=self.worker_manager.WORKER_HOME)
+    def run_ch2(self, log_file: str = ""):
+        logger.info(f"Running {self.test_config.ch2_settings.workload}")
+        log_file = log_file or self.test_config.ch2_settings.workload
+        if self.worker_manager.is_remote:
+            self.remote.ch2_run_task(
+                self._create_ch2_conn_settings(),
+                self.test_config.ch2_settings,
+                self.worker_manager.WORKER_HOME,
+                log_file=log_file,
+            )
+            self.remote.get_ch2_logfile(
+                worker_home=self.worker_manager.WORKER_HOME, logfile=log_file
+            )
         else:
-            self._distributed_ch2_load()
+            local.ch2_run_task(
+                self._create_ch2_conn_settings(),
+                self.test_config.ch2_settings,
+                log_file=log_file,
+            )
 
     def restart(self):
         self.remote.stop_server()
@@ -1326,88 +1191,47 @@ class CH2Test(PerfTest):
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
+    def init_ch2_repo(self):
+        if self.worker_manager.is_remote:
+            self.remote.clone_git_repo(
+                repo=self.test_config.ch2_settings.repo,
+                branch=self.test_config.ch2_settings.branch,
+                worker_home=self.worker_manager.WORKER_HOME,
+            )
+        else:
+            local.clone_git_repo(
+                repo=self.test_config.ch2_settings.repo,
+                branch=self.test_config.ch2_settings.branch,
+            )
+
     def run(self):
-        local.clone_git_repo(repo=self.test_config.ch2_settings.repo,
-                             branch=self.test_config.ch2_settings.branch)
+        self.init_ch2_repo()
 
         if self.test_config.ch2_settings.use_backup:
-            self.restore_local()
+            self.restore_data()
         else:
-            self.load_ch2_local()
+            self.load_ch2()
 
         self.wait_for_persistence()
         self.restart()
         self.sync()
-        self.create_indexes()
+        if (
+            self.test_config.ch2_settings.create_gsi_index
+            and not self.cluster_spec.goldfish_infrastructure
+        ):
+            self.create_gsi_indexes()
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets()
+            self.analyze_datasets(verbose=True)
 
-        self.run_ch2_local()
+        self.run_ch2()
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
 
 
-class CH2CloudTest(CH2Test):
-
-    def restore(self):
-        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
-        self.remote.create_aws_credential(credential)
-        self.remote.client_drop_caches()
-
-        self.remote.restore(cluster_spec=self.cluster_spec,
-                            master_node=self.master_node,
-                            threads=self.test_config.restore_settings.threads,
-                            worker_home=self.worker_manager.WORKER_HOME,
-                            archive=self.test_config.restore_settings.backup_storage,
-                            repo=self.test_config.restore_settings.backup_repo,
-                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region,
-                            use_tls=self.test_config.restore_settings.use_tls,
-                            map_data=self.test_config.restore_settings.map_data,
-                            encrypted=self.test_config.restore_settings.encrypted,
-                            passphrase=self.test_config.restore_settings.passphrase)
-
-    def run(self):
-        self.remote.init_ch2(repo=self.test_config.ch2_settings.repo,
-                             branch=self.test_config.ch2_settings.branch,
-                             worker_home=self.worker_manager.WORKER_HOME)
-
-        if self.test_config.ch2_settings.use_backup:
-            self.remote.extract_cb_any(filename='couchbase',
-                                       worker_home=self.worker_manager.WORKER_HOME)
-            self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
-            self.restore()
-        else:
-            self.load_ch2_remote()
-
-        self.wait_for_persistence()
-        self.restart()
-        self.sync()
-        if (self.test_config.ch2_settings.create_gsi_index and
-                not self.cluster_spec.goldfish_infrastructure):
-            self.create_indexes()
-
-        if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets()
-
-        self.run_ch2_remote()
-        self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
-                                    logfile=self.test_config.ch2_settings.workload)
-        if self.test_config.ch2_settings.workload != 'ch2_analytics':
-            self.report_kpi()
-
-
-class CH2CloudRemoteLinkTest(CH2CloudTest):
-
+class CH2RemoteLinkTest(CH2Test):
     def __init__(self, *args, **kwargs):
-        PerfTest.__init__(self, *args, **kwargs)
-
-        self.num_items = 0
-        self.analytics_link = self.test_config.analytics_settings.analytics_link
-        self.data_node, self.analytics_node = self.cluster_spec.masters
-        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
-        self.storage_format = self.test_config.analytics_settings.storage_format
+        super().__init__(*args, **kwargs)
         self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
 
     @property
@@ -1430,95 +1254,26 @@ class CH2CloudRemoteLinkTest(CH2CloudTest):
             self.monitor.monitor_warmup(self.memcached, self.data_node, bucket)
         self.monitor.monitor_analytics_node_active(self.analytics_node)
 
-    def restore(self):
-        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
-        self.remote.create_aws_credential(credential)
-        self.remote.client_drop_caches()
+    def report_sync_kpi(self, sync_time: int):
+        logger.info(f"Sync time (s): {sync_time}")
 
-        self.remote.restore(cluster_spec=self.cluster_spec,
-                            master_node=self.data_node,
-                            threads=self.test_config.restore_settings.threads,
-                            worker_home=self.worker_manager.WORKER_HOME,
-                            archive=self.test_config.restore_settings.backup_storage,
-                            repo=self.test_config.restore_settings.backup_repo,
-                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region,
-                            use_tls=self.test_config.restore_settings.use_tls,
-                            map_data=self.test_config.restore_settings.map_data,
-                            encrypted=self.test_config.restore_settings.encrypted,
-                            passphrase=self.test_config.restore_settings.passphrase)
+        if not self.test_config.stats_settings.enabled:
+            self.reporter.post(*self.metrics.avg_ingestion_rate(self.num_items, sync_time))
 
     @with_stats
-    def sync(self) -> int:
-        self.disconnect_link()
-        self.create_datasets()
-        self.create_analytics_indexes()
-        self.connect_link()
-
-        t0 = time.time()
-        for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(self.data_node,
-                                                               bucket,
-                                                               self.analytics_node)
-        return time.time() - t0
-
-    def report_sync_kpi(self, sync_time: int):
-        logger.info('Sync time: {}s'.format(sync_time))
-        self.reporter.post(
-            *self.metrics.avg_ingestion_rate(self.num_items, sync_time)
-        )
-
-    def run(self):
-        self.remote.init_ch2(repo=self.test_config.ch2_settings.repo,
-                             branch=self.test_config.ch2_settings.branch,
-                             worker_home=self.worker_manager.WORKER_HOME)
-
-        if self.test_config.ch2_settings.use_backup:
-            self.remote.extract_cb_any(filename='couchbase',
-                                       worker_home=self.worker_manager.WORKER_HOME)
-            self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
-            # Restore to KV cluster
-            self.restore()
-        else:
-            # Load into KV cluster
-            self.load_ch2_remote()
-
-        # Only wait for and restart the KV cluster
-        self.wait_for_persistence()
-        self.restart()
-
+    def sync(self) -> float:
         rest_username, rest_password = self.cluster_spec.rest_credentials
-        local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node,
-                                 rest_username, rest_password)
-
-        sync_time = self.sync()
+        local.create_remote_link(
+            self.analytics_link, self.data_node, self.analytics_node, rest_username, rest_password
+        )
+        sync_time = super().sync()
         self.report_sync_kpi(sync_time)
 
-        if (self.test_config.ch2_settings.create_gsi_index and
-                not self.cluster_spec.goldfish_infrastructure):
-            self.create_indexes()
 
-        if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets()
-
-        self.run_ch2_remote()
-        self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
-                                    logfile=self.test_config.ch2_settings.workload)
-        if self.test_config.ch2_settings.workload != 'ch2_analytics':
-            self.report_kpi()
-
-
-class CH2GoldfishPauseResumeTest(CH2CloudRemoteLinkTest):
-
+class CH2ColumnarSimulatedPauseResumeTest(CH2RemoteLinkTest):
     def __init__(self, *args, **kwargs):
-        PerfTest.__init__(self, *args, **kwargs)
+        CH2Test.__init__(self, *args, **kwargs)
         self.cluster_spec.set_inactive_clusters_by_idx([2])
-
-        self.num_items = 0
-        self.analytics_link = self.test_config.analytics_settings.analytics_link
-        self.data_node, self.analytics_node = self.cluster_spec.masters
-        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
-        self.storage_format = self.test_config.analytics_settings.storage_format
         self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
 
     @with_stats
@@ -1591,20 +1346,18 @@ class CH2GoldfishPauseResumeTest(CH2CloudRemoteLinkTest):
 
         # Switch over to second analytics cluster
         self.cluster_spec.set_inactive_clusters_by_idx([1])
-        self.data_node, self.analytics_node = self.cluster_spec.masters
 
         log_file = '{}_post_resume'.format(self.test_config.ch2_settings.workload)
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets()
+            self.analyze_datasets(verbose=True)
 
-        self.run_ch2_remote(log_file=log_file)
-        self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME, logfile=log_file)
+        self.run_ch2(log_file=log_file)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
 
 
-class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, GoldfishCopyFromS3Test):
+class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
     COLLECTORS = {
         "ns_server": False,
         "ns_server_system": True,
@@ -1612,17 +1365,9 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, GoldfishCopyFromS3Test):
         "analytics": True,
     }
 
-    def __init__(self, *args, **kwargs):
-        PerfTest.__init__(self, *args, **kwargs)
-        self.analytics_settings = self.test_config.analytics_settings
-        self.analytics_node = self.analytics_nodes[0]
-        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
-
-        self.dataset_list = [{"Dataset": coll, "Collection": coll} for coll in self.CH2_DATASETS]
-
-        self.is_capella_goldfish = (
-            self.cluster_spec.capella_infrastructure and self.cluster_spec.goldfish_infrastructure
-        )
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        return [DatasetDef(name) for name in self.DATASETS]
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         userid, password = self.cluster_spec.rest_credentials
@@ -1643,17 +1388,17 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, GoldfishCopyFromS3Test):
         )
 
         self.set_up_s3_link()
-        self.create_standalone_datasets()
+        self.create_standalone_datasets(verbose=True)
 
         self.create_analytics_indexes()
 
-        copy_from_time = self.ingest_data()
+        copy_from_time = self.copy_data_from_s3()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets()
+            self.analyze_datasets(verbose=True)
 
-        self.run_ch2_local()
+        self.run_ch2()
         self.report_kpi()
 
 
@@ -1706,8 +1451,7 @@ class CapellaColumnarManualOnOffTest(PerfTest):
                 )
 
 
-class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
-
+class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.kafka_links_settings = self.test_config.goldfish_kafka_links_settings
@@ -1720,7 +1464,7 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
         if source == "MONGODB":
             self.docs_per_collection = {
                 collection: self.count_collection_docs_mongodb(collection)
-                for collection in self.CH2_DATASETS
+                for collection in self.DATASETS
             }
             self.source_details.update({
                 "connectionFields": {
@@ -1740,9 +1484,6 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
 
         self.num_items = sum(self.docs_per_collection.values())
 
-        self.is_capella_goldfish = self.cluster_spec.capella_infrastructure and \
-            self.cluster_spec.goldfish_infrastructure
-
         if self.is_capella_goldfish:
             self.COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
 
@@ -1759,24 +1500,21 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
         statement = 'CREATE LINK `{}` TYPE KAFKA WITH {{"sourceDetails": {}}}'\
             .format(self.analytics_link, json.dumps(self.source_details))
 
-        logger.info('Running: {}'.format(statement))
-        res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-        logger.info("Result: {}".format(str(res)))
+        self.exec_and_log_analytics_statement(self.analytics_node, statement)
 
-    def create_datasets(self):
+    def create_datasets_at_link(self):
         logger.info('Creating standalone datasets')
 
-        for dataset in self.CH2_DATASETS:
+        for dataset in self.DATASETS:
             statement = "CREATE DATASET `{0}` PRIMARY KEY (`{1}`: string) ON {2}.{0} AT `{3}`;" \
                 .format(dataset, self.kafka_links_settings.primary_key_field,
                         self.kafka_links_settings.remote_database_name, self.analytics_link)
-            logger.info('Running: {}'.format(statement))
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
+            self.exec_and_log_analytics_statement(self.analytics_node, statement)
 
     @with_stats
-    def sync(self) -> int:
+    def sync(self) -> float:
         """Set up data ingestion and return time taken to ingest all data (excluding setup time)."""
-        self.create_datasets()
+        self.create_datasets_at_link()
         self.connect_link()
 
         t0 = time.time()
@@ -1815,42 +1553,19 @@ class CH2GoldfishKafkaLinksIngestionTest(CH2CloudTest):
                 self.disconnect_link()
 
 
-class CH3Test(PerfTest):
+class CH3Test(CH2Test):
+    SCOPE = "bench.ch3"
 
-    CH3_DATASETS = [
-        "customer",
-        "district",
-        "history",
-        "item",
-        "neworder",
-        "orders",
-        "stock",
-        "warehouse",
-        "supplier",
-        "nation",
-        "region",
+    GSI_INDEXES = [
+        ("cu_w_id_d_id_last", "customer", ("c_w_id", "c_d_id", "c_last")),
+        ("di_id_w_id", "district", ("d_id", "d_w_id")),
+        ("no_o_id_d_id_w_id", "neworder", ("no_o_id", "no_d_id", "no_w_id")),
+        ("or_id_d_id_w_id_c_id", "orders", ("o_id", "o_d_id", "o_w_id, o_c_id")),
+        ("or_w_id_d_id_c_id", "orders", ("o_w_id", "o_d_id", "o_c_id")),
+        ("wh_id", "warehouse", ("w_id",)),
     ]
 
-    CH3_INDEXES = [("cu_w_id_d_id_last",
-                    "customer(c_w_id, c_d_id, c_last)",
-                    "customer"),
-                   ("di_id_w_id",
-                    "district(d_id, d_w_id)",
-                    "district"),
-                   ("no_o_id_d_id_w_id",
-                    "neworder(no_o_id, no_d_id, no_w_id)",
-                    "neworder"),
-                   ("or_id_d_id_w_id_c_id",
-                    "orders(o_id, o_d_id, o_w_id, o_c_id)",
-                    "orders"),
-                   ("or_w_id_d_id_c_id",
-                    "orders(o_w_id, o_d_id, o_c_id)",
-                    "orders"),
-                   ("wh_id",
-                    "warehouse(w_id)",
-                    "warehouse")]
-
-    CH3_FTS_INDEXES = [
+    FTS_INDEXES = [
         "customerFTSI",
         "itemFTSI",
         "ordersFTSI",
@@ -1869,15 +1584,9 @@ class CH3Test(PerfTest):
         'analytics': True,
     }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.num_items = 0
-        self.analytics_link = self.test_config.analytics_settings.analytics_link
-        self.data_node = self.master_node
-        self.analytics_node = self.analytics_nodes[0]
-        self.fts_node = self.fts_nodes[0]
-        self.analytics_statements = self.test_config.ch3_settings.analytics_statements
+    @property
+    def fts_node(self) -> str:
+        return self.fts_nodes[0]
 
     def _report_kpi(self):
         measure_time = self.test_config.ch3_settings.duration - \
@@ -1919,81 +1628,6 @@ class CH3Test(PerfTest):
                 *self.metrics.ch3_fts_qph(fts_qph, self.test_config.ch3_settings.tclients)
             )
 
-    def create_datasets(self):
-        logger.info('Creating datasets')
-        for dataset in self.CH3_DATASETS:
-            statement = "CREATE DATASET `{}` ON bench.ch3.{};" \
-                .format(dataset, dataset)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def create_analytics_indexes(self):
-        if self.analytics_statements:
-            logger.info('Creating analytics indexes')
-            for statement in self.analytics_statements:
-                logger.info('Running: {}'.format(statement))
-                self.rest.exec_analytics_statement(self.analytics_node,
-                                                   statement)
-
-    def create_indexes(self):
-        logger.info('Creating indexes')
-        for index in self.CH3_INDEXES:
-            statement = "CREATE INDEX {} ON bench.ch3.{} using gsi;".format(index[0], index[1])
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def drop_indexes(self):
-        logger.info('Dropping indexes')
-        for index in self.CH3_INDEXES:
-            statement = "DROP INDEX {} ON bench.ch3.{} using gsi;".format(index[0], index[2])
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def disconnect_link(self):
-        logger.info('DISCONNECT LINK {}'.format(self.analytics_link))
-        statement = "DISCONNECT LINK {}".format(self.analytics_link)
-        self.rest.exec_analytics_statement(self.analytics_node,
-                                           statement)
-
-    def connect_link(self):
-        logger.info('Connecting Link {}'.format(self.analytics_link))
-        statement = "CONNECT link {}".format(self.analytics_link)
-        self.rest.exec_analytics_statement(self.analytics_node,
-                                           statement)
-
-    def create_primary_indexes(self):
-        logger.info('Creating primary indexes')
-        for dataset in self.CH3_DATASETS:
-            statement = "CREATE PRIMARY INDEX ON {};".format(dataset)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def drop_primary_indexes(self):
-        logger.info('Dropping primary indexes')
-        for dataset in self.CH3_DATASETS:
-            statement = "DROP INDEX {}.primary_idx_{};".format(dataset, dataset)
-            logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
-            logger.info("Result: {}".format(str(res)))
-            time.sleep(5)
-
-    def sync(self):
-        self.disconnect_link()
-        self.create_datasets()
-        self.create_analytics_indexes()
-        self.connect_link()
-        for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(self.data_node,
-                                                               bucket,
-                                                               self.analytics_node)
 
     @with_stats
     def run_ch3(self):
@@ -2028,7 +1662,7 @@ class CH3Test(PerfTest):
         )
 
     def wait_for_fts_index_persistence(self):
-        for index_name in self.CH3_FTS_INDEXES:
+        for index_name in self.FTS_INDEXES:
             self.monitor.monitor_fts_index_persistence(
                 hosts=self.fts_nodes,
                 index=index_name,
@@ -2055,14 +1689,6 @@ class CH3Test(PerfTest):
         logger.info("running {}".format(self.test_config.ch3_settings.workload))
         local.ch3_load_task(conn_settings, self.test_config.ch3_settings)
 
-    def restart(self):
-        self.remote.stop_server()
-        self.remote.drop_caches()
-        self.remote.start_server()
-        for master in self.cluster_spec.masters:
-            for bucket in self.test_config.buckets:
-                self.monitor.monitor_warmup(self.memcached, master, bucket)
-
     def run(self):
         local.clone_git_repo(repo=self.test_config.ch3_settings.repo,
                              branch=self.test_config.ch3_settings.branch)
@@ -2075,7 +1701,7 @@ class CH3Test(PerfTest):
         self.wait_for_persistence()
         self.restart()
         self.sync()
-        self.create_indexes()
+        self.create_gsi_indexes()
         self.wait_for_indexing()
         self.create_fts_indexes()
         self.wait_for_fts_index_persistence()

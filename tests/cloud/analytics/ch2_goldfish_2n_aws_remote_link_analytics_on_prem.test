@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2CloudRemoteLinkTest
+test = perfrunner.tests.analytics.CH2RemoteLinkTest
 
 [showfast]
 title = CH2 Queries, 2A, c=11, analytics only, AWS, No compute/storage separation, Columnar storage (remote link)

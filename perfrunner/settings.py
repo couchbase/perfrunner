@@ -229,6 +229,12 @@ class ClusterSpec(Config):
             yield cluster_name, hosts
 
     @property
+    def cbl_clusters(self) -> Iterator:
+        for cluster_name, servers in self.config.items('cblites'):
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
+
+    @property
     def kafka_clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('kafka_clusters'):
             hosts = [s.split(':')[0] for s in servers.split()]
@@ -272,6 +278,15 @@ class ClusterSpec(Config):
         servers = []
         if self.config.has_section('syncgateways'):
             for _, cluster_servers in self.sgw_clusters:
+                for server in cluster_servers:
+                    servers.append(server)
+        return servers
+
+    @property
+    def cbl_clients(self) -> list[str]:
+        servers = []
+        if self.config.has_section('cblites'):
+            for _, cluster_servers in self.cbl_clusters:
                 for server in cluster_servers:
                     servers.append(server)
         return servers

@@ -143,7 +143,6 @@ def kafka_zookeepers(task, *args, **kwargs):
     with settings(gateway=jump_host):
         return execute(parallel(task), *args, hosts=hosts, **kwargs)
 
-
 @decorator
 def kafka_brokers(task, *args, **kwargs):
     """Execute the decorated function on all remote Kafka broker nodes."""
@@ -155,3 +154,12 @@ def kafka_brokers(task, *args, **kwargs):
     # Kafka nodes are in private subnets, so we need to use a jump host that is publicly accessible
     with settings(gateway=jump_host):
         return execute(parallel(task), *args, hosts=hosts, **kwargs)
+
+@decorator
+def cbl_clients(task, *args, **kwargs):
+    """Execute the decorated function on cbl nodes."""
+    self = args[0]
+
+    hosts = self.cluster_spec.cbl_clients
+
+    return execute(parallel(task), *args, hosts=hosts, **kwargs)

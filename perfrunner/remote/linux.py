@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from fabric.api import cd, get, put, quiet, run, settings
+from fabric.contrib.files import append
 from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
@@ -17,6 +18,7 @@ from perfrunner.remote.context import (
     all_dn_nodes,
     all_kafka_nodes,
     all_servers,
+    cbl_clients,
     kafka_brokers,
     kafka_zookeepers,
     master_client,
@@ -1464,3 +1466,161 @@ class RemoteLinux(Remote):
         for k, v in settings.items():
             url = api.format(k)
             run('curl -X PUT {} --data-urlencode value=\'{}\''.format(url, v))
+
+    def find_java_home(self):
+        java_home = None
+        java_dir = "/usr/lib/jvm/"
+        try:
+            with settings(warn_only=True):
+                if run(f"test -d {java_dir}").succeeded:
+                    java_versions = run(f"ls -d {java_dir}java-*").split()
+                    if java_versions:
+                        java_versions.sort(reverse=True)
+                        java_home = java_versions[0]
+            logger.info(f"Java home found: {java_home}")
+        except Exception as e:
+            logger.error(f"Failed to find Java home: {e}")
+        return java_home
+
+    @cbl_clients
+    def stop_daemon_manager(self, javatestserver_dir: str):
+        daemon_manager_path = f"{javatestserver_dir}/daemon_manager.sh"
+        service_status = "stop"
+        binary_location = f"{javatestserver_dir}/CBLTestServer-Java-Desktop-3.2.0-75-enterprise.jar"
+        output_location = f"{javatestserver_dir}/output"
+        java_home = self.find_java_home()
+        jsvc_location = "/usr/bin/jsvc"
+        working_location = javatestserver_dir
+        command = f"{daemon_manager_path} {service_status} {binary_location} {output_location} \
+                {java_home} {jsvc_location} {working_location}"
+        try:
+            result = run(command, warn_only=True)
+            logger.info(result)
+            logger.info("Couchbase Lite Test Server stopped.")
+        except Exception as e:
+            logger.error(f"Failed to run daemon_manager.sh: {e}")
+
+    @cbl_clients
+    def remove_line_from_setenv(
+        self, ld_library_path: str, catalina_base: str = "/opt/tomcat/updated"
+    ):
+        setenv_path = f"{catalina_base}/bin/setenv.sh"  # noqa: F821
+        line_to_remove = f"export LD_LIBRARY_PATH={ld_library_path}:$LD_LIBRARY_PATH"
+        try:
+            logger.info("Removing line from setenv.sh file...")
+            setenv_content = run(f"cat {setenv_path}", quiet=True)
+            if line_to_remove in setenv_content:
+                updated_content = "\n".join([line for line in setenv_content.splitlines() \
+                    if line.strip() != line_to_remove])
+                run(f"echo '{updated_content}' > {setenv_path}")
+                logger.info("Line removed from setenv.sh.")
+            else:
+                logger.info("Line not found in setenv.sh, no changes made.")
+        except Exception as e:
+            logger.error(f"Failed to remove line from setenv.sh: {e}")
+
+    @cbl_clients
+    def uninstall_cbl(
+        self,
+        cbl_support_dir: str,
+        cbl_support_zip_path: str,
+        cbl_testserver_zip_path: str,
+        javatestserver_dir: str,
+    ):
+        try:
+            result = run("lsof -i :8080", warn_only=True)
+            if result.succeeded:
+                lines = result.splitlines()
+                for line in lines:
+                    if "jsvc" in line:
+                        pid = line.split()[1]
+                        run(f"kill -9 {pid}")
+                        logger.info(f"Killed process with PID {pid} running on port 8080.")
+                        break
+            cleanup_command = (
+                f"rm -r javatestserver {javatestserver_dir} {cbl_testserver_zip_path} \
+                    {cbl_support_dir} {cbl_support_zip_path}"
+            )
+            run(f"{cleanup_command}", warn_only=True)
+            logger.info("Removed Couchbase Lite Test Server files and directories.")
+            port_check = run("curl http://localhost:8080", warn_only=True)
+            if port_check.failed:
+                logger.info("Port 8080 is free after cleanup.")
+        except Exception as e:
+            logger.error(f"Failed to uninstall Couchbase Lite Test Server: {e}")
+
+    @cbl_clients
+    def download_cbl_support_libs(self, cbl_support_zip_url: str, cbl_support_zip_path: str):
+        try:
+            run(f"wget {cbl_support_zip_url} -O {cbl_support_zip_path}")
+            logger.info("Download of support libraries completed.")
+        except Exception as e:
+            logger.error(f"Failed to download Couchbase Lite Test Server: {e}")
+
+    @cbl_clients
+    def unzip_cbl_support_libs(self, cbl_support_zip_path: str, cbl_support_dir: str):
+        try:
+            with cd("~"):
+                run(f"mkdir {cbl_support_dir}")
+                run(f"unzip {cbl_support_zip_path} -d {cbl_support_dir}")
+            logger.info("Extraction of support libraries completed.")
+        except Exception as e:
+            logger.error(f"Failed to unzip the test server: {e}")
+
+    @cbl_clients
+    def update_setenv(self, ld_library_path: str, catalina_base: str = "/opt/tomcat/updated"):
+        setenv_path = f"{catalina_base}/bin/setenv.sh"
+        try:
+            logger.info("Updating Tomcat setenv.sh file...")
+            run(f"touch {setenv_path}")
+            append(setenv_path, f"export LD_LIBRARY_PATH={ld_library_path}:$LD_LIBRARY_PATH", \
+                use_sudo=True)
+            logger.info("setenv.sh updated.")
+        except Exception as e:
+            logger.error(f"Failed to update setenv.sh: {e}")
+
+    @cbl_clients
+    def download_cbl_testserver(self, cbl_testserver_zip_url: str, cbl_testserver_zip_path: str):
+        try:
+            run(f"wget {cbl_testserver_zip_url} -O {cbl_testserver_zip_path}")
+            logger.info("Download of CBL package completed.")
+        except Exception as e:
+            logger.error(f"Failed to download Couchbase Lite Test Server: {e}")
+
+    @cbl_clients
+    def unzip_cbl_testserver(self, cbl_testserver_zip_path: str, javatestserver_dir: str):
+        try:
+            with cd("~"):
+                run(f"mkdir {javatestserver_dir}")
+                run(f"unzip {cbl_testserver_zip_path} -d {javatestserver_dir}")
+            logger.info("Extraction of CBL package completed.")
+        except Exception as e:
+            logger.error(f"Failed to unzip the test server: {e}")
+
+    @cbl_clients
+    def make_executable(self, javatestserver_dir: str):
+        daemon_manager_path = f"{javatestserver_dir}/daemon_manager.sh"
+        try:
+            run(f"chmod +x {daemon_manager_path}")
+            logger.info("daemon_manager.sh script made executable.")
+        except Exception as e:
+            logger.error(f"Failed to make daemon_manager.sh executable: {e}")
+
+    @cbl_clients
+    def run_daemon_manager(self, ld_library_path: str, javatestserver_dir: str):
+        daemon_manager_path = f"{javatestserver_dir}/daemon_manager.sh"
+        service_status = "start"
+        binary_location = f"{javatestserver_dir}/CBLTestServer-Java-Desktop-3.2.0-75-enterprise.jar"
+        output_location = f"{javatestserver_dir}/output"
+        java_home = self.find_java_home()
+        jsvc_location = "/usr/bin/jsvc"
+        working_location = javatestserver_dir
+        command = f"export LD_LIBRARY_PATH={ld_library_path}:$LD_LIBRARY_PATH && \
+            {daemon_manager_path} {service_status} {binary_location} {output_location} \
+                {java_home} {jsvc_location} {working_location}"
+        try:
+            result = run(command)
+            logger.info(result)
+            logger.info("Couchbase Lite Test Server installation and startup completed.")
+        except Exception as e:
+            logger.error(f"Failed to run daemon_manager.sh: {e}")

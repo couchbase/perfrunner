@@ -734,6 +734,38 @@ class KafkaInstaller:
     def install(self):
         self.remote.install_kafka(self.options.kafka_version)
 
+class CBLInstaller:
+
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
+        self.remote = RemoteHelper(cluster_spec, options.verbose)
+        self.options = options
+        self.cluster_spec = cluster_spec
+        self.cbl_support_zip_url = self.options.cbl_support_url
+        self.cbl_support_dir_name = self.cbl_support_zip_url.split('/')[-1].replace(".zip","")
+        self.cbl_support_zip_path = f"/tmp/{self.cbl_support_dir_name}.zip"
+        self.cbl_support_dir = f"/tmp/{self.cbl_support_dir_name}"
+        self.ld_library_path = f"{self.cbl_support_dir}:{self.cbl_support_dir}/libicu"
+        self.cbl_testserver_zip_url = self.options.cbl_url
+        self.cbl_testserver_dir_name = self.cbl_testserver_zip_url.split('/')[-1].replace(".zip","")
+        self.cbl_testserver_zip_path = f"/tmp/{self.cbl_testserver_dir_name}.zip"
+        self.javatestserver_dir = "/opt/javatestserver"
+
+    def install(self):
+        logger.info("Uninstalling CBL.")
+        self.remote.stop_daemon_manager(self.javatestserver_dir)
+        self.remote.remove_line_from_setenv(self.ld_library_path)
+        self.remote.uninstall_cbl(self.cbl_support_dir, self.cbl_support_zip_path, \
+            self.cbl_testserver_zip_path, self.javatestserver_dir)
+        logger.info("Starting CBL Installation.")
+        self.remote.download_cbl_support_libs(self.cbl_support_zip_url, self.cbl_support_zip_path)
+        self.remote.unzip_cbl_support_libs(self.cbl_support_zip_path, self.cbl_support_dir)
+        self.remote.update_setenv(self.ld_library_path)
+        self.remote.download_cbl_testserver(self.cbl_testserver_zip_url, \
+            self.cbl_testserver_zip_path)
+        self.remote.unzip_cbl_testserver(self.cbl_testserver_zip_path, self.javatestserver_dir)
+        self.remote.make_executable(self.javatestserver_dir)
+        self.remote.run_daemon_manager(self.ld_library_path, self.javatestserver_dir)
+
 
 def get_args():
     parser = ArgumentParser()
@@ -790,6 +822,15 @@ def get_args():
                         default=False,
                         help='use to convert the cb-server profile to \
                         columnar on non-capella machines')
+    parser.add_argument(
+        "--cbl-url", dest="cbl_url", default=None, help="the HTTP URL to a cbl package"
+    )
+    parser.add_argument(
+        "--cbl-support-url",
+        dest="cbl_support_url",
+        default=None,
+        help="the HTTP URL to a cbl support libraries package",
+    )
     parser.add_argument('override',
                         nargs='*',
                         help='custom cluster settings')
@@ -843,6 +884,10 @@ def main():
     if cluster_spec.infrastructure_kafka_clusters:
         kafka_installer = KafkaInstaller(cluster_spec, args)
         kafka_installer.install()
+
+    if args.cbl_url:
+        cbl_installer = CBLInstaller(cluster_spec, args)
+        cbl_installer.install()
 
 
 if __name__ == '__main__':

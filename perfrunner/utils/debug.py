@@ -223,21 +223,57 @@ def check_if_log_file_exists(path_name_pattern: str):
 
 
 def get_capella_cluster_logs(rest: RestType, s3_bucket_name: str):
+    if not (upload_host := os.environ.get("CBCOLLECT_UPLOAD_HOST")):
+        logger.error("CBCOLLECT_UPLOAD_HOST needs to be set for collecting Capella cluster logs.")
+        return
 
-    rest.trigger_all_cluster_log_collection()
-    rest.wait_until_all_logs_uploaded()
-    node_logs = rest.get_all_cluster_node_logs()
+    for master in rest.cluster_spec.masters:
+        rest.start_log_collection(master, upload_host=f"https://{upload_host}/")
 
-    for node_name, log_info in node_logs.items():
-        file_key = create_s3_bucket_file_key(log_info[0], log_info[1])
-        path_name_pattern = f"s3://{s3_bucket_name}/{file_key}"
-        file_key = check_if_log_file_exists(path_name_pattern)
-        path_name = f"s3://{s3_bucket_name}/{file_key}"
+    timeout_secs = 600
+    interval_secs = 30
+    clusters_remaining = list(zip(rest.cluster_spec.capella_cluster_ids, rest.cluster_spec.masters))
+    successful_tasks = []
 
-        hostname = create_bucket_hostname(node_name)
-        if re.search(hostname, log_info[1]) is not None:
-            file_name = f"{hostname}.zip"
-            local.download_all_s3_logs(path_name, file_name)
+    deadline = time.time() + timeout_secs
+    while clusters_remaining and time.time() < deadline:
+        time.sleep(interval_secs)
+
+        not_done = []
+        for i, (cluster_id, master) in enumerate(clusters_remaining):
+            task = next(
+                (t for t in rest.get_tasks(master) if t["type"] == "clusterLogsCollection"), None
+            )
+            if not task:
+                logger.error(f"Log collection task not found for cluster {cluster_id}")
+            elif (status := task["status"]) == "completed":
+                logger.info(f"Log collection finished for cluster {cluster_id}")
+                successful_tasks.append(task)
+            elif status not in ["running", "pending"]:
+                logger.error(f"Unexpected log collection status for cluster {cluster_id}: {status}")
+            else:
+                logger.info(f"Log collection progress for cluster {cluster_id}: {task['progress']}")
+                not_done.append(i)
+
+        clusters_remaining = [c for i, c in enumerate(clusters_remaining) if i in not_done]
+
+    if clusters_remaining:
+        logger.interrupt(f"Timed out after {timeout_secs}s waiting for log collection to finish")
+
+    for task in successful_tasks:
+        for node_name, log_info in task["perNode"].items():
+            path = log_info["path"]
+            url = log_info["url"]
+
+            file_key = create_s3_bucket_file_key(path, url)
+            path_name_pattern = f"s3://{s3_bucket_name}/{file_key}"
+            file_key = check_if_log_file_exists(path_name_pattern)
+            path_name = f"s3://{s3_bucket_name}/{file_key}"
+
+            hostname = create_bucket_hostname(node_name)
+            if re.search(hostname, url) is not None:
+                file_name = f"{hostname}.zip"
+                local.download_all_s3_logs(path_name, file_name)
 
 
 def main():

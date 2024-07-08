@@ -1948,6 +1948,27 @@ class DefaultRestHelper(RestBase):
         resp = self.post(url=url, json=settings)
         resp.raise_for_status()
 
+    def start_log_collection(self, host: str, nodes: list[str] = [], upload_host: str = ""):
+        """Start log collection for the specified nodes, or all nodes if none are specified."""
+        data = {
+            "nodes": ",".join(f"ns_1@{n}" for n in nodes) or "*",
+            "logRedactionLevel": "none",
+        }
+
+        if upload_host:
+            data |= {
+                "uploadHost": upload_host,
+                "customer": "perf",
+            }
+
+        logger.info(
+            f"Starting log collection on {host} with the following parameters: {pretty_dict(data)}"
+        )
+
+        url = self._get_api_url(host=host, path="controller/startLogsCollection")
+        resp = self.post(url=url, data=data)
+        resp.raise_for_status()
+
 
 class KubernetesRestHelper(DefaultRestHelper):
 
@@ -2032,74 +2053,9 @@ class CapellaRestBase(DefaultRestHelper):
         return os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
 
     @retry
-    def trigger_log_collection(self, cluster_id: str):
-        resp = self.dedicated_client.trigger_log_collection(cluster_id)
-        return resp
-
-    def trigger_all_cluster_log_collection(self):
-        for cluster_id in self.cluster_ids:
-            logger.info('Triggering log collection for clusterId: {}'.format(cluster_id))
-            resp = self.trigger_log_collection(cluster_id)
-        return resp
-
-    @retry
     def get_cluster_tasks(self, cluster_id: str):
         resp = self.dedicated_client.get_cluster_tasks(cluster_id)
         return resp
-
-    def get_log_information(self, cluster_id: str):
-        resp = self.get_cluster_tasks(cluster_id)
-        for i in resp.json():
-            if i['type'] == 'clusterLogsCollection':
-                return i
-
-    def _check_if_given_clusters_are_uploaded(self, cluster_ids_not_uploaded: list):
-        clusters_not_uploaded = []
-        waiting_states = ['running', 'pending']
-
-        for cluster_id in cluster_ids_not_uploaded:
-            log_info = self.get_log_information(cluster_id)
-            if log_info['status'] in waiting_states:
-                logger.info('Progress {} for cluster {}'.format(log_info['progress'], cluster_id))
-                clusters_not_uploaded.append(cluster_id)
-            elif log_info['status'] == 'completed':
-                logger.info('Cluster {} logs uploaded'.format(cluster_id))
-            else:
-                logger.interrupt('Failed to upload logs for cluster {}'.format(cluster_id))
-
-        return clusters_not_uploaded
-
-    def wait_until_all_logs_uploaded(self):
-        cluster_ids_not_uploaded = [cluster_id for cluster_id in self.cluster_ids]
-        t0 = time.time()
-        timeout_mins = 20
-
-        while (time.time() - t0) < timeout_mins * 60:
-            cluster_ids_not_uploaded = \
-                self._check_if_given_clusters_are_uploaded(cluster_ids_not_uploaded)
-            if not cluster_ids_not_uploaded:
-                logger.info('All cluster logs have been successfully uploaded')
-                return
-            logger.info('Waiting for cluster logs to be uploaded')
-            time.sleep(60)
-
-        logger.interrupt(
-            'Waiting for logs to upload has timed out after {} mins'.format(timeout_mins))
-
-    def get_node_log_info(self, cluster_id: str) -> dict[list]:
-        log_nodes = {}
-        log_info = self.get_log_information(cluster_id)
-        for node in log_info['perNode']:
-            log_nodes[node] = (log_info['perNode'][node]['path'],
-                               log_info['perNode'][node]['url'])
-        return log_nodes
-
-    def get_all_cluster_node_logs(self):
-        log_nodes = {}
-        for cluster_id in self.cluster_ids:
-            logger.info('Getting node information from the cluster id: {}'.format(cluster_id))
-            log_nodes = log_nodes | self.get_node_log_info(cluster_id)
-        return log_nodes
 
     def get_cp_version(self) -> str:
         api = f"{self.dedicated_client.internal_url}/status"

@@ -273,27 +273,34 @@ class RemoteLinux(Remote):
         run('iptables -F && ip6tables -F')
 
     @all_servers
-    def collect_info(self, timeout: int = 1200, task_regexp: str = None):
-        logger.info('Running cbcollect_info with redaction')
+    def collect_info(
+        self, redaction: bool = False, timeout: int = 1200, task_regexp: Optional[str] = None
+    ):
+        redact_level = "none" if not redaction else "partial"
+        logger.info(f"Running cbcollect_info with redaction level = {redact_level}")
 
-        run('rm -f /tmp/*.zip')
+        run("rm -f /tmp/*.zip")
 
-        fname = '/tmp/{}.zip'.format(uhex())
+        fname = f"/tmp/{uhex()}.zip"
+        params = [
+            fname,
+            f"--log-redaction-level={redact_level}",
+            f"--task-regexp {quote(task_regexp)}" if task_regexp is not None else None,
+        ]
+
         try:
-            params = [fname]
-            if task_regexp is not None:
-                task_regexp = quote(task_regexp)
-                params.append(f'--task-regexp {task_regexp}')
-            param_string = ' '.join(params)
-            r = run(f'{self.CB_DIR}/bin/cbcollect_info {param_string}',
-                     warn_only=True, timeout=timeout)
-
+            r = run(
+                f"{self.CB_DIR}/bin/cbcollect_info {' '.join(filter(None, params))}",
+                warn_only=True,
+                timeout=timeout,
+            )
         except CommandTimeout:
-            logger.error('cbcollect_info timed out')
+            logger.error("cbcollect_info timed out")
             return
+
         if not r.return_code:
-            get('{}'.format(fname))
-            run('rm -f {}'.format(fname))
+            get(fname)
+            run(f"rm -f {fname}")
 
     @all_dn_nodes
     def collect_dn_logs(self):

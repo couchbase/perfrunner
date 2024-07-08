@@ -97,6 +97,8 @@
     "Tools": [
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_100M_rift_encrypted.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_400M_rift_encrypted.test", "groups": "P0"},
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_restore_100M_rift_encrypted.test", "groups": "P0"}
+        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_restore_100M_rift_encrypted.test", "groups": "P0"},
+        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_restore_400M_rift_magma.test", "groups": "P0"},
+        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_400M_rift_magma.test", "groups": "P0"}
     ]
 }

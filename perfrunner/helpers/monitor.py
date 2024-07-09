@@ -72,32 +72,53 @@ class Monitor:
 
         logger.info('Rebalance started. Rebalance progress: {} %'.format(progress))
 
-    def monitor_rebalance(self, host):
-        logger.info('Monitoring rebalance status')
-
+    def wait_for_rebalance_task(self, host: str):
+        """Wait for rebalance task to complete (successfully or not) on the given host."""
         is_running = True
         last_progress = 0
         last_progress_time = time.time()
+
         while is_running:
             time.sleep(self.POLLING_INTERVAL)
 
-            is_running, progress = self.rest.get_task_status(host,
-                                                             task_type='rebalance')
+            is_running, progress = self.rest.get_task_status(host, task_type="rebalance")
             if progress == last_progress:
                 if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
-                    logger.interrupt('Rebalance hung')
+                    logger.interrupt("Rebalance hung")
             else:
                 last_progress = progress
                 last_progress_time = time.time()
 
             if progress is not None:
-                logger.info('Rebalance progress: {} %'.format(progress))
-        if not self.rest.is_balanced(self.master_node):
+                logger.info(f"Rebalance progress: {progress} %")
+
+        logger.info("Rebalance task stopped running")
+
+    def wait_for_cluster_balanced(self, host: str, timeout_secs: int = 20) -> bool:
+        """Wait for the cluster to become balanced."""
+        is_balanced = False
+        deadline = time.time() + timeout_secs
+        while time.time() < deadline and not (is_balanced := self.rest.is_balanced(host)):
+            time.sleep(self.POLLING_INTERVAL)
+
+        if is_balanced:
+            logger.info("Cluster is balanced")
+        else:
+            logger.error(f"Cluster did not become balanced within {timeout_secs}s")
+
+        return is_balanced
+
+    def monitor_rebalance(self, host: str):
+        """Monitor a rebalance operation until the cluster is balanced."""
+        logger.info("Monitoring rebalance status")
+
+        self.wait_for_rebalance_task(host)
+
+        logger.info("Waiting for cluster to become balanced")
+        if not self.wait_for_cluster_balanced(self.master_node):
             rebalance_report = self.rest.get_rebalance_report(self.master_node)
             completion_message = rebalance_report["completionMessage"]
             logger.interrupt(f"Rebalance failed with message {completion_message}")
-        else:
-            logger.info('Rebalance completed')
 
     def _wait_for_empty_queues(self, host, bucket, queues, stats_function):
         metrics = list(queues)

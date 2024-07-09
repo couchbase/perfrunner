@@ -18,8 +18,22 @@ sdist
 develop-eggs
 .installed.cfg
 
-# Installer logs
+# Logs
 pip-log.txt
+*.log
+
+# Local testing
+*.db
+*.pem
+*.pid
+*.result
+*.out
+*.deb
+*.rpm
+*.zip
+*.gz
+target/
+spring_latency/
 
 # Unit test / coverage reports
 .coverage

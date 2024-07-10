@@ -1823,8 +1823,10 @@ class MetricHelper:
 
     def _parse_sg_throughput(self, operation: str = "access") -> int:
         throughput = 0
-        if operation == "load":
+        if operation == "load_":
             pattern = "YCSB/*loaddocs*.result"
+        elif operation == "load_users_":
+            pattern = "YCSB/*loadusers*.result"
         else:
             pattern = "YCSB/*_runtest_*.result"
         for filename in glob.glob(pattern):
@@ -1940,18 +1942,11 @@ class MetricHelper:
         else:
             return 0
 
-    def sg_throughput(self, title) -> Metric:
-        metric_id = '{}_throughput'.format(self.test_config.name)
+    def sg_throughput(self, title, operation: str = "") -> Metric:
+        metric_id = f'{self.test_config.name}_{operation}throughput'
         metric_title = "{}{}".format(title, self._title)
         metric_info = self._metric_info(metric_id, metric_title)
-        throughput = self._parse_sg_throughput()
-        return throughput, self._snapshots, metric_info
-
-    def sg_load_throughput(self, title) -> Metric:
-        metric_id = '{}_load_throughput'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
-        metric_info = self._metric_info(metric_id, metric_title)
-        throughput = self._parse_sg_throughput("load")
+        throughput = self._parse_sg_throughput(operation)
         return throughput, self._snapshots, metric_info
 
     def avg_sg_cpu_usage(self, title) -> Metric:

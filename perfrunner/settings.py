@@ -2752,8 +2752,12 @@ class AuditSettings:
 
     def __init__(self, options: dict):
         self.enabled = bool(options.get('enabled', self.ENABLED))
-        self.extra_events = set(options.get('extra_events',
-                                            self.EXTRA_EVENTS).split())
+        self.extra_events = set(options.get("extra_events", self.EXTRA_EVENTS).split())
+
+
+class SGWAuditSettings(AuditSettings):
+
+    ENABLED = False
 
 
 class YCSBSettings:
@@ -3324,7 +3328,7 @@ class SyncgatewaySettings:
 
         self.roundtrip_write_load = options.get('roundtrip_write_load', self.ROUNDTRIP_WRITE_LOAD)
         # possible options: datadog, sumologic, generic_http
-        self.log_streaming = options.get('log_streaming', self.LOG_STREAMING_TYPE)
+        self.log_streaming = options.get("log_streaming", self.LOG_STREAMING_TYPE)
         self.sg_replication_type = options.get('sg_replication_type', self.SG_REPLICATION_TYPE)
         self.sg_conflict_resolution = options.get('sg_conflict_resolution',
                                                   self.SG_CONFLICT_RESOLUTION)
@@ -3750,6 +3754,11 @@ class TestConfig(Config):
     def audit_settings(self) -> AuditSettings:
         options = self._get_options_as_dict('audit')
         return AuditSettings(options)
+
+    @property
+    def sgw_audit_settings(self) -> SGWAuditSettings:
+        options = self._get_options_as_dict("sgw-audit")
+        return SGWAuditSettings(options)
 
     def get_n1ql_query_definition(self, query_name: str) -> dict:
         return self._get_options_as_dict('n1ql-{}'.format(query_name))

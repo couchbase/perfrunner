@@ -124,6 +124,11 @@ class SGPerfTest(PerfTest):
 
         self.use_distributed_load = int(self.sg_settings.load_clients) > 1
 
+        if collector := self.settings.syncgateway_settings.log_streaming:
+            self.enable_log_streaming(collector)
+        if self.test_config.sgw_audit_settings.enabled:
+            self.enable_audit_logging()
+
     def enable_log_streaming(self, collector: str):
 
         if not self.capella_infra:
@@ -167,6 +172,38 @@ class SGPerfTest(PerfTest):
 
     def _get_collector_api_key(self, collector: str) -> str:
         return os.getenv(f'COLLECTOR_API_KEY_{collector.upper()}')
+
+    def _get_audit_settings(self) -> dict:
+        # Get all available audit settings and configure those filterable ones
+
+        current_events = self.rest.sgw_get_audit_settings(self.sgw_master_node, "db-1").get(
+            "events", {}
+        )
+
+        if extra_events := self.test_config.sgw_audit_settings.extra_events:
+            if extra_events == "ALL":
+                return dict.fromkeys(current_events.keys(), True)
+            for event, value in current_events:
+                current_events[event] = (event in extra_events) or value
+        return current_events
+
+    def enable_audit_logging(self):
+        if not self.capella_infra:
+            config = {"enabled": True, "events": self._get_audit_settings()}
+            self.rest.sgw_update_audit_logging(self.sgw_master_node, "db-1", config)
+            audit_settings = self.rest.sgw_get_audit_settings(
+                self.sgw_master_node, "db-1", filterable=False
+            )
+            logger.info(f"Audit settings: {pretty_dict(audit_settings)}")
+            return
+
+        self.rest.sgw_enable_audit_logging()
+        sleep(10)
+        state = self.rest.sgw_get_audit_logging_state()
+        logger.info(f"The state of audit logging is: {state}")
+
+        current_events = self.rest.sgw_get_audit_logging_config("db-1").json()
+        logger.info(f"The current audit logging events are: {current_events}")
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
@@ -332,7 +369,7 @@ class SGPerfTest(PerfTest):
 
     def check_num_warnings(self):
         warn_count = 0
-        if not self.cluster_spec.capella_infrastructure:
+        if not self.capella_infra:
             for host in self.cluster_spec.sgw_servers:
                 stats = self.rest.get_sg_stats(host)
                 warn_count += int(stats['syncgateway']['global']
@@ -354,8 +391,6 @@ class SGPerfTest(PerfTest):
 
     def run(self):
         self.download_ycsb()
-        if collector := self.settings.syncgateway_settings.log_streaming:
-            self.enable_log_streaming(collector)
         self.start_memcached()
         self.load_users()
         self.load_docs()
@@ -462,7 +497,7 @@ class SGLoad(SGPerfTest):
             )
 
         self.reporter.post(
-            *self.metrics.sg_load_throughput("Load Throughput (docs/sec)")
+            *self.metrics.sg_throughput("Load Throughput (docs/sec)", "load_")
         )
 
         if self.sg_settings.mem_cpu_stats:
@@ -647,6 +682,38 @@ class SGWriteLatency(SGPerfTest):
             self.metrics.sg_latency('[INSERT], 95thPercentileLatency(us)',
                                     'Latency (ms), POST doc, 95 percentile')
         )
+
+
+class SGInsertUsers(SGPerfTest):
+
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob(f'{self.LOCAL_DIR}/*loaddocs*.result'):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_throughput("Load Throughput (docs/sec)", "load_users_")
+        )
+
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
+
+    def run(self):
+        self.remote.remove_sglogs()
+
+        self.download_ycsb()
+
+        self.start_memcached()
+        self.load_users()
+
+        self.report_kpi()
 
 
 class SGMixQueryThroughput(SGPerfTest):
@@ -973,7 +1040,7 @@ class SGReplicateThroughputTest1(SGPerfTest):
         )
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = f'https://{sg1_master}:4985/db-1'
             sg2 = f'https://{sg2_master}:4985/db-1'
@@ -1030,7 +1097,7 @@ class SGReplicateThroughputTest1(SGPerfTest):
 class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = f'https://{sg1_master}:4985/db-1'
             sg2 = f'https://{sg2_master}:4985/db-1'
@@ -1083,7 +1150,7 @@ class SGReplicateThroughputTest2(SGPerfTest):
         )
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = f'https://{sg1_master}:4985/db-1'
             sg2 = f'https://{sg2_master}:4985/db-1'
@@ -1148,7 +1215,7 @@ class SGReplicateThroughputTest2(SGPerfTest):
 class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = f'https://{sg1_master}:4985/db-1'
             sg2 = f'https://{sg2_master}:4985/db-1'
@@ -1196,7 +1263,7 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
 class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg2 = f'https://{sg2_master}:4985/db-1'
         else:
@@ -1255,7 +1322,7 @@ class SGReplicateLoad(SGPerfTest):
 class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = f'https://{sg1_master}:4985/db-1'
             sg2 = f'https://{sg2_master}:4985/db-1'
@@ -1307,7 +1374,7 @@ class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
 class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg2 = f'https://{sg2_master}:4985/db-1'
         else:
@@ -1351,7 +1418,7 @@ class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
 class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
 
     def start_replication(self, sg1_master, sg2_master, channel):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = f'https://{sg1_master}:4985/db-1'
             sg2 = f'https://{sg2_master}:4985/db-1'
@@ -1416,7 +1483,7 @@ class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
 class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master, channel):
-        if self.cluster_spec.capella_infrastructure or \
+        if self.capella_infra or \
            self.test_config.cluster.enable_n2n_encryption:
             sg1 = f'https://{sg1_master}:4985/db-1'
             sg2 = f'https://{sg2_master}:4985/db-1'
@@ -1991,7 +2058,7 @@ class EndToEndTest(SGPerfTest):
         push_count = 0
         for host in sg_servers:
             sgw_stats = self.rest.get_sg_stats(host)
-            if not self.cluster_spec.capella_infrastructure:
+            if not self.capella_infra:
                 logger.info(f'Sync-gateway Stats for host {host}: \
                             {pretty_dict(sgw_stats["syncgateway"]["per_db"])}')
                 for count in range(1, self.test_config.cluster.num_buckets + 1):
@@ -2444,7 +2511,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
         archive = self.test_config.restore_settings.backup_storage
         if self.test_config.restore_settings.modify_storage_dir_name:
             suffix_repo = "aws"
-            if self.cluster_spec.capella_infrastructure:
+            if self.capella_infra:
                 suffix_repo = self.cluster_spec.capella_backend
             archive = archive + "/" + suffix_repo
 

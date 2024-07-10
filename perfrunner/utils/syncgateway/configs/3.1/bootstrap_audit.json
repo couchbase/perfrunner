@@ -1,0 +1,21 @@
+{
+    "bootstrap": {
+        "server_tls_skip_verify": true,
+        "use_tls_server": false,
+        "server": "couchbase://172.23.100.190",
+        "username": "bucket-1",
+        "password": "password"
+    },
+    "api": {
+        "admin_interface_authentication": false,
+        "metrics_interface_authentication": false,
+        "admin_interface": "0.0.0.0:4985"
+    },
+    "logging": {
+        "log_file_path": "/var/tmp/sglogs",
+        "audit": {
+            "enabled": true,
+            "audit_log_file_path": "/var/tmp/sglogs/sgaudit"
+        }
+    }
+}

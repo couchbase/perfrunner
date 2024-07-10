@@ -1733,6 +1733,35 @@ class DefaultRestHelper(RestBase):
         resp = self.put(url=api, data=new_sync)
         resp.raise_for_status()
 
+    def sgw_update_audit_logging(self, host: str, keyspace: str, config: dict):
+        logger.info("Updating audit logging")
+        api = self._get_api_url(
+            host=host,
+            path=f"{keyspace}/_config/audit",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.put(url=api, data=json.dumps(config))
+        resp.raise_for_status()
+
+    def sgw_disable_audit_logging(self, host: str, keyspace: str):
+        logger.info("Disabling audit logging")
+        config = {"enabled": False}
+        resp = self.sgw_update_audit_logging(host, keyspace, config)
+        resp.raise_for_status()
+
+    def sgw_get_audit_settings(
+        self, host: str, db_name: str, filterable: bool = True, verbose: bool = False
+    ) -> dict:
+        api = self._get_api_url(
+            host=host,
+            path=f"{db_name}/_config/audit?filterable={str(filterable).lower()}&verbose={str(verbose).lower()}",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.get(url=api)
+        return resp.json()
+
     def sgw_set_db_offline(self, host: str, db: str):
         logger.info(f"Setting database {db} offline")
         api = self._get_api_url(
@@ -2331,6 +2360,56 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                                                          sgw_db_name, config)
         logger.info(f'The resp is: {resp}')
         resp.raise_for_status()
+
+    def sgw_enable_audit_logging(self):
+        logger.info("Enabling Audit Logging")
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.sgw_enable_audit_logging(self.tenant_id, self.project_id,
+                                                              cluster_id, sgw_cluster_id)
+        logger.info(f'The resp is: {resp}')
+        resp.raise_for_status()
+
+    def sgw_disable_audit_logging(self):
+        logger.info("Disabling Audit Logging")
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.sgw_disable_audit_logging(self.tenant_id, self.project_id,
+                                                               cluster_id, sgw_cluster_id)
+        logger.info(f'The resp is: {resp}')
+        resp.raise_for_status()
+
+    def sgw_get_audit_logging_state(self) -> dict:
+        logger.info("Get Audit Logging State")
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        return self.dedicated_client.sgw_get_audit_logging_state(self.tenant_id, self.project_id,
+                                                                 cluster_id, sgw_cluster_id).json()
+
+    def sgw_set_audit_logging_config(self, db_name, config: dict):
+        logger.info("Setting Audit Logging Config")
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.sgw_set_audit_logging_config(self.tenant_id, self.project_id,
+                                                                  cluster_id, sgw_cluster_id,
+                                                                  db_name, config)
+        logger.info(f'The resp is: {resp}')
+        resp.raise_for_status()
+
+    def sgw_get_audit_logging_config(self, db_name) -> dict:
+        logger.info("Get Audit Logging Config")
+        cluster_id = self.cluster_ids[0]
+        sgw_cluster_id = \
+            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        resp = self.dedicated_client.sgw_get_audit_logging_config(self.tenant_id, self.project_id,
+                                                                 cluster_id, sgw_cluster_id,
+                                                                 db_name)
+        logger.info(f'The resp is: {resp}')
+        return resp
 
 
 class CapellaServerlessRestHelper(CapellaRestBase):

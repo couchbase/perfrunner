@@ -1636,7 +1636,7 @@ class MetricHelper:
 
     def ingestion_time(self, time_elapsed: float, ingest_method: str) -> Metric:
         return self.custom_metric(
-            time_elapsed,
+            round(time_elapsed, 2),
             f"Data ingestion time (sec), {ingest_method.replace('_', ' ').title()}, {{}}",
             f"ingest_time_{ingest_method.lower().replace(' ', '_')}",
             chirality=-1,
@@ -1694,38 +1694,51 @@ class MetricHelper:
 
         return value, self._snapshots, metric_info
 
-    def ch2_tpm(self, tpm: float, tclients: int) -> Metric:
+    def ch2_tpm(self, tpm: float, tclients: int, extra_metric_id_suffix: str = "") -> Metric:
         return self.custom_metric(
-            tpm, f"Transactions per minute (tpm), {{}}, {tclients} tclients", "tmp", chirality=1
+            tpm,
+            f"Transactions per minute (tpm), {{}}, {tclients} tclients",
+            f"tmp{'_' + extra_metric_id_suffix if extra_metric_id_suffix else ''}",
+            chirality=1,
         )
 
-    def ch2_response_time(self, response_time: float, tclients: int) -> Metric:
+    def ch2_response_time(
+        self, response_time: float, tclients: int, extra_metric_id_suffix: str = ""
+    ) -> Metric:
         return self.custom_metric(
             response_time,
             f"Average response time (sec), {{}}, {tclients} tclients",
-            "response_time",
+            f"response_time{'_' + extra_metric_id_suffix if extra_metric_id_suffix else ''}",
             chirality=-1,
         )
 
-    def ch2_geo_mean_query_time(self, query_time: float, tclients: int) -> Metric:
+    def ch2_geo_mean_query_time(
+        self, query_time: float, tclients: int, extra_metric_id_suffix: str = ""
+    ) -> Metric:
         return self.custom_metric(
             query_time,
             f"Geo-mean analytics query time (sec), {{}}, {tclients} tclients",
-            "geo_mean_query_time",
+            f"geo_mean_query_time{'_' + extra_metric_id_suffix if extra_metric_id_suffix else ''}",
             chirality=-1,
         )
 
-    def ch2_analytics_query_set_time(self, query_set_time: float, tclients: int) -> Metric:
+    def ch2_analytics_query_set_time(
+        self, query_set_time: float, tclients: int, extra_metric_id_suffix: str = ""
+    ) -> Metric:
         return self.custom_metric(
             query_set_time,
             f"Average time per analytics query set (sec), {{}}, {tclients} tclients",
-            "analytics_query_time",
+            f"analytics_query_time{'_' + extra_metric_id_suffix if extra_metric_id_suffix else ''}",
             chirality=-1,
         )
 
-    def ch2_analytics_qph(self, qph: float, tclients: int) -> Metric:
+    def ch2_analytics_qph(
+        self, qph: float, tclients: int, extra_metric_id_suffix: str = ""
+    ) -> Metric:
         return self.custom_metric(
-            qph, f"Analytics queries per hour, {{}}, {tclients} tclients", "analytics_qph"
+            qph,
+            f"Analytics queries per hour, {{}}, {tclients} tclients",
+            f"analytics_qph{'_' + extra_metric_id_suffix if extra_metric_id_suffix else ''}",
         )
 
     def ch3_metrics(self, duration: float, logfile: str) -> CH3Metrics:

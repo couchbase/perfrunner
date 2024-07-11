@@ -17,7 +17,7 @@ enable_n2n_encryption = all
 [analytics]
 analytics_link = KafkaLink
 
-[goldfish_kafka_links]
+[columnar_kafka_links]
 link_source = MONGODB
 remote_database_name = ch2
 primary_key_field = _id

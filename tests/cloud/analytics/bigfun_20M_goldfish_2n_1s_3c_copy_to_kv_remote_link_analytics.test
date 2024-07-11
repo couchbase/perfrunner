@@ -32,8 +32,8 @@ external_file_include = json
 aws_credential_path = /root/.ssh/
 analytics_link = RemoteLink
 
-[copy_to_kv]
-query_file = tests/cloud/analytics/workload/bigfun_copy_to_kv_queries.json
+[columnar_copy_to]
+kv_query_file = tests/cloud/analytics/workload/bigfun_copy_to_kv_queries.json
 
 [clients]
 python_client = 4.2.0

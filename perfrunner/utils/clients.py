@@ -592,8 +592,10 @@ class ClientInstaller:
                 logger.info('No Tableau Connector required.')
 
         # Install pymongo
-        if self.cluster_spec.goldfish_infrastructure and \
-           self.test_config.goldfish_kafka_links_settings.link_source == 'MONGODB':
+        if (
+            self.cluster_spec.goldfish_infrastructure
+            and self.test_config.columnar_kafka_links_settings.link_source == "MONGODB"
+        ):
             logger.info('Installing pymongo for Goldfish Kafka Links')
             run_local_shell_command("env/bin/pip install pymongo --no-cache-dir")
 

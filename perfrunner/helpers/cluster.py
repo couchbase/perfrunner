@@ -173,12 +173,15 @@ class ClusterManagerBase:
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
-    def wait_until_healthy(self):
+    def wait_until_healthy(self, polling_interval_secs: int = 0, max_retries: int = 0):
+        """Wait for all nodes to be healthy and for the analytics service to be active."""
         for master in self.cluster_spec.masters:
-            self.monitor.monitor_node_health(master)
+            self.monitor.monitor_node_health(master, polling_interval_secs, max_retries)
 
             for analytics_node in self.rest.get_active_nodes_by_role(master, "cbas"):
-                self.monitor.monitor_analytics_node_active(analytics_node)
+                self.monitor.monitor_analytics_node_active(
+                    analytics_node, polling_interval_secs, max_retries
+                )
 
     def _gen_disabled_audit_events(self, master: str) -> List[str]:
         curr_settings = self.rest.get_audit_settings(master)
@@ -533,21 +536,6 @@ class DefaultClusterManager(ClusterManagerBase):
             self.rest.set_auto_failover(master, enabled, failover_timeouts,
                                         disk_failover_timeout)
 
-    def wait_until_warmed_up(self):
-        if self.test_config.bucket.bucket_type in ('ephemeral', 'memcached'):
-            return
-
-        for master in self.cluster_spec.masters:
-            for bucket in self.test_config.buckets:
-                self.monitor.monitor_warmup(self.memcached, master, bucket)
-
-    def wait_until_healthy(self):
-        for master in self.cluster_spec.masters:
-            self.monitor.monitor_node_health(master)
-
-            for analytics_node in self.rest.get_active_nodes_by_role(master, "cbas"):
-                self.monitor.monitor_analytics_node_active(analytics_node)
-
     def add_server_groups(self):
         logger.info("Server group map: {}".format(self.cluster_spec.server_group_map))
         if self.cluster_spec.server_group_map:
@@ -819,7 +807,7 @@ class DefaultClusterManager(ClusterManagerBase):
 
     def configure_kafka(self):
         self.remote.configure_kafka_brokers(
-            self.test_config.goldfish_kafka_links_settings.partitions_per_topic
+            self.test_config.columnar_kafka_links_settings.partitions_per_topic
         )
 
     def start_kafka(self):
@@ -879,7 +867,7 @@ class DefaultClusterManager(ClusterManagerBase):
         return arns
 
     def set_kafka_links_settings(self):
-        kafka_links_settings = self.test_config.goldfish_kafka_links_settings
+        kafka_links_settings = self.test_config.columnar_kafka_links_settings
         settings = {
             # Generic settings
             "kafkaConnectVersion": "2.7.1",
@@ -902,25 +890,25 @@ class DefaultClusterManager(ClusterManagerBase):
         }
 
         worker_config_arn = self.get_msk_connect_worker_configuration_arn(
-            self.test_config.goldfish_kafka_links_settings.msk_connect_worker_config
+            self.test_config.columnar_kafka_links_settings.msk_connect_worker_config
         )
         if not worker_config_arn:
             raise Exception("Could not find specified MSK Connect worker configuration")
 
         service_exec_role_arn = self.get_msk_connect_service_execution_role_arn(
-            self.test_config.goldfish_kafka_links_settings.msk_connect_service_exec_role
+            self.test_config.columnar_kafka_links_settings.msk_connect_service_exec_role
         )
         if not service_exec_role_arn:
             raise Exception("Could not find specified MSK Connect service execution role")
 
         mongodb_plugin_arn = self.get_msk_connect_custom_plugin_arn(
-            self.test_config.goldfish_kafka_links_settings.mongodb_connector_custom_plugin
+            self.test_config.columnar_kafka_links_settings.mongodb_connector_custom_plugin
         )
         if not mongodb_plugin_arn:
             raise Exception("Could not find specified MongoDB connector custom plugin")
 
         cbas_plugin_arn = self.get_msk_connect_custom_plugin_arn(
-            self.test_config.goldfish_kafka_links_settings.cbas_connector_custom_plugin
+            self.test_config.columnar_kafka_links_settings.cbas_connector_custom_plugin
         )
         if not cbas_plugin_arn:
             raise Exception("Could not find specified CBAS connector custom plugin")

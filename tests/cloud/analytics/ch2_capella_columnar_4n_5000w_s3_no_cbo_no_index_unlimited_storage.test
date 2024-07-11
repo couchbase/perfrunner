@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2CapellaColumnarUnlimitedStorageTest
+
+[showfast]
+title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, No CBO, Hand-Optimized Queries
+component = analyticscloud
+category = ch2
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+enable_n2n_encryption = all
+
+[analytics]
+external_dataset_type = s3
+external_dataset_region = us-east-1
+external_bucket = analytics-ch2-5000w-gz
+external_file_format = json
+external_file_include = gz
+aws_credential_path = /root/.ssh/
+
+[ch2]
+warehouses = 5000
+aclients = 1
+tclients = 0
+iterations = 2
+warmup_iterations = 1
+duration = 0
+warmup_duration = 0
+workload = ch2_analytics
+use_backup = false
+create_gsi_index = false
+
+[clients]
+python_client = 4.3.0

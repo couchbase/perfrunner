@@ -28,11 +28,11 @@ external_file_format = json
 external_file_include = json
 aws_credential_path = /root/.ssh/
 
-[copy_to_s3]
-format = json
+[columnar_copy_to]
+s3_format = json
 max_objects_per_file = 1000, 10000, 100000, 1000000
-compression = none
-query_file = tests/cloud/analytics/workload/bigfun_copy_to_s3_queries.json
+s3_compression = none
+s3_query_file = tests/cloud/analytics/workload/bigfun_copy_to_s3_queries.json
 
 [clients]
 python_client = 4.1.9

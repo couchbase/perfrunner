@@ -496,10 +496,17 @@ class Monitor:
                 time.sleep(self.POLLING_INTERVAL)
         logger.info('All items are compressed')
 
-    def monitor_node_health(self, host):
+    def monitor_node_health(
+        self,
+        host: str,
+        polling_interval_secs: Optional[int] = None,
+        max_retries: Optional[int] = None,
+    ):
+        max_retries = max_retries or self.MAX_RETRY
+        polling_interval_secs = polling_interval_secs or self.POLLING_INTERVAL
         logger.info('Monitoring node health')
 
-        for retry in range(self.MAX_RETRY):
+        for _ in range(max_retries):
             unhealthy_nodes = {
                 n for n, status in self.rest.node_statuses(host).items()
                 if status != 'healthy'
@@ -507,24 +514,29 @@ class Monitor:
                 n for n, status in self.rest.node_statuses_v2(host).items()
                 if status != 'healthy'
             }
-            if unhealthy_nodes:
-                time.sleep(self.POLLING_INTERVAL)
-            else:
+            if not unhealthy_nodes:
                 break
+
+            time.sleep(polling_interval_secs)
         else:
-            logger.interrupt('Some nodes are not healthy: {}'.format(unhealthy_nodes))
+            logger.interrupt(f"Some nodes are not healthy: {unhealthy_nodes}")
 
-    def monitor_analytics_node_active(self, host):
-        logger.info('Monitoring analytics node health')
+    def monitor_analytics_node_active(
+        self,
+        host: str,
+        polling_interval_secs: int = 0,
+        max_retries: int = 0,
+    ):
+        max_retries = max_retries or self.MAX_RETRY
+        polling_interval_secs = polling_interval_secs or self.POLLING_INTERVAL
+        logger.info("Monitoring analytics node health")
 
-        for retry in range(self.MAX_RETRY):
-            active = self.rest.analytics_node_active(host)
-            if active:
+        for _ in range(max_retries):
+            if self.rest.analytics_node_active(host):
                 break
-            else:
-                time.sleep(self.POLLING_INTERVAL)
+            time.sleep(polling_interval_secs)
         else:
-            logger.interrupt('Analytics node still not healthy: {}'.format(host))
+            logger.interrupt(f"Analytics node still not healthy: {host}")
 
     def is_index_ready(self, host: str) -> bool:
         for status in self.rest.get_index_status(host)['status']:
@@ -1048,7 +1060,7 @@ class Monitor:
         logger.info('Wait until Kafka Link data ingestion is completed.')
         datasets_still_ingesting = set(final_dataset_counts.keys())
 
-        timeout_mins = self.test_config.goldfish_kafka_links_settings.ingestion_timeout_mins
+        timeout_mins = self.test_config.columnar_kafka_links_settings.ingestion_timeout_mins
         t0 = time.time()
         while datasets_still_ingesting:
             if time.time() - t0 > (timeout_mins * 60):

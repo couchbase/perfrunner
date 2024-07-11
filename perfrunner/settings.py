@@ -2630,7 +2630,7 @@ class AnalyticsSettings:
         self.config_settings = options
 
 
-class GoldfishKafkaLinksSettings:
+class ColumnarKafkaLinksSettings:
 
     # Kafka Broker settings
     PARTITIONS_PER_TOPIC = 1
@@ -2676,44 +2676,54 @@ class GoldfishKafkaLinksSettings:
                                           self.INGESTION_TIMEOUT_MINS))
 
 
-class CopyToS3Settings:
-
-    FILE_FORMAT = 'json'
-    MAX_OBJECTS_PER_FILE = '1000'
-    COMPRESSION = 'none'
+class ColumnarCopyToSettings:
+    S3_FILE_FORMAT = "json"
+    MAX_OBJECTS_PER_FILE = "1000"
+    S3_COMPRESSION = "none"
 
     def __init__(self, options: dict):
-        self.file_format = set(
-            fmt.strip() for fmt in options.get('format', self.FILE_FORMAT).split(',')
+        self.s3_file_format = set(
+            fmt.strip() for fmt in options.get("s3_format", self.S3_FILE_FORMAT).split(",")
         )
         self.max_objects_per_file = set(
-            mopf.strip() for mopf in
-            options.get('max_objects_per_file', self.MAX_OBJECTS_PER_FILE).split(',')
+            mopf.strip()
+            for mopf in options.get("max_objects_per_file", self.MAX_OBJECTS_PER_FILE).split(",")
         )
-        self.compression = set(
-            cmprs.strip() for cmprs in options.get('compression', self.COMPRESSION).split(',')
+        self.s3_compression = set(
+            cmprs.strip() for cmprs in options.get("s3_compression", self.S3_COMPRESSION).split(",")
         )
-        self.query_file = options.get('query_file')
+        self.s3_query_file = options.get("s3_query_file")
+        self.kv_query_file = options.get("kv_query_file")
 
 
-class CopyToKVSettings:
-    def __init__(self, options: dict):
-        self.query_file = options.get("query_file")
-
-
-class ColumnarOnOffSettings:
-    CYCLES = 3
+class ColumnarSettings:
+    ON_OFF_CYCLES = 3
     ON_DURATION_SECS = 120
     OFF_DURATION_SECS = 300
-    POLL_INTERVAL_SECS = 10
-    TIMEOUT_SECS = 1200
+    ON_OFF_POLL_INTERVAL_SECS = 10
+    ON_OFF_TIMEOUT_SECS = 1200
+
+    SWEEP_THRESHOLD_BYTES = 1_000_000_000
 
     def __init__(self, options: dict):
-        self.cycles = int(options.get("cycles", self.CYCLES))
+        self.on_off_cycles = int(options.get("on_off_cycles", self.ON_OFF_CYCLES))
         self.on_duration = int(options.get("on_duration", self.ON_DURATION_SECS))
         self.off_duration = int(options.get("off_duration", self.OFF_DURATION_SECS))
-        self.poll_interval = int(options.get("poll_interval", self.POLL_INTERVAL_SECS))
-        self.timeout = int(options.get("timeout", self.TIMEOUT_SECS))
+        self.on_off_poll_interval = int(
+            options.get("on_off_poll_interval", self.ON_OFF_POLL_INTERVAL_SECS)
+        )
+        self.on_off_timeout = int(options.get("on_off_timeout", self.ON_OFF_TIMEOUT_SECS))
+
+        self.unlimited_storage_skip_baseline = maybe_atoi(
+            options.get("unlimited_storage_skip_baseline", "false")
+        )
+        self.debug_sweep_threshold_enabled = maybe_atoi(
+            options.get("debug_sweep_threshold_enabled", "false")
+        )
+        # per-node sweep threshold for columnar selective caching
+        self.sweep_threshold_bytes = int(
+            options.get("sweep_threshold_bytes", self.SWEEP_THRESHOLD_BYTES)
+        )
 
 
 class AuditSettings:
@@ -3693,24 +3703,19 @@ class TestConfig(Config):
         return AnalyticsSettings(options)
 
     @property
-    def goldfish_kafka_links_settings(self) -> GoldfishKafkaLinksSettings:
-        options = self._get_options_as_dict('goldfish_kafka_links')
-        return GoldfishKafkaLinksSettings(options)
+    def columnar_kafka_links_settings(self) -> ColumnarKafkaLinksSettings:
+        options = self._get_options_as_dict("columnar_kafka_links")
+        return ColumnarKafkaLinksSettings(options)
 
     @property
-    def copy_to_s3_settings(self) -> CopyToS3Settings:
-        options = self._get_options_as_dict('copy_to_s3')
-        return CopyToS3Settings(options)
+    def columnar_copy_to_settings(self) -> ColumnarCopyToSettings:
+        options = self._get_options_as_dict("columnar_copy_to")
+        return ColumnarCopyToSettings(options)
 
     @property
-    def copy_to_kv_settings(self) -> CopyToKVSettings:
-        options = self._get_options_as_dict("copy_to_kv")
-        return CopyToKVSettings(options)
-
-    @property
-    def columnar_on_off_settings(self) -> ColumnarOnOffSettings:
-        options = self._get_options_as_dict("columnar_on_off")
-        return ColumnarOnOffSettings(options)
+    def columnar_settings(self) -> ColumnarSettings:
+        options = self._get_options_as_dict("columnar")
+        return ColumnarSettings(options)
 
     @property
     def audit_settings(self) -> AuditSettings:

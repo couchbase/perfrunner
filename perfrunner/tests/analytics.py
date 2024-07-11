@@ -28,7 +28,7 @@ from perfrunner.helpers.rest import (
     QUERY_PORT_SSL,
 )
 from perfrunner.helpers.worker import ch2_load, tpcds_initial_data_load_task
-from perfrunner.settings import AnalyticsCBOSampleSize, CH2ConnectionSettings
+from perfrunner.settings import CH2, AnalyticsCBOSampleSize, CH2ConnectionSettings, ColumnarSettings
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
 from perfrunner.tests.xdcr import SrcTargetIterator
@@ -638,16 +638,16 @@ class ColumnarCopyFromS3Test(BigFunQueryNoIndexExternalTest):
 class ColumnarCopyToS3Test(ColumnarCopyFromS3Test):
     @with_stats
     def access(self):
-        with open(self.test_config.copy_to_s3_settings.query_file, 'r') as f:
+        with open(self.test_config.columnar_copy_to_settings.s3_query_file, "r") as f:
             queries = json.load(f)
 
         s3_bucket_name = self.cluster_spec.backup.split('://')[1]
         query_template = f'COPY {{}} TO `{s3_bucket_name}` AT `external_link` PATH({{}}) {{}} {{}}'
 
         for fmt, mopf, compression in itertools.product(
-            self.test_config.copy_to_s3_settings.file_format,
-            self.test_config.copy_to_s3_settings.max_objects_per_file,
-            self.test_config.copy_to_s3_settings.compression
+            self.test_config.columnar_copy_to_settings.s3_file_format,
+            self.test_config.columnar_copy_to_settings.max_objects_per_file,
+            self.test_config.columnar_copy_to_settings.s3_compression,
         ):
             for query in queries:
                 output_path_prefix = \
@@ -709,7 +709,7 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromS3Test):
 
     @with_stats
     def access(self):
-        with open(self.test_config.copy_to_kv_settings.query_file, "r") as f:
+        with open(self.test_config.columnar_copy_to_settings.kv_query_file, "r") as f:
             queries = json.load(f)
 
         query_template = f"COPY {{}} TO {{}} AT `{self.analytics_link}` KEY {{}}"
@@ -1078,40 +1078,50 @@ class CH2Test(AnalyticsTest):
             for name, coll, fields in self.GSI_INDEXES
         ]
 
-    def _report_kpi(self):
+    def _report_kpi(self, log_file: Optional[str] = None, extra_metric_id_suffix: str = ""):
         measure_time = (
             self.test_config.ch2_settings.duration - self.test_config.ch2_settings.warmup_duration
         )
         ch2_metrics = self.metrics.ch2_metrics(
-            duration=measure_time, logfile=self.test_config.ch2_settings.workload
+            duration=measure_time, logfile=log_file or self.test_config.ch2_settings.workload
         )
 
         if self.test_config.ch2_settings.tclients:
             self.reporter.post(
                 *self.metrics.ch2_tpm(
-                    round(ch2_metrics.tpm, 2), self.test_config.ch2_settings.tclients
+                    round(ch2_metrics.tpm, 2),
+                    self.test_config.ch2_settings.tclients,
+                    extra_metric_id_suffix,
                 )
             )
             self.reporter.post(
                 *self.metrics.ch2_response_time(
-                    round(ch2_metrics.txn_response_time, 2), self.test_config.ch2_settings.tclients
+                    round(ch2_metrics.txn_response_time, 2),
+                    self.test_config.ch2_settings.tclients,
+                    extra_metric_id_suffix,
                 )
             )
 
         if self.test_config.ch2_settings.aclients:
             self.reporter.post(
                 *self.metrics.ch2_geo_mean_query_time(
-                    ch2_metrics.geo_mean_cbas_query_time, self.test_config.ch2_settings.tclients
+                    ch2_metrics.geo_mean_cbas_query_time,
+                    self.test_config.ch2_settings.tclients,
+                    extra_metric_id_suffix,
                 )
             )
             self.reporter.post(
                 *self.metrics.ch2_analytics_query_set_time(
-                    ch2_metrics.average_cbas_query_set_time, self.test_config.ch2_settings.tclients
+                    ch2_metrics.average_cbas_query_set_time,
+                    self.test_config.ch2_settings.tclients,
+                    extra_metric_id_suffix,
                 )
             )
             self.reporter.post(
                 *self.metrics.ch2_analytics_qph(
-                    ch2_metrics.cbas_qph, self.test_config.ch2_settings.tclients
+                    ch2_metrics.cbas_qph,
+                    self.test_config.ch2_settings.tclients,
+                    extra_metric_id_suffix,
                 )
             )
 
@@ -1213,13 +1223,15 @@ class CH2Test(AnalyticsTest):
             local.ch2_load_task(self._create_ch2_conn_settings(), ch2_settings)
 
     @with_stats
-    def run_ch2(self, log_file: str = ""):
+    def run_ch2(self, log_file: str = "", ch2_settings: Optional[CH2] = None):
         logger.info(f"Running {self.test_config.ch2_settings.workload}")
         log_file = log_file or self.test_config.ch2_settings.workload
+        ch2_settings = ch2_settings or self.test_config.ch2_settings
+
         if self.worker_manager.is_remote:
             self.remote.ch2_run_task(
                 self._create_ch2_conn_settings(),
-                self.test_config.ch2_settings,
+                ch2_settings,
                 self.worker_manager.WORKER_HOME,
                 log_file=log_file,
             )
@@ -1227,11 +1239,7 @@ class CH2Test(AnalyticsTest):
                 worker_home=self.worker_manager.WORKER_HOME, logfile=log_file
             )
         else:
-            local.ch2_run_task(
-                self._create_ch2_conn_settings(),
-                self.test_config.ch2_settings,
-                log_file=log_file,
-            )
+            local.ch2_run_task(self._create_ch2_conn_settings(), ch2_settings, log_file=log_file)
 
     def restart(self):
         self.remote.stop_server()
@@ -1432,7 +1440,7 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
             use_tls=use_tls,
         )
 
-    def run(self):
+    def setup(self):
         local.clone_git_repo(
             repo=self.test_config.ch2_settings.repo, branch=self.test_config.ch2_settings.branch
         )
@@ -1449,49 +1457,62 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
         if self.test_config.analytics_settings.use_cbo:
             self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
 
+    def benchmark(self):
         self.run_ch2()
         self.report_kpi()
-
         self.report_columnar_s3_stats()
+
+    def run(self):
+        self.setup()
+        self.benchmark()
 
 
 class CapellaColumnarManualOnOffTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance_id = self.cluster_spec.controlplane_settings["columnar_ids"].split()[0]
-        self.on_off_settings = self.test_config.columnar_on_off_settings
+
+    @property
+    def on_off_settings(self) -> ColumnarSettings:
+        return self.test_config.columnar_settings
+
+    @timeit
+    def turn_off(self):
+        self.rest.turn_off_instance(self.instance_id)
+        self.monitor.wait_for_columnar_instance_turn_off(
+            self.instance_id,
+            poll_interval_secs=self.on_off_settings.on_off_poll_interval,
+            timeout_secs=self.on_off_settings.on_off_timeout,
+        )
+
+    @timeit
+    def turn_on(self):
+        self.rest.turn_on_instance(self.instance_id)
+        self.monitor.wait_for_columnar_instance_turn_on(
+            self.instance_id,
+            poll_interval_secs=self.on_off_settings.on_off_poll_interval,
+            timeout_secs=self.on_off_settings.on_off_timeout,
+        )
 
     def run(self):
         on_duration = self.on_off_settings.on_duration
         off_duration = self.on_off_settings.off_duration
-        poll_interval = self.on_off_settings.poll_interval
-        timeout = self.on_off_settings.timeout
 
         turn_on_times, turn_off_times = [], []
-        for i in range(max(cycles := self.on_off_settings.cycles, 1)):
+        for i in range(max(cycles := self.on_off_settings.on_off_cycles, 1)):
             logger.info(f"Starting on/off cycle {i + 1}/{cycles}")
 
             logger.info(f"Waiting {on_duration} seconds before turning columnar instance off.")
             time.sleep(on_duration)
 
-            self.rest.turn_off_instance(self.instance_id)
-            t0 = time.time()
-            self.monitor.wait_for_columnar_instance_turn_off(
-                self.instance_id, poll_interval_secs=poll_interval, timeout_secs=timeout
-            )
-            turn_off_time = time.time() - t0
+            turn_off_time = self.turn_off()
             logger.info(f"Time to turn columnar instance off (seconds): {turn_off_time:.2f}")
             turn_off_times.append(turn_off_time)
 
             logger.info(f"Waiting {off_duration} seconds before turning columnar instance on.")
             time.sleep(off_duration)
 
-            self.rest.turn_on_instance(self.instance_id)
-            t0 = time.time()
-            self.monitor.wait_for_columnar_instance_turn_on(
-                self.instance_id, poll_interval_secs=poll_interval, timeout_secs=timeout
-            )
-            turn_on_time = time.time() - t0
+            turn_on_time = self.turn_on()
             logger.info(f"Time to turn columnar instance on (seconds): {turn_on_time:.2f}")
             turn_on_times.append(turn_on_time)
 
@@ -1504,10 +1525,62 @@ class CapellaColumnarManualOnOffTest(PerfTest):
                 )
 
 
+class CH2CapellaColumnarUnlimitedStorageTest(
+    CH2CapellaColumnarAnalyticsOnlyTest, CapellaColumnarManualOnOffTest
+):
+    def run(self):
+        self.setup()
+
+        if not self.test_config.columnar_settings.unlimited_storage_skip_baseline:
+            super().benchmark()
+        else:
+            self.report_columnar_s3_stats()
+
+        self.instance_id = self.cluster_spec.controlplane_settings["columnar_ids"].split()[0]
+
+        turn_off_time = self.turn_off()
+        logger.info(f"Time to turn columnar instance off (seconds): {turn_off_time:.2f}")
+        turn_on_time = self.turn_on()
+        logger.info(f"Time to turn columnar instance on (seconds): {turn_on_time:.2f}")
+
+        self.cluster.wait_until_healthy()
+
+        if self.test_config.columnar_settings.debug_sweep_threshold_enabled:
+            # enable debug sweep threshold
+            self.rest.set_analytics_config_settings(
+                self.analytics_node,
+                "service",
+                {
+                    "cloudStorageDebugModeEnabled": True,
+                    "cloudStorageDebugSweepThresholdSize": (
+                        self.test_config.columnar_settings.sweep_threshold_bytes
+                    ),
+                },
+            )
+            self.rest.restart_analytics_cluster(self.analytics_node)
+            self.cluster.wait_until_healthy(polling_interval_secs=10, max_retries=120)
+
+        if self.test_config.analytics_settings.use_cbo:
+            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
+
+        new_sf_title = f"{self.test_config.showfast.title}, POST-RESUME"
+        self.test_config.config["showfast"]["title"] = new_sf_title
+        self.test_config.update_spec_file()
+
+        log_file = f"{self.test_config.ch2_settings.workload}_post_resume"
+        ch2_settings = self.test_config.ch2_settings
+        ch2_settings.warmup_iterations = 0
+        ch2_settings.iterations = 1
+        self.run_ch2(log_file=log_file, ch2_settings=ch2_settings)
+
+        self.report_kpi(log_file=log_file, extra_metric_id_suffix="post_resume")
+        self.report_columnar_s3_stats()
+
+
 class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.kafka_links_settings = self.test_config.goldfish_kafka_links_settings
+        self.kafka_links_settings = self.test_config.columnar_kafka_links_settings
         self.docs_per_collection = {}
         self.kafka_link_connected = False
 

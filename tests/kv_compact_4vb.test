@@ -24,6 +24,3 @@ size = 512
 workers = 20
 key_fmtr = hex
 doc_gen = large
-
-[clients]
-python_client = 3.0.8

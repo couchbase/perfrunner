@@ -29,6 +29,3 @@ time = 1200
 ssl_mode = data
 show_tls_version = true
 min_tls_version = tlsv1.3
-
-[clients]
-python_client = 3.0.8

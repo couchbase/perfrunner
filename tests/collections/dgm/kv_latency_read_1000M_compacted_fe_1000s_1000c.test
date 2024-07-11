@@ -43,6 +43,3 @@ working_set_access = 95
 workers = 40
 throughput = 15000
 time = 3600
-
-[clients]
-python_client = 4.0.2

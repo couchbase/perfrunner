@@ -56,6 +56,3 @@ latency_percentiles = 50,99
 nodes_after = 4
 start_after = 180
 stop_after = 180
-
-[clients]
-python_client = 3.2.7

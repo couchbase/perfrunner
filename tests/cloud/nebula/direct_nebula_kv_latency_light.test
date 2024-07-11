@@ -39,6 +39,3 @@ time = 600
 latency_percentiles = 50,98
 ssl_mode = nebula
 nebula_mode = nebula
-
-[clients]
-python_client = 3.2.7

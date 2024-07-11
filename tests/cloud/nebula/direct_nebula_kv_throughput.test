@@ -37,6 +37,3 @@ workers = 10
 time = 600
 ssl_mode = nebula
 nebula_mode = nebula
-
-[clients]
-python_client = 3.2.7

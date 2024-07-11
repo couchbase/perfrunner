@@ -33,6 +33,3 @@ workers = 200
 items = 35000000
 throughput = 200000
 time = 3600
-
-[clients]
-libcouchbase = 3.0.7

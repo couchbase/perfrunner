@@ -33,6 +33,3 @@ throughput = 20000
 items = 500000000
 workers = 20
 time = 3600
-
-[clients]
-python_client = 3.0.8

@@ -27,6 +27,3 @@ items = 20000000
 workers = 12
 subdoc_field = city
 time = 1200
-
-[clients]
-python_client = 3.0.8

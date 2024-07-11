@@ -38,6 +38,3 @@ workers = 10
 time = 600
 latency_percentiles = 50,98
 ssl_mode = capella
-
-[clients]
-python_client = 3.2.7

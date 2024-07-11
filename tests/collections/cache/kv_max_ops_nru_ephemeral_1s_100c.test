@@ -34,6 +34,3 @@ items = 35000000
 throughput = 200000
 time = 3600
 async = 1
-
-[clients]
-libcouchbase = 3.0.7

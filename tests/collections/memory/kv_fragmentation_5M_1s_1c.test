@@ -19,7 +19,3 @@ config = collections/1bucket_1scope_1collection_basic.json
 
 [load]
 items = 5000000
-
-[clients]
-libcouchbase = 3.2.2
-python_client = 4.1.2

@@ -23,7 +23,3 @@ iterations = 20
 
 [bucket_extras]
 defragmenter_interval = 1
-
-[clients]
-python_client = 2.5.0
-libcouchbase = 2.9.3

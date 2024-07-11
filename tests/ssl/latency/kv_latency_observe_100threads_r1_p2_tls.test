@@ -36,6 +36,3 @@ connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interv
 ssl_mode = data
 show_tls_version = true
 min_tls_version = tlsv1.3
-
-[clients]
-python_client = 3.0.8

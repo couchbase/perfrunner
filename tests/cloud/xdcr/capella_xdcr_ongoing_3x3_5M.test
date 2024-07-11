@@ -43,6 +43,3 @@ working_set = 10
 working_set_access = 98
 time = 1200
 ssl_mode = capella
-
-[clients]
-python_client = 3.2.7

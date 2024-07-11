@@ -36,6 +36,3 @@ ssl_mode = capella
 
 [xdcr]
 filter_expression = EXISTS(city)
-
-[clients]
-python_client = 3.2.7

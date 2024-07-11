@@ -31,7 +31,3 @@ doc_gen = large
 [xdcr]
 num_xdcr_links = 2
 xdcr_links_priority = High,High
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

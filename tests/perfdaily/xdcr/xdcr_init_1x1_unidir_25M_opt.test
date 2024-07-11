@@ -24,7 +24,3 @@ optimisticReplicationThreshold = 10240
 items = 25000000
 size = 1024
 workers = 80
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

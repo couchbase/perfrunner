@@ -25,6 +25,3 @@ size = 1024
 workers = 80
 doc_gen = large
 ssl_mode = capella
-
-[clients]
-python_client = 3.2.7

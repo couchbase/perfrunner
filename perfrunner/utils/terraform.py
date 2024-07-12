@@ -2042,6 +2042,16 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             }
 
             logger.info(f"Deploying Goldfish instance with config: {pretty_dict(config)}")
+
+            if ami := self.options.columnar_ami:
+                logger.info(f"Overriding Columnar AMI: {ami}")
+                config |= {
+                    "overRide": {
+                        "image": ami,
+                        "token": os.getenv("CBC_OVERRIDE_TOKEN"),
+                    }
+                }
+
             resp = self.columnar_api.create_columnar_instance(
                 self.tenant_id, self.project_id, config
             )
@@ -2210,6 +2220,7 @@ def get_args():
     parser.add_argument(
         "--capella-sgw-ami", help="custom AMI to use for App Services Capella Deployment"
     )
+    parser.add_argument("--columnar-ami", help="custom AMI to use for Columnar deployment")
     parser.add_argument("--release-id", help="release id for managing releases")
     parser.add_argument("--dapi-ami", help="AMI to use for Data API deployment (serverless)")
     parser.add_argument("--dapi-override-count", type=int, help="number of DAPI nodes to deploy")

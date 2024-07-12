@@ -377,7 +377,7 @@ class RemoteLinux(Remote):
     def _install_couchbase(self, filename: str):
         logger.info('Installing Couchbase Server')
         if self.package == 'deb':
-            run(f'yes | apt install -y /tmp/{filename}')
+            run(f"DEBIAN_FRONTEND=noninteractive apt install -y /tmp/{filename}")
         else:
             run(f'yes | yum localinstall -y /tmp/{filename}')
 
@@ -1504,7 +1504,7 @@ class RemoteLinux(Remote):
     def remove_line_from_setenv(
         self, ld_library_path: str, catalina_base: str = "/opt/tomcat/updated"
     ):
-        setenv_path = f"{catalina_base}/bin/setenv.sh"  # noqa: F821
+        setenv_path = f"{catalina_base}/bin/setenv.sh"
         line_to_remove = f"export LD_LIBRARY_PATH={ld_library_path}:$LD_LIBRARY_PATH"
         try:
             logger.info("Removing line from setenv.sh file...")

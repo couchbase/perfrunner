@@ -44,21 +44,18 @@ class ObserveIndexLatency(Latency):
 
     def __init__(self, settings):
         super().__init__(settings)
-        self.pools = self.init_pool(settings)
+        self.pools = []
 
-    def init_pool(self, settings):
-        pools = []
+    def _init_pool(self):
         for bucket in self.get_buckets():
             pool = Pool(
                 bucket=bucket,
-                host=settings.master_node,
+                host=self.master_node,
                 username=bucket,
-                password=settings.bucket_password,
-                collections=settings.collections,
+                password=self.auth[1],
                 quiet=True,
             )
-            pools.append((bucket, pool))
-        return pools
+            self.pools.append((bucket, pool))
 
     @timeit
     def _wait_until_indexed(self, client, key):
@@ -162,10 +159,8 @@ class DurabilityLatency(ObserveIndexLatency, Latency):
 
     def __init__(self, settings, workload):
         super().__init__(settings)
-
         self.new_docs = Document(workload.size)
-
-        self.pools = self.init_pool(settings)
+        self.pools = []
 
     @staticmethod
     def gen_key() -> Key:

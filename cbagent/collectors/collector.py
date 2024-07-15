@@ -209,7 +209,15 @@ class Collector:
     def sample(self):
         raise NotImplementedError
 
+    def _init_pool(self):
+        # Due to the underlying architecture of the 4.x SDK, a cluster instance cannot be shared
+        # across processes. This method gives a place for collectors that use the SDK to initialise
+        # the connection when the collector process is started.
+        # https://docs.couchbase.com/sdk-api/couchbase-python-client/couchbase_api/parallelism.html
+        pass
+
     def collect(self):
+        self._init_pool()
         while True:
             try:
                 t0 = time.time()

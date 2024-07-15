@@ -280,11 +280,11 @@ class CbAgent:
                 self.add_sgimport_latency()
 
     def add_sgimport_latency(self):
-        for i, cluster_id in enumerate(self.cluster_map):
+        for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
             settings.cluster = cluster_id
-            collector = SGImportLatency(settings, self.test.cluster_spec,
-                                        self.test.test_config.syncgateway_settings)
+            settings.master_node = master_node
+            collector = SGImportLatency(settings, self.test.cluster_spec)
             self.collectors.append(collector)
 
     def add_collector(self, cls, *args):

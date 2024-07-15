@@ -1040,7 +1040,7 @@ class RemoteLinux(Remote):
         logger.info(f"Deleting staging directory {staging_dir}")
         cmd = f"rm -rf {staging_dir}/* {staging_dir}/.*"
         logger.info(f"Running.. {cmd}")
-        run(cmd)
+        run(cmd, warn_only=True)
 
     @master_client
     def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,

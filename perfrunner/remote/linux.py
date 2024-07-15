@@ -1038,7 +1038,7 @@ class RemoteLinux(Remote):
     @master_client
     def delete_existing_staging_dir(self, staging_dir:str):
         logger.info(f"Deleting staging directory {staging_dir}")
-        cmd = f"rm -rf {staging_dir}/*"
+        cmd = f"rm -rf {staging_dir}/* {staging_dir}/.*"
         logger.info(f"Running.. {cmd}")
         run(cmd)
 

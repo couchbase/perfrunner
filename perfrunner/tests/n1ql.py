@@ -3,10 +3,12 @@ import threading
 import time
 from typing import Optional
 
+import numpy as np
+
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import pretty_dict, run_aws_cli_command
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import CapellaRebalanceTest
@@ -197,8 +199,9 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
     def load(self):
         PerfTest.load(self)
 
-    def create_indexes(self, query_node: Optional[str] = None, index_node: Optional[str] = None):
-        logger.info('Creating and building indexes')
+    def create_indexes(self, query_node: Optional[str] = None, index_node: Optional[str] = None,
+                       statements: Optional[list[str]] = None):
+
 
         query_node = query_node or self.query_nodes[0]
         index_node = index_node or self.index_nodes[0]
@@ -206,7 +209,8 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
         create_statements = []
         build_statements = []
 
-        for statement in self.test_config.index_settings.statements:
+
+        for statement in statements or self.test_config.index_settings.statements:
             check_stmt = statement.replace(" ", "").upper()
             if 'CREATEINDEX' in check_stmt \
                     or 'CREATEPRIMARYINDEX' in check_stmt:
@@ -216,7 +220,7 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
 
         queries = []
         for statement in create_statements:
-            logger.info('Creating index: ' + statement)
+            logger.info(f"Creating index: {statement}")
             queries.append(threading.Thread(target=self.execute_index,
                                             args=(statement, query_node, index_node)))
 
@@ -228,7 +232,7 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
 
         queries = []
         for statement in build_statements:
-            logger.info('Building index: ' + statement)
+            logger.info(f"Building index:{statement}")
             queries.append(threading.Thread(target=self.execute_index,
                                             args=(statement, query_node, index_node)))
 
@@ -1437,3 +1441,183 @@ class N1QLLatencyRebalanceRawStatementTest(N1QLLatencyRawStatementTest, CapellaR
         self.access()
 
         self.report_kpi()
+
+
+class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
+    def cloud_restore(self):
+        self.remote.extract_cb_any(filename='couchbase',
+                                   worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+
+        credential = local.read_aws_credential(
+            self.test_config.backup_settings.aws_credential_path, self.cloud_infra)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+        self.remote.delete_existing_staging_dir(self.test_config.backup_settings.obj_staging_dir)
+        collection_map = self.test_config.collection.collection_map
+        restore_mapping = self.test_config.restore_settings.map_data
+        if restore_mapping is None and collection_map:
+            for target in self.target_iterator:
+                if not collection_map.get(
+                        target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
+                    restore_mapping = \
+                        "{0}._default._default={0}.scope-1.collection-1"\
+                        .format(target.bucket)
+        archive = self.test_config.restore_settings.backup_storage
+        if self.test_config.restore_settings.modify_storage_dir_name:
+            suffix_repo = "aws"
+            if self.cluster_spec.capella_infrastructure:
+                suffix_repo = self.cluster_spec.capella_backend
+            archive = archive + "/" + suffix_repo
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            archive=archive,
+                            repo=self.test_config.restore_settings.backup_repo,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            map_data=restore_mapping,
+                            encrypted=self.test_config.restore_settings.encrypted,
+                            passphrase=self.test_config.restore_settings.passphrase)
+        self.wait_for_persistence()
+
+    @with_profiles
+    @with_stats
+    def vector_recall_and_accuracy_check(self):
+        query_node = self.query_nodes[0]
+        gsi_settings = self.test_config.gsi_settings
+        index_settings = self.test_config.index_settings
+        query_map = index_settings.vector_query_map
+        indexes = gsi_settings.indexes
+        probes = gsi_settings.vector_scan_probes
+        probes = probes.split(",")
+        ground_truth = [x.split() for x in
+                    open(self.test_config.index_settings.ground_truth_file_name,'r').readlines()]
+        recalls =[]
+        accuracies = []
+        k = int(index_settings.top_k_results)
+        for probe in probes:
+            recall = []
+            accuracy = []
+            if query_map:
+                bucket, scope = next(iter(indexes.items()))
+                scope, collections = next(iter(scope.items()))
+                collection, vectors = next(iter(collections.items()))
+                vector_idx, details = next(iter(vectors.items()))
+                if self.test_config.index_settings.ground_truth_file_name:
+                    for vector, truth in zip(query_map, ground_truth):
+                        query = [float(x) for x in vector.split()[2:]]
+                        if index_settings.fields:
+                            query_statement = "SELECT meta().id from `{}`.`{}`.`{}`\
+                            where {}='eligible' ORDER BY ANN(emb, {},{},{}) LIMIT {}"\
+                            .format(bucket,
+                                    scope,
+                                    collection,
+                                    gsi_settings.index_def_prefix,
+                                    query,
+                                    details["similarity"],
+                                    probe,
+                                    k)
+                        else:
+                            query_statement = "SELECT meta().id from `{}`.`{}`.`{}`\
+                            ORDER BY ANN(emb, {},{},{}) LIMIT {}"\
+                            .format(bucket,
+                                    scope,
+                                    collection,
+                                    query,
+                                    details["similarity"],
+                                    probe,
+                                    k)
+                        result = self.rest.exec_n1ql_statement(query_node,query_statement)
+                        ids = [result['id'] for result in result['results']]
+                        common_ids = sum(x in ids[:k] for x in truth[:k])/float(k)
+                        recall.append(common_ids)
+                        accuracy.append(int(ids[0]==truth[0]))
+                accuracy_percentage = np.mean(accuracy) * 100
+                logger.info(f"accuracy percentage for probe {probe}: {accuracy_percentage}")
+                recall_percentage = np.mean(recall) * 100
+                logger.info(f"recall percentage for probe {probe}: {recall_percentage}")
+                recalls.append(recall_percentage)
+                accuracies.append(accuracy_percentage)
+        return probes, recalls, accuracies
+
+    def downloads_ground_truth_file(self):
+        ground_truth_s3_path = self.test_config.index_settings.ground_truth_s3_path
+        ground_truth_file_name = self.test_config.index_settings.ground_truth_file_name
+        run_aws_cli_command(
+        f"s3 cp {ground_truth_s3_path+ground_truth_file_name} {ground_truth_file_name}")
+
+    def report_kpi(self, probes, recalls, accuracies):
+        k = int(self.test_config.index_settings.top_k_results)
+        for probe, avg_recall, avg_accuracy in zip(probes, recalls, accuracies):
+            self.reporter.post(
+                *self.metrics.n1ql_vector_recall_and_accuracy(k, probe, avg_recall, "Recall")
+                            )
+            self.reporter.post(
+                *self.metrics.n1ql_vector_recall_and_accuracy(k, probe, avg_accuracy, "Accuracy")
+                            )
+
+    def create_statements(self):
+        gsi_settings = self.test_config.gsi_settings
+        indexes = gsi_settings.indexes
+        statements = []
+        build_statements = []
+        bucket, scope = next(iter(indexes.items()))
+        scope, collections = next(iter(scope.items()))
+        collection, vectors = next(iter(collections.items()))
+        vector_idx, details = next(iter(vectors.items()))
+        if gsi_settings.override_index_def:
+            new_statement = (f"CREATE INDEX `{vector_idx}` on "
+            f"`{bucket}`.`{scope}`.`{collection}`({gsi_settings.override_index_def})")
+        else:
+            new_statement = (f"CREATE INDEX `{vector_idx}` "
+            f" on`{bucket}`.`{scope}`.`{collection}`({details['field']})")
+        with_clause = (
+            "WITH {"
+            f"'dimension':{gsi_settings.vector_dimension},"
+            f"'similarity':{details['similarity']},"
+            f"'num_replica':{details['num_replica']},"
+            "'defer_build':true,"
+        )
+        if(gsi_settings.vector_description is not None):
+            with_clause += f"'description':{gsi_settings.vector_description}"
+        else:
+            with_clause += f"'description':{details['description']}"
+        if(gsi_settings.vector_train_list is not None):
+            with_clause += f", 'train_list':{gsi_settings.vector_train_list}"
+        with_clause += "}"
+        new_statement += with_clause
+        statements.append(new_statement)
+        build_statement = f"BUILD INDEX ON `{bucket}`.`{scope}`.`{collection}`('{vector_idx}')"
+        build_statements.append(build_statement)
+        statements = statements + build_statements
+        return statements
+
+    def run(self):
+        self.cloud_restore()
+        start_time = time.time()
+        statements = self.create_statements()
+        self.create_indexes(statements=statements)
+        self.wait_for_indexing()
+        index_time = time.time()-start_time
+        logger.info(f"index time {index_time}")
+        self.downloads_ground_truth_file()
+        probes, recalls, accuracies = self.vector_recall_and_accuracy_check()
+        self.report_kpi(probes, recalls, accuracies)
+
+class N1qlVectorSearchWithFilterTest(N1qlVectorSearchTest):
+
+    def access(self):
+        access_settings = self.test_config.access_settings
+        access_settings.filtering_percentage = \
+            int(self.test_config.gsi_settings.vector_filter_percentage)
+        PerfTest.access(self, settings=access_settings)
+
+    def cloud_restore(self):
+        super().cloud_restore()
+        self.wait_for_persistence()
+        self.access()

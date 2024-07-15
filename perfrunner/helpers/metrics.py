@@ -208,6 +208,15 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
+    def n1ql_vector_recall_and_accuracy(self, k: int, probe: int,  value: float,
+                                        metric: str) -> Metric:
+        metric_id = f'{metric}_{k}_{probe}_{self.test_config.name}'
+        title_prefix = f"{metric}@{k}, probes-{probe} across 1000 queries"
+        metric_id = metric_id.replace('.', '')
+        title = f'{title_prefix}, {self._title}'
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        return round(value, 3), self._snapshots, metric_info
+
     def fts_index(self, elapsed_time: float) -> Metric:
         metric_id = self.test_config.name
         title_temp = self._title

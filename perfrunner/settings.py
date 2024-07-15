@@ -2241,7 +2241,7 @@ class IndexSettings:
 
     def __init__(self, options: dict):
         self.raw_statements = options.get('statements')
-        self.fields = options.get('fields')
+        self.fields = options.get('fields', None)
         self.replicas = int(options.get('replicas', self.REPLICAS))
         self.collection_map = options.get('collection_map')
         self.indexes_per_collection = int(options.get('indexes_per_collection',
@@ -2251,7 +2251,14 @@ class IndexSettings:
                                                     self.FTS_INDEX_NAME)
         self.couchbase_fts_index_configfile = options.get('couchbase_fts_index_configfile',
                                                           self.FTS_INDEX_CONFIG_FILE)
+        self.ground_truth_file_name = options.get('ground_truth_file_name', None)
+        self.ground_truth_s3_path = options.get('ground_truth_s3_path', None)
+        self.top_k_results = options.get('top_k_results', 10)
         self.statements = self.create_index_statements()
+        self.vector_query_path = options.get("vector_query_path", None)
+        if self.vector_query_path:
+            with open(self.vector_query_path,'r') as f:
+                self.vector_query_map = f.readlines()
 
     def create_index_statements(self) -> list[str]:
         #  Here we generate all permutations of all subsets of index fields

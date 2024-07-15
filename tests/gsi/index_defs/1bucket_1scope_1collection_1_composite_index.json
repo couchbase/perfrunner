@@ -1,0 +1,13 @@
+{
+    "bucket-1": {
+      "_default": {},
+      "scope-1": {
+        "collection-1": {
+          "composite-idx": {
+            "field": "id",
+            "num_replica": 0
+          }
+        }
+      }
+    }
+  }

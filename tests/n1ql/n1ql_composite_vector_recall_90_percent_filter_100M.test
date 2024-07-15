@@ -1,0 +1,62 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlVectorSearchWithFilterTest
+
+[showfast]
+title = Vector Search, 1 bucket, SIFT 100M doc 128dims, no replica, 1s 1c, 90%% selectivity
+component = n1ql
+category = vector
+sub_category = Plasma
+
+[cluster]
+mem_quota = 100000
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+backend_storage = magma
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+scopes_per_bucket = 1
+collections_per_scope = 1
+
+[load]
+items = 100000000
+size = 1024
+workers = 50
+doc_gen = reverse_lookup
+key_fmtr = no_hash
+
+[access]
+items = 100000000
+workers = 50
+modify_doc_loader = filter_vector
+key_fmtr = no_hash
+
+[restore]
+backup_storage = s3://fts-vector-100m-sift-128-dims
+backup_repo = fts_vector_100m_sift_128_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_composite_vector_index.json
+vector_query_path = tests/fts/data/vector/testData/Sift_query_100M_128dim_top1000.txt
+ground_truth_file_name = Sift100M/gtiIdx50M.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+top_k_results = 10
+
+[secondary]
+indexer.settings.storage_mode = plasma
+vector_scan_probes = 3
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index.json
+vector_dimension = 128
+vector_filter_percentage = 90
+override_index_def = emb Vector, scalar
+index_def_prefix = scalar

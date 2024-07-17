@@ -1483,10 +1483,10 @@ class RemoteLinux(Remote):
         return java_home
 
     @cbl_clients
-    def stop_daemon_manager(self, javatestserver_dir: str):
+    def stop_daemon_manager(self, javatestserver_dir: str, cbl_testserver_dir_name: str):
         daemon_manager_path = f"{javatestserver_dir}/daemon_manager.sh"
         service_status = "stop"
-        binary_location = f"{javatestserver_dir}/CBLTestServer-Java-Desktop-3.2.0-75-enterprise.jar"
+        binary_location = f"{javatestserver_dir}/{cbl_testserver_dir_name}.jar"
         output_location = f"{javatestserver_dir}/output"
         java_home = self.find_java_home()
         jsvc_location = "/usr/bin/jsvc"
@@ -1607,10 +1607,12 @@ class RemoteLinux(Remote):
             logger.error(f"Failed to make daemon_manager.sh executable: {e}")
 
     @cbl_clients
-    def run_daemon_manager(self, ld_library_path: str, javatestserver_dir: str):
+    def run_daemon_manager(
+        self, ld_library_path: str, javatestserver_dir: str, cbl_testserver_dir_name: str
+    ):
         daemon_manager_path = f"{javatestserver_dir}/daemon_manager.sh"
         service_status = "start"
-        binary_location = f"{javatestserver_dir}/CBLTestServer-Java-Desktop-3.2.0-75-enterprise.jar"
+        binary_location = f"{javatestserver_dir}/{cbl_testserver_dir_name}.jar"
         output_location = f"{javatestserver_dir}/output"
         java_home = self.find_java_home()
         jsvc_location = "/usr/bin/jsvc"

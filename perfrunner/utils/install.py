@@ -752,7 +752,7 @@ class CBLInstaller:
 
     def install(self):
         logger.info("Uninstalling CBL.")
-        self.remote.stop_daemon_manager(self.javatestserver_dir)
+        self.remote.stop_daemon_manager(self.javatestserver_dir, self.cbl_testserver_dir_name)
         self.remote.remove_line_from_setenv(self.ld_library_path)
         self.remote.uninstall_cbl(self.cbl_support_dir, self.cbl_support_zip_path, \
             self.cbl_testserver_zip_path, self.javatestserver_dir)
@@ -764,7 +764,9 @@ class CBLInstaller:
             self.cbl_testserver_zip_path)
         self.remote.unzip_cbl_testserver(self.cbl_testserver_zip_path, self.javatestserver_dir)
         self.remote.make_executable(self.javatestserver_dir)
-        self.remote.run_daemon_manager(self.ld_library_path, self.javatestserver_dir)
+        self.remote.run_daemon_manager(
+            self.ld_library_path, self.javatestserver_dir, self.cbl_testserver_dir_name
+        )
 
 
 def get_args():

@@ -39,4 +39,4 @@ durability = 0
 ssl_mode = capella
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.3.12

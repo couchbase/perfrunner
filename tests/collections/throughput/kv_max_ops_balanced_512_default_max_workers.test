@@ -28,7 +28,7 @@ workers = 200
 updates = 50
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.3.12
 
 [stats]
 client_processes = cbc-pillowfight

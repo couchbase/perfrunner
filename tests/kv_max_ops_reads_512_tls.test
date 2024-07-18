@@ -26,4 +26,4 @@ updates = 20
 ssl_mode = data
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.3.12

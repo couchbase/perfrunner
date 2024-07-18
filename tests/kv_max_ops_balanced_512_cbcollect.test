@@ -28,4 +28,4 @@ time = 1200
 cbcollect = 1
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.3.12

@@ -36,4 +36,4 @@ show_tls_version = true
 min_tls_version = tlsv1.3
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.3.12

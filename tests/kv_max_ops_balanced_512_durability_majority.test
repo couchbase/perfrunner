@@ -27,4 +27,4 @@ updates = 50
 durability = 1
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.3.12

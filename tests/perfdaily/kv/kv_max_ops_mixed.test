@@ -27,5 +27,4 @@ workers = 50
 updates = 50
 
 [clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+libcouchbase = 3.3.12

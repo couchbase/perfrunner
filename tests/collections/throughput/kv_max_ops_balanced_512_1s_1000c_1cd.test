@@ -33,5 +33,4 @@ collection_mod_workers = 1
 collection_mod_throughput = 1
 
 [clients]
-libcouchbase = 3.0.7
-
+libcouchbase = 3.3.12

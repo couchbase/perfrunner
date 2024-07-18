@@ -32,4 +32,4 @@ persist_to = 0
 connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.0005}
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.3.12

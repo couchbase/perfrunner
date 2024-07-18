@@ -28,5 +28,4 @@ workers = 5
 updates = 50
 
 [clients]
-libcouchbase = 3.0.7
-
+libcouchbase = 3.3.12

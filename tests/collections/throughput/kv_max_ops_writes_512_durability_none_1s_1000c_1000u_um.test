@@ -39,4 +39,4 @@ user_mod_workers = 10
 user_mod_throughput = 100
 
 [clients]
-libcouchbase = 3.0.7
+libcouchbase = 3.3.12

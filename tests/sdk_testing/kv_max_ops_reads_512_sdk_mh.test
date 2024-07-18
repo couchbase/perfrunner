@@ -31,5 +31,4 @@ client_processes = java
 enable_sdktest = 1
 
 [clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+libcouchbase = 3.3.12

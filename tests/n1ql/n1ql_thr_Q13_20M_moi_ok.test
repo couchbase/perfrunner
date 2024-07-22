@@ -49,7 +49,3 @@ workload_instances = 3
 statement = SELECT RAW meta().id FROM `bucket-1` WHERE meta().id >= $1 ORDER BY meta().id LIMIT 50;
 scan_consistency = not_bounded
 args = ["{key}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

@@ -45,7 +45,3 @@ time = 1200
 [n1ql-bigfun]
 statement = SELECT `user`.screen_name AS username, AVG(LENGTH(message_text)) AS avg FROM `bucket-1` WHERE `chirpid` IS NOT MISSING AND send_time >= $1 AND send_time < $2 GROUP BY `user`.screen_name ORDER BY avg LIMIT 10;
 args = ["{send_time_medium[0]}", "{send_time_medium[1]}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

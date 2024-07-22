@@ -50,7 +50,3 @@ n1ql_workers = 120
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
 scan_consistency = request_plus
 args = ["{capped_small}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

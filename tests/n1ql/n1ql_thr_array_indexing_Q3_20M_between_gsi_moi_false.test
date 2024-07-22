@@ -48,7 +48,3 @@ workload_instances = 3
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE ANY i IN achievements2 SATISFIES i=$1 END;
 scan_consistency = request_plus
 args = [{achievements2[0]}]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

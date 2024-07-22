@@ -50,7 +50,3 @@ n1ql_workers = 4
 statement = SELECT b1.state, SUM(b1.coins) FROM `bucket-1` b1 JOIN `bucket-2` b2 USE HASH(build) ON b1.coins = b2.coins WHERE b1.capped_10K = $1 AND b2.capped_100 > $2 AND b2.capped_100 < $3 GROUP BY b1.state;
 scan_consistency = request_plus
 args = ["{capped_10K}","{capped_100}","{capped_100_range}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

@@ -49,7 +49,3 @@ workload_instances = 2
 statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON META(t).id IN u.topics WHERE u.email = $1;
 scan_consistency = request_plus
 args = ["{email}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

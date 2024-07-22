@@ -270,7 +270,3 @@ args = ["{key}"]
 [n1ql-q060]
 statement = SELECT * FROM `bucket-60` USE KEYS[$1];
 args = ["{key}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

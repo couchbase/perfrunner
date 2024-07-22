@@ -44,7 +44,3 @@ n1ql_throughput = 10000
 statement = SELECT * FROM `bucket-1` WHERE email = $1;
 scan_consistency = not_bounded
 args = ["{email}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

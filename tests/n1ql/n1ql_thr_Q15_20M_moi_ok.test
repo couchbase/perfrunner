@@ -48,7 +48,3 @@ workload_instances = 3
 statement = SELECT COUNT(1) FROM `bucket-1` WHERE ANY s IN TOKENS(address) SATISFIES s = $1 END;
 scan_consistency = not_bounded
 args = ["{capped_large}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

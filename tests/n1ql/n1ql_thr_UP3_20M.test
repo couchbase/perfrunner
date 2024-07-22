@@ -36,7 +36,3 @@ workload_instances = 3
 [n1ql-key-value-update]
 statement = UPDATE `bucket-1` USE KEYS [$1] SET name = name||'_UPDATED';
 args = ["{key}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

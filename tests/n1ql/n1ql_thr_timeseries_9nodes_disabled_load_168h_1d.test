@@ -64,6 +64,3 @@ scan_consistency = not_bound
 args = ["timeseries"]
 ts_config = {'total_devices': 1000, 'device_range': 0, 'total_ts_range': 2160, 'ts_range': 168, 'ts_start': 1672531200000}
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

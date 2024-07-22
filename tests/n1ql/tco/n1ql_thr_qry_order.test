@@ -45,6 +45,3 @@ statement = SELECT x.alt_email FROM (SELECT alt_email FROM `bucket-1` WHERE emai
 scan_consistency = not_bounded
 args = ["{email}"]
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

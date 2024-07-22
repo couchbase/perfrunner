@@ -151,6 +151,3 @@ args = ["{key}"]
 statement = SELECT * FROM `bucket-30` USE KEYS[$1];
 args = ["{key}"]
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

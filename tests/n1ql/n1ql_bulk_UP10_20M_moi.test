@@ -36,7 +36,3 @@ n1ql_queries = bulk-delete
 
 [n1ql-bulk-delete]
 statement = UPDATE `bucket-1` SET year = 2017 WHERE `year` > 1996;
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

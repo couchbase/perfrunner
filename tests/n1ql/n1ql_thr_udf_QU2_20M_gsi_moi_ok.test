@@ -54,6 +54,3 @@ statement = execute function func($1);
 scan_consistency = not_bounded
 args = ["{email}"]
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

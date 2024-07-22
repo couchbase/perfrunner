@@ -36,7 +36,3 @@ time = 600
 [n1ql-key-value-lookup]
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

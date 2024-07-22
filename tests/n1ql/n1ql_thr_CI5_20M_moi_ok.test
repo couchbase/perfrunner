@@ -48,7 +48,3 @@ workload_instances = 2
 statement = SELECT SUM(coins) FROM `bucket-1` WHERE capped_small=$1;
 scan_consistency = not_bounded
 args = ["{capped_small}"]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

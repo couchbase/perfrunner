@@ -32,7 +32,3 @@ xattr_field = city
 [backup]
 threads = 16
 sink_type = blackhole
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

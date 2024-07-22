@@ -31,7 +31,3 @@ storage_type = rift
 [restore]
 use_tls = 1
 show_tls_version = 1
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

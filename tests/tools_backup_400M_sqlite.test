@@ -26,7 +26,3 @@ workers = 40
 [backup]
 threads = 16
 storage_type = sqlite
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

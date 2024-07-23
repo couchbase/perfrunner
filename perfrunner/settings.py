@@ -2914,6 +2914,7 @@ class CH2:
     CREATE_GSI_INDEX = "true"
     DEBUG = "false"
     USE_UNOPTIMIZED_QUERIES = "false"
+    IGNORE_SKIP_INDEX_HINTS = "false"
 
     def __init__(self, options: dict):
         self.repo = options.get("repo", self.REPO)
@@ -2934,6 +2935,9 @@ class CH2:
         self.debug = maybe_atoi(options.get("debug", self.DEBUG))
         self.unoptimized_queries = maybe_atoi(
             options.get("unoptimized_queries", self.USE_UNOPTIMIZED_QUERIES)
+        )
+        self.ignore_skip_index_hints = maybe_atoi(
+            options.get("ignore_skip_index_hints", self.IGNORE_SKIP_INDEX_HINTS)
         )
 
         self.raw_analytics_statements = options.get(
@@ -2964,6 +2968,7 @@ class CH2:
             else None,
             "--no-load",
             "--unoptimized_queries" if self.unoptimized_queries else None,
+            "--ignore-skip-index-hints" if self.ignore_skip_index_hints else None,
         ]
         return " ".join(filter(None, flags))
 

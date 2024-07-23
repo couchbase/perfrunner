@@ -426,7 +426,8 @@ class SSLCertificate:
         )
 
     def _store_key(self, key_name: str, key: RSAPrivateKey):
-        with open('{}{}.key'.format(self.INBOX, key_name), 'wb') as file:
+        file = os.path.join(self.INBOX, f"{key_name}.key")
+        with open(file, "wb") as file:
             file.write(key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
@@ -434,7 +435,8 @@ class SSLCertificate:
             ))
 
     def _store_cert(self, cert_name: str, cert: Certificate):
-        with open('{}{}.pem'.format(self.INBOX, cert_name), 'wb') as file:
+        file = os.path.join(self.INBOX, f"{cert_name}.pem")
+        with open(file, "wb") as file:
             file.write(cert.public_bytes(serialization.Encoding.PEM))
 
     def _get_general_name(self, host: str) -> GeneralName:

@@ -60,8 +60,10 @@ class YCSBTest(PerfTest):
         self.cb_start = duration*0.8
         time.sleep(self.cb_start)
         start_time = time.time()
-        self.remote.collect_info(timeout=self.test_config.access_settings.cbcollect_timeout,
-                                 regexp=self.test_config.access_settings.cbcollect_regexp)
+        self.remote.collect_info(
+            timeout=self.test_config.access_settings.cbcollect_timeout,
+            task_regexp=self.test_config.access_settings.cbcollect_regexp,
+        )
         end_time = time.time()
         self.cb_time = round(end_time - start_time)
         logger.info("cbcollect_info finished and it took: {} seconds".format(self.cb_time))

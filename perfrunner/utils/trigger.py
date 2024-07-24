@@ -24,6 +24,7 @@ RELEASES = {
     'neo': '7.1.0',
     'elixir': '7.2.0',
     'trinity': '7.6.0',
+    'cypher': '7.7.0',
     'morpheus': '8.0.0'
 }
 

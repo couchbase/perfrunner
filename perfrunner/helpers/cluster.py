@@ -45,7 +45,8 @@ class ClusterManagerBase:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.capella_infra = self.cluster_spec.capella_infrastructure
-        self.rest = RestHelper(cluster_spec, test_config)
+        cluster = test_config.cluster
+        self.rest = RestHelper(cluster_spec, bool(cluster.enable_n2n_encryption))
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.master_node = next(self.cluster_spec.masters)
@@ -57,7 +58,14 @@ class ClusterManagerBase:
         self.build = self.rest.get_version(self.master_node)
         self.build_tuple = create_build_tuple(self.build)
         self.is_columnar = self.rest.is_columnar(self.master_node)
-        self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote, self.build)
+        self.monitor = Monitor(
+            cluster_spec,
+            self.rest,
+            self.remote,
+            self.build,
+            cluster.query_awr_bucket,
+            cluster.query_awr_scope,
+        )
 
     def is_compatible(self, min_release: str) -> bool:
         for master in self.cluster_spec.masters:
@@ -967,6 +975,7 @@ class CapellaClusterManager(ClusterManagerBase):
                     ram_quota=per_bucket_quota,
                     replica_number=self.test_config.bucket.replica_number,
                     eviction_policy=self.test_config.bucket.eviction_policy,
+                    bucket_type=self.test_config.bucket.bucket_type,
                     backend_storage=self.test_config.bucket.backend_storage,
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                     flush=self.test_config.bucket.flush,
@@ -993,6 +1002,7 @@ class CapellaClusterManager(ClusterManagerBase):
                     replica_number=self.test_config.bucket.replica_number,
                     eviction_policy=self.test_config.bucket.eviction_policy,
                     backend_storage=self.test_config.bucket.backend_storage,
+                    bucket_type=self.test_config.bucket.bucket_type,
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                     flush=self.test_config.bucket.flush,
                     durability=self.test_config.bucket.min_durability,
@@ -1010,6 +1020,7 @@ class CapellaClusterManager(ClusterManagerBase):
                 replica_number=self.test_config.bucket.replica_number,
                 eviction_policy=self.test_config.bucket.eviction_policy,
                 backend_storage=self.test_config.bucket.backend_storage,
+                bucket_type=self.test_config.bucket.bucket_type,
                 conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                 flush=self.test_config.bucket.flush,
                 durability=self.test_config.bucket.min_durability,

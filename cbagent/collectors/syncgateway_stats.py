@@ -1,8 +1,8 @@
 from cbagent.collectors import Collector
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
-from perfrunner.helpers import rest
 from perfrunner.helpers.misc import create_build_tuple
+from perfrunner.helpers.rest import RestHelper
 
 
 class SyncGatewayStats(Collector):
@@ -281,7 +281,9 @@ class SyncGatewayStats(Collector):
             self.hosts = test.cluster_spec.sgw_servers[:int(self.cg_settings.nodes)]
         else:
             self.hosts = test.cluster_spec.servers[:int(self.cg_settings.nodes)]
-        self.rest = rest.RestHelper(test.cluster_spec, test.test_config)
+        self.rest = RestHelper(
+            test.cluster_spec, bool(test.test_config.cluster.enable_n2n_encryption)
+        )
         self.sg_stats = dict()
 
         self.sgw_master_node = next(test.cluster_spec.sgw_masters)

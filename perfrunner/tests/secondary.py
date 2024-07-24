@@ -2378,8 +2378,11 @@ class InitialSecondaryIndexExpiryTest(InitialSecondaryIndexTest):
     @with_stats
     def measure_resource_during_expiry(self):
         target_iterator = self.target_iterator
+        bucket_replica = self.test_config.bucket.replica_number
         for target in target_iterator:
-            self.monitor.monitor_num_items(target.node, target.bucket, num_items=0, max_retry=3600)
+            self.monitor.monitor_num_items(
+                target.node, target.bucket, bucket_replica, num_items=0, max_retry=3600
+            )
 
     @with_stats
     @timeit

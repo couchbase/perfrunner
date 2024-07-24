@@ -36,8 +36,11 @@ class AnalyticsConnectorTest(CH2Test):
         self.disconnect_link()
         self.create_analytics_collections()
         self.connect_link()
+        bucket_replica = self.test_config.bucket.replica_number
         for bucket in self.test_config.buckets:
-            self.monitor.monitor_data_synced(self.data_node, bucket, self.analytics_node)
+            self.monitor.monitor_data_synced(
+                self.data_node, bucket, bucket_replica, self.analytics_node
+            )
 
     def _exec_analytics_statement(self, statement: str, outfile: str):
         api = 'http://{}:8095/analytics/service'.format(self.analytics_node)

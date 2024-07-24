@@ -73,7 +73,7 @@ def main():
             # If on provisioned Capella, we need to do two things before anything else:
             # 1. Create some DB credentials
             # 2. Whitelist the local IP
-            rest = RestHelper(cluster_spec, test_config)
+            rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
             rest.allow_my_ip_all_clusters()
             rest.create_db_user_all_clusters(*cluster_spec.rest_credentials)
 

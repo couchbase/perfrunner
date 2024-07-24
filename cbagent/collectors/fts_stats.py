@@ -1,5 +1,5 @@
 from cbagent.collectors.collector import Collector
-from perfrunner.helpers import rest
+from perfrunner.helpers.rest import RestHelper
 
 
 class FTSCollector(Collector):
@@ -44,7 +44,7 @@ class FTSCollector(Collector):
         self.fts_index_map = test.jts_access.fts_index_map
         self.allbuckets = [x for x in self.get_buckets()]
         self.fts_nodes = test.fts_nodes
-        self.rest = rest.RestHelper(test.cluster_spec, test.test_config)
+        self.rest = RestHelper(test.cluster_spec, self.n2n_enabled)
 
     def collect_stats(self):
         for host in self.fts_nodes:
@@ -173,7 +173,7 @@ class RegulatorStats(Collector):
         self.fts_index_map = test.jts_access.fts_index_map
         self.allbuckets = [x for x in self.get_buckets()]
         self.fts_nodes = test.fts_nodes
-        self.rest = rest.RestHelper(test.cluster_spec, test.test_config)
+        self.rest = RestHelper(test.cluster_spec, self.n2n_enabled)
 
     def collect_stats(self):
         for host in self.fts_nodes:

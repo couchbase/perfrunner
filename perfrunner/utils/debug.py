@@ -241,7 +241,7 @@ def check_if_log_file_exists(path_name_pattern: str):
 
 def get_capella_cluster_logs(cluster_spec: ClusterSpec, s3_bucket_name: str):
     test_config = TestConfig()
-    rest = RestHelper(cluster_spec, test_config)
+    rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
 
     rest.trigger_all_cluster_log_collection()
     rest.wait_until_all_logs_uploaded()

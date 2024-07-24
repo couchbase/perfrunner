@@ -82,7 +82,7 @@ class SGPerfTest(PerfTest):
         self.cloud_infra = self.cluster_spec.cloud_infrastructure
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
-        self.rest = RestHelper(cluster_spec, test_config)
+        self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
         self.master_node = next(self.cluster_spec.masters)
         self.sgw_master_node = next(cluster_spec.sgw_masters)
         self.metrics = MetricHelper(self)
@@ -99,8 +99,14 @@ class SGPerfTest(PerfTest):
         self.profiler = ProfilerHelper(cluster_spec, test_config)
         self.cluster = ClusterManager(cluster_spec, test_config)
         self.target_iterator = TargetIterator(cluster_spec, test_config)
-        self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote,
-                               self.rest.get_version(self.master_node))
+        self.monitor = Monitor(
+            cluster_spec,
+            self.rest,
+            self.remote,
+            self.rest.get_version(self.master_node),
+            test_config.cluster.query_awr_bucket,
+            test_config.cluster.query_awr_scope,
+        )
         self.sg_settings = self.test_config.syncgateway_settings
         self.collections = self.test_config.collection.collection_map
         if self.test_config.collection.collection_map:
@@ -331,6 +337,16 @@ class SGPerfTest(PerfTest):
             timer=self.settings.time,
             distribute=True
         )
+
+    @with_stats
+    @with_profiles
+    def monitor_sg_replicate(
+        self, sg_master: str, expected_docs: int, replication_id: str, version: int
+    ):
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(
+            sg_master, self.test_config.cluster.num_buckets, expected_docs, replication_id, version
+        )
+        return time_elapsed, items_in_range
 
     def compress_sg_logs(self):
         try:
@@ -831,7 +847,8 @@ class SGImportThroughputTest(SGPerfTest):
     @with_profiles
     def monitor_sg_import(self, phase):
         host = self.cluster_spec.sgw_servers[0]
-        expected_docs = self.test_config.load_settings.items * self.test_config.cluster.num_buckets
+        num_buckets = self.test_config.cluster.num_buckets
+        expected_docs = self.test_config.load_settings.items * num_buckets
         if phase == 'access':
             expected_docs = expected_docs * 2
         logger.info(f'expected docs :{expected_docs}')
@@ -842,14 +859,17 @@ class SGImportThroughputTest(SGPerfTest):
         remaining_docs = expected_docs - initial_docs
         logger.info(f'remaining_docs :{remaining_docs}')
 
-        time_elapsed, items_in_range = self.monitor.monitor_sgimport_queues(host, expected_docs)
+        time_elapsed, items_in_range = self.monitor.monitor_sgimport_queues(
+            host, num_buckets, expected_docs
+        )
         return time_elapsed, items_in_range
 
     def initial_import_count(self):
         total_initial_docs = 0
+        num_buckets = self.test_config.cluster.num_buckets
         for i in range(self.test_config.syncgateway_settings.import_nodes):
             server = self.cluster_spec.sgw_servers[i]
-            import_count = self.monitor.get_import_count(host=server)
+            import_count = self.monitor.get_import_count(host=server, num_buckets=num_buckets)
             total_initial_docs += import_count
             if self.capella_infra:
                 break
@@ -872,13 +892,14 @@ class SGImportThroughputTest(SGPerfTest):
         importing = True
 
         start_time = time()
+        num_buckets = self.test_config.cluster.num_buckets
 
         while importing:
             sleep(sleep_delay)
             total_count = 0
             for i in range(self.test_config.syncgateway_settings.import_nodes):
                 server = self.cluster_spec.sgw_servers[i]
-                import_count = self.monitor.get_import_count(host=server)
+                import_count = self.monitor.get_import_count(host=server, num_buckets=num_buckets)
                 logger.info(f'import count : {import_count} , host : {server}')
                 total_count += import_count
             if total_count >= expected_docs:
@@ -963,9 +984,10 @@ class SGImportLatencyTest(SGPerfTest):
 
     def monitor_sg_import(self):
         host = self.cluster_spec.sgw_servers[0]
-        # expected_docs = self.test_config.load_settings.items + 360
         expected_docs = self.test_config.load_settings.items
-        self.monitor.monitor_sgimport_queues(host, expected_docs)
+        self.monitor.monitor_sgimport_queues(
+            host, self.test_config.cluster.num_buckets, expected_docs
+        )
 
     @with_stats
     @with_profiles
@@ -1076,16 +1098,6 @@ class SGReplicateThroughputTest1(SGPerfTest):
             data["replication_id"] = "sgr1_pull"
             self.rest.start_sg_replication(sg2_master, data)
 
-    @with_stats
-    @with_profiles
-    def monitor_sg_replicate(self, replication_id, sg_master):
-        expected_docs = self.test_config.load_settings.items
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
-                                                                        expected_docs,
-                                                                        replication_id,
-                                                                        1)
-        return time_elapsed, items_in_range
-
     def run(self):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
@@ -1094,10 +1106,16 @@ class SGReplicateThroughputTest1(SGPerfTest):
         self.start_memcached()
         self.load_docs()
         self.start_replication(sg1_master, sg2_master)
-        if self.sg_settings.sg_replication_type == 'push':
-            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_push", sg1_master)
-        elif self.sg_settings.sg_replication_type == 'pull':
-            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_pull", sg2_master)
+        if self.sg_settings.sg_replication_type == "push":
+            sgw_node = sg1_master
+        elif self.sg_settings.sg_replication_type == "pull":
+            sgw_node = sg2_master
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sgw_node,
+            self.test_config.load_settings.items,
+            f"sgr1_{self.sg_settings.sg_replication_type}",
+            1,
+        )
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -1141,10 +1159,16 @@ class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
         self.start_memcached()
         self.load_docs()
         self.start_replication(sg1_master, sg2_master)
-        if self.sg_settings.sg_replication_type == 'push':
-            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_push", sg1_master)
-        elif self.sg_settings.sg_replication_type == 'pull':
-            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_pull", sg2_master)
+        if self.sg_settings.sg_replication_type == "push":
+            sgw_node = sg1_master
+        elif self.sg_settings.sg_replication_type == "pull":
+            sgw_node = sg2_master
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sgw_node,
+            self.test_config.load_settings.items,
+            f"sgr1_{self.sg_settings.sg_replication_type}",
+            1,
+        )
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -1187,16 +1211,6 @@ class SGReplicateThroughputTest2(SGPerfTest):
             data["remote"] = sg1
             self.rest.start_sg_replication2(sg2_master, data)
 
-    @with_stats
-    @with_profiles
-    def monitor_sg_replicate(self, replication_id, sg_master):
-        expected_docs = self.test_config.load_settings.items
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
-                                                                        expected_docs,
-                                                                        replication_id,
-                                                                        2)
-        return time_elapsed, items_in_range
-
     def run(self):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
@@ -1205,10 +1219,16 @@ class SGReplicateThroughputTest2(SGPerfTest):
         self.start_memcached()
         self.load_docs()
         self.start_replication(sg1_master, sg2_master)
-        if self.sg_settings.sg_replication_type == 'push':
-            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_push", sg1_master)
-        elif self.sg_settings.sg_replication_type == 'pull':
-            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_pull", sg2_master)
+        if self.sg_settings.sg_replication_type == "push":
+            sgw_node = sg1_master
+        elif self.sg_settings.sg_replication_type == "pull":
+            sgw_node = sg2_master
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sgw_node,
+            self.test_config.load_settings.items,
+            f"sgr2_{self.sg_settings.sg_replication_type}",
+            2,
+        )
         self.report_kpi(time_elapsed, items_in_range)
         if self.sg_settings.mem_cpu_stats:
             self.reporter.post(
@@ -1260,10 +1280,16 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
         self.start_memcached()
         self.load_docs()
         self.start_replication(sg1_master, sg2_master)
-        if self.sg_settings.sg_replication_type == 'push':
-            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_push", sg1_master)
-        elif self.sg_settings.sg_replication_type == 'pull':
-            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_pull", sg2_master)
+        if self.sg_settings.sg_replication_type == "push":
+            sgw_node = sg1_master
+        elif self.sg_settings.sg_replication_type == "pull":
+            sgw_node = sg2_master
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sgw_node,
+            self.test_config.load_settings.items,
+            f"sgr2_{self.sg_settings.sg_replication_type}",
+            2,
+        )
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -1298,23 +1324,17 @@ class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
 
         self.rest.start_sg_replication2(sg1_master, data)
 
-    @with_stats
-    @with_profiles
-    def monitor_sg_replicate(self, replication_id, sg_master):
-        expected_docs = self.test_config.load_settings.items * 2
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
-                                                                        expected_docs,
-                                                                        replication_id,
-                                                                        2)
-        return time_elapsed, items_in_range
-
     def run(self):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.start_replication(sg1_master, sg2_master)
-        time_elapsed, items_in_range = \
-            self.monitor_sg_replicate("sgr2_conflict_resolution", sg1_master)
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sg1_master,
+            self.test_config.load_settings.items * 2,
+            "sgr2_conflict_resolution",
+            2,
+        )
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -1359,22 +1379,17 @@ class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
         data["target"] = sg1
         self.rest.start_sg_replication(sg1_master, data)
 
-    @with_stats
-    @with_profiles
-    def monitor_sg_replicate(self, replication_id, sg_master):
-        expected_docs = self.test_config.load_settings.items * 2
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
-                                                                        expected_docs,
-                                                                        replication_id,
-                                                                        1)
-        return time_elapsed, items_in_range
-
     def run(self):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.start_replication(sg1_master, sg2_master)
-        time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_pushAndPull", sg1_master)
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sg1_master,
+            self.test_config.load_settings.items * 2,
+            "sgr1_pushAndPull",
+            1,
+        )
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -1403,22 +1418,18 @@ class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
 
         self.rest.start_sg_replication2(sg1_master, data)
 
-    @with_stats
-    @with_profiles
-    def monitor_sg_replicate(self, replication_id, sg_master):
-        expected_docs = self.test_config.load_settings.items * 2
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
-                                                                        expected_docs,
-                                                                        replication_id,
-                                                                        2)
-        return time_elapsed, items_in_range
-
     def run(self):
         masters = self.cluster_spec.sgw_masters
         sg1_master = next(masters)
         sg2_master = next(masters)
         self.start_replication(sg1_master, sg2_master)
-        time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_pushAndPull", sg1_master)
+
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sg1_master,
+            self.test_config.load_settings.items * 2,
+            "sgr2_pushAndPull",
+            2,
+        )
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -1454,16 +1465,6 @@ class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
             self.rest.start_sg_replication(sg2_master, data)
         return data["replication_id"]
 
-    @with_stats
-    @with_profiles
-    def monitor_sg_replicate(self, replication_id, sg_master):
-        expected_docs = self.test_config.load_settings.items
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
-                                                                        expected_docs,
-                                                                        replication_id,
-                                                                        1)
-        return time_elapsed, items_in_range
-
     def run(self):
         sg1_node = []
         sg2_node = []
@@ -1480,10 +1481,17 @@ class SGReplicateThroughputMultiChannelMultiSgTest1(SGReplicateThroughputTest1):
             sg1_node.append(sg1)
             sg2_node.append(sg2)
             replication_ids.append(replication_id)
-        if self.sg_settings.sg_replication_type == 'push':
-            time_elapsed, items_in_range = self.monitor_sg_replicate(replication_ids, sg1_node)
-        elif self.sg_settings.sg_replication_type == 'pull':
-            time_elapsed, items_in_range = self.monitor_sg_replicate(replication_ids, sg2_node)
+
+        if self.sg_settings.sg_replication_type == "push":
+            sgw_node = sg1_node
+        elif self.sg_settings.sg_replication_type == "pull":
+            sgw_node = sg2_node
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sgw_node,
+            self.test_config.load_settings.items,
+            replication_ids,
+            1,
+        )
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -1520,12 +1528,14 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
             self.rest.start_sg_replication2(sg2_master, data)
         return data["replication_id"]
 
-    def monitor_sg_replicate(self, replication_id, sg_master):
-        expected_docs = self.test_config.load_settings.items
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
-                                                                        expected_docs,
-                                                                        replication_id,
-                                                                        2)
+    def monitor_sg_replicate(
+        self, sg_master: str, expected_docs: int, replication_id, version: int
+    ):
+        # This overrides to avoid triggering profiles and stats twice since
+        # `run_replicate` already does this
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(
+            sg_master, self.test_config.cluster.num_buckets, expected_docs, replication_id, version
+        )
         return time_elapsed, items_in_range
 
     @with_stats
@@ -1543,10 +1553,17 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
             sg1_nodes.append(sg1)
             sg2_nodes.append(sg2)
             replication_ids.append(replication_id)
-        if self.sg_settings.sg_replication_type == 'push':
-            time_elapsed, items_in_range = self.monitor_sg_replicate(replication_ids, sg1_nodes)
-        elif self.sg_settings.sg_replication_type == 'pull':
-            time_elapsed, items_in_range = self.monitor_sg_replicate(replication_ids, sg2_nodes)
+
+        if self.sg_settings.sg_replication_type == "push":
+            sgw_node = sg1_nodes
+        elif self.sg_settings.sg_replication_type == "pull":
+            sgw_node = sg2_nodes
+        time_elapsed, items_in_range = self.monitor_sg_replicate(
+            sgw_node,
+            self.test_config.load_settings.items,
+            replication_ids,
+            2,
+        )
         return time_elapsed, items_in_range
 
     def run(self):
@@ -1824,9 +1841,11 @@ class DeltaSync(SGPerfTest):
         return bandwidth
 
     def get_bytes_transfer(self):
-        sg_server = self.cluster_spec.sgw_servers[0]
-        bytes_transferred = self.monitor.deltasync_bytes_transfer(host=sg_server)
-        return bytes_transferred
+        return self.monitor.deltasync_bytes_transfer(
+            host=self.cluster_spec.sgw_servers[0],
+            num_buckets=self.test_config.cluster.num_buckets,
+            replication_mode=self.test_config.syncgateway_settings.replication_type,
+        )
 
     def run(self):
         self.download_ycsb()
@@ -2034,10 +2053,13 @@ class EndToEndTest(SGPerfTest):
     def wait_for_docs_pushed(self, initial_docs, target_docs):
         sgw_servers = self.settings.syncgateway_settings.nodes
         sg_servers = self.cluster_spec.sgw_servers[0:sgw_servers]
-        sgw_t0, start_push_count = self.monitor.wait_sgw_push_start(sg_servers, initial_docs)
+        sgw_t0, start_push_count = self.monitor.wait_sgw_push_start(
+            sg_servers, self.test_config.cluster.num_buckets, initial_docs
+        )
         logger.info("waiting for push complete...")
-        sgw_t1, end_push_count = self.monitor.wait_sgw_push_docs(sg_servers,
-                                                                 initial_docs+target_docs)
+        sgw_t1, end_push_count = self.monitor.wait_sgw_push_docs(
+            sg_servers, self.test_config.cluster.num_buckets, initial_docs + target_docs
+        )
         sgw_time = sgw_t1 - sgw_t0
         observed_pushed = end_push_count-start_push_count
         logger.info(f'sgw_time: {sgw_time}, observed_pushed: {observed_pushed}, \
@@ -2048,10 +2070,13 @@ class EndToEndTest(SGPerfTest):
         sgw_servers = self.settings.syncgateway_settings.nodes
         sg_servers = self.cluster_spec.sgw_servers[0:sgw_servers]
         logger.info(f'Initial docs: {initial_docs}, Target docs: {target_docs}')
-        sgw_t0, start_pull_count = self.monitor.wait_sgw_pull_start(sg_servers, initial_docs)
+        sgw_t0, start_pull_count = self.monitor.wait_sgw_pull_start(
+            sg_servers, self.test_config.cluster.num_buckets, initial_docs
+        )
         logger.info("waiting for pull complete...")
-        sgw_t1, end_pull_count = self.monitor.wait_sgw_pull_docs(sg_servers,
-                                                                 initial_docs+target_docs)
+        sgw_t1, end_pull_count = self.monitor.wait_sgw_pull_docs(
+            sg_servers, self.test_config.cluster.num_buckets, initial_docs + target_docs
+        )
         sgw_time = sgw_t1 - sgw_t0
         observed_pulled = end_pull_count - start_pull_count
         logger.info(f'sgw_time: {sgw_time}, observed_pulled: {observed_pulled}, \

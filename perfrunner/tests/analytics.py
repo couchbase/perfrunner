@@ -247,9 +247,11 @@ class AnalyticsTest(PerfTest):
         self.create_datasets_at_link()
         self.create_analytics_indexes()
         self.connect_link()
+        bucket_replica = self.test_config.bucket.replica_number
+        sql_suite = self.test_config.access_settings.sql_suite
         for bucket in self.test_config.buckets:
             self.num_items += self.monitor.monitor_data_synced(
-                self.data_node, bucket, self.analytics_node
+                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
             )
 
     def connect_link(self):
@@ -407,8 +409,12 @@ class BigFunTest(AnalyticsTest):
 
     def re_sync(self):
         self.connect_link()
+        bucket_replica = self.test_config.bucket.replica_number
+        sql_suite = self.test_config.access_settings.sql_suite
         for bucket in self.test_config.buckets:
-            self.monitor.monitor_data_synced(self.data_node, bucket, self.analytics_node)
+            self.monitor.monitor_data_synced(
+                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
+            )
 
     def get_dataset_items(self, dataset: str):
         logger.info('Get number of items in dataset {}'.format(dataset))
@@ -941,10 +947,12 @@ class TPCDSTest(AnalyticsTest):
         self.disconnect_link()
         self.create_datasets_at_link()
         self.connect_link()
+        bucket_replica = self.test_config.bucket.replica_number
+        sql_suite = self.test_config.access_settings.sql_suite
         for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(self.data_node,
-                                                               bucket,
-                                                               self.analytics_node)
+            self.num_items += self.monitor.monitor_data_synced(
+                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
+            )
 
     def run(self):
         self.download_tpcds_couchbase_loader()
@@ -1148,9 +1156,11 @@ class CH2Test(AnalyticsTest):
         self.connect_link()
 
         t0 = time.time()
+        bucket_replica = self.test_config.bucket.replica_number
+        sql_suite = self.test_config.access_settings.sql_suite
         for bucket in self.test_config.buckets:
             self.num_items += self.monitor.monitor_data_synced(
-                self.data_node, bucket, self.analytics_node
+                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
             )
         return time.time() - t0
 
@@ -1550,9 +1560,11 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
             sync_time = self.sync()
             self.report_sync_kpi(sync_time)
         else:
+            bucket_replica = self.test_config.bucket.replica_number
+            sql_suite = self.test_config.access_settings.sql_suite
             for bucket in self.test_config.buckets:
                 self.num_items += self.monitor.monitor_data_synced(
-                    self.data_node, bucket, self.analytics_node
+                    self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
                 )
 
         if self.test_config.ch2_settings.create_gsi_index:
@@ -1750,8 +1762,11 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
         self.kafka_link_connected = True
         logger.info('Link connection time: {}s'.format(link_connect_time))
 
-        self.monitor.monitor_cbas_kafka_link_data_ingestion_status(self.analytics_node,
-                                                                   self.docs_per_collection)
+        self.monitor.monitor_cbas_kafka_link_data_ingestion_status(
+            self.analytics_node,
+            self.docs_per_collection,
+            timeout_mins=self.test_config.columnar_kafka_links_settings.ingestion_timeout_mins,
+        )
         data_ingest_time = time.time() - link_connect_time
         logger.info('Data ingestion time: {}s'.format(data_ingest_time))
 
@@ -1895,9 +1910,7 @@ class CH3Test(CH2Test):
     def wait_for_fts_index_persistence(self):
         for index_name in self.FTS_INDEXES:
             self.monitor.monitor_fts_index_persistence(
-                hosts=self.fts_nodes,
-                index=index_name,
-                bkt=self.test_config.buckets[0]
+                hosts=self.fts_nodes, index=index_name, bucket=self.test_config.buckets[0]
             )
 
     def load_ch3(self):
@@ -2022,10 +2035,12 @@ class ScanTest(AnalyticsTest):
         self.disconnect_link()
         self.create_and_analyze_datasets()
         self.connect_link()
+        bucket_replica = self.test_config.bucket.replica_number
+        sql_suite = self.test_config.access_settings.sql_suite
         for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(self.data_node,
-                                                               bucket,
-                                                               self.analytics_node)
+            self.num_items += self.monitor.monitor_data_synced(
+                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
+            )
 
     def run(self):
         self.restore_local()

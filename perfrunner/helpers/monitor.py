@@ -5,7 +5,7 @@ from logger import logger
 from perfrunner.helpers import misc
 from perfrunner.helpers.rest import RestType
 from perfrunner.remote import Remote
-from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.settings import ClusterSpec
 
 
 class Monitor:
@@ -48,16 +48,24 @@ class Monitor:
         'replication_changes_left',
     )
 
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
-                 rest: RestType, remote: Remote, build: str):
+    def __init__(
+        self,
+        cluster_spec: ClusterSpec,
+        rest: RestType,
+        remote: Remote,
+        build: str,
+        awr_bucket: str,
+        awr_scope: str,
+    ):
         self.cluster_spec = cluster_spec
-        self.test_config = test_config
         self.remote = remote
         self.rest = rest
         self.master_node = next(cluster_spec.masters)
         self.build = build
         self.build_version_number = misc.create_build_tuple(self.build)
         self.is_columnar = self.rest.is_columnar(self.master_node)
+        self.awr_bucket = awr_bucket
+        self.awr_scope = awr_scope
 
     def wait_for_rebalance_to_begin(self, host):
         logger.info('Waiting for rebalance to start')
@@ -244,10 +252,10 @@ class Monitor:
         self._wait_for_empty_queues(host, bucket, self.DISK_QUEUES,
                                     self.rest.get_bucket_stats)
 
-    def monitor_dcp_queues(self, host, bucket):
+    def monitor_dcp_queues(self, host: str, bucket: str, bucket_replica: int):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
         if self.build_version_number < (1, 0, 0, 0):
-            if self.test_config.bucket.replica_number != 0:
+            if bucket_replica != 0:
                 if self.build_version_number < (0, 0, 0, 2106):
                     self._wait_for_empty_dcp_queues(host, bucket,
                                                     self.rest.get_dcp_replication_items)
@@ -263,7 +271,7 @@ class Monitor:
             self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
                                         self.rest.get_bucket_stats)
         else:
-            if self.test_config.bucket.replica_number != 0:
+            if bucket_replica != 0:
                 if self.build_version_number < (7, 0, 0, 4990):
                     self._wait_for_empty_dcp_queues(host, bucket,
                                                     self.rest.get_dcp_replication_items)
@@ -293,7 +301,9 @@ class Monitor:
             is_running, _ = self.rest.get_xdcrlink_status(host, task_type='xdcr', uuid=uuid)
         return time.time()
 
-    def monitor_xdcr_queues(self, host: str, bucket: str):
+    def monitor_xdcr_queues(
+        self, host: str, bucket: str, total_docs: int, mobile: Optional[str] = None
+    ):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
         self._wait_for_xdcr_to_start(host)
         # adding temporary delay to make sure replication_changes_left stats arrives
@@ -302,9 +312,11 @@ class Monitor:
             self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                         self.rest.get_xdcr_stats)
         else:
-            self._wait_for_empty_xdcr_queues(host, bucket)
+            self._wait_for_empty_xdcr_queues(host, bucket, total_docs, mobile)
 
-    def _wait_for_empty_xdcr_queues(self, host: str, bucket: str):
+    def _wait_for_empty_xdcr_queues(
+        self, host: str, bucket: str, total_docs: int, mobile: Optional[str] = None
+    ):
         start_time = time.time()
         # For mobile replication (XDCR with SGW), xdcr_changes_left_total will never reach 0
         # because of sgw heartbeat docs being constantly rewritten. These docs are filtered and
@@ -313,7 +325,7 @@ class Monitor:
         # - xdcr_docs_written_total >= total number of docs (it can be greater due to import)
         # - xdcr_mobile_docs_filtered_total keeps increasing
         # - xdcr_changes_left_total = 1
-        if self.test_config.xdcr_settings.mobile:
+        if mobile:
             previous_xdcr_mobile_docs_filtered_total = \
                 self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
             logger.info('Initial xdcr_mobile_docs_filtered_total = {:,}'.
@@ -333,7 +345,7 @@ class Monitor:
                     xdcr_docs_written_total = self.rest.get_xdcr_docs_written_total(host, bucket)
                     logger.info('xdcr_docs_written_total = {:,}'.format(xdcr_docs_written_total))
 
-                    if xdcr_docs_written_total >= self.test_config.load_settings.items:
+                    if xdcr_docs_written_total >= total_docs:
                         xdcr_mobile_docs_filtered_total = \
                             self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
                         logger.info('xdcr_mobile_docs_filtered_total = {:,}'.
@@ -367,19 +379,22 @@ class Monitor:
                                     stats_function=self.rest.get_xdcr_stats)
         return time.time()
 
-    def get_num_items(self, host: str, bucket: str):
-        num_items = self._get_num_items(host, bucket, total=True)
+    def get_num_items(self, host: str, bucket: str, bucket_replica: int):
+        num_items = self._get_num_items(host, bucket, bucket_replica, total=True)
         return num_items
 
-    def _get_num_items(self, host: str, bucket: str, total: bool = False) -> int:
+    def _get_num_items(
+        self, host: str, bucket: str, bucket_replica: int, total: bool = False
+    ) -> int:
         stats = self.rest.get_bucket_stats(host=host, bucket=bucket)
         if total:
             curr_items = stats['op']['samples'].get('curr_items_tot')
         else:
             curr_items = stats['op']['samples'].get('curr_items')
         if curr_items:
-            return self._ignore_system_collection_items(host=host,
-                                                        bucket=bucket, curr_items=curr_items[-1])
+            return self._ignore_system_collection_items(
+                host=host, bucket=bucket, bucket_replica=bucket_replica, curr_items=curr_items[-1]
+            )
         return 0
 
     def _get_num_items_scope_and_collection(self, host: str, bucket: str, scope: str,
@@ -389,20 +404,28 @@ class Monitor:
             return sum(int(d['values'][-1][1]) for d in stats['data'])
         return 0
 
-    def _ignore_system_collection_items(self, host: str, bucket: str, curr_items: int) -> int:
+    def _ignore_system_collection_items(
+        self, host: str, bucket: str, bucket_replica: int, curr_items: int
+    ) -> int:
         sys_coll_items = self._get_num_items_scope_and_collection(host, bucket, '_system')
-        replica_sys_coll_items = sys_coll_items * (1 + self.test_config.bucket.replica_number)
-        logger.info(f"Ignoring items in _system collection: {sys_coll_items} (active), "
-                    f"{replica_sys_coll_items} (total)")
-        awr_bucket = self.test_config.cluster.query_awr_bucket
-        awr_scope = self.test_config.cluster.query_awr_scope
-        awr_coll_items = self._get_num_items_scope_and_collection(host, awr_bucket, awr_scope)
-        replica_awr_coll_items = awr_coll_items * (1 + self.test_config.bucket.replica_number)
-        logger.info(f"Ignoring items in scope-awr collection: {awr_coll_items} (active), "
-                    f"{replica_awr_coll_items} (total)")
+        replica_sys_coll_items = sys_coll_items * (1 + bucket_replica)
+        awr_coll_items = self._get_num_items_scope_and_collection(
+            host, self.awr_bucket, self.awr_scope
+        )
+        replica_awr_coll_items = awr_coll_items * (1 + bucket_replica)
+        logger.info(
+            f"Ignoring items in _system collection: {sys_coll_items} (active), "
+            f"{replica_sys_coll_items} (total)"
+        )
+        logger.info(
+            f"Ignoring items in scope-awr collection: {awr_coll_items} (active), "
+            f"{replica_awr_coll_items} (total)"
+        )
         return curr_items - replica_sys_coll_items - replica_awr_coll_items
 
-    def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int = None):
+    def monitor_num_items(
+        self, host: str, bucket: str, bucket_replica: int, num_items: int, max_retry: int = None
+    ):
         logger.info('Checking the number of items in {}'.format(bucket))
 
         if not max_retry:
@@ -410,7 +433,7 @@ class Monitor:
 
         retries = 0
         while retries < max_retry:
-            curr_items = self._get_num_items(host, bucket, total=True)
+            curr_items = self._get_num_items(host, bucket, bucket_replica, total=True)
             if curr_items == num_items:
                 break
             else:
@@ -419,16 +442,18 @@ class Monitor:
             time.sleep(self.POLLING_INTERVAL)
             retries += 1
         else:
-            actual_items = self._get_num_items(host, bucket, total=True)
+            actual_items = self._get_num_items(host, bucket, bucket_replica, total=True)
             raise Exception('Mismatch in the number of items: {}'
                             .format(actual_items))
 
-    def monitor_num_backfill_items(self, host: str, bucket: str, num_items: int):
+    def monitor_num_backfill_items(
+        self, host: str, bucket: str, bucket_replica: int, num_items: int
+    ):
         logger.info('Checking the number of items in {}'.format(bucket))
 
         t0 = time.time()
         while True:
-            curr_items = self._get_num_items(host, bucket, total=True)
+            curr_items = self._get_num_items(host, bucket, bucket_replica, total=True)
 
             if curr_items == num_items:
                 t1 = time.time()
@@ -786,10 +811,8 @@ class Monitor:
             logger.info('FTS indexed documents for {}: {:,}'.format(index, count))
             time.sleep(self.POLLING_INTERVAL)
 
-    def monitor_fts_index_persistence(self, hosts: list, index: str, bkt: str = None):
-        logger.info('{}: Waiting for index to be persisted'.format(index))
-        if not bkt:
-            bkt = self.test_config.buckets[0]
+    def monitor_fts_index_persistence(self, hosts: list[str], index: str, bucket: str):
+        logger.info(f"{index}: Waiting for index to be persisted")
         tries = 0
         pending_items = 1
         while pending_items:
@@ -798,32 +821,28 @@ class Monitor:
                 compact = 0
                 for host in hosts:
                     stats = self.rest.get_fts_stats(host)
-                    metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
-                    persist += stats[metric]
-
-                    metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
-                    compact += stats[metric]
+                    persist += stats[f"{bucket}:{index}:num_recs_to_persist"]
+                    compact += stats[f"{bucket}:{index}:total_compactions"]
                 pending_items = persist or compact
-                logger.info('Records to persist: {:,}'.format(persist))
-                logger.info('Ongoing compactions: {:,}'.format(compact))
+                logger.info(f"Records to persist: {persist:,}")
+                logger.info(f"Ongoing compactions: {compact:,}")
             except KeyError:
                 tries += 1
             if tries >= 10:
                 raise Exception("cannot get fts stats")
             time.sleep(self.POLLING_INTERVAL)
 
-    def monitor_fts_index_persistence_and_merges(self, hosts: list, index: str, bkt: str = None):
-        logger.info('{}: Waiting for index to be persisted'.format(index))
-        if not bkt:
-            bkt = self.test_config.buckets[0]
+    def monitor_fts_index_persistence_and_merges(self, hosts: list, index: str, bucket: str):
+        logger.info(f"{index}: Waiting for index to be persisted")
+
         tries = 0
         retries = 0
         pending_items = 1
         previous_file_merge_total = -1
         previous_mem_merge_total = -1
-        file_merge_ops = '{}:{}:{}'.format(bkt, index, 'num_file_merge_ops')
-        mem_merge_ops = '{}:{}:{}'.format(bkt, index, 'num_mem_merge_ops')
-        metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
+        file_merge_ops = f"{bucket}:{index}:num_file_merge_ops"
+        mem_merge_ops = f"{bucket}:{index}:num_mem_merge_ops"
+        metric = f"{bucket}:{index}:num_recs_to_persist"
         while pending_items:
             try:
                 persist = 0
@@ -834,7 +853,7 @@ class Monitor:
                     persist += stats[metric]
                     current_file_merge_total += stats[file_merge_ops]
                     current_mem_merge_total += stats[mem_merge_ops]
-                logger.info('Records to persist: {:,}'.format(persist))
+                logger.info(f"Records to persist: {persist:,}")
                 logger.info(f"Current file merge total: {current_file_merge_total}")
                 logger.info(f"Current mem merge total: {current_mem_merge_total}")
                 if (current_file_merge_total == previous_file_merge_total and
@@ -852,13 +871,12 @@ class Monitor:
                 raise Exception("cannot get fts stats")
             time.sleep(self.POLLING_INTERVAL)
 
-    def monitor_elastic_indexing_queue(self, host: str, index: str):
-        logger.info(' Waiting for indexing to finish')
-        items = int(self.test_config.fts_settings.test_total_docs)
+    def monitor_elastic_indexing_queue(self, host: str, index: str, total_docs: int):
+        logger.info(" Waiting for indexing to finish")
         count = 0
-        while count < items:
+        while count < total_docs:
             count = self.rest.get_elastic_doc_count(host, index)
-            logger.info('Elasticsearch indexed documents: {:,}'.format(count))
+            logger.info(f"Elasticsearch indexed documents: {count:,}")
             time.sleep(self.POLLING_INTERVAL)
 
     def monitor_elastic_index_persistence(self, host: str, index: str):
@@ -932,14 +950,21 @@ class Monitor:
                 time.sleep(self.POLLING_INTERVAL_ANALYTICS)
         return num_items
 
-    def monitor_data_synced(self, data_node: str, bucket: str, analytics_node: str) -> int:
+    def monitor_data_synced(
+        self,
+        data_node: str,
+        bucket: str,
+        bucket_replica: int,
+        analytics_node: str,
+        sql_suite: str = None,
+    ) -> int:
         logger.info('Waiting for data to be synced from {}'.format(data_node))
         time.sleep(self.MONITORING_DELAY * 3)
 
         analytics_node_version = misc.create_build_tuple(self.rest.get_version(analytics_node))
         is_columnar = self.rest.is_columnar(analytics_node)
 
-        num_items = self._get_num_items(data_node, bucket)
+        num_items = self._get_num_items(data_node, bucket, bucket_replica)
         while True:
             if (analytics_node_version > (8, 0, 0, 0)) or (
                 is_columnar and analytics_node_version >= (1, 0, 1, 0)
@@ -948,7 +973,7 @@ class Monitor:
             else:
                 metric = "cbas_incoming_records_count"
 
-            if self.test_config.access_settings.sql_suite is not None:
+            if sql_suite is not None:
                 incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node, bucket,
                                                                          metric)
             else:
@@ -1055,12 +1080,12 @@ class Monitor:
 
         return link_state
 
-    def monitor_cbas_kafka_link_data_ingestion_status(self, analytics_node: str,
-                                                      final_dataset_counts: dict[str, int]):
+    def monitor_cbas_kafka_link_data_ingestion_status(
+        self, analytics_node: str, final_dataset_counts: dict[str, int], timeout_mins: int
+    ):
         logger.info('Wait until Kafka Link data ingestion is completed.')
         datasets_still_ingesting = set(final_dataset_counts.keys())
 
-        timeout_mins = self.test_config.columnar_kafka_links_settings.ingestion_timeout_mins
         t0 = time.time()
         while datasets_still_ingesting:
             if time.time() - t0 > (timeout_mins * 60):
@@ -1098,12 +1123,15 @@ class Monitor:
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info('Failed to get timer event for function: {}'.format(function))
 
-    def wait_for_all_mutations_processed(self, host: str, bucket1: str, bucket2: str):
+    def wait_for_all_mutations_processed(
+        self, host: str, bucket1: str, bucket2: str, bucket_replica: int
+    ):
         logger.info('Waiting for mutations to be processed of eventing function')
         retry = 1
         while retry < self.MAX_RETRY_BOOTSTRAP:
-            if self._get_num_items(host=host, bucket=bucket1) == \
-                    self._get_num_items(host=host, bucket=bucket2):
+            bucket1_items = self._get_num_items(host, bucket1, bucket_replica)
+            bucket2_items = self._get_num_items(host, bucket2, bucket_replica)
+            if bucket1_items == bucket2_items:
                 break
             retry += 1
             time.sleep(self.POLLING_INTERVAL_EVENTING)
@@ -1147,21 +1175,26 @@ class Monitor:
                 break
             time.sleep(self.POLLING_INTERVAL)
 
-    def monitor_sgimport_queues(self, host: str, expected_docs: int):
+    def monitor_sgimport_queues(
+        self,
+        host: str,
+        num_buckets: int,
+        expected_docs: int,
+    ):
         logger.info('Monitoring SGImport items:')
-        initial_items, start_time = self._wait_for_sg_import_start(host)
+        initial_items, start_time = self._wait_for_sg_import_start(host, num_buckets)
         items_in_range = expected_docs - initial_items
-        time_taken = self._wait_for_sg_import_complete(host, expected_docs, start_time)
+        time_taken = self._wait_for_sg_import_complete(host, num_buckets, expected_docs, start_time)
         return time_taken, items_in_range
 
-    def get_import_count(self, host: str):
+    def get_import_count(self, host: str, num_buckets: int):
         stats = self.rest.get_sg_stats(host=host)
         import_count = 0
         if not self.cluster_spec.capella_infrastructure:
             if 'syncGateway_import' in stats.keys():
                 import_count = int(stats['syncGateway_import']['import_count'])
             else:
-                for count in range(1, self.test_config.cluster.num_buckets + 1):
+                for count in range(1, num_buckets + 1):
                     db = 'db-{}'.format(count)
                     if 'shared_bucket_import' in (db_stats :=
                                                   stats['syncgateway']['per_db'][db]):
@@ -1171,21 +1204,23 @@ class Monitor:
                                                       "sgw_shared_bucket_import_import_count")
         return import_count
 
-    def _wait_for_sg_import_start(self, host: str):
+    def _wait_for_sg_import_start(self, host: str, num_buckets: int):
         logger.info('Checking if import process started')
 
         start_time = time.time()
         import_docs = 0
         while True:
             time.sleep(self.POLLING_INTERVAL)
-            import_docs = self.get_import_count(host)
+            import_docs = self.get_import_count(host, num_buckets)
             if import_docs >= 1:
                 logger.info('importing docs has started')
                 return import_docs, time.time()
             if time.time() - start_time > 300:
                 raise Exception("timeout of 300 seconds exceeded")
 
-    def _wait_for_sg_import_complete(self, host: str, expected_docs: int, start_time):
+    def _wait_for_sg_import_complete(
+        self, host: str, num_buckets: int, expected_docs: int, start_time
+    ):
         expected_docs = expected_docs
         start_time = start_time
         logger.info('Monitoring syncgateway import status :')
@@ -1194,7 +1229,7 @@ class Monitor:
 
         while True:
             time.sleep(self.POLLING_INTERVAL * 4)
-            imports = self.get_import_count(host)
+            imports = self.get_import_count(host, num_buckets)
             logger.info('Docs imported: {}'.format(imports))
             if imports >= expected_docs:
                 end_time = time.time()
@@ -1203,17 +1238,17 @@ class Monitor:
             if time.time() - start_time > 2400:
                 raise Exception("timeout of 2400 seconds exceeded")
 
-    def monitor_sgreplicate(self, host, expected_docs, replicate_id, version):
+    def monitor_sgreplicate(
+        self, host: str, num_buckets: int, expected_docs: int, replicate_id: str, version: int
+    ):
         logger.info('Monitoring SGReplicate items:')
         initial_items, start_time = self._wait_for_sg_replicate_start(host, replicate_id, version)
         logger.info('initial items: {} start time: {}'.format(initial_items, start_time))
         items_in_range = expected_docs - initial_items
         logger.info('items in range: {}'.format(items_in_range))
-        time_taken, final_items = self._wait_for_sg_replicate_complete(host,
-                                                                       expected_docs,
-                                                                       start_time,
-                                                                       replicate_id,
-                                                                       version)
+        time_taken, final_items = self._wait_for_sg_replicate_complete(
+            host, num_buckets, expected_docs, start_time, replicate_id, version
+        )
 
         if replicate_id == 'sgr2_conflict_resolution':
             items_in_range = final_items - initial_items
@@ -1263,10 +1298,15 @@ class Monitor:
 
             time.sleep(self.POLLING_INTERVAL)
 
-    def _wait_for_sg_replicate_complete(self, host, expected_docs, start_time,
-                                        replicate_id, version):
-        expected_docs = expected_docs
-        start_time = start_time
+    def _wait_for_sg_replicate_complete(
+        self,
+        host: str,
+        num_buckets: int,
+        expected_docs: int,
+        start_time: float,
+        replicate_id: str,
+        version: int,
+    ):
         logger.info('Monitoring syncgateway replicate status :')
         while True:
             replicate_docs = 0
@@ -1309,7 +1349,7 @@ class Monitor:
                 remote_count = 0
                 merge_count = 0
                 num_docs_pushed = 0
-                for count in range(1, self.test_config.cluster.num_buckets + 1):
+                for count in range(1, num_buckets + 1):
                     db = 'db-{}'.format(count)
                     sgr_stats = sg_stats['syncgateway']['per_db'][db]['replications'][replicate_id]
                     local_count += int(sgr_stats['sgr_conflict_resolved_local_count'])
@@ -1339,25 +1379,25 @@ class Monitor:
             logger.info('Delta Sync Disabled')
             return stats['syncgateway']['per_db']
 
-    def deltasync_bytes_transfer(self, host: str):
+    def deltasync_bytes_transfer(self, host: str, num_buckets: int, replication_mode: str):
         stats = self.rest.get_expvar_stats(host)
         bytes_transeferred = 0
-        if self.test_config.syncgateway_settings.replication_type == 'PUSH':
+        if replication_mode == "PUSH":
             replication_type = 'doc_writes_bytes_blip'
         else:
             replication_type = 'doc_reads_bytes_blip'
-        for count in range(1, self.test_config.cluster.num_buckets + 1):
-            db = 'db-{}'.format(count)
+        for count in range(1, num_buckets + 1):
+            db = f"db-{count}"
             bytes_transeferred += float(
                     stats['syncgateway']['per_db'][db]['database'][replication_type])
             return bytes_transeferred
 
-    def get_sgw_push_count(self, host):
+    def get_sgw_push_count(self, host: str, num_buckets: int):
         sgw_stats = self.rest.get_sg_stats(host)
         push_count = 0
         if not self.cluster_spec.capella_infrastructure:
-            for count in range(1, self.test_config.cluster.num_buckets + 1):
-                db = 'db-{}'.format(count)
+            for count in range(1, num_buckets + 1):
+                db = f"db-{count}"
                 push_count += \
                     int(sgw_stats['syncgateway']['per_db'][db]
                                  ['cbl_replication_push']['doc_push_count'])
@@ -1366,12 +1406,12 @@ class Monitor:
                                                     "sgw_replication_push_doc_push_count")
         return push_count
 
-    def get_sgw_pull_count(self, host):
+    def get_sgw_pull_count(self, host: str, num_buckets: int):
         pull_count = 0
         sgw_stats = self.rest.get_sg_stats(host)
         if not self.cluster_spec.capella_infrastructure:
-            for count in range(1, self.test_config.cluster.num_buckets + 1):
-                db = 'db-{}'.format(count)
+            for count in range(1, num_buckets + 1):
+                db = f"db-{count}"
                 pull_count += \
                     int(sgw_stats['syncgateway']['per_db'][db]
                                  ['cbl_replication_pull']['rev_send_count'])
@@ -1380,14 +1420,14 @@ class Monitor:
                                                     "sgw_replication_pull_rev_send_count")
         return pull_count
 
-    def wait_sgw_push_start(self, hosts, initial_docs):
+    def wait_sgw_push_start(self, hosts: list[str], num_buckets: int, initial_docs: int):
         retries = 0
         max_retries = 900
         while True:
             push_count = 0
             start_time = time.time()
             for host in hosts:
-                push_count += self.get_sgw_push_count(host)
+                push_count += self.get_sgw_push_count(host, num_buckets)
                 if self.cluster_spec.capella_infrastructure:
                     break
 
@@ -1401,14 +1441,14 @@ class Monitor:
                 )
             time.sleep(self.POLLING_INTERVAL_SGW)
 
-    def wait_sgw_pull_start(self, hosts, initial_docs):
+    def wait_sgw_pull_start(self, hosts: list[str], num_buckets: int, initial_docs: int):
         retries = 0
         max_retries = 900
         while True:
             pull_count = 0
             start_time = time.time()
             for host in hosts:
-                pull_count += self.get_sgw_pull_count(host)
+                pull_count += self.get_sgw_pull_count(host, num_buckets)
                 if self.cluster_spec.capella_infrastructure:
                     break
 
@@ -1422,7 +1462,7 @@ class Monitor:
                 )
             time.sleep(self.POLLING_INTERVAL_SGW)
 
-    def wait_sgw_push_docs(self, hosts, target_docs):
+    def wait_sgw_push_docs(self, hosts: list[str], num_buckets: int, target_docs: int):
         retries = 0
         max_retries = 360
         last_push_count = 0
@@ -1430,7 +1470,7 @@ class Monitor:
             push_count = 0
             finished_time = time.time()
             for host in hosts:
-                push_count += self.get_sgw_push_count(host)
+                push_count += self.get_sgw_push_count(host, num_buckets)
                 if self.cluster_spec.capella_infrastructure:
                     break
 
@@ -1446,7 +1486,7 @@ class Monitor:
             last_push_count = push_count
             time.sleep(self.POLLING_INTERVAL_SGW)
 
-    def wait_sgw_pull_docs(self, hosts, target_docs):
+    def wait_sgw_pull_docs(self, hosts: list[str], num_buckets: int, target_docs: int):
         retries = 0
         max_retries = 360
         last_pull_count = 0
@@ -1454,7 +1494,7 @@ class Monitor:
             pull_count = 0
             finished_time = time.time()
             for host in hosts:
-                pull_count += self.get_sgw_pull_count(host)
+                pull_count += self.get_sgw_pull_count(host, num_buckets)
                 if self.cluster_spec.capella_infrastructure:
                     break
 
@@ -1468,37 +1508,6 @@ class Monitor:
                         "Pull failed to complete..."
                     )
             last_pull_count = pull_count
-            time.sleep(self.POLLING_INTERVAL_SGW)
-
-    def wait_sgw_push_stop(self, hosts):
-        logger.info('Waiting for push to finish')
-        last_push_count = 0
-        verify_count = 0
-        max_verify = 3
-        finished_time = time.time()
-        maybe_finished_time = time.time()
-        while True:
-            if verify_count == 0:
-                maybe_finished_time = time.time()
-            push_count = 0
-            for host in hosts:
-                push_count += self.get_sgw_push_count(host)
-                if self.cluster_spec.capella_infrastructure:
-                    break
-
-            logger.info('push count: {}'.format(push_count))
-            if push_count == last_push_count:
-                logger.info('push maybe completed')
-                if verify_count == 0:
-                    finished_time = maybe_finished_time
-                verify_count += 1
-                if verify_count >= max_verify:
-                    return finished_time
-                last_push_count = push_count
-                continue
-            else:
-                verify_count = 0
-            last_push_count = push_count
             time.sleep(self.POLLING_INTERVAL_SGW)
 
     def wait_sgw_log_streaming_status(self, desired_status: str):

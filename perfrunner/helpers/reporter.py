@@ -25,7 +25,7 @@ class Reporter:
         self.test_config = test_config
         self.build = build + test_config.showfast.build_label
         self.master_node = next(self.cluster_spec.masters)
-        self.rest = RestHelper(cluster_spec, test_config)
+        self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
         self.sgw = sgw
 
 

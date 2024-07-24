@@ -455,13 +455,13 @@ class FTSTest(JTSTest):
                     self.monitor.monitor_fts_index_persistence(
                         hosts=fts_nodes,
                         index=self.fts_index_map[index_name]["full_index_name"],
-                        bkt=self.fts_index_map[index_name]["bucket"]
+                        bucket=self.fts_index_map[index_name]["bucket"],
                     )
                 else:
                     self.monitor.monitor_fts_index_persistence_and_merges(
                         hosts=fts_nodes,
                         index=self.fts_index_map[index_name]["full_index_name"],
-                        bkt=self.fts_index_map[index_name]["bucket"]
+                        bucket=self.fts_index_map[index_name]["bucket"],
                     )
 
         if self.fts_index_name_flag is False:
@@ -470,13 +470,13 @@ class FTSTest(JTSTest):
                     self.monitor.monitor_fts_index_persistence(
                         hosts=fts_nodes,
                         index=index_name,
-                        bkt=self.fts_index_map[index_name]["bucket"]
+                        bucket=self.fts_index_map[index_name]["bucket"],
                     )
                 else:
                     self.monitor.monitor_fts_index_persistence_and_merges(
                         hosts=fts_nodes,
                         index=index_name,
-                        bkt=self.fts_index_map[index_name]["bucket"]
+                        bucket=self.fts_index_map[index_name]["bucket"],
                     )
 
     def add_extra_fts_parameters(self):

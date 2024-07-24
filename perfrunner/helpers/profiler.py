@@ -54,7 +54,7 @@ class ProfilerBase:
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         self.test_config = test_config
         self.cluster_spec = cluster_spec
-        self.rest = RestHelper(cluster_spec, test_config)
+        self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
         self.master_node = next(cluster_spec.masters)
         self.ssh_username, self.ssh_password = cluster_spec.ssh_credentials
         self.profiling_settings = copy.deepcopy(test_config.profiling_settings)

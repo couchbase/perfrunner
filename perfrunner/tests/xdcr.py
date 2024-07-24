@@ -74,9 +74,11 @@ class XdcrTest(PerfTest):
             self.rest.delete_replication(self.master_node, replication_id)
 
     def monitor_replication(self):
+        items = self.test_config.load_settings.items
+        mobile = self.test_config.xdcr_settings.mobile
         for target in self.target_iterator:
             if self.rest.get_remote_clusters(target.node):
-                self.monitor.monitor_xdcr_queues(target.node, target.bucket)
+                self.monitor.monitor_xdcr_queues(target.node, target.bucket, items, mobile)
 
     @with_stats
     @with_profiles
@@ -743,8 +745,11 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
 
     def get_replicated_docs(self, host: str):
         num_items = 0
+        bucket_replica = self.test_config.bucket.replica_number
         for bucket in self.test_config.buckets:
-            num_items = self.monitor.get_num_items(host=host, bucket=bucket)
+            num_items = self.monitor.get_num_items(
+                host=host, bucket=bucket, bucket_replica=bucket_replica
+            )
         return num_items
 
     def create_backfill_replication(self, replication_id: str):
@@ -761,10 +766,11 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
 
     def monitor_backfill_replication(self, dest_host: str, num_items: int):
         backfill_time = 0
+        bucket_replica = self.test_config.bucket.replica_number
         for bucket in self.test_config.buckets:
-            backfill_time = self.monitor.monitor_num_backfill_items(host=dest_host,
-                                                                    bucket=bucket,
-                                                                    num_items=num_items)
+            backfill_time = self.monitor.monitor_num_backfill_items(
+                host=dest_host, bucket=bucket, bucket_replica=bucket_replica, num_items=num_items
+            )
         return backfill_time
 
     @with_stats

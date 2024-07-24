@@ -18,7 +18,7 @@ from requests.exceptions import ConnectionError
 from logger import logger
 from perfrunner.helpers.misc import create_build_tuple, pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.settings import BucketSettings, ClusterSpec, TestConfig
+from perfrunner.settings import BucketSettings, ClusterSpec
 from perfrunner.utils.terraform import (
     SERVICES_CAPELLA_TO_PERFRUNNER,
     ControlPlaneManager,
@@ -75,32 +75,25 @@ def retry(method: Callable, *args, **kwargs):
 
 
 class RestHelper:
-    def __new__(cls,
-                cluster_spec: ClusterSpec,
-                test_config: TestConfig,
-                verbose: bool = False
-                ):
+    def __new__(cls, cluster_spec: ClusterSpec, use_tls: bool):
         if cluster_spec.dynamic_infrastructure:
-            return KubernetesRestHelper(cluster_spec, test_config)
+            return KubernetesRestHelper(cluster_spec, use_tls)
         elif cluster_spec.serverless_infrastructure:
-            return CapellaServerlessRestHelper(cluster_spec, test_config)
+            return CapellaServerlessRestHelper(cluster_spec)
         elif cluster_spec.capella_infrastructure:
             if cluster_spec.columnar_infrastructure:
-                return CapellaColumnarRestHelper(cluster_spec, test_config)
-            return CapellaProvisionedRestHelper(cluster_spec, test_config)
+                return CapellaColumnarRestHelper(cluster_spec)
+            return CapellaProvisionedRestHelper(cluster_spec)
         else:
-            return DefaultRestHelper(cluster_spec, test_config)
+            return DefaultRestHelper(cluster_spec, use_tls)
 
 
 class RestBase:
-
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+    def __init__(self, cluster_spec: ClusterSpec, use_tls: bool):
         self.rest_username, self.rest_password = cluster_spec.rest_credentials
         self.auth = self.rest_username, self.rest_password
         self.cluster_spec = cluster_spec
-        self.test_config = test_config
-        self.use_tls = test_config.cluster.enable_n2n_encryption or \
-            self.cluster_spec.capella_infrastructure
+        self.use_tls = use_tls
 
     def _set_auth(self, **kwargs) -> tuple[str, str]:
         return self.auth
@@ -155,9 +148,8 @@ class RestBase:
 
 
 class DefaultRestHelper(RestBase):
-
-    def __init__(self, cluster_spec, test_config):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+    def __init__(self, cluster_spec: ClusterSpec, use_tls: bool):
+        super().__init__(cluster_spec=cluster_spec, use_tls=use_tls)
 
     def _set_service_path(
         self, host: str, service: Literal["data", "index", "cbas"], path: Union[str, list[str]]
@@ -1617,8 +1609,7 @@ class DefaultRestHelper(RestBase):
             password="guest",
             collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
-        if self.cluster_spec.capella_infrastructure or \
-           self.test_config.cluster.enable_n2n_encryption:
+        if self.use_tls:
             ws_prefix = "wss://"
         else:
             ws_prefix = "ws://"
@@ -1658,8 +1649,7 @@ class DefaultRestHelper(RestBase):
             password="guest",
             collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
-        if self.cluster_spec.capella_infrastructure or \
-           self.test_config.cluster.enable_n2n_encryption:
+        if self.use_tls:
             ws_prefix = "wss://"
         else:
             ws_prefix = "ws://"
@@ -1699,8 +1689,7 @@ class DefaultRestHelper(RestBase):
             password="guest",
             collections=None):
         api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
-        if self.cluster_spec.capella_infrastructure or \
-           self.test_config.cluster.enable_n2n_encryption:
+        if self.use_tls:
             ws_prefix = "wss://"
         else:
             ws_prefix = "ws://"
@@ -1892,6 +1881,7 @@ class DefaultRestHelper(RestBase):
 
 
 class KubernetesRestHelper(DefaultRestHelper):
+
     SERVICES_PERFRUNNER_TO_CAO = {
         "kv": "data",
         "cbas": "analytics",
@@ -1901,8 +1891,8 @@ class KubernetesRestHelper(DefaultRestHelper):
         "eventing": "eventing",
     }
 
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+    def __init__(self, cluster_spec: ClusterSpec, use_tls: bool):
+        super().__init__(cluster_spec=cluster_spec, use_tls=use_tls)
         self.remote = RemoteHelper(cluster_spec)
         self.ip_table, self.port_translation = self.remote.get_ip_port_mapping()
 
@@ -1933,9 +1923,8 @@ class KubernetesRestHelper(DefaultRestHelper):
 
 
 class CapellaRestBase(DefaultRestHelper):
-
-    def __init__(self, cluster_spec, test_config):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+    def __init__(self, cluster_spec: ClusterSpec):
+        super().__init__(cluster_spec=cluster_spec, use_tls=True)
         self.base_url = self.cluster_spec.controlplane_settings["public_api_url"]
         self.tenant_id = self.cluster_spec.controlplane_settings["org"]
         self.project_id = self.cluster_spec.controlplane_settings["project"]
@@ -2094,22 +2083,26 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         }
 
     @retry
-    def create_bucket(self, host: str,
-                      name: str,
-                      ram_quota: int,
-                      replica_number: int = 1,
-                      conflict_resolution_type: str = "seqno",
-                      flush: bool = True,
-                      durability: str = "none",
-                      backend_storage: str = "couchstore",
-                      eviction_policy: str = "nruEviction",
-                      ttl_value: int = 0,
-                      ttl_unit: str = None):
+    def create_bucket(
+        self,
+        host: str,
+        name: str,
+        ram_quota: int,
+        replica_number: int = 1,
+        conflict_resolution_type: str = "seqno",
+        flush: bool = True,
+        durability: str = "none",
+        bucket_type: str = "couchbase",
+        backend_storage: str = "couchstore",
+        eviction_policy: str = "nruEviction",
+        ttl_value: int = 0,
+        ttl_unit: str = None,
+    ):
         cluster_id = self.hostname_to_cluster_id(host)
 
         logger.info('Adding new bucket on cluster {}: {}'.format(cluster_id, name))
-
-        bucket_type = 'couchbase'
+        if bucket_type not in ("couchbase", "ephemeral"):
+            bucket_type = "couchbase"
 
         data = {
             'name': name,
@@ -2125,8 +2118,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             },
             'type': bucket_type
         }
-        if self.test_config.bucket.bucket_type == 'ephemeral':
-            data['type'] = 'ephemeral'
+        if bucket_type == "ephemeral":
             data['storageBackend'] = None
             data['evictionPolicy'] = eviction_policy
 
@@ -2553,8 +2545,8 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
 
 
 class CapellaServerlessRestHelper(CapellaRestBase):
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+    def __init__(self, cluster_spec: ClusterSpec):
+        super().__init__(cluster_spec=cluster_spec)
         self.serverless_client = CapellaAPIServerless(
             self.base_url, self._cbc_user, self._cbc_pwd, self._cbc_token
         )
@@ -2621,17 +2613,6 @@ class CapellaServerlessRestHelper(CapellaRestBase):
         resp = self.serverless_client.update_db(db_id, data)
         return resp
 
-    def update_db(self, db_id, width=None, weight=None):
-        if not (weight or width):
-            return
-
-        self._update_db(db_id, width, weight)
-
-        db_map = self.test_config.serverless_db.db_map
-        db_map[db_id]['width'] = width
-        db_map[db_id]['weight'] = weight
-        self.test_config.serverless_db.update_db_map(db_map)
-
     def _get_dataplane_node_configs(self):
         resp = self.serverless_client.get_serverless_dataplane_node_configs(self.dp_id)
         resp.raise_for_status()
@@ -2659,53 +2640,30 @@ class CapellaServerlessRestHelper(CapellaRestBase):
         logger.info('Creating a new FTS index: {}'.format(index))
         headers = {'Content-Type': 'application/json'}
         data = json.dumps(definition, ensure_ascii=False)
-        bucket = definition['sourceName']
-        auth = self.test_config.serverless_db.bucket_creds(bucket)
+
         url = self._get_api_url(host=host, path='api/index/{}'.format(index), plain_port=FTS_PORT,
                                 ssl_port=FTS_PORT_SSL)
-        self.put(url=url, data=data, headers=headers, auth=auth)
-
-    def get_fts_doc_count(self, host: str, index: str, bucket: str) -> int:
-        url = self._get_api_url(host=host, path='api/index/{}/count'.format(index),
-                                plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
-        auth = self.test_config.serverless_db.bucket_creds(bucket)
-        response = self.get(url=url, auth=auth).json()
-        return response['count']
+        self.put(url=url, data=data, headers=headers)
 
     def exec_n1ql_statement(self, host: str, statement: str, query_context: str) -> dict:
-        api = 'https://{}:{}/_p/query/query/service'.format(host, REST_PORT_SSL)
+        api = f"https://{host}:{REST_PORT_SSL}/_p/query/query/service"
 
-        data = {
-            'statement': statement,
-            'query_context': query_context
-        }
-
-        bucket = query_context.removeprefix('default:').split('.')[0].strip('`')
-        auth = self.test_config.serverless_db.bucket_creds(bucket)
-        response = self.post(url=api, data=data, auth=auth)
-
-        return response.json()
+        data = {"statement": statement, "query_context": query_context}
+        return self.post(url=api, data=data).json()
 
     def get_active_nodes_by_role(self, master_node: str, role: str) -> list[str]:
         resp = self.get_dataplane_info()
-        node_list = resp['couchbase']['nodes']
+        node_list = resp["couchbase"]["nodes"]
         has_role = []
         for node_config in node_list:
-            if role in node_config['services'][0]['type']:
-                has_role.append(node_config['hostname'])
+            if role in node_config["services"][0]["type"]:
+                has_role.append(node_config["hostname"])
         return has_role
-
-    def get_bucket_fts_stats(self, host: str, bucket, index) -> dict:
-        url = self._get_api_url(host=host, path='api/nsstats/index/{}'.format(index),
-                                plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
-        auth = self.test_config.serverless_db.bucket_creds(bucket)
-        response = self.get(url=url, auth=auth)
-        return response.json()
 
 
 class CapellaColumnarRestHelper(CapellaRestBase):
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
-        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
+    def __init__(self, cluster_spec: ClusterSpec):
+        super().__init__(cluster_spec=cluster_spec)
         self.columnar_client = CapellaAPIColumnar(
             self.base_url,
             self.dedicated_client.SECRET,

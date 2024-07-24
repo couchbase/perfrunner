@@ -53,10 +53,17 @@ class PerfTest:
         self.profiler = ProfilerHelper(cluster_spec, test_config)
         self.master_node = next(cluster_spec.masters)
         self.memcached = MemcachedHelper(cluster_spec, test_config)
-        self.rest = RestHelper(cluster_spec, test_config)
+        self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
         self.build = self.rest.get_version(self.master_node)
         self.is_columnar = self.rest.is_columnar(self.master_node)
-        self.monitor = Monitor(cluster_spec, test_config, self.rest, self.remote, self.build)
+        self.monitor = Monitor(
+            cluster_spec,
+            self.rest,
+            self.remote,
+            self.build,
+            test_config.cluster.query_awr_bucket,
+            test_config.cluster.query_awr_scope,
+        )
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
 
@@ -300,9 +307,10 @@ class PerfTest:
                     self.monitor.monitor_task(target.node, 'bucket_compaction')
 
     def wait_for_persistence(self):
+        bucket_replica = self.test_config.bucket.replica_number
         for target in self.target_iterator:
             self.monitor.monitor_disk_queues(target.node, target.bucket)
-            self.monitor.monitor_dcp_queues(target.node, target.bucket)
+            self.monitor.monitor_dcp_queues(target.node, target.bucket, bucket_replica)
             self.monitor.monitor_replica_count(target.node, target.bucket)
 
     def wait_for_indexing(self, index_nodes: List[str] = []):
@@ -314,16 +322,14 @@ class PerfTest:
     def check_num_items(self, bucket_items: dict = None, max_retry: int = None,
                         target_iterator: TargetIterator = None):
         target_iterator = target_iterator or self.target_iterator
+        bucket_replica = self.test_config.bucket.replica_number
         if bucket_items:
             for target in target_iterator:
                 num_items = bucket_items.get(target.bucket, None)
                 if num_items:
                     num_items = num_items * (1 + self.test_config.bucket.replica_number)
                     self.monitor.monitor_num_items(
-                        target.node,
-                        target.bucket,
-                        num_items,
-                        max_retry=max_retry
+                        target.node, target.bucket, bucket_replica, num_items, max_retry=max_retry
                     )
         elif getattr(self.test_config.load_settings, 'collections', None):
             for target in target_iterator:
@@ -338,15 +344,17 @@ class PerfTest:
                     (self.test_config.load_settings.items // total_load_distribution_ratio) * \
                     total_load_distribution_ratio * \
                     (1 + self.test_config.bucket.replica_number)
-                self.monitor.monitor_num_items(target.node, target.bucket,
-                                               num_items, max_retry=max_retry)
+                self.monitor.monitor_num_items(
+                    target.node, target.bucket, bucket_replica, num_items, max_retry=max_retry
+                )
         else:
             num_items = self.test_config.load_settings.items * (
                 1 + self.test_config.bucket.replica_number
             )
             for target in target_iterator:
-                self.monitor.monitor_num_items(target.node, target.bucket,
-                                               num_items, max_retry=max_retry)
+                self.monitor.monitor_num_items(
+                    target.node, target.bucket, bucket_replica, num_items, max_retry=max_retry
+                )
 
     def reset_kv_stats(self):
         master_node = next(self.cluster_spec.masters)

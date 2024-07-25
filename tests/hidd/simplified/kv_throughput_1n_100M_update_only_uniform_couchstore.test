@@ -40,7 +40,3 @@ items = 100000000
 workers = 512
 time = 1800
 requestdistribution = uniform
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

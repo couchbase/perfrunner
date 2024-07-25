@@ -35,9 +35,5 @@ indexes = myindex:alt_email
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
-
 [backup]
 backup_directory = /data2/gsi_1b

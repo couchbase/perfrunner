@@ -36,7 +36,3 @@ fs_cache_size=0
 data_dir=/data
 engine=magma
 engine_config='{"compactiontype":"universal","enable_block_cache":true,"enable_lookup_on_set":true,"enable_directio":true,"enable_wal":true,"io_q_depth":1}'
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

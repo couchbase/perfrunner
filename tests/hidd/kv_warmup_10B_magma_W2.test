@@ -58,9 +58,5 @@ items = 10000000000
 workers = 128
 time = 1800
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
-
 [backup]
 backup_directory = /data2/4n_10b

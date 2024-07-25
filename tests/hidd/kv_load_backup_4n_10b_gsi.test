@@ -38,9 +38,5 @@ indexes = tests/gsi/index_defs/1bucket_default_1_index_1_3partitions.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
-
 [backup]
 backup_directory = /data2/gsi_10b

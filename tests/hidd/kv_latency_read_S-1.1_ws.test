@@ -46,7 +46,3 @@ throughput = 15000
 working_set = 1
 working_set_access = 90
 time = 43200
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

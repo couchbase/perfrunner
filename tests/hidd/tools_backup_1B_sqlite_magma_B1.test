@@ -59,7 +59,3 @@ items = 1000000000
 threads = 16
 storage_type = sqlite
 backup_directory = /data2/4n_1b
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

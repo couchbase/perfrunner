@@ -66,9 +66,5 @@ time = 1800
 working_set = 5
 working_set_access = 70
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
-
 [backup]
 backup_directory = /data2/1n_100m

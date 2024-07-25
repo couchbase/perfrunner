@@ -31,7 +31,3 @@ key_fmtr = hex
 doc_gen = large
 mem_low_wat = 134217728
 mem_high_wat = 268435456
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

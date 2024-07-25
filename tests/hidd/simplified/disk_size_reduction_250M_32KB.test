@@ -29,7 +29,3 @@ size = 1450
 workers = 100
 key_fmtr = hex
 doc_gen = high_compressible
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

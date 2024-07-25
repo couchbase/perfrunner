@@ -28,7 +28,3 @@ items = 1000000000
 size = 256
 workers = 100
 doc_gen = incompressible
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

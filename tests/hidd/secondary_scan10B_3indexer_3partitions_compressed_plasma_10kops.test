@@ -59,9 +59,5 @@ workers = 20
 working_set = 10
 working_set_access = 90
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
-
 [backup]
 backup_directory = /data2/gsi_10b

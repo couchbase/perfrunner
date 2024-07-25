@@ -31,9 +31,5 @@ size = 1024
 workers = 100
 doc_gen = reverse_lookup
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
-
 [backup]
 backup_directory = /data2/n1ql_1b

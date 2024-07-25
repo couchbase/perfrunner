@@ -444,7 +444,7 @@ class SecondaryIndexTest(PerfTest):
             configdata = json.load(config_file)
         numscans = 0
         for scanspec in configdata['ScanSpecs']:
-            numscans += scanspec['Repeat']
+            numscans += scanspec['Repeat'] + 1
 
         with open('result.json') as result_file:
             resdata = json.load(result_file)

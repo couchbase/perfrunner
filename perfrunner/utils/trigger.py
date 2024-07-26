@@ -51,8 +51,8 @@ def build_exists(release: str, build: str) -> bool:
     return r.status_code == 200
 
 
-def rpm_package_exists(release: str, build: str, semver: str) -> bool:
-    package = 'couchbase-server-enterprise-{semver}-{build}-centos7.x86_64.rpm'\
+def deb_package_exists(release: str, build: str, semver: str) -> bool:
+    package = 'couchbase-server-enterprise_{semver}-{build}-linux_amd64.deb'\
         .format(semver=semver, build=build)
     url = '{}/{release}/{build}/{package}'.format(
         BASE_URL, release=release, build=build, package=package)
@@ -87,7 +87,7 @@ def main():
             missing += 1
             continue
 
-        if rpm_package_exists(args.release, str(build), args.relserver):
+        if deb_package_exists(args.release, str(build), args.relserver):
             latest = build
 
     if latest:

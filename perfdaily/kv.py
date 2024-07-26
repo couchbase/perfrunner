@@ -14,8 +14,9 @@ class DCPThroughputTest(DailyTest, _DCPThroughputTest):
 
 
 class PillowFightTest(DailyTest, _PillowFightTest):
-
-    pass
+    def _report_kpi(self, *args):
+        for metric in self.metrics.max_ops():
+            self.reporter.post(*metric)
 
 
 class PillowFightCDCTest(DailyTest, _PillowFightCDCTest):

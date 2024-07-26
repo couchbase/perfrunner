@@ -790,21 +790,35 @@ class Monitor:
         if not bkt:
             bkt = self.test_config.buckets[0]
         tries = 0
+        retries = 0
         pending_items = 1
+        previous_file_merge_total = -1
+        previous_mem_merge_total = -1
+        file_merge_ops = '{}:{}:{}'.format(bkt, index, 'num_file_merge_ops')
+        mem_merge_ops = '{}:{}:{}'.format(bkt, index, 'num_mem_merge_ops')
+        metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
         while pending_items:
             try:
                 persist = 0
-                compact = 0
+                current_file_merge_total = 0
+                current_mem_merge_total = 0
                 for host in hosts:
                     stats = self.rest.get_fts_stats(host)
-                    metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
                     persist += stats[metric]
-
-                    metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
-                    compact += stats[metric]
-                pending_items = persist or compact
+                    current_file_merge_total += stats[file_merge_ops]
+                    current_mem_merge_total += stats[mem_merge_ops]
                 logger.info('Records to persist: {:,}'.format(persist))
-                logger.info('Ongoing compactions: {:,}'.format(compact))
+                logger.info(f"Current file merge total: {current_file_merge_total}")
+                logger.info(f"Current mem merge total: {current_mem_merge_total}")
+                if (current_file_merge_total == previous_file_merge_total and
+                    current_mem_merge_total == previous_mem_merge_total):
+                    retries+=1
+                else:
+                    retries=0
+
+                pending_items = persist or max(0, self.MAX_RETRY-retries)
+                previous_file_merge_total = current_file_merge_total
+                previous_mem_merge_total = current_mem_merge_total
             except KeyError:
                 tries += 1
             if tries >= 10:

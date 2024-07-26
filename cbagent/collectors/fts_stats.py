@@ -7,11 +7,7 @@ class FTSCollector(Collector):
     COLLECTOR = "fts_stats"
 
     METRICS = (
-        "batch_merge_count",
         "doc_count",
-        "iterator_next_count",
-        "iterator_seek_count",
-        "num_bytes_live_data",
         "num_bytes_used_disk",
         "num_bytes_used_ram",
         "num_mutations_to_index",
@@ -23,10 +19,6 @@ class FTSCollector(Collector):
         "num_root_memorysegments",
         "num_root_filesegments",
         "pct_cpu_gc",
-        "reader_get_count",
-        "reader_multi_get_count",
-        "reader_prefix_iterator_count",
-        "reader_range_iterator_count",
         "timer_batch_store_count",
         "timer_data_delete_count",
         "timer_data_update_count",
@@ -36,7 +28,6 @@ class FTSCollector(Collector):
         "timer_snapshot_start_count",
         "total_bytes_indexed",
         "total_bytes_query_results",
-        "total_compactions",
         "total_gc",
         "total_queries",
         "total_queries_error",
@@ -44,7 +35,6 @@ class FTSCollector(Collector):
         "total_queries_timeout",
         "total_request_time",
         "total_term_searchers",
-        "writer_execute_batch_count",
     )
 
     def __init__(self, settings, test):

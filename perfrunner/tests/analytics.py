@@ -28,7 +28,7 @@ from perfrunner.helpers.rest import (
     QUERY_PORT_SSL,
 )
 from perfrunner.helpers.worker import ch2_load, tpcds_initial_data_load_task
-from perfrunner.settings import CH2ConnectionSettings
+from perfrunner.settings import AnalyticsCBOSampleSize, CH2ConnectionSettings
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
 from perfrunner.tests.xdcr import SrcTargetIterator
@@ -102,8 +102,14 @@ class DatasetDef:
     def drop_primary_idx_statement(self) -> str:
         return f"DROP INDEX {self.name}.primary_idx_{self.name}"
 
-    def analyze_statement(self) -> str:
-        return f"ANALYZE ANALYTICS COLLECTION {sqlpp_escape(self.name)}"
+    def analyze_statement(
+        self,
+        sample_size: AnalyticsCBOSampleSize = AnalyticsCBOSampleSize.DEFAULT,
+    ) -> str:
+        with_clause = ""
+        if sample_size is not AnalyticsCBOSampleSize.DEFAULT:
+            with_clause = f' WITH {{ "sample": "{sample_size.value}" }}'
+        return f"ANALYZE ANALYTICS COLLECTION {sqlpp_escape(self.name)}{with_clause}"
 
 
 @dataclass(frozen=True)
@@ -223,10 +229,17 @@ class AnalyticsTest(PerfTest):
             self.datasets, lambda dataset: dataset.drop_primary_idx_statement(), verbose=verbose
         )
 
-    def analyze_datasets(self, *, verbose: bool = False):
-        logger.info("Analyzing datasets for CBO")
+    def analyze_datasets(
+        self,
+        sample_size: AnalyticsCBOSampleSize = AnalyticsCBOSampleSize.DEFAULT,
+        *,
+        verbose: bool = False,
+    ):
+        logger.info(f"Analyzing datasets for CBO using {sample_size.name.lower()} sample size")
         self._run_statements(
-            self.datasets, lambda dataset: dataset.analyze_statement(), verbose=verbose
+            self.datasets,
+            lambda dataset: dataset.analyze_statement(sample_size),
+            verbose=verbose,
         )
 
     def sync(self):
@@ -1259,7 +1272,7 @@ class CH2Test(AnalyticsTest):
             self.create_gsi_indexes()
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(verbose=True)
+            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
 
         self.run_ch2()
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
@@ -1387,7 +1400,7 @@ class CH2ColumnarSimulatedPauseResumeTest(CH2RemoteLinkTest):
         log_file = '{}_post_resume'.format(self.test_config.ch2_settings.workload)
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(verbose=True)
+            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
 
         self.run_ch2(log_file=log_file)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
@@ -1434,7 +1447,7 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
         self.report_ingestion_kpi(copy_from_time)
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(verbose=True)
+            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
 
         self.run_ch2()
         self.report_kpi()

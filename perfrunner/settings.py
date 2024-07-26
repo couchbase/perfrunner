@@ -2571,6 +2571,18 @@ class MagmaSettings:
                                                       self.MAGMA_MIN_MEMORY_QUOTA))
 
 
+class AnalyticsCBOSampleSize(Enum):
+    DEFAULT = ""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+    @classmethod
+    def _missing_(cls, value) -> "AnalyticsCBOSampleSize":
+        logger.warning(f"Invalid CBO sample size: '{value}'. Using default.")
+        return cls.DEFAULT
+
+
 class AnalyticsSettings:
 
     NUM_IO_DEVICES = 1
@@ -2612,6 +2624,7 @@ class AnalyticsSettings:
 
         self.goldfish_storage_partitions = int(options.pop('goldfish_storage_partitions', 0))
         self.use_cbo = maybe_atoi(options.pop("use_cbo", self.USE_CBO))
+        self.cbo_sample_size = AnalyticsCBOSampleSize(options.pop("cbo_sample_size", "").lower())
 
         # Remaining settings are for analytics config REST API
         self.config_settings = options

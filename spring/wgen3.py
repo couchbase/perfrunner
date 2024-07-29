@@ -1309,6 +1309,9 @@ class N1QLWorker(Worker):
         for bucket, bucket_instances in self.access_targets.items():
             if bucket == self.ts.bucket:
                 num_bucket_instances = len(bucket_instances)
+                if num_bucket_instances == 0:
+                    target = object()
+                    continue
                 random_instance = random.randint(num_bucket_instances)
                 target_replacements = []
                 for j in range(num_bucket_instances):
@@ -1326,6 +1329,8 @@ class N1QLWorker(Worker):
             raise Exception("No target")
 
     def next_target(self):
+        if self.num_bucket_instances == 0:
+            return []
         random_instance = random.randint(self.num_bucket_instances)
         target_replacements = []
         target = None

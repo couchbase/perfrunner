@@ -14,6 +14,7 @@ class Monitor:
     MAX_RETRY_RECOVERY = 1200
     MAX_RETRY_TIMER_EVENT = 18000
     MAX_RETRY_BOOTSTRAP = 1200
+    MAX_RETRY_FOR_FTS_MERGES = 90
 
     MONITORING_DELAY = 5
 
@@ -790,6 +791,32 @@ class Monitor:
         if not bkt:
             bkt = self.test_config.buckets[0]
         tries = 0
+        pending_items = 1
+        while pending_items:
+            try:
+                persist = 0
+                compact = 0
+                for host in hosts:
+                    stats = self.rest.get_fts_stats(host)
+                    metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
+                    persist += stats[metric]
+
+                    metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
+                    compact += stats[metric]
+                pending_items = persist or compact
+                logger.info('Records to persist: {:,}'.format(persist))
+                logger.info('Ongoing compactions: {:,}'.format(compact))
+            except KeyError:
+                tries += 1
+            if tries >= 10:
+                raise Exception("cannot get fts stats")
+            time.sleep(self.POLLING_INTERVAL)
+
+    def monitor_fts_index_persistence_and_merges(self, hosts: list, index: str, bkt: str = None):
+        logger.info('{}: Waiting for index to be persisted'.format(index))
+        if not bkt:
+            bkt = self.test_config.buckets[0]
+        tries = 0
         retries = 0
         pending_items = 1
         previous_file_merge_total = -1
@@ -816,7 +843,7 @@ class Monitor:
                 else:
                     retries=0
 
-                pending_items = persist or max(0, self.MAX_RETRY-retries)
+                pending_items = persist or max(0, self.MAX_RETRY_FOR_FTS_MERGES-retries)
                 previous_file_merge_total = current_file_merge_total
                 previous_mem_merge_total = current_mem_merge_total
             except KeyError:

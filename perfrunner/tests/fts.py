@@ -447,21 +447,37 @@ class FTSTest(JTSTest):
         if fts_nodes is None:
             fts_nodes = self.fts_nodes
         logger.info("This is the list of hosts: {}".format(fts_nodes))
+        result = self.rest.get_bucket_info(self.fts_nodes[0], self.test_config.buckets[0])
+        cb_version = result["nodes"][0]["version"].split("-")[0]
         if self.fts_index_name_flag is True:
             for index_name in self.fts_index_map.keys():
-                self.monitor.monitor_fts_index_persistence(
-                    hosts=fts_nodes,
-                    index=self.fts_index_map[index_name]["full_index_name"],
-                    bkt=self.fts_index_map[index_name]["bucket"]
-                )
+                if cb_version < "7.6.3":
+                    self.monitor.monitor_fts_index_persistence(
+                        hosts=fts_nodes,
+                        index=self.fts_index_map[index_name]["full_index_name"],
+                        bkt=self.fts_index_map[index_name]["bucket"]
+                    )
+                else:
+                    self.monitor.monitor_fts_index_persistence_and_merges(
+                        hosts=fts_nodes,
+                        index=self.fts_index_map[index_name]["full_index_name"],
+                        bkt=self.fts_index_map[index_name]["bucket"]
+                    )
 
         if self.fts_index_name_flag is False:
             for index_name in self.fts_index_map.keys():
-                self.monitor.monitor_fts_index_persistence(
-                    hosts=fts_nodes,
-                    index=index_name,
-                    bkt=self.fts_index_map[index_name]["bucket"]
-                )
+                if cb_version < "7.6.3":
+                    self.monitor.monitor_fts_index_persistence(
+                        hosts=fts_nodes,
+                        index=index_name,
+                        bkt=self.fts_index_map[index_name]["bucket"]
+                    )
+                else:
+                    self.monitor.monitor_fts_index_persistence_and_merges(
+                        hosts=fts_nodes,
+                        index=index_name,
+                        bkt=self.fts_index_map[index_name]["bucket"]
+                    )
 
     def add_extra_fts_parameters(self):
         logger.info("Adding extra parameter to the fts nodes")

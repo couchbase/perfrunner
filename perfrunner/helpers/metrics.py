@@ -1726,7 +1726,7 @@ class MetricHelper:
                                      collector='sgimport_latency')
         logger.info("db: {}, cluster: {}".format(db, self.test.cbmonitor_clusters[0]))
         values += self.store.get_values(db, metric='sgimport_latency')
-        lag = round(np.percentile(values, percentile), 1)
+        lag = round(np.percentile(values, percentile), 2)
         return lag, self._snapshots, metric_info
 
     def sgimport_items_per_sec(self, time_elapsed: float, items_in_range: int,

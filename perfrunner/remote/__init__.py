@@ -330,17 +330,12 @@ class Remote:
         logger.info('Cloning cblite')
         with cd('/tmp/couchbase-mobile-tools/'):
             run('git clone https://github.com/couchbaselabs/couchbase-mobile-tools .')
-            run('git checkout dbfb5f53e57ccdba9bc63693d580a2b7cdc2aa0d')
+            run('git checkout 08e3ef3179a56c7fb8fbbead304db743aac8ab87')
 
     def build_cblite(self):
         logger.info('Building cblite: updating submodule...')
         try:
             self.cblite_update_submodule()
-        except Exception as ex:
-            logger.info("{}".format(ex))
-        logger.info('Building cblite: checking out version...')
-        try:
-            self.cblite_checkout_version()
         except Exception as ex:
             logger.info("{}".format(ex))
         logger.info('Building cblite: creating build directory...')
@@ -367,7 +362,7 @@ class Remote:
     @all_clients_batch
     def cblite_checkout_version(self):
         with cd('/tmp/couchbase-mobile-tools/vendor/couchbase-lite-core'):
-            run('git checkout 8b3bb4f1e0942c596a2fe1a3e903e8f778ba9b66', quiet=True)
+            run('git checkout bc77f743d13fb6de86e56167425cdb3252ae7c71', quiet=True)
 
     @all_clients_batch
     def cblite_make_build_dir(self):
@@ -382,7 +377,7 @@ class Remote:
     @all_clients_batch
     def cblite_build_make(self):
         with cd('/tmp/couchbase-mobile-tools/cblite/build_cmake'):
-            run('/usr/bin/make -j 5', quiet=True)
+            run('/usr/bin/make -j 5')
 
     def start_cblitedb_continuous(self, worker: str, db_name: str, port: int, verbose: int = 1,
                                   collection: dict = {}):

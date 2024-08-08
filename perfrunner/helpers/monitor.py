@@ -337,10 +337,16 @@ class Monitor:
         # - xdcr_docs_written_total >= total number of docs (it can be greater due to import)
         # - xdcr_mobile_docs_filtered_total keeps increasing
         # - xdcr_changes_left_total = 1
-        previous_xdcr_mobile_docs_filtered_total = \
-            self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
-        logger.info('Initial xdcr_mobile_docs_filtered_total = {:,}'.
-                    format(previous_xdcr_mobile_docs_filtered_total))
+        if self.test_config.xdcr_settings.mobile:
+            previous_xdcr_mobile_docs_filtered_total = \
+                self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
+            logger.info('Initial xdcr_mobile_docs_filtered_total = {:,}'.
+                        format(previous_xdcr_mobile_docs_filtered_total))
+        logger.info("Sleep until xdcr_changes_left_total starts to be updated")
+        while self.rest.get_xdcr_changes_left_total(host, bucket) <= 0:
+            time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('xdcr_changes_left was not updated')
         while True:
             xdcr_changes_left_total = self.rest.get_xdcr_changes_left_total(host, bucket)
             if xdcr_changes_left_total:

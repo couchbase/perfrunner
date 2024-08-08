@@ -181,60 +181,44 @@ class Monitor:
                 raise Exception('Replica items monitoring got stuck')
 
     def _wait_for_replication_completion(self, host, bucket, queues, stats_function, link1, link2):
-        metrics = list(queues)
 
         completion_count = 0
         link1_time = 0
         link2_items = 0
 
-        link1_compelteness_str = \
-            'replications/{}/bucket-1/bucket-1/percent_completeness'.format(link1)
-        link2_compelteness_str = \
-            'replications/{}/bucket-1/bucket-1/percent_completeness'.format(link2)
-        link2_items_str = \
-            'replications/{}/bucket-1/bucket-1/docs_written'.format(link2)
-
         start_time = time.time()
 
-        while metrics:
-            bucket_stats = stats_function(host, bucket)
-            # As we are changing metrics in the loop; take a copy of it to
-            # iterate over.
-            for metric in list(metrics):
-                stats = bucket_stats['op']['samples'].get(metric)
-                if stats:
-                    last_value = stats[-1]
-                    if last_value:
-                        logger.info('{} = {:,}'.format(metric, last_value))
-                        link1_completeness = \
-                            bucket_stats['op']['samples'].get(link1_compelteness_str)[-1]
-                        link2_completeness = \
-                            bucket_stats['op']['samples'].get(link2_compelteness_str)[-1]
-                        if link1_completeness == 100 or \
-                                link2_completeness == 100:
-                            if link1_completeness == 100:
-                                if completion_count == 0:
-                                    link1_time = time.time()
-                                    link2_items = \
-                                        bucket_stats['op']['samples'].get(link2_items_str)[-1]
-                                    completion_count = completion_count + 1
-                            elif link2_completeness == 100:
-                                if completion_count == 0:
-                                    link1_time = time.time()
-                                    link2_items = \
-                                        bucket_stats['op']['samples'].get(link2_items_str)[-1]
-                                    completion_count = completion_count + 1
-                        continue
-                    else:
-                        logger.info('{} reached 0'.format(metric))
-                        if completion_count == 0:
-                            link1_time = time.time()
-                            link2_items = \
-                                bucket_stats['op']['samples'].get(link2_items_str)[-1]
-                            completion_count = completion_count + 1
-                    metrics.remove(metric)
-            if metrics:
-                time.sleep(self.POLLING_INTERVAL)
+        logger.info("Sleep until xdcr_changes_left_total starts to be updated")
+        while self.rest.get_xdcr_changes_left_total(host, bucket) <= 0:
+            time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('xdcr_changes_left was not updated')
+        logger.info("Monitoring queues")
+        while True:
+            xdcr_changes_left_total = self.rest.get_xdcr_changes_left_total(host, bucket)
+            logger.info(f'xdcr_changes_left_total = {xdcr_changes_left_total:,}')
+            link_completeness = self.rest.get_xdcr_completeness(host, bucket)
+            link1_completeness = int(float(link_completeness[0]["values"][-1][1]))
+            logger.info(f'link1_compelteness = {link1_completeness:,}')
+            link2_completeness = int(float(link_completeness[1]["values"][-1][1]))
+            logger.info(f'link2_compelteness = {link2_completeness:,}')
+            if link1_completeness == 100 or link2_completeness == 100:
+                if link1_completeness == 100:
+                    if completion_count == 0:
+                        link1_time = time.time()
+                        link2_items = int(self.rest.get_xdcr_items(host,
+                                                                    bucket)[1]['values'][-1][1])
+                        completion_count = completion_count + 1
+                elif link2_completeness == 100:
+                    if completion_count == 0:
+                        link1_time = time.time()
+                        link2_items = int(self.rest.get_xdcr_items(host,
+                                                                    bucket)[1]["values"][-1][1])
+                        completion_count = completion_count + 1
+            if xdcr_changes_left_total == 0:
+                logger.info('xdcr_changes_left_total reached 0')
+                break
+            time.sleep(self.POLLING_INTERVAL)
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Monitoring got stuck')
 

@@ -19,7 +19,7 @@ class XdcrLag(Latency):
 
     INITIAL_POLLING_INTERVAL = 0.001  # 1 ms
 
-    TIMEOUT = 600  # 10 minutes
+    TIMEOUT = 10  # 10 seconds
 
     MAX_SAMPLING_INTERVAL = 0.25  # 250 ms
 

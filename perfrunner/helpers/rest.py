@@ -518,12 +518,12 @@ class DefaultRestHelper(RestBase):
         return self.get(url=self._get_api_url(host=host, path=api)).json()
 
     def get_xdcr_stats(self, host: str, bucket: str) -> dict:
-        api = 'pools/default/buckets/@xdcr-{}/stats'.format(bucket)
+        api = f'pools/default/buckets/@xdcr-{bucket}/stats'
         return self.get(url=self._get_api_url(host=host, path=api)).json()
 
     def get_xdcr_changes_left_total(self, host: str, bucket: str) -> int:
         api = 'pools/default/stats/range/xdcr_changes_left_total?' \
-            'sourceBucketName={}&pipelineType=Main'.format(bucket)
+            f'sourceBucketName={bucket}&pipelineType=Main'
         resp = self.get(url=self._get_api_url(host=host, path=api)).json()
         if resp["data"] != []:
             return int(resp["data"][0]["values"][-1][1])
@@ -531,15 +531,27 @@ class DefaultRestHelper(RestBase):
 
     def get_xdcr_docs_written_total(self, host: str, bucket: str) -> int:
         api = 'pools/default/stats/range/xdcr_docs_written_total?' \
-            'sourceBucketName={}&pipelineType=Main'.format(bucket)
+            f'sourceBucketName={bucket}&pipelineType=Main'
         resp = self.get(url=self._get_api_url(host=host, path=api)).json()
         return int(resp["data"][0]["values"][-1][1])
 
     def xdcr_mobile_docs_filtered_total(self, host: str, bucket: str) -> int:
         api = 'pools/default/stats/range/xdcr_mobile_docs_filtered_total?' \
-            'sourceBucketName={}&pipelineType=Main'.format(bucket)
+            f'sourceBucketName={bucket}&pipelineType=Main'
         resp = self.get(url=self._get_api_url(host=host, path=api)).json()
         return int(resp["data"][0]["values"][-1][1])
+
+    def get_xdcr_completeness(self, host: str, bucket: str) -> int:
+        api = 'pools/default/stats/range/xdcr_percent_completeness?' \
+            f'sourceBucketName={bucket}&pipelineType=Main'
+        resp = self.get(url=self._get_api_url(host=host, path=api)).json()
+        return resp["data"]
+
+    def get_xdcr_items(self, host: str, bucket: str) -> int:
+        api = 'pools/default/stats/range/xdcr_docs_written_total?' \
+            f'sourceBucketName={bucket}&pipelineType=Main'
+        resp = self.get(url=self._get_api_url(host=host, path=api)).json()
+        return resp["data"]
 
     def add_remote_cluster(self,
                            local_host: str,

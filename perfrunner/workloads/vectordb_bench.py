@@ -21,7 +21,10 @@ def run_vectordb_bench_case(
         workload_settings.label,
     ]
     run_vectordb_bench(
-        " ".join(options), workload_settings.dataset_local_path, workload_settings.use_shuffled_data
+        " ".join(options),
+        workload_settings.dataset_local_path,
+        workload_settings.use_shuffled_data,
+        workload_settings.batch_size,
     )
 
 

@@ -18,6 +18,7 @@ enable_n2n_encryption = all
 
 [vectordb]
 cases = Performance768D100M
+batch_size = 1000000
 ssl_mode = capella
 dataset_path = /stage
 

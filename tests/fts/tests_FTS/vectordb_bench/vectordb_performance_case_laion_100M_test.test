@@ -14,6 +14,7 @@ fts_index_mem_quota = 51200
 
 [vectordb]
 cases = Performance768D100M
+batch_size = 1000000
 
 [profiling]
 services = fts

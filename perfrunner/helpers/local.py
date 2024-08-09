@@ -1678,7 +1678,9 @@ def build_vectordb_bench():
         local("make")
 
 
-def run_vectordb_bench(options: str, dataset_dir: str, use_shuffled_data: bool = True):
+def run_vectordb_bench(
+    options: str, dataset_dir: str, use_shuffled_data: bool = True, batch_size: int = 5000
+):
     with lcd("VectorDBBench"):
         # Set `PYTHONPATH` to avoid package not found issues in some setup
         vectordb_path = local("pwd", capture=True)
@@ -1686,6 +1688,7 @@ def run_vectordb_bench(options: str, dataset_dir: str, use_shuffled_data: bool =
             USE_SHUFFLED_DATA=str(use_shuffled_data),
             PYTHONPATH=vectordb_path,
             DATASET_LOCAL_DIR=dataset_dir,
+            NUM_PER_BATCH=str(batch_size),
         ):
             # Run using a command line tool which may not exist in upstream version
             local("env/bin/cmd_run {}".format(options))

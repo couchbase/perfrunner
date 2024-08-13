@@ -10,9 +10,9 @@ def run_vectordb_bench_case(
 ):
     options = [
         "--db-config",
-        "'{}'".format(
-            json.dumps(get_db_config_for(workload_settings.database, target, workload_settings))
-        ),
+        f"'{json.dumps(get_db_config_for(workload_settings.database, target, workload_settings))}'",
+        "--db-case-config",
+        f"'{json.dumps(workload_settings.case_settings)}'",
         "--database",
         workload_settings.database,
         "--cases",
@@ -44,6 +44,7 @@ def get_db_config_for(
             "username": target.username,
             "password": target.password,
             "ssl_mode": workload_settings.ssl_mode,
+            "index_type": workload_settings.index_type,
         }
     else:
         logger.warn(f"No config for '{database}' client. Defaults will be used")

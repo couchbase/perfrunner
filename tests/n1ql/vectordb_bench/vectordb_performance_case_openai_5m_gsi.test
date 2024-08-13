@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.vectordb.VectorDBBenchTest
+
+[showfast]
+title = 4 nodes, 1 bucket, GSI
+component = n1ql
+category = vectordb
+sub_category = plasma
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 4
+num_buckets = 1
+online_cores = 16
+
+[bucket]
+backend_storage = magma
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[vectordb]
+cases = Performance1536D5M
+batch_size = 1000000
+index_type = CVI

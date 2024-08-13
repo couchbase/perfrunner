@@ -558,3 +558,4 @@ class Remote:
             run("pip3 uninstall --yes virtualenv", warn_only=True)
             run("apt purge -y python3-virtualenv", warn_only=True)
             run(f"pyenv local {py_version} && yes | pip install virtualenv", warn_only=True)
+            run("pyenv local 3.9.7 && yes | pip install virtualenv", warn_only=True)

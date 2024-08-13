@@ -20,11 +20,9 @@ class VectorDBBenchTest(PerfTest):
         super().__init__(cluster_spec, test_config, verbose)
         self.vectordb_settings = test_config.vectordb_settings
         self.vectordb_settings.label = self.build_tag
-
-        # FTS specific stats settings
-        self.jts_access = test_config.vectordb_settings
-        self.jts_access.couchbase_index_name = "bucket-1_vector_index"
-        self.jts_access.fts_index_map = {"fts_index_map": {"bucket": "bucket-1"}}
+        self.vectordb_settings.case_settings.update(
+            self.get_case_settings(self.vectordb_settings.index_type)
+        )
 
     @cached_property
     def build_tag(self):
@@ -59,6 +57,33 @@ class VectorDBBenchTest(PerfTest):
             task=vectordb_bench_task,
         )
         self.worker_manager.run_fg_phases(phase)
+
+    def get_case_settings(self, index_type: str) -> dict:
+        case_settings = {}
+        if index_type.upper() == "FTS":
+            # FTS specific stats settings
+            self.jts_access = self.test_config.vectordb_settings
+            self.jts_access.couchbase_index_name = "bucket-1_vector_index"
+            self.jts_access.fts_index_map = {"fts_index_map": {"bucket": "bucket-1"}}
+            return case_settings
+
+        self.COLLECTORS = {
+            "secondary_stats": True,
+            "secondary_debugstats": True,
+            "secondary_debugstats_bucket": True,
+            "secondary_debugstats_index": True,
+        }
+        case_settings = {
+            "description": self.test_config.gsi_settings.vector_description or "IVF,SQ8",
+            "nprobes": self.test_config.gsi_settings.vector_nprobes,
+        }
+        if train_list := self.test_config.gsi_settings.vector_train_list:
+            case_settings["train_list"] = train_list
+        if scan_nprobes := self.test_config.gsi_settings.vector_scan_probes:
+            case_settings["scan_nprobes"] = scan_nprobes
+        if vector_similarity := self.test_config.gsi_settings.vector_similarity:
+            case_settings["vector_similarity"] = vector_similarity
+        return case_settings
 
     def collect_results(self) -> dict:
         database = self.vectordb_settings.database
@@ -159,11 +184,11 @@ CASE_DEFINITIONS = {
     CaseType.Performance768D1M99P: "Filtering Search Performance "
     "(COHERE, 1M Dataset, 768 Dim, Filter 99%)",
     CaseType.Performance1536D500K1P: "Filtering Search Performance "
-    "(OpenAI, 500K Dataset, 768 Dim, Filter 1%)",
+    "(OpenAI, 500K Dataset, 1536 Dim, Filter 1%)",
     CaseType.Performance1536D5M1P: "Filtering Search Performance "
-    "(OpenAI, 5M Dataset, 768 Dim, Filter 1%)",
+    "(OpenAI, 5M Dataset, 1536 Dim, Filter 1%)",
     CaseType.Performance1536D500K99P: "Filtering Search Performance "
-    "(OpenAI, 500K Dataset, 768 Dim, Filter 99%)",
+    "(OpenAI, 500K Dataset, 1536 Dim, Filter 99%)",
     CaseType.Performance1536D5M99P: "Filtering Search Performance "
-    "(OpenAI, 5M Dataset, 768 Dim, Filter 99%)",
+    "(OpenAI, 5M Dataset, 1536 Dim, Filter 99%)",
 }

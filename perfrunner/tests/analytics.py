@@ -602,6 +602,12 @@ class ColumnarCopyFromS3Test(BigFunQueryNoIndexExternalTest):
                          query_method=query_method)
         return [(query, latency) for query, latency in results]
 
+    def report_ingestion_kpi(self, ingestion_time: float):
+        if self.test_config.stats_settings.enabled:
+            v, snapshots, metric_info = self.metrics.ingestion_time(ingestion_time, "copy_from_s3")
+            metric_info["category"] = "sync"
+            self.reporter.post(v, snapshots, metric_info)
+
     def run(self):
         random.seed(8095)
 
@@ -610,6 +616,7 @@ class ColumnarCopyFromS3Test(BigFunQueryNoIndexExternalTest):
 
         copy_from_time = self.copy_data_from_s3()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
+        self.report_ingestion_kpi(copy_from_time)
 
         results = self.access()
         self.report_kpi(results)
@@ -1062,25 +1069,36 @@ class CH2Test(AnalyticsTest):
         measure_time = (
             self.test_config.ch2_settings.duration - self.test_config.ch2_settings.warmup_duration
         )
-        total_time, rate, test_duration = self.metrics.ch2_metric(
+        ch2_metrics = self.metrics.ch2_metrics(
             duration=measure_time, logfile=self.test_config.ch2_settings.workload
         )
 
         if self.test_config.ch2_settings.tclients:
-            tpm = round(rate * 60 / test_duration, 2)
-            response_time = round(total_time / 1000000 / rate, 2) if rate > 0 else float("inf")
-
-            self.reporter.post(*self.metrics.ch2_tmp(tpm, self.test_config.ch2_settings.tclients))
+            self.reporter.post(
+                *self.metrics.ch2_tpm(
+                    round(ch2_metrics.tpm, 2), self.test_config.ch2_settings.tclients
+                )
+            )
             self.reporter.post(
                 *self.metrics.ch2_response_time(
-                    response_time, self.test_config.ch2_settings.tclients
+                    round(ch2_metrics.txn_response_time, 2), self.test_config.ch2_settings.tclients
                 )
             )
 
         if self.test_config.ch2_settings.aclients:
             self.reporter.post(
-                *self.metrics.ch2_analytics_query_time(
-                    test_duration, self.test_config.ch2_settings.tclients
+                *self.metrics.ch2_geo_mean_query_time(
+                    ch2_metrics.geo_mean_cbas_query_time, self.test_config.ch2_settings.tclients
+                )
+            )
+            self.reporter.post(
+                *self.metrics.ch2_analytics_query_set_time(
+                    ch2_metrics.average_cbas_query_set_time, self.test_config.ch2_settings.tclients
+                )
+            )
+            self.reporter.post(
+                *self.metrics.ch2_analytics_qph(
+                    ch2_metrics.cbas_qph, self.test_config.ch2_settings.tclients
                 )
             )
 
@@ -1413,6 +1431,7 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
 
         copy_from_time = self.copy_data_from_s3()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
+        self.report_ingestion_kpi(copy_from_time)
 
         if self.test_config.analytics_settings.use_cbo:
             self.analyze_datasets(verbose=True)
@@ -1610,43 +1629,48 @@ class CH3Test(CH2Test):
         return self.fts_nodes[0]
 
     def _report_kpi(self):
-        measure_time = self.test_config.ch3_settings.duration - \
-                       self.test_config.ch3_settings.warmup_duration
-        total_time, rate, test_duration, fts_duration, fts_client, fts_qph = \
-            self.metrics.ch3_metric(duration=measure_time,
-                                    logfile=self.test_config.ch3_settings.workload)
-
-        tpm = round(rate*60/test_duration, 2)
-        response_time = round(total_time/1000/rate, 2)
-        fts_query_time = round(fts_duration/1000, 2)
-        fts_client_time = round(fts_client/1000, 2)
-
-        self.reporter.post(
-            *self.metrics.ch2_tmp(tpm, self.test_config.ch3_settings.tclients)
+        measure_time = (
+            self.test_config.ch3_settings.duration - self.test_config.ch3_settings.warmup_duration
+        )
+        ch3_metrics = self.metrics.ch3_metrics(
+            duration=measure_time, logfile=self.test_config.ch3_settings.workload
         )
 
         self.reporter.post(
-            *self.metrics.ch2_response_time(response_time, self.test_config.ch3_settings.tclients)
+            *self.metrics.ch2_tpm(round(ch3_metrics.tpm, 2), self.test_config.ch3_settings.tclients)
+        )
+
+        self.reporter.post(
+            *self.metrics.ch2_response_time(
+                round(ch3_metrics.txn_response_time, 2), self.test_config.ch3_settings.tclients
+            )
         )
 
         if self.test_config.ch3_settings.workload == 'ch3_mixed':
             self.reporter.post(
-                *self.metrics.ch2_analytics_query_time(test_duration,
-                                                       self.test_config.ch3_settings.tclients)
+                *self.metrics.ch2_analytics_query_set_time(
+                    ch3_metrics.average_cbas_query_set_time, self.test_config.ch3_settings.tclients
+                )
             )
 
             self.reporter.post(
-                *self.metrics.ch3_fts_query_time(fts_query_time,
-                                                 self.test_config.ch3_settings.tclients)
+                *self.metrics.ch3_fts_query_time(
+                    round(ch3_metrics.average_fts_query_set_time_ms / 1000, 2),
+                    self.test_config.ch3_settings.tclients,
+                )
             )
 
             self.reporter.post(
-                *self.metrics.ch3_fts_client_time(fts_client_time,
-                                                  self.test_config.ch3_settings.tclients)
+                *self.metrics.ch3_fts_client_time(
+                    round(ch3_metrics.average_fts_client_time_ms / 1000, 2),
+                    self.test_config.ch3_settings.tclients,
+                )
             )
 
             self.reporter.post(
-                *self.metrics.ch3_fts_qph(fts_qph, self.test_config.ch3_settings.tclients)
+                *self.metrics.ch3_fts_qph(
+                    ch3_metrics.fts_qph, self.test_config.ch3_settings.tclients
+                )
             )
 
 

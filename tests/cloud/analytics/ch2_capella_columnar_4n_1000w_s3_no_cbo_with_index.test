@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2CapellaColumnarAnalyticsOnlyTest
 
 [showfast]
-title = CH2 Queries, 4A, c=11, analytics-only workload, Capella Columnar only
+title = CH2 1000W, 4A, c=11, analytics-only workload, Capella Columnar only, Analytics Indexes
 component = analyticscloud
 category = ch2
 sub_category = {provider}

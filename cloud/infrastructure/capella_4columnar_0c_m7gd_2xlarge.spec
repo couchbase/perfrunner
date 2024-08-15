@@ -18,10 +18,10 @@ node_groups = ec2_node_group_1
 storage_class = gp3
 
 [ec2_node_group_1]
-instance_type = r7gd.xlarge
+instance_type = m7gd.2xlarge
 
 [parameters]
 OS = Amazon Linux 2
-CPU = r7gd.xlarge (4 vCPU)
+CPU = m7gd.2xlarge (8 vCPU)
 Memory = 32GB
-Disk = NVMe SSD 237 GB
+Disk = NVMe SSD 474 GB

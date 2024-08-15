@@ -12,15 +12,6 @@ goldfish =
 [ec2_node_group_1]
 instance_type = m7gd.4xlarge
 
-[storage]
-data = /data/data
-analytics = /data/analytics
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-aws_key_name = korry
-
 [parameters]
 OS = Amazon Linux 2
 CPU = m7gd.4xlarge (16 vCPU)

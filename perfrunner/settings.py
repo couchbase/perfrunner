@@ -561,20 +561,19 @@ class ClusterSpec(Config):
         return subnet_ids
 
     @property
-    def client_credentials(self) -> list[str]:
-        if self.config.has_option('clients', 'credentials'):
-            return self.config.get('clients', 'credentials').split(':')
+    def client_credentials(self) -> tuple[str, str]:
+        if creds := self.config.get("clients", "credentials", fallback=""):
+            return tuple(creds.split(":")) if ":" in creds else ("", "")
         else:
             return self.ssh_credentials
 
     @property
-    def data_path(self) -> str:
-        return self.config.get('storage', 'data')
+    def data_path(self) -> Optional[str]:
+        return self.config.get("storage", "data", fallback=None)
 
     @property
-    def index_path(self) -> str:
-        return self.config.get('storage', 'index',
-                               fallback=self.config.get('storage', 'data'))
+    def index_path(self) -> Optional[str]:
+        return self.config.get("storage", "index", fallback=self.data_path)
 
     @property
     def analytics_paths(self) -> list[str]:
@@ -590,7 +589,7 @@ class ClusterSpec(Config):
                 yield path
 
     @property
-    def backup(self) -> str:
+    def backup(self) -> Optional[str]:
         return self.config.get('storage', 'backup', fallback=None)
 
     @property
@@ -600,14 +599,15 @@ class ClusterSpec(Config):
     @property
     def capella_admin_credentials(self) -> list[tuple[str, str]]:
         return [
-            tuple(creds.split(":"))
+            tuple(creds.split(":")) if ":" in creds else ("", "")
             for i, creds in enumerate(self.config.get("credentials", "admin", fallback="").split())
             if i not in self.inactive_cluster_idxs
         ]
 
     @property
-    def ssh_credentials(self) -> list[str]:
-        return self.config.get('credentials', 'ssh').split(':')
+    def ssh_credentials(self) -> tuple[str, str]:
+        creds = self.config.get("credentials", "ssh", fallback="")
+        return tuple(creds.split(":")) if ":" in creds else ("", "")
 
     @property
     def aws_key_name(self) -> list[str]:
@@ -646,6 +646,8 @@ class ClusterSpec(Config):
                     pwds.append(pwd)
 
             creds = '\n'.join('{}:{}'.format(user, pwd) for pwd in pwds).replace('%', '%%')
+            if "credentials" not in self.config:
+                self.config.add_section("credentials")
             if self.goldfish_infrastructure:
                 self.config.set('credentials', 'rest', creds)
             else:

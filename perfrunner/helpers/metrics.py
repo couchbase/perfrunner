@@ -4,6 +4,7 @@ import glob
 import os
 import re
 import statistics
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
@@ -40,6 +41,44 @@ def strip(s: str) -> str:
     for c in ' &()':
         s = s.replace(c, '')
     return s.lower()
+
+
+@dataclass
+class CH2Metrics:
+    # transactions
+    total_txn_time_us: float = 0
+    txn_success_count: int = 0
+
+    # analytical queries
+    geo_mean_cbas_query_time: float = 0
+    average_cbas_query_set_time: float = 0
+    cbas_qph: float = 0
+
+    @property
+    def tpm(self) -> float:
+        """Return transactions per minute."""
+        return (
+            self.txn_success_count * 60 / self.average_cbas_query_set_time
+            if self.average_cbas_query_set_time > 0
+            else 0
+        )
+
+    @property
+    def txn_response_time(self) -> float:
+        """Return average transaction response time in seconds."""
+        return (
+            self.total_txn_time_us / 1e6 / self.txn_success_count
+            if self.txn_success_count > 0
+            else float("inf")
+        )
+
+
+@dataclass
+class CH3Metrics(CH2Metrics):
+    # fts queries
+    average_fts_query_set_time_ms: float = 0
+    average_fts_client_time_ms: float = 0
+    fts_qph: float = 0
 
 
 class MetricHelper:
@@ -1595,6 +1634,14 @@ class MetricHelper:
 
         return rate, self._snapshots, metric_info
 
+    def ingestion_time(self, time_elapsed: float, ingest_method: str) -> Metric:
+        return self.custom_metric(
+            time_elapsed,
+            f"Data ingestion time (sec), {ingest_method.replace('_', ' ').title()}, {{}}",
+            f"ingest_time_{ingest_method.lower().replace(' ', '_')}",
+            chirality=-1,
+        )
+
     def avg_drop_rate(self, num_items: int, time_elapsed: float) -> Metric:
         metric_info = self._metric_info(chirality=1)
 
@@ -1609,111 +1656,126 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
-    def ch2_metric(self, duration: float, logfile: str):
+    def ch2_metrics(self, duration: float, logfile: str) -> CH2Metrics:
         filename = logfile + '.log'
-        total_time, rate = 0, 0
-        test_duration = duration
+        metrics = CH2Metrics(average_cbas_query_set_time=duration)
         with open(filename) as fh:
             for line in fh.readlines():
                 if 'NEW_ORDER' in line and 'success' in line:
                     elements = line.split()
-                    total_time = float(elements[2].split('.')[0])
-                    rate = int("".join(filter(str.isdigit, elements[-1])))
+                    # "total_txn_time" is the number of microseconds spent executing NEW_ORDER txns
+                    # by all tclients (so wall-clock time spent is total_txn_time / tclients)
+                    metrics.total_txn_time_us = float(elements[2].split(".")[0])
+                    metrics.txn_success_count = int("".join(filter(str.isdigit, elements[-1])))
+                if "OVERALL GEOMETRIC MEAN" in line:
+                    metrics.geo_mean_cbas_query_time = float(line.split()[-1])
                 if 'AVERAGE TIME PER QUERY SET' in line:
-                    test_duration = float(line.split()[-1])
-        return total_time, rate, test_duration
+                    metrics.average_cbas_query_set_time = float(line.split()[-1])
+                if "QUERIES PER HOUR" in line:
+                    metrics.qph = float(line.split()[-1])
+        return metrics
 
-    def ch2_tmp(self, tpm: float, tclients: int) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, "tmp")
-        title = 'Transactions per minute (tpm), {}, {} tclients'.format(self._title,
-                                                                        tclients)
+    def custom_metric(
+        self, value: float, title_template: str, metric_id_suffix: str, chirality: int = 1
+    ) -> Metric:
+        """Return a simple metric with custom title and metric ID.
 
-        metric_info = self._metric_info(metric_id,
-                                        title,
-                                        chirality=1)
+        Args:
+            value (float): Metric value that will be used without any modification.
+            title_template (str): Template for metric title, with a single placeholder for the
+            MetricHelper._title value.
+            metric_id_suffix (str): Suffix to append to the test config name to form the metric ID.
+            chirality (int): Metric chirality (-1 if smaller values are better, 1 otherwise).
+        """
+        metric_id = f"{self.test_config.name}_{metric_id_suffix}"
+        title = title_template.format(self._title)
 
-        return tpm, self._snapshots, metric_info
+        metric_info = self._metric_info(metric_id, title, chirality)
+
+        return value, self._snapshots, metric_info
+
+    def ch2_tpm(self, tpm: float, tclients: int) -> Metric:
+        return self.custom_metric(
+            tpm, f"Transactions per minute (tpm), {{}}, {tclients} tclients", "tmp", chirality=1
+        )
 
     def ch2_response_time(self, response_time: float, tclients: int) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, "response_time")
-        title = 'Average response time (sec), {}, {} tclients'.format(self._title,
-                                                                      tclients)
+        return self.custom_metric(
+            response_time,
+            f"Average response time (sec), {{}}, {tclients} tclients",
+            "response_time",
+            chirality=-1,
+        )
 
-        metric_info = self._metric_info(metric_id,
-                                        title,
-                                        chirality=-1)
+    def ch2_geo_mean_query_time(self, query_time: float, tclients: int) -> Metric:
+        return self.custom_metric(
+            query_time,
+            f"Geo-mean analytics query time (sec), {{}}, {tclients} tclients",
+            "geo_mean_query_time",
+            chirality=-1,
+        )
 
-        return response_time, self._snapshots, metric_info
+    def ch2_analytics_query_set_time(self, query_set_time: float, tclients: int) -> Metric:
+        return self.custom_metric(
+            query_set_time,
+            f"Average time per analytics query set (sec), {{}}, {tclients} tclients",
+            "analytics_query_time",
+            chirality=-1,
+        )
 
-    def ch2_analytics_query_time(self, query_time: float, tclients: int) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, "analytics_query_time")
-        title = 'Average time per analytics query set (sec), {}, {} tclients'.format(self._title,
-                                                                                     tclients)
+    def ch2_analytics_qph(self, qph: float, tclients: int) -> Metric:
+        return self.custom_metric(
+            qph, f"Analytics queries per hour, {{}}, {tclients} tclients", "analytics_qph"
+        )
 
-        metric_info = self._metric_info(metric_id,
-                                        title,
-                                        chirality=-1)
-
-        return query_time, self._snapshots, metric_info
-
-    def ch3_metric(self, duration: float, logfile: str):
+    def ch3_metrics(self, duration: float, logfile: str) -> CH3Metrics:
         filename = logfile + '.log'
-        test_duration = duration
+        metrics = CH3Metrics(average_cbas_query_set_time=duration)
         with open(filename) as fh:
             for line in fh.readlines():
                 if 'NEW_ORDER' in line and 'success' in line:
                     elements = line.split()
-                    total_time = float(elements[2].split('.')[0])
-                    rate = int(elements[1])
+                    # For CH3 the txn times are in ms not us so we have to convert
+                    metrics.total_txn_time_us = float(elements[2].split(".")[0]) * 1000
+                    metrics.txn_success_count = int("".join(filter(str.isdigit, elements[-1])))
                 if 'AVERAGE TIME PER ANALYTICS QUERY SET' in line:
-                    test_duration = float(line.split()[-1])
+                    metrics.average_cbas_query_set_time = float(line.split()[-1])
                 if 'AVERAGE TIME PER FTS QUERY SET' in line:
-                    fts_duration = float(line.split()[-1])
+                    metrics.average_fts_query_set_time_ms = float(line.split()[-1])
                 if 'AVERAGE TIME PER FTS CLIENT' in line:
-                    fts_client = float(line.split()[-1])
+                    metrics.average_fts_client_time_ms = float(line.split()[-1])
                 if 'FTS QUERIES PER HOUR' in line:
-                    fts_qph = float(line.split()[-1])
-        return total_time, rate, test_duration, fts_duration, fts_client, fts_qph
+                    metrics.fts_qph = float(line.split()[-1])
+        return metrics
 
     def ch3_fts_query_time(self, query_time: float, tclients: int) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, "fts_query_time")
-        title = 'Average time per fts query set (sec), {}, {} tclients'.format(self._title,
-                                                                               tclients)
-
-        metric_info = self._metric_info(metric_id,
-                                        title,
-                                        chirality=-1)
-
-        return query_time, self._snapshots, metric_info
+        return self.custom_metric(
+            query_time,
+            f"Average time per fts query set (sec), {{}}, {tclients} tclients",
+            "fts_query_time",
+            chirality=-1,
+        )
 
     def ch3_fts_client_time(self, client_time: float, tclients: int) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, "fts_client_time")
-        title = 'Average time per fts client (sec), {}, {} tclients'.format(self._title,
-                                                                            tclients)
-
-        metric_info = self._metric_info(metric_id,
-                                        title,
-                                        chirality=-1)
-
-        return client_time, self._snapshots, metric_info
+        return self.custom_metric(
+            client_time,
+            f"Average time per fts client (sec), {{}}, {tclients} tclients",
+            "fts_client_time",
+            chirality=-1,
+        )
 
     def ch3_fts_qph(self, qph: float, tclients: int) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, "fts_qph")
-        title = 'FTS queries per hour (Qph), {}, {} tclients'.format(self._title, tclients)
-
-        metric_info = self._metric_info(metric_id,
-                                        title,
-                                        chirality=1)
-
-        return qph, self._snapshots, metric_info
+        return self.custom_metric(
+            qph, f"FTS queries per hour (Qph), {{}}, {tclients} tclients", "fts_qph"
+        )
 
     def custom_elapsed_time(self, time_elapsed: float, op: str) -> Metric:
-        metric_id = '{}_{}_time'.format(self.test_config.name, op)
-        title = 'Time elapsed (sec), {}, {}'.format(op.replace('_', ' ').title(), self._title)
-
-        metric_info = self._metric_info(metric_id, title, chirality=-1)
-
-        return round(time_elapsed, 1), self._snapshots, metric_info
+        return self.custom_metric(
+            round(time_elapsed, 1),
+            f"Time elapsed (sec), {op.replace('_', ' ').title()}, {{}}",
+            f"{op}_time",
+            chirality=-1,
+        )
 
     def sgimport_latency(self, percentile: Number = 95) -> Metric:
         metric_id = '{}_{}th_sgimport_latency'.format(self.test_config.name, percentile)

@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2CapellaColumnarAnalyticsOnlyTest
 
 [showfast]
-title = CH2 1000W, 4A, c=11 (standalone collections), analytics-only workload, No CBO, Hand-Optimized Queries, Analytics Indexes
+title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, No CBO, Hand-Optimized Queries, Analytics Indexes
 component = analyticscloud
 category = ch2
 sub_category = {provider}
@@ -16,13 +16,13 @@ enable_n2n_encryption = all
 [analytics]
 external_dataset_type = s3
 external_dataset_region = us-east-1
-external_bucket = analytics-ch2-1000w-json
+external_bucket = analytics-ch2-5000w-gz
 external_file_format = json
-external_file_include = json
+external_file_include = gz
 aws_credential_path = /root/.ssh/
 
 [ch2]
-warehouses = 1000
+warehouses = 5000
 aclients = 1
 tclients = 0
 iterations = 2

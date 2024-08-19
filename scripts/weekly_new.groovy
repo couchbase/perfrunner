@@ -1,4 +1,4 @@
-import groovy.time.TimeCategory 
+import groovy.time.TimeCategory
 import groovy.time.TimeDuration
 
 currentBuild.description = params.version
@@ -7,36 +7,21 @@ def testCases = [:]
 def buildTests(tests) {
     def totalTests = 0
     for ( test in tests ) {
-        if ( test.containsKey("groups") && test['groups'].equalsIgnoreCase("disabled") ){
-            // do nothing for disabled test
-        }
-        else if ( params.groups != '' && test.containsKey("groups") && test['groups'].equalsIgnoreCase(params.groups) ){
-               if ( params.dry_run ){
-                    echo test.toString()
-                    totalTests++
-               }
-               else {
-                    build job: test['job'], propagate: false, parameters: [
-                        string(name: 'test_config', value: test['test_config']),
-                        string(name: 'cluster', value: test['cluster']),
-                        string(name: 'version', value: params.version)
-                    ]
-                    totalTests++
-               }
-        }
-        else if ( params.groups == '') {
-               if ( params.dry_run ){
-                    echo test.toString()
-                    totalTests++
-               }
-               else {
-                    build job: test['job'], propagate: false, parameters: [
-                        string(name: 'test_config', value: test['test_config']),
-                        string(name: 'cluster', value: test['cluster']),
-                        string(name: 'version', value: params.version)
-                    ]
-                    totalTests++
-               }
+        if (
+            !test.get('groups', '').equalsIgnoreCase('disabled') &&
+            (params.groups == '' || test.get('groups', '').equalsIgnoreCase(params.groups))
+        ) {
+            if ( params.dry_run ) {
+                echo test.toString()
+            }
+            else {
+                build job: test['job'], propagate: false, parameters: [
+                    string(name: 'test_config', value: test['test_config']),
+                    string(name: 'cluster', value: test['cluster']),
+                    string(name: 'version', value: params.version)
+                ]
+            }
+            totalTests++
         }
     }
     echo "Total Tests ran: " + totalTests.toString()

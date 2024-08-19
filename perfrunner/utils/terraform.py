@@ -2038,7 +2038,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 "nodes": size,
                 "instanceTypes": instance_type_info,
                 "availabilityZone": "multi" if self.options.multi_az else "single",
-                "package": {"key": "Enterprise", "timezone": "PT"},
+                "package": {"key": "enterprise", "timezone": "PT"},
             }
 
             logger.info(f"Deploying Goldfish instance with config: {pretty_dict(config)}")

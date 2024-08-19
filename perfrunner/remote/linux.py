@@ -1372,10 +1372,12 @@ class RemoteLinux(Remote):
         run('systemctl daemon-reload')
 
     @master_server
-    def configure_analytics_s3_bucket(self, region: str = 'us-east-1',
-                                      s3_bucket: str = 'cb-perf-goldfish'):
-        logger.info('Configuring Analytics S3 bucket. Bucket name: {}, region: {}'
-                    .format(s3_bucket, region))
+    def configure_columnar_s3_bucket(
+        self, region: str = "us-east-1", s3_bucket: str = "cb-perf-columnar"
+    ):
+        logger.info(
+            "Configuring Columnar S3 bucket. Bucket name: {}, region: {}".format(s3_bucket, region)
+        )
         command = ("curl --max-time 3 --retry 3 --retry-connrefused "
                    "--request POST "
                    "--url http://localhost:8091/settings/analytics "
@@ -1405,12 +1407,13 @@ class RemoteLinux(Remote):
         run(command)
 
     @all_servers
-    def set_goldfish_storage_partitions(self, num_partitions: int):
-        logger.info('Setting number of Goldfish storage partitions to {}'.format(num_partitions))
-        command = ('curl -v -X PUT '
-                   'http://localhost:8091/_metakv/cbas/debug/settings/storage_partitions_count '
-                   '--data-urlencode value={}'
-                   .format(num_partitions))
+    def set_columnar_storage_partitions(self, num_partitions: int):
+        logger.info(f"Setting number of Columnar storage partitions to {num_partitions}")
+        command = (
+            "curl -v -X PUT "
+            "http://localhost:8091/_metakv/cbas/debug/settings/storage_partitions_count "
+            f"--data-urlencode value={num_partitions}"
+        )
         run(command)
 
     @all_kafka_nodes

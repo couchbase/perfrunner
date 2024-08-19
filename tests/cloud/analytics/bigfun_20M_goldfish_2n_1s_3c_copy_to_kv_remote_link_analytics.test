@@ -3,7 +3,7 @@ test = perfrunner.tests.analytics.ColumnarCopyToKVRemoteLinkTest
 use_workers = 0
 
 [showfast]
-title = 2 nodes, BigFUN 20M users (320M docs), s=1 c=3, Simulated Goldfish, COPY TO KV
+title = 2 nodes, BigFUN 20M users (320M docs), s=1 c=3, Simulated Columnar, COPY TO KV
 component = analyticscloud
 category = latency
 sub_category = {provider}

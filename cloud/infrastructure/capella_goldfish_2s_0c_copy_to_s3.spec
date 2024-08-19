@@ -1,7 +1,7 @@
 [infrastructure]
 provider = capella
 backend = aws
-service = goldfish
+service = columnar
 cloud_storage = 1
 
 [clusters]

@@ -2,7 +2,7 @@
 provider = aws
 type = ec2
 os_arch = arm
-service = goldfish
+service = columnar
 cloud_storage = 1
 
 [clusters]

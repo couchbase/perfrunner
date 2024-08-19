@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2ColumnarSimulatedPauseResumeTest
 
 [showfast]
-title = Pause/Resume, 2A, c=11, analytics only, AWS, Goldfish (remote link)
+title = Pause/Resume, 2A, c=11, analytics only, AWS, Columnar (remote link)
 component = analyticscloud
 category = ch2
 sub_category = {provider}

@@ -519,7 +519,7 @@ class CouchbaseInstaller:
         if self.build is None:
             locations = SERVER_RELEASE_LOCATIONS
             logger.info("No build specified; searching only release packages...")
-        elif self.cluster_spec.goldfish_infrastructure:
+        elif self.cluster_spec.columnar_infrastructure:
             products.insert(0, 'columnar')
             locations = COLUMNAR_LOCATIONS + SERVER_INTERNAL_LOCATIONS
             logger.info(
@@ -594,7 +594,7 @@ class CouchbaseInstaller:
             profile = CBProfile.SERVERLESS
         elif self.options.columnar_profile:
             profile = CBProfile.COLUMNAR
-        elif self.cluster_spec.goldfish_infrastructure:
+        elif self.cluster_spec.columnar_infrastructure:
             if (
                 (7, 6, 100) <= self.build_tuple < (8, 0, 0) or
                 Path(urlparse(self.url).path).name.startswith('couchbase-columnar')

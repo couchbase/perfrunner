@@ -68,7 +68,7 @@ def main():
             cluster_spec.config["infrastructure"].pop("service")
 
         if (
-            not cluster_spec.serverless_infrastructure and not cluster_spec.goldfish_infrastructure
+            not cluster_spec.serverless_infrastructure and not cluster_spec.columnar_infrastructure
         ) or cluster_spec.prov_cluster_in_columnar_test:
             # If on provisioned Capella, we need to do two things before anything else:
             # 1. Create some DB credentials
@@ -87,7 +87,7 @@ def main():
             cm.init_nebula_ssh()
             cm.set_nebula_log_levels()
         elif (
-            not cm.cluster_spec.goldfish_infrastructure
+            not cm.cluster_spec.columnar_infrastructure
             or cm.cluster_spec.prov_cluster_in_columnar_test
         ):
             if cm.test_config.deployment.monitor_deployment_time:
@@ -104,7 +104,7 @@ def main():
             cm.capella_allow_client_ips()
 
         if (
-            not cm.cluster_spec.goldfish_infrastructure
+            not cm.cluster_spec.columnar_infrastructure
             or cm.cluster_spec.prov_cluster_in_columnar_test
         ):
             if cm.test_config.collection.collection_map:
@@ -118,12 +118,12 @@ def main():
         cm.start_kafka()
 
     # Individual nodes
-    if cm.cluster_spec.goldfish_infrastructure:
+    if cm.cluster_spec.columnar_infrastructure:
         if cm.cluster_spec.infrastructure_kafka_clusters:
             cm.set_kafka_links_settings()
-        cm.set_goldfish_s3_bucket()
+        cm.set_columnar_s3_bucket()
         cm.add_aws_credential()
-        cm.set_goldfish_storage_partitions()
+        cm.set_columnar_storage_partitions()
 
     cm.disable_wan()
     cm.clear_login_history()

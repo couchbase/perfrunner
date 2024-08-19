@@ -779,10 +779,10 @@ class DefaultClusterManager(ClusterManagerBase):
         self.remote.clear_system_limit_config()
         self.remote.restart()
 
-    def set_goldfish_s3_bucket(self):
+    def set_columnar_s3_bucket(self):
         region = os.environ.get("AWS_REGION", "us-east-1")
         s3_bucket_name = self.cluster_spec.backup.split("://")[1]
-        self.remote.configure_analytics_s3_bucket(region=region, s3_bucket=s3_bucket_name)
+        self.remote.configure_columnar_s3_bucket(region=region, s3_bucket=s3_bucket_name)
 
     def add_aws_credential(self):
         access_key_id, secret_access_key = local.get_aws_credential(
@@ -790,20 +790,20 @@ class DefaultClusterManager(ClusterManagerBase):
         )
         self.remote.add_aws_credential(access_key_id, secret_access_key)
 
-    def set_goldfish_storage_partitions(self):
-        storage_partitions = self.test_config.analytics_settings.goldfish_storage_partitions
+    def set_columnar_storage_partitions(self):
+        storage_partitions = self.test_config.analytics_settings.columnar_storage_partitions
 
         if ((8, 0, 0, 0) < self.build_tuple < (8, 0, 0, 1547)) and storage_partitions:
             logger.warning(
-                "Cannot set storage partitions for Goldfish. "
+                "Cannot set storage partitions for Columnar. "
                 "Couchbase Server 8.0.0-1547 or later required."
             )
             return
 
-        if storage_partitions := self.test_config.analytics_settings.goldfish_storage_partitions:
-            self.remote.set_goldfish_storage_partitions(storage_partitions)
+        if storage_partitions := self.test_config.analytics_settings.columnar_storage_partitions:
+            self.remote.set_columnar_storage_partitions(storage_partitions)
         else:
-            logger.info("Keeping default number of storage partitions for Goldfish.")
+            logger.info("Keeping default number of storage partitions for Columnar.")
 
     def configure_kafka(self):
         self.remote.configure_kafka_brokers(

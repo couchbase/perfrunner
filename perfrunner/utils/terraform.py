@@ -1973,7 +1973,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 super().update_spec(non_capella_output)
 
         # Deploy capella cluster(s)
-        self.deploy_goldfish_instances()
+        self.deploy_columnar_instances()
 
         # Update cluster spec file
         self.update_spec()
@@ -1999,14 +1999,14 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             for ip in all_ips:
                 self.columnar_api.allow_ip(self.tenant_id, self.project_id, instance_id, f'{ip}/32')
 
-    def deploy_goldfish_instances(self):
+    def deploy_columnar_instances(self):
         instance_sizes = [len(servers) for _, servers in self.infra_spec.clusters]
         node_groups = [servers[0].split(".")[2] for _, servers in self.infra_spec.clusters]
-        names = [f'perf-goldfish-{self.uuid}' for _ in instance_sizes]
+        names = [f"perf-columnar-{self.uuid}" for _ in instance_sizes]
         if len(names) > 1:
             names = [f'{name}-{i}'for i, name in enumerate(names)]
 
-        logger.info("Fetching deployment options for Goldfish instances.")
+        logger.info("Fetching deployment options for Columnar instances.")
         resp = self.columnar_api.get_deployment_options(
             self.tenant_id, self.csp, self.region, free_tier=False
         )
@@ -2040,7 +2040,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 "package": {"key": "enterprise", "timezone": "PT"},
             }
 
-            logger.info(f"Deploying Goldfish instance with config: {pretty_dict(config)}")
+            logger.info(f"Deploying Columnar instance with config: {pretty_dict(config)}")
 
             if ami := self.options.columnar_ami:
                 logger.info(f"Overriding Columnar AMI: {ami}")
@@ -2060,15 +2060,15 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             deployment_durations[instance_id] = time()
             self.instance_ids.append(instance_id)
 
-            logger.info(f'Initialised Goldfish instance deployment {instance_id}')
-            logger.info('Saving Goldfish instance ID to spec file.')
+            logger.info(f"Initialised Columnar instance deployment {instance_id}")
+            logger.info("Saving Columnar instance ID to spec file.")
             self.infra_spec.config.set("controlplane", "columnar_ids", "\n".join(self.instance_ids))
             self.infra_spec.update_spec_file()
 
         timeout_mins = self.capella_timeout
         interval_secs = self.test_config.deployment.capella_poll_interval_secs
         pending_instances = [instance_id for instance_id in self.instance_ids]
-        logger.info('Waiting for Goldfish instance(s) to be deployed...')
+        logger.info("Waiting for Columnar instance(s) to be deployed...")
         t0 = time()
         poll_duration = 0
         while pending_instances and (time() - t0) < timeout_mins * 60:
@@ -2084,12 +2084,14 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 status = resp.json()['data']['state']
                 logger.info(f'Instance state for {instance_id}: {status}')
                 if status == 'deploy_failed':
-                    logger.error(f'Deployment failed for Goldfish instance {instance_id}')
+                    logger.error(f"Deployment failed for Columnar instance {instance_id}")
                     exit(1)
                 elif status == 'healthy':
                     deployment_durations[instance_id] = time() - deployment_durations[instance_id]
-                    logger.info(f'Goldfish instance {instance_id} deployed successfully after '
-                                f'{deployment_durations[instance_id]}s')
+                    logger.info(
+                        f"Columnar instance {instance_id} deployed successfully after "
+                        f"{deployment_durations[instance_id]}s"
+                    )
                 statuses.append(status)
 
             pending_instances = [
@@ -2102,7 +2104,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             logger.error(f'Deployment timed out after {timeout_mins} mins')
             exit(1)
 
-        logger.info('Successfully deployed all Goldfish instances')
+        logger.info("Successfully deployed all Columnar instances")
         timing_results = '\n\t'.join(f'{iid}: [{duration-interval_secs:4.0f} - {duration:4.0f}]s'
                                      for iid, duration in deployment_durations.items())
         logger.info(f'Deployment timings:\n\t{timing_results}')
@@ -2115,21 +2117,21 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             # Destroy non-capella resources
             self.terraform_destroy(self.csp)
 
-        # Destroy Goldfish instance(s)
+        # Destroy Columnar instance(s)
         if not self.options.keep_cluster:
-            self.destroy_goldfish_instance()
-            self.wait_for_goldfish_instance_destroy()
+            self.destroy_columnar_instance()
+            self.wait_for_columnar_instance_destroy()
 
-    def destroy_goldfish_instance(self):
+    def destroy_columnar_instance(self):
         for instance_id in self.instance_ids:
-            logger.info(f'Deleting Goldfish instance {instance_id}...')
+            logger.info(f"Deleting Columnar instance {instance_id}...")
             resp = self.columnar_api.delete_columnar_instance(self.tenant_id, self.project_id,
                                                               instance_id)
             raise_for_status(resp)
-            logger.info('Goldfish instance successfully queued for deletion.')
+            logger.info("Columnar instance successfully queued for deletion.")
 
-    def wait_for_goldfish_instance_destroy(self):
-        logger.info('Waiting for Goldfish instances to be destroyed...')
+    def wait_for_columnar_instance_destroy(self):
+        logger.info("Waiting for Columnar instances to be destroyed...")
 
         timeout_mins = self.capella_timeout
         interval_secs = 30
@@ -2150,10 +2152,10 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         if pending_instances:
             logger.error(f'Timed out after {timeout_mins} mins waiting for instances to delete.')
         else:
-            logger.info("All Goldfish instances destroyed.")
+            logger.info("All Columnar instances destroyed.")
 
     def update_spec(self):
-        """Update the infrastructure spec file with Goldfish instance details.
+        """Update the infrastructure spec file with Columnar instance details.
 
         This includes:
         - Hostnames for compute nodes
@@ -2311,7 +2313,7 @@ def destroy():
         deployer = CapellaServerlessDeployer(infra_spec, args)
     elif infra_spec.app_services == 'true':
         deployer = AppServicesDeployer(infra_spec, args)
-    elif infra_spec.goldfish_infrastructure:
+    elif infra_spec.columnar_infrastructure:
         if prov_cluster := infra_spec.prov_cluster_in_columnar_test:
             infra_spec.set_inactive_clusters_by_name([prov_cluster])
             CapellaColumnarDeployer(infra_spec, args).destroy()
@@ -2362,7 +2364,7 @@ def main():
             deployer = CapellaServerlessDeployer(infra_spec, args)
         elif infra_spec.app_services == "true":
             deployer = AppServicesDeployer(infra_spec, args)
-        elif infra_spec.goldfish_infrastructure:
+        elif infra_spec.columnar_infrastructure:
             if prov_cluster := infra_spec.prov_cluster_in_columnar_test:
                 infra_spec.set_active_clusters_by_name([prov_cluster])
                 CapellaProvisionedDeployer(infra_spec, args).deploy()

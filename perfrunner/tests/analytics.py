@@ -138,9 +138,9 @@ class AnalyticsTest(PerfTest):
                 self.dataset_config = json.load(f)
 
     @property
-    def is_capella_goldfish(self) -> bool:
+    def is_capella_columnar(self) -> bool:
         return (
-            self.cluster_spec.capella_infrastructure and self.cluster_spec.goldfish_infrastructure
+            self.cluster_spec.capella_infrastructure and self.cluster_spec.columnar_infrastructure
         )
 
     @property
@@ -309,7 +309,7 @@ class AnalyticsTest(PerfTest):
         file_include = self.analytics_settings.external_file_include
 
         path_keyword = "PATH"
-        if not self.is_capella_goldfish and (
+        if not self.is_capella_columnar and (
             (8, 0, 0, 0) < self.cluster.build_tuple < (8, 0, 0, 1452)
         ):
             path_keyword = "USING"
@@ -1269,7 +1269,7 @@ class CH2Test(AnalyticsTest):
         self.sync()
         if (
             self.test_config.ch2_settings.create_gsi_index
-            and not self.cluster_spec.goldfish_infrastructure
+            and not self.cluster_spec.columnar_infrastructure
         ):
             self.create_gsi_indexes()
 
@@ -1364,7 +1364,7 @@ class CH2ColumnarSimulatedPauseResumeTest(CH2RemoteLinkTest):
         self.cluster_spec.set_active_clusters_by_idx([2])
         analytics_node = next(self.cluster_spec.masters)
 
-        self.cluster.set_goldfish_s3_bucket()
+        self.cluster.set_columnar_s3_bucket()
         self.cluster.add_aws_credential()
 
         self.cluster.tune_logging()
@@ -1424,7 +1424,7 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         userid, password = self.cluster_spec.rest_credentials
 
-        use_tls = self.test_config.cluster.enable_n2n_encryption or self.is_capella_goldfish
+        use_tls = self.test_config.cluster.enable_n2n_encryption or self.is_capella_columnar
         port = ANALYTICS_PORT_SSL if use_tls else ANALYTICS_PORT
 
         return CH2ConnectionSettings(
@@ -1700,7 +1700,7 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
 
         self.num_items = sum(self.docs_per_collection.values())
 
-        if self.is_capella_goldfish:
+        if self.is_capella_columnar:
             self.COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
 
     def count_collection_docs_mongodb(self, collection: str) -> int:
@@ -1762,7 +1762,7 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
             self.report_kpi(data_ingest_time)
         finally:
             if self.kafka_link_connected:
-                if not self.is_capella_goldfish:
+                if not self.is_capella_columnar:
                     logger.info('Getting Connector ARNs to be able to look up logs')
                     if not self.cluster.get_msk_connect_connector_arns():
                         logger.warn('Failed to get Kafka Connect connector ARNs')

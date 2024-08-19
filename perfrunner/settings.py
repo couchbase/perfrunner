@@ -124,15 +124,15 @@ class ClusterSpec(Config):
             self.infrastructure_settings.get('capella_arch', 'dedicated') == 'serverless'
 
     @property
-    def goldfish_infrastructure(self) -> bool:
+    def columnar_infrastructure(self) -> bool:
         if self.cloud_infrastructure:
-            return self.infrastructure_settings.get("service", "") == "goldfish"
+            return self.infrastructure_settings.get("service", "") == "columnar"
         return False
 
     @property
     def prov_cluster_in_columnar_test(self) -> Optional[str]:
         """For Columnar tests that use a provisioned cluster, return provisioned cluster name."""
-        if self.goldfish_infrastructure:
+        if self.columnar_infrastructure:
             return self.infrastructure_settings.get("provisioned_cluster")
         return None
 
@@ -2636,7 +2636,7 @@ class AnalyticsSettings:
         self.aws_credential_path = options.pop('aws_credential_path', self.AWS_CREDENTIAL_PATH)
         self.storage_format = options.pop('storage_format', self.STORAGE_FORMAT)
 
-        self.goldfish_storage_partitions = int(options.pop('goldfish_storage_partitions', 0))
+        self.columnar_storage_partitions = int(options.pop("columnar_storage_partitions", 0))
         self.use_cbo = maybe_atoi(options.pop("use_cbo", self.USE_CBO))
         self.cbo_sample_size = AnalyticsCBOSampleSize(options.pop("cbo_sample_size", "").lower())
         self.ingest_during_load = maybe_atoi(

@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.ColumnarCopyFromS3Test
 
 [showfast]
-title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, Capella Goldfish, COPY FROM S3, json
+title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, Capella Columnar, COPY FROM S3, json
 component = analyticscloud
 category = latency
 sub_category = {provider}

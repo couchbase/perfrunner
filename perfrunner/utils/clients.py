@@ -300,10 +300,10 @@ class ClientInstaller:
 
         # Install pymongo
         if (
-            self.cluster_spec.goldfish_infrastructure
+            self.cluster_spec.columnar_infrastructure
             and self.test_config.columnar_kafka_links_settings.link_source == "MONGODB"
         ):
-            logger.info('Installing pymongo for Goldfish Kafka Links')
+            logger.info("Installing pymongo for Columnar Kafka Links")
             run_local_shell_command("env/bin/pip install pymongo --no-cache-dir")
 
 

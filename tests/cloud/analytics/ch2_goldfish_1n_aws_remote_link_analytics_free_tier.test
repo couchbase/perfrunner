@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2RemoteLinkTest
 
 [showfast]
-title = CH2 Queries, 1A, c=11, analytics only, AWS, Goldfish (remote link)
+title = CH2 Queries, 1A, c=11, analytics only, AWS, Columnar (remote link)
 component = analyticscloud
 category = ch2
 sub_category = {provider}
@@ -20,7 +20,7 @@ serverless_mode = enabled
 
 [analytics]
 analytics_link = RemoteLink
-goldfish_storage_partitions = 2
+columnar_storage_partitions = 2
 
 [backup]
 obj_staging_dir = /stage

@@ -85,7 +85,7 @@ class RestHelper:
         elif cluster_spec.serverless_infrastructure:
             return CapellaServerlessRestHelper(cluster_spec, test_config)
         elif cluster_spec.capella_infrastructure:
-            if cluster_spec.goldfish_infrastructure:
+            if cluster_spec.columnar_infrastructure:
                 return CapellaColumnarRestHelper(cluster_spec, test_config)
             return CapellaProvisionedRestHelper(cluster_spec, test_config)
         else:

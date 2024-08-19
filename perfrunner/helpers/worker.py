@@ -385,7 +385,7 @@ class RemoteWorkerManager:
         perfrunner_home = os.path.join(self.WORKER_HOME, "perfrunner")
         self.remote.init_repo(self.WORKER_HOME, self.test_config.client_settings.cherrypick)
         need_pymongo = (
-            self.cluster_spec.goldfish_infrastructure
+            self.cluster_spec.columnar_infrastructure
             and self.test_config.columnar_kafka_links_settings.link_source == "MONGODB"
         )
         self.remote.install_clients(perfrunner_home,

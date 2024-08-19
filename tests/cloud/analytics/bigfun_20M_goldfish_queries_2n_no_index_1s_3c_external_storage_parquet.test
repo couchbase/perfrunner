@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.BigFunQueryNoIndexExternalTest
 
 [showfast]
-title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, AWS, Goldfish, External Storage, parquet
+title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, AWS, Columnar, External Storage, parquet
 component = analyticscloud
 category = latency
 sub_category = AWS

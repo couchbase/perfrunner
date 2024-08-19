@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2ColumnarKafkaLinksIngestionTest
 
 [showfast]
-title = Kafka Links Ingestion rate (avg. items/sec), CH2 1000 warehouses, c=11, 2 Analytics nodes, 2 Kafka nodes, AWS, Goldfish
+title = Kafka Links Ingestion rate (avg. items/sec), CH2 1000 warehouses, c=11, 2 Analytics nodes, 2 Kafka nodes, AWS, Columnar
 component = analyticscloud
 category = ch2
 sub_category = {provider}

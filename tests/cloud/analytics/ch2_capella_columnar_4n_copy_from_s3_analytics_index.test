@@ -31,8 +31,6 @@ duration = 0
 warmup_duration = 0
 workload = ch2_analytics
 use_backup = false
-repo = https://github.com/d-nagy/ch2.git
-branch = capella
 create_gsi_index = false
 analytics_statements =
     CREATE INDEX customer_c_balance ON customer(c_balance:DOUBLE);

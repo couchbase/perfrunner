@@ -2895,8 +2895,7 @@ class CH2ConnectionSettings:
 
 
 class CH2:
-
-    REPO = "https://github.com/couchbaselabs2/ch2.git"
+    REPO = "https://github.com/couchbaselabs/ch2.git"
     BRANCH = "main"
     WAREHOUSES = 1000
     ACLIENTS = 0

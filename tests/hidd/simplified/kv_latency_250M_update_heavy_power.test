@@ -58,7 +58,7 @@ items = 250000000
 workers = 128
 throughput = 20000
 power_alpha = 10
-time = 1800
+time = 600
 
 [clients]
 libcouchbase = 2.9.3

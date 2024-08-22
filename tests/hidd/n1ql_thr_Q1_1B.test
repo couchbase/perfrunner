@@ -42,7 +42,7 @@ workers = 0
 n1ql_queries = key-value-lookup
 n1ql_workers = 240
 workload_instances = 1
-time = 1200
+time = 600
 
 [n1ql-key-value-lookup]
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];

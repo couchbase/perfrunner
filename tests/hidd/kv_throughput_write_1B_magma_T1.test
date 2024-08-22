@@ -54,7 +54,7 @@ updates = 80
 deletes = 0
 items = 1000000000
 workers = 128
-time = 1800
+time = 600
 requestdistribution = uniform
 
 [clients]

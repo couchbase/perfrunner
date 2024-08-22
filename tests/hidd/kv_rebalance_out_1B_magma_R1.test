@@ -66,8 +66,8 @@ working_set_access = 90
 
 [rebalance]
 nodes_after = 4
-start_after = 1800
-stop_after = 1800
+start_after = 180
+stop_after = 180
 
 [clients]
 libcouchbase = 2.9.3

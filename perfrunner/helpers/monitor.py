@@ -188,11 +188,13 @@ class Monitor:
 
         start_time = time.time()
 
-        logger.info("Sleep until xdcr_changes_left_total starts to be updated")
-        while self.rest.get_xdcr_changes_left_total(host, bucket) <= 0:
-            time.sleep(self.POLLING_INTERVAL)
-            if time.time() - start_time > self.TIMEOUT:
-                raise Exception('xdcr_changes_left was not updated')
+        # No need to check for every bucket if we have multiple buckets
+        if bucket == "bucket-1":
+            logger.info("Sleep until xdcr_changes_left_total starts to be updated")
+            while self.rest.get_xdcr_changes_left_total(host, bucket) <= 0:
+                time.sleep(self.POLLING_INTERVAL)
+                if time.time() - start_time > self.TIMEOUT:
+                    raise Exception('xdcr_changes_left was not updated')
         logger.info("Monitoring queues")
         while True:
             xdcr_changes_left_total = self.rest.get_xdcr_changes_left_total(host, bucket)
@@ -326,11 +328,13 @@ class Monitor:
                 self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
             logger.info('Initial xdcr_mobile_docs_filtered_total = {:,}'.
                         format(previous_xdcr_mobile_docs_filtered_total))
-        logger.info("Sleep until xdcr_changes_left_total starts to be updated")
-        while self.rest.get_xdcr_changes_left_total(host, bucket) <= 0:
-            time.sleep(self.POLLING_INTERVAL)
-            if time.time() - start_time > self.TIMEOUT:
-                raise Exception('xdcr_changes_left was not updated')
+        # No need to check for every bucket if we have multiple buckets
+        if bucket == "bucket-1":
+            logger.info("Sleep until xdcr_changes_left_total starts to be updated")
+            while self.rest.get_xdcr_changes_left_total(host, bucket) <= 0:
+                time.sleep(self.POLLING_INTERVAL)
+                if time.time() - start_time > self.TIMEOUT:
+                    raise Exception('xdcr_changes_left was not updated')
         while True:
             xdcr_changes_left_total = self.rest.get_xdcr_changes_left_total(host, bucket)
             if xdcr_changes_left_total:

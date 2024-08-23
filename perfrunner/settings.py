@@ -1971,7 +1971,7 @@ class HotLoadSettings(PhaseSettings):
         self.configure_bucket_list(test_config.buckets)
 
 
-class XattrLoadSettings(PhaseSettings):
+class XattrLoadSettings(LoadSettings):
 
     SEQ_UPSERTS = True
 

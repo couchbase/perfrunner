@@ -2519,6 +2519,8 @@ class InitialVectorSecondaryIndexTest(InitialandIncrementalandRecoverySecondaryI
                                 if self.test_config.gsi_settings.vector_similarity:
                                     index_config["similarity"] = \
                                         f"\'{self.test_config.gsi_settings.vector_similarity}\'"
+                                if train_list := self.test_config.gsi_settings.vector_train_list:
+                                    index_config["train_list"] = train_list
                             for config, value in index_config.items():
                                 configs = configs + "'{}':{}, ".format(config, value)
                         else:

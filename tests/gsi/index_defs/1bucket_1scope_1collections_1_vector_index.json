@@ -6,7 +6,7 @@
         "vector-idx": {
           "field": "emb VECTOR",
           "dimension": 128,
-          "description": "'IVF,PQ32x8'",
+          "description": "'IVF,SQ8'",
           "similarity": "'L2_SQUARED'",
           "num_replica": 0
         }

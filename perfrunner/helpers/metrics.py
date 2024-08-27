@@ -1672,7 +1672,7 @@ class MetricHelper:
                 if 'AVERAGE TIME PER QUERY SET' in line:
                     metrics.average_cbas_query_set_time = float(line.split()[-1])
                 if "QUERIES PER HOUR" in line:
-                    metrics.qph = float(line.split()[-1])
+                    metrics.cbas_qph = float(line.split()[-1])
         return metrics
 
     def custom_metric(
@@ -1690,7 +1690,7 @@ class MetricHelper:
         metric_id = f"{self.test_config.name}_{metric_id_suffix}"
         title = title_template.format(self._title)
 
-        metric_info = self._metric_info(metric_id, title, chirality)
+        metric_info = self._metric_info(metric_id, title, chirality=chirality)
 
         return value, self._snapshots, metric_info
 

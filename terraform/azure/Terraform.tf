@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.116"
+    }
+  }
+}
+
 provider "azurerm" {
   features {}
 }
@@ -181,7 +190,7 @@ resource "azurerm_network_interface" "perf-cluster-ni" {
   name                          = "perf-cluster-ni${each.key}-${var.uuid}"
   location                      = "East US"
   resource_group_name           = "perf-resources-eastus"
-  enable_accelerated_networking = true
+  accelerated_networking_enabled = true
 
   ip_configuration {
     name                          = "perf-cluster-private-ip-${each.key}-${var.uuid}"
@@ -203,7 +212,7 @@ resource "azurerm_network_interface" "perf-client-ni" {
   name                          = "perf-client-ni${each.key}-${var.uuid}"
   location                      = "East US"
   resource_group_name           = "perf-resources-eastus"
-  enable_accelerated_networking = true
+  accelerated_networking_enabled = true
 
   ip_configuration {
     name                          = "perf-client-private-ip-${each.key}-${var.uuid}"
@@ -225,7 +234,7 @@ resource "azurerm_network_interface" "perf-utility-ni" {
   name                          = "perf-utility-ni${each.key}-${var.uuid}"
   location                      = "East US"
   resource_group_name           = "perf-resources-eastus"
-  enable_accelerated_networking = true
+  accelerated_networking_enabled = true
 
   ip_configuration {
     name                          = "perf-utility-private-ip-${each.key}-${var.uuid}"
@@ -247,7 +256,7 @@ resource "azurerm_network_interface" "perf-syncgateway-ni" {
   name                          = "perf-syncgateway-ni${each.key}-${var.uuid}"
   location                      = "East US"
   resource_group_name           = "perf-resources-eastus"
-  enable_accelerated_networking = true
+  accelerated_networking_enabled = true
 
   ip_configuration {
     name                          = "perf-syncgateway-private-ip-${each.key}-${var.uuid}"

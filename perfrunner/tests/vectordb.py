@@ -72,6 +72,7 @@ class VectorDBBenchTest(PerfTest):
             "secondary_debugstats": True,
             "secondary_debugstats_bucket": True,
             "secondary_debugstats_index": True,
+            "n1ql_stats": True,
         }
         case_settings = {
             "description": self.test_config.gsi_settings.vector_description or "IVF,SQ8",

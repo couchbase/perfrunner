@@ -180,7 +180,7 @@ class Monitor:
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Replica items monitoring got stuck')
 
-    def _wait_for_replication_completion(self, host, bucket, queues, stats_function, link1, link2):
+    def _wait_for_replication_completion(self, host: str, bucket: str, link1: str, link2: str):
 
         completion_count = 0
         link1_time = 0
@@ -190,35 +190,25 @@ class Monitor:
 
         # No need to check for every bucket if we have multiple buckets
         if bucket == "bucket-1":
-            logger.info("Sleep until xdcr_changes_left_total starts to be updated")
-            while self.rest.get_xdcr_changes_left_total(host, bucket) <= 0:
+            logger.info("Sleep until get_xdcr_changes_left_link1 starts to be updated")
+            while self.rest.get_xdcr_changes_left_link(host, bucket, link1) <= 0:
                 time.sleep(self.POLLING_INTERVAL)
                 if time.time() - start_time > self.TIMEOUT:
                     raise Exception('xdcr_changes_left was not updated')
         logger.info("Monitoring queues")
         while True:
-            xdcr_changes_left_total = self.rest.get_xdcr_changes_left_total(host, bucket)
-            logger.info(f'xdcr_changes_left_total = {xdcr_changes_left_total:,}')
-            link_completeness = self.rest.get_xdcr_completeness(host, bucket)
-            link1_completeness = int(float(link_completeness[0]["values"][-1][1]))
-            logger.info(f'link1_compelteness = {link1_completeness:,}')
-            link2_completeness = int(float(link_completeness[1]["values"][-1][1]))
-            logger.info(f'link2_compelteness = {link2_completeness:,}')
-            if link1_completeness == 100 or link2_completeness == 100:
-                if link1_completeness == 100:
-                    if completion_count == 0:
-                        link1_time = time.time()
-                        link2_items = int(self.rest.get_xdcr_items(host,
-                                                                    bucket)[1]['values'][-1][1])
-                        completion_count = completion_count + 1
-                elif link2_completeness == 100:
-                    if completion_count == 0:
-                        link1_time = time.time()
-                        link2_items = int(self.rest.get_xdcr_items(host,
-                                                                    bucket)[1]["values"][-1][1])
-                        completion_count = completion_count + 1
-            if xdcr_changes_left_total == 0:
-                logger.info('xdcr_changes_left_total reached 0')
+            xdcr_changes_left_link1 = self.rest.get_xdcr_changes_left_link(host, bucket, link1)
+            logger.info(f'xdcr_changes_left_link1 = {xdcr_changes_left_link1:,}')
+            link1_completeness = self.rest.get_xdcr_completeness(host, bucket, link1)
+            logger.info(f'link1_completeness = {link1_completeness:,}')
+            link2_completeness = self.rest.get_xdcr_completeness(host, bucket, link2)
+            logger.info(f'link2_completeness = {link2_completeness:,}')
+            if (link1_completeness == 100 or link2_completeness == 100) and completion_count == 0:
+                link1_time = time.time()
+                link2_items = self.rest.get_xdcr_items(host, bucket, link2)
+                completion_count += 1
+            if xdcr_changes_left_link1 == 0:
+                logger.info('xdcr_changes_left_link1 reached 0')
                 break
             time.sleep(self.POLLING_INTERVAL)
             if time.time() - start_time > self.TIMEOUT:
@@ -367,8 +357,6 @@ class Monitor:
         self._wait_for_xdcr_to_start(host)
         start_time = time.time()
         link1_time, link2_items = self._wait_for_replication_completion(host, bucket,
-                                                                        self.XDCR_QUEUES,
-                                                                        self.rest.get_xdcr_stats,
                                                                         xdcrlink1,
                                                                         xdcrlink2)
         return start_time, link1_time, link2_items

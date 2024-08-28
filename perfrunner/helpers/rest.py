@@ -542,17 +542,25 @@ class DefaultRestHelper(RestBase):
         resp = self.get(url=self._get_api_url(host=host, path=api)).json()
         return int(resp["data"][0]["values"][-1][1])
 
-    def get_xdcr_completeness(self, host: str, bucket: str) -> int:
-        api = 'pools/default/stats/range/xdcr_percent_completeness?' \
-            f'sourceBucketName={bucket}&pipelineType=Main'
+    def get_xdcr_changes_left_link(self, host: str, bucket: str, link: str) -> int:
+        api = 'pools/default/stats/range/xdcr_changes_left_total?' \
+            f'sourceBucketName={bucket}&pipelineType=Main&targetClusterUUID={link}'
         resp = self.get(url=self._get_api_url(host=host, path=api)).json()
-        return resp["data"]
+        if resp["data"] != []:
+            return int(resp["data"][0]["values"][-1][1])
+        return -1
 
-    def get_xdcr_items(self, host: str, bucket: str) -> int:
-        api = 'pools/default/stats/range/xdcr_docs_written_total?' \
-            f'sourceBucketName={bucket}&pipelineType=Main'
+    def get_xdcr_completeness(self, host: str, bucket: str, link: str) -> int:
+        api = 'pools/default/stats/range/xdcr_percent_completeness?' \
+            f'sourceBucketName={bucket}&pipelineType=Main&targetClusterUUID={link}'
         resp = self.get(url=self._get_api_url(host=host, path=api)).json()
-        return resp["data"]
+        return int(float(resp["data"][0]["values"][-1][1]))
+
+    def get_xdcr_items(self, host: str, bucket: str, link: str) -> int:
+        api = 'pools/default/stats/range/xdcr_docs_written_total?' \
+            f'sourceBucketName={bucket}&pipelineType=Main&targetClusterUUID={link}'
+        resp = self.get(url=self._get_api_url(host=host, path=api)).json()
+        return int(resp["data"][0]["values"][-1][1])
 
     def add_remote_cluster(self,
                            local_host: str,

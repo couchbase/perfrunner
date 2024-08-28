@@ -569,6 +569,8 @@ class XdcrPriorityThroughputTest(XdcrTest):
     def wait_for_replication(self, cluster_map: map):
         xdcr_link1 = cluster_map.get('link1')
         xdcr_link2 = cluster_map.get('link2')
+        logger.info(f'xdcr_link1 is: {xdcr_link1}')
+        logger.info(f'xdcr_link2 is: {xdcr_link2}')
         for target in self.target_iterator:
             if self.rest.get_remote_clusters(target.node):
                 start_time, link1_endtime, link2_items = \

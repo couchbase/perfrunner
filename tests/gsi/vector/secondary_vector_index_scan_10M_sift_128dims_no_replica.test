@@ -56,3 +56,9 @@ aws_credential_path = /root/.ssh
 [bucket_extras]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized
+
+[profiling]
+services = index
+profiles = cpu,heap
+interval = 180
+num_profiles = 3

@@ -57,7 +57,7 @@ deletes = 0
 throughput = 500
 items = 1000000000
 workers = 128
-time = 600
+time = 1800
 durability = 3
 
 [backup]

@@ -5,12 +5,10 @@ from fabric.api import cd, local, run
 
 from logger import logger
 from perfrunner.helpers.misc import (
-    create_build_tuple,
     get_python_sdk_installation,
     run_local_shell_command,
 )
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.tableau import TableauTerminalHelper
 from perfrunner.remote.context import all_clients
 from perfrunner.settings import ClusterSpec, TestConfig
@@ -22,7 +20,7 @@ LIBCOUCHBASE_GERRIT_URL = 'https://review.couchbase.org/libcouchbase'
 
 # Examples: lbc_version = 3.3.8, os_version = 'ubuntu1804', os_label = 'focal'
 LIBCOUCHBASE_PACKAGES = {
-    'ubuntu': {
+    "ubuntu": {
         "package": "libcouchbase-{lcb_version}_{os_version}_{os_label}_amd64",
         "package_path": "libcouchbase-{lcb_version}_{os_version}_{os_label}_amd64",
         "format": "tar",
@@ -39,9 +37,27 @@ LIBCOUCHBASE_PACKAGES = {
             "libcouchbase-dbg_{lcb_version}-1_amd64.deb "
             "libcouchbase{major}-libev_{lcb_version}-1_amd64.deb "
             "libcouchbase{major}-tools_{lcb_version}-1_amd64.deb "
-            "libcouchbase-dev_{lcb_version}-1_amd64.deb"
-        ]
-    }
+            "libcouchbase-dev_{lcb_version}-1_amd64.deb",
+        ],
+    },
+    "2.9.3": {  # Temp support for LCB 2.9.3
+        "package": "libcouchbase-2.9.3_ubuntu1804_amd64",
+        "package_path": "libcouchbase-2.9.3_ubuntu1804_amd64",
+        "format": "tar",
+        "install_cmds": [
+            "grep -qxF "
+            "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+            "/etc/apt/sources.list || echo "
+            "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+            ">> /etc/apt/sources.list",
+            "sudo apt-get update -y",
+            "sudo apt-get install libevent-core-2.1 libev4 -y ",
+            "sudo dpkg -i libcouchbase2-core_2.9.3-1_amd64.deb "
+            "libcouchbase2-libevent_2.9.3-1_amd64.deb "
+            "libcouchbase-dev_2.9.3-1_amd64.deb "
+            "libcouchbase2-bin_2.9.3-1_amd64.deb",
+        ],
+    },
 }
 
 LCB_CUSTOM_DEPS = {
@@ -66,7 +82,6 @@ class ClientInstaller:
         self.cluster_spec = cluster_spec
         self.client_settings = self.test_config.client_settings
         self.options = options
-        self.remote = RemoteHelper(self.cluster_spec, options.verbose)
 
         if self.cluster_spec.workers:
             self.client_os = RemoteHelper.detect_client_os(self.cluster_spec.workers[0],
@@ -79,21 +94,17 @@ class ClientInstaller:
 
             self.client_os = stdout.replace("\"", "").split("=")[-1]
 
-        self.rest = RestHelper(self.cluster_spec, self.test_config, options.verbose)
-
-        self.taco_destination = '/var/opt/tableau/tableau_server/data/tabsvc/vizqlserver/Connectors'
-        self.jar_destination = '/opt/tableau/tableau_driver/jdbc/'
-
-    @property
-    def cb_version(self):
-        return create_build_tuple(self.rest.get_version(host=next(self.cluster_spec.masters)))
+        self.taco_destination = "/var/opt/tableau/tableau_server/data/tabsvc/vizqlserver/Connectors"
+        self.jar_destination = "/opt/tableau/tableau_driver/jdbc/"
 
     @all_clients
     def detect_libcouchbase_versions(self):
-        return run("cbc version 2>&1 | head -n 2 | tail -n 1 | "
-                   "awk -F ' ' '{ print $2 }' | "
-                   "awk -F '=' '{ print $2 }' | "
-                   "awk -F ',' '{ print $1 }'")
+        return run(
+            "cbc version 2>&1 | head -n 2 | tail -n 1 | "
+            "awk -F ' ' '{ print $2 }' | "
+            "awk -F '=' '{ print $2 }' | "
+            "awk -F ',' '{ print $1 }'"
+        )
 
     @all_clients
     def uninstall_lcb(self):
@@ -102,7 +113,10 @@ class ClientInstaller:
 
     @all_clients
     def install_libcouchbase(self, version: str):
-        client_package_info = LIBCOUCHBASE_PACKAGES.get(self.client_os)
+        if version.startswith("2."):
+            client_package_info = LIBCOUCHBASE_PACKAGES.get("2.9.3")
+        else:
+            client_package_info = LIBCOUCHBASE_PACKAGES.get(self.client_os)
 
         if not client_package_info:
             raise Exception(f"LCB package v{version} not found for {self.client_os} os")
@@ -136,113 +150,95 @@ class ClientInstaller:
         dep_cmds = LCB_CUSTOM_DEPS[self.client_os]
         for cmd in dep_cmds:
             run(cmd)
-        with cd('/tmp'):
+        with cd("/tmp"):
             run("rm -rf libcouchbase_custom")
             run("mkdir libcouchbase_custom")
-        with cd('/tmp/libcouchbase_custom'):
-            run('git clone https://github.com/couchbase/libcouchbase.git')
-        with cd('/tmp/libcouchbase_custom/libcouchbase'):
+        with cd("/tmp/libcouchbase_custom"):
+            run("git clone https://github.com/couchbase/libcouchbase.git")
+        with cd("/tmp/libcouchbase_custom/libcouchbase"):
             if source == "gerrit":
                 run(f"git pull {LIBCOUCHBASE_GERRIT_URL} {version}")
             else:
                 _, _, commit_id = version.split(":")
                 run(f"git checkout {commit_id}")
-            run('mkdir build')
-        with cd('/tmp/libcouchbase_custom/libcouchbase/build'):
-            run('apt-get install cmake libevent-dev libevent-core-2.1 libev4 -y')
-            run('../cmake/configure')
-            run('make')
+            run("mkdir build")
+        with cd("/tmp/libcouchbase_custom/libcouchbase/build"):
+            run("apt-get install cmake libevent-dev libevent-core-2.1 libev4 -y")
+            run("../cmake/configure")
+            run("make")
 
     def detect_python_client_version(self):
-        return local("env/bin/pip freeze | grep ^couchbase | awk -F '==|@' '{ print $2 }'",
-                     capture=True)
+        return local(
+            "env/bin/pip freeze | grep ^couchbase | awk -F '==|@' '{ print $2 }'", capture=True
+        )
 
     def install_python_client(self, version: str):
         package = get_python_sdk_installation(version)
-        local(f'PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {package} --no-cache-dir')
+        local(f"PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {package} --no-cache-dir")
 
     def uninstall_tableau_connectors(self):
-        local(f'rm -rf {self.jar_destination}/*couchbase*')
-        local(f'rm -rf {self.taco_destination}/*couchbase*.taco')
+        local(f"rm -rf {self.jar_destination}/*couchbase*")
+        local(f"rm -rf {self.taco_destination}/*couchbase*.taco")
 
     def install_cdata_tableau_connector(self):
-        logger.info('Installing CData Tableau Connector')
+        logger.info("Installing CData Tableau Connector")
 
-        jarfile = 'cdata.tableau.couchbase.jar'
-        tacofile = 'cdata.couchbase.taco'
-        licensefile = 'cdata.tableau.couchbase.lic'
-        cdata_dir = '/opt/cdata/lib/'
+        jarfile = "cdata.tableau.couchbase.jar"
+        tacofile = "cdata.couchbase.taco"
+        licensefile = "cdata.tableau.couchbase.lic"
+        cdata_dir = "/opt/cdata/lib/"
 
-        self.tableau_term.copy_file(f'{cdata_dir}/{jarfile}', self.jar_destination)
-        self.tableau_term.copy_file(f'{cdata_dir}/{licensefile}', self.jar_destination)
-        self.tableau_term.copy_file(f'{cdata_dir}/{tacofile}', self.taco_destination)
+        self.tableau_term.copy_file(f"{cdata_dir}/{jarfile}", self.jar_destination)
+        self.tableau_term.copy_file(f"{cdata_dir}/{licensefile}", self.jar_destination)
+        self.tableau_term.copy_file(f"{cdata_dir}/{tacofile}", self.taco_destination)
 
         version = self.tableau_term.get_connector_version()
 
-        logger.info(f'CData Tableau Connector {version} has been installed.')
+        logger.info(f"CData Tableau Connector {version} has been installed.")
 
     def install_couchbase_tableau_connector(self, full_version: str):
-        version, build = full_version.split('-')
+        version, build = full_version.split("-")
 
         url = (
-            'http://172.23.126.166/builds/latestbuilds/couchbase-tableau-connector/'
-            '{0}/{1}/couchbase-tableau-connector-{0}-{1}.zip'
+            "http://172.23.126.166/builds/latestbuilds/couchbase-tableau-connector/"
+            "{0}/{1}/couchbase-tableau-connector-{0}-{1}.zip"
         ).format(version, build)
 
-        logger.info(f'Installing Couchbase Tableau Connector using URL: {url}')
-        archive = 'tableau_connector.zip'
-        local(f'wget -nv {url} -O {archive}')
+        logger.info(f"Installing Couchbase Tableau Connector using URL: {url}")
+        archive = "tableau_connector.zip"
+        local(f"wget -nv {url} -O {archive}")
 
-        jarfile = 'couchbase-jdbc-driver-*.jar'
-        tacofile = 'couchbase-analytics-*.taco'
-        local(f'unzip {archive} {jarfile} {tacofile}')
+        jarfile = "couchbase-jdbc-driver-*.jar"
+        tacofile = "couchbase-analytics-*.taco"
+        local(f"unzip {archive} {jarfile} {tacofile}")
 
         self.tableau_term.copy_file(jarfile, self.jar_destination)
         self.tableau_term.copy_file(tacofile, self.taco_destination)
 
         tms_config_cmds = [
-            f'configuration set -frc -k native_api.connect_plugins_path -v {self.taco_destination}',
-            'configuration set -k JdbcDriverCustomLoad -v false --force-keys',
+            f"configuration set -frc -k native_api.connect_plugins_path -v {self.taco_destination}",
+            "configuration set -k JdbcDriverCustomLoad -v false --force-keys",
         ]
 
         for cmd in tms_config_cmds:
             self.tableau_term.run_tsm_command(cmd)
 
-        logger.info(f'Couchbase Tableau Connector {full_version} has been installed.')
+        logger.info(f"Couchbase Tableau Connector {full_version} has been installed.")
 
     def install(self):
         lcb_version = self.client_settings.libcouchbase
         py_version = self.client_settings.python_client
-        logger.info(f'Desired clients: lcb={lcb_version}, py={py_version}')
-
-        # Check if we are using Capella to avoid evaluating the server version if we are using
-        # Capella Columnar, as the "self.rest.get_version(...)" method doesn't work for
-        # Capella Columnar yet...
-        mb45563_is_hit = ((not self.cluster_spec.capella_infrastructure) and
-                          self.cb_version >= (7, 1, 0, 1745) and
-                          self.cb_version < (7, 1, 0, 1807))
+        logger.info(f"Desired clients: lcb={lcb_version}, py={py_version}")
 
         if not py_version:
-            logger.info("No python SDK version provided. "
-                        "Defaulting to version specified in requirements.txt")
-        elif mb45563_is_hit and create_build_tuple(py_version) < (3, 2, 0):
-            # SDK compatibility changed with 7.1.0-1745
-            # see https://issues.couchbase.com/browse/MB-45563
-            logger.warn("python SDK >= 3.2.0 required for Couchbase Server builds "
-                        "7.1.0-1745 <= (build) < 7.1.0-1807. "
-                        "Upgrading python SDK version to 3.2.3")
-            py_version = "3.2.3"
+            logger.info(
+                "No python SDK version provided. "
+                "Defaulting to version specified in requirements.txt"
+            )
 
         if not lcb_version and self.cluster_spec.workers:
             logger.info("No libcouchbase version provided. Uninstalling libcouchbase.")
             self.uninstall_lcb()
-        elif mb45563_is_hit and create_build_tuple(lcb_version) < (3, 2, 0):
-            # SDK compatibility changed with 7.1.0-1745
-            # see https://issues.couchbase.com/browse/MB-45563
-            logger.warn("libcouchbase >= 3.2.0 required for Couchbase Server builds "
-                        "7.1.0-1745 <= (build) < 7.1.0-1807. "
-                        "Upgrading libcouchbase version to 3.2.3")
-            lcb_version = "3.2.3"
 
         if py_version and py_version.split('.')[0] == "2" and \
            lcb_version and lcb_version.split('.')[0] != "2":

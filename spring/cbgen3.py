@@ -2,6 +2,7 @@ import time
 from ctypes import CDLL
 from datetime import timedelta
 
+from couchbase import subdocument
 from couchbase.cluster import (
     Cluster,
     ClusterOptions,
@@ -222,3 +223,48 @@ class CBGen3(CBAsyncGen3):
         self.collection_manager.drop_collection(
             CollectionSpec(scope_name=args[0],
                            collection_name=args[1]))
+
+
+class SubDocGen3(CBGen3):
+
+    def read(self, *args, **kwargs):
+        self.collection = self.collections[args[0]]
+        return self.do_read(*args[1:], **kwargs)
+
+    @quiet
+    @time_all
+    def do_read(self, key: str, field: str):
+        self.collection.lookup_in(key, (subdocument.get(path=field),))
+
+    def update(self, *args, **kwargs):
+        self.collection = self.collections[args[0]]
+        return self.do_update(*args[1:], **kwargs)
+
+    @quiet
+    @time_all
+    def do_update(self, key: str, field: str, doc: dict):
+        new_field_value = doc[field]
+        self.collection.mutate_in(key, (subdocument.upsert(path=field,
+                                                           value=new_field_value),))
+
+    def read_xattr(self, *args, **kwargs):
+        self.collection = self.collections[args[0]]
+        return self.do_read_xattr(*args[1:], **kwargs)
+
+    @quiet
+    @time_all
+    def do_read_xattr(self, key: str, field: str):
+        self.collection.lookup_in(key, (subdocument.get(path=field,
+                                                        xattr=True),))
+
+    def update_xattr(self, *args, **kwargs):
+        self.collection = self.collections[args[0]]
+        return self.do_update_xattr(*args[1:], **kwargs)
+
+    @quiet
+    @time_all
+    def do_update_xattr(self, key: str, field: str, doc: dict):
+        self.collection.mutate_in(key, (subdocument.upsert(path=field,
+                                                           value=doc,
+                                                           xattr=True,
+                                                           create_parents=True),))

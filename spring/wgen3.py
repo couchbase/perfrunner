@@ -101,6 +101,7 @@ if sdk_major_version == 3:
 
     from spring.cbgen3 import CBAsyncGen3 as CBAsyncGen
     from spring.cbgen3 import CBGen3 as CBGen
+    from spring.cbgen3 import SubDocGen3 as SubDocGen
 elif sdk_major_version == 4:
     # need to import txcouchbase before importing reactor from twisted
     import txcouchbase  # noqa: F401
@@ -108,6 +109,7 @@ elif sdk_major_version == 4:
 
     from spring.cbgen4 import CBAsyncGen4 as CBAsyncGen
     from spring.cbgen4 import CBGen4 as CBGen
+    from spring.cbgen4 import SubDocGen4 as SubDocGen
 
 
 def err(*args, **kwargs):
@@ -136,7 +138,7 @@ def set_cpu_afinity(sid):
 
 
 Sequence = List[Tuple[str, Callable, Tuple]]
-Client = Union[CBAsyncGen, CBGen, DAPIGen]
+Client = Union[CBAsyncGen, CBGen, DAPIGen, SubDocGen]
 
 
 class Worker:
@@ -425,7 +427,6 @@ class Worker:
         params = {
             'bucket': self.ts.bucket,
             'host': self.ts.node,
-            'port': 8091,
             'username': self.ts.username,
             'password': self.ts.password,
             'ssl_mode': self.ws.ssl_mode,
@@ -669,6 +670,84 @@ class KVWorker(Worker):
             self.dump_stats()
 
 
+class SubDocWorker(KVWorker):
+
+    NAME = 'sub-doc-worker'
+
+    def init_db(self):
+        params = {'bucket': self.ts.bucket,
+                  'host': self.ts.node,
+                  'username': self.ts.username,
+                  'password': self.ts.password,
+                  'connstr_params': self.ws.connstr_params}
+
+        self.cb = SubDocGen(**params)
+
+    def read_args(self, cb: Client,
+                  curr_items: int,
+                  deleted_items: int,
+                  target: str) -> Sequence:
+        key = self.existing_keys.next(curr_items, deleted_items)
+        read_args = target, key.string, self.ws.subdoc_field
+
+        return [('get', cb.read, read_args)]
+
+    def update_args(self, cb: Client,
+                    curr_items: int,
+                    deleted_items: int,
+                    target: str) -> Sequence:
+        key = self.existing_keys.next(curr_items,
+                                      deleted_items,
+                                      self.current_hot_load_start,
+                                      self.timer_elapse)
+        doc = self.docs.next(key)
+        update_args = target, key.string, self.ws.subdoc_field, doc
+
+        return [('set', cb.update, update_args)]
+
+
+class XATTRWorker(SubDocWorker):
+
+    NAME = 'xattr-worker'
+
+    def read_args(self, cb: Client,
+                  curr_items: int,
+                  deleted_items: int,
+                  target: str) -> Sequence:
+        key = self.existing_keys.next(curr_items, deleted_items)
+        read_args = target, key.string, self.ws.xattr_field
+
+        return [('get', cb.read_xattr, read_args)]
+
+    def update_args(self, cb: Client,
+                    curr_items: int,
+                    deleted_items: int,
+                    target: str) -> Sequence:
+        key = self.existing_keys.next(curr_items,
+                                      deleted_items,
+                                      self.current_hot_load_start,
+                                      self.timer_elapse)
+        doc = self.docs.next(key)
+        update_args = target, key.string, self.ws.xattr_field, doc
+
+        return [('set', cb.update_xattr, update_args)]
+
+
+class SeqXATTRUpdatesWorker(XATTRWorker):
+
+    def run(self, sid, *args):
+        logger.info("running SeqXATTRUpdatesWorker")
+        self.cb.connect_collections(self.load_targets)
+        ws = copy.deepcopy(self.ws)
+        period = 1 / ws.throughput
+        for target in self.load_targets:
+            ws.items = self.load_map[target]
+            for key in SequentialKey(sid, ws, self.ts.prefix):
+                doc = self.docs.next(key)
+                self.cb.update_xattr(target, key.string, self.ws.xattr_field, doc)
+                time.sleep(period)
+
+
 class AsyncKVWorker(KVWorker):
 
     NAME = 'async-kv-worker'
@@ -676,7 +755,7 @@ class AsyncKVWorker(KVWorker):
     NUM_CONNECTIONS = 8
 
     def init_db(self):
-        params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,
+        params = {'bucket': self.ts.bucket, 'host': self.ts.node,
                   'username': self.ts.username, 'password': self.ts.password,
                   'ssl_mode': self.ws.ssl_mode}
 
@@ -975,7 +1054,6 @@ class AuxillaryWorker:
         params = {
             'bucket': self.ts.bucket,
             'host': self.ts.node,
-            'port': 8091,
             'username': self.ts.username,
             'password': self.ts.password,
             'ssl_mode': self.ws.ssl_mode,
@@ -1485,6 +1563,9 @@ class WorkerFactory:
         num_workers = settings.workers
         if getattr(settings, 'async', None):
             worker = AsyncKVWorker
+        elif getattr(settings, 'seq_upserts') and \
+                getattr(settings, 'xattr_field', None):
+            worker = SeqXATTRUpdatesWorker
         elif getattr(settings, 'seq_upserts', None):
             worker = SeqUpsertsWorker
         elif getattr(settings, 'hot_reads', None):
@@ -1494,6 +1575,10 @@ class WorkerFactory:
             num_workers = settings.fts_data_spread_workers
         elif getattr(settings, 'modify_doc_loader'):
             worker = SeqFetchModifyUpsertsWorker
+        elif getattr(settings, 'subdoc_field', None):
+            worker = SubDocWorker
+        elif getattr(settings, 'xattr_field', None):
+            worker = XATTRWorker
         else:
             worker = KVWorker
         return worker, num_workers

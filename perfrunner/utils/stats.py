@@ -1,35 +1,18 @@
-import os
 from collections import namedtuple
-from multiprocessing import set_start_method
 from typing import Dict, Iterator, Optional
 
-from couchbase.cluster import Cluster, ClusterOptions, QueryOptions
-from couchbase_core.cluster import PasswordAuthenticator
+from couchbase.options import QueryOptions
 
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
 from logger import logger
 from perfrunner.settings import CBMONITOR_HOST
-from perfrunner.utils.jenkins import JenkinsScanner
-from perfrunner.utils.weekly import Weekly
+from perfrunner.utils.jenkins import BaseScanner, JenkinsScanner
 
-try:
-    set_start_method("fork")
-except Exception as ex:
-    print(ex)
-
-StatsSettings = namedtuple('StatsSettings', ('cluster', 'cbmonitor_host'))
+StatsSettings = namedtuple("StatsSettings", ("cluster", "cbmonitor_host", "serverless_db_names"))
 
 
-class StatsScanner:
-
-    COUCHBASE_BUCKET = 'stats'
-
-    COUCHBASE_HOST = 'cb.2ioc8okhsq7qiudd.cloud.couchbase.com'
-
-    COUCHBASE_USER = os.getenv('CAPELLA_PERFLAB_USER')
-    COUCHBASE_PASSWORD = os.getenv('CAPELLA_PERFLAB_KEY')
-
+class StatsScanner(BaseScanner):
     STATUS_QUERY = """
         SELECT component, COUNT(1) AS total
         FROM stats
@@ -45,32 +28,29 @@ class StatsScanner:
     """
 
     def __init__(self):
-        pass_auth = PasswordAuthenticator(self.COUCHBASE_USER, self.COUCHBASE_PASSWORD)
-        options = ClusterOptions(authenticator=pass_auth)
-        self.cluster = Cluster(connection_string=self.connection_string, options=options)
-        self.bucket = self.cluster.bucket(self.COUCHBASE_BUCKET).default_collection()
+        super().__init__("stats")
         self.jenkins = JenkinsScanner()
         self.ps = PerfStore(host=CBMONITOR_HOST)
-        self.weekly = Weekly()
-
-    @property
-    def connection_string(self) -> str:
-        return ('couchbases://{}?certpath=/root/capella_perflab.pem&sasl_mech_force=PLAIN'
-                .format(self.COUCHBASE_HOST))
 
     @staticmethod
     def generate_key(attributes: dict) -> str:
-        return ''.join((attributes['cluster'],
-                        attributes['test_config'],
-                        attributes['version'],
-                        attributes['metric'],
-                        attributes.get('bucket', ''),
-                        attributes.get('server', ''),
-                        attributes.get('index', '')))
+        return "".join((
+            attributes["cluster"],
+            attributes["test_config"],
+            attributes["version"],
+            attributes["metric"],
+            attributes.get("bucket", ""),
+            attributes.get("server", ""),
+            attributes.get("index", ""),
+        ))
+
+    @staticmethod
+    def get_metadata_client(cluster: str) -> MetadataClient:
+        return MetadataClient(settings=StatsSettings(cluster, CBMONITOR_HOST, {}))
 
     def store_metric_info(self, attributes: dict):
         key = self.generate_key(attributes)
-        self.bucket.upsert(key=key, value=attributes)
+        self.upsert_to_bucket(key, attributes)
 
     def get_summary(self, db: str, metric: str) -> Optional[Dict[str, float]]:
         if self.ps.exists(db=db, metric=metric):
@@ -78,66 +58,65 @@ class StatsScanner:
         return {}
 
     def cluster_stats(self, cluster: str) -> Iterator[dict]:
-        m = MetadataClient(settings=StatsSettings(cluster, CBMONITOR_HOST))
+        m = self.get_metadata_client(cluster)
         for metric in m.get_metrics():
-            db = self.ps.build_dbname(cluster=cluster,
-                                      collector=metric['collector'])
-            summary = self.get_summary(db=db, metric=metric['name'])
+            db = self.ps.build_dbname(cluster=cluster, collector=metric["collector"])
+            summary = self.get_summary(db=db, metric=metric["name"])
             if summary:
                 yield {
-                    'metric': metric['name'],
-                    'summary': summary,
+                    "metric": metric["name"],
+                    "summary": summary,
                 }
 
     def bucket_stats(self, cluster: str) -> Iterator[dict]:
-        m = MetadataClient(settings=StatsSettings(cluster, CBMONITOR_HOST))
+        m = self.get_metadata_client(cluster)
         for bucket in m.get_buckets():
             for metric in m.get_metrics(bucket=bucket):
-                db = self.ps.build_dbname(cluster=cluster,
-                                          collector=metric['collector'],
-                                          bucket=bucket)
-                summary = self.get_summary(db=db, metric=metric['name'])
+                db = self.ps.build_dbname(
+                    cluster=cluster, collector=metric["collector"], bucket=bucket
+                )
+                summary = self.get_summary(db=db, metric=metric["name"])
                 if summary:
                     yield {
-                        'bucket': bucket,
-                        'metric': metric['name'],
-                        'summary': summary,
+                        "bucket": bucket,
+                        "metric": metric["name"],
+                        "summary": summary,
                     }
 
     def server_stats(self, cluster: str) -> Iterator[dict]:
-        m = MetadataClient(settings=StatsSettings(cluster, CBMONITOR_HOST))
+        m = self.get_metadata_client(cluster)
         for server in m.get_servers():
             for metric in m.get_metrics(server=server):
-                db = self.ps.build_dbname(cluster=cluster,
-                                          collector=metric['collector'],
-                                          server=server)
-                summary = self.get_summary(db=db, metric=metric['name'])
+                db = self.ps.build_dbname(
+                    cluster=cluster, collector=metric["collector"], server=server
+                )
+                summary = self.get_summary(db=db, metric=metric["name"])
                 if summary:
                     yield {
-                        'metric': metric['name'],
-                        'server': server,
-                        'summary': summary,
+                        "metric": metric["name"],
+                        "server": server,
+                        "summary": summary,
                     }
 
     def index_stats(self, cluster: str) -> Iterator[dict]:
-        m = MetadataClient(settings=StatsSettings(cluster, CBMONITOR_HOST))
+        m = self.get_metadata_client(cluster)
         for index in m.get_indexes():
             for metric in m.get_metrics(index=index):
-                db = self.ps.build_dbname(cluster=cluster,
-                                          collector=metric['collector'],
-                                          index=index)
-                summary = self.get_summary(db=db, metric=metric['name'])
+                db = self.ps.build_dbname(
+                    cluster=cluster, collector=metric["collector"], index=index
+                )
+                summary = self.get_summary(db=db, metric=metric["name"])
                 if summary:
                     yield {
-                        'index': index,
-                        'metric': metric['name'],
-                        'summary': summary,
+                        "index": index,
+                        "metric": metric["name"],
+                        "summary": summary,
                     }
 
     def find_snapshots(self, url: str):
         for snapshots in self.cluster.query(
-                self.SNAPSHOT_QUERY,
-                QueryOptions(positional_parameters=url)):
+            self.SNAPSHOT_QUERY, QueryOptions(positional_parameters=[url])
+        ):
             for snapshot in snapshots:
                 yield snapshot
 
@@ -152,17 +131,6 @@ class StatsScanner:
             for stats in self.index_stats(cluster=snapshot):
                 yield stats
 
-    def get_checkpoint(self, url: str) -> Optional[dict]:
-        try:
-            return self.bucket.get(url).content
-        except Exception as ex:
-            logger.info(ex)
-            return
-
-    def add_checkpoint(self, url: str):
-        self.bucket.insert(key=url, value={})
-        logger.info('Added checkpoint for {}'.format(url))
-
     def find_metrics(self, version: str):
         for build in self.jenkins.find_builds(version=version):
             meta = {
@@ -172,10 +140,11 @@ class StatsScanner:
                 'test_config': build['test_config'],
             }
 
-            if self.get_checkpoint(build['url']) is None:
+            if self.get_checkpoint(build["url"]) is None:
                 for stats in self.all_stats(url=build['url']):
                     yield {**stats, **meta}
-                self.add_checkpoint(build['url'])
+                self.upsert_to_bucket(key=build["url"])
+                logger.info(f"Added checkpoint for {build['url']}")
 
     def run(self):
         for build in self.weekly.builds:
@@ -189,8 +158,8 @@ class StatsScanner:
             logger.info('Updating status of build {}'.format(build))
 
             for status in self.cluster.query(
-                    self.STATUS_QUERY,
-                    QueryOptions(positional_parameters=build)):
+                self.STATUS_QUERY, QueryOptions(positional_parameters=[build])
+            ):
                 status = {
                     'build': build,
                     'component': status['component'],

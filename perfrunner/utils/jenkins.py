@@ -2,34 +2,69 @@ import glob
 import json
 import os
 from collections import defaultdict
-from multiprocessing import set_start_method
-from typing import Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Tuple, Union
 
 import jenkins
-from couchbase.cluster import Cluster, ClusterOptions, QueryOptions
-from couchbase_core.cluster import PasswordAuthenticator
+from couchbase.auth import PasswordAuthenticator
+from couchbase.cluster import Cluster
+from couchbase.exceptions import CouchbaseException, DocumentNotFoundException
+from couchbase.options import ClusterOptions, QueryOptions
 
 from logger import logger
 from perfrunner.utils.weekly import Weekly
 
-try:
-    set_start_method("fork")
-except Exception as ex:
-    print(ex)
-
 JobMapping = Dict[str, List[Dict[str, str]]]
 
 
-class JenkinsScanner:
+class BaseScanner:
+    COUCHBASE_HOST = "cb.2ioc8okhsq7qiudd.cloud.couchbase.com"
+    COUCHBASE_USER = os.getenv("CAPELLA_PERFLAB_USER")
+    COUCHBASE_PASSWORD = os.getenv("CAPELLA_PERFLAB_KEY")
+    RETRY_LIMIT = 3
 
-    COUCHBASE_BUCKET = 'jenkins'
+    def __init__(self, bucket_name: str):
+        options = ClusterOptions(
+            authenticator=PasswordAuthenticator(
+                self.COUCHBASE_USER, self.COUCHBASE_PASSWORD, cert_path="/root/capella_perflab.pem"
+            )
+        )
+        options.apply_profile("wan_development")
+        self.cluster = Cluster(
+            self.connection_string,
+            options,
+        )
+        self.bucket = self.cluster.bucket(bucket_name).default_collection()
+        self.weekly = Weekly()
 
-    COUCHBASE_HOST = 'cb.2ioc8okhsq7qiudd.cloud.couchbase.com'
+    @property
+    def connection_string(self) -> str:
+        return f"couchbases://{self.COUCHBASE_HOST}?sasl_mech_force=PLAIN"
 
-    COUCHBASE_USER = os.getenv('CAPELLA_PERFLAB_USER')
-    COUCHBASE_PASSWORD = os.getenv('CAPELLA_PERFLAB_KEY')
+    def upsert_to_bucket(self, key: str, value: Union[int, dict] = {}):
+        count = 0
+        while count < self.RETRY_LIMIT:
+            try:
+                self.bucket.upsert(key=key, value=value)
+                return
+            except CouchbaseException as ex:
+                count += 1
+                logger.warn(f"Failed adding value (Retry count {count}/{self.RETRY_LIMIT}). {ex}")
 
-    JENKINS_URL = 'http://perf.jenkins.couchbase.com'
+    def get_checkpoint(self, key: str, default: Any = {}) -> Any:
+        """Do a get on a bucket and return the content if found.
+
+        The returned content will be of the same type as the provided default value.
+        """
+        try:
+            return self.bucket.get(key).content_as[type(default)]
+        except DocumentNotFoundException:
+            return None
+        except Exception as ex:
+            logger.error(ex)
+        return default
+
+class JenkinsScanner(BaseScanner):
+    JENKINS_URL = "http://perf.jenkins.couchbase.com"
 
     STATUS_QUERY = """
         SELECT component,
@@ -48,34 +83,13 @@ class JenkinsScanner:
     """
 
     def __init__(self):
-        pass_auth = PasswordAuthenticator(self.COUCHBASE_USER, self.COUCHBASE_PASSWORD)
-        options = ClusterOptions(authenticator=pass_auth)
-        self.cluster = Cluster(connection_string=self.connection_string, options=options)
-        self.bucket = self.cluster.bucket(self.COUCHBASE_BUCKET).default_collection()
+        super().__init__("jenkins")
         self.jenkins = jenkins.Jenkins(self.JENKINS_URL)
-        self.weekly = Weekly()
         self.jobs = set()
-
-    @property
-    def connection_string(self) -> str:
-        return ('couchbases://{}?certpath=/root/capella_perflab.pem&sasl_mech_force=PLAIN'
-                .format(self.COUCHBASE_HOST))
-
-    def get_checkpoint(self, job_name: str) -> Optional[int]:
-        try:
-            return self.bucket.get(job_name).content
-        except Exception as ex:
-            logger.info(ex)
-            return 0
-
-    def add_checkpoint(self, job_name: str, build_number: int):
-        self.bucket.upsert(key=job_name, value=build_number, persist_to=1)
-        logger.info('Added checkpoint for {}'.format(job_name))
 
     def store_build_info(self, attributes: dict):
         key = self.generate_key(attributes)
-        self.bucket.upsert(key=key, value=attributes)
-        logger.info('Added: {}'.format(attributes['url']))
+        self.upsert_to_bucket(key=key, value=attributes)
 
     @staticmethod
     def generate_key(attributes: dict) -> str:
@@ -135,7 +149,7 @@ class JenkinsScanner:
 
     def build_info(self) -> Iterator[Tuple[str, dict]]:
         for job_name in self.jobs:
-            checkpoint = self.get_checkpoint(job_name)
+            checkpoint: int = self.get_checkpoint(job_name, 0)
             new_checkpoint = checkpoint
 
             job_info = self.jenkins.get_job_info(job_name, fetch_all_builds=True)
@@ -149,7 +163,8 @@ class JenkinsScanner:
                         new_checkpoint = max(new_checkpoint, build_number)
                         yield job_name, build_info
 
-            self.add_checkpoint(job_name, new_checkpoint)
+            self.upsert_to_bucket(key=job_name, value=new_checkpoint)
+            logger.info(f"Added checkpoint for {job_name}")
 
     def build_ext_info(self) -> Iterator[Tuple[str, dict, dict]]:
         for job_name, build_info in self.build_info():
@@ -178,9 +193,9 @@ class JenkinsScanner:
         for build in self.weekly.builds:
             logger.info('Updating status of build {}'.format(build))
 
-            for status in self.cluster.query(self.STATUS_QUERY,
-                                             QueryOptions(
-                                                 positional_parameters=build)):
+            for status in self.cluster.query(
+                self.STATUS_QUERY, QueryOptions(positional_parameters=[build])
+            ):
                 status = {
                     'build': build,
                     'component': status['component'],
@@ -192,9 +207,9 @@ class JenkinsScanner:
                 self.weekly.update_status(status)
 
     def find_builds(self, version: str) -> Iterator[dict]:
-        for build in self.cluster.query(self.BUILD_QUERY,
-                                        QueryOptions(
-                                            positional_parameters=version)):
+        for build in self.cluster.query(
+            self.BUILD_QUERY, QueryOptions(positional_parameters=[version])
+        ):
             yield build
 
 

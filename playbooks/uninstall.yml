@@ -60,7 +60,7 @@
     timeout: 300
 
   - name: check if couchbase is installed
-    shell: "dpkg -l | grep couchbase*"
+    shell: "dpkg -l | grep 'couchbase*'"
     register: found_couchbase
     ignore_errors: yes
 

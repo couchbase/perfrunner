@@ -63,7 +63,3 @@ workers = 1
 nodes_after = 10 2
 start_after = 600
 stop_after = 600
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

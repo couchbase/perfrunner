@@ -165,6 +165,3 @@ qualified_batches = 1
 
 [stats]
 server_processes = projector
-
-[clients]
-python_client = 3.2.7

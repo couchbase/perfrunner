@@ -40,7 +40,3 @@ statements =
     CREATE INDEX ag8 ON `bucket-1`(customer.county, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'month'), customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count);
     CREATE INDEX ag9 ON `bucket-1`(item.category, DATE_PART_STR(sold_date, 'day_of_year'), sales_price);
     CREATE INDEX ag10 ON `bucket-1`(customer.zip, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'quarter'), sales_price);
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

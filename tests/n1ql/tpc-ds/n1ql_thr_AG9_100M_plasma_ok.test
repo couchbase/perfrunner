@@ -42,7 +42,3 @@ statement = SELECT item.category AS category, SUM(sales_price) AS total_sales FR
 scan_consistency = not_bounded
 args = [{categories}, {day_of_year}]
 ad_hoc = true
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

@@ -44,6 +44,3 @@ ssl_mode = capella
 [n1ql-key-value-lookup]
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]
-
-[clients]
-python_client = 3.2.7

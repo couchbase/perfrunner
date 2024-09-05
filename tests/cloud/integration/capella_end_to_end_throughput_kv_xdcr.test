@@ -49,6 +49,3 @@ ssl_mode = capella
 
 [stats]
 server_processes = goxdcr
-
-[clients]
-python_client = 3.2.7

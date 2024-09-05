@@ -50,6 +50,3 @@ doc_gen = unified
 latency_percentiles = 50,90,95,98,99
 workload_instances = 1
 ssl_mode = capella
-
-[clients]
-python_client = 3.2.7

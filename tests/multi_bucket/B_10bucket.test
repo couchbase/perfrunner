@@ -34,7 +34,3 @@ throughput = 100
 spring_batch_size = 10
 workers = 1
 time = 900
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

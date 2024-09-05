@@ -102,9 +102,6 @@ statement = RAW_QUERY SELECT * FROM `bucket-1`.`users`.`views` AS b WHERE uid >=
 scan_consistency = not_bound
 args = ["{uid}"]
 
-[clients]
-python_client = 3.2.7
-
 [rebalance]
 nodes_after = 8
 start_after = 300

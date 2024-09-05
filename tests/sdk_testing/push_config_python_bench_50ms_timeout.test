@@ -36,8 +36,5 @@ failed_nodes = 1
 start_after = 60
 stop_after = 180
 
-[clients]
-python_client = 4.1.9
-
 [stats]
 client_processes = python

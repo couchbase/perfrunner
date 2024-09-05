@@ -48,6 +48,3 @@ ssl_mode = capella
 nodes_after = 3
 start_after = 300
 stop_after = 300
-
-[clients]
-python_client = 3.2.7

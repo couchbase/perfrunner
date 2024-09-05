@@ -31,6 +31,3 @@ config = perf/config/compression-enabled.properties
 [dcp]
 invoke_warm_up = 1
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

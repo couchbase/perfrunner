@@ -42,7 +42,3 @@ statement = SELECT customer.gender, customer.marital_status, customer.education_
 scan_consistency = not_bounded
 args = [{counties}, {year}, {month}]
 ad_hoc = true
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

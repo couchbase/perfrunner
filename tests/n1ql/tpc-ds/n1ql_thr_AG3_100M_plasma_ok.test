@@ -41,7 +41,3 @@ workload_instances = 2
 statement = SELECT DATE_PART_STR(sold_date, 'year') AS year, item.brand, SUM(sales_price) AS sum_agg FROM `bucket-1` WHERE item.manufacturer_id = $1 AND DATE_PART_STR(sold_date, 'month') = $2 GROUP BY DATE_PART_STR(sold_date, 'year'), item.brand ORDER BY DATE_PART_STR(sold_date, 'year'), sum_agg DESC, item.brand;
 scan_consistency = not_bounded
 args = [{manufacturer_id}, {month}]
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

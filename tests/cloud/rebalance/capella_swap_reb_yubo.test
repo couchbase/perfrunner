@@ -47,6 +47,3 @@ statements =
     CREATE INDEX `adv_uid_swipe_dateDESC_linked_uidDESC` ON `bucket-1`.`users`.`swipes`(`uid`, `swipe_date` DESC,`linked_uid` DESC) PARTITION BY hash(`uid`) WITH { "defer_build":true, "num_replica":1, "num_partition":3 };
     BUILD INDEX on `bucket-1`.`users`.`swipes`(adv_linked_uidDESC_swipe_dateDESC_uid,adv_uid_swipe_dateDESC_linked_uidDESC)
     BUILD INDEX on `bucket-1`.`users`.`views`(adv_linked_uid_countDESC_last_seenDESC_uid)
-
-[clients]
-python_client = 3.2.7

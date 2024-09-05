@@ -41,7 +41,3 @@ statements =
     CREATE INDEX ag9 ON `bucket-1`(item.category, DATE_PART_STR(sold_date, 'day_of_year'), sales_price) PARTITION BY HASH(item.category) WITH {"defer_build": true};
     CREATE INDEX ag10 ON `bucket-1`(customer.zip, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'quarter'), sales_price) PARTITION BY HASH(customer.zip) WITH {"defer_build": true};
     BUILD  INDEX ON `bucket-1`(ag1, ag2, ag3, ag4, ag5, ag6, ag7, ag8, ag9, ag10);
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

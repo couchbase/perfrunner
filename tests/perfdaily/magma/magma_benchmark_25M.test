@@ -27,7 +27,3 @@ fs_cache_size=1342177280
 data_dir=/data
 engine=magma
 engine_config='{"compactiontype":"","memory_quota":1073741824,"log_level":"warn"}'
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

@@ -20,7 +20,8 @@ doc_gen = json
 
 [access]
 items = 20000000
-iterations = 40000
+iterations = -1
+time = 900
 workers = 50
 updates = 80
 ssl_mode = data

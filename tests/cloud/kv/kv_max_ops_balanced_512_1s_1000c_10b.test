@@ -27,7 +27,8 @@ ssl_mode = capella
 
 [access]
 items = 2000000
-iterations = 4000
+iterations = -1
+time = 900
 workers = 5
 updates = 50
 ssl_mode = capella

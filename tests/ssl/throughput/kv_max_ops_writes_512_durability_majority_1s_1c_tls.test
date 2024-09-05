@@ -28,7 +28,8 @@ durability = 0
 [access]
 batch_size = 1
 items = 20000000
-iterations = 1000000
+iterations = -1
+time = 900
 workers = 128
 updates = 100
 durability = 1

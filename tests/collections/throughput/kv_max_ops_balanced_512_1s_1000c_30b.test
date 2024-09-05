@@ -23,7 +23,8 @@ doc_gen = json
 
 [access]
 items = 666666
-iterations = 40000
+iterations = -1
+time = 900
 workers = 2
 updates = 50
 

@@ -21,7 +21,8 @@ durability = 1
 
 [access]
 items = 20000000
-iterations = 40000
+iterations = -1
+time = 900
 workers = 50
 updates = 50
 durability = 1

@@ -37,12 +37,14 @@ run_extra_access = true
 items = 20000000
 workers = 5
 batch_size = 1000
-iterations = 20000
+iterations = -1
+time = 600
 updates = 100
 
 [access]
 items = 20000000
-iterations = 20000
+iterations = -1
+time = 600
 workers = 50
 updates = 20
 

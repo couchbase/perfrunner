@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from multiprocessing import set_start_method
 
+from fabric import state
 from fabric.api import cd, local, run
 
 from logger import logger
@@ -82,6 +83,9 @@ class ClientInstaller:
         self.cluster_spec = cluster_spec
         self.client_settings = self.test_config.client_settings
         self.options = options
+
+        state.output.running = options.verbose
+        state.output.stdout = options.verbose
 
         if self.cluster_spec.workers:
             self.client_os = RemoteHelper.detect_client_os(self.cluster_spec.workers[0],

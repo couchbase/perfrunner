@@ -95,28 +95,13 @@ import multiprocessing
 import random
 import time
 
-import pkg_resources
+from couchbase.auth import PasswordAuthenticator
+from couchbase.cluster import Cluster
+from couchbase.exceptions import TemporaryFailException as TemporaryFailError
+from couchbase.exceptions import TimeoutException as TimeoutError
+from couchbase.transcoder import RawBinaryTranscoder
 
 from logger import logger
-
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
-
-if sdk_major_version == 2:
-    from couchbase import FMT_BYTES
-    from couchbase.cluster import Cluster, PasswordAuthenticator
-    from couchbase.exceptions import TemporaryFailError, TimeoutError
-elif sdk_major_version == 3:
-    from couchbase.cluster import Cluster, PasswordAuthenticator
-    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
-    from couchbase.exceptions import TimeoutException as TimeoutError
-    from couchbase_core._libcouchbase import FMT_BYTES
-elif sdk_major_version == 4:
-    from couchbase.auth import PasswordAuthenticator
-    from couchbase.cluster import Cluster
-    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
-    from couchbase.exceptions import TimeoutException as TimeoutError
-    from couchbase.pycbc_core import FMT_BYTES
-
 
 # TCMalloc size classes
 SIZES = (8, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192,
@@ -242,10 +227,12 @@ class Worker(multiprocessing.Process):
 
     def _connect(self):
         """Establish a connection to the Couchbase cluster."""
-        cluster = Cluster('http://{}:{}'.format(self.host, self.port))
-        authenticator = PasswordAuthenticator('Administrator', self.password)
-        cluster.authenticate(authenticator)
-        self.client = cluster.open_bucket(self.bucket)
+        cluster = Cluster(
+            f"couchbase://{self.host}",
+            authenticator=PasswordAuthenticator("Administrator", self.password),
+            transcoder=RawBinaryTranscoder(),
+        )
+        self.client = cluster.bucket(self.bucket).default_collection()
 
     def run(self):
         """Run a Worker.
@@ -280,7 +267,7 @@ class Worker(multiprocessing.Process):
         backoff = 0.01
         while not success:
             try:
-                self.client.set(key, value, format=FMT_BYTES)
+                self.client.upsert(key, value)
                 success = True
             except (TimeoutError,
                     TemporaryFailError) as e:

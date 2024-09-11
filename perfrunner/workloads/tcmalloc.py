@@ -6,12 +6,7 @@ import pkg_resources
 from logger import logger
 
 sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
-if sdk_major_version == 2:
-    from couchbase import experimental
-    from twisted.internet import reactor
-    from txcouchbase.connection import Connection
-    experimental.enable()
-elif sdk_major_version == 3:
+if sdk_major_version == 3:
     from couchbase.cluster import ClusterOptions
     from couchbase_core.cluster import PasswordAuthenticator
     from twisted.internet import reactor
@@ -125,10 +120,6 @@ class WorkloadGen:
     NUM_ITERATIONS = 5
 
     def __init__(self, num_items, host, bucket, password, collections=None, small=True):
-        if collections:
-            self.use_collection = True
-        else:
-            self.use_collection = False
         self.num_items = num_items
         if small:
             self.kv_cls = KeyValueIterator
@@ -139,17 +130,14 @@ class WorkloadGen:
         self.kv_iterator = self.kv_cls(self.num_items)
         self.field_iterator = self.field_cls(self.num_items)
 
-        sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
-        if sdk_major_version == 2:
-            self.cb = Connection(bucket=bucket, host=host, password=password)
-        elif sdk_major_version >= 3:
-            connection_string = 'couchbase://{host}?password={password}'
-            connection_string = connection_string.format(host=host,
-                                                         password=password)
-            pass_auth = PasswordAuthenticator(bucket, password)
-            self.cluster = TxCluster(connection_string, ClusterOptions(pass_auth))
-            self.bucket = self.cluster.bucket(bucket)
+        connection_string = f"couchbase://{host}?password={password}"
+        pass_auth = PasswordAuthenticator(bucket, password)
+        self.cluster = TxCluster(connection_string, ClusterOptions(pass_auth))
+        self.bucket = self.cluster.bucket(bucket)
+        if collections:
             self.collection = self.bucket.scope("scope-1").collection("collection-1")
+        else:
+            self.collection = self.bucket.default_collection()
 
         self.fraction = 1
         self.iteration = 0
@@ -166,30 +154,19 @@ class WorkloadGen:
         self.counter = 0
         try:
             for k, v in self.kv_iterator.next():
-                if self.use_collection:
-                    d = self.collection.upsert(k, v)
-                    d.addCallback(self._on_set)
-                    d.addErrback(self._interrupt)
-                else:
-                    d = self.cb.set(k, v)
-                    d.addCallback(self._on_set)
-                    d.addErrback(self._interrupt)
+                d = self.collection.upsert(k, v)
+                d.addCallback(self._on_set)
+                d.addErrback(self._interrupt)
         except StopIteration:
             logger.info('Started iteration: {}-{}'.format(self.iteration,
                                                           self.fraction))
             self._append()
 
     def run(self):
-        if self.use_collection:
-            logger.info('Running initial load: {} items per collection'.format(self.num_items))
-            d = self.bucket.on_connect()
-            d.addCallback(self._set)
-            d.addErrback(self._interrupt)
-        else:
-            logger.info('Running initial load: {} items'.format(self.num_items))
-            d = self.cb.connect()
-            d.addCallback(self._set)
-            d.addErrback(self._interrupt)
+        logger.info(f"Running initial load: {self.num_items} items for '{self.collection.name}'")
+        d = self.bucket.on_connect()
+        d.addCallback(self._set)
+        d.addErrback(self._interrupt)
 
         reactor.run()
 
@@ -199,34 +176,22 @@ class WorkloadGen:
             self._append()
 
     def _on_get(self, rv, f, key=None):
-        if self.use_collection:
-            if sdk_major_version == 4:
-                v = rv.content_as[lambda x: x]
-            else:
-                v = rv.content
-            v.append(f)
-            d = self.collection.upsert(key, v)
-            d.addCallback(self._on_append)
-            d.addErrback(self._interrupt)
+        if sdk_major_version == 4:
+            v = rv.content_as[lambda x: x]
         else:
-            v = rv.value
-            v.append(f)
-            d = self.cb.set(rv.key, v)
-            d.addCallback(self._on_append)
-            d.addErrback(self._interrupt)
+            v = rv.content
+        v.append(f)
+        d = self.collection.upsert(key, v)
+        d.addCallback(self._on_append)
+        d.addErrback(self._interrupt)
 
     def _append(self, *args):
         self.counter = 0
         try:
             for k, f in self.field_iterator.next():
-                if self.use_collection:
-                    d = self.collection.get(k)
-                    d.addCallback(self._on_get, f, k)
-                    d.addErrback(self._interrupt)
-                else:
-                    d = self.cb.get(k)
-                    d.addCallback(self._on_get, f)
-                    d.addErrback(self._interrupt)
+                d = self.collection.get(k)
+                d.addCallback(self._on_get, f, k)
+                d.addErrback(self._interrupt)
         except StopIteration:
             logger.info('Finished iteration: {}-{}'.format(self.iteration,
                                                            self.fraction))

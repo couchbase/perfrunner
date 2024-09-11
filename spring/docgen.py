@@ -2512,8 +2512,7 @@ class MultiVectorDocument:
     def __init__(self, knn_list: deque) -> None:
         self.knn_list = knn_list
 
-    def next(self, doc):
-         doc = doc.content
+    def next(self, doc: dict):
          doc["emb2"] = self.knn_list.pop()
          self.knn_list.appendleft(doc["emb"])
          return doc
@@ -2524,17 +2523,14 @@ class TextAndVectorDocument:
         self.fk = Faker()
         Faker.seed(1000)
 
-    def next(self, doc):
-        doc = doc.content
+    def next(self, doc: dict):
         text = self.fk.sentence(20)
         doc["text"] = text
         return doc
 
 
 class MutateVectorDocument(MultiVectorDocument):
-
-    def next(self, doc):
-        doc = doc.content
+    def next(self, doc: dict):
         self.knn_list.appendleft(doc["emb"])
         doc["emb"] = self.knn_list.pop()
         return doc
@@ -2544,9 +2540,11 @@ class FixedTextAndVectorDocument:
     def __init__(self, filtering:int) -> None:
         self.filtering = filtering
 
-    '''it expects a doc with field field "id" which is sequential'''
     def next(self, doc):
-        doc = doc.content
+        """Return next doc from the provided doc content.
+
+        Expects a doc with field "id" which is sequential.
+        """
         if int(doc["id"]) < self.filtering:
             scalar = "eligible"
         else:

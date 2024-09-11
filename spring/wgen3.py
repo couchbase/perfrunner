@@ -939,7 +939,6 @@ class SeqFetchModifyUpsertsWorker(Worker):
             knn_list = deque()
             for seq_id in range(sid, ws.items, ws.workers):
                 doc = self.cb.get(target, str(seq_id))
-                doc = doc.content
                 knn = doc["emb"]
                 knn_list.append(knn)
                 if len(knn_list) >= 10:
@@ -1001,7 +1000,7 @@ class FTSDataSpreadWorker(Worker):
                     get_args = source, hex_key
                     doc = self.cb.get(*get_args)
                     new_hex_key = format(new_key, 'x')
-                    set_args = target, new_hex_key, doc.content
+                    set_args = target, new_hex_key, doc
                     self.cb.set(*set_args)
                     self.cb.delete(*get_args)
                     new_key += step
@@ -1023,7 +1022,7 @@ class FTSDataSpreadWorker(Worker):
             doc = self.cb.get(*get_args)
 
             for target in sorted(self.load_targets):
-                set_args = target, hex_target_key, doc.content
+                set_args = target, hex_target_key, doc
                 self.cb.set(*set_args)
 
             if source_key >= items_per_collection:

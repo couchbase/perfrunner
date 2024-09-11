@@ -129,7 +129,7 @@ class CBGen4(CBAsyncGen4):
 
     def get(self, *args, **kwargs):
         self.collection = self.collections[args[0]]
-        return self.do_get(*args[1:], **kwargs)
+        return self.do_get(*args[1:], **kwargs).content_as[dict]
 
     def do_get(self, *args, **kwargs):
         return super().do_read(*args, **kwargs)

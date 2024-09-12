@@ -226,14 +226,15 @@ class DefaultRestHelper(RestBase):
             host=host, path="admin/settings", plain_port=QUERY_PORT, ssl_port=QUERY_PORT_SSL
         )
 
-        settings = self.get(url=api).json()
+        current_settings = self.get(url=api).json()
+        updated_settings = {}
         for override, value in override_settings.items():
-            if override not in settings:
+            if override not in current_settings:
                 logger.error(f"Cannot change query setting {override} to {value}, setting invalid")
                 continue
-            settings[override] = value
+            updated_settings[override] = value
             logger.info(f"Changing {override} to {value}")
-        self.post(url=api, data=json.dumps(settings))
+        self.post(url=api, data=json.dumps(updated_settings), timeout=60)
 
     def get_query_settings(self, host: str) -> dict:
         api = self._get_api_url(

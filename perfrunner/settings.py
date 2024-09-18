@@ -836,6 +836,7 @@ class DeploymentSettings:
 class ClusterSettings:
 
     NUM_BUCKETS = 1
+    NUM_VBUCKETS = 1024
 
     MEM_QUOTA = 0
     INDEX_MEM_QUOTA = 256
@@ -886,7 +887,7 @@ class ClusterSettings:
                             self.EVENTING_METADATA_BUCKET_MEM_QUOTA))
         self.eventing_buckets = int(options.get('eventing_buckets',
                                                 self.EVENTING_BUCKETS))
-        self.num_vbuckets = options.get('num_vbuckets', None)
+        self.num_vbuckets = options.get('num_vbuckets', self.NUM_VBUCKETS)
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
         self.sgw_online_cores = int(options.get('sgw_online_cores',
@@ -1040,7 +1041,7 @@ class BucketSettings:
     AUTOFAILOVER_ENABLED = 'true'
     DEFAULT_FAILOVER_MIN_TIMEOUTS = [5, 30]  # sec
     DEFAULT_DATA_DISK_FAILURE_TIMEOUT = 10  # sec
-    BACKEND_STORAGE = None
+    BACKEND_STORAGE = 'couchstore'
     CONFLICT_RESOLUTION_TYPE = 'seqno'
     FLUSH = True
     MIN_DURABILITY = 'none'

@@ -21,6 +21,9 @@ replica_number = 0
 [secondary]
 indexer.settings.storage_mode = plasma
 
+[n1ql]
+n1ql-feat-ctrl = 4194380
+
 [load]
 items = 50000000
 size = 1024

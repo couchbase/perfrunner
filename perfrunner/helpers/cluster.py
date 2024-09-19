@@ -355,9 +355,10 @@ class DefaultClusterManager(ClusterManagerBase):
         if self.test_config.cluster.num_buckets > 7:
             self.increase_bucket_limit(self.test_config.cluster.num_buckets + 3)
 
-        if self.test_config.cluster.eventing_metadata_bucket_mem_quota:
-            mem_quota -= (self.test_config.cluster.eventing_metadata_bucket_mem_quota +
-                          self.test_config.cluster.eventing_bucket_mem_quota)
+        mem_quota -= (self.test_config.cluster.eventing_metadata_bucket_mem_quota +
+                      self.test_config.cluster.eventing_bucket_mem_quota +
+                      self.test_config.cluster.conflict_bucket_mem_quota
+        )
 
         per_bucket_quota = mem_quota // self.test_config.cluster.num_buckets
 
@@ -401,6 +402,29 @@ class DefaultClusterManager(ClusterManagerBase):
                     backend_storage=self.test_config.bucket.backend_storage,
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                     compression_mode=self.test_config.bucket.compression_mode,
+                )
+
+    def create_conflict_logging_buckets(self):
+        logger.info("Creating conflict logging bucket")
+        if self.test_config.cluster.conflict_buckets == 0:
+            return
+        per_bucket_quota = (
+            self.test_config.cluster.conflict_bucket_mem_quota
+            // self.test_config.cluster.conflict_buckets
+        )
+        for master in self.cluster_spec.masters:
+            for bucket_name in self.test_config.conflict_buckets:
+                self.rest.create_bucket(
+                    host=master,
+                    name=bucket_name,
+                    ram_quota=per_bucket_quota,
+                    replica_number=self.test_config.bucket.replica_number,
+                    replica_index=self.test_config.bucket.replica_index,
+                    eviction_policy=self.test_config.bucket.eviction_policy,
+                    bucket_type=self.test_config.bucket.bucket_type,
+                    backend_storage=self.test_config.bucket.backend_storage,
+                    conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
+                    compression_mode=self.test_config.bucket.compression_mode
                 )
 
     def create_eventing_metadata_bucket(self):
@@ -662,7 +686,8 @@ class DefaultClusterManager(ClusterManagerBase):
                 roles=['admin'],
             )
 
-            buckets = self.test_config.buckets + self.test_config.eventing_buckets
+            buckets = self.test_config.buckets + self.test_config.eventing_buckets \
+                + self.test_config.conflict_buckets
 
             for bucket in buckets:
                 bucket_roles = [role.format(bucket=bucket) for role in roles]
@@ -972,11 +997,10 @@ class CapellaClusterManager(ClusterManagerBase):
         mem_quota = mem_info["free"]
         logger.info("Free memory for buckets (per node): {}MB".format(mem_quota))
 
-        if self.test_config.cluster.eventing_metadata_bucket_mem_quota:
-            mem_quota -= (
-                self.test_config.cluster.eventing_metadata_bucket_mem_quota
-                + self.test_config.cluster.eventing_bucket_mem_quota
-            )
+        mem_quota -= (
+            self.test_config.cluster.eventing_metadata_bucket_mem_quota
+            + self.test_config.cluster.eventing_bucket_mem_quota
+        )
 
         per_bucket_quota = mem_quota // self.test_config.cluster.num_buckets
 

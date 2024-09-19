@@ -57,6 +57,7 @@ from perfrunner.workloads.tpcds import (
     tpcds_remaining_data_load,
 )
 from perfrunner.workloads.vectordb_bench import run_vectordb_bench_case
+from perfrunner.workloads.xdcr_conflict_sim import run_conflictsim
 from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
 
 try:
@@ -180,6 +181,10 @@ def java_dcp_client_task(*args):
 
 
 @celery.task
+def run_conflictsim_task(*args):
+    run_conflictsim(*args)
+
+@celery.task
 def syncgateway_task_load_users(*args):
     syncgateway_load_users(*args)
 
@@ -279,11 +284,16 @@ class WorkloadPhase:
                  task: Callable,
                  target_iterator: Iterable[TargetSettings],
                  base_settings: PhaseSettings,
+                 source_iterator: Iterable[TargetSettings] = None,
                  override_settings: dict = {},
                  timer: Optional[int] = None):
         self.task = task
         self.target_iterator = target_iterator
+        self.source_iterator = source_iterator
         self.targets = list(target_iterator)
+        if source_iterator is not None:
+            self.source_targets = list(source_iterator)
+            self.source_target = self.source_targets[0]
         self.task_settings = base_settings
         for option, value in override_settings.items():
             if hasattr(self.task_settings, option):
@@ -297,9 +307,15 @@ class WorkloadPhase:
         for target in self.targets:
             for instance in range(self.task_settings.workload_instances):
                 worker = next(workers)
-                sig = self.task.si(self.task_settings, target, self.timer, instance).set(
-                    queue=worker, expires=self.timer
-                )
+                if self.source_iterator is not None:
+                    sig = self.task.si(self.task_settings, self.source_target,
+                                       target, self.timer).set(
+                        queue=worker, expires=self.timer
+                    )
+                else:
+                    sig = self.task.si(self.task_settings, target, self.timer, instance).set(
+                        queue=worker, expires=self.timer
+                    )
                 sigs_with_workers.append((sig, worker))
 
         return sigs_with_workers

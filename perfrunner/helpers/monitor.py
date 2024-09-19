@@ -291,6 +291,7 @@ class Monitor:
 
     def _wait_for_xdcr_to_start(self, host: str):
         is_running = False
+        logger.info("Waiting for XDCR to start")
         while not is_running:
             time.sleep(self.POLLING_INTERVAL)
             is_running, _ = self.rest.get_task_status(host, task_type='xdcr')
@@ -303,7 +304,13 @@ class Monitor:
         return time.time()
 
     def monitor_xdcr_queues(
-        self, host: str, bucket: str, total_docs: int, mobile: Optional[str] = None
+        self,
+        host: str,
+        bucket: str,
+        total_docs: int,
+        num_replication: int,
+        num_nodes: int,
+        mobile: Optional[str] = None
     ):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
         self._wait_for_xdcr_to_start(host)
@@ -313,10 +320,17 @@ class Monitor:
             self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                         self.rest.get_xdcr_stats)
         else:
-            self._wait_for_empty_xdcr_queues(host, bucket, total_docs, mobile)
+            self._wait_for_empty_xdcr_queues(host, bucket, total_docs,
+                                             num_replication, num_nodes, mobile)
 
     def _wait_for_empty_xdcr_queues(
-        self, host: str, bucket: str, total_docs: int, mobile: Optional[str] = None
+        self,
+        host: str,
+        bucket: str,
+        total_docs: int,
+        num_replication: int,
+        num_nodes: int,
+        mobile: Optional[str] = None
     ):
         start_time = time.time()
         # For mobile replication (XDCR with SGW), xdcr_changes_left_total will never reach 0
@@ -332,7 +346,7 @@ class Monitor:
             logger.info('Initial xdcr_mobile_docs_filtered_total = {:,}'.
                         format(previous_xdcr_mobile_docs_filtered_total))
         # No need to check for every bucket if we have multiple buckets
-        if bucket == "bucket-1":
+        if bucket == "bucket-1" and num_replication == 0:
             logger.info("Sleep until xdcr_changes_left_total starts to be updated")
             while self.rest.get_xdcr_changes_left_total(host, bucket) <= 0:
                 time.sleep(self.POLLING_INTERVAL)
@@ -346,7 +360,7 @@ class Monitor:
                     xdcr_docs_written_total = self.rest.get_xdcr_docs_written_total(host, bucket)
                     logger.info('xdcr_docs_written_total = {:,}'.format(xdcr_docs_written_total))
 
-                    if xdcr_docs_written_total >= total_docs:
+                    if xdcr_docs_written_total >= total_docs / num_nodes:
                         xdcr_mobile_docs_filtered_total = \
                             self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
                         logger.info('xdcr_mobile_docs_filtered_total = {:,}'.

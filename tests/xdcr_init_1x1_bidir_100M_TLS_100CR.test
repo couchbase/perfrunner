@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.xdcr.BiDirXdcrInitTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 1 <-> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, Bidir, TLS, Non-optimistic replication, Conflict Ratio 10%%
+component = xdcr
+category = init_single
+orderby = aa
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 25000
+initial_nodes = 1 1
+num_buckets = 1
+conflict_buckets = 1
+conflict_bucket_mem_quota = 2048
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+cLogConnPoolLimit = 10
+
+[xdcr]
+eccv = active
+worker_count = 20
+queue_len = 500
+demand_encryption = yes
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = large
+conflict_ratio = 1

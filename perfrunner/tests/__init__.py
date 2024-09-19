@@ -181,6 +181,36 @@ class PerfTest:
         with open(self.ROOT_CERTIFICATE, 'w') as fh:
             fh.write(cert)
 
+    def download_ycsb(self):
+        if self.worker_manager.is_remote:
+            self.remote.init_ycsb(
+                    repo=self.test_config.ycsb_settings.repo,
+                    branch=self.test_config.ycsb_settings.branch,
+                    worker_home=self.worker_manager.WORKER_HOME,
+                    sdk_version=self.test_config.ycsb_settings.sdk_version)
+        else:
+            local.clone_git_repo(repo=self.test_config.ycsb_settings.repo,
+                                 branch=self.test_config.ycsb_settings.branch)
+
+    def build_ycsb(self, ycsb_client):
+        if self.worker_manager.is_remote:
+            self.remote.build_ycsb(self.worker_manager.WORKER_HOME, ycsb_client)
+        else:
+            local.build_ycsb(ycsb_client)
+
+    def generate_keystore(self):
+        if self.worker_manager.is_remote:
+            self.worker_manager.remote.generate_ssl_keystore(
+                self.ROOT_CERTIFICATE,
+                self.test_config.access_settings.ssl_keystore_file,
+                self.test_config.access_settings.ssl_keystore_password,
+                self.worker_manager.WORKER_HOME,
+            )
+        else:
+            local.generate_ssl_keystore(self.ROOT_CERTIFICATE,
+                                        self.test_config.access_settings.ssl_keystore_file,
+                                        self.test_config.access_settings.ssl_keystore_password)
+
     def check_rebalance(self) -> str:
         if self.dynamic_infra:
             return
@@ -493,6 +523,7 @@ class PerfTest:
                       default_mixed_settings: Iterable[PhaseSettings],
                       task: Callable = spring_task,
                       settings: PhaseSettings = None,
+                      source_iterator: Iterable = None,
                       target_iterator: Iterable = None,
                       mixed_tasks: Iterable[Callable] = None,
                       mixed_settings: Iterable[PhaseSettings] = None,
@@ -510,7 +541,8 @@ class PerfTest:
 
             timer = settings.time if use_timers else None
 
-            phases = [WorkloadPhase(task, target_iterator, settings, timer=timer)]
+            phases = [WorkloadPhase(task, target_iterator, settings,
+                                    source_iterator, timer=timer)]
         else:
             # Do mixed workload
             if mixed_settings is None:
@@ -620,6 +652,7 @@ class PerfTest:
     def access(self,
                task: Callable = spring_task,
                settings: PhaseSettings = None,
+               source_iterator: Iterable = None,
                target_iterator: Iterable = None,
                mixed_tasks: Iterable[Callable] = None,
                mixed_settings: Iterable[PhaseSettings] = None,
@@ -630,6 +663,7 @@ class PerfTest:
             default_mixed_settings=self.test_config.mixed_access_settings,
             task=task,
             settings=settings,
+            source_iterator=source_iterator,
             target_iterator=target_iterator,
             mixed_tasks=mixed_tasks,
             mixed_settings=mixed_settings,

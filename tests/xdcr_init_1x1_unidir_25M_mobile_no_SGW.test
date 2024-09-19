@@ -19,7 +19,7 @@ num_buckets = 1
 replica_number = 0
 
 [xdcr]
-mobile = active
+eccv = active
 
 [xdcr_cluster]
 sourceNozzlePerNode = 2

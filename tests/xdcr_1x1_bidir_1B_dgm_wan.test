@@ -1,0 +1,45 @@
+[test_case]
+test = perfrunner.tests.xdcr.BiDirXdcrInitTest
+
+[showfast]
+title = 5 <-> 5 (2 source nozzles, 4 target nozzles), 1 bucket x 1B x 1KB, 40K updates/sec, WAN 80±4 ms, Bidir
+component = xdcr
+category = ongoing
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 5 5
+num_buckets = 1
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+optimisticReplicationThreshold = 0
+
+[load]
+items = 1000000000
+size = 1024
+workers = 50
+
+[hot_load]
+items = 1000000000
+workers = 100
+working_set = 10
+
+[xdcr]
+wan_delay = 40
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+deletes = 0
+throughput = 50000
+items = 1000000000
+workers = 50
+working_set = 10
+working_set_access = 98
+time = 3600

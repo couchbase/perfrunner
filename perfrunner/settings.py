@@ -893,6 +893,9 @@ class ClusterSettings:
     EVENTING_METADATA_BUCKET_NAME = 'eventing'
     EVENTING_BUCKETS = 0
 
+    CONFLICT_BUCKETS = 0
+    CONFLICT_BUCKET_MEM_QUOTA = 0
+
     KERNEL_MEM_LIMIT = 0
     KV_KERNEL_MEM_LIMIT = 0
     KERNEL_MEM_LIMIT_SERVICES = 'fts', 'index'
@@ -938,6 +941,10 @@ class ClusterSettings:
         self.eventing_buckets = int(options.get('eventing_buckets',
                                                 self.EVENTING_BUCKETS))
         self.num_vbuckets = int(options.get('num_vbuckets', self.NUM_VBUCKETS))
+        self.conflict_buckets = int(options.get('conflict_buckets',
+                                                self.CONFLICT_BUCKETS))
+        self.conflict_bucket_mem_quota = int(options.get('conflict_bucket_mem_quota',
+                                                         self.CONFLICT_BUCKET_MEM_QUOTA))
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
         self.sgw_online_cores = int(options.get('sgw_online_cores',
@@ -1412,6 +1419,10 @@ class PhaseSettings:
     TIMESERIES_DOCS_PER_DEVICE = 1
     TIMESERIES_TOTAL_DAYS = 1
 
+    GAP = 3000
+    DISTRIBUTION = "step"
+    DEBUG_MODE = 1
+
     BATCH_SIZE = 1000
     BATCHES = 1
     SPRING_BATCH_SIZE = 100
@@ -1567,6 +1578,8 @@ class PhaseSettings:
 
     PER_COLLECTION_LATENCY = False
 
+    CONFLICT_RATIO = 0
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -1633,6 +1646,10 @@ class PhaseSettings:
                                                      self.TIMESERIES_TOTAL_DAYS))
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
+
+        self.gap = int(options.get('gap', self.GAP))
+        self.distribution = options.get('distribution', self.DISTRIBUTION)
+        self.debug_mode = int(options.get('debug_mode', self.DEBUG_MODE))
 
         self.batch_size = int(options.get('batch_size', self.BATCH_SIZE))
         self.batches = int(options.get('batches', self.BATCHES))
@@ -1864,6 +1881,9 @@ class PhaseSettings:
 
         # Default setting. Is set based on collection stat groups in configure_collection_settings
         self.per_collection_latency = self.PER_COLLECTION_LATENCY
+
+
+        self.conflict_ratio = float(options.get('conflict_ratio', self.CONFLICT_RATIO))
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -2159,7 +2179,13 @@ class XDCRSettings:
     BACKFILL_COLLECTION_MAPPING = ''   # ----------------------"----------------------------------
     XDCR_LINK_DIRECTIONS = 'one-way'
     XDCR_LINK_NETWORK_LIMITS = '0'
-    MOBILE = None
+    MOBILE = None    #options: None, active
+    ECCV = None    #options: None, active
+
+    WORKER_COUNT = 20
+    CONN_TYPE = 'gocbcore'   # options: gocbcore, gomemcached
+    CONN_LIMIT = 10
+    QUEUE_LEN = 500
 
     def __init__(self, options: dict):
         self.demand_encryption = options.get('demand_encryption')
@@ -2178,6 +2204,13 @@ class XDCRSettings:
         self.collections_oso_mode = bool(options.get('collections_oso_mode'))
 
         self.mobile = options.get('mobile', self.MOBILE)
+
+        self.eccv = options.get('eccv', self.ECCV)
+
+        self.worker_count = int(options.get('worker_count', self.WORKER_COUNT))
+        self.conn_type = options.get('conn_type', self.CONN_TYPE)
+        self.conn_limit = int(options.get('conn_limit', self.CONN_LIMIT))
+        self.queue_len = int(options.get('queue_len', self.QUEUE_LEN))
 
         # Capella-specific settings
         self.xdcr_link_directions = options.get('xdcr_link_directions',
@@ -3821,6 +3854,12 @@ class TestConfig(Config):
     def eventing_metadata_bucket(self) -> list[str]:
         return [
             'eventing'
+        ]
+
+    @property
+    def conflict_buckets(self) -> list[str]:
+        return [
+            'conflict-bucket-{}'.format(i + 1) for i in range(self.cluster.conflict_buckets)
         ]
 
     @property

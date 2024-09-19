@@ -3,7 +3,6 @@ import shutil
 import time
 
 from logger import logger
-from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import ycsb_data_load_task, ycsb_task
@@ -15,24 +14,6 @@ from perfrunner.tests.xdcr import XdcrInitTest
 class YCSBTest(PerfTest):
 
     ALL_BUCKETS = True
-
-    def download_ycsb(self):
-        if self.worker_manager.is_remote:
-            self.worker_manager.remote.init_ycsb(
-                repo=self.test_config.ycsb_settings.repo,
-                branch=self.test_config.ycsb_settings.branch,
-                worker_home=self.worker_manager.WORKER_HOME,
-                sdk_version=self.test_config.ycsb_settings.sdk_version,
-            )
-        else:
-            local.clone_git_repo(repo=self.test_config.ycsb_settings.repo,
-                                 branch=self.test_config.ycsb_settings.branch)
-
-    def build_ycsb(self, ycsb_client):
-        if self.worker_manager.is_remote:
-            self.worker_manager.remote.build_ycsb(self.worker_manager.WORKER_HOME, ycsb_client)
-        else:
-            local.build_ycsb(ycsb_client)
 
     def collect_export_files(self):
         if self.worker_manager.is_remote:
@@ -69,19 +50,6 @@ class YCSBTest(PerfTest):
         self.cb_time = round(end_time - start_time)
         logger.info("cbcollect_info finished and it took: {} seconds".format(self.cb_time))
         self.worker_manager.wait_for_bg_tasks()
-
-    def generate_keystore(self):
-        if self.worker_manager.is_remote:
-            self.worker_manager.remote.generate_ssl_keystore(
-                self.ROOT_CERTIFICATE,
-                self.test_config.access_settings.ssl_keystore_file,
-                self.test_config.access_settings.ssl_keystore_password,
-                self.worker_manager.WORKER_HOME,
-            )
-        else:
-            local.generate_ssl_keystore(self.ROOT_CERTIFICATE,
-                                        self.test_config.access_settings.ssl_keystore_file,
-                                        self.test_config.access_settings.ssl_keystore_password)
 
     def run(self):
         if self.test_config.access_settings.ssl_mode == 'data':

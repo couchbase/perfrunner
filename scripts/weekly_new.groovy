@@ -273,6 +273,12 @@ pipeline {
                         buildComponent('XDCR', testCases)
                     }
                 }
+                stage('XDCR-BIDI') {
+                    when { expression { return params.XDCR } }
+                    steps {
+                        buildComponent('XDCR-BIDI', testCases)
+                    }
+                }
                 stage('XDCR-C1') {
                     when { expression { return params.XDCR } }
                     steps {

@@ -5,6 +5,7 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import target_hash
 from perfrunner.helpers.profiler import with_profiles
+from perfrunner.helpers.worker import run_conflictsim_task, ycsb_data_load_task, ycsb_task
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.tools import RestoreTest
@@ -57,6 +58,7 @@ class XdcrTest(PerfTest):
             params.update({
                 'mobile': 'active'
             })
+        if self.xdcr_settings.eccv:
             for bucket in self.test_config.buckets:
                 m1, m2 = self.cluster_spec.masters
                 self.rest.enable_cross_clustering_versioning(m1, bucket)
@@ -76,9 +78,13 @@ class XdcrTest(PerfTest):
     def monitor_replication(self):
         items = self.test_config.load_settings.items
         mobile = self.test_config.xdcr_settings.mobile
+        num_replication = 0
         for target in self.target_iterator:
             if self.rest.get_remote_clusters(target.node):
-                self.monitor.monitor_xdcr_queues(target.node, target.bucket, items, mobile)
+                num_nodes = int(self.test_config.cluster.initial_nodes[0])
+                self.monitor.monitor_xdcr_queues(target.node, target.bucket, items,
+                                                 num_replication, num_nodes, mobile)
+                num_replication += 1
 
     @with_stats
     @with_profiles
@@ -355,6 +361,297 @@ class CapellaXdcrInitTest(XdcrInitTest, CapellaXdcrTest):
         time_elapsed = self.init_xdcr()
         self.report_kpi(time_elapsed)
 
+
+class BiDirXdcrInitTest(XdcrInitTest):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.load_target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+        self.dest_target_iterator = DestTargetIterator(self.cluster_spec, self.test_config)
+        self.cluster_name1 = f"{self.CLUSTER_NAME}1"
+        self.cluster_name2 = f"{self.CLUSTER_NAME}2"
+
+    def add_remote_clusters(self):
+        m1, m2 = self.cluster_spec.masters
+        certificate_m2 = self.xdcr_settings.demand_encryption and \
+            self.rest.get_certificate(m2)
+        secure_type = self.xdcr_settings.secure_type
+        self.rest.add_remote_cluster(local_host=m1,
+                                     remote_host=m2,
+                                     name=self.cluster_name1,
+                                     secure_type=secure_type,
+                                     certificate=certificate_m2)
+        certificate_m1 = self.xdcr_settings.demand_encryption and \
+            self.rest.get_certificate(m1)
+        self.rest.add_remote_cluster(local_host=m2,
+                                     remote_host=m1,
+                                     name=self.cluster_name2,
+                                     secure_type=secure_type,
+                                     certificate=certificate_m1)
+
+    def enable_cross_clustering_versioning(self):
+        for bucket in self.test_config.buckets:
+            m1, m2 = self.cluster_spec.masters
+            self.rest.enable_cross_clustering_versioning(m1, bucket)
+            self.rest.enable_cross_clustering_versioning(m2, bucket)
+
+    def set_conflict_settings(self):
+        logger.info("setting conflict settings")
+        params = {
+            'workerCount': self.xdcr_settings.worker_count,
+            'connType': self.xdcr_settings.conn_type,
+            'connLimit': self.xdcr_settings.conn_limit,
+            'queueLen': self.xdcr_settings.queue_len
+        }
+        for bucket in self.test_config.buckets:
+            m1, m2 = self.cluster_spec.masters
+            self.rest.set_xdcr_conflict_settings(m1, params)
+            self.rest.set_xdcr_conflict_settings(m2, params)
+
+    def replication_params(self, from_bucket: str, to_bucket: str, replication_name: str):
+        params = {
+            'replicationType': 'continuous',
+            'fromBucket': from_bucket,
+            'toBucket': to_bucket,
+            'toCluster': replication_name
+        }
+        if self.xdcr_settings.filter_expression:
+            params.update({
+                'filterExpression': self.xdcr_settings.filter_expression,
+            })
+
+        if self.xdcr_settings.mobile:
+            logger.info("XDCR mobile replication is active")
+            params.update({
+                'mobile': 'active'
+            })
+        if self.test_config.cluster.conflict_buckets != 0:
+            cLog = '{\"bucket\": \"conflict-bucket-1\", \"collection\": \"_default._default\"}'
+            params.update({
+                'conflictLogging': cLog,
+                'cLogQueueCapacity': self.test_config.xdcr_settings.queue_len,
+                'cLogWorkerCount': self.test_config.xdcr_settings.worker_count
+            })
+        return params
+
+    def create_replications(self):
+        m1, m2 = self.cluster_spec.masters
+        for bucket in self.test_config.buckets:
+            # Create replication from cluster 1 to cluster 2
+            params = self.replication_params(from_bucket=bucket,
+                                             to_bucket=bucket,
+                                             replication_name=self.cluster_name1)
+            self.rest.create_replication(m1, params)
+            # Create replication from cluster 2 to cluster 1
+            params = self.replication_params(from_bucket=bucket,
+                                             to_bucket=bucket,
+                                             replication_name=self.cluster_name2)
+            self.rest.create_replication(m2, params)
+
+    def check_num_items(self, target_iterator, *args):
+        PerfTest.check_num_items(self, *args, target_iterator=target_iterator)
+
+    def load(self, *args):
+        logger.info("Loading the source bucket")
+        PerfTest.load(self, *args, target_iterator=self.load_target_iterator)
+        self.wait_for_persistence()
+        self.check_num_items(self.load_target_iterator)
+        logger.info("Finished loading the source bucket")
+
+        logger.info("Loading the destination bucket")
+        load_settings = self.test_config.load_settings
+        total_items = load_settings.items
+        load_settings.items = int(load_settings.items * (1 - load_settings.conflict_ratio))
+        logger.info(f"The total number of items is: {total_items}")
+        logger.info(f"The number of non-conflict docs is: {load_settings.items}")
+        # To load non-conflict docs we use YCSB
+
+        if load_settings.items != 0:
+            non_conflict_dest_target_iterator = DestTargetIterator(
+                self.cluster_spec, self.test_config, "non-conflict"
+            )
+            PerfTest.load(
+                self,
+                *args,
+                target_iterator=non_conflict_dest_target_iterator,
+                settings=load_settings,
+            )
+
+        logger.info("Finished loading non-conflict docs to the destination bucket")
+        logger.info(f"The diff is: {total_items - load_settings.items}")
+        load_settings.items = total_items - load_settings.items
+        logger.info(f"The number of conflict docs is: {load_settings.items}")
+
+        PerfTest.load(self, *args, target_iterator=self.dest_target_iterator,
+                      settings=load_settings)
+        self.wait_for_persistence()
+
+        load_settings.items = total_items
+        self.check_num_items(self.dest_target_iterator)
+
+    @with_stats
+    @with_profiles
+    @timeit
+    def init_xdcr(self):
+        self.add_remote_clusters()
+        self.create_replications()
+        self.monitor_replication()
+
+    def access(self, *args):
+        PerfTest.access(self, *args, target_iterator=self.load_target_iterator)
+
+    def _report_kpi(self, time_elapsed):
+        logger.info("Time elapsed is: {}".format(time_elapsed))
+        m1, m2 = self.cluster_spec.masters
+        bucket_replica = self.test_config.bucket.replica_number
+        m1_bucket_docs = self.monitor.get_num_items(host=m1, bucket="bucket-1",
+                                                    bucket_replica=bucket_replica)
+        logger.info(f"Number of docs in bucket-1 on {m1} is: {m1_bucket_docs}")
+        m2_bucket_docs = self.monitor.get_num_items(host=m2, bucket="bucket-1",
+                                                    bucket_replica=bucket_replica)
+        logger.info(f"Number of docs in bucket-1 on {m2} is: {m2_bucket_docs}")
+        total_docs = (
+            m1_bucket_docs + m2_bucket_docs
+        )
+        if self.test_config.cluster.conflict_buckets != 0:
+            m1_conflict_bucket_docs = self.monitor.get_num_items(
+                host=m1, bucket="conflict-bucket-1", bucket_replica=bucket_replica
+            )
+            logger.info(
+                f"Number of docs in conflict-bucket-1 on {m1} is: {m1_conflict_bucket_docs}"
+            )
+            m2_conflict_bucket_docs = self.monitor.get_num_items(
+                host=m2, bucket="conflict-bucket-1", bucket_replica=bucket_replica
+            )
+            logger.info(
+                f"Number of docs in conflict-bucket-1 on {m2} is: {m2_conflict_bucket_docs}"
+            )
+            total_docs += m1_conflict_bucket_docs + m2_conflict_bucket_docs
+        logger.info(f"Total number of docs is: {total_docs}")
+        m1_bucket_written = self.rest.get_xdcr_docs_written_total(host=m1, bucket="bucket-1")
+        logger.info(f"Number of docs written to bucket-1 on {m1} is: {m1_bucket_written}")
+        m2_bucket_written = self.rest.get_xdcr_docs_written_total(host=m2, bucket="bucket-1")
+        logger.info(f"Number of docs written to bucket-1 on {m2} is: {m2_bucket_written}")
+        total_docs_written = m1_bucket_written + m2_bucket_written
+        logger.info(f"Total number of docs written is: {total_docs_written}")
+        m1_bucket_dcp = self.rest.get_xdcr_docs_received_from_dcp_total(host=m1, bucket="bucket-1")
+        logger.info(f"Number of docs received from DCP on {m1} is: {m1_bucket_dcp}")
+        m2_bucket_dcp = self.rest.get_xdcr_docs_received_from_dcp_total(host=m2, bucket="bucket-1")
+        logger.info(f"Number of docs received from DCP on {m2} is: {m2_bucket_dcp}")
+        total_docs_dcp = m1_bucket_dcp + m2_bucket_dcp
+        logger.info(f"Total number of docs received from DCP is: {total_docs_dcp}")
+        self.reporter.post(
+            *self.metrics.bidir_replication_rate_total_docs(time_elapsed)
+        )
+        self.reporter.post(
+            *self.metrics.bidir_replication_rate_written_docs(time_elapsed, total_docs_written)
+        )
+        self.reporter.post(
+            *self.metrics.bidir_replication_rate_dcp_docs(time_elapsed, total_docs_dcp)
+        )
+
+    def run(self):
+        if self.xdcr_settings.eccv:
+            self.enable_cross_clustering_versioning()
+        self.load()
+
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)
+
+
+class BiDirXdcrUpdateTest(BiDirXdcrInitTest):
+
+    def load(self, *args):
+        logger.info("Loading the source bucket")
+        self.build_ycsb(self.test_config.load_settings.ycsb_client)
+        PerfTest.load(self, task=ycsb_data_load_task, target_iterator=self.load_target_iterator)
+        self.wait_for_persistence()
+        self.check_num_items(self.load_target_iterator)
+        logger.info("Finished loading the source bucket")
+
+    @timeit
+    @with_stats
+    def access(self, *args):
+        logger.info("Updating the source bucket")
+        self.build_ycsb(self.test_config.access_settings.ycsb_client)
+        PerfTest.access_bg(self, task=ycsb_task, target_iterator=self.load_target_iterator)
+
+        logger.info("Updating the destination bucket")
+        access_settings = self.test_config.access_settings
+        total_ops = access_settings.ops
+        access_settings.ops = int(access_settings.ops * access_settings.conflict_ratio)
+        logger.info(f"The total number of ops is: {total_ops}")
+        logger.info(f"The number of conflict docs is: {access_settings.ops}")
+        if access_settings.ops != 0:
+            self.build_ycsb(self.test_config.load_settings.ycsb_client)
+            PerfTest.access_bg(self, task=ycsb_task, target_iterator=self.dest_target_iterator,
+                               settings=access_settings)
+        logger.info("Monitoring XDCR replication")
+        self.monitor_replication()
+
+    def run(self):
+        if self.xdcr_settings.eccv:
+            self.enable_cross_clustering_versioning()
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+        logger.info("Loading the source bucket")
+        self.load()
+
+        logger.info("Starting the XDCR replication")
+        time_elapsed = self.init_xdcr()
+        logger.info("Time elapsed load is: {}".format(time_elapsed))
+        logger.info("Finished the XDCR replication, starting the update conflict phase")
+        acess_time = self.access()
+        logger.info("Time elapsed access is: {}".format(acess_time))
+        self.report_kpi(acess_time)
+
+
+class UniDirXdcrConflictSimTest(BiDirXdcrInitTest):
+
+    def do_conflicts(self, *args):
+        logger.info("Starting ConflictSim")
+        PerfTest.access(self,
+                        task=run_conflictsim_task,
+                        source_iterator=self.load_target_iterator,
+                        target_iterator=self.dest_target_iterator,
+                        settings=self.test_config.access_settings)
+
+    @with_stats
+    @with_profiles
+    @timeit
+    def init_xdcr(self):
+        self.add_remote_clusters()
+        self.create_replications()
+        self.do_conflicts()
+
+    def run(self):
+        if self.xdcr_settings.eccv:
+            self.enable_cross_clustering_versioning()
+
+        self.load()
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)
+
+
+class UniDirXdcrInitConflictTest(BiDirXdcrInitTest):
+
+    @with_stats
+    @with_profiles
+    @timeit
+    def init_xdcr(self):
+        self.add_remote_cluster()
+        self.create_replication()
+        self.monitor_replication()
+
+    def run(self):
+        if self.xdcr_settings.eccv:
+            self.enable_cross_clustering_versioning()
+        self.load()
+
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)
 
 class UniDirXdcrInitTest(XdcrInitTest):
 

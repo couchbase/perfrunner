@@ -1,0 +1,53 @@
+[test_case]
+test = perfrunner.tests.xdcr.BiDirXdcrUpdateTest
+
+[showfast]
+title = Avg. Update XDCR rate (items/sec), 1 <-> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, Bidir, Non-optimistic replication, Conflict Ratio 100%%
+component = xdcr
+category = init_single
+orderby = aa
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1 1
+num_buckets = 1
+conflict_buckets = 1
+conflict_bucket_mem_quota = 2048
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+cLogConnPoolLimit = 10
+
+[xdcr]
+eccv = active
+worker_count = 20
+queue_len = 500
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 10000000
+workers = 160
+workload_instances = 2
+
+[access]
+workload_path = workloads/workloadupdate
+ycsb_client = couchbase3
+items = 10000000
+ops = 10000000
+workers = 160
+time = 300
+workload_instances = 1
+kv_endpoints = 16
+requestdistribution = uniform
+conflict_ratio = 1
+
+[ycsb]
+branch = couchbase3-range-scan

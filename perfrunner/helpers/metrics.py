@@ -549,14 +549,52 @@ class MetricHelper:
         return np.percentile(values, percentile)
 
     def xdcr_lag(self, percentile: Number = 95) -> Metric:
-        metric_id = '{}_{}th_xdcr_lag'.format(self.test_config.name, percentile)
-        title = '{}th percentile replication lag (ms), {}'.format(percentile,
-                                                                  self._title)
+        metric_id = f'{self.test_config.name}_{percentile}th_xdcr_lag'
+        title = f'{percentile}th percentile replication lag (ms), {self._title}'
         metric_info = self._metric_info(metric_id, title, chirality=-1)
 
         xdcr_lag = self.get_percentile_value_of_collector('xdcr_lag', percentile)
 
         return round(xdcr_lag, 1), self._snapshots, metric_info
+
+    def bidir_replication_rate_total_docs(self, time_elapsed: float) -> Metric:
+        metric_id = f'{self.test_config.name}_total_docs'
+        title = f'{self._title} Total Docs'
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+
+        initial_items = self.test_config.load_settings.items + \
+                        self.test_config.load_settings.items * \
+                        (1 - self.test_config.load_settings.conflict_ratio)
+        rate = self._bidir_replication_rate(time_elapsed, initial_items)
+
+        return rate, self._snapshots, metric_info
+
+    def bidir_replication_rate_written_docs(self,
+                                            time_elapsed: float,
+                                            total_docs_written: int) -> Metric:
+        metric_id = f'{self.test_config.name}_written_docs'
+        title = f'{self._title} Written Docs'
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+
+        rate = self._bidir_replication_rate(time_elapsed, total_docs_written)
+
+        return rate, self._snapshots, metric_info
+
+    def bidir_replication_rate_dcp_docs(self, time_elapsed: float, total_dcp_docs: int) -> Metric:
+        metric_id = f'{self.test_config.name}_dcp_docs'
+        title = f'{self._title} DCP Docs'
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+
+        rate = self._bidir_replication_rate(time_elapsed, total_dcp_docs)
+
+        return rate, self._snapshots, metric_info
+
+    def _bidir_replication_rate(self, time_elapsed: float, initial_items: int) -> float:
+
+        num_buckets = self.test_config.cluster.num_buckets
+        bidir_replication_rate = num_buckets * initial_items / time_elapsed
+
+        return round(bidir_replication_rate)
 
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info(chirality=1)

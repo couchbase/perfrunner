@@ -19,6 +19,7 @@ num_buckets = 1
 replica_number = 0
 
 [xdcr]
+eccv = active
 mobile = active
 
 [xdcr_cluster]

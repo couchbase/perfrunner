@@ -36,5 +36,20 @@
     "GSI": [
         {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim.test", "groups": "P0"},
         {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_1Filter.test", "groups": "P0"}
+    ],
+    "XDCR-BIDI": [
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M_TLS.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M_wan.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_2x2_bidir_100M.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M_1CR.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M_10CR.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M_100CR.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M_TLS_10CR.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M_TLS_100CR.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_update_100M.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_update_100M_10CR.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_update_100M_100CR.test", "groups": "P0"},
+        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_conflictsim_100M.test", "groups": "P0"}
     ]
 }

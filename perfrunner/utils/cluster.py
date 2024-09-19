@@ -157,6 +157,7 @@ def main():
         cm.create_buckets()
         cm.create_eventing_buckets()
         cm.create_eventing_metadata_bucket()
+        cm.create_conflict_logging_buckets()
         cm.add_rbac_users()
 
     cm.restart_with_alternative_bucket_options()

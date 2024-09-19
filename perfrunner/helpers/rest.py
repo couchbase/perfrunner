@@ -548,6 +548,12 @@ class DefaultRestHelper(RestBase):
         resp = self.get(url=self._get_api_url(host=host, path=api)).json()
         return int(resp["data"][0]["values"][-1][1])
 
+    def get_xdcr_docs_received_from_dcp_total(self, host: str, bucket: str) -> int:
+        api = 'pools/default/stats/range/xdcr_docs_received_from_dcp_total?' \
+            f'sourceBucketName={bucket}&pipelineType=Main'
+        resp = self.get(url=self._get_api_url(host=host, path=api)).json()
+        return int(resp["data"][0]["values"][-1][1])
+
     def xdcr_mobile_docs_filtered_total(self, host: str, bucket: str) -> int:
         api = 'pools/default/stats/range/xdcr_mobile_docs_filtered_total?' \
             f'sourceBucketName={bucket}&pipelineType=Main'
@@ -599,7 +605,9 @@ class DefaultRestHelper(RestBase):
     def get_remote_clusters(self, host: str) -> list[dict]:
         logger.info('Getting remote clusters')
         url = self._get_api_url(host=host, path='pools/default/remoteClusters')
-        return self.get(url=url).json()
+        resp = self.get(url=url)
+        logger.info(f'The remote cluster response is: {resp.json()}')
+        return resp.json()
 
     def create_replication(self, host: str, params: dict):
         logger.info('Starting replication with parameters {}'.format(params))
@@ -712,6 +720,12 @@ class DefaultRestHelper(RestBase):
         }
         self.post(url=api, data=data)
 
+    def set_xdcr_conflict_settings(self, host: str, params: dict):
+        logger.info(f"Setting XDCR conflict settings on node: {host}")
+        api = self._get_api_url(host=host, path="xdcr/conflictlog")
+        resp = self.post(url=api, data=params)
+        logger.info(f"The resp is: {resp.json()}")
+
     def run_diag_eval(self, host: str, cmd: str):
         url = self._get_api_url(host=host, path='diag/eval')
         self.post(url=url, data=cmd)
@@ -736,7 +750,7 @@ class DefaultRestHelper(RestBase):
         raise Exception('Autofailover setting combinations rejected')
 
     def get_certificate(self, host: str) -> str:
-        logger.info('Getting remote certificate')
+        logger.info(f'Getting remote certificate on host: {host}')
 
         build = self.get_version(host)
         if create_build_tuple(build) < (7, 1, 0, 0) and not self.is_columnar(host):

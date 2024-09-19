@@ -138,9 +138,6 @@ class PerfTest:
 
             self.reset_memory_settings()
 
-        if self.test_config.cluster.num_vbuckets:
-            self.remote.reset_num_vbuckets()
-
         if self.test_config.cluster.serverless_mode and not self.cloud_infra:
             self.remote.set_cb_profile(CBProfile.DEFAULT)
 

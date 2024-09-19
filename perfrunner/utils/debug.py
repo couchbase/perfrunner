@@ -293,7 +293,7 @@ def main():
         remote.collect_k8s_logs()
         local.collect_cbopinfo_logs(remote.kube_config_path)
     else:
-        _, _, returncode = run_local_shell_command("ls *.zip")
+        _, _, returncode = run_local_shell_command(f"ls {cluster_spec.servers[0]}.zip")
         if returncode:
             remote.collect_info()
             for hostname in cluster_spec.servers:

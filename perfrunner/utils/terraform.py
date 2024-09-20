@@ -1764,15 +1764,10 @@ class AppServicesDeployer(CloudVMDeployer):
             "compute": {"type": self.test_config.syncgateway_settings.instance}
         }
 
-        logger.info(f'The payload is: {config}')
+        if self.options.capella_sgw_version:
+            config['version'] = self.options.capella_sgw_version
 
-        if self.options.capella_cb_version and self.options.capella_sgw_ami:
-            config['overRide'] = {
-                'token': os.getenv('CBC_OVERRIDE_TOKEN'),
-                'server': self.options.capella_cb_version,
-                'image': self.options.capella_sgw_ami
-            }
-            logger.info(f'Deploying with custom AMI: {self.options.capella_sgw_ami}')
+        logger.info(f'The payload is: {config}')
 
         resp = self.api_client.create_sgw_backend(self.tenant_id, config)
         raise_for_status(resp)
@@ -2236,6 +2231,7 @@ def get_args():
         help="serverless dataplane ID to use for serverless database deployment",
     )
     parser.add_argument("--capella-cb-version", help="cb version to use for Capella deployment")
+    parser.add_argument("--capella-sgw-version", help="SGW version to use for Capella deployment")
     parser.add_argument("--capella-ami", help="custom AMI to use for Capella deployment")
     parser.add_argument(
         "--capella-sgw-ami", help="custom AMI to use for App Services Capella Deployment"

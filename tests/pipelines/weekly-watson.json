@@ -121,8 +121,6 @@
         {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_failover_100M_dgm_kv_graceful.test", "groups": "P0"},
         {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_failover_100M_dgm_kv_hard.test", "groups": "P0"},
         {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_failover_100M_dgm_kv_auto.test", "groups": "P0"},
-        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_in_100M_dgm_views.test", "groups": "P0"},
-        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_swap_100M_dgm_views.test", "groups": "P0"},
         {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_in_100M_dgm_kv.test", "groups": "P1"},
         {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_out_100M_dgm_kv.test", "groups": "P1"},
         {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_swap_100M_dgm_kv.test", "groups": "P1"}
@@ -168,7 +166,9 @@
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "query_lat_20M_compute.test"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "query_lat_20M_group_by.test"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "query_lat_20M_multi_emits.test"},
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "query_lat_20M_range.test"}
+        {"job": "artemis", "cluster": "artemis.spec", "test_config": "query_lat_20M_range.test"},
+        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_in_100M_dgm_views.test", "groups": "P0"},
+        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_swap_100M_dgm_views.test", "groups": "P0"}
     ],
     "XDCR": [
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_5x5_unidir_250M.test", "groups": "P0"},

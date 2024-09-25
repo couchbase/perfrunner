@@ -112,29 +112,34 @@ def format_datadog_link(cluster_id: str = None, dataplane_id: str = None,
 
 class CloudVMDeployer:
     IMAGE_MAP = {
-        'aws': {
-            'clusters': {
-                'x86_64': 'perf-server-x86-ubuntu20-2023-07',  # ami-08d83f4b122efb564
-                'arm': 'perf-server-arm-us-east',  # ami-0f249abfe3dd01b30
-                'al2': 'perf-server-al_x86-2022-03-us-east',  # ami-060e286353d227c32
+        "aws": {
+            "clusters": {
+                "x86_64": "perf-server-x86-ubuntu20-2023-07",  # ami-08d83f4b122efb564
+                "arm": "perf-server-arm-us-east",  # ami-0f249abfe3dd01b30
+                "al2": "perf-server-al_x86-2022-03-us-east",  # ami-060e286353d227c32
             },
-            'clients': 'perf-client-x86-ubuntu20-2023-06-v3',  # ami-0d9789eef66732b62
-            'utilities': 'perf-broker-us-east',  # ami-0d9e5ee360aa02d94
-            'syncgateways': 'perf-server-x86-ubuntu20-2023-07',  # ami-08d83f4b122efb564
-            'kafka_brokers': 'perf-client-x86-ubuntu20-2023-06-v3'
+            "clients": "perf-client-x86-ubuntu20-2023-06-v3",  # ami-0d9789eef66732b62
+            "utilities": "perf-broker-us-east",  # ami-0d9e5ee360aa02d94
+            "syncgateways": "perf-server-x86-ubuntu20-2023-07",  # ami-08d83f4b122efb564
+            "kafka_brokers": "perf-client-x86-ubuntu20-2023-06-v3",
         },
-        'gcp': {
-            'clusters': 'perftest-server-x86-ubuntu20-2023-07',
-            'clients': 'perftest-client-x86-ubuntu20-2023-06-v3',
-            'utilities': 'perftest-broker-disk-image',
-            'syncgateways': 'perftest-server-x86-ubuntu20-2023-07'
+        "gcp": {
+            "clusters": {
+                "x86_64": "perftest-server-x86-ubuntu20-2023-07",
+                "arm": "perftest-server-arm64-ubuntu20-2024-10-v2",
+            },
+            "clients": "perftest-client-x86-ubuntu20-2024-10",
+            "utilities": "perftest-broker-disk-image",
+            "syncgateways": "perftest-server-x86-ubuntu20-2023-07",
         },
-        'azure': {
-            'clusters': 'perf-server-x86-ubuntu20-image-def',
-            'clients': 'perf-client-x86-ubuntu20-image-def',
-            'utilities': 'perf-broker-image-def',
-            'syncgateways': 'perf-server-x86-ubuntu20-image-def'
-        }
+        "azure": {
+            "clusters": {
+                "x86_86": "perf-server-x86-ubuntu20-image-def",
+            },
+            "clients": "perf-client-x86-ubuntu20-image-def",
+            "utilities": "perf-broker-image-def",
+            "syncgateways": "perf-server-x86-ubuntu20-image-def",
+        },
     }
 
     def __init__(self, infra_spec: ClusterSpec, options: Namespace):
@@ -194,6 +199,8 @@ class CloudVMDeployer:
             logger.interrupt(f"Unrecognised cloud service provider: {self.csp}")
 
         logger.info(f"Deployer region, zone: {self.region}, {self.zone}")
+        self.infra_spec.config.set("infrastructure", "region", self.region)
+        self.infra_spec.update_spec_file()
 
     def deploy(self):
         # Configure terraform
@@ -245,7 +252,7 @@ class CloudVMDeployer:
                 # If image name isn't provided as cli param, use hardcoded defaults
                 if image is None:
                     image = self.IMAGE_MAP[self.csp][role]
-                    if self.csp == "aws" and role == "clusters":
+                    if role == "clusters":
                         image = image.get(self.os_arch, image['x86_64'])
 
                 parameters['image'] = image
@@ -261,16 +268,13 @@ class CloudVMDeployer:
 
                 # Set CSP-specific options
                 if self.csp == "azure":
-                    parameters['disk_tier'] = parameters.get('disk_tier', '')
+                    parameters["disk_tier"] = parameters.get("disk_tier", "")
                 else:
                     # AWS and GCP
-                    parameters['iops'] = int(parameters.get('iops', 0))
-                    if self.csp == "aws":
-                        parameters['volume_throughput'] = int(parameters.get('volume_throughput',
-                                                                             0))
-                    else:
-                        # GCP
-                        parameters['local_nvmes'] = int(parameters.get('local_nvmes', 0))
+                    parameters["iops"] = int(parameters.get("iops", 0))
+                    parameters["volume_throughput"] = int(parameters.get("volume_throughput", 0))
+                    if self.csp == "gcp":
+                        parameters["local_nvmes"] = int(parameters.get("local_nvmes", 0))
 
                 parameters.pop("instance_capacity", None)
 

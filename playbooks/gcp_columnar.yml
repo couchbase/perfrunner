@@ -1,0 +1,64 @@
+---
+- hosts: couchbase_servers
+  gather_facts: no
+  vars:
+    data_dir: /data
+    disk: /dev/sdb
+  tasks:
+  - name: wait for clients to become reachable
+    wait_for_connection:
+      sleep: 10
+      timeout: 300
+
+  - name: gather facts
+    setup:
+
+  - name: find any non-root NVMe disks
+    shell: lsblk -o NAME,TYPE,FSTYPE -dsnp | awk '/^\/dev\/nvme[0-9]+n[0-9]+/ && $2 == "disk" && $3 == "" {print $1}'
+    register: nvme_disks
+
+  - name: set "disk" as the NVMe disk if there is only one
+    set_fact:
+      disk: "{{ nvme_disks.stdout_lines[0] }}"
+    when: (nvme_disks.stdout_lines | length) == 1
+
+  - name: set up RAID array on NVMe disks, if there are multiple
+    block:
+    - name: create RAID array
+      command: mdadm --create /dev/md0 --level=0 --raid-devices={{ nvme_disks.stdout_lines | length }} {{ nvme_disks.stdout_lines | join(' ') }}
+    - name: set "disk" as the RAID array
+      set_fact:
+        disk: /dev/md0
+    when: (nvme_disks.stdout_lines | length) > 1
+
+  - name: re-creating filesystem
+    filesystem:
+      fstype: "xfs"
+      dev: "{{ disk }}"
+      force: yes
+
+  - name: mounting data parition
+    mount:
+      name: "{{ data_dir }}"
+      state: mounted
+      src: "{{ disk }}"
+      fstype: "xfs"
+
+  - name: creating new "couchbase" group
+    group: name=couchbase
+
+  - name: creating new "couchbase" user
+    user: name=couchbase group=couchbase
+
+  - name: ensuring ownership of "{{ data_dir }}" directory
+    file: path={{ data_dir }} owner=couchbase group=couchbase
+
+  - name: Creates directory
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: couchbase
+      group: couchbase
+    with_items:
+    - /data/data
+    - /data/analytics

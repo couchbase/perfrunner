@@ -1,4 +1,3 @@
-import os
 import random
 import re
 import time
@@ -799,16 +798,22 @@ class DefaultClusterManager(ClusterManagerBase):
         self.remote.clear_system_limit_config()
         self.remote.restart()
 
-    def set_columnar_s3_bucket(self):
-        region = os.environ.get("AWS_REGION", "us-east-1")
-        s3_bucket_name = self.cluster_spec.backup.split("://")[1]
-        self.remote.configure_columnar_s3_bucket(region=region, s3_bucket=s3_bucket_name)
+    def set_columnar_cloud_storage(self):
+        scheme, bucket_name = self.cluster_spec.backup.split("://")
+        region = self.cluster_spec.cloud_region
+        self.remote.configure_columnar_cloud_storage(bucket_name, scheme, region)
 
-    def add_aws_credential(self):
-        access_key_id, secret_access_key = local.get_aws_credential(
-            self.test_config.backup_settings.aws_credential_path, False
-        )
-        self.remote.add_aws_credential(access_key_id, secret_access_key)
+    def add_columnar_cloud_storage_creds(self):
+        if self.cluster_spec.cloud_provider == "aws":
+            access_key_id, secret_access_key = local.get_aws_credential(
+                self.test_config.backup_settings.aws_credential_path, False
+            )
+            self.remote.store_analytics_aws_creds(access_key_id, secret_access_key)
+        elif self.cluster_spec.cloud_provider == "gcp":
+            run_local_shell_command(
+                f"gcloud storage buckets add-iam-policy-binding {self.cluster_spec.backup} "
+                "--member=allUsers --role=roles/storage.objectAdmin"
+            )
 
     def set_columnar_storage_partitions(self):
         storage_partitions = self.test_config.analytics_settings.columnar_storage_partitions
@@ -895,7 +900,7 @@ class DefaultClusterManager(ClusterManagerBase):
             # Settings that MSK Connect needs for creating connectors
             "brokersUrl": ",".join([f"{k}:9092" for k in self.cluster_spec.kafka_brokers]),
             "subnets": ",".join(self.cluster_spec.kafka_broker_subnet_ids),
-            "region": os.environ.get("AWS_REGION", "us-east-1"),
+            "region": self.cluster_spec.cloud_region,
             # Settings for CBAS sink connector
             "couchbaseSeedNodes": ",".join(self.cluster_spec.servers_by_role("cbas")),
             "couchbaseUsername": self.cluster_spec.rest_credentials[0],

@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTest
 
 [showfast]
-title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, CBO (high sample size), Unoptimized Queries
+title = CH2 1000W, 2A, c=11 (standalone collections), analytics-only workload, No CBO, Hand-Optimized Queries
 component = analyticscloud
 category = ch2
 sub_category = {provider}
@@ -11,22 +11,25 @@ sub_category = {provider}
 server_processes = java
 
 [cluster]
-enable_n2n_encryption = all
+mem_quota = 256
+analytics_mem_quota = 12800
+initial_nodes = 2
+num_buckets = 1
+bucket_name = bench
 
 [analytics]
 external_dataset_type = s3
 external_dataset_region = us-east-1
-external_bucket = analytics-ch2-5000w-gz
+external_bucket = analytics-ch2-1000w-gz
 external_file_format = json
 external_file_include = gz
 aws_credential_path = /root/.ssh/
-use_cbo = true
-cbo_sample_size = high
 
 [ch2]
-warehouses = 5000
+warehouses = 1000
 aclients = 1
 tclients = 0
+load_tclients = 48
 iterations = 2
 warmup_iterations = 1
 duration = 0
@@ -34,4 +37,3 @@ warmup_duration = 0
 workload = ch2_analytics
 use_backup = false
 create_gsi_index = false
-unoptimized_queries = true

@@ -1,6 +1,7 @@
 import copy
 import itertools
 import json
+import os
 import random
 import time
 from dataclasses import dataclass
@@ -15,7 +16,7 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import (
-    get_s3_bucket_stats,
+    get_cloud_storage_bucket_stats,
     human_format,
     pretty_dict,
 )
@@ -169,6 +170,12 @@ class AnalyticsTest(PerfTest):
             with open(self.config_file, "r") as f:
                 self.dataset_config = json.load(f)
 
+    def __exit__(self, *args):
+        if self.rest.is_columnar(self.analytics_node) and self.cluster_spec.cloud_infrastructure:
+            self.report_columnar_cloud_storage_stats()
+
+        super().__exit__(*args)
+
     @property
     def is_capella_columnar(self) -> bool:
         return (
@@ -275,6 +282,36 @@ class AnalyticsTest(PerfTest):
             verbose=verbose,
         )
 
+    def create_external_link(self):
+        external_dataset_type = self.analytics_settings.external_dataset_type
+
+        kwargs = {
+            "analytics_node": self.analytics_node,
+            "link_name": "external_link",
+            "link_type": external_dataset_type,
+        }
+
+        if external_dataset_type == "s3":
+            external_dataset_region = self.analytics_settings.external_dataset_region
+            access_key_id, secret_access_key = local.get_aws_credential(
+                self.analytics_settings.aws_credential_path
+            )
+            kwargs |= {
+                "s3_region": external_dataset_region,
+                "s3_access_key_id": access_key_id,
+                "s3_secret_access_key": secret_access_key,
+            }
+        elif external_dataset_type == "gcs":
+            with open(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"), "r") as f:
+                kwargs["gcs_json_creds"] = json.load(f)
+        else:
+            logger.interrupt(
+                "Could not create external link. "
+                f"Perfrunner doesn't support external link type: {external_dataset_type}"
+            )
+
+        self.rest.create_analytics_link(**kwargs)
+
     def sync(self):
         self.disconnect_link()
         self.create_datasets_at_link()
@@ -303,11 +340,16 @@ class AnalyticsTest(PerfTest):
         )
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
-        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
-        self.remote.create_aws_credential(credential)
+        archive = self.test_config.restore_settings.backup_storage
+
+        if archive.startswith("s3://"):
+            credential = local.read_aws_credential(
+                self.test_config.backup_settings.aws_credential_path
+            )
+            self.remote.create_aws_credential(credential)
+
         self.remote.client_drop_caches()
 
-        archive = self.test_config.restore_settings.backup_storage
         if self.test_config.restore_settings.modify_storage_dir_name:
             suffix_repo = "aws"
             if self.cluster_spec.capella_infrastructure:
@@ -336,8 +378,8 @@ class AnalyticsTest(PerfTest):
         else:
             self.restore_local()
 
-    def copy_data_from_s3(self):
-        logger.info("Ingesting data from S3 using COPY FROM")
+    def copy_data_from_object_store(self):
+        logger.info("Ingesting data from cloud object store using COPY FROM")
 
         external_bucket = self.analytics_settings.external_bucket
         file_format = self.analytics_settings.external_file_format
@@ -373,19 +415,26 @@ class AnalyticsTest(PerfTest):
             self.rest.session_post(session, url=url, data=data)
             logger.info(f"Statement execution time: {time.time() - t0}")
 
-    def report_columnar_s3_stats(self):
-        """Report S3 bucket stats for Columnar tests."""
+    def report_columnar_cloud_storage_stats(self):
+        """Report cloud storage bucket stats for Columnar tests."""
         bucket_name = self.rest.get_analytics_settings(self.analytics_node).get("blobStorageBucket")
         if bucket_name is None:
             logger.warning(
-                "No S3 bucket found in analytics settings. Cannot report S3 bucket stats."
+                "No cloud storage bucket found in analytics settings."
+                "Cannot report cloud storage bucket stats."
             )
             return
 
-        objects, size = get_s3_bucket_stats(bucket_name)
+        csp = (
+            self.cluster_spec.capella_backend
+            if self.cluster_spec.capella_infrastructure
+            else self.cluster_spec.cloud_provider
+        )
+        objects, size = get_cloud_storage_bucket_stats(bucket_name, csp)
         if objects > 0:
             logger.info(
-                f"S3 bucket stats: {objects} objects, {size} bytes ({human_format(size, 2)}B)"
+                "Cloud storage bucket stats: "
+                f"{objects} objects, {size} bytes ({human_format(size, 2)}B)"
             )
 
 
@@ -586,21 +635,6 @@ class BigFunQueryNoIndexTest(BigFunQueryTest):
 
 
 class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
-    def set_up_s3_link(self):
-        external_dataset_type = self.analytics_settings.external_dataset_type
-        external_dataset_region = self.analytics_settings.external_dataset_region
-        access_key_id, secret_access_key = local.get_aws_credential(
-            self.analytics_settings.aws_credential_path
-        )
-        self.rest.create_analytics_link(
-            self.analytics_node,
-            "external_link",
-            external_dataset_type,
-            s3_region=external_dataset_region,
-            s3_access_key_id=access_key_id,
-            s3_secret_access_key=secret_access_key,
-        )
-
     @property
     def datasets(self) -> list[DatasetDef]:
         return [
@@ -625,7 +659,7 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
 
     def run(self):
         random.seed(8095)
-        self.set_up_s3_link()
+        self.create_external_link()
         self.create_external_datasets()
 
         logger.info('Running access phase')
@@ -634,13 +668,13 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
         self.report_kpi(results)
 
 
-class ColumnarCopyFromS3Test(BigFunQueryNoIndexExternalTest):
+class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
     COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
 
     @with_stats
     @timeit
-    def copy_data_from_s3(self):
-        super().copy_data_from_s3()
+    def copy_data_from_object_store(self):
+        super().copy_data_from_object_store()
 
     @with_stats
     def access(self) -> list[QueryLatencyPair]:
@@ -658,17 +692,24 @@ class ColumnarCopyFromS3Test(BigFunQueryNoIndexExternalTest):
 
     def report_ingestion_kpi(self, ingestion_time: float):
         if self.test_config.stats_settings.enabled:
-            v, snapshots, metric_info = self.metrics.ingestion_time(ingestion_time, "copy_from_s3")
+            storage_svc = {"aws": "s3", "gcp": "gcs", "azure": "azblob"}[
+                self.cluster_spec.capella_backend
+                if self.cluster_spec.capella_infrastructure
+                else self.cluster_spec.cloud_provider
+            ]
+            v, snapshots, metric_info = self.metrics.ingestion_time(
+                ingestion_time, f"copy_from_{storage_svc}"
+            )
             metric_info["category"] = "sync"
             self.reporter.post(v, snapshots, metric_info)
 
     def run(self):
         random.seed(8095)
 
-        self.set_up_s3_link()
+        self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.copy_data_from_s3()
+        copy_from_time = self.copy_data_from_object_store()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
         self.report_ingestion_kpi(copy_from_time)
 
@@ -676,7 +717,7 @@ class ColumnarCopyFromS3Test(BigFunQueryNoIndexExternalTest):
         self.report_kpi(results)
 
 
-class ColumnarCopyToS3Test(ColumnarCopyFromS3Test):
+class ColumnarCopyToS3Test(ColumnarCopyFromObjectStoreTest):
     @with_stats
     def access(self):
         with open(self.test_config.columnar_copy_to_settings.s3_query_file, "r") as f:
@@ -736,16 +777,16 @@ class ColumnarCopyToS3Test(ColumnarCopyFromS3Test):
     def run(self):
         random.seed(8095)
 
-        self.set_up_s3_link()
+        self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.copy_data_from_s3()
+        copy_from_time = self.copy_data_from_object_store()
         logger.info(f'Total data ingestion time using COPY FROM: {copy_from_time}')
 
         self.access()
 
 
-class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromS3Test):
+class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromObjectStoreTest):
     COLLECTORS = {"ns_server": True, "active_tasks": False, "analytics": True}
 
     @with_stats
@@ -769,10 +810,10 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromS3Test):
             logger.info(f"client-side query response time (s): {latency}")
 
     def run(self):
-        self.set_up_s3_link()
+        self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.copy_data_from_s3()
+        copy_from_time = self.copy_data_from_object_store()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
 
         self.rest.create_analytics_link(
@@ -1108,6 +1149,8 @@ class CH2Test(AnalyticsTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.analytics_statements = self.test_config.ch2_settings.analytics_statements
+        if self.rest.is_columnar(self.analytics_node):
+            self.COLLECTORS |= {"active_tasks": False, "ns_server": False, "secondary_stats": False}
 
     @property
     def datasets(self) -> list[DatasetDef]:
@@ -1419,8 +1462,8 @@ class CH2ColumnarSimulatedPauseResumeTest(CH2RemoteLinkTest):
         self.cluster_spec.set_active_clusters_by_idx([2])
         analytics_node = next(self.cluster_spec.masters)
 
-        self.cluster.set_columnar_s3_bucket()
-        self.cluster.add_aws_credential()
+        self.cluster.set_columnar_cloud_storage()
+        self.cluster.add_columnar_cloud_storage_creds()
 
         self.cluster.tune_logging()
         self.cluster.set_data_path()
@@ -1464,7 +1507,7 @@ class CH2ColumnarSimulatedPauseResumeTest(CH2RemoteLinkTest):
             self.report_kpi()
 
 
-class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
+class CH2ColumnarStandaloneDatasetTest(CH2Test, ColumnarCopyFromObjectStoreTest):
     COLLECTORS = {
         "ns_server": False,
         "ns_server_system": True,
@@ -1477,7 +1520,9 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
         return [DatasetDef(name) for name in self.DATASETS]
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
-        userid, password = self.cluster_spec.capella_admin_credentials[0]
+        userid, password = self.cluster_spec.rest_credentials
+        if self.is_capella_columnar:
+            userid, password = self.capella_admin_credentials[0]
 
         use_tls = self.test_config.cluster.enable_n2n_encryption or self.is_capella_columnar
         port = ANALYTICS_PORT_SSL if use_tls else ANALYTICS_PORT
@@ -1496,12 +1541,12 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
             cherrypick=self.test_config.ch2_settings.cherrypick,
         )
 
-        self.set_up_s3_link()
+        self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
         self.create_analytics_indexes()
 
-        copy_from_time = self.copy_data_from_s3()
+        copy_from_time = self.copy_data_from_object_store()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
         self.report_ingestion_kpi(copy_from_time)
 
@@ -1511,7 +1556,6 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
     def benchmark(self):
         self.run_ch2()
         self.report_kpi()
-        self.report_columnar_s3_stats()
 
     def run(self):
         self.setup()
@@ -1608,8 +1652,6 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
         self.run_ch2()
         self.report_kpi()
 
-        self.report_columnar_s3_stats()
-
 
 class CapellaColumnarManualOnOffTest(PerfTest):
     def __init__(self, *args, **kwargs):
@@ -1671,7 +1713,7 @@ class CapellaColumnarManualOnOffTest(PerfTest):
 
 
 class CH2CapellaColumnarUnlimitedStorageTest(
-    CH2CapellaColumnarAnalyticsOnlyTest, CapellaColumnarManualOnOffTest
+    CH2ColumnarStandaloneDatasetTest, CapellaColumnarManualOnOffTest
 ):
     def run(self):
         self.setup()
@@ -1679,7 +1721,7 @@ class CH2CapellaColumnarUnlimitedStorageTest(
         if not self.test_config.columnar_settings.unlimited_storage_skip_baseline:
             super().benchmark()
         else:
-            self.report_columnar_s3_stats()
+            self.report_columnar_cloud_storage_stats()
 
         self.instance_id = self.cluster_spec.controlplane_settings["columnar_ids"].split()[0]
 
@@ -1719,7 +1761,6 @@ class CH2CapellaColumnarUnlimitedStorageTest(
         self.run_ch2(log_file=log_file, ch2_settings=ch2_settings)
 
         self.report_kpi(log_file=log_file, extra_metric_id_suffix="post_resume")
-        self.report_columnar_s3_stats()
 
 
 class CH2ColumnarKafkaLinksIngestionTest(CH2Test):

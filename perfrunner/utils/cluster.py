@@ -123,8 +123,8 @@ def main():
     if cm.cluster_spec.columnar_infrastructure:
         if cm.cluster_spec.infrastructure_kafka_clusters:
             cm.set_kafka_links_settings()
-        cm.set_columnar_s3_bucket()
-        cm.add_aws_credential()
+        cm.set_columnar_cloud_storage()
+        cm.add_columnar_cloud_storage_creds()
         cm.set_columnar_storage_partitions()
 
     cm.disable_wan()
@@ -159,7 +159,9 @@ def main():
     cm.set_magma_min_quota()
     cm.serverless_throttle()
 
-    if cm.test_config.cluster.num_buckets:
+    if need_buckets := (
+        not cm.cluster_spec.columnar_infrastructure and cm.test_config.cluster.num_buckets
+    ):
         cm.create_buckets()
         cm.create_eventing_buckets()
         cm.create_eventing_metadata_bucket()
@@ -173,10 +175,11 @@ def main():
     cm.set_min_tls_version()
     cm.set_cipher_suite()
     cm.wait_until_healthy()
-    cm.wait_until_warmed_up()
+    if need_buckets:
+        cm.wait_until_warmed_up()
     cm.disable_ui_http()
 
-    if cm.test_config.collection.collection_map:
+    if need_buckets and cm.test_config.collection.collection_map:
         cm.create_collections()
 
     if cm.test_config.cluster.enable_query_awr:

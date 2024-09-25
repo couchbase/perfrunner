@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2CapellaColumnarAnalyticsOnlyTest
+test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTest
 
 [showfast]
 title = CH2 1000W, 4A, c=11 (standalone collections), analytics-only workload, No CBO, Hand-Optimized Queries, Analytics Indexes

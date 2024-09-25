@@ -57,7 +57,14 @@ SERVER_RELEASE_LOCATIONS = (
 )
 
 COLUMNAR_LOCATIONS = (
-    f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-columnar/1.0.0/{{build}}/",
+    *(
+        f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-columnar/{codename}/{{build}}/"
+        for codename in (
+            "ionic",
+            "goldfish",
+            "1.0.0",
+        )
+    ),
     f"{LATESTBUILDS_BASE_URL}/latestbuilds/capella-analytics/1.0.0/{{build}}/",
 )
 
@@ -101,6 +108,7 @@ Build = namedtuple('Build', ['filename', 'url'])
 
 
 def download_file(url: str, filename: str):
+    logger.info(f"Downloading {url} to {filename}")
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with open(filename, 'wb') as f:
@@ -677,17 +685,25 @@ class CloudInstaller(CouchbaseInstaller):
         package_name = f'couchbase.{self.remote.package}'
 
         if self.options.remote_copy:
-            url = self.url
-            if self.options.local_copy_url:
-                url = self.options.local_copy_url
-                logger.info(f'Saving a local url {url}')
-            elif 'aarch64' in self.url:
-                url = self.url.replace('aarch64', 'x86_64')
-                logger.info(f'Saving a local copy of x86_64 {url}')
+            for url in (self.options.couchbase_version, self.options.local_copy_url):
+                if url and validators.url(url):
+                    logger.info("Checking if provided package URL is valid.")
+                    if url_exist(url):
+                        client_package_url = url
+                        break
+                    logger.interrupt(f"Invalid URL: {url}")
             else:
-                logger.info(f'Saving a local copy of {url}')
+                client_package_url = self.find_package(
+                    edition=self.options.edition,
+                    package="deb",
+                    os_name="ubuntu",
+                    os_version="20.04",
+                    arch="x86_64",
+                )
 
-            download_file(url, package_name)
+            logger.info(f"Saving a local copy of {client_package_url} to upload to remote clients.")
+
+            download_file(client_package_url, package_name)
 
             uploads = []
             for client in self.cluster_spec.workers:

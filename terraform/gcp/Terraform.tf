@@ -12,13 +12,14 @@ variable "uuid" {
 
 variable "cluster_nodes" {
   type = map(object({
-    node_group    = string
-    image         = string
-    instance_type = string
-    storage_class = string
-    volume_size   = number
-    iops          = number
-    local_nvmes   = number
+    node_group        = string
+    image             = string
+    instance_type     = string
+    storage_class     = string
+    volume_size       = number
+    iops              = number
+    volume_throughput = number
+    local_nvmes       = number
   }))
 }
 
@@ -165,13 +166,18 @@ resource "google_compute_instance" "cluster_instance" {
   boot_disk {
     initialize_params {
       size = "50"
-      type = "pd-balanced"
       image = each.value.image
     }
   }
 
-  attached_disk {
-    source = google_compute_disk.cluster-disk[each.key].id
+  dynamic "attached_disk"{
+    for_each = (
+      try(google_compute_disk.cluster-disk[each.key].id, null) != null
+    ) ? [google_compute_disk.cluster-disk[each.key].id] : []
+
+    content {
+      source = attached_disk.value
+    }
   }
 
   dynamic "scratch_disk" {
@@ -195,12 +201,13 @@ resource "google_compute_instance" "cluster_instance" {
 }
 
 resource "google_compute_disk" "cluster-disk" {
-  for_each = var.cluster_nodes
+  for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
 
-  name             = "cluster-data-disk-${each.key}-${var.uuid}"
-  type             = lower(each.value.storage_class)
-  size             = each.value.volume_size
-  provisioned_iops = each.value.iops > 0 ? each.value.iops : null
+  name                   = "cluster-data-disk-${each.key}-${var.uuid}"
+  type                   = lower(each.value.storage_class)
+  size                   = each.value.volume_size
+  provisioned_iops       = each.value.iops > 0 ? each.value.iops : null
+  provisioned_throughput = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
   labels = {
     deployment = var.global_tag != "" ? var.global_tag : null
   }
@@ -228,8 +235,14 @@ resource "google_compute_instance" "client_instance" {
     }
   }
 
-  attached_disk {
-    source = google_compute_disk.client-disk[each.key].id
+  dynamic "attached_disk"{
+    for_each = (
+      try(google_compute_disk.client-disk[each.key].id, null) != null
+    ) ? [google_compute_disk.client-disk[each.key].id] : []
+
+    content {
+      source = attached_disk.value
+    }
   }
 
   network_interface {
@@ -246,7 +259,7 @@ resource "google_compute_instance" "client_instance" {
 }
 
 resource "google_compute_disk" "client-disk" {
-  for_each = var.client_nodes
+  for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
 
   name             = "client-data-disk-${each.key}-${var.uuid}"
   type             = lower(each.value.storage_class)
@@ -280,9 +293,12 @@ resource "google_compute_instance" "utility_instance" {
   }
 
   dynamic "attached_disk"{
-    for_each = lookup(google_compute_disk.utility-disk, each.key, null) != null ? [google_compute_disk.utility-disk[each.key]] : []
+    for_each = (
+      try(google_compute_disk.utility-disk[each.key].id, null) != null
+    ) ? [google_compute_disk.utility-disk[each.key].id] : []
+
     content {
-      source = attached_disk.value["id"]
+      source = attached_disk.value
     }
   }
 
@@ -333,8 +349,14 @@ resource "google_compute_instance" "syncgateway_instance" {
     }
   }
 
-  attached_disk {
-    source = google_compute_disk.syncgateway-disk[each.key].id
+  dynamic "attached_disk"{
+    for_each = (
+      try(google_compute_disk.syncgateway-disk[each.key].id, null) != null
+    ) ? [google_compute_disk.syncgateway-disk[each.key].id] : []
+
+    content {
+      source = attached_disk.value
+    }
   }
 
   network_interface {
@@ -351,7 +373,7 @@ resource "google_compute_instance" "syncgateway_instance" {
 }
 
 resource "google_compute_disk" "syncgateway-disk" {
-  for_each = var.syncgateway_nodes
+  for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
 
   name             = "syncgateway-data-disk-${each.key}-${var.uuid}"
   type             = lower(each.value.storage_class)

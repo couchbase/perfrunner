@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.ColumnarCopyFromS3Test
+test = perfrunner.tests.analytics.ColumnarCopyFromObjectStoreTest
 
 [showfast]
 title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, AWS, Columnar, COPY FROM S3, gz

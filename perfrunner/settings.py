@@ -91,15 +91,19 @@ class ClusterSpec(Config):
         return self.cloud_infrastructure and self.kubernetes_infrastructure
 
     @property
-    def cloud_infrastructure(self):
+    def cloud_infrastructure(self) -> bool:
         return 'infrastructure' in self.config.sections()
 
     @property
-    def cloud_provider(self):
+    def cloud_provider(self) -> str:
         return self.config.get('infrastructure', 'provider', fallback='')
 
     @property
-    def capella_backend(self):
+    def cloud_region(self) -> str:
+        return self.config.get("infrastructure", "region", fallback="")
+
+    @property
+    def capella_backend(self) -> str:
         return self.config.get('infrastructure', 'backend', fallback='')
 
     @property
@@ -696,25 +700,21 @@ class ClusterSpec(Config):
             if not self.config.has_section('cluster_instance_ids'):
                 self.config.add_section('cluster_instance_ids')
 
-            region = os.environ.get('AWS_REGION', 'us-east-1')
-
             for cluster_name, hosts in self.clusters:
                 iids = []
                 for host in hosts:
-                    iid = self.get_aws_iid(host, region)
-                    logger.info('Instance ID for {}: {}'.format(host, iid))
+                    iid = self.get_aws_iid(host, self.cloud_region)
+                    logger.info("Instance ID for {}: {}".format(host, iid))
                     iids.append(iid)
-                self.config.set('cluster_instance_ids', cluster_name, '\n' + '\n'.join(iids))
+                self.config.set("cluster_instance_ids", cluster_name, "\n" + "\n".join(iids))
             self.update_spec_file()
 
     def set_nebula_instance_ids(self) -> None:
-        if self.capella_backend == 'aws':
-            logger.info('Getting Nebula instance IDs')
+        if self.capella_backend == "aws":
+            logger.info("Getting Nebula instance IDs")
 
-            if not self.config.has_section('nebula_instance_ids'):
-                self.config.add_section('nebula_instance_ids')
-
-            region = os.environ.get('AWS_REGION', 'us-east-1')
+            if not self.config.has_section("nebula_instance_ids"):
+                self.config.add_section("nebula_instance_ids")
 
             command_template = (
                 "ec2 describe-instances --region {} "
@@ -722,7 +722,7 @@ class ClusterSpec(Config):
                 '"Name=tag:couchbase-cloud-dataplane-id,Values={}" '
                 '--query "Reservations[].Instances[].InstanceId" '
                 "--output text"
-            ).format(region, self.controlplane_settings["dataplane_id"])
+            ).format(self.cloud_region, self.controlplane_settings["dataplane_id"])
 
             stdout = run_aws_cli_command(command_template, 'couchbase-cloud-nebula')
             dn_iids = stdout.split()
@@ -740,8 +740,7 @@ class ClusterSpec(Config):
         if not self.config.has_section('sgw_instance_ids'):
             self.config.add_section('sgw_instance_ids')
 
-        if self.capella_backend == 'aws':
-            region = os.environ.get('AWS_REGION', 'us-east-1')
+        if self.capella_backend == "aws":
             command_template = (
                 'ec2 describe-instances --region {} '
                 '--filters "Name=tag-key,Values=couchbase-cloud-syncgateway-id" '
@@ -750,7 +749,7 @@ class ClusterSpec(Config):
                 '--output text'
             )
             stdout = run_aws_cli_command(
-                command_template, region, self.controlplane_settings["cluster_ids"]
+                command_template, self.cloud_region, self.controlplane_settings["cluster_ids"]
             )
             sgids = stdout.split()
             logger.info("Found Instance IDs for sgw: {}".format(', '.join(sgids)))

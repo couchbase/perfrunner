@@ -322,18 +322,27 @@ def lookup_address(address: Union[bytes, str], port: Union[bytes, str, int] = No
     return [entry[-1][0] for entry in entries]
 
 
-def get_s3_bucket_stats(bucket_name: str) -> tuple[int, int]:
-    """Return the number of objects and total size in bytes of an S3 bucket.
+def get_cloud_storage_bucket_stats(bucket_name: str, csp: str) -> tuple[int, int]:
+    """Return (number of objects, total size in bytes) for a cloud storage bucket.
 
     Returns (-1, -1) on failure to get stats.
     """
-    logger.info(f"Getting stats for S3 bucket: {bucket_name}")
-    stdout = run_aws_cli_command(f"s3 ls s3://{bucket_name} --recursive --summarize | tail -2")
-    if stdout is not None:
-        objects, size = [int(line.split()[-1]) for line in stdout.splitlines()]
-        return objects, size
+    prefix = {"aws": "s3", "gcp": "gs", "azure": "az"}[csp.lower()]
+    fq_bucket_name = f"{prefix}://{bucket_name}"
+    logger.info(f"Getting stats for {fq_bucket_name}")
+    if csp.lower() == "aws":
+        stdout = run_aws_cli_command(f"s3 ls {fq_bucket_name} --recursive --summarize | tail -2")
+        if stdout is not None:
+            return tuple(int(line.split()[-1]) for line in stdout.splitlines()[:2])
+    elif csp.lower() == "gcp":
+        stdout, _, rc = run_local_shell_command(
+            f"gcloud storage du {fq_bucket_name} | "
+            "awk 'BEGIN {{c=0;s=0}} !/\\/$/ {{c+=1;s+=$1}} END {{print c, s}}'"
+        )
+        if rc == 0:
+            return tuple(int(n) for n in stdout.split()[:2])
 
-    logger.error(f"Failed to get stats for S3 bucket: {bucket_name}")
+    logger.error(f"Failed to get stats for {fq_bucket_name}")
     return -1, -1
 
 

@@ -1372,24 +1372,28 @@ class RemoteLinux(Remote):
         run('systemctl daemon-reload')
 
     @master_server
-    def configure_columnar_s3_bucket(
-        self, region: str = "us-east-1", s3_bucket: str = "cb-perf-columnar"
+    def configure_columnar_cloud_storage(
+        self, bucket_name: str = "cb-perf-columnar", scheme: str = "s3", region: str = "us-east-1"
     ):
         logger.info(
-            "Configuring Columnar S3 bucket. Bucket name: {}, region: {}".format(s3_bucket, region)
+            "Configuring Columnar cloud storage bucket. "
+            f"Bucket name: {bucket_name}, region: {region}, scheme: {scheme}"
         )
-        command = ("curl --max-time 3 --retry 3 --retry-connrefused "
-                   "--request POST "
-                   "--url http://localhost:8091/settings/analytics "
-                   "--header 'Content-Type: application/x-www-form-urlencoded' "
-                   "--data blobStorageRegion={} "
-                   "--data blobStoragePrefix= "
-                   "--data blobStorageBucket={} "
-                   "--data blobStorageScheme=s3").format(region, s3_bucket)
+        command = (
+            "curl --max-time 3 --retry 3 --retry-connrefused "
+            "--request POST "
+            "--url http://localhost:8091/settings/analytics "
+            "--header 'Content-Type: application/x-www-form-urlencoded' "
+            f"--data blobStorageRegion={region} "
+            "--data blobStoragePrefix= "
+            f"--data blobStorageBucket={bucket_name} "
+            f"--data blobStorageScheme={scheme} "
+            f"--data blobStorageAnonymousAuth=false"
+        )
         run(command)
 
     @all_servers
-    def add_aws_credential(self, access_key_id: str, secret_access_key: str):
+    def store_analytics_aws_creds(self, access_key_id: str, secret_access_key: str):
         access_key_url = \
             "http://localhost:8091/_metakv/cbas/debug/settings/blob_storage_access_key_id"
         secret_access_key_url = \

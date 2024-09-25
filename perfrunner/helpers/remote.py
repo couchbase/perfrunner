@@ -19,6 +19,7 @@ class RemoteHelper:
             return RemoteKubernetes(cluster_spec)
 
         state.env.user, state.env.password = cluster_spec.ssh_credentials
+        state.env.disable_known_hosts = True
         state.output.running = verbose
         state.output.stdout = verbose
 

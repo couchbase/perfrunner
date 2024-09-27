@@ -1544,7 +1544,7 @@ class Monitor:
         instance_id: str,
         end_state: str,
         temp_state: str,
-        state_func: Callable[[dict], Optional[str]],
+        state_func: Optional[Callable[[dict], Optional[str]]] = None,
         state_object: Optional[str] = None,
         poll_interval_secs: Optional[int] = None,
         timeout_secs: Optional[int] = None,

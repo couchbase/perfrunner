@@ -436,7 +436,9 @@ class BigFunSyncTest(BigFunTest):
         self.wait_for_persistence()
 
         if self.analytics_link != "Local":
-            self.rest.create_remote_link(self.analytics_node, self.data_node, self.analytics_link)
+            self.rest.create_analytics_link(
+                self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+            )
 
         sync_time = self.sync()
 
@@ -545,18 +547,20 @@ class BigFunQueryNoIndexTest(BigFunQueryTest):
 
 
 class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
-
     def set_up_s3_link(self):
-        rest_username, rest_password = self.cluster_spec.rest_credentials
         external_dataset_type = self.analytics_settings.external_dataset_type
         external_dataset_region = self.analytics_settings.external_dataset_region
-        access_key_id, secret_access_key =\
-            local.get_aws_credential(self.analytics_settings.aws_credential_path)
-        baseurl = self.rest._get_api_url(self.analytics_node, '',
-                                         ANALYTICS_PORT, ANALYTICS_PORT_SSL)
-        local.set_up_s3_link(rest_username, rest_password, baseurl,
-                             external_dataset_type, external_dataset_region,
-                             access_key_id, secret_access_key)
+        access_key_id, secret_access_key = local.get_aws_credential(
+            self.analytics_settings.aws_credential_path
+        )
+        self.rest.create_analytics_link(
+            self.analytics_node,
+            "external_link",
+            external_dataset_type,
+            s3_region=external_dataset_region,
+            s3_access_key_id=access_key_id,
+            s3_secret_access_key=secret_access_key,
+        )
 
     @property
     def datasets(self) -> list[DatasetDef]:
@@ -732,7 +736,9 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromS3Test):
         copy_from_time = self.copy_data_from_s3()
         logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
 
-        self.rest.create_remote_link(self.analytics_node, self.data_node, self.analytics_link)
+        self.rest.create_analytics_link(
+            self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+        )
         self.connect_link()
 
         self.access()
@@ -850,7 +856,9 @@ class BigFunConnectTest(BigFunTest):
         self.wait_for_persistence()
 
         if self.analytics_link != "Local":
-            self.rest.create_remote_link(self.analytics_node, self.data_node, self.analytics_link)
+            self.rest.create_analytics_link(
+                self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+            )
 
         self.sync()
 
@@ -1317,7 +1325,9 @@ class CH2RemoteLinkTest(CH2Test):
 
     @with_stats
     def sync(self) -> float:
-        self.rest.create_remote_link(self.analytics_node, self.data_node, self.analytics_link)
+        self.rest.create_analytics_link(
+            self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+        )
         sync_time = super().sync()
         self.report_sync_kpi(sync_time)
 

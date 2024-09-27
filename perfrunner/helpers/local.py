@@ -1581,24 +1581,6 @@ def kill_cblite():
         local(cmd)
 
 
-def set_up_s3_link(username: str, password: str, baseurl: str, external_dataset_type: str,
-                   external_dataset_region: str, access_key: str, secret_access_key: str):
-    logger.info('Create analytics external link')
-
-    cmd = "curl -v -k -u {}:{} " \
-          "-X POST {}/analytics/link " \
-          "-d dataverse=Default " \
-          "-d name=external_link " \
-          "-d type={} " \
-          "-d region={} " \
-          "-d accessKeyId={} " \
-          "--data-urlencode secretAccessKey={}".format(username, password, baseurl.strip('/'),
-                                                       external_dataset_type,
-                                                       external_dataset_region,
-                                                       access_key, secret_access_key)
-    local(cmd)
-
-
 def create_javascript_udf(node, udflib, user, password, security):
     logger.info('Create Javascript UDF function')
     cmd = "curl -k -v -X POST " \

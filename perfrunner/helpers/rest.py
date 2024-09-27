@@ -1122,18 +1122,21 @@ class DefaultRestHelper(RestBase):
         # So we just return the single list element
         return resp.json()[0]
 
-    def create_remote_link(
+    def create_analytics_link(
         self,
         analytics_node: str,
-        data_node: str,
         link_name: str,
-        data_node_username: Optional[str] = None,
-        data_node_password: Optional[str] = None,
+        link_type: str,
+        dataverse: str = "Default",
+        cb_data_node: Optional[str] = None,
+        cb_data_node_user: Optional[str] = None,
+        cb_data_node_pwd: Optional[str] = None,
+        s3_region: str = "us-east-1",
+        s3_access_key_id: Optional[str] = None,
+        s3_secret_access_key: Optional[str] = None,
+        gcs_json_creds: Optional[dict] = None,
     ):
-        logger.info(
-            f"Creating analytics remote link '{link_name}' "
-            f"between {analytics_node} (analytics) and {data_node} (data)"
-        )
+        logger.info(f"Creating analytics {link_type} link '{link_name}' in dataverse '{dataverse}'")
 
         url = self._get_api_url(
             host=analytics_node,
@@ -1142,24 +1145,39 @@ class DefaultRestHelper(RestBase):
             ssl_port=ANALYTICS_PORT_SSL,
         )
 
-        default_auth = self._set_auth()
-
         params = {
-            "dataverse": "Default",
+            "dataverse": dataverse,
             "name": link_name,
-            "type": "couchbase",
-            "hostname": f"{data_node}:{REST_PORT_SSL if self.use_tls else REST_PORT}",
-            "username": data_node_username or default_auth[0],
-            "password": data_node_password or default_auth[1],
-            "encryption": "none",
+            "type": link_type,
         }
 
-        if url.startswith("https"):
-            with open("root.pem", "r") as f:
-                params |= {
-                    "encryption": "full",
-                    "certificate": f.read(),
-                }
+        if link_type == "couchbase":
+            logger.info(
+                f"Creating link between {analytics_node} (analytics) and {cb_data_node} (data)"
+            )
+            default_auth = self._set_auth()
+            params |= {
+                "hostname": f"{cb_data_node}:{REST_PORT_SSL if self.use_tls else REST_PORT}",
+                "username": cb_data_node_user or default_auth[0],
+                "password": cb_data_node_pwd or default_auth[1],
+                "encryption": "none",
+            }
+            if url.startswith("https"):
+                with open("root.pem", "r") as f:
+                    params |= {
+                        "encryption": "full",
+                        "certificate": f.read(),
+                    }
+        elif link_type == "s3":
+            params |= {
+                "region": s3_region,
+                "accessKeyId": s3_access_key_id,
+                "secretAccessKey": s3_secret_access_key,
+            }
+        elif link_type == "gcs":
+            params |= {
+                "jsonCredentials": json.dumps(gcs_json_creds),
+            }
 
         resp = self.post(url=url, data=params)
         resp.raise_for_status()

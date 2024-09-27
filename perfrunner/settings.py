@@ -570,7 +570,7 @@ class ClusterSpec(Config):
     @property
     def client_credentials(self) -> tuple[str, str]:
         if creds := self.config.get("clients", "credentials", fallback=""):
-            return tuple(creds.split(":")) if ":" in creds else ("", "")
+            return self._creds_tuple(creds)
         else:
             return self.ssh_credentials
 
@@ -599,22 +599,26 @@ class ClusterSpec(Config):
     def backup(self) -> Optional[str]:
         return self.config.get('storage', 'backup', fallback=None)
 
+    @staticmethod
+    def _creds_tuple(creds: str) -> tuple[str, str]:
+        """Turn a string like "<user>:<pwd>" into a tuple (<user>, <pwd>)."""
+        return tuple(creds.split(":")) if ":" in creds else ("", "")
+
     @property
-    def rest_credentials(self) -> list[str]:
-        return self.config.get('credentials', 'rest').split(':')
+    def rest_credentials(self) -> tuple[str, str]:
+        return self._creds_tuple(self.config.get("credentials", "rest", fallback=""))
 
     @property
     def capella_admin_credentials(self) -> list[tuple[str, str]]:
         return [
-            tuple(creds.split(":")) if ":" in creds else ("", "")
+            self._creds_tuple(creds)
             for i, creds in enumerate(self.config.get("credentials", "admin", fallback="").split())
             if i not in self.inactive_cluster_idxs
         ]
 
     @property
     def ssh_credentials(self) -> tuple[str, str]:
-        creds = self.config.get("credentials", "ssh", fallback="")
-        return tuple(creds.split(":")) if ":" in creds else ("", "")
+        return self._creds_tuple(self.config.get("credentials", "ssh", fallback=""))
 
     @property
     def aws_key_name(self) -> list[str]:

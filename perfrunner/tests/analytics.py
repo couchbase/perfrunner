@@ -1422,7 +1422,7 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
         return [DatasetDef(name) for name in self.DATASETS]
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
-        userid, password = self.cluster_spec.rest_credentials
+        userid, password = self.cluster_spec.capella_admin_credentials[0]
 
         use_tls = self.test_config.cluster.enable_n2n_encryption or self.is_capella_columnar
         port = ANALYTICS_PORT_SSL if use_tls else ANALYTICS_PORT

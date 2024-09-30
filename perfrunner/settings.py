@@ -2972,6 +2972,17 @@ class CH2ConnectionSettings:
         return " ".join(flags)
 
 
+class CH2Schema(Enum):
+    CH2 = "ch2"  # Original CH2 with mostly flat schema
+    CH2P = "ch2p"  # CH2+: More nested than CH2, no extra, unused fields. "Between" CH2 and CH2++
+    CH2PP = "ch2pp"  # CH2++: More nested than CH2+ with tunable number of extra, unused fields
+
+    @classmethod
+    def _missing_(cls, value) -> "CH2Schema":
+        logger.warning(f"Invalid CH2 schema: '{value}'. Using default.")
+        return cls.CH2
+
+
 class CH2:
     REPO = "https://github.com/couchbaselabs/ch2.git"
     BRANCH = "main"
@@ -2993,6 +3004,9 @@ class CH2:
     TXTIMEOUT_SECS = 3
     USE_UNOPTIMIZED_QUERIES = "false"
     IGNORE_SKIP_INDEX_HINTS = "false"
+    CUSTOMER_EXTRA_FIELDS = 128
+    ORDERS_EXTRA_FIELDS = 128
+    ITEM_EXTRA_FIELDS = 128
 
     def __init__(self, options: dict):
         self.repo = options.get("repo", self.REPO)
@@ -3018,6 +3032,12 @@ class CH2:
         self.ignore_skip_index_hints = maybe_atoi(
             options.get("ignore_skip_index_hints", self.IGNORE_SKIP_INDEX_HINTS)
         )
+        self.schema = CH2Schema(schema) if (schema := options.get("schema")) else CH2Schema.CH2
+        self.customer_extra_fields = int(
+            options.get("customer_extra_fields", self.CUSTOMER_EXTRA_FIELDS)
+        )
+        self.orders_extra_fields = int(options.get("orders_extra_fields", self.ORDERS_EXTRA_FIELDS))
+        self.item_extra_fields = int(options.get("item_extra_fields", self.ITEM_EXTRA_FIELDS))
 
         self.raw_analytics_statements = options.get(
             "analytics_statements", self.ANALYTICS_STATEMENTS
@@ -3047,8 +3067,9 @@ class CH2:
             else None,
             f"--txtimeout {self.txtimeout}",
             "--no-load",
-            "--unoptimized_queries" if self.unoptimized_queries else None,
+            "--nonOptimizedQueries" if self.unoptimized_queries else None,
             "--ignore-skip-index-hints" if self.ignore_skip_index_hints else None,
+            f"--{self.schema.value}" if self.schema is not CH2Schema.CH2 else None,
         ]
         return " ".join(filter(None, flags))
 
@@ -3061,6 +3082,16 @@ class CH2:
             f"--tclients {self.load_tclients}",
             "--no-execute",
             f"--{self.load_mode}",
+            f"--{self.schema.value}" if self.schema is not CH2Schema.CH2 else None,
+            f"--customerExtraFields {self.customer_extra_fields}"
+            if self.schema is CH2Schema.CH2PP
+            else None,
+            f"--ordersExtraFields {self.orders_extra_fields}"
+            if self.schema is CH2Schema.CH2PP
+            else None,
+            f"--itemExtraFields {self.item_extra_fields}"
+            if self.schema is CH2Schema.CH2PP
+            else None,
         ]
         return " ".join(filter(None, flags))
 
@@ -3086,6 +3117,8 @@ class CH3(CH2):
 
     def __init__(self, options: dict):
         super().__init__(options)
+        self.schema = CH2Schema.CH2
+        self.unoptimized_queries = False
         self.fclients = int(options.get("fclients", self.FCLIENTS))
 
     def __str__(self) -> str:

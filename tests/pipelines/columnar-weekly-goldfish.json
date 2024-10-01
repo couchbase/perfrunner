@@ -1,11 +1,13 @@
 {
-    "AWS_CH2": [
+    "AWS_CH2_1": [
         {"job": "ColumnarAWSWeekly", "cluster": "capella_aws_4columnar_0c_m7gd_2xlarge.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_s3_no_cbo_no_index_unlimited_storage.test", "groups": "P0"},
-        {"job": "ColumnarAWSWeekly", "cluster": "capella_aws_4columnar_0c_m7gd_2xlarge.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_s3_cbo_with_index_3_aclients.test", "groups": "P0"},
-
+        {"job": "ColumnarAWSWeekly", "cluster": "capella_aws_4columnar_0c_m7gd_2xlarge.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_s3_cbo_with_index_3_aclients.test", "groups": "P0"}
+    ],
+    "AWS_CH2_2": [
         {"job": "ColumnarAWSWeekly2", "cluster": "capella_aws_4s_4columnar_1c_m7gd_2xlarge_kv.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_remote_link_cbo_with_index.test", "groups": "P0"},
-        {"job": "ColumnarAWSWeekly2", "cluster": "capella_aws_4columnar_0c_m7gd_2xlarge.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_s3_cbo_with_index.test", "groups": "P0"},
-
+        {"job": "ColumnarAWSWeekly2", "cluster": "capella_aws_4columnar_0c_m7gd_2xlarge.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_s3_cbo_with_index.test", "groups": "P0"}
+    ],
+    "AWS_CH2_3": [
         {"job": "ColumnarAWSWeekly3", "cluster": "capella_aws_4columnar_0c_m7gd_2xlarge.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_s3_no_cbo_with_index.test", "groups": "P0"},
         {"job": "ColumnarAWSWeekly3", "cluster": "capella_aws_8columnar_0c_m7gd_2xlarge.spec", "test_config": "cloud/analytics/ch2_capella_columnar_8n_5000w_s3_cbo_with_index.test", "groups": "P0"},
         {"job": "ColumnarAWSWeekly3", "cluster": "capella_aws_4columnar_0c_m7gd_2xlarge.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_s3_cbo_no_index.test", "groups": "P0"}

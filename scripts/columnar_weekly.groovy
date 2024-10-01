@@ -1,4 +1,4 @@
-currentBuild.description = params.version
+currentBuild.description = params.columnar_ami
 
 def testCases = [:]
 
@@ -52,10 +52,22 @@ pipeline {
         }
         stage('Weekly') {
             parallel {
-                stage('AWS_CH2') {
+                stage('AWS_CH2_1') {
                     when { expression { return params.AWS_CH2 } }
                     steps {
-                        buildComponent('AWS_CH2', testCases)
+                        buildComponent('AWS_CH2_1', testCases)
+                    }
+                }
+                stage('AWS_CH2_2') {
+                    when { expression { return params.AWS_CH2 } }
+                    steps {
+                        buildComponent('AWS_CH2_2', testCases)
+                    }
+                }
+                stage('AWS_CH2_3') {
+                    when { expression { return params.AWS_CH2 } }
+                    steps {
+                        buildComponent('AWS_CH2_3', testCases)
                     }
                 }
             }

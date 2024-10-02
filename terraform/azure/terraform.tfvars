@@ -11,3 +11,5 @@ syncgateway_nodes = <SYNCGATEWAY_NODES>
 cloud_storage = <CLOUD_STORAGE>
 
 global_tag = <GLOBAL_TAG>
+
+managed_id = <MANAGED_ID>

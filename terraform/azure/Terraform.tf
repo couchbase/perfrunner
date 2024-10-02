@@ -67,6 +67,10 @@ variable "global_tag" {
   type = string
 }
 
+variable "managed_id" {
+  type = string
+}
+
 data "azurerm_shared_image_version" "cluster-image" {
   for_each = var.cluster_nodes
 
@@ -539,7 +543,7 @@ resource "azurerm_virtual_machine" "perf-cluster-vm" {
 
   identity {
     type = "UserAssigned"
-    identity_ids = ["/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/perfrunner-mi"]
+    identity_ids = [var.managed_id]
   }
 
   storage_os_disk {
@@ -581,7 +585,7 @@ resource "azurerm_virtual_machine" "perf-client-vm" {
 
   identity {
     type = "UserAssigned"
-    identity_ids = ["/subscriptions/a5c0936c-5cec-4c8c-85e1-97f5cab644d9/resourceGroups/perf-resources-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/perfrunner-mi"]
+    identity_ids = [var.managed_id]
   }
 
   storage_os_disk {

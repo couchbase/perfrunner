@@ -271,6 +271,19 @@ class CloudVMDeployer:
 
         return tfvar_nodes
 
+    def _get_managed_id(self) -> str:
+        """Return Azure managed identity id based on the active subscription."""
+        if self.csp != "azure":
+            return ""
+
+        stdout, _, returncode = run_local_shell_command(
+            "az identity show --name perfrunner-mi --resource-group perf-resources-eastus",
+            err_msg="Failed to get managed identity 'perfrunner-mi' in the current subscription",
+        )
+        if returncode != 0:
+            return ""
+        return json.loads(stdout).get("id", "").replace("/resourcegroups/", "/resourceGroups/")
+
     def populate_tfvars(self) -> bool:
         logger.info("Setting tfvars")
         global_tag = self.options.tag if self.options.tag else ''
@@ -284,6 +297,7 @@ class CloudVMDeployer:
             logger.warn('Nothing to deploy with Terraform.')
             return False
 
+        managed_id = self._get_managed_id()
         replacements = {
             "<CLOUD_REGION>": self.region,
             "<CLOUD_ZONE>": self.zone or "",
@@ -295,6 +309,7 @@ class CloudVMDeployer:
             "<CLOUD_STORAGE>": self.cloud_storage,
             "<GLOBAL_TAG>": global_tag,
             "<UUID>": self.uuid,
+            "<MANAGED_ID>": managed_id,
         }
 
         with open(f"terraform/{self.csp}/terraform.tfvars", "r+") as tfvars:

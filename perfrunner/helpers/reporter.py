@@ -59,6 +59,7 @@ class ShowFastReporter(Reporter):
             'component': component,
             'category': category,
             'subCategory': sub_category,
+            'hidden': False,
         })
 
         logger.info('Adding a metric: {}'.format(pretty_dict(metric)))

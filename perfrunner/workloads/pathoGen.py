@@ -95,13 +95,20 @@ import multiprocessing
 import random
 import time
 
-from couchbase.auth import PasswordAuthenticator
-from couchbase.cluster import Cluster
-from couchbase.exceptions import TemporaryFailException as TemporaryFailError
-from couchbase.exceptions import TimeoutException as TimeoutError
-from couchbase.transcoder import RawBinaryTranscoder
+import pkg_resources
 
 from logger import logger
+
+# Although this workloads will only support sdk >=4 going forward,
+# it is directly imported by kv tests which support other SDKs for other workloads
+sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+if sdk_major_version >= 4:
+    from couchbase.auth import PasswordAuthenticator
+    from couchbase.cluster import Cluster
+    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
+    from couchbase.exceptions import TimeoutException as TimeoutError
+    from couchbase.transcoder import RawBinaryTranscoder
+
 
 # TCMalloc size classes
 SIZES = (8, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192,

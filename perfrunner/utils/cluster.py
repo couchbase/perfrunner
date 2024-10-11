@@ -102,6 +102,8 @@ def main():
                 with TimeTrackingFile() as t:
                     t.config['bucket'] = deployment_time
             cm.capella_allow_client_ips()
+        else:
+            cm.set_analytics_settings()
 
         if (
             not cm.cluster_spec.columnar_infrastructure

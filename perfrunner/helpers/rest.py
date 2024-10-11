@@ -1059,19 +1059,16 @@ class DefaultRestHelper(RestBase):
             logger.warning('Unexpected request status code {}'.
                            format(r.status_code))
 
-    def validate_analytics_settings(self, analytics_node: str, level: Literal["service", "node"],
-                                    settings: dict[str, str]):
-        logger.info(f'Verifying analytics {level}-level parameters on {analytics_node}:\n'
-                    f'{pretty_dict(settings)}')
-        api = self._get_api_url(
-            host=analytics_node,
-            path=f"analytics/config/{level}",
-            plain_port=ANALYTICS_PORT,
-            ssl_port=ANALYTICS_PORT_SSL,
+    def validate_analytics_settings(
+        self, analytics_node: str, level: Literal["service", "node"], settings: dict[str, str]
+    ):
+        logger.info(
+            f"Verifying analytics {level}-level parameters on {analytics_node}:\n"
+            f"{pretty_dict(settings)}"
         )
-        response = self.get(url=api).json()
+        config = self.get_analytics_config(analytics_node, level)
         for setting, value in settings.items():
-            assert (str(response[setting]) == str(value))
+            assert str(config[setting]) == str(value)
 
     def get_analytics_config(self, analytics_node: str, level: Literal["service", "node"]) -> dict:
         logger.info(f'Grabbing analytics {level} config from {analytics_node}')

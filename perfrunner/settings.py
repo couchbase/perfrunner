@@ -2724,7 +2724,7 @@ class AnalyticsSettings:
         )
 
         # Remaining settings are for analytics config REST API
-        self.config_settings = options
+        self.config_settings = {k: maybe_atoi(v) for k, v in options.items()}
 
 
 class ColumnarKafkaLinksSettings:

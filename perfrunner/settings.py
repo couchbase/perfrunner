@@ -3129,6 +3129,7 @@ class CH2:
     REPO = "https://github.com/couchbaselabs/ch2.git"
     BRANCH = "main"
     WAREHOUSES = 1000
+    DATAGEN_SEED = -1  # valid seed is >= 0
     ACLIENTS = 0
     TCLIENTS = 0
     ITERATIONS = 1
@@ -3155,6 +3156,7 @@ class CH2:
         self.branch = options.get("branch", self.BRANCH)
         self.cherrypick = options.get("cherrypick")
         self.warehouses = int(options.get("warehouses", self.WAREHOUSES))
+        self.datagen_seed = int(options.get("datagen_seed", self.DATAGEN_SEED))
         self.aclients = int(options.get("aclients", self.ACLIENTS))
         self.tclients = int(options.get("tclients", self.TCLIENTS))
         self.load_tclients = int(options.get("load_tclients", self.LOAD_TCLIENTS))
@@ -3222,6 +3224,7 @@ class CH2:
             "--debug" if self.debug else None,
             f"--starting_warehouse {self.starting_warehouse}",
             f"--warehouses {self.warehouses}",
+            f"--datagenSeed {self.datagen_seed}" if self.datagen_seed >= 0 else None,
             f"--tclients {self.load_tclients}",
             "--no-execute",
             f"--{self.load_mode}",

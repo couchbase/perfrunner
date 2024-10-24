@@ -216,6 +216,12 @@ class SGPerfTest(PerfTest):
             local.clone_ycsb(repo=self.test_config.syncgateway_settings.repo,
                              branch=self.test_config.syncgateway_settings.branch)
 
+    def build_ycsb(self, ycsb_client):
+        if self.worker_manager.is_remote:
+            self.remote.build_ycsb(self.worker_manager.WORKER_HOME, ycsb_client)
+        else:
+            local.build_ycsb(ycsb_client)
+
     def collect_execution_logs(self):
         if self.worker_manager.is_remote:
             if os.path.exists(self.LOCAL_DIR):
@@ -888,6 +894,7 @@ class SGImportThroughputTest(SGPerfTest):
 
     def run(self):
         self.download_ycsb()
+        self.build_ycsb(ycsb_client=self.test_config.load_settings.ycsb_client)
 
         t0 = time()
 

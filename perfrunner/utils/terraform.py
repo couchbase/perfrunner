@@ -1672,7 +1672,10 @@ class AppServicesDeployer(CloudVMDeployer):
 
             # Add admin user
             logger.info('Adding admin user')
-            admin_user = {"name": "Administrator", "password": "Password123!"}
+            bucket_count = bucket_name.split("-")[1]
+            admin_name = f"admin{bucket_count}"
+            logger.info("The admin name is: {}".format(admin_name))
+            admin_user = {"name": admin_name, "password": "Password123!"}
             self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
                                                self.cluster_id, sgw_cluster_id,
                                                sgw_db_name, admin_user)
@@ -1707,7 +1710,8 @@ class AppServicesDeployer(CloudVMDeployer):
         logger.info(f'The connect response is: {resp}')
         adminurl = resp.json().get('data').get('adminURL').split(':')[1].split('//')[1]
         logger.info(f'The admin url is: {adminurl}')
-        self.infra_spec.config.add_section('sgw_schemas')
+        if "sgw_schemas" not in self.infra_spec.config:
+            self.infra_spec.config.add_section('sgw_schemas')
         for option, value in self.infra_spec.infrastructure_syncgateways.items():
             self.infra_spec.config.set('sgw_schemas', option, value)
 
@@ -1813,7 +1817,8 @@ class AppServicesDeployer(CloudVMDeployer):
             "import_filter": ""
         }
         """
-        sgw_db_name = f'db-{bucket_name.split("-")[1]}'
+        bucket_count = int(bucket_name.split("-")[1])
+        sgw_db_name = f'db-{bucket_count}'
         logger.info("The sgw db name is: {}".format(sgw_db_name))
         config = {
             "name": sgw_db_name,
@@ -1881,7 +1886,9 @@ class AppServicesDeployer(CloudVMDeployer):
 
         num_sgw = 0
         count = 0
-        while num_sgw != self.test_config.cluster.num_buckets:
+        logger.info('We need to have the same number of sgw databases as the number of buckets')
+        logger.info(f'The number of buckets is: {bucket_count}')
+        while num_sgw < bucket_count:
             sleep(10)
             resp = self.api_client.get_sgw_databases(self.tenant_id, self.project_id,
                                                      self.cluster_id, sgw_cluster_id).json()
@@ -1903,6 +1910,7 @@ class AppServicesDeployer(CloudVMDeployer):
                     if state == 'Online':
                         num_sgw += 1
             count += 1
+            logger.info(f'The number of sgw databases is: {num_sgw}')
             if count > 1000:
                 logger.error('Collection deployment timed out')
                 exit(1)

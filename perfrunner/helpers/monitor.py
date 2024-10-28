@@ -942,7 +942,12 @@ class Monitor:
             else:
                 metric = "cbas_incoming_records_count"
 
-            incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node, metric)
+            if self.test_config.access_settings.sql_suite is not None:
+                incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node, bucket,
+                                                                         metric)
+            else:
+                incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node, None,
+                                                                        metric)
 
             try:
                 num_analytics_items = int(incoming_records["data"][0]["values"][-1][1])

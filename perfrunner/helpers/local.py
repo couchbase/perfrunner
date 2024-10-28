@@ -267,7 +267,7 @@ def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec, threads: in
                         include_data: str, archive: str = '', repo: str = 'default',
                         map_data: Optional[str] = None, use_tls: bool = False,
                         encrypted: bool = False, passphrase: str = 'couchbase',
-                        disable_hlv: bool = False):
+                        disable_hlv: bool = False, disable_analytics: bool = False):
 
     flags = ['--archive {}'.format(archive or cluster_spec.backup),
              '--repo {}'.format(repo),
@@ -279,7 +279,8 @@ def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec, threads: in
              '--password {}'.format(cluster_spec.rest_credentials[1]),
              '--map-data {}'.format(map_data) if map_data else None,
              '--passphrase {}'.format(passphrase) if encrypted else None,
-             '--disable-hlv' if disable_hlv else None]
+             '--disable-hlv' if disable_hlv else None,
+             '--disable-analytics --disable-cluster-analytics' if disable_analytics else None]
 
     cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
         ' '.join(filter(None, flags)))
@@ -376,7 +377,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
              data_type: str, data_format: str, import_file: str, threads: int,
              scope_collection_exp: str, field_separator: str = None, limit_rows: int = None,
              skip_rows: int = None, infer_types: int = None,
-             omit_empty: int = None, errors_log: str = None,
+             omit_empty: int = None, errors_log: str = None, generate_key: str = '"#MONO_INCR#"',
              log_file: str = None, is_sample_format: bool = False):
 
     if not scope_collection_exp:
@@ -388,7 +389,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
                  '--bucket {}'.format(bucket),
                  '--username {}'.format(cluster_spec.rest_credentials[0]),
                  '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 '--generate-key "#MONO_INCR#"' if not is_sample_format else None,
+                 f'--generate-key {generate_key}' if not is_sample_format else None,
                  '--threads {}'.format(threads) if threads else None,
                  '--field-separator {}'.format(field_separator) if field_separator
                  else None,
@@ -408,7 +409,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
                  '--bucket {}'.format(bucket),
                  '--username {}'.format(cluster_spec.rest_credentials[0]),
                  '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 '--generate-key "#MONO_INCR#"',
+                 f'--generate-key {generate_key}' if not is_sample_format else None,
                  '--threads {}'.format(threads) if threads else None,
                  '--field-separator {}'.format(field_separator) if field_separator
                  else None,
@@ -1634,6 +1635,14 @@ def download_dotnet_client(version: str):
         local('dotnet build --configuration Release couchbase-net-client.sln')
         return local('pwd', capture=True)
 
+def cbq(analytics_node: str, cluster_spec: ClusterSpec, script: str):
+
+    cmd = (f'./opt/couchbase/bin/cbq -e={analytics_node}:8095 '
+           f'-u={cluster_spec.rest_credentials[0]} '
+           f'-p={cluster_spec.rest_credentials[1]} < {script}')
+
+    logger.info('Running: {}'.format(cmd))
+    local(cmd)
 
 def build_vectordb_bench():
     # Build using Makefile. When using couchbase-client branch,

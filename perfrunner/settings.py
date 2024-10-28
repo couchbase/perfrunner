@@ -938,6 +938,11 @@ class ClusterSettings:
 
         self.cng_enabled = maybe_atoi(options.get("cng_enabled", self.CNG_ENABLED))
 
+        if ',' in self.bucket_name:
+            if len(self.bucket_name.split(",")) != self.num_buckets:
+                logger.error("Mismatch between number of bucket names and number of buckets.")
+            else:
+                self.bucket_name = self.bucket_name.split(",")
 
 class DirectNebulaSettings:
 
@@ -1454,6 +1459,9 @@ class PhaseSettings:
     ANALYTICS_WARMUP_OPS = 0
     ANALYTICS_WARMUP_WORKERS = 0
 
+    SQL_SUITE = 'scans1.1'
+    SCAN_SUITE = '1'
+
     COLLECTION_MAP = None
     CUSTOM_PILLOWFIGHT = False
 
@@ -1710,6 +1718,10 @@ class PhaseSettings:
 
         self.ycsb_jvm_args = options.get('ycsb_jvm_args', self.YCSB_JVM_ARGS)
         self.tpcds_scale_factor = int(options.get('tpcds_scale_factor', self.TPCDS_SCALE_FACTOR))
+
+        # Analytics settings
+        self.sql_suite = options.get('sql_suite', self.SQL_SUITE)
+        self.scan_suite = options.get('scan_suite', self.SCAN_SUITE)
 
         self.analytics_warmup_ops = int(options.get('analytics_warmup_ops',
                                                     self.ANALYTICS_WARMUP_OPS))
@@ -3595,6 +3607,8 @@ class TestConfig(Config):
             return list(self.serverless_db.db_map.keys())
         elif self.cluster.num_buckets == 1 and self.cluster.bucket_name != 'bucket-1':
             return [self.cluster.bucket_name]
+        elif self.cluster.num_buckets != 1 and isinstance(self.cluster.bucket_name, list):
+            return self.cluster.bucket_name
         else:
             return [
                 'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)

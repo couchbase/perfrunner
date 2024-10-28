@@ -1092,11 +1092,15 @@ class DefaultRestHelper(RestBase):
     def get_cbas_incoming_records_count(
         self,
         host: str,
+        bucket: str = None,
         metric: str = "cbas_incoming_records_total",
     ) -> dict:
+        path=f"pools/default/stats/range/{metric}?nodesAggregation=sum"
+        if bucket is not None:
+            path = f"{path}&bucket={bucket}"
         api = self._get_api_url(
             host=host,
-            path=f"pools/default/stats/range/{metric}?nodesAggregation=sum",
+            path=path,
         )
         return self.get(url=api).json()
 

@@ -263,7 +263,10 @@ class PerfTest:
             repo=self.test_config.restore_settings.backup_repo,
             include_data=self.test_config.backup_settings.include_data,
             map_data=self.test_config.restore_settings.map_data,
-            use_tls=self.test_config.restore_settings.use_tls
+            use_tls=self.test_config.restore_settings.use_tls,
+            disable_analytics=(
+                True if self.test_config.access_settings.sql_suite is not None else False
+            )
         )
 
     def load_tpcds_json_data(self):

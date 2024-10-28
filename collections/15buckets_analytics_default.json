@@ -1,0 +1,122 @@
+{
+    "KS1": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "KS2": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "R": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "S": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "T": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "U": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "V": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "region": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "nation": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "supplier": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "customer": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "part": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "partsupp": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "orders": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "lineitem": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    }
+}

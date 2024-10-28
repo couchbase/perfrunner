@@ -719,6 +719,19 @@ class MetricHelper:
 
         return scan_latency, self._snapshots, metric_info
 
+    def analytics_time_taken(self,
+                             time_taken: float,
+                             sql_suite: str) -> Metric:
+
+        metric_id = f'{self.test_config.name}_time_taken_{sql_suite}'
+        metric_id = metric_id.replace('.', '')
+
+        title = f'{sql_suite} Time Elapsed (sec), {self._title}'
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+        time_taken = round(time_taken, 2)
+
+        return time_taken, self._snapshots, metric_info
+
     def kv_latency(self,
                    operation: str,
                    percentiles: Iterable[Number] = [99.9],

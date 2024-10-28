@@ -1940,3 +1940,96 @@ class CH3Test(CH2Test):
         self.run_ch3()
         if self.test_config.ch3_settings.workload != 'ch3_analytics':
             self.report_kpi()
+
+
+class ScanTest(AnalyticsTest):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.num_items = 0
+        self.base_path = "file:///data2/backup/analytics/STEPS/"
+
+    def import_tables(self):
+        for table in ["R", "S", "T", "U", "V"]:
+            import_file = f'{self.base_path}{table}.tbl'
+            local.cbimport(
+                master_node=self.master_node,
+                cluster_spec=self.cluster_spec,
+                bucket=table,
+                data_type='csv',
+                data_format='',
+                import_file=import_file,
+                scope_collection_exp='',
+                generate_key='key::%rand%',
+                threads=16,
+                field_separator='"|"',
+                infer_types=True
+            )
+
+        table_key_map = [
+            ("region", "r_regionkey"), ("nation", "n_nationkey"), ("supplier", "s_suppkey"),
+            ("customer", "c_custkey"), ("part", "p_partkey"),
+            ("partsupp", "ps_partkey%:%ps_suppkey"),
+            ("orders", "o_orderkey"), ("lineitem", "l_orderkey%:%l_linenumber")
+        ]
+
+        for mapping in table_key_map:
+            import_file = f'{self.base_path}TPCH/{mapping[0]}.tbl'
+            generate_key = f'key::%{mapping[1]}%'
+            local.cbimport(
+                master_node=self.master_node,
+                cluster_spec=self.cluster_spec,
+                bucket=mapping[0],
+                data_type='csv',
+                data_format='',
+                import_file=import_file,
+                scope_collection_exp='',
+                generate_key=generate_key,
+                threads=16,
+                field_separator='"|"',
+                infer_types=True
+            )
+
+    def create_and_analyze_datasets(self):
+        for script in ["cr_datasets", "cr_indexesRSTUV", "analyze"]:
+            script_file = f'{self.base_path.replace("file://", "")}{script}.sql'
+            local.cbq(
+                analytics_node=self.analytics_node,
+                cluster_spec=self.cluster_spec,
+                script=script_file
+            )
+
+    def _report_kpi(self, time_taken):
+        sql_suite = self.test_config.access_settings.sql_suite
+        self.reporter.post(
+            *self.metrics.analytics_time_taken(time_taken, sql_suite)
+        )
+
+    @with_stats
+    @timeit
+    def all_operations(self):
+        sql_suite = self.test_config.access_settings.sql_suite
+        path = f"/data2/backup/analytics/SQL/{sql_suite}.sql"
+        logger.info("Executing {}.sql...".format(sql_suite))
+        local.cbq(
+            analytics_node=self.analytics_node,
+            cluster_spec=self.cluster_spec,
+            script=path
+        )
+
+    def sync(self):
+        self.disconnect_link()
+        self.create_and_analyze_datasets()
+        self.connect_link()
+        for bucket in self.test_config.buckets:
+            self.num_items += self.monitor.monitor_data_synced(self.data_node,
+                                                               bucket,
+                                                               self.analytics_node)
+
+    def run(self):
+        self.restore_local()
+        self.import_tables()
+        self.sync()
+        time_taken = self.all_operations()
+        self.report_kpi(time_taken)

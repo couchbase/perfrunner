@@ -1,3 +1,4 @@
+import datetime
 import re
 import threading
 import time
@@ -160,8 +161,28 @@ class N1QLTest(PerfTest):
         if "latency" in self.__class__.__name__.lower():
             self.COLLECTORS['n1ql_latency'] = True
 
+    def enable_query_awr(self):
+        if self.test_config.cluster.enable_query_awr:
+            bucket = self.test_config.cluster.query_awr_bucket
+            scope = self.test_config.cluster.query_awr_scope
+            collection = self.test_config.cluster.query_awr_collection
+            location = f"{bucket}.{scope}.{collection}"
+            statement = (f'update system:awr set location="{location}", '
+                         f'interval="1m", threshold=0, enabled=true;')
+            logger.info(f"Enabling query AWR: {statement}")
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
+    @with_stats
+    def generate_query_awr_report(self, start_time: str, end_time: str):
+        bucket = self.test_config.cluster.query_awr_bucket
+        scope = self.test_config.cluster.query_awr_scope
+        collection = self.test_config.cluster.query_awr_collection
+        keyspace = f"{bucket}.{scope}.{collection}"
+        self.remote.run_cbqueryreportgen_command(keyspace, start_time, end_time)
+
     def run(self):
         self.enable_stats()
+        self.enable_query_awr()
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
@@ -175,8 +196,15 @@ class N1QLTest(PerfTest):
         if self.test_config.users.num_users_per_bucket > 0:
             self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
 
+        query_awr_start_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         self.access_bg()
         self.access()
+        query_awr_end_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+        if self.test_config.cluster.enable_query_awr:
+            time.sleep(60)
+            logger.info("sleep 60 seconds before generating report")
+            self.generate_query_awr_report(query_awr_start_time, query_awr_end_time)
 
         self.report_kpi()
 
@@ -955,6 +983,7 @@ class TpcDsTest(N1QLTest):
 
     def run(self):
         self.enable_stats()
+        self.enable_query_awr()
         self.load_tpcds_json_data()
         self.wait_for_persistence()
         self.compact_bucket()

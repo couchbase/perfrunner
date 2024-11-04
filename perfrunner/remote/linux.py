@@ -1647,3 +1647,11 @@ class RemoteLinux(Remote):
             logger.info("Couchbase Lite Test Server installation and startup completed.")
         except Exception as e:
             logger.error(f"Failed to run daemon_manager.sh: {e}")
+
+    @master_server
+    def run_cbqueryreportgen_command(self, keyspace: str, start_time: str, end_time: str):
+        command = (f"/opt/couchbase/bin/cbqueryreportgen -c couchbase://localhost -u Administrator "
+                   f"-p password -k {keyspace} -t1 {start_time},{end_time} -o /tmp/rpt.html")
+
+        logger.info("Running: {}".format(command))
+        run(command)

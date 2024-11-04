@@ -160,6 +160,15 @@ class ClusterManagerBase:
                                         master, bucket, scope, collection, history
                                     )
 
+    def create_query_awr_collection(self):
+        for master in self.cluster_spec.masters:
+            bucket = self.test_config.cluster.query_awr_bucket
+            scope = self.test_config.cluster.query_awr_scope
+            collection = self.test_config.cluster.query_awr_collection
+            self.rest.create_scope(master, bucket, scope)
+            self.rest.create_collection(master, bucket, scope, collection)
+            logger.info(f"Creating Query AWR scope and collection: {bucket}.{scope}.{collection}")
+
     def serverless_throttle(self):
         if not all(value == 0 for value in self.test_config.cluster.serverless_throttle.values()):
             self.rest.set_serverless_throttle(

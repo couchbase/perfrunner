@@ -392,9 +392,15 @@ class Monitor:
     def _ignore_system_collection_items(self, host: str, bucket: str, curr_items: int) -> int:
         sys_coll_items = self._get_num_items_scope_and_collection(host, bucket, '_system')
         replica_sys_coll_items = sys_coll_items * (1 + self.test_config.bucket.replica_number)
-        logger.info('Ignoring items in _system collection: {} (active), {} (total)'
-                    .format(sys_coll_items, replica_sys_coll_items))
-        return curr_items - replica_sys_coll_items
+        logger.info(f"Ignoring items in _system collection: {sys_coll_items} (active), "
+                    f"{replica_sys_coll_items} (total)")
+        awr_bucket = self.test_config.cluster.query_awr_bucket
+        awr_scope = self.test_config.cluster.query_awr_scope
+        awr_coll_items = self._get_num_items_scope_and_collection(host, awr_bucket, awr_scope)
+        replica_awr_coll_items = awr_coll_items * (1 + self.test_config.bucket.replica_number)
+        logger.info(f"Ignoring items in scope-awr collection: {awr_coll_items} (active), "
+                    f"{replica_awr_coll_items} (total)")
+        return curr_items - replica_sys_coll_items - replica_awr_coll_items
 
     def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int = None):
         logger.info('Checking the number of items in {}'.format(bucket))

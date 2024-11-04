@@ -177,6 +177,9 @@ def main():
     if cm.test_config.collection.collection_map:
         cm.create_collections()
 
+    if cm.test_config.cluster.enable_query_awr:
+        cm.create_query_awr_collection()
+
     cm.tweak_memory()
     cm.enable_n2n_encryption()
     cm.deploy_couchbase_with_cgroups_for_index_nodes()

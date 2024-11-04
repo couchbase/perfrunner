@@ -868,6 +868,10 @@ class ClusterSettings:
     SGW_ONLINE_CORES = 0
     ENABLE_CPU_CORES = 'true'
     ENABLE_N2N_ENCRYPTION = None
+    ENABLE_QUERY_AWR = None
+    QUERY_AWR_BUCKET = 'bucket-1'
+    QUERY_AWR_SCOPE = 'scope-awr'
+    QUERY_AWR_COLLECTION = 'collection-awr'
     BUCKET_NAME = 'bucket-1'
     DISABLE_UI_HTTP = None
     SERVERLESS_MODE = None
@@ -913,6 +917,14 @@ class ClusterSettings:
                                                self.KV_KERNEL_MEM_LIMIT)
         self.enable_n2n_encryption = options.get('enable_n2n_encryption',
                                                  self.ENABLE_N2N_ENCRYPTION)
+        self.enable_query_awr = options.get('enable_query_awr',
+                                            self.ENABLE_QUERY_AWR)
+        self.query_awr_bucket = options.get('query_awr_bucket',
+                                            self.QUERY_AWR_BUCKET)
+        self.query_awr_scope = options.get('query_awr_scope',
+                                           self.QUERY_AWR_SCOPE)
+        self.query_awr_collection = options.get('query_awr_collection',
+                                                self.QUERY_AWR_COLLECTION)
         self.ui_http = options.get('ui_http', self.DISABLE_UI_HTTP)
         self.serverless_mode = options.get('serverless_mode', self.SERVERLESS_MODE)
         self.show_cp_version = options.get('show_cp_version', self.SHOW_CP_VERSION)

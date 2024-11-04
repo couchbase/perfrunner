@@ -1659,7 +1659,7 @@ class PhaseSettings:
         self.range_distance = int(options.get('range_distance',
                                               self.RANGE_DISTANCE))
         self.n1ql_timeout = int(options.get('n1ql_timeout', self.N1QL_TIMEOUT))
-
+        self.n1ql_query_type = options.get('n1ql_query_type', None)
         if 'n1ql_queries' in options:
             self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
             n1ql_query_weight = options.get('n1ql_query_weight', self.N1QL_QUERY_WEIGHT).strip()
@@ -2254,6 +2254,7 @@ class GSISettings:
         self.vector_nprobes = options.get("nprobes", self.DEFAULT_NPROBES)
         self.vector_filter_percentage = options.get("vector_filter_percentage", 0)
         self.vector_scan_probes = options.get("vector_scan_probes", 0)
+        self.vector_def_prefix = options.get("vector_def_prefix", None)
 
         self.override_index_def = options.get("override_index_def", None)
 

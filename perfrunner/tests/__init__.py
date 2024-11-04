@@ -313,9 +313,9 @@ class PerfTest:
             self.monitor.monitor_dcp_queues(target.node, target.bucket, bucket_replica)
             self.monitor.monitor_replica_count(target.node, target.bucket)
 
-    def wait_for_indexing(self, index_nodes: List[str] = []):
+    def wait_for_indexing(self, index_nodes: List[str] = [], statements: List[str] = []):
         index_nodes = index_nodes or self.index_nodes
-        if self.test_config.index_settings.statements:
+        if statements or self.test_config.index_settings.statements:
             for server in index_nodes:
                 self.monitor.monitor_indexing(server)
 

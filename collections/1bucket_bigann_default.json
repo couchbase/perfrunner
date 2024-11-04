@@ -1,0 +1,10 @@
+{
+    "bigann": {
+      "_default": {
+        "_default": {
+          "access": 1,
+          "load": 1
+        }
+      }
+    }
+}

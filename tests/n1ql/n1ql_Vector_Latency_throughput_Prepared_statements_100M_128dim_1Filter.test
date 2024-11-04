@@ -1,0 +1,82 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlVectorLatencyThroughputPreparedStatementFilterTest
+
+[showfast]
+title = Vector Search, 1 bucket, SIFT 100M 1 Filter doc 128dims, no replica, 1s 1c
+component = n1ql
+category = vector
+sub_category = Plasma
+
+[cluster]
+mem_quota = 100000
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+replica_index=0
+backend_storage = magma
+eviction_policy = fullEviction
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = vector_embedding
+key_fmtr = no_hash
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[access]
+items = 100000000
+workers = 50
+time = 500
+n1ql_op = read
+modify_doc_loader = filter_vector
+latency_percentiles = 95,99
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+key_fmtr = no_hash
+doc_gen = vector_embedding
+
+[restore]
+backup_storage = s3://fts-vector-100m-sift-128-dims
+backup_repo = fts_vector_100m_sift_128_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+vector_query_path = tests/fts/data/vector/testData/Sift_query_100M_128dim_top1000.txt
+ground_truth_file_name = Sift100M/gtiIdx1M.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+top_k_results = 10
+fields = composite
+
+[secondary]
+indexer.settings.storage_mode = plasma
+vector_scan_probes = 250
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_default.json
+vector_dimension = 128
+vector_filter_percentage = 1
+override_index_def = scalar, emb Vector
+index_def_prefix = scalar
+vector_def_prefix = emb
+
+[n1ql-q01]
+statement = SELECT META().id FROM `bucket-1` where scalar='eligible' ORDER BY ANN(emb, $1, 'L2_SQUARED', NPROBES) limit top_k_results
+args = [{emb}]
+total_batches = 1000
+
+[profiling]
+services = index
+profiles = cpu,heap
+interval = 100
+num_profiles = 3

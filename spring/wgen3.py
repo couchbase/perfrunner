@@ -86,6 +86,7 @@ from spring.docgen import (
     UniformKey,
     VaryingAllItemSizePlasmaDocument,
     VaryingItemSizePlasmaDocument,
+    VectorEmbeddingDocument,
     WorkingSetKey,
     YuboDoc,
     ZipfKey,
@@ -421,6 +422,8 @@ class Worker:
             self.docs = VaryingAllItemSizePlasmaDocument(ws.size,
                                                          ws.size_variation_min,
                                                          ws.size_variation_max)
+        elif self.ws.doc_gen == 'vector_embedding':
+            self.docs = VectorEmbeddingDocument(self.ws.vector_query_map)
 
     def init_db(self):
         workload_client = CBGen

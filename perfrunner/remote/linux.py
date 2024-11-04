@@ -1101,7 +1101,7 @@ class RemoteLinux(Remote):
                 "--disable-analytics --disable-cluster-analytics" if restore_to_capella else None,
                 f"--passphrase {passphrase}" if encrypted else None,
                 f'--filter-keys "{filter_keys}"' if filter_keys else None,
-                "--no-progress-bar --purge",
+                "--no-progress-bar --purge --disable-gsi-indexes --disable-ft-indexes",
             ]
 
             cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(

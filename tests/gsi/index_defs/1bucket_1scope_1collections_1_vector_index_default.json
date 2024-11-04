@@ -1,12 +1,12 @@
 {
   "bucket-1": {
-    "scope-1": {
-      "collection-1": {
+    "_default": {
+      "_default": {
         "vector-idx": {
           "field": "emb VECTOR",
           "dimension": 128,
-          "description": "'IVF,SQ8'",
-          "similarity": "'L2'",
+          "description": "IVF,SQ8",
+          "similarity": "L2_SQUARED",
           "num_replica": 0
         }
       }

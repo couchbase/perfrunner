@@ -2551,3 +2551,17 @@ class FixedTextAndVectorDocument:
             scalar = "not_eligible"
         doc["scalar"] = scalar
         return doc
+
+class VectorEmbeddingDocument:
+    def __init__(self, vector_query_map) -> None:
+        embeddings = []
+        for vector in vector_query_map:
+            query = [float(x) for x in vector.split()[2:]]
+            embeddings.append(query)
+        self.embeddings = embeddings
+
+    def next(self, key):
+        doc = {
+            "emb": self.embeddings[random.randint(0, len(self.embeddings) - 1)]
+        }
+        return doc

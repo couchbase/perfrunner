@@ -165,14 +165,17 @@ class MetricHelper:
         else:
             return query_id
 
-    def avg_n1ql_throughput(self, master_node: str) -> Metric:
+    def avg_n1ql_throughput(self, master_node: str, initial_throughput: str = None) -> Metric:
         """Generate cluster total query throughput metric."""
         metric_id = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
 
         metric_info = self._metric_info(metric_id, title,
                                         order_by=self.query_id, chirality=1)
-        throughput = self._avg_n1ql_throughput(master_node)
+        if initial_throughput is not None:
+            throughput = self._avg_n1ql_throughput(master_node) - initial_throughput
+        else:
+            throughput = self._avg_n1ql_throughput(master_node)
         return throughput, self._snapshots, metric_info
 
     def _avg_n1ql_throughput(self, master_node: str) -> int:

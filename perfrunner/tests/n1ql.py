@@ -1,4 +1,5 @@
 import datetime
+import json
 import re
 import threading
 import time
@@ -243,6 +244,8 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
             check_stmt = statement.replace(" ", "").upper()
             if 'CREATEINDEX' in check_stmt \
                     or 'CREATEPRIMARYINDEX' in check_stmt:
+                create_statements.append(statement)
+            elif 'CREATEVECTORINDEX' in check_stmt:
                 create_statements.append(statement)
             elif 'BUILDINDEX' in check_stmt:
                 build_statements.append(statement)
@@ -1565,6 +1568,8 @@ class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
                     open(self.test_config.index_settings.ground_truth_file_name,'r').readlines()]
         recalls =[]
         accuracies = []
+        load_settings = self.test_config.load_settings
+        vector_filter_percentage = gsi_settings.vector_filter_percentage
         k = int(index_settings.top_k_results)
         for probe in probes:
             recall = []
@@ -1574,32 +1579,34 @@ class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
                 scope, collections = next(iter(scope.items()))
                 collection, vectors = next(iter(collections.items()))
                 vector_idx, details = next(iter(vectors.items()))
+                similarity = details["similarity"]
                 if self.test_config.index_settings.ground_truth_file_name:
                     for vector, truth in zip(query_map, ground_truth):
                         query = [float(x) for x in vector.split()[2:]]
-                        if index_settings.fields:
-                            query_statement = "SELECT meta().id from `{}`.`{}`.`{}`\
-                            where {}='eligible' ORDER BY ANN(emb, {},{},{}) LIMIT {}"\
-                            .format(bucket,
-                                    scope,
-                                    collection,
-                                    gsi_settings.index_def_prefix,
-                                    query,
-                                    details["similarity"],
-                                    probe,
-                                    k)
+                        if gsi_settings.index_def_prefix is not None:
+                            if gsi_settings.index_def_prefix == "id":
+                                query_statement = f"SELECT meta().id from \
+                                    `{bucket}`.`{scope}`.`{collection}`\
+    where {gsi_settings.index_def_prefix} < \
+        {(int(vector_filter_percentage)*load_settings.items/100)}\
+          ORDER BY ANN({gsi_settings.vector_def_prefix}, {query},'{similarity}',{probe}) \
+            LIMIT {k}"
+                            else:
+                                query_statement = f"SELECT meta().id from \
+                                    `{bucket}`.`{scope}`.`{collection}`\
+    where {gsi_settings.index_def_prefix}='eligible' \
+        ORDER BY ANN({gsi_settings.vector_def_prefix}, \
+            {query},'{similarity}',{probe}) LIMIT {k}"
                         else:
-                            query_statement = "SELECT meta().id from `{}`.`{}`.`{}`\
-                            ORDER BY ANN(emb, {},{},{}) LIMIT {}"\
-                            .format(bucket,
-                                    scope,
-                                    collection,
-                                    query,
-                                    details["similarity"],
-                                    probe,
-                                    k)
+                            query_statement = f"SELECT meta().id from \
+                                `{bucket}`.`{scope}`.`{collection}`\
+    ORDER BY ANN({gsi_settings.vector_def_prefix}, {query},'{similarity}',{probe}) LIMIT {k}"
+
+                        logger.info(f"query_statements {query_statement}")
                         result = self.rest.exec_n1ql_statement(query_node,query_statement)
                         ids = [result['id'] for result in result['results']]
+                        if 'test' in ids[0]:
+                            ids = [str(int(id_.split('-')[1].lstrip('0')) - 1) for id_ in ids]
                         common_ids = sum(x in ids[:k] for x in truth[:k])/float(k)
                         recall.append(common_ids)
                         accuracy.append(int(ids[0]==truth[0]))
@@ -1636,29 +1643,32 @@ class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
         scope, collections = next(iter(scope.items()))
         collection, vectors = next(iter(collections.items()))
         vector_idx, details = next(iter(vectors.items()))
+        similarity = details["similarity"]
         if gsi_settings.override_index_def:
-            new_statement = (f"CREATE INDEX `{vector_idx}` on "
-            f"`{bucket}`.`{scope}`.`{collection}`({gsi_settings.override_index_def})")
+            if "Bhive" == self.test_config.showfast.sub_category:
+                new_statement = (f"CREATE VECTOR INDEX `{vector_idx}` on "
+                f"`{bucket}`.`{scope}`.`{collection}` ({gsi_settings.override_index_def})")
+            else:
+                new_statement = (f"CREATE INDEX `{vector_idx}` on "
+                f"`{bucket}`.`{scope}`.`{collection}` ({gsi_settings.override_index_def})")
         else:
             new_statement = (f"CREATE INDEX `{vector_idx}` "
-            f" on`{bucket}`.`{scope}`.`{collection}`({details['field']})")
-        with_clause = (
-            "WITH {"
-            f"'dimension':{gsi_settings.vector_dimension},"
-            f"'similarity':{details['similarity']},"
-            f"'num_replica':{details['num_replica']},"
-            "'defer_build':true,"
-        )
-        if(gsi_settings.vector_description is not None):
-            with_clause += f"'description':{gsi_settings.vector_description}"
-        else:
-            with_clause += f"'description':{details['description']}"
-        if(gsi_settings.vector_train_list is not None):
-            with_clause += f", 'train_list':{gsi_settings.vector_train_list}"
-        with_clause += "}"
+            f" on `{bucket}`.`{scope}`.`{collection}` ({details['field']})")
+
+        with_params = {
+            "dimension": gsi_settings.vector_dimension,
+            "similarity": similarity,
+            "num_replica": details["num_replica"],
+            "defer_build": "true",
+            "description": gsi_settings.vector_description or details["description"]
+        }
+        if gsi_settings.vector_train_list:
+            with_params["train_list"] = gsi_settings.vector_train_list
+
+        with_clause = f"WITH {json.dumps(with_params)}"
         new_statement += with_clause
         statements.append(new_statement)
-        build_statement = f"BUILD INDEX ON `{bucket}`.`{scope}`.`{collection}`('{vector_idx}')"
+        build_statement = f"BUILD INDEX ON `{bucket}`.`{scope}`.`{collection}` ('{vector_idx}')"
         build_statements.append(build_statement)
         statements = statements + build_statements
         return statements
@@ -1808,6 +1818,67 @@ class JoinEnumTest(N1QLTest):
         self.run_cbq_script("indexstats")
 
         self.run_all_query_suites()
+
+class N1qlVectorLatencyThroughputPreparedStatementTest(N1qlVectorSearchTest):
+
+    @with_stats
+    @with_profiles
+    def access(self):
+        access_settings = self.test_config.access_settings
+        access_settings.workers = 0
+        access_settings.n1ql_queries[0]['statement'] = access_settings.n1ql_queries[0][
+            'statement'].replace("NPROBES", self.test_config.gsi_settings.vector_scan_probes)
+        access_settings.n1ql_queries[0]['statement'] = access_settings.n1ql_queries[0][
+            'statement'].replace("top_k_results", self.test_config.index_settings.top_k_results)
+        access_settings.vector_query_map = self.test_config.index_settings.vector_query_map
+        PerfTest.access(self, settings=access_settings)
+
+    def _report_kpi(self, probes, recalls, accuracies, initial_throughput):
+        k = int(self.test_config.index_settings.top_k_results)
+        for probe, avg_recall, avg_accuracy in zip(probes, recalls, accuracies):
+            self.reporter.post(
+                *self.metrics.n1ql_vector_recall_and_accuracy(k, probe, avg_recall, "Recall")
+                            )
+            self.reporter.post(
+                *self.metrics.n1ql_vector_recall_and_accuracy(k, probe, avg_accuracy, "Accuracy")
+                            )
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            self.reporter.post(
+                *self.metrics.query_latency(percentile=percentile)
+            )
+        self.reporter.post(
+            *self.metrics.avg_n1ql_throughput(self.master_node,
+                                              initial_throughput=initial_throughput)
+        )
+
+    def run(self):
+        self.cloud_restore()
+        statements = self.create_statements()
+        self.create_indexes(statements=statements)
+        self.wait_for_indexing(statements=statements)
+        self.downloads_ground_truth_file()
+        probes, recalls, accuracies = self.vector_recall_and_accuracy_check()
+        self.enable_stats()
+        initial_throughput = self.metrics._avg_n1ql_throughput(self.master_node)
+        self.access()
+        self._report_kpi(probes, recalls, accuracies, initial_throughput)
+
+class N1qlVectorLatencyThroughputPreparedStatementFilterTest(
+    N1qlVectorLatencyThroughputPreparedStatementTest):
+    def cloud_restore(self):
+        super().cloud_restore()
+        access_settings = self.test_config.access_settings
+        access_settings.n1ql_workers = 0
+        access_settings.filtering_percentage = \
+            int(self.test_config.gsi_settings.vector_filter_percentage)
+        if access_settings.workers > 0:
+            PerfTest.access(self, settings=access_settings)
+
+class N1qlVectorLatencyThroughputPreparedStatementBhiveTest(
+    N1qlVectorLatencyThroughputPreparedStatementTest):
+    def run(self):
+        self.remote.enable_developer_preview()
+        super().run()
 
 
 class N1QLDynamicServiceRebalanceTest(N1QLThroughputRebalanceTest, DynamicServiceRebalanceTest):

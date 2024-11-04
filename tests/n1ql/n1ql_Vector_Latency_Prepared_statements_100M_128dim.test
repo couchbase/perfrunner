@@ -1,0 +1,71 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlVectorPreparedStatementTest
+
+[showfast]
+title = Vector Search, 1 bucket, SIFT 1M doc 128dims, no replica, 1s 4c
+component = n1ql
+category = vector
+sub_category = Plasma
+
+[cluster]
+mem_quota = 100000
+index_mem_quota = 100000
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+backend_storage = magma
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = vector_embedding
+
+[access]
+items = 100000000
+workers = 0
+time = 1200
+n1ql_op = read
+latency_percentiles = 80,95,99
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 1
+workload_instances = 1
+doc_gen = vector_embedding
+
+[restore]
+backup_storage = s3://fts-vector-100m-sift-128-dims
+backup_repo = fts_vector_100m_sift_128_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+vector_query_path = tests/fts/data/vector/testData/Sift_query_100M_128dim_top1000.txt
+ground_truth_file_name = Cohere1M/cohere_1M_groundtruth.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+top_k_results = 10
+
+[secondary]
+indexer.settings.storage_mode = plasma
+vector_scan_probes = 20
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index.json
+vector_dimension = 128
+override_index_def = emb Vector
+vector_def_prefix = emb
+
+[n1ql-q01]
+statement = SELECT META().id FROM `bucket-1` ORDER BY ANN(emb, $1, 'L2_SQUARED', NPROBES) limit top_k_results
+args = [{emb}]
+total_batches = 1000
+
+[profiling]
+services = index
+profiles = cpu,heap
+interval = 100
+num_profiles = 3

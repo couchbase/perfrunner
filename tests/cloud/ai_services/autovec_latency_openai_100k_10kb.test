@@ -1,0 +1,32 @@
+[test_case]
+test = perfrunner.tests.ai_services.AutoVecWorkflowTest
+
+[showfast]
+title = Autovec 100k docs x 10kb, OpenAI model
+component = aicloud
+category = lat
+sub_category = {provider}
+
+[stats]
+server_processes = eventing-produc
+
+[cluster]
+initial_nodes = 5
+num_buckets = 1
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 100000
+size = 10240
+workers = 100
+ssl_mode = capella
+
+[ai_services]
+model_source = external
+workflow_type = structured
+model_name = text-embedding-3-small
+schema_fields = body

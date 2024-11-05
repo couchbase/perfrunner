@@ -1221,14 +1221,18 @@ class DefaultRestHelper(RestBase):
 
     def get_apps_with_status(self, node: str, status: str):
         logger.info('get apps with status {} on node {}'.format(status, node))
-        url = self._get_api_url(host=node, path='api/v1/status',
-                                plain_port=EVENTING_PORT, ssl_port=EVENTING_PORT_SSL)
-        data = self.get(url=url).json()
+        data = self.get_eventing_apps(node)
         apps = []
-        for app in data["apps"]:
+        for app in data.get("apps", []) or []:
             if app["composite_status"] == status:
                 apps.append(app["name"])
         return apps
+
+    def get_eventing_apps(self, node: str) -> dict:
+        url = self._get_api_url(
+            host=node, path="api/v1/status", plain_port=EVENTING_PORT, ssl_port=EVENTING_PORT_SSL
+        )
+        return self.get(url=url).json()
 
     def get_eventing_stats(self, node: str, full_stats: bool = False) -> dict:
         logger.info('get eventing stats on node {}'.format(node))
@@ -2542,6 +2546,32 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             if job_details.get("jobType") == job_type:
                 return job_details.get("currentStep"), job_details.get("completionPercentage")
         return None, None
+
+    def create_workflow(self, host: str, payload: dict) -> str:
+        """Create a workflow using the provided payload."""
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.create_autovec_workflow(
+            self.tenant_id, self.project_id, cluster_id, payload
+        )
+
+        logger.info(f"Workflow creation response: {resp.json()}")
+        return resp.json().get("id")
+
+    def delete_workflow(self, host: str, workflow_id: str):
+        """Delete a specified workflow."""
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.delete_autovec_workflow(
+            self.tenant_id, self.project_id, cluster_id, workflow_id
+        )
+        resp.raise_for_status()
+
+    def get_workflow_details(self, host: str, workflow_id: str) -> str:
+        """Get the full details of an existing workflow."""
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.get_autovec_workflow(
+            self.tenant_id, self.project_id, cluster_id, workflow_id
+        )
+        return resp.json().get("data", {})
 
 
 class CapellaServerlessRestHelper(CapellaRestBase):

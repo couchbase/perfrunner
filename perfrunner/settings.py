@@ -141,6 +141,10 @@ class ClusterSpec(Config):
         return None
 
     @property
+    def has_model_services_infrastructure(self) -> bool:
+        return self.config.get("infrastructure", "model_services", fallback="false") == "true"
+
+    @property
     def generated_cloud_config_path(self):
         if self.cloud_infrastructure:
             return "cloud/infrastructure/generated/infrastructure_config.json"
@@ -187,6 +191,16 @@ class ClusterSpec(Config):
         if self.config.has_section('kafka_clusters'):
             return {k: v for k, v in self.config.items('kafka_clusters')}
         return {}
+
+    @property
+    def infrastructure_model_services(self) -> dict:
+        # We currently can only have an embedding, an LLM model or both.
+        # We can't have multiple models of the same type
+        models = {}
+        for model_kind in ["embedding-generation", "text-generation"]:
+            if self.config.has_section(model_kind):
+                models[model_kind] = self._get_options_as_dict(model_kind)
+        return models
 
     @property
     def external_client(self) -> bool:
@@ -3547,6 +3561,39 @@ class LoadBalancerSettings:
             self.lbc_config = self.DEFAULT_LBC_CONFIG
 
 
+class AIServicesSettings:
+    """Provides settings to control deployment of workflow integrations."""
+
+    def __init__(self, options: dict):
+        # Generic Workflow settings
+        self.workflow_type = options.get("workflow_type", "structured")  # alt: unstructured
+        self.schema_fields = options.get("schema_fields", "text-to-embed").split(",")
+
+        # Pre-processing settings
+        self.chunk_size = int(options.get("chunk_size", 200))  # current min: 5, max: 200
+        # Options: TEXT_SPLITTER | JSON_SPLITTER | WORD_SPLITTER | SENTENCE_SPLITTER |
+        # PARAGRAPH_SPLITTER | RECURSIVE_SPLITTER
+        self.chunking_strategy = options.get("chunking_strategy", "SENTENCE_SPLITTER").upper()
+        self.pages = options.get("pages", "").split(",")
+        self.exclusions = options.get("exclusions", "").split(",")
+
+        # Integrations settings
+        self.s3_bucket = options.get("s3_bucket", "ai-doclaynet-dataset")
+        self.s3_path = options.get("s3_path", "core_pngs")
+        self.s3_bucket_region = options.get("s3_bucket_region", "us-east-1")
+
+        # Model settings, for external model not deployed by Capella.
+        # These will only be used during testing when `model_source` is external
+        self.model_source = options.get("model_source", "internal")  # alt: external
+        self.model_name = options.get("model_name", "text-embedding-3-small")
+        self.model_provider = options.get("provider", "openAI")
+
+        # Indexing settitngs
+        self.fts_index_name = options.get("fts_index_name", "embedding-index")
+        # Will be fixed as part of CBPS-1490
+        self.aws_credential_path = options.get("aws_credential_path", "/root/.ssh")
+
+
 class TestConfig(Config):
 
     def _configure_phase_settings(method):  # noqa: N805
@@ -3973,6 +4020,12 @@ class TestConfig(Config):
     def load_balancer_settings (self) -> LoadBalancerSettings:
         options = self._get_options_as_dict("load_balancer")
         return LoadBalancerSettings(options)
+
+    @property
+    def ai_services_settings(self) -> AIServicesSettings:
+        options = self._get_options_as_dict("ai_services")
+        return AIServicesSettings(options)
+
 
 class TargetSettings:
 

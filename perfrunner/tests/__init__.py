@@ -79,7 +79,7 @@ class PerfTest:
             self.test_config.load_settings.ssl_mode in ssl_enabled_modes or
             self.test_config.access_settings.ssl_mode in ssl_enabled_modes
         )
-        if need_certificate:
+        if need_certificate and test_config.test_case.use_workers:
             self.download_certificate()
             if self.worker_manager.is_remote or self.cluster_spec.cloud_infrastructure:
                 self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE,

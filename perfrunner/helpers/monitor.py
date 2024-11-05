@@ -1731,3 +1731,38 @@ class Monitor:
                 last_progress_time = time.time()
 
         logger.info("Snapshot restore completed")
+
+    def wait_for_workflow_status(
+        self, host: str, workflow_id: str, status: str = "running"
+    ) -> Optional[str]:
+        logger.info(f"Waiting for workflow {workflow_id} to reach status {status}")
+        retries = 0
+        while True:
+            workflow_details = self.rest.get_workflow_details(host, workflow_id)
+            workflow_status = workflow_details.get("status", "").lower()
+            if workflow_status == status.lower():
+                logger.info(f"Deployed workflow: {workflow_details}")
+                eventing_apps = self.rest.get_eventing_apps(host).get("apps", []) or []
+                logger.info(f"Eventing apps: {eventing_apps}")
+                if len(eventing_apps) > 0:
+                    return eventing_apps[0].get("name")
+            retries += 1
+            if retries % 60 == 0:
+                logger.info(f"Workflow status: {workflow_status}")
+            if retries >= self.MAX_RETRY:
+                raise Exception(
+                    f"Workflow {workflow_id} failed to reach the desired status {workflow_details}"
+                )
+
+            time.sleep(self.MONITORING_DELAY)
+
+    def monitor_eventing_dcp_mutation(self, eventing_node: str, items: int):
+        logger.info("Monitoring eventing backlog")
+        dcp_mutation = 0
+        while dcp_mutation != items:
+            stats = self.rest.get_eventing_stats(eventing_node)
+            for stat in stats:
+                backlog = stat.get("events_remaining", {}).get("dcp_backlog", 0)
+                dcp_mutation = stat.get("event_processing_stats", {}).get("dcp_mutation", 0)
+                logger.info(f"{dcp_mutation=}, {backlog=}")
+            time.sleep(self.MONITORING_DELAY * 12)

@@ -247,9 +247,9 @@ class CbAgent:
             if index_latency:
                 self.add_collector(ObserveIndexLatency)
             if eventing_stats:
+                self.add_collector(EventingStats, self.test)
+                self.add_collector(EventingPerNodeStats, self.test)
                 if not self.test.capella_infra:
-                    self.add_collector(EventingStats, self.test)
-                    self.add_collector(EventingPerNodeStats, self.test)
                     self.add_collector(EventingPerHandlerStats, self.test)
                     self.add_collector(EventingConsumerStats, self.test)
             if fts_stats:

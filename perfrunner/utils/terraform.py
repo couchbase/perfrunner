@@ -2239,6 +2239,113 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         self.infra_spec.update_spec_file()
 
 
+class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
+    def deploy(self):
+        # Deploy a provisional cluster first
+        super().deploy()
+        # Now we can deploy the model services
+        self.deploy_model_services()
+
+    def destroy(self):
+        # First destroy any model services resources
+        try:
+            self.destroy_model_services()
+        except Exception as e:
+            logger.error(f"Error while destroying model services: {e}")
+
+        # Now we can destroy the cluster
+        return super().destroy()
+
+    def deploy_model_services(self):
+        logger.info("Deploying model services...")
+        # We always want to deploy embedding model first as an LLM with value-added services may
+        # have dependency on the embedding model
+        models = self.infra_spec.infrastructure_model_services
+        for model_kind in ["embedding-generation", "text-generation"]:
+            if model_config := models.get(model_kind):
+                self.deploy_model(model_kind, model_config)
+
+        self.infra_spec.update_spec_file()
+
+    def deploy_model(self, model_kind: str, model_config: dict):
+        payload = {
+            "name": model_config.get("model_name"),
+            "compute": model_config.get("instance_type"),
+            "configuration": {
+                "name": model_config.get("model_name"),
+                "kind": model_kind,
+                "parameters": {},
+            },
+        }
+        logger.info(f"Deploying model with payload: {payload}")
+        try:
+            resp = self.provisioned_api.deploy_model(
+                self.tenant_id, self.project_id, self.cluster_ids[0], payload
+            )
+            resp.raise_for_status()
+            hosted_model_id = resp.json().get("id")
+            logger.info(f"Hosted model created with id {hosted_model_id}")
+            # If we get an id, we want to store it so we can destroy it later even
+            # if the rest of the code fails
+            self.infra_spec.config.set(model_kind, "model_id", hosted_model_id)
+            self.infra_spec.update_spec_file()
+
+            self.wait_for_hosted_model_status(hosted_model_id, "healthy")
+            model_endpoint = self._get_model_data(hosted_model_id).get("endpoint")
+            self.infra_spec.config.set(model_kind, "model_endpoint", model_endpoint)
+        except Exception as e:
+            logger.error(f"Error while deploying a hosted model: {e}")
+            raise e  # Reraise the exception to stop the deployment
+
+    def destroy_model_services(self):
+        logger.info("Destroying model services...")
+        # We destroy an llm first before an embedding model, if it exists
+        models = self.infra_spec.infrastructure_model_services
+        for model_kind in ["text-generation", "embedding-generation"]:
+            model_id = models.get(model_kind, {}).get("model_id")
+            if not model_id:
+                continue
+            try:
+                logger.info(f"Destroying {model_kind} model, id: {model_id}")
+                resp = self.provisioned_api.delete_model(
+                    self.tenant_id, self.project_id, self.cluster_ids[0], model_id
+                )
+                resp.raise_for_status()
+                logger.info(f"Model {model_id} successfully queued for deletion.")
+                self.wait_for_hosted_model_status(model_id, "")
+            except Exception as e:
+                logger.error(f"Error while destroying model {model_id}: {e}")
+
+    def wait_for_hosted_model_status(self, model_id: str, status: str):
+        logger.info(f"Waiting for hosted model {model_id} to reach status {status}")
+        retries = 0
+        status = status.lower()
+        interval_secs = 60  # Check for status every minute
+        while True:
+            model_details = self._get_model_data(model_id)
+            model_status = model_details.get("status", "").lower()
+            if model_status == status:
+                logger.info(f"Deployed model: {model_details}")
+                return
+            if retries % 10 == 0:  # Log model status every 10 minutes
+                logger.info(f"Hosted model status: {model_status}")
+            if retries >= 60:
+                # From current measurements, if a model does not reach a desired state
+                # after an hour, it is likely to never reach that state
+                raise Exception(
+                    f"Hosted model {model_id} failed to reach the desired status {model_details}"
+                )
+
+            retries += 1
+            sleep(interval_secs)
+
+    def _get_model_data(self, model_id: str) -> dict:
+        resp = self.provisioned_api.get_model_details(
+            self.tenant_id, self.project_id, self.cluster_ids[0], model_id
+        )
+        return resp.json().get("data", {})
+
+
 # CLI args.
 def get_args():
     parser = ArgumentParser()
@@ -2366,6 +2473,8 @@ def destroy():
             deployer = CapellaProvisionedDeployer(infra_spec, args)
         else:
             deployer = CapellaColumnarDeployer(infra_spec, args)
+    elif infra_spec.has_model_services_infrastructure:
+        deployer = CapellaModelServicesDeployer(infra_spec, args)
     else:
         deployer = CapellaProvisionedDeployer(infra_spec, args)
 
@@ -2416,6 +2525,8 @@ def main():
                 infra_spec.set_inactive_clusters_by_name([prov_cluster])
                 args.capella_only = True
             deployer = CapellaColumnarDeployer(infra_spec, args)
+        elif infra_spec.has_model_services_infrastructure:
+            deployer = CapellaModelServicesDeployer(infra_spec, args)
         else:
             deployer = CapellaProvisionedDeployer(infra_spec, args)
 

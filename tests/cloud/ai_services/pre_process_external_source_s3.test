@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.ai_services.WorkflowIngestionAndLatencyTest
+
+[showfast]
+title = Ingestion and embedding generation
+component = aicloud
+category = lat
+sub_category = {provider}
+
+[stats]
+server_processes = eventing-produc
+
+[cluster]
+initial_nodes = 5
+num_buckets = 1
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[access]
+time = 1200
+ssl_mode = capella
+
+[ai_services]
+workflow_type = unstructured

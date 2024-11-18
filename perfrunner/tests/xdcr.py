@@ -306,9 +306,13 @@ class XdcrInitTest(XdcrTest):
         self.monitor_replication()
 
     def _report_kpi(self, time_elapsed):
-        self.reporter.post(
-            *self.metrics.avg_replication_rate(time_elapsed)
-        )
+        if self.xdcr_settings.mobile:
+            self.sgw_master_node = next(self.cluster_spec.sgw_masters)
+            self.build = f'{self.rest.get_sgversion(self.sgw_master_node)}:' \
+                        f'{self.rest.get_version(self.master_node)}'
+            self.reporter.build = self.build
+
+        self.reporter.post(*self.metrics.avg_replication_rate(time_elapsed))
 
     def run(self):
         self.load()

@@ -1,9 +1,12 @@
 import json
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 from urllib.parse import urlparse
 
 from perfrunner.settings import TargetSettings, TestConfig
 from spring.wgen3 import WorkloadGen
+
+set_start_method("fork")
 
 PROG = "spring"
 USAGE = "%(prog)s -t <test file> [OPTIONS]"

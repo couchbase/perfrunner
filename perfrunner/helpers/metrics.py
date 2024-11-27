@@ -732,6 +732,19 @@ class MetricHelper:
 
         return time_taken, self._snapshots, metric_info
 
+    def query_suite_runtime(self,
+                            time_taken: float,
+                            suite: str) -> Metric:
+
+        metric_id = f'{self.test_config.name}_runtime_{suite}'
+        metric_id = metric_id.replace('.', '')
+
+        title = f'{suite} Runtime (sec), {self._title}'
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+        time_taken = round(time_taken, 2)
+
+        return time_taken, self._snapshots, metric_info
+
     def kv_latency(self,
                    operation: str,
                    percentiles: Iterable[Number] = [99.9],

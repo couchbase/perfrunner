@@ -1,0 +1,22 @@
+[test_case]
+test = perfrunner.tests.n1ql.JoinEnumTest
+
+[showfast]
+title = 4 nodes
+component = n1ql
+category = sql
+
+[cluster]
+mem_quota = 15000
+index_mem_quota = 35000
+initial_nodes = 4
+num_buckets = 6
+bucket_name = KS1,KS2,R,S,T,U
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[restore]
+backup_storage = /data/join_enum/RSTU/focus_100k_110921/
+backup_repo = default
+threads = 8

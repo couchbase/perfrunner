@@ -1635,9 +1635,9 @@ def download_dotnet_client(version: str):
         local('dotnet build --configuration Release couchbase-net-client.sln')
         return local('pwd', capture=True)
 
-def cbq(analytics_node: str, cluster_spec: ClusterSpec, script: str):
+def cbq(node: str, cluster_spec: ClusterSpec, script: str, port: int = 8095):
 
-    cmd = (f'./opt/couchbase/bin/cbq -e={analytics_node}:8095 '
+    cmd = (f'./opt/couchbase/bin/cbq -e={node}:{port} '
            f'-u={cluster_spec.rest_credentials[0]} '
            f'-p={cluster_spec.rest_credentials[1]} < {script}')
 

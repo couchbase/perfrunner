@@ -1697,3 +1697,78 @@ class CapellaSnapshotBackupWithN1QLTest(CapellaSnapshotBackupRestoreTest, N1QLTe
 
         self.report_kpi()
         logger.info(f"\n{self.latencies_before=}\n{self.latencies_after=}")
+
+class JoinEnumTest(N1QLTest):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.base_path = "file:///data/join_enum/RSTU/"
+
+    def import_tables(self):
+        for table in ["R", "S", "T", "U"]:
+            import_file = f'{self.base_path}{table}.tbl'
+            local.cbimport(
+                master_node=self.master_node,
+                cluster_spec=self.cluster_spec,
+                bucket=table,
+                data_type='csv',
+                data_format='',
+                import_file=import_file,
+                scope_collection_exp='',
+                generate_key='key::%rand%',
+                threads=16,
+                field_separator='"|"',
+                infer_types=True
+            )
+
+    def _report_kpi(self, time_taken, suite):
+       self.reporter.post(
+           *self.metrics.query_suite_runtime(time_taken, suite)
+       )
+
+    def run_cbq_script(self, script: str):
+        script_file = f'{self.base_path.replace("file://", "")}{script}.sql'
+        local.cbq(
+            node=self.query_nodes[0],
+            cluster_spec=self.cluster_spec,
+            script=script_file,
+            port=8093
+        )
+
+    def wait_for_indexing(self):
+        for server in self.index_nodes:
+            self.monitor.monitor_indexing(server)
+
+    @with_stats
+    @timeit
+    def run_query_suite(self, suite: str):
+       suite_file = f'{self.base_path.replace("file://", "")}{suite}.sql'
+       logger.info("Executing {}...".format(suite_file))
+       local.cbq(
+           node=self.query_nodes[0],
+           cluster_spec=self.cluster_spec,
+           script=suite_file,
+           port=8093
+       )
+
+    def run_all_query_suites(self):
+        for suite in ["60Joins", "Focus", "RST.HashJoins", "RST.NLJoins", "RSTU.HashJoins"]:
+            time_taken = self.run_query_suite(suite)
+            self.report_kpi(time_taken=time_taken, suite=suite)
+
+    def run(self):
+        self.restore_local()
+        self.import_tables()
+
+        # create indexes
+        self.run_cbq_script("cr_ind_n_upd")
+
+        # build indexes
+        self.run_cbq_script("build_index")
+        self.wait_for_indexing()
+
+        # update index stats
+        self.run_cbq_script("indexstats")
+
+        self.run_all_query_suites()

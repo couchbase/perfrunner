@@ -1,0 +1,50 @@
+{
+    "KS1": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "KS2": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "R": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "S": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "T": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    },
+    "U": {
+        "_default": {
+            "_default": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    }
+}

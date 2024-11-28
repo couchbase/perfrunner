@@ -56,8 +56,20 @@ def buildTestsSGReplicateMultiCluster(tests) {
     }
 }
 
+def buildTestsSGXDCR(tests) {
+    for ( test in tests ) {
+        build job: test['job'], propagate: false, parameters: [
+            string(name: 'sg_build', value: params.version),
+            string(name: 'cb_build', value: params.cb_build),
+            string(name: 'test_config', value: test['test_config']),
+            string(name: 'sg1_config', value: test['sg1_config']),
+            string(name: 'sg2_config', value: test['sg2_config'])
+        ]
+    }
+}
+
 def buildComponent(component, testCases) {
-    for ( release in ['lithium'] ) {
+    for ( release in ['anemone'] ) {
         if ( testCases.containsKey(release) ) {
             buildTests(testCases[release][component])
         }
@@ -65,7 +77,7 @@ def buildComponent(component, testCases) {
 }
 
 def buildComponentImport(component, testCases) {
-    for ( release in ['lithium'] ) {
+    for ( release in ['anemone'] ) {
         if ( testCases.containsKey(release) ) {
             buildTestsImport(testCases[release][component])
         }
@@ -73,7 +85,7 @@ def buildComponentImport(component, testCases) {
 }
 
 def buildComponentSGReplicate(component, testCases) {
-    for ( release in ['lithium'] ) {
+    for ( release in ['anemone'] ) {
         if ( testCases.containsKey(release) ) {
             buildTestsSGReplicate(testCases[release][component])
         }
@@ -81,9 +93,17 @@ def buildComponentSGReplicate(component, testCases) {
 }
 
 def buildComponentSGReplicateMultiCluster(component, testCases) {
-    for ( release in ['lithium'] ) {
+    for ( release in ['anemone'] ) {
         if ( testCases.containsKey(release) ) {
             buildTestsSGReplicateMultiCluster(testCases[release][component])
+        }
+    }
+}
+
+def buildComponentSGXDCR(component, testCases) {
+    for ( release in ['anemone'] ) {
+        if ( testCases.containsKey(release) ) {
+            buildTestsSGXDCR(testCases[release][component])
         }
     }
 }
@@ -94,8 +114,8 @@ pipeline {
         stage('Setup') {
             steps {
                 script {
-                    if ( params.cobalt_test_suite != '' ) {
-                        testCases['lithium'] = readJSON file: params.lithium_test_suite
+                    if ( params.anemone_test_suite != '' ) {
+                        testCases['anemone'] = readJSON file: params.anemone_test_suite
                     }
                 }
             }
@@ -108,22 +128,10 @@ pipeline {
                         buildComponent('Read', testCases)
                     }
                 }
-                stage('noxa_Read') {
-                    when { expression { return params.noxa_Read } }
-                    steps {
-                        buildComponent('noxa_Read', testCases)
-                    }
-                }
                 stage('Write') {
                     when { expression { return params.Write } }
                     steps {
                         buildComponent('Write', testCases)
-                    }
-                }
-                stage('noxa_Write') {
-                    when { expression { return params.noxa_Write } }
-                    steps {
-                        buildComponent('noxa_Write', testCases)
                     }
                 }
                 stage('Sync') {
@@ -132,22 +140,10 @@ pipeline {
                         buildComponent('Sync', testCases)
                     }
                 }
-                stage('noxa_Sync') {
-                    when { expression { return params.noxa_Sync } }
-                    steps {
-                        buildComponent('noxa_Sync', testCases)
-                    }
-                }
                 stage('Query') {
                     when { expression { return params.Query } }
                     steps {
                         buildComponent('Query', testCases)
-                    }
-                }
-                stage('noxa_Query') {
-                    when { expression { return params.noxa_Query } }
-                    steps {
-                        buildComponent('noxa_Query', testCases)
                     }
                 }
                 stage('Replicate') {
@@ -184,6 +180,12 @@ pipeline {
                     when { expression { return params.Resync } }
                     steps {
                         buildComponent('Resync', testCases)
+                    }
+                }
+                stage('SGXDCR') {
+                    when { expression { return params.SGXDCR } }
+                    steps {
+                        buildComponent('SGXDCR', testCases)
                     }
                 }
                 stage('LowEnd') {

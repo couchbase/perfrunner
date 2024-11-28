@@ -90,31 +90,6 @@
           "sg_config": "3.1/hebe_channel_xattr_1db_1s_50c",
           "test": "syncgateway_readwithrevs_4node_replicator2_1s_50c.test"}
     ],
-    "noxa_Read": [
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_1node_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_read_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_read_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_1node_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_readwithrevs_revcache_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_readwithrevs_revcache_4node.test"}
-    ],
     "Write": [
         {"job": "syncgteway-hebe-new",
           "sg_cluster_map": "hebe_1node",
@@ -164,31 +139,6 @@
           "sg_config": "3.1/hebe_channel_xattr_1db_1s_50c",
           "test": "syncgateway_write_4node_no_roundtripwrite_replicator2_1s_50c.test"}
     ],
-    "noxa_Write": [
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_1node_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_write_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_write_4node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_1node_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_write_1node_no_roundtripwrite.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_write_4node_no_roundtripwrite.test"}
-    ],
     "Sync": [
         {"job": "syncgteway-hebe-new",
           "sg_cluster_map": "hebe_1node",
@@ -237,20 +187,6 @@
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.1/hebe_channel_nocache_xattr_1db_1s_50c",
           "test": "syncgateway_sync_4node_channelquery_1s_50c.test"}
-    ],
-    "noxa_Sync": [
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_1node_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_sync_1node.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_4node",
-          "cb_cluster_map": "hebe_4nodes_colocated.spec",
-          "sg_config": "3.0/hebe_channel_noxa",
-          "test": "noxa/syncgateway_noxa_sync_4node.test"}
     ],
     "Query": [
         {"job": "syncgteway-hebe-new",
@@ -318,13 +254,6 @@
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.1/hebe_channel_access_nocache_xattr_1db_1s_50c",
           "test": "syncgateway_auth_4node_1s_50c.test"}
-    ],
-    "noxa_Query": [
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_1node_colocated.spec",
-          "sg_config": "3.0/hebe_channel_access_nocache_noxa",
-          "test": "noxa/syncgateway_noxa_auth_1node.test"}
     ],
     "Import": [
         {"job": "hebe_sg_import",
@@ -681,6 +610,28 @@
         "cluster": "rhea_6kv_4n1ql_4index_4sgw.spec",
         "test": "syncgateway_resync_4nodes_10M.test"
       }
+    ],
+    "SGXDCR": [
+      {"job": "hebe-xdcr-sgw-dev",
+        "sg1_config": "3.0/hebe_replicate_sg1_no_import.config",
+        "sg2_config": "3.0/hebe_replicate_sg1_no_import.config",
+        "cluster": "hebe_replicate_6node_colocated.spec",
+        "test": "xdcr_init_1x1_unidir_100M_mobile_no_import.test"},
+      {"job": "hebe-xdcr-sgw-dev",
+        "sg1_config": "3.0/hebe_replicate_sg1_no_import.config",
+        "sg2_config": "3.0/hebe_replicate_sg1_no_import.config",
+        "cluster": "hebe_replicate_6node_colocated.spec",
+        "test": "xdcr_init_2x2_unidir_100M_mobile_no_import.test"},
+      {"job": "hebe-xdcr-sgw-dev",
+        "sg1_config": "3.0/hebe_replicate_sg1.config",
+        "sg2_config": "3.0/hebe_replicate_sg1.config",
+        "cluster": "hebe_replicate_6node_colocated.spec",
+        "test": "xdcr_init_1x1_unidir_100M_mobile.test"},
+      {"job": "hebe-xdcr-sgw-dev",
+        "sg1_config": "3.0/hebe_replicate_sg1.config",
+        "sg2_config": "3.0/hebe_replicate_sg1.config",
+        "cluster": "hebe_replicate_6node_colocated.spec",
+        "test": "xdcr_init_2x2_unidir_100M_mobile.test"}
     ],
     "LowEnd":[
       {"job": "syncgteway-hebe-new",

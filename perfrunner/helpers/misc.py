@@ -69,9 +69,8 @@ def uhex() -> str:
     return uuid4().hex
 
 
-def pretty_dict(d: Any, sort_keys: bool = True) -> str:
-    return json.dumps(d, indent=4, sort_keys=sort_keys,
-                      default=lambda o: o.__dict__)
+def pretty_dict(d: Any, sort_keys: bool = True, encoder=lambda o: o.__dict__) -> str:
+    return json.dumps(d, indent=4, sort_keys=sort_keys, default=encoder)
 
 
 def target_hash(*args: str) -> str:

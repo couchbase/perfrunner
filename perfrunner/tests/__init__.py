@@ -458,21 +458,34 @@ class PerfTest:
         time.sleep(access_settings.time)
 
     def log_task_settings(self, phases: Iterable[WorkloadPhase]):
+        def phase_settings_encoder(obj):
+            settings_dict = copy.deepcopy(obj.__dict__)
+            if isinstance(obj, PhaseSettings) and obj.collections:
+                # Replace a collection map with `CollectionSettings` definition
+                settings_dict.update({"collections": self.test_config.collection.get_definition()})
+            return settings_dict
+
         if len(phases) > 1:
             common_task_settings, diff_task_settings = PhaseSettings.compare_phase_settings(
                 [ph.task_settings for ph in phases]
             )
 
             # Print out all the settings which are the same for each task
-            logger.info('Settings common to each task: {}'
-                        .format(pretty_dict(common_task_settings)))
+            if common_task_settings.get("collections"):
+                # Replace the collections with their definition
+                common_task_settings["collections"] = self.test_config.collection.get_definition()
+            logger.info(f"Common settings: {pretty_dict(common_task_settings)}")
 
             # For each task, print out the settings which are different
-            logger.info('Individual task settings: \n{}'.format(
-                '\n'.join(pretty_dict(d) for d in diff_task_settings)
-            ))
+            logger.info("Individual task settings:")
+            for d in diff_task_settings:
+                logger.info(pretty_dict(d))
         else:
-            logger.info('Task settings: {}'.format(pretty_dict(phases[0].task_settings)))
+            logger.info(
+                f"""Task settings: {
+                    pretty_dict(phases[0].task_settings, encoder=phase_settings_encoder)
+                }"""
+            )
 
     def generic_phase(self,
                       phase_name: str,

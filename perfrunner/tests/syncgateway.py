@@ -26,6 +26,7 @@ from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import SGW_ADMIN_PORT, SGW_PUBLIC_PORT, RestHelper
 from perfrunner.helpers.worker import (
     WorkerManager,
+    WorkloadPhase,
     pillowfight_data_load_task,
     syncgateway_bh_puller_task,
     syncgateway_delta_sync_task_load_docs,
@@ -262,7 +263,8 @@ class SGPerfTest(PerfTest):
         settings.public_port = self.public_port
         settings.memcached_port = self.memcached_port
 
-        logger.info(f'Running {phase}: {pretty_dict(settings)}')
+        logger.info(f"Running {phase}")
+        self.log_task_settings([WorkloadPhase(task, target_iterator, settings, timer=timer)])
         self.worker_manager.run_sg_tasks(task, settings, target_iterator, timer, distribute, phase)
         if wait:
             self.worker_manager.wait_for_fg_tasks()

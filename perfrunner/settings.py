@@ -1190,6 +1190,23 @@ class CollectionSettings:
 
         return coll_map
 
+    def get_definition(self) -> Optional[dict]:
+        """
+        Return collections definition summary intended for printing usecases only.
+
+        If a config file is provided, the returned dictionary contains the config file path.
+        Otherwise, it will contain the defined per bucket and per scope values.
+        """
+        if self.config:
+            return {"config": self.config}
+        elif not self.collection_map:
+            return None
+
+        return {
+            "scopes_per_bucket": self.scopes_per_bucket,
+            "collections_per_scope": self.collections_per_scope,
+        }
+
 
 class ServerlessDBSettings:
 

@@ -12,11 +12,10 @@ from capella.columnar.CapellaAPI import CapellaAPI as CapellaAPIColumnar
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
 from capella.serverless.CapellaAPI import CapellaAPI as CapellaAPIServerless
 from decorator import decorator
-from fabric.api import local
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import create_build_tuple, pretty_dict
+from perfrunner.helpers.misc import create_build_tuple, pretty_dict, run_local_shell_command
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec
 from perfrunner.utils.terraform import (
@@ -1001,13 +1000,14 @@ class DefaultRestHelper(RestBase):
     def exec_analytics_statement_curl(self, analytics_node: str, statement: str) -> str:
         url = self._get_api_url(host=analytics_node, path='analytics/service',
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
-        data = {'statement': statement}
-        data_json = json.dumps(data)
+        data_json = json.dumps({"statement": statement})
+        user, pwd = self._set_auth(url=url)
         cmd = (
-            f"curl -v -k -u {self.rest_username}:{self.rest_password} "
+            f"curl -v -k -u {user}:{pwd} "
             f"-H \"Content-Type: application/json\" -d '{data_json}' {url}"
         )
-        return local(cmd, capture=True)
+        stdout, _, _ = run_local_shell_command(cmd)
+        return stdout
 
     def get_analytics_stats(self, analytics_node: str) -> dict:
         url = self._get_api_url(host=analytics_node, path='analytics/node/stats',

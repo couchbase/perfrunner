@@ -28,7 +28,14 @@ from perfrunner.helpers.rest import (
     QUERY_PORT_SSL,
 )
 from perfrunner.helpers.worker import ch2_load, tpcds_initial_data_load_task
-from perfrunner.settings import CH2, AnalyticsCBOSampleSize, CH2ConnectionSettings, ColumnarSettings
+from perfrunner.settings import (
+    CH2,
+    AnalyticsCBOSampleSize,
+    AnalyticsExternalFileFormat,
+    AnalyticsExternalTableFormat,
+    CH2ConnectionSettings,
+    ColumnarSettings,
+)
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
 from perfrunner.tests.xdcr import SrcTargetIterator
@@ -72,29 +79,54 @@ class DatasetDef:
     def create_external_statement(
         self,
         external_bucket: str,
-        file_format: Literal["json", "parquet"],
-        file_ext: str,
+        file_format: AnalyticsExternalFileFormat = AnalyticsExternalFileFormat.DEFAULT,
+        table_format: AnalyticsExternalTableFormat = AnalyticsExternalTableFormat.DEFAULT,
+        file_ext: Optional[str] = None,
     ) -> str:
         name, external_bucket = sqlpp_escape(self.name, external_bucket)
-        return (
+
+        with_clause_options = {}
+        if file_format is not AnalyticsExternalFileFormat.DEFAULT:
+            with_clause_options["format"] = file_format.value
+        if table_format is not AnalyticsExternalTableFormat.DEFAULT:
+            with_clause_options["table-format"] = table_format.value
+        if file_ext:
+            with_clause_options["include"] = f"*.{file_ext}"
+
+        cmd = (
             f"CREATE EXTERNAL DATASET {name} ON {external_bucket} AT `external_link` "
-            f"USING '{self.source or self.name}' "
-            f"WITH {{ 'format': '{file_format}', 'include': '*.{file_ext}' }};"
+            f"USING '{self.source or self.name}'"
         )
+
+        if with_clause_options:
+            cmd += f" WITH {json.dumps(with_clause_options)}"
+
+        return cmd
 
     def copy_into_statement(
         self,
         external_bucket: str,
-        file_format: Literal["json", "parquet"],
-        file_ext: str,
+        file_format: AnalyticsExternalFileFormat = AnalyticsExternalFileFormat.DEFAULT,
+        file_ext: Optional[str] = None,
         path_keyword: Literal["PATH", "USING"] = "PATH",
     ) -> str:
         name, external_bucket = sqlpp_escape(self.name, external_bucket)
-        return (
+
+        with_clause_options = {}
+        if file_format is not AnalyticsExternalFileFormat.DEFAULT:
+            with_clause_options["format"] = file_format.value
+        if file_ext:
+            with_clause_options["include"] = f"*.{file_ext}"
+
+        cmd = (
             f"COPY INTO {name} FROM {external_bucket} "
-            f"AT `external_link` {path_keyword} '{self.source or self.name}' "
-            f"WITH {{ 'format': '{file_format}', 'include': '*.{file_ext}' }};"
+            f"AT `external_link` {path_keyword} '{self.source or self.name}'"
         )
+
+        if with_clause_options:
+            cmd += f" WITH {json.dumps(with_clause_options)}"
+
+        return cmd
 
     def create_primary_idx_statement(self) -> str:
         return f"CREATE PRIMARY INDEX ON {sqlpp_escape(self.name)}"
@@ -208,6 +240,7 @@ class AnalyticsTest(PerfTest):
             lambda dataset: dataset.create_external_statement(
                 self.analytics_settings.external_bucket,
                 self.analytics_settings.external_file_format,
+                self.analytics_settings.external_table_format,
                 self.analytics_settings.external_file_include,
             ),
             verbose=verbose,

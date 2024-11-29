@@ -12,6 +12,7 @@ from decorator import decorator
 
 from logger import logger
 from perfrunner.helpers.misc import (
+    SafeEnum,
     maybe_atoi,
     run_aws_cli_command,
     target_hash,
@@ -21,7 +22,6 @@ CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
 REPO = 'https://github.com/couchbase/perfrunner'
 CAPELLA_PUBLIC_API_URL_TEMPLATE = "https://cloudapi.{}.nonprod-project-avengers.com"
-
 
 class CBProfile(Enum):
     DEFAULT = 'default'
@@ -2648,16 +2648,26 @@ class MagmaSettings:
                                                       self.MAGMA_MIN_MEMORY_QUOTA))
 
 
-class AnalyticsCBOSampleSize(Enum):
+class AnalyticsCBOSampleSize(SafeEnum):
     DEFAULT = ""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
 
-    @classmethod
-    def _missing_(cls, value) -> "AnalyticsCBOSampleSize":
-        logger.warning(f"Invalid CBO sample size: '{value}'. Using default.")
-        return cls.DEFAULT
+
+class AnalyticsExternalFileFormat(SafeEnum):
+    DEFAULT = ""
+    JSON = "json"
+    CSV = "csv"
+    TSV = "tsv"
+    PARQUET = "parquet"
+    AVRO = "avro"
+
+
+class AnalyticsExternalTableFormat(SafeEnum):
+    DEFAULT = ""
+    DELTALAKE = "delta"
+    ICEBERG = "apache-iceberg"
 
 
 class AnalyticsSettings:
@@ -2671,8 +2681,7 @@ class AnalyticsSettings:
     EXTERNAL_DATASET_TYPE = "s3"
     EXTERNAL_DATASET_REGION = "us-east-1"
     EXTERNAL_BUCKET = None
-    EXTERNAL_FILE_FORMAT = 'json'
-    EXTERNAL_FILE_INCLUDE = 'json'
+    EXTERNAL_FILE_INCLUDE = None
     AWS_CREDENTIAL_PATH = None
     STORAGE_FORMAT = ""
     USE_CBO = "false"
@@ -2694,7 +2703,12 @@ class AnalyticsSettings:
         self.external_dataset_region = options.pop("external_dataset_region",
                                                    self.EXTERNAL_DATASET_REGION)
         self.external_bucket = options.pop("external_bucket", self.EXTERNAL_BUCKET)
-        self.external_file_format = options.pop("external_file_format", self.EXTERNAL_FILE_FORMAT)
+        self.external_file_format = AnalyticsExternalFileFormat(
+            options.pop("external_file_format", "").lower()
+        )
+        self.external_table_format = AnalyticsExternalTableFormat(
+            options.pop("external_table_format", "").lower()
+        )
         self.external_file_include = options.pop("external_file_include",
                                                  self.EXTERNAL_FILE_INCLUDE)
         self.aws_credential_path = options.pop('aws_credential_path', self.AWS_CREDENTIAL_PATH)
@@ -3024,15 +3038,10 @@ class CH2ConnectionSettings:
         return " ".join(flags)
 
 
-class CH2Schema(Enum):
+class CH2Schema(SafeEnum):
     CH2 = "ch2"  # Original CH2 with mostly flat schema
     CH2P = "ch2p"  # CH2+: More nested than CH2, no extra, unused fields. "Between" CH2 and CH2++
     CH2PP = "ch2pp"  # CH2++: More nested than CH2+ with tunable number of extra, unused fields
-
-    @classmethod
-    def _missing_(cls, value) -> "CH2Schema":
-        logger.warning(f"Invalid CH2 schema: '{value}'. Using default.")
-        return cls.CH2
 
 
 class CH2:

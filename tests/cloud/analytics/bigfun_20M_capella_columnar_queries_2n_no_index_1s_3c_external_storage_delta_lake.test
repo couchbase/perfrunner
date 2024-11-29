@@ -1,0 +1,28 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunQueryNoIndexExternalTest
+
+[showfast]
+title = 2 nodes, BigFUN 20M users (320M docs), no indexes (ad hoc), s=1 c=3, Capella Columnar, External Storage, delta
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[stats]
+server_processes = cbas java
+
+[cluster]
+initial_nodes = 2
+enable_n2n_encryption = all
+
+[analytics]
+queries = perfrunner/workloads/bigfun/queries_without_index_external.json
+analytics_config_file = tests/analytics/config/3_datasets_collection_config.json
+external_dataset_type = s3
+external_dataset_region = us-east-1
+external_bucket = analytics-bigfun20m-delta-lake
+external_table_format = delta
+aws_credential_path = /root/.ssh/
+
+[access]
+ops = 5
+workers = 1

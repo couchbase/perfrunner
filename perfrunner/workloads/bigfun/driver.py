@@ -9,7 +9,7 @@ import numpy
 
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
-from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.rest import RestType
 from perfrunner.workloads.bigfun.query_gen import Query, new_queries
 
 
@@ -25,7 +25,7 @@ def store_metrics(statement: str, metrics: dict):
         fh.write('\n')
 
 
-def run_query(rest: RestHelper, node: str, query: Query) -> float:
+def run_query(rest: RestType, node: str, query: Query) -> float:
     t0 = time.time()
     response = rest.exec_analytics_statement(node, query.statement)
     latency = time.time() - t0  # Latency in seconds
@@ -33,7 +33,7 @@ def run_query(rest: RestHelper, node: str, query: Query) -> float:
     return latency
 
 
-def run_query_external(rest: RestHelper, node: str, query: Query) -> float:
+def run_query_external(rest: RestType, node: str, query: Query) -> float:
     t0 = time.time()
     response = rest.exec_analytics_statement_curl(node, query.statement)
     latency = time.time() - t0  # Latency in seconds
@@ -41,12 +41,14 @@ def run_query_external(rest: RestHelper, node: str, query: Query) -> float:
     return latency
 
 
-def run_concurrent_queries(rest: RestHelper,
-                           nodes: List[str],
-                           query: Query,
-                           concurrency: int,
-                           num_requests: int,
-                           query_method: QueryMethod = QueryMethod.PYTHON_CBAS) -> List[float]:
+def run_concurrent_queries(
+    rest: RestType,
+    nodes: List[str],
+    query: Query,
+    concurrency: int,
+    num_requests: int,
+    query_method: QueryMethod = QueryMethod.PYTHON_CBAS,
+) -> List[float]:
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
         nodes = cycle(nodes)
 
@@ -65,12 +67,14 @@ def run_concurrent_queries(rest: RestHelper,
         return timings
 
 
-def bigfun(rest: RestHelper,
-           nodes: List[str],
-           concurrency: int,
-           num_requests: int,
-           query_set: str,
-           query_method: QueryMethod = QueryMethod.PYTHON_CBAS) -> Iterator:
+def bigfun(
+    rest: RestType,
+    nodes: List[str],
+    concurrency: int,
+    num_requests: int,
+    query_set: str,
+    query_method: QueryMethod = QueryMethod.PYTHON_CBAS,
+) -> Iterator:
     logger.info('Running BigFun queries')
 
     if not num_requests > 0:

@@ -1,6 +1,7 @@
 import socket
 import sys
 import time
+from functools import cached_property
 from threading import Thread
 from typing import Optional, Union
 
@@ -136,7 +137,16 @@ class Collector:
                 return False
         return True
 
+    @cached_property
+    def cluster_is_columnar(self) -> bool:
+        version = self.get_http("/pools").get("implementationVersion")
+        return "columnar" in version
+
     def get_buckets(self, with_stats=False):
+        if self.cluster_is_columnar:
+            # Columnar clusters don't have KV buckets so don't try to get them.
+            return
+
         buckets = self.get_http(path="/pools/default/buckets")
         if not buckets:
             buckets = self.refresh_nodes_and_retry(path="/pools/default/buckets")

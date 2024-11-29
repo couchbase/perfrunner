@@ -8,6 +8,7 @@ import socket
 import subprocess
 import time
 from dataclasses import dataclass
+from enum import Enum
 from hashlib import md5
 from typing import Any, Optional, Union
 from uuid import uuid4
@@ -39,6 +40,18 @@ from cryptography.x509 import (
 from cryptography.x509.oid import NameOID
 
 from logger import logger
+
+
+class SafeEnum(Enum):
+    """Enum that falls back to the first member if an invalid value is provided."""
+
+    @classmethod
+    def _missing_(cls, value):
+        fallback = next(iter(cls))
+        logger.warning(
+            f"Invalid value '{value}' provided for {cls.__name__}. Falling back to {fallback.name}."
+        )
+        return fallback
 
 
 @dataclass

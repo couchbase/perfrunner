@@ -18,10 +18,10 @@ STATEMENTS = {
             'FROM `GleambookUsers-{}` u '
             'WHERE u.user_since >= "{}" AND u.user_since < "{}" '
             'AND (SOME e IN u.employment SATISFIES e.end_date IS UNKNOWN);',
-    'BF08': 'SELECT cm.user.screen_name AS username, AVG(LENGTH(cm.message_text)) AS avg '
+    'BF08': 'SELECT cm.`user`.screen_name AS username, AVG(LENGTH(cm.message_text)) AS avg '
             'FROM `ChirpMessages-{}` cm '
             'WHERE cm.send_time >= "{}" AND cm.send_time < "{}" '
-            'GROUP BY cm.user.screen_name '
+            'GROUP BY cm.`user`.screen_name '
             'ORDER BY avg '
             'LIMIT 10;',
     'BF10': 'SELECT VALUE cm '

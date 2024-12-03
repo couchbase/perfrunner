@@ -1597,14 +1597,15 @@ class CapellaColumnarManualOnOffTest(PerfTest):
             timeout_secs=self.on_off_settings.on_off_timeout,
         )
 
-    @timeit
     def turn_on(self):
         self.rest.turn_on_instance(self.instance_id)
+        t0 = time.time()
         self.monitor.wait_for_columnar_instance_turn_on(
             self.instance_id,
             poll_interval_secs=self.on_off_settings.on_off_poll_interval,
             timeout_secs=self.on_off_settings.on_off_timeout,
         )
+        return time.time() - t0
 
     def run(self):
         on_duration = self.on_off_settings.on_duration

@@ -2681,10 +2681,11 @@ class CapellaColumnarRestHelper(CapellaRestBase):
         resp.raise_for_status()
         return resp.json()
 
+    @retry
     def turn_on_instance(self, instance_id: str):
         logger.info(f"Turning on columnar instance {instance_id}")
         resp = self.columnar_client.turn_on_instance(self.tenant_id, self.project_id, instance_id)
-        resp.raise_for_status()
+        return resp
 
     def turn_off_instance(self, instance_id: str):
         logger.info(f"Turning off columnar instance {instance_id}")

@@ -1509,13 +1509,6 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
     def sync(self) -> float:
         return CH2Test.sync(self)
 
-    def wait_for_persistence(self):
-        """Wait for data persistence on the KV cluster."""
-        for bucket in self.test_config.buckets:
-            self.monitor.monitor_disk_queues(self.data_node, bucket)
-            self.monitor.monitor_dcp_queues(self.data_node, bucket)
-            self.monitor.monitor_replica_count(self.data_node, bucket)
-
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         query_port = QUERY_PORT_SSL
         query_urls = [f"{node}:{query_port}" for node in self.query_nodes]

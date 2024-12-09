@@ -1,14 +1,10 @@
 [clusters]
 server =
-    172.23.96.189:kv
+    172.23.96.175:kv
 
 [syncgateways]
 syncgateways =
-    172.23.96.166
-
-[cblites]
-cblites =
-    172.23.96.59
+    172.23.96.121
 
 [storage]
 data = /data

@@ -1573,7 +1573,7 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
         self.disconnect_link()
 
         if self.test_config.analytics_settings.ingest_during_load:
-            self.create_datasets()
+            self.create_datasets_at_link()
             self.create_analytics_indexes()
             self.connect_link()
 

@@ -1532,7 +1532,9 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
         (self.data_cluster_user, self.data_cluster_pwd), (self.columnar_user, self.columnar_pwd) = (
             self.cluster_spec.capella_admin_credentials
         )
-        self.reporter.build += f" : {self.rest.get_version(self.analytics_node)}"
+        self.reporter.build = (
+            f"{self.rest.get_version(self.analytics_node)} : {self.reporter.build}"
+        )
 
     @with_stats
     def restore_data(self):

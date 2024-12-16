@@ -1,4 +1,5 @@
 import csv
+import itertools
 import json
 import os
 import re
@@ -6,7 +7,7 @@ from configparser import ConfigParser, NoOptionError, NoSectionError
 from dataclasses import dataclass
 from enum import Enum
 from itertools import chain, combinations, permutations
-from typing import Iterable, Iterator, Optional, Tuple
+from typing import Any, Iterable, Iterator, Optional, Tuple
 
 from decorator import decorator
 
@@ -685,7 +686,7 @@ class ClusterSpec(Config):
 
             for cluster_id in self.capella_cluster_ids:
                 pwd = run_aws_cli_command(command_template, cluster_id)
-                if pwd is not None:
+                if pwd:
                     pwds.append(pwd)
 
             creds = "\n".join(f"{user}:{pwd}" for pwd in pwds)
@@ -2796,23 +2797,51 @@ class ColumnarKafkaLinksSettings:
 
 
 class ColumnarCopyToSettings:
-    S3_FILE_FORMAT = "json"
-    MAX_OBJECTS_PER_FILE = "1000"
-    S3_COMPRESSION = "none"
+    OBJECT_STORE_FILE_FORMATS = "json"  # alt: csv
+    MAX_OBJECTS_PER_FILES = "10000"
+    OBJECT_STORE_COMPRESSIONS = "none"  # alt: gzip
+    GZIP_COMPRESSION_LEVELS = "6"  # ranges from 1-9
 
     def __init__(self, options: dict):
-        self.s3_file_format = set(
-            fmt.strip() for fmt in options.get("s3_format", self.S3_FILE_FORMAT).split(",")
+        self.object_store_file_formats = (
+            options.get("object_store_file_formats", self.OBJECT_STORE_FILE_FORMATS)
+            .replace(",", " ")
+            .split()
         )
-        self.max_objects_per_file = set(
-            mopf.strip()
-            for mopf in options.get("max_objects_per_file", self.MAX_OBJECTS_PER_FILE).split(",")
+        self.max_objects_per_files = (
+            options.get("max_objects_per_files", self.MAX_OBJECTS_PER_FILES)
+            .replace(",", " ")
+            .split()
         )
-        self.s3_compression = set(
-            cmprs.strip() for cmprs in options.get("s3_compression", self.S3_COMPRESSION).split(",")
+        self.object_store_compressions = (
+            options.get("object_store_compressions", self.OBJECT_STORE_COMPRESSIONS)
+            .replace(",", " ")
+            .split()
         )
-        self.s3_query_file = options.get("s3_query_file")
+        self.gzip_compression_levels = (
+            options.get("gzip_compression_levels", self.GZIP_COMPRESSION_LEVELS)
+            .replace(",", " ")
+            .split()
+        )
+        self.object_store_query_file = options.get("object_store_query_file")
         self.kv_query_file = options.get("kv_query_file")
+
+    def all_param_combinations(self) -> list[tuple[Any, ...]]:
+        """Return all combinations of COPY TO statement "WITH" clause parameters."""
+        compression_settings = []
+        for c in self.object_store_compressions:
+            if c == "gzip":
+                compression_settings.extend((c, level) for level in self.gzip_compression_levels)
+                continue
+            compression_settings.append((c, None))
+
+        return list(
+            itertools.product(
+                self.object_store_file_formats,
+                self.max_objects_per_files,
+                compression_settings,
+            )
+        )
 
 
 class ColumnarSettings:
@@ -2842,6 +2871,11 @@ class ColumnarSettings:
         # per-node sweep threshold for columnar selective caching
         self.sweep_threshold_bytes = int(
             options.get("sweep_threshold_bytes", self.SWEEP_THRESHOLD_BYTES)
+        )
+        # setting to override which datasets are imported from an object store (e.g. S3, GCS),
+        # where applicable. Can be used e.g. to import only a subset of all datasets
+        self.object_store_import_datasets = (
+            options.get("object_store_import_datasets", "").replace(",", " ").split()
         )
 
 
@@ -3066,6 +3100,7 @@ class CH2Schema(SafeEnum):
     CH2 = "ch2"  # Original CH2 with mostly flat schema
     CH2P = "ch2p"  # CH2+: More nested than CH2, no extra, unused fields. "Between" CH2 and CH2++
     CH2PP = "ch2pp"  # CH2++: More nested than CH2+ with tunable number of extra, unused fields
+    CH2PPF = "ch2ppf"  # Flat CH2++: fully normalized CH2++ schema
 
 
 class CH2:

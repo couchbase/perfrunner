@@ -1,0 +1,157 @@
+[
+    {
+        "id": "q01",
+        "source_def": "(SELECT c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_middle, c_credit_lim, c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_since, c_data FROM customer) AS c",
+        "output_path_exps": [],
+        "partition_exps": [],
+        "order_exps": [],
+        "obj_type_def": {
+            "c_w_id": "int",
+            "c_d_id": "int",
+            "c_id": "int",
+            "c_discount": "float",
+            "c_credit": "string",
+            "c_last": "string",
+            "c_first": "string",
+            "c_middle": "string",
+            "c_credit_lim": "float",
+            "c_balance": "float",
+            "c_ytd_payment": "float",
+            "c_payment_cnt": "int",
+            "c_delivery_cnt": "int",
+            "c_since": "string?",
+            "c_data": "string"
+        }
+    },
+    {
+        "id": "q02",
+        "source_def": "(SELECT s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM stock) AS s",
+        "output_path_exps": [],
+        "partition_exps": [],
+        "order_exps": [],
+        "obj_type_def": {
+            "s_w_id": "int",
+            "s_i_id": "int",
+            "s_quantity": "int",
+            "s_ytd": "float",
+            "s_order_cnt": "int",
+            "s_remote_cnt": "int",
+            "s_data": "string",
+            "s_dist_01": "string",
+            "s_dist_02": "string",
+            "s_dist_03": "string",
+            "s_dist_04": "string",
+            "s_dist_05": "string",
+            "s_dist_06": "string",
+            "s_dist_07": "string",
+            "s_dist_08": "string",
+            "s_dist_09": "string",
+            "s_dist_10": "string"
+        }
+    },
+    {
+        "id": "q04",
+        "source_def": "(SELECT c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_middle, c_credit_lim, c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_since, c_data FROM customer) AS c",
+        "output_path_exps": [
+            "\"partition-\" || to_string(partition)"
+        ],
+        "partition_exps": [
+            "FLOOR(SQRT(c.c_id/30)) AS partition"
+        ],
+        "order_exps": [],
+        "obj_type_def": {
+            "c_w_id": "int",
+            "c_d_id": "int",
+            "c_id": "int",
+            "c_discount": "float",
+            "c_credit": "string",
+            "c_last": "string",
+            "c_first": "string",
+            "c_middle": "string",
+            "c_credit_lim": "float",
+            "c_balance": "float",
+            "c_ytd_payment": "float",
+            "c_payment_cnt": "int",
+            "c_delivery_cnt": "int",
+            "c_since": "string?",
+            "c_data": "string"
+        }
+    },
+    {
+        "id": "q03",
+        "source_def": "(SELECT o_w_id, o_d_id, o_id, ol_number, ol_i_id, ol_delivery_d, ol_amount, ol_supply_w_id, ol_quantity, ol_dist_info FROM orders_orderline) AS ol",
+        "output_path_exps": [],
+        "partition_exps": [],
+        "order_exps": [],
+        "obj_type_def": {
+            "o_w_id": "int",
+            "o_d_id": "int",
+            "o_id": "int",
+            "ol_number": "int",
+            "ol_i_id": "int",
+            "ol_delivery_d": "string?",
+            "ol_amount": "float",
+            "ol_supply_w_id": "int",
+            "ol_quantity": "int",
+            "ol_dist_info": "string"
+        }
+    },
+    {
+        "id": "q05",
+        "source_def": "(SELECT c_w_id, c_d_id, c_id, c_discount, c_credit, c_last, c_first, c_middle, c_credit_lim, c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt, c_since, c_data FROM customer) AS c",
+        "output_path_exps": [
+            "\"partition-\" || to_string(partition)"
+        ],
+        "partition_exps": [
+            "(c.c_id % 10) AS partition"
+        ],
+        "order_exps": [],
+        "obj_type_def": {
+            "c_w_id": "int",
+            "c_d_id": "int",
+            "c_id": "int",
+            "c_discount": "float",
+            "c_credit": "string",
+            "c_last": "string",
+            "c_first": "string",
+            "c_middle": "string",
+            "c_credit_lim": "float",
+            "c_balance": "float",
+            "c_ytd_payment": "float",
+            "c_payment_cnt": "int",
+            "c_delivery_cnt": "int",
+            "c_since": "string?",
+            "c_data": "string"
+        }
+    },
+    {
+        "id": "q06",
+        "source_def": "(SELECT s_w_id, s_i_id, s_quantity, s_ytd, s_order_cnt, s_remote_cnt, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM stock) AS s",
+        "output_path_exps": [
+            "\"partition-\" || to_string(partition)"
+        ],
+        "partition_exps": [
+            "(s.s_i_id % 5) AS partition"
+        ],
+        "order_exps": [],
+        "obj_type_def": {
+            "s_w_id": "int",
+            "s_i_id": "int",
+            "s_quantity": "int",
+            "s_ytd": "float",
+            "s_order_cnt": "int",
+            "s_remote_cnt": "int",
+            "s_data": "string",
+            "s_dist_01": "string",
+            "s_dist_02": "string",
+            "s_dist_03": "string",
+            "s_dist_04": "string",
+            "s_dist_05": "string",
+            "s_dist_06": "string",
+            "s_dist_07": "string",
+            "s_dist_08": "string",
+            "s_dist_09": "string",
+            "s_dist_10": "string"
+        }
+    }
+]

@@ -484,10 +484,12 @@ class CloudVMDeployer:
         if self.cloud_storage:
             cloud_storage_info = output['cloud_storage']['value']
             bucket_url = cloud_storage_info['storage_bucket']
-            self.infra_spec.config.set('storage', 'backup', bucket_url)
+            if (section := "storage") not in self.infra_spec.config.sections():
+                self.infra_spec.config.add_section(section)
+            self.infra_spec.config.set(section, "backup", bucket_url)
             if self.csp == "azure":
                 storage_acc = cloud_storage_info['storage_account']
-                self.infra_spec.config.set('storage', 'storage_acc', storage_acc)
+                self.infra_spec.config.set(section, "storage_acc", storage_acc)
 
         self.infra_spec.update_spec_file()
 

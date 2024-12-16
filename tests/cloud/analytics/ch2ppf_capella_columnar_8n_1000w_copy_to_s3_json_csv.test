@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2CapellaColumnarCopyToObjectStoreTest
+
+[showfast]
+title = Copy To S3, CH2++ Flat 1000W, 8A, c=11 (standalone collections)
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+initial_nodes = 8
+enable_n2n_encryption = all
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[analytics]
+external_dataset_type = s3
+external_dataset_region = us-east-1
+external_bucket = analytics-ch2pp0f-1000w-gz
+external_file_format = json
+external_file_include = gz
+aws_credential_path = /root/.ssh/
+
+[ch2]
+schema = ch2ppf
+
+[columnar]
+object_store_import_datasets = customer, stock, orders_orderline
+
+[columnar_copy_to]
+object_store_file_formats = json, csv
+max_objects_per_files = 10000
+object_store_compressions = none
+object_store_query_file = tests/cloud/analytics/workload/ch2ppf_copy_to_s3_queries.json

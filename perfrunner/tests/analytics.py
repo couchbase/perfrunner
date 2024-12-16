@@ -17,7 +17,6 @@ from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import (
     get_cloud_storage_bucket_stats,
-    human_format,
     pretty_dict,
 )
 from perfrunner.helpers.rest import (
@@ -35,6 +34,7 @@ from perfrunner.settings import (
     AnalyticsExternalFileFormat,
     AnalyticsExternalTableFormat,
     CH2ConnectionSettings,
+    CH2Schema,
     ColumnarSettings,
 )
 from perfrunner.tests import PerfTest
@@ -169,6 +169,7 @@ class AnalyticsTest(PerfTest):
         self.analytics_link = self.analytics_settings.analytics_link
         self.storage_format = self.test_config.analytics_settings.storage_format
         self.config_file = self.analytics_settings.analytics_config_file
+        self.rest_session = None
 
         if self.config_file:
             with open(self.config_file, "r") as f:
@@ -206,12 +207,43 @@ class AnalyticsTest(PerfTest):
     def indexes(self) -> list[IndexDef]:
         return []
 
-    def exec_and_log_analytics_statement(self, host: str, statement: str) -> requests.Response:
-        """Wrap RestHelper.exec_analytics_statement with logging."""
-        logger.info(f"Running: {statement}")
-        res = self.rest.exec_analytics_statement(host, statement)
-        logger.info(f"Result: {res}")
-        return res
+    def long_query_session(self) -> requests.Session:
+        if self.rest_session is None:
+            self.rest_session = requests.Session()
+            url = urlparse(
+                self.rest._get_api_url(
+                    host=self.analytics_node,
+                    path="analytics/service",
+                    plain_port=ANALYTICS_PORT,
+                    ssl_port=ANALYTICS_PORT_SSL,
+                )
+            )
+            keep_alive = socket_options.TCPKeepAliveAdapter(idle=120, count=20, interval=30)
+            self.rest_session.mount(f"{url.scheme}://{url.netloc}", keep_alive)
+
+        return self.rest_session
+
+    def exec_analytics_statement(
+        self, host: str, statement: str, *, verbose: bool = False
+    ) -> requests.Response:
+        """Execute an analytics statement."""
+        if verbose:
+            logger.info(f"Running: {statement}")
+
+        url = self.rest._get_api_url(
+            host=host,
+            path="analytics/service",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
+        resp = self.rest.session_post(
+            self.long_query_session(), url=url, data={"statement": statement}
+        )
+
+        if verbose:
+            logger.info(f"Result: {resp}")
+
+        return resp
 
     def _run_statements(
         self,
@@ -223,10 +255,7 @@ class AnalyticsTest(PerfTest):
         """Run analytics statements for each given dataset or index."""
         for def_ in defs:
             statement = get_statement(def_)
-            if verbose:
-                self.exec_and_log_analytics_statement(self.analytics_node, statement)
-            else:
-                self.rest.exec_analytics_statement(self.analytics_node, statement)
+            self.exec_analytics_statement(self.analytics_node, statement, verbose=verbose)
 
     def create_datasets_at_link(self, *, verbose: bool = False):
         logger.info("Creating datasets")
@@ -382,8 +411,10 @@ class AnalyticsTest(PerfTest):
         else:
             self.restore_local()
 
-    def copy_data_from_object_store(self):
+    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []):
         logger.info("Ingesting data from cloud object store using COPY FROM")
+
+        datasets_to_import = datasets or self.datasets
 
         external_bucket = self.analytics_settings.external_bucket
         file_format = self.analytics_settings.external_file_format
@@ -395,51 +426,26 @@ class AnalyticsTest(PerfTest):
         ):
             path_keyword = "USING"
 
-        url = self.rest._get_api_url(
-            host=self.analytics_node,
-            path="analytics/service",
-            plain_port=ANALYTICS_PORT,
-            ssl_port=ANALYTICS_PORT_SSL,
-        )
-
-        # Use TCP keep-alive for the session so that long-running COPY FROM statements don't hang
-        session = requests.Session()
-        keep_alive = socket_options.TCPKeepAliveAdapter(idle=120, count=20, interval=30)
-        url_ = urlparse(url)
-        session.mount(f"{url_.scheme}://{url_.netloc}", keep_alive)
-
-        for dataset in self.datasets:
+        for dataset in datasets_to_import:
             statement = dataset.copy_into_statement(
                 external_bucket, file_format, file_include, path_keyword
             )
-            logger.info(f"statement: {statement}")
-
-            data = {"statement": statement}
             t0 = time.time()
-            self.rest.session_post(session, url=url, data=data)
+            self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
             logger.info(f"Statement execution time: {time.time() - t0}")
 
     def report_columnar_cloud_storage_stats(self):
         """Report cloud storage bucket stats for Columnar tests."""
-        bucket_name = self.rest.get_analytics_settings(self.analytics_node).get("blobStorageBucket")
-        if bucket_name is None:
+        analytics_settings = self.rest.get_analytics_settings(self.analytics_node)
+        if (bucket_name := analytics_settings.get("blobStorageBucket")) is None:
             logger.warning(
                 "No cloud storage bucket found in analytics settings."
                 "Cannot report cloud storage bucket stats."
             )
             return
 
-        csp = (
-            self.cluster_spec.capella_backend
-            if self.cluster_spec.capella_infrastructure
-            else self.cluster_spec.cloud_provider
-        )
-        objects, size = get_cloud_storage_bucket_stats(bucket_name, csp)
-        if objects > 0:
-            logger.info(
-                "Cloud storage bucket stats: "
-                f"{objects} objects, {size} bytes ({human_format(size, 2)}B)"
-            )
+        blob_storage_scheme = analytics_settings.get("blobStorageScheme")
+        get_cloud_storage_bucket_stats(f"{blob_storage_scheme}://{bucket_name}")
 
 
 class BigFunTest(AnalyticsTest):
@@ -505,7 +511,7 @@ class BigFunTest(AnalyticsTest):
     def get_dataset_items(self, dataset: str):
         logger.info('Get number of items in dataset {}'.format(dataset))
         statement = "SELECT COUNT(*) from `{}`;".format(dataset)
-        result = self.rest.exec_analytics_statement(self.analytics_node, statement)
+        result = self.exec_analytics_statement(self.analytics_node, statement)
         num_items = result.json()['results'][0]['$1']
         logger.info("Number of items in dataset {}: {}".format(dataset, num_items))
         return num_items
@@ -677,8 +683,8 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
 
     @with_stats
     @timeit
-    def copy_data_from_object_store(self):
-        super().copy_data_from_object_store()
+    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []):
+        super().copy_data_from_object_store(datasets)
 
     @with_stats
     def access(self) -> list[QueryLatencyPair]:
@@ -721,62 +727,79 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
         self.report_kpi(results)
 
 
-class ColumnarCopyToS3Test(ColumnarCopyFromObjectStoreTest):
+class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
     @with_stats
     def access(self):
-        with open(self.test_config.columnar_copy_to_settings.s3_query_file, "r") as f:
+        copy_to_settings = self.test_config.columnar_copy_to_settings
+
+        with open(copy_to_settings.object_store_query_file, "r") as f:
             queries = json.load(f)
 
-        s3_bucket_name = self.cluster_spec.backup.split('://')[1]
-        query_template = f'COPY {{}} TO `{s3_bucket_name}` AT `external_link` PATH({{}}) {{}} {{}}'
+        obj_store_uri = self.cluster_spec.backup
+        obj_store_name = obj_store_uri.split("://")[1]
 
-        for fmt, mopf, compression in itertools.product(
-            self.test_config.columnar_copy_to_settings.s3_file_format,
-            self.test_config.columnar_copy_to_settings.max_objects_per_file,
-            self.test_config.columnar_copy_to_settings.s3_compression,
-        ):
+        query_template = (
+            f"COPY {{}} TO `{obj_store_name}` AT `external_link` PATH ({{}}) {{}} {{}} {{}}"
+        )
+
+        objects, size = get_cloud_storage_bucket_stats(obj_store_uri, aws_profile="default")
+
+        for fmt, mopf, (comp_type, comp_level) in copy_to_settings.all_param_combinations():
             for query in queries:
-                output_path_prefix = \
-                    f"\"mopf-{mopf}/{fmt}/compression-{compression}/{query['id']}\""
+                comp = comp_type + (f"-{comp_level}" if comp_level else "")
+                output_path_prefix = f"\"mopf-{mopf}/{fmt}/compression-{comp}/{query['id']}\""
 
                 output_path_expr = output_path_prefix
-                if output_path_exps := query.get('output_path_exps'):
+                if output_path_exps := query.get("output_path_exps"):
                     output_path_expr += f", {', '.join(output_path_exps)}"
 
-                partition_clause = ''
-                if partition_exps := query.get('partition_exps'):
+                partition_clause = ""
+                if partition_exps := query.get("partition_exps"):
                     partition_clause = f"PARTITION BY {', '.join(partition_exps)}"
 
-                order_clause = ''
-                if order_exps := query.get('order_exps'):
+                order_clause = ""
+                if order_exps := query.get("order_exps"):
                     order_clause = f"ORDER BY {', '.join(order_exps)}"
 
-                over_clause = ''
+                over_clause = ""
                 if partition_clause or order_clause:
-                    over_clause = \
-                        f"OVER({' '.join(filter(None, (partition_clause, order_clause)))})"
+                    over_clause = (
+                        f"OVER ({' '.join(filter(None, (partition_clause, order_clause)))})"
+                    )
 
-                with_options = {'format': fmt, 'max-objects-per-file': mopf}
-                if compression != 'none':
-                    with_options['compression'] = compression
+                schema_clause = ""
+                if fmt == "csv":
+                    obj_type_def = json.dumps(query["obj_type_def"]).replace('"', "")
+                    schema_clause = f"TYPE ({obj_type_def})"
 
-                with_clause = f'WITH {json.dumps(with_options)}'
+                with_options = {"format": fmt, "max-objects-per-file": mopf}
+                if comp_type != "none":
+                    with_options["compression"] = comp_type
+                    if comp_level:
+                        with_options["gzipCompressionLevel"] = comp_level
+
+                with_clause = f"WITH {json.dumps(with_options)}"
 
                 statement = query_template.format(
-                    query['source_def'],
-                    output_path_expr,
-                    over_clause,
-                    with_clause
+                    query["source_def"], output_path_expr, over_clause, schema_clause, with_clause
                 )
-                logger.info(f'statement: {statement}')
 
                 t0 = time.time()
-                resp = self.rest.exec_analytics_statement(self.analytics_node, statement)
+                resp = self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
                 latency = time.time() - t0
 
                 logger.info(resp.json())
-                logger.info(f'client-side query response time (s): {latency}')
+                logger.info(f"client-side query response time (s): {latency}")
 
+                new_objects, new_size = get_cloud_storage_bucket_stats(
+                    obj_store_uri, aws_profile="default"
+                )
+                if not (new_objects > objects and new_size > size):
+                    logger.warning(
+                        "Cloud storage bucket object count and data size have not both increased. "
+                        "COPY TO statement has not written any data!"
+                    )
+                objects, size = new_objects, new_size
 
     def run(self):
         random.seed(8095)
@@ -784,7 +807,14 @@ class ColumnarCopyToS3Test(ColumnarCopyFromObjectStoreTest):
         self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.copy_data_from_object_store()
+        # If object_store_import_datasets is empty, all pre-defined datasets will be imported
+        datasets_to_import = [
+            d
+            for d in self.datasets
+            if d.name in self.test_config.columnar_settings.object_store_import_datasets
+        ]
+
+        copy_from_time = self.copy_data_from_object_store(datasets_to_import)
         logger.info(f'Total data ingestion time using COPY FROM: {copy_from_time}')
 
         self.access()
@@ -804,10 +834,9 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromObjectStoreTest):
             statement = query_template.format(
                 query["source_def"], query["dest_coll_qualified_name"], query["key"]
             )
-            logger.info(f"statement: {statement}")
 
             t0 = time.time()
-            resp = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            resp = self.exec_analytics_statement(self.analytics_node, statement)
             latency = time.time() - t0
 
             logger.info(resp.json())
@@ -1118,7 +1147,7 @@ class TPCDSQueryTest(TPCDSTest):
 
 
 class CH2Test(AnalyticsTest):
-    SCOPE = "bench.ch2"
+    BUCKET = "bench"
 
     DATASETS = [
         "customer",
@@ -1132,6 +1161,14 @@ class CH2Test(AnalyticsTest):
         "supplier",
         "nation",
         "region",
+    ]
+
+    FLAT_DATASETS = DATASETS + [
+        "customer_item_categories",
+        "customer_addresses",
+        "customer_phones",
+        "orders_orderline",
+        "item_categories",
     ]
 
     GSI_INDEXES = [
@@ -1156,17 +1193,22 @@ class CH2Test(AnalyticsTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.analytics_statements = self.test_config.ch2_settings.analytics_statements
-        if self.rest.is_columnar(self.analytics_node):
-            self.COLLECTORS |= {"active_tasks": False, "ns_server": False, "secondary_stats": False}
+        self.schema = self.test_config.ch2_settings.schema
+        self.dataset_names = (
+            self.FLAT_DATASETS if self.schema is CH2Schema.CH2PPF else self.DATASETS
+        )
 
     @property
     def datasets(self) -> list[DatasetDef]:
-        return [DatasetDef(name, f"{self.SCOPE}.{name}") for name in self.DATASETS]
+        return [
+            DatasetDef(name, f"{self.BUCKET}.{self.schema.value}.{name}")
+            for name in self.dataset_names
+        ]
 
     @property
     def indexes(self) -> list[IndexDef]:
         return [
-            IndexDef(name, f"{self.SCOPE}.{coll}", fields)
+            IndexDef(name, f"{self.BUCKET}.{self.schema.value}.{coll}", fields)
             for name, coll, fields in self.GSI_INDEXES
         ]
 
@@ -1221,7 +1263,7 @@ class CH2Test(AnalyticsTest):
         if self.analytics_statements:
             logger.info('Creating analytics indexes')
             for statement in self.analytics_statements:
-                self.exec_and_log_analytics_statement(self.analytics_node, statement)
+                self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
 
     def create_gsi_indexes(self):
         logger.info("Creating indexes")
@@ -1524,7 +1566,7 @@ class CH2ColumnarStandaloneDatasetTest(CH2Test, ColumnarCopyFromObjectStoreTest)
 
     @property
     def datasets(self) -> list[DatasetDef]:
-        return [DatasetDef(name) for name in self.DATASETS]
+        return [DatasetDef(name) for name in self.dataset_names]
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         userid, password = self.cluster_spec.rest_credentials
@@ -1567,6 +1609,12 @@ class CH2ColumnarStandaloneDatasetTest(CH2Test, ColumnarCopyFromObjectStoreTest)
     def run(self):
         self.setup()
         self.benchmark()
+
+
+class CH2CapellaColumnarCopyToObjectStoreTest(
+    ColumnarCopyToObjectStoreTest, CH2ColumnarStandaloneDatasetTest
+):
+    pass
 
 
 class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
@@ -1783,7 +1831,7 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
         if source == "MONGODB":
             self.docs_per_collection = {
                 collection: self.count_collection_docs_mongodb(collection)
-                for collection in self.DATASETS
+                for collection in self.dataset_names
             }
             self.source_details.update({
                 "connectionFields": {
@@ -1819,16 +1867,16 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
         statement = 'CREATE LINK `{}` TYPE KAFKA WITH {{"sourceDetails": {}}}'\
             .format(self.analytics_link, json.dumps(self.source_details))
 
-        self.exec_and_log_analytics_statement(self.analytics_node, statement)
+        self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
 
     def create_datasets_at_link(self):
         logger.info('Creating standalone datasets')
 
-        for dataset in self.DATASETS:
+        for dataset in self.dataset_names:
             statement = "CREATE DATASET `{0}` PRIMARY KEY (`{1}`: string) ON {2}.{0} AT `{3}`;" \
                 .format(dataset, self.kafka_links_settings.primary_key_field,
                         self.kafka_links_settings.remote_database_name, self.analytics_link)
-            self.exec_and_log_analytics_statement(self.analytics_node, statement)
+            self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
 
     @with_stats
     def sync(self) -> float:

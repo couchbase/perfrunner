@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.ColumnarCopyToS3Test
+test = perfrunner.tests.analytics.ColumnarCopyToObjectStoreTest
 
 [showfast]
 title = 2 nodes, BigFUN 20M users (320M docs), s=1 c=3, Capella Columnar, COPY TO S3, json
@@ -29,10 +29,7 @@ external_file_include = json
 aws_credential_path = /root/.ssh/
 
 [columnar_copy_to]
-s3_format = json
-max_objects_per_file = 1000, 10000, 100000, 1000000
-s3_compression = none
-s3_query_file = tests/cloud/analytics/workload/bigfun_copy_to_s3_queries.json
-
-[clients]
-python_client = 4.1.9
+object_store_file_formats = json
+max_objects_per_files = 1000, 10000, 100000, 1000000
+object_store_compressions = none
+object_store_query_file = tests/cloud/analytics/workload/bigfun_copy_to_s3_queries.json

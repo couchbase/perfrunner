@@ -269,19 +269,20 @@ def get_python_sdk_installation(version: str) -> str:
         return 'couchbase=={}'.format(version)
 
 
-def run_aws_cli_command(command_template: str, *args) -> Optional[str]:
-    """Run an AWS CLI command formatted with any extra args and return the output (if any)."""
-    command = 'env/bin/aws {}'.format(command_template.format(*args))
-    logger.info('Running AWS CLI command: {}'.format(command))
+def run_aws_cli_command(command_template: str, *args, profile: str = "") -> Optional[str]:
+    """Run an AWS CLI command formatted with any extra args.
+
+    If the command fails, return `None`. Otherwise return the stdout.
+    """
+    profile_flag = f"--profile {profile}" if profile else ""
+    command = f"env/bin/aws {profile_flag} {command_template.format(*args)}"
+    logger.info(f"Running AWS CLI command: {command}")
     stdout, _, returncode = run_local_shell_command(command)
 
-    output = None
     if returncode == 0:
-        output = stdout.strip()
-        if output:
-            return output
+        return stdout.strip()
 
-    return output
+    return None
 
 
 def parse_prometheus_stat(stats, stat_name: str):
@@ -322,28 +323,37 @@ def lookup_address(address: Union[bytes, str], port: Union[bytes, str, int] = No
     return [entry[-1][0] for entry in entries]
 
 
-def get_cloud_storage_bucket_stats(bucket_name: str, csp: str) -> tuple[int, int]:
+def get_cloud_storage_bucket_stats(bucket_uri: str, aws_profile: str = "") -> tuple[int, int]:
     """Return (number of objects, total size in bytes) for a cloud storage bucket.
 
     Returns (-1, -1) on failure to get stats.
     """
-    prefix = {"aws": "s3", "gcp": "gs", "azure": "az"}[csp.lower()]
-    fq_bucket_name = f"{prefix}://{bucket_name}"
-    logger.info(f"Getting stats for {fq_bucket_name}")
-    if csp.lower() == "aws":
-        stdout = run_aws_cli_command(f"s3 ls {fq_bucket_name} --recursive --summarize | tail -2")
-        if stdout is not None:
-            return tuple(int(line.split()[-1]) for line in stdout.splitlines()[:2])
-    elif csp.lower() == "gcp":
+    objects, size = -1, -1
+    scheme = bucket_uri.split("://")[0].lower()
+    logger.info(f"Getting stats for {bucket_uri}")
+
+    if scheme == "s3":
+        stdout = run_aws_cli_command(
+            f"s3 ls {bucket_uri} --recursive --summarize | tail -2", profile=aws_profile
+        )
+        if stdout:
+            objects, size = tuple(int(line.split()[-1]) for line in stdout.splitlines()[:2])
+    elif scheme == "gs":
         stdout, _, rc = run_local_shell_command(
-            f"gcloud storage du {fq_bucket_name} | "
+            f"gcloud storage du {bucket_uri} | "
             "awk 'BEGIN {{c=0;s=0}} !/\\/$/ {{c+=1;s+=$1}} END {{print c, s}}'"
         )
         if rc == 0:
-            return tuple(int(n) for n in stdout.split()[:2])
+            objects, size = tuple(int(n) for n in stdout.split()[:2])
 
-    logger.error(f"Failed to get stats for {fq_bucket_name}")
-    return -1, -1
+    if objects > 0:
+        logger.info(
+            f"Stats for {bucket_uri}: {objects} objects, {size} bytes ({human_format(size, 2)}B)"
+        )
+    else:
+        logger.error(f"Failed to get stats for {bucket_uri}")
+
+    return objects, size
 
 
 def my_public_ip() -> str:

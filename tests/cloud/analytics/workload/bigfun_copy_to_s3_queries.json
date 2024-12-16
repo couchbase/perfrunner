@@ -16,7 +16,9 @@
     {
         "id": "q04",
         "source_def": "`GleambookUsers-1` AS gu",
-        "output_path_exps": ["\"alias-length-\"", "alias_length"],
+        "output_path_exps": [
+            "\"alias-length-\" || to_string(alias_length)"
+        ],
         "partition_exps": ["length(gu.alias) AS alias_length"],
         "order_exps": []
     },
@@ -30,14 +32,18 @@
     {
         "id": "q05",
         "source_def": "`GleambookUsers-1` AS gu",
-        "output_path_exps": ["\"num-friends-\"", "num_friends"],
+        "output_path_exps": [
+            "\"num-friends-\" || to_string(num_friends)"
+        ],
         "partition_exps": ["array_length(gu.friend_ids) AS num_friends"],
         "order_exps": []
     },
     {
         "id": "q06",
         "source_def": "`ChirpMessages-1` AS cm",
-        "output_path_exps": ["\"num-topics-\"", "num_topics"],
+        "output_path_exps": [
+            "\"num-topics-\" || to_string(num_topics)"
+        ],
         "partition_exps": ["array_length(cm.referred_topics) AS num_topics"],
         "order_exps": []
     }

@@ -58,5 +58,5 @@ output "cloud_storage" {
 }
 
 output "az" {
-  value = one(random_shuffle.az[*].result)[0]
+  value = one(random_shuffle.az[*].result) != null ? one(random_shuffle.az[*].result)[0] : null
 }

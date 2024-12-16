@@ -1180,7 +1180,7 @@ class CapellaClusterManager(ClusterManagerBase):
 
         vpc_id = run_aws_cli_command(command_template, cluster_node_hostname)
 
-        if vpc_id is not None:
+        if vpc_id:
             logger.info("Found VPC ID: {}".format(vpc_id))
 
         return vpc_id
@@ -1195,7 +1195,7 @@ class CapellaClusterManager(ClusterManagerBase):
 
         sg_id = run_aws_cli_command(command_template, vpc_id)
 
-        if sg_id is not None:
+        if sg_id:
             logger.info("Found Security Group ID: {}".format(sg_id))
 
         return sg_id

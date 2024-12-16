@@ -7,12 +7,12 @@
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_throughput_250M_update_only_uniform_128v.test", "groups": "P1"}
     ],
     "Magma2": [
-        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_rebalance_out_1B_magma_R1_128v.test", "groups": "P1"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_rebalance_out_1B_magma_R1_128v.test", "groups": "P1"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_insert_heavy_power_128v.test", "groups": "P1"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_mixed_power_128v.test", "groups": "P1"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_mixed_uniform_128v.test", "groups": "P1"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_throughput_250M_insert_only_uniform_128v.test", "groups": "P1"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_rebalance_out_250M_magma_128v.test", "groups": "P1"}
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_rebalance_out_250M_magma_128v.test", "groups": "P1"}
     ],
     "MagmaNVME": [
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_1rr_128v_magma.test", "groups": "P1"},

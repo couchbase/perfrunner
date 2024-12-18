@@ -2,8 +2,8 @@
 - hosts: couchbase_servers
   vars:
     data_dir: /data
-    ebs: /dev/nvme1n1
-    lvm: /dev/nvme2n1
+    ebs: /dev/nvme2n1
+    nvme: /dev/nvme1n1
 
   tasks:
   - name: memory available
@@ -18,21 +18,21 @@
   - debug:
           var: command_output.stdout_lines
 
-  - name: "Create PV from instance store"
-    command: pvcreate /dev/nvme1n1
+  - name: "Create PV from EBS volume"
+    command: pvcreate {{ ebs }}
 
-  - name: "Create PV from EBS volums"
-    command: pvcreate /dev/nvme2n1
+  - name: "Create PV from instance store"
+    command: pvcreate {{ nvme }}
 
   - name: "Create volume group ‘vg’ containing both"
-    command: vgcreate vg /dev/nvme1n1 /dev/nvme2n1
+    command: vgcreate vg {{ ebs }} {{ nvme }}
     ignore_errors: yes
 
   - name: "Create LV from origin EBS volume"
-    command: lvcreate --extents 100%PVS -n cb_data_ebs vg /dev/nvme1n1
+    command: lvcreate --extents 100%PVS -n cb_data_ebs vg {{ ebs }}
 
   - name: "Create cache-pool LV from instance storage"
-    command: lvcreate --type cache-pool --extents 100%PVS -n cb_data_cache_pool vg /dev/nvme2n1
+    command: lvcreate --type cache-pool --extents 100%PVS -n cb_data_cache_pool vg {{ nvme }}
 
   - name: "Create a cached logical volume by associating the cache pool with EBS"
     command: lvconvert --yes --type cache --cachepool cb_data_cache_pool vg/cb_data_ebs
@@ -50,7 +50,7 @@
     file: path={{ data_dir }} owner=couchbase group=couchbase
 
   - name: "mount partition"
-    command: mount /dev/vg/cb_data_ebs /data
+    command: mount /dev/vg/cb_data_ebs {{ data_dir }}
 
   - name: list block
     shell: lsblk

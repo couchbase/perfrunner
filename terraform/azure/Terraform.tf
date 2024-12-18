@@ -71,6 +71,10 @@ variable "managed_id" {
   type = string
 }
 
+data "http" "myip" {
+  url = "https://api.ipify.org"
+}
+
 data "azurerm_shared_image_version" "cluster-image" {
   for_each = var.cluster_nodes
 
@@ -346,7 +350,7 @@ resource "azurerm_network_security_group" "perf-nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "*"
+    source_address_prefix      = "${chomp(data.http.myip.response_body)}/32"
     destination_address_prefix = "*"
   }
 
@@ -389,6 +393,11 @@ resource "azurerm_network_security_group" "perf-nsg" {
   tags = {
     deployment = var.global_tag != "" ? var.global_tag : null
   }
+}
+
+resource "azurerm_subnet_network_security_group_association" "perf-nsg-subnet-assoc" {
+  subnet_id                 = azurerm_subnet.perf-sn.id
+  network_security_group_id = azurerm_network_security_group.perf-nsg.id
 }
 
 # Config and create cluster OS disks.

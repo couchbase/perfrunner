@@ -69,6 +69,10 @@ provider "google" {
   zone    = var.cloud_zone
 }
 
+data "http" "myip" {
+  url = "https://api.ipify.org"
+}
+
 resource "google_compute_network" "perf-vn" {
   name                    = "perf-vn-${var.uuid}"
   auto_create_subnetworks = "false"
@@ -104,7 +108,7 @@ resource "google_compute_firewall" "allow-ssh" {
     ports    = ["22"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["${chomp(data.http.myip.response_body)}/32"]
 }
 
 resource "google_compute_firewall" "allow-broker" {

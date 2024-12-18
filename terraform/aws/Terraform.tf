@@ -78,6 +78,10 @@ provider "aws" {
   region = var.cloud_region
 }
 
+data "http" "myip" {
+  url = "https://api.ipify.org"
+}
+
 data "aws_ec2_instance_type_offerings" "available" {
   filter {
     name = "instance-type"
@@ -297,125 +301,114 @@ resource "aws_route_table_association" "kafka_private" {
   route_table_id = one(aws_route_table.kafka_private[*].id)
 }
 
-resource "aws_security_group_rule" "enable_ssh" {
+resource "aws_vpc_security_group_ingress_rule" "enable_ssh_from_driver" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 22
   to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "${chomp(data.http.myip.response_body)}/32"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_rabbitmq" {
+resource "aws_vpc_security_group_ingress_rule" "enable_rabbitmq" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 5672
   to_port           = 5672
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
 # ["8091-8096","18091-18096","11210","11207"]
-resource "aws_security_group_rule" "enable_couchbase_default" {
+resource "aws_vpc_security_group_ingress_rule" "enable_couchbase_default" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 8091
   to_port           = 8096
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_indexer" {
+resource "aws_vpc_security_group_ingress_rule" "enable_indexer" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 9102
   to_port           = 9102
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_cbas" {
+resource "aws_vpc_security_group_ingress_rule" "enable_cbas" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 9110
   to_port           = 9110
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_couchbase_secure" {
+resource "aws_vpc_security_group_ingress_rule" "enable_couchbase_secure" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 18091
   to_port           = 18096
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_indexer_secure" {
+resource "aws_vpc_security_group_ingress_rule" "enable_indexer_secure" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 19102
   to_port           = 19102
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_cbas_secure" {
+resource "aws_vpc_security_group_ingress_rule" "enable_cbas_secure" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 19110
   to_port           = 19110
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_memcached" {
+resource "aws_vpc_security_group_ingress_rule" "enable_memcached" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 11209
   to_port           = 11210
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_memcached_secure" {
+resource "aws_vpc_security_group_ingress_rule" "enable_memcached_secure" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 11207
   to_port           = 11207
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_security_group_rule" "enable_sgw" {
+resource "aws_vpc_security_group_ingress_rule" "enable_sgw" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
-  type              = "ingress"
   from_port         = 4984
   to_port           = 5025
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 

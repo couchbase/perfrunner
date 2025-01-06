@@ -15,3 +15,5 @@ syncgateway_nodes = <SYNCGATEWAY_NODES>
 cloud_storage = <CLOUD_STORAGE>
 
 global_tag = <GLOBAL_TAG>
+
+allowed_ips = <ALLOWED_IPS>

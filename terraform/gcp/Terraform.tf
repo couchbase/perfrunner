@@ -63,14 +63,14 @@ variable "global_tag" {
   type = string
 }
 
+variable "allowed_ips" {
+  type = list(string)
+}
+
 provider "google" {
   project = "couchbase-qe"
   region  = var.cloud_region
   zone    = var.cloud_zone
-}
-
-data "http" "myip" {
-  url = "https://api.ipify.org"
 }
 
 resource "google_compute_network" "perf-vn" {
@@ -108,7 +108,7 @@ resource "google_compute_firewall" "allow-ssh" {
     ports    = ["22"]
   }
 
-  source_ranges = ["${chomp(data.http.myip.response_body)}/32"]
+  source_ranges = var.allowed_ips
 }
 
 resource "google_compute_firewall" "allow-broker" {

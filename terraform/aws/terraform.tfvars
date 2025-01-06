@@ -15,3 +15,5 @@ kafka_nodes = <KAFKA_NODES>
 cloud_storage = <CLOUD_STORAGE>
 
 global_tag = <GLOBAL_TAG>
+
+allowed_ips = <ALLOWED_IPS>

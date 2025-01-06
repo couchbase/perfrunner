@@ -337,6 +337,13 @@ def get_s3_bucket_stats(bucket_name: str) -> tuple[int, int]:
     return -1, -1
 
 
+def my_public_ip() -> str:
+    """Get the public IP address of the current machine."""
+    resp = requests.get("https://api.ipify.org")
+    resp.raise_for_status()
+    return resp.content.decode()
+
+
 class SSLCertificate:
 
     """Generate a self signed CA and node certificate with SAN including cluster nodes IPs.

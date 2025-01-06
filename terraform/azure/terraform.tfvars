@@ -13,3 +13,5 @@ cloud_storage = <CLOUD_STORAGE>
 global_tag = <GLOBAL_TAG>
 
 managed_id = <MANAGED_ID>
+
+allowed_ips = <ALLOWED_IPS>

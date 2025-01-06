@@ -74,12 +74,12 @@ variable "global_tag" {
   type = string
 }
 
-provider "aws" {
-  region = var.cloud_region
+variable "allowed_ips" {
+  type = list(string)
 }
 
-data "http" "myip" {
-  url = "https://api.ipify.org"
+provider "aws" {
+  region = var.cloud_region
 }
 
 data "aws_ec2_instance_type_offerings" "available" {
@@ -301,13 +301,13 @@ resource "aws_route_table_association" "kafka_private" {
   route_table_id = one(aws_route_table.kafka_private[*].id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_ssh_from_driver" {
-  count = length(aws_vpc.main) != 0 ? 1 : 0
+resource "aws_vpc_security_group_ingress_rule" "enable_ssh_from_allowed_ips" {
+  for_each = length(aws_vpc.main) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 22
   to_port           = 22
   ip_protocol       = "tcp"
-  cidr_ipv4         = "${chomp(data.http.myip.response_body)}/32"
+  cidr_ipv4         = each.key
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 

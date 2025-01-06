@@ -71,8 +71,8 @@ variable "managed_id" {
   type = string
 }
 
-data "http" "myip" {
-  url = "https://api.ipify.org"
+variable "allowed_ips" {
+  type = list(string)
 }
 
 data "azurerm_shared_image_version" "cluster-image" {
@@ -350,7 +350,7 @@ resource "azurerm_network_security_group" "perf-nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "${chomp(data.http.myip.response_body)}/32"
+    source_address_prefixes    = var.allowed_ips
     destination_address_prefix = "*"
   }
 

@@ -3,6 +3,7 @@ import json
 import os
 from argparse import ArgumentParser, Namespace
 from collections import Counter
+from ipaddress import IPv4Network
 from time import sleep, time
 from typing import Dict, Optional
 from uuid import uuid4
@@ -16,7 +17,13 @@ from requests.exceptions import HTTPError
 
 from logger import logger
 from perfrunner.helpers.config_files import TimeTrackingFile
-from perfrunner.helpers.misc import maybe_atoi, pretty_dict, remove_nulls, run_local_shell_command
+from perfrunner.helpers.misc import (
+    maybe_atoi,
+    my_public_ip,
+    pretty_dict,
+    remove_nulls,
+    run_local_shell_command,
+)
 from perfrunner.settings import ClusterSpec, TestConfig
 
 CAPELLA_CREDS_FILE = '.capella_creds'
@@ -298,6 +305,17 @@ class CloudVMDeployer:
             return False
 
         managed_id = self._get_managed_id()
+        allowed_ips = [
+            f"{cidr}/32" if "/" not in cidr else cidr
+            for cidr in os.environ.get("PERF_ALLOWED_IPS", "").split(",")
+            if cidr
+        ]
+        myip = my_public_ip()
+        if not any(IPv4Network(cidr).overlaps(IPv4Network(myip)) for cidr in allowed_ips):
+            # Azure NSGs require non-overlapping CIDRs/addresses in security rules, so at minimum
+            # we will check if our public ip is already covered in allowed_ips
+            allowed_ips.append(f"{myip}/32")
+
         replacements = {
             "<CLOUD_REGION>": self.region,
             "<CLOUD_ZONE>": self.zone or "",
@@ -310,6 +328,7 @@ class CloudVMDeployer:
             "<GLOBAL_TAG>": global_tag,
             "<UUID>": self.uuid,
             "<MANAGED_ID>": managed_id,
+            "<ALLOWED_IPS>": allowed_ips,
         }
 
         with open(f"terraform/{self.csp}/terraform.tfvars", "r+") as tfvars:
@@ -1999,10 +2018,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
 
     def update_allowlists(self):
         logger.info('Updating allowlists for Columnar clusters')
-        resp = requests.get('https://ifconfig.me')
-        if not resp.ok:
-            logger.interrupt('Failed to fetch own IP address')
-        myip = resp.content.decode()
+        myip = my_public_ip()
 
         client_ips = [
             dns.split('.')[0].removeprefix('ec2-').replace('-', '.')

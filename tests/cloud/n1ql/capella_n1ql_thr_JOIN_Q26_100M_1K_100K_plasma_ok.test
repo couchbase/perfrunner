@@ -1,0 +1,55 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLJoinThroughputTest
+
+[showfast]
+title = Q26, Hash Join (1K -> 100K), not_bounded, 7 nodes
+component = n1qlcloud
+category = thr
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 7
+num_buckets = 2
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 50000000
+size = 1024
+workers = 80
+doc_gen = hash_join,hash_join
+range_distance = 1000
+ssl_mode = capella
+
+[index]
+statements =
+    CREATE INDEX idx1 ON `bucket-1`(capped_1K, state, coins);
+    CREATE INDEX idx2 ON `bucket-2`(capped_100, state, coins);
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 10000
+items = 50000000
+workers = 20
+time = 1200
+n1ql_gen = hash_join
+n1ql_queries = join
+n1ql_workers = 6
+ssl_mode = capella
+
+[n1ql-join]
+statement = SELECT b1.state, SUM(b1.coins) FROM `bucket-1` b1 JOIN `bucket-2` b2 USE HASH(build) ON b1.coins = b2.coins WHERE b1.capped_1K = $1 AND b2.capped_100 > $2 AND b2.capped_100 < $3 GROUP BY b1.state;
+scan_consistency = request_plus
+args = ["{capped_1K}","{capped_100}","{capped_100_range}"]

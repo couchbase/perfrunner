@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 
 [showfast]
-title = Q1, Key-Value Lookup, 10K queries/sec, s=1 c=1
+title = Q1, Key-Value Lookup, 10K queries/sec, 7 nodes, s=1 c=1
 component = n1qlcloud
 category = lat
 sub_category = {provider}

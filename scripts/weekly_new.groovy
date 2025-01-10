@@ -183,6 +183,12 @@ pipeline {
                         buildComponent('N1QL', testCases)
                     }
                 }
+                stage('N1QL-SQL') {
+                    when { expression { return params.N1QL } }
+                    steps {
+                        buildComponent('N1QL-SQL', testCases)
+                    }
+                }
                 stage('N1QL-Windows') {
                     when { expression { return params.N1QL_Windows } }
                     steps {

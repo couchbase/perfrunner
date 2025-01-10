@@ -981,10 +981,46 @@ class TpcDsTest(N1QLTest):
         'secondary_debugstats_index': False,
     }
 
+    def restore_remote(self):
+        self.remote.extract_cb_any(
+            filename="couchbase", worker_home=self.worker_manager.WORKER_HOME
+        )
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+
+        archive = self.test_config.restore_settings.backup_storage
+        if self.test_config.restore_settings.modify_storage_dir_name:
+            suffix_repo = "aws"
+            if self.cluster_spec.capella_infrastructure:
+                suffix_repo = self.cluster_spec.capella_backend
+            archive += f"/{suffix_repo}"
+
+        self.remote.restore(
+            cluster_spec=self.cluster_spec,
+            master_node=self.master_node,
+            threads=self.test_config.restore_settings.threads,
+            worker_home=self.worker_manager.WORKER_HOME,
+            archive=archive,
+            repo=self.test_config.restore_settings.backup_repo,
+            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+            obj_region=self.test_config.backup_settings.obj_region,
+            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+            use_tls=self.test_config.restore_settings.use_tls,
+            map_data=self.test_config.restore_settings.map_data,
+            encrypted=self.test_config.restore_settings.encrypted,
+            passphrase=self.test_config.restore_settings.passphrase,
+        )
+
     def run(self):
         self.enable_stats()
         self.enable_query_awr()
-        self.load_tpcds_json_data()
+        if self.cluster_spec.cloud_infrastructure:
+            self.restore_remote()
+        else:
+            self.load_tpcds_json_data()
         self.wait_for_persistence()
         self.compact_bucket()
 

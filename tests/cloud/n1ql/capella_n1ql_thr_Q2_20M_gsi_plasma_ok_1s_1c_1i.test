@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, Plasma, not_bounded, s=1 c=1 i=1
+title = Q2, Singleton Unique Lookup, Plasma, not_bounded, 7 nodes, s=1 c=1 i=1
 component = n1qlcloud
 category = thr
 sub_category = {provider}

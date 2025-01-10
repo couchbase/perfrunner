@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q3, Range Scan, Plasma, request_plus, 7 nodes, s=1 c=1 i=1
+title = Q17, Range Scan with Limit, Plasma, request_plus, 7 nodes
 component = n1qlcloud
 category = thr
 sub_category = {provider}
@@ -13,9 +13,6 @@ num_buckets = 1
 enable_cpu_cores = false
 enable_n2n_encryption = all
 ui_http = disabled
-
-[collection]
-config = collections/1bucket_1scope_1collection_basic.json
 
 [bucket]
 replica_number = 1
@@ -33,8 +30,8 @@ doc_gen = reverse_lookup
 ssl_mode = capella
 
 [index]
-fields = capped_small
-indexes_per_collection = 1
+statements =
+    CREATE INDEX by_capped_small ON `bucket-1`(capped_small);
 
 [access]
 creates = 0
@@ -45,14 +42,11 @@ throughput = 10000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = range-scan
-n1ql_workers = 120
+n1ql_queries = page-query
+n1ql_workers = 360
 ssl_mode = capella
 
-[n1ql-range-scan]
-statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
+[n1ql-page-query]
+statement = SELECT name, email FROM `bucket-1` WHERE capped_small > $1 ORDER BY capped_small LIMIT 10;
 scan_consistency = request_plus
 args = ["{capped_small}"]
-
-[clients]
-python_client = 3.2.7

@@ -1,0 +1,60 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsThroughputTest
+
+[showfast]
+title = AG1, Aggregation query, Plasma, not_bounded, 7 nodes, s=1 c=1 i=1
+component = n1qlcloud
+category = thr
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 7
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+fields = DATE_PART_STR(sold_date, 'year'),customer.state,store,quantity
+indexes_per_collection = 1
+top_down = True
+
+[access]
+items = 1000000
+time = 1200
+n1ql_queries = aggregation
+n1ql_batch_size = 10
+n1ql_workers = 30
+ssl_mode = capella
+
+[n1ql-aggregation]
+statement = SELECT store, AVG(quantity) AS avg_quantity FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') = $1 AND customer.state = $2 GROUP BY store;
+scan_consistency = not_bounded
+args = [{year}, "{state}"]
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[restore]
+backup_storage = s3://tpc-ds-backup
+modify_storage_dir_name = True
+backup_repo = default
+threads = 8
+map_data = bucket-1.scope-1=bucket-1.scope-1
+use_tls = 1

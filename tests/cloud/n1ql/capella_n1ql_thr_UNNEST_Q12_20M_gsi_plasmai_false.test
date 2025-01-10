@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLThroughputTest
+test = perfrunner.tests.n1ql.N1QLJoinThroughputTest
 
 [showfast]
-title = Q3, Range Scan, Plasma, request_plus, 7 nodes, s=1 c=1 i=1
+title = Q12, UNNEST 100, MOI, request_plus, 7 nodes
 component = n1qlcloud
 category = thr
 sub_category = {provider}
@@ -13,9 +13,6 @@ num_buckets = 1
 enable_cpu_cores = false
 enable_n2n_encryption = all
 ui_http = disabled
-
-[collection]
-config = collections/1bucket_1scope_1collection_basic.json
 
 [bucket]
 replica_number = 1
@@ -29,30 +26,29 @@ indexer.settings.storage_mode = plasma
 items = 20000000
 size = 1024
 workers = 80
-doc_gen = reverse_lookup
+doc_gen = join
 ssl_mode = capella
 
 [index]
-fields = capped_small
-indexes_per_collection = 1
+statements =
+    CREATE INDEX by_replies ON `bucket-1`(ALL ARRAY r.`user` FOR r IN replies END, title);
 
 [access]
 creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 10000
+throughput = 15000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = range-scan
-n1ql_workers = 120
+n1ql_gen = join
+n1ql_queries = unnest
+n1ql_workers = 360
+n1ql_batch_size = 10
 ssl_mode = capella
 
-[n1ql-range-scan]
-statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
+[n1ql-unnest]
+statement = SELECT t.title FROM `bucket-1` t UNNEST t.replies AS r WHERE r.`user` = $1;
 scan_consistency = request_plus
-args = ["{capped_small}"]
-
-[clients]
-python_client = 3.2.7
+args = ["{key}"]

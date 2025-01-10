@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q1, Key-Value Lookup, s=1 c=1
+title = Q1, Key-Value Lookup, 7 nodes, s=1 c=1
 component = n1qlcloud
 category = thr
 sub_category = {provider}

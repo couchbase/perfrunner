@@ -3136,6 +3136,7 @@ class ResyncTest(SGImportThroughputTest):
 
     def run(self):
         self.download_ycsb()
+        self.build_ycsb(ycsb_client=self.test_config.load_settings.ycsb_client)
         self.load()
         self.monitor_sg_import_multinode(phase="load", timeout=3600, sleep_delay=30)
 

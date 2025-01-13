@@ -77,14 +77,28 @@ class Remote:
                     '-l INFO -Q {0} -n {0} --discard '
                     '&>worker_{0}.log &'.format(worker, broker_url), pty=False)
 
-    def clone_git_repo(self, repo: str, branch: str, worker_home: str, commit: str = None):
+    def clone_git_repo(
+        self,
+        repo: str,
+        branch: str,
+        worker_home: str,
+        commit: Optional[str] = None,
+        cherrypick: Optional[str] = None,
+    ):
         repo = repo.replace("git://", "https://")
-        logger.info('Cloning repository: {} branch {}'.format(repo, branch))
-        with cd(worker_home), cd('perfrunner'):
-            run('git clone -q -b {} {}'.format(branch, repo))
+        logger.info(f"Cloning repository: {repo} branch {branch}")
+        repo_name = repo.split("/")[-1].split(".")[0]
+
+        with cd(worker_home), cd("perfrunner"):
+            run("git clone -q -b {} {}".format(branch, repo))
+
         if commit:
-            with cd(worker_home), cd('perfrunner'), cd(repo):
-                run('git checkout {}'.format(commit))
+            with cd(worker_home), cd("perfrunner"), cd(repo_name):
+                run(f"git checkout {commit}")
+
+        if cherrypick:
+            with cd(worker_home), cd("perfrunner"), cd(repo_name):
+                run(cherrypick)
 
     @all_clients
     def build_ycsb(self, worker_home: str, ycsb_client: str):
@@ -197,8 +211,10 @@ class Remote:
                 get('{}*.log'.format(logfile), local_path='./')
 
     @all_clients
-    def init_ch2(self, repo: str, branch: str, worker_home: str):
-        self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
+    def init_ch2(self, repo: str, branch: str, worker_home: str, cherrypick: Optional[str] = None):
+        self.clone_git_repo(
+            repo=repo, branch=branch, worker_home=worker_home, cherrypick=cherrypick
+        )
 
     @all_clients
     def clone_ycsb(self, repo: str, branch: str, worker_home: str, ycsb_instances: int):

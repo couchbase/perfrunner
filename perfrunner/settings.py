@@ -3074,6 +3074,7 @@ class CH2:
     def __init__(self, options: dict):
         self.repo = options.get("repo", self.REPO)
         self.branch = options.get("branch", self.BRANCH)
+        self.cherrypick = options.get("cherrypick")
         self.warehouses = int(options.get("warehouses", self.WAREHOUSES))
         self.aclients = int(options.get("aclients", self.ACLIENTS))
         self.tclients = int(options.get("tclients", self.TCLIENTS))

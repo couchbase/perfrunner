@@ -1300,11 +1300,13 @@ class CH2Test(AnalyticsTest):
                 repo=self.test_config.ch2_settings.repo,
                 branch=self.test_config.ch2_settings.branch,
                 worker_home=self.worker_manager.WORKER_HOME,
+                cherrypick=self.test_config.ch2_settings.cherrypick,
             )
         else:
             local.clone_git_repo(
                 repo=self.test_config.ch2_settings.repo,
                 branch=self.test_config.ch2_settings.branch,
+                cherrypick=self.test_config.ch2_settings.cherrypick,
             )
 
     def run(self):
@@ -1489,7 +1491,9 @@ class CH2CapellaColumnarAnalyticsOnlyTest(CH2Test, ColumnarCopyFromS3Test):
 
     def setup(self):
         local.clone_git_repo(
-            repo=self.test_config.ch2_settings.repo, branch=self.test_config.ch2_settings.branch
+            repo=self.test_config.ch2_settings.repo,
+            branch=self.test_config.ch2_settings.branch,
+            cherrypick=self.test_config.ch2_settings.cherrypick,
         )
 
         self.set_up_s3_link()

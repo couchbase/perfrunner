@@ -926,17 +926,26 @@ def start_celery_worker(queue: str):
               '-l INFO -Q {} -f worker.log &'.format(queue))
 
 
-def clone_git_repo(repo: str, branch: str, commit: str = None):
+def clone_git_repo(
+    repo: str, branch: str, commit: Optional[str] = None, cherrypick: Optional[str] = None
+):
     repo_name = repo.split("/")[-1].split(".")[0]
     logger.info('checking if repo {} exists...'.format(repo_name))
+
     if os.path.exists("{}".format(repo_name)):
-        logger.info('repo {} exists...removing...'.format(repo_name))
+        logger.info("repo {} exists...removing...".format(repo_name))
         shutil.rmtree(repo_name, ignore_errors=True)
+
     logger.info('Cloning repository: {} branch: {}'.format(repo, branch))
     local('git clone -q -b {} --single-branch {}'.format(branch, repo))
+
     if commit:
         with lcd(repo_name):
             local('git checkout {}'.format(commit))
+
+    if cherrypick:
+        with lcd(repo_name):
+            local(cherrypick)
 
 
 def check_if_remote_branch_exists(repo: str, branch: str) -> bool:

@@ -12,27 +12,27 @@ provisioned =
         ec2.ec2_cluster_1.ec2_node_group_1.4:kv
 
 goldfish =
-        ec2.ec2_cluster_2.ec2_node_group_3.1:kv,cbas
-        ec2.ec2_cluster_2.ec2_node_group_3.2:kv,cbas
-        ec2.ec2_cluster_2.ec2_node_group_3.3:kv,cbas
-        ec2.ec2_cluster_2.ec2_node_group_3.4:kv,cbas
+        ec2.ec2_cluster_2.ec2_node_group_2.1:kv,cbas
+        ec2.ec2_cluster_2.ec2_node_group_2.2:kv,cbas
+        ec2.ec2_cluster_2.ec2_node_group_2.3:kv,cbas
+        ec2.ec2_cluster_2.ec2_node_group_2.4:kv,cbas
 
 [clients]
 workers1 =
-        ec2.ec2_cluster_1.ec2_node_group_4.1
+        ec2.ec2_cluster_1.ec2_node_group_3.1
 
 [utilities]
-brokers1 = ec2.ec2_cluster_1.ec2_node_group_5.1
+brokers1 = ec2.ec2_cluster_1.ec2_node_group_4.1
 
 [ec2]
 clusters = ec2_cluster_1,ec2_cluster_2
 
 [ec2_cluster_1]
-node_groups = ec2_node_group_1,ec2_node_group_2,ec2_node_group_4,ec2_node_group_5
+node_groups = ec2_node_group_1,ec2_node_group_3,ec2_node_group_4
 storage_class = gp3
 
 [ec2_cluster_2]
-node_groups = ec2_node_group_3
+node_groups = ec2_node_group_2
 storage_class = gp3
 
 [ec2_node_group_1]
@@ -41,17 +41,13 @@ volume_size = 1000
 iops = 16000
 
 [ec2_node_group_2]
-instance_type = c5.2xlarge
-volume_size = 50
-
-[ec2_node_group_3]
 instance_type = m7gd.2xlarge
 
-[ec2_node_group_4]
+[ec2_node_group_3]
 instance_type = c5.24xlarge
 volume_size = 100
 
-[ec2_node_group_5]
+[ec2_node_group_4]
 instance_type = c5.xlarge
 instance_capacity = 1
 volume_size = 50

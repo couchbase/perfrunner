@@ -2026,10 +2026,14 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         logger.info('Updating allowlists for Columnar clusters')
         myip = my_public_ip()
 
-        client_ips = [
-            dns.split('.')[0].removeprefix('ec2-').replace('-', '.')
-            for dns in self.infra_spec.clients
-        ]
+        client_ips = (
+            [
+                dns.split(".")[0].removeprefix("ec2-").replace("-", ".")
+                for dns in self.infra_spec.clients
+            ]
+            if self.csp == "aws"
+            else self.infra_spec.clients
+        )
 
         all_ips = [myip] + client_ips
         logger.info(f'Allowing IPs: {pretty_dict(all_ips)}')
@@ -2061,7 +2065,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         deployment_durations = {}
         for name, size, node_group in zip(names, instance_sizes, node_groups):
             node_group_info = self.infra_spec.infrastructure_section(node_group)
-            instance_type = node_group_info.get("instance_type", "m7gd.4xlarge")
+            instance_type = node_group_info.get("instance_type")
 
             if not (instance_type_info := instance_type_options.get(instance_type)):
                 logger.interrupt(

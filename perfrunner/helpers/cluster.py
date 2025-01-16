@@ -287,6 +287,8 @@ class DefaultClusterManager(ClusterManagerBase):
                 self.rest.set_eventing_mem_quota(
                     master, self.test_config.cluster.eventing_mem_quota
                 )
+            if self.test_config.cluster.query_mem_quota:
+                self.rest.set_query_mem_quota(master, self.test_config.cluster.query_mem_quota)
 
     def set_query_settings(self):
         logger.info("Setting query settings")

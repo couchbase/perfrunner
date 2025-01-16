@@ -855,6 +855,7 @@ class ClusterSettings:
     FTS_INDEX_MEM_QUOTA = 0
     ANALYTICS_MEM_QUOTA = 0
     EVENTING_MEM_QUOTA = 0
+    QUERY_MEMORY_QUOTA = 0
 
     EVENTING_BUCKET_MEM_QUOTA = 0
     EVENTING_METADATA_BUCKET_MEM_QUOTA = 0
@@ -890,6 +891,7 @@ class ClusterSettings:
                                                    self.ANALYTICS_MEM_QUOTA))
         self.eventing_mem_quota = int(options.get('eventing_mem_quota',
                                                   self.EVENTING_MEM_QUOTA))
+        self.query_mem_quota = int(options.get("query_mem_quota", self.QUERY_MEMORY_QUOTA))
 
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes', '1').split()

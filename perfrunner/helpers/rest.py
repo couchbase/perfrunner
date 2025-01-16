@@ -187,7 +187,7 @@ class DefaultRestHelper(RestBase):
     def _set_service_mem_quota(
         self,
         host: str,
-        service: Literal["data", "index", "fts", "cbas", "eventing"],
+        service: Literal["data", "index", "fts", "cbas", "eventing", "query"],
         mem_quota: int,
     ):
         logger.info(f"Configuring {service} RAM quota: {mem_quota} MB")
@@ -211,6 +211,9 @@ class DefaultRestHelper(RestBase):
 
     def set_eventing_mem_quota(self, host: str, mem_quota: int):
         self._set_service_mem_quota(host, "eventing", mem_quota)
+
+    def set_query_mem_quota(self, host: str, mem_quota: int):
+        self._set_service_mem_quota(host, "query", mem_quota)
 
     def set_query_settings(self, host: str, override_settings: dict):
         api = self._get_api_url(

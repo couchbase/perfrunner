@@ -36,12 +36,12 @@ run_extra_access = true
 workload_path = workloads/workloadupdate
 ycsb_client = couchbase3
 items = 4000000000
-ops = 1000000000
+ops = 2000000000
 time = 86400
 boost = 12
-workers = 80
+workers = 160
 kv_endpoints = 128
-workload_instances = 4
+workload_instances = 2
 requestdistribution = uniform
 
 [access]

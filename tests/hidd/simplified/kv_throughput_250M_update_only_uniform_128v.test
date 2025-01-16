@@ -30,6 +30,7 @@ size = 1024
 workers = 100
 key_fmtr = hex
 doc_gen = large
+use_backup = true
 key_prefix = 1ee266
 
 [extra_access]
@@ -58,6 +59,5 @@ workers = 128
 time = 600
 requestdistribution = uniform
 
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+[backup]
+backup_directory = /data2/2n_250m_128v

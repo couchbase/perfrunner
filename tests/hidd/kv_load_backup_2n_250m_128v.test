@@ -1,19 +1,17 @@
 [test_case]
-test = perfrunner.tests.magma.MixedLatencyDGMTest
+test = perfrunner.tests.magma.LoadBackupDGMTest
 
 [showfast]
-title = Latency(ms), Workload S0.3, 2 nodes, 250M x 1KB, 20K ops/sec (25/50/25 C/R/W), Power distribution (α=10), 2.4%% Resident Ratio, 128 vbuckets, Magma
+title = 2 nodes, 250M x 1KB, Magma, 128 vBuckets
 component = hidd
 category = S0
-orderby = S03
+orderby = S01
 
 [cluster]
-mem_quota = 6144
+mem_quota = 51200
 initial_nodes = 2
 num_buckets = 1
 num_vbuckets = 128
-kernel_mem_limit = 12G
-kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
@@ -30,7 +28,6 @@ size = 1024
 workers = 100
 key_fmtr = hex
 doc_gen = large
-use_backup = true
 key_prefix = 1ee266
 
 [extra_access]
@@ -48,17 +45,6 @@ power_alpha = 0
 zipf_alpha = 0
 durability = 0
 async = 0
-
-[access]
-creates = 25
-reads = 50
-updates = 25
-deletes = 0
-items = 250000000
-workers = 128
-throughput = 20000
-power_alpha = 10
-time = 600
 
 [backup]
 backup_directory = /data2/2n_250m_128v

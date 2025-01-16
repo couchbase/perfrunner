@@ -33,6 +33,7 @@ items = 1500000000
 workers = 640
 kv_endpoints = 128
 size = 1000
+use_backup = true
 
 [extra_access]
 run_extra_access = true
@@ -67,3 +68,6 @@ branch = couchbase3
 
 [stats]
 client_processes = java
+
+[backup]
+backup_directory = /data3/3n_1500m_1kb_128v

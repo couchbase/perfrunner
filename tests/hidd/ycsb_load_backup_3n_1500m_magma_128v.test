@@ -1,19 +1,16 @@
 [test_case]
-test = perfrunner.tests.magma.YCSBThroughputHIDDTest
+test = perfrunner.tests.magma.YCSBLoadBackupHIDDTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload C, 3 nodes, 1 bucket x 1.5B x 1KB, 1%% Resident Ratio, 128 vbuckets, Magma
+title = 3 nodes, 1 bucket x 1.5B x 1KB, Magma, 128 vBuckets
 component = hidd
 category = ycsb
-orderby = cml
-sub_category = Throughput
+orderby = am
 
 [cluster]
-mem_quota = 10240
+mem_quota = 102400
 initial_nodes = 3
 num_buckets = 1
-kernel_mem_limit = 20G
-kernel_mem_limit_services = kv
 enable_cpu_cores = false
 num_vbuckets = 128
 
@@ -27,13 +24,12 @@ num_reader_threads = 64
 num_writer_threads = 16
 
 [load]
-workload_path = workloads/workloadc
+workload_path = workloads/workloada
 ycsb_client = couchbase3
 items = 1500000000
 workers = 640
 kv_endpoints = 128
 size = 1000
-use_backup = true
 
 [extra_access]
 run_extra_access = true
@@ -47,17 +43,6 @@ workers = 640
 kv_endpoints = 128
 workload_instances = 2
 requestdistribution = uniform
-
-[access]
-workload_path = workloads/workloadc
-ycsb_client = couchbase3
-items = 1500000000
-ops = 1500000000
-time = 600
-boost = 12
-workers = 640
-kv_endpoints = 64
-workload_instances = 6
 
 [ycsb]
 branch = couchbase3

@@ -1,20 +1,18 @@
 [test_case]
-test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+test = perfrunner.tests.magma.LoadBackupDGMTest
 
 [showfast]
-title = Throughput, Workload S0.7, 2 nodes, 250M x 1KB, read only, Uniform distribution, 2.4%% Resident Ratio, 128 vbuckets, Magma
+title = 3 nodes, 250M x 1KB, Magma, 128 vbuckets
 component = hidd
 category = S0
-orderby = S07
+orderby = S01
 
 [cluster]
-mem_quota = 6144
-initial_nodes = 2
+mem_quota = 51200
+initial_nodes = 3
 num_buckets = 1
-num_vbuckets = 128
-kernel_mem_limit = 12G
-kernel_mem_limit_services = kv
 enable_cpu_cores = false
+num_vbuckets = 128
 
 [bucket]
 eviction_policy = fullEviction
@@ -27,11 +25,10 @@ num_writer_threads = 64
 [load]
 items = 250000000
 size = 1024
-workers = 100
+workers = 128
 key_fmtr = hex
 doc_gen = large
-use_backup = true
-key_prefix = 1ee266
+key_prefix = dac318
 
 [extra_access]
 run_extra_access = true
@@ -49,15 +46,5 @@ zipf_alpha = 0
 durability = 0
 async = 0
 
-[access]
-creates = 0
-reads = 100
-updates = 0
-deletes = 0
-items = 250000000
-workers = 128
-time = 600
-requestdistribution = uniform
-
 [backup]
-backup_directory = /data2/2n_250m_128v
+backup_directory = /data2/3n_250m_128v

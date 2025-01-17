@@ -3,18 +3,19 @@ test = perfrunner.tests.secondary.InitialVectorSecondaryIndexTest
 
 [showfast]
 title = Vector Search, 1 bucket x 10M doc 128dims,single 2i index, SIFT Dataset, no replica, 10M mutations during incremental phase
-sub_category = Plasma
 component = secondary
 category = vector
+sub_category = Plasma1p
 
 [stats]
 server_processes = projector
 
 [cluster]
-mem_quota = 50000
+mem_quota = 100000
 index_mem_quota = 100000
 initial_nodes = 4
 num_buckets = 1
+online_cores = 16
 
 [compaction]
 db_percentage = 100
@@ -39,7 +40,9 @@ key_fmtr = no_hash
 indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index.json
 indexer.settings.storage_mode = plasma
 vector_dimension = 128
-run_recovery_test = 1
+run_recovery_test = 0
+override_index_def = emb Vector
+vector_def_prefix = emb
 
 [restore]
 backup_storage = s3://fts-vector-100m-sift-128-dims
@@ -55,7 +58,7 @@ aws_credential_path = /root/.ssh
 [access]
 items = 10000000
 workers = 50
-throughput = 2000
+throughput = 5000
 modify_doc_loader = mutate_vector
 
 [bucket_extras]

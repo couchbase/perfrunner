@@ -22,7 +22,7 @@ backend_storage = magma
 items = 1000000000
 size = 1024
 workers = 80
-doc_gen = reverse_lookup
+doc_gen = vector_embedding
 
 [collection]
 config = collections/1bucket_bigann_default.json
@@ -64,10 +64,10 @@ train_list = 1000000
 override_index_def = emb Vector
 vector_def_prefix = emb
 num_index_replica = 3
-
+vector_index_type = bhive
 
 [n1ql-q01]
-statement = SELECT META().id FROM `bigann` ORDER BY ANN(emb, $1, 'L2_SQUARED', NPROBES) limit top_k_results
+statement = SELECT META().id FROM `bigann` ORDER BY ANN_DISTANCE(emb, $1, 'L2_SQUARED', NPROBES) limit top_k_results
 args = [{emb}]
 total_batches = 1000
 

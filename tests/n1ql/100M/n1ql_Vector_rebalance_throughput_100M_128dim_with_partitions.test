@@ -1,0 +1,89 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlVectorLatencyRebalanceTest
+
+[showfast]
+title = Rebalance out(3->4), Bhive Vector Search, 1 bucket, SIFT 100M doc 128dims, 10 partitions. s=1 c=1
+component = n1ql
+category = vector
+sub_category = Bhive
+
+[cluster]
+mem_quota = 100000
+index_mem_quota = 100000
+initial_nodes = 7
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+backend_storage = magma
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = vector_embedding
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[access]
+items = 100000000
+workers = 10
+time = 500
+n1ql_op = read
+doc_gen = vector_embedding
+latency_percentiles = 80,95
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+modify_doc_loader = mutate_vector
+key_fmtr = no_hash
+throughput = 250
+
+[restore]
+backup_storage = s3://fts-vector-100m-sift-128-dims
+backup_repo = fts_vector_100m_sift_128_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[rebalance]
+nodes_after = 8
+start_after = 180
+stop_after = 180
+
+[index]
+vector_query_path = tests/fts/data/vector/testData/Sift_query_100M_128dim_top1000.txt
+ground_truth_file_name = Sift100M/gtiIdx100M.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+top_k_results = 10
+fields = composite
+
+[secondary]
+indexer.settings.storage_mode = plasma
+vector_scan_probes = 125
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_default_4partitions.json
+vector_dimension = 128
+override_index_def = emb Vector
+vector_def_prefix = emb
+num_partition = 10
+indexer.settings.rebalance.redistribute_indexes = True
+indexer.settings.enable_shard_affinity  = True
+queryport.client.usePlanner = True
+queryport.client.log_level = Warn
+vector_index_type = bhive
+
+[n1ql-q01]
+statement = SELECT META().id FROM `bucket-1` ORDER BY ANN_DISTANCE(emb, $1, 'L2_SQUARED', NPROBES, RERANKING) limit top_k_results
+args = [{emb}]
+total_batches = 1000
+
+[profiling]
+services = index
+profiles = cpu,heap
+interval = 100
+num_profiles = 3

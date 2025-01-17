@@ -2559,9 +2559,11 @@ class VectorEmbeddingDocument:
             query = [float(x) for x in vector.split()[2:]]
             embeddings.append(query)
         self.embeddings = embeddings
+        self.choices = ["q","2","g","b","m","j","e","d","a","l"]
 
     def next(self, key):
         doc = {
-            "emb": self.embeddings[random.randint(0, len(self.embeddings) - 1)]
+            "emb": self.embeddings[random.randint(0, len(self.embeddings) - 1)],
+            "choice" : self.choices[random.randint(0, len(self.choices) - 1)]
         }
         return doc

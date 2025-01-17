@@ -165,10 +165,14 @@ class MetricHelper:
         else:
             return query_id
 
-    def avg_n1ql_throughput(self, master_node: str, initial_throughput: str = None) -> Metric:
+    def avg_n1ql_throughput(self, master_node: str, initial_throughput: str = None,
+                            custom_title_postfix: str = None,
+                            update_subcategory: bool = False) -> Metric:
         """Generate cluster total query throughput metric."""
         metric_id = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
+        if custom_title_postfix:
+            title = f"{title} {custom_title_postfix}"
 
         metric_info = self._metric_info(metric_id, title,
                                         order_by=self.query_id, chirality=1)
@@ -176,6 +180,8 @@ class MetricHelper:
             throughput = self._avg_n1ql_throughput(master_node) - initial_throughput
         else:
             throughput = self._avg_n1ql_throughput(master_node)
+        if update_subcategory:
+            metric_info['subCategory'] = "Throughput"
         return throughput, self._snapshots, metric_info
 
     def _avg_n1ql_throughput(self, master_node: str) -> int:
@@ -196,7 +202,7 @@ class MetricHelper:
 
     def avg_n1ql_rebalance_throughput(self, rebalance_time, total_requests) -> Metric:
         metric_id = '{}_avg_query_requests'.format(self.test_config.name)
-        title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
+        title = 'Avg. Query Throughput (queries/sec), during rebalance, {}'.format(self._title)
 
         metric_info = self._metric_info(metric_id, title,
                                         order_by=self.query_id, chirality=1)
@@ -212,12 +218,15 @@ class MetricHelper:
         return throughput, self._snapshots, metric_info
 
     def n1ql_vector_recall_and_accuracy(self, k: int, probe: int,  value: float,
-                                        metric: str) -> Metric:
+                                        metric: str, custom_title_postfix: str = None) -> Metric:
         metric_id = f'{metric}_{k}_{probe}_{self.test_config.name}'
         title_prefix = f"{metric}@{k}, probes-{probe} across 1000 queries"
+        if custom_title_postfix:
+            title_prefix = title_prefix + f" {custom_title_postfix}"
         metric_id = metric_id.replace('.', '')
         title = f'{title_prefix}, {self._title}'
         metric_info = self._metric_info(metric_id, title, chirality=-1)
+        metric_info['subCategory'] = "Recall"
         return round(value, 3), self._snapshots, metric_info
 
     def fts_index(self, elapsed_time: float) -> Metric:
@@ -687,11 +696,15 @@ class MetricHelper:
 
         return couch_views_ops, self._snapshots, metric_info
 
-    def query_latency(self, percentile: Number, cluster_idx: int = 0) -> Metric:
+    def query_latency(self, percentile: Number, cluster_idx: int = 0,
+                      custom_title_postfix: str = None,
+                      update_subcategory: bool = False) -> Metric:
         metric_id = '{}_query_{:g}th'.format(self.test_config.name, percentile)
         metric_id = metric_id.replace('.', '')
 
         title_prefix = '{:g}th percentile query latency (ms)'.format(percentile)
+        if custom_title_postfix:
+            title_prefix = title_prefix + f" {custom_title_postfix}"
 
         if len(self.test.cbmonitor_clusters) > 1:
             metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
@@ -703,6 +716,8 @@ class MetricHelper:
                                         order_by=self.query_id, chirality=-1)
 
         latency = self._query_latency(percentile, cluster_idx)
+        if update_subcategory:
+            metric_info['subCategory'] = "Latency"
 
         return latency, self._snapshots, metric_info
 

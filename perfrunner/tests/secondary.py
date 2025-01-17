@@ -19,6 +19,7 @@ from perfrunner.helpers.local import (
 from perfrunner.helpers.misc import SGPortRange, create_build_tuple, pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.tests.n1ql import N1qlVectorSearchTest
 from perfrunner.tests.rebalance import (
     AutoFailoverAndFailureDetectionTest,
     DynamicServiceRebalanceTest,
@@ -359,6 +360,7 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Scan workload applied')
 
     @with_stats
+    @with_profiles
     def cloud_apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
                                  run_in_background=False, is_ssl=False):
         rest_username, rest_password = self.cluster_spec.rest_credentials
@@ -444,6 +446,8 @@ class SecondaryIndexTest(PerfTest):
                 logger.info(f'Average RR over all Indexes with compression : {avg_rr}')
 
     def print_index_disk_usage(self, text="", heap_profile=True):
+        if str(self.test_config.gsi_settings.vector_index_type).lower() == "bhive":
+            return
         self.print_average_rr()
         if self.test_config.gsi_settings.disable_perindex_stats:
             return
@@ -630,7 +634,6 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
     def run(self):
         self.load_and_build_initial_index()
-
         time_elapsed = self.build_incrindex()
         self.report_kpi(time_elapsed, 'Incremental')
         self.print_index_disk_usage(heap_profile=False)
@@ -869,7 +872,8 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
     def _report_kpi(self,
                     percentile_latencies,
                     scan_thr: float = 0,
-                    time_elapsed: float = 0):
+                    time_elapsed: float = 0,
+                    update_category = True):
 
         if time_elapsed != 0:
             if self.report_initial_build_time:
@@ -886,17 +890,23 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr,
                                               metric_id_append_str="thr",
-                                              title=title)
+                                              title=title,
+                                              update_category=update_category
+                                              )
             )
             title = str(self.test_config.showfast.title).strip()
             self.reporter.post(
                 *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
                                                            percentile=90,
-                                                           title=title))
+                                                           title=title,
+                                                           update_category=update_category
+                                                           ))
             self.reporter.post(
                 *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
                                                            percentile=95,
-                                                           title=title))
+                                                           title=title,
+                                                           update_category=update_category
+                                                           ))
 
     def calculate_scan_latencies(self):
 
@@ -2532,6 +2542,8 @@ class InitialVectorSecondaryIndexTest(InitialandIncrementalandRecoverySecondaryI
         indexes_copy = copy.deepcopy(indexes)
         all_options = ""
         ddl_statement = 'CREATE INDEX `{index}` ON `{bucket}`.`{scope}`.`{collection}`({fields})'
+        if str(self.test_config.gsi_settings.vector_index_type).lower() == "bhive":
+            ddl_statement = ddl_statement.replace('CREATE INDEX', 'CREATE VECTOR INDEX')
         for bucket_name, scope_map in indexes_copy.items():
             for scope_name, collection_map in scope_map.items():
                 for collection_name, index_map in collection_map.items():
@@ -2598,7 +2610,16 @@ class VectorSecondaryIndexingScanTest(SecondaryIndexingScanTest, InitialVectorSe
         logger.info('Rows throughput: {}'.format(row_thr))
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
-        self.validate_num_connections()
+
+    def _report_kpi(self,
+                    percentile_latencies,
+                    scan_thr: float,
+                    time_elapsed: float):
+
+        super()._report_kpi(percentile_latencies,
+                            scan_thr,
+                            time_elapsed,
+                            False)
 
 
 class VectorSecondaryScanWithEqualityFiltersTest(VectorSecondaryIndexingScanTest):
@@ -2628,3 +2649,39 @@ class VectorSecondaryScanWithLThanOpFiltersTest(VectorSecondaryIndexingScanTest)
 
             with open(self.configfile, 'w') as f:
                 json.dump(cbindexperf_contents, f, indent=4)
+
+class VectorSecondaryIndexingScanAndRecallTest(VectorSecondaryIndexingScanTest):
+
+    def calculate_recall(self):
+        N1qlVectorSearchTest.downloads_ground_truth_file(self)
+        return N1qlVectorSearchTest.vector_recall_and_accuracy_check(self)
+
+    def run(self):
+        super().run()
+        probes, recalls, accuracies = self.calculate_recall()
+        N1qlVectorSearchTest.report_kpi(self, probes, recalls, accuracies)
+
+
+class CloudVectorSecondaryIndexingScanTest(VectorSecondaryIndexingScanAndRecallTest):
+
+    def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
+                           run_in_background=False, is_ssl=False):
+        self.cloud_apply_scanworkload(path_to_tool=path_to_tool,
+                           run_in_background=run_in_background, is_ssl=is_ssl)
+
+    def read_scanresults(self):
+        self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
+        return super().read_scanresults()
+
+class CloudVectorSecondaryScanWithEqualityFiltersTest(VectorSecondaryScanWithEqualityFiltersTest
+                                                      ,VectorSecondaryIndexingScanAndRecallTest):
+
+    def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
+                           run_in_background=False, is_ssl=False):
+        VectorSecondaryIndexingScanAndRecallTest.apply_scanworkload(path_to_tool=path_to_tool,
+                           run_in_background=run_in_background, is_ssl=is_ssl)
+
+    def read_scanresults(self):
+        self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
+        return super().read_scanresults()
+

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.VectorSecondaryScanWithEqualityFiltersTest
 
 [showfast]
-title = 99%% filter, Vector Search, 1 bucket x 100M doc 128dims ,single 2i index, SIFT Dataset, no replica
+title = 99%% selectivity, Vector Search, 1 bucket x 100M doc 128dims ,single 2i index, SIFT Dataset, no replica
 sub_category = Plasma
 component = secondary
 category = vector
@@ -15,6 +15,7 @@ mem_quota = 50000
 index_mem_quota = 100000
 initial_nodes = 4
 num_buckets = 1
+online_cores = 16
 
 [compaction]
 db_percentage = 100
@@ -40,6 +41,9 @@ indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index.json
 indexer.settings.storage_mode = plasma
 vector_dimension = 128
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanLatency_concurrency_1_1B_1s_1c.json
+vector_scan_probes = 25
+cbindexperf_concurrency = 32
+indexer.settings.max_cpu_percent = 3200
 disable_perindex_stats = False
 vector_filter_percentage = 99
 index_def_prefix = scalar

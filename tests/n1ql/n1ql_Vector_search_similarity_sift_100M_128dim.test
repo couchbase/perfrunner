@@ -26,7 +26,7 @@ collections_per_scope = 1
 items = 20000
 size = 1024
 workers = 80
-doc_gen = reverse_lookup
+doc_gen = vector_embedding
 
 [access]
 items = 20000

@@ -71,7 +71,7 @@ index_def_prefix = id
 vector_def_prefix = emb
 
 [n1ql-q01]
-statement = SELECT META().id FROM `bucket-1` where id<1000000 ORDER BY ANN(emb, $1, 'L2_SQUARED', NPROBES) limit top_k_results
+statement = SELECT META().id FROM `bucket-1` where id<1000000 ORDER BY ANN_DISTANCE(emb, $1, 'L2_SQUARED', NPROBES) limit top_k_results
 args = [{emb}]
 total_batches = 1000
 

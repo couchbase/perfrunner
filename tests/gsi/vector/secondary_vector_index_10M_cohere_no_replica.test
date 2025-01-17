@@ -15,6 +15,7 @@ mem_quota = 50000
 index_mem_quota = 100000
 initial_nodes = 4
 num_buckets = 1
+online_cores = 16
 
 [compaction]
 db_percentage = 100
@@ -45,6 +46,7 @@ indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index.json
 indexer.settings.storage_mode = plasma
 vector_dimension = 768
 run_recovery_test = 1
+indexer.settings.max_cpu_percent = 3200
 
 [restore]
 backup_storage = s3://fts-cohere-large-10m-768-dims

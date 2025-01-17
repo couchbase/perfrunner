@@ -10,7 +10,7 @@ sub_category = Plasma
 [cluster]
 mem_quota = 100000
 index_mem_quota = 100000
-initial_nodes = 6
+initial_nodes = 4
 num_buckets = 1
 
 [bucket]
@@ -63,7 +63,7 @@ override_index_def = emb Vector
 vector_def_prefix = emb
 
 [n1ql-q01]
-statement = SELECT META().id FROM `bucket-1` ORDER BY ANN(emb, $1, 'L2', NPROBES) limit top_k_results
+statement = SELECT META().id FROM `bucket-1` ORDER BY ANN_DISTANCE(emb, $1, 'L2', NPROBES) limit top_k_results
 args = [{emb}]
 total_batches = 1000
 

@@ -1,0 +1,43 @@
+{
+    "bucket-1": {
+        "_default": {
+            "_default": {
+                "vector-idx-1": {
+                    "field": "emb VECTOR",
+                    "dimension": 128,
+                    "description": "'IVF,SQ8'",
+                    "similarity": "'L2_SQUARED'",
+                    "num_replica": 0
+                },
+                "vector-idx-2": {
+                    "field": "emb VECTOR",
+                    "dimension": 128,
+                    "description": "'IVF,SQ4'",
+                    "similarity": "'L2_SQUARED'",
+                    "num_replica": 0
+                },
+                "vector-idx-3": {
+                    "field": "emb VECTOR",
+                    "dimension": 128,
+                    "description": "'IVF,PQ32x8'",
+                    "similarity": "'L2_SQUARED'",
+                    "num_replica": 0
+                },
+                "vector-idx-4": {
+                    "field": "emb VECTOR",
+                    "dimension": 128,
+                    "description": "'IVF,PQ128x8'",
+                    "similarity": "'L2_SQUARED'",
+                    "num_replica": 0
+                },
+                "vector-idx-5": {
+                    "field": "emb VECTOR",
+                    "dimension": 128,
+                    "description": "'IVF,PQ64x8'",
+                    "similarity": "'L2_SQUARED'",
+                    "num_replica": 0
+                }
+            }
+        }
+    }
+}

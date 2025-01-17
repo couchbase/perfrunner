@@ -1,0 +1,80 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlVectorLatencyThroughputPreparedStatementTest
+
+[showfast]
+title = Vector Search, 1 bucket, SIFT 1B doc 128dims, no replica, 1s 1c
+component = n1ql
+category = vector
+sub_category = Bhive
+
+[cluster]
+mem_quota = 100000
+index_mem_quota = 100000
+initial_nodes = 7
+num_buckets = 1
+bucket_name = bigann
+
+[bucket]
+replica_number = 0
+backend_storage = magma
+
+[load]
+items = 1000000000
+size = 1024
+workers = 80
+doc_gen = vector_embedding
+
+[collection]
+config = collections/1bucket_bigann_default.json
+
+[access]
+items = 1000000000
+workers = 0
+time = 500
+n1ql_op = read
+doc_gen = vector_embedding
+latency_percentiles = 80,95
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+
+[restore]
+backup_storage = s3://big-ann-1bil-128-dims
+backup_repo = big_ann_1bil_128_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+vector_query_path = tests/fts/data/vector/testData/Sift_query_100M_128dim_top1000.txt
+ground_truth_file_name = Sift100M/gtiIdx1000M.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+top_k_results = 10
+fields = composite
+
+[secondary]
+indexer.settings.storage_mode = plasma
+vector_scan_probes = 125
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_default_bigann_4partitions.json
+vector_dimension = 128
+train_list = 1000000
+override_index_def = emb Vector
+vector_def_prefix = emb
+partition_by_clause = size
+num_partition = 5
+vector_index_type = bhive
+
+[n1ql-q01]
+statement = SELECT META().id FROM `bigann` ORDER BY ANN_DISTANCE(emb, $1, 'L2_SQUARED', NPROBES, RERANKING) limit top_k_results
+args = [{emb}]
+total_batches = 1000
+
+[profiling]
+services = index
+profiles = cpu,heap
+interval = 100
+num_profiles = 3

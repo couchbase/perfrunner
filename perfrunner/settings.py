@@ -2305,15 +2305,20 @@ class GSISettings:
         # GSI vector settings
         self.vector_dimension = int(options.get('vector_dimension', 0))
         self.vector_description = options.get('vector_description', None)
-        self.vector_similarity = options.get('vector_similarity', None)
+        self.vector_similarity = options.get('vector_similarity', 'L2')
         self.index_def_prefix = options.get("index_def_prefix", None)
         self.vector_train_list = options.get("train_list")
         self.vector_nprobes = options.get("nprobes", self.DEFAULT_NPROBES)
         self.vector_filter_percentage = options.get("vector_filter_percentage", 0)
         self.vector_scan_probes = options.get("vector_scan_probes", 0)
         self.vector_def_prefix = options.get("vector_def_prefix", None)
+        self.num_index_replica = options.get("num_index_replica", None)
+        self.include_columns = options.get("include_columns", None)
 
         self.override_index_def = options.get("override_index_def", None)
+        self.partition_by_clause = options.get("partition_by_clause", None)
+        self.num_partition = options.get("num_partition", None)
+        self.vector_index_type = options.get("vector_index_type", "composite")
 
         self.settings = {}
         for option in options:
@@ -2337,6 +2342,8 @@ class GSISettings:
         if self.settings.get('planner.excludeNode'):
             self.excludeNode = self.settings.get('planner.excludeNode')
             self.settings.pop("planner.excludeNode")
+
+        self.vector_reranking = maybe_atoi(options.get('vector_reranking', "true"))
 
     def __str__(self) -> str:
         return str(self.__dict__)

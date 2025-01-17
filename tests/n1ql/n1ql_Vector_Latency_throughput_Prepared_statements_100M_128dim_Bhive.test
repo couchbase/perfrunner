@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1qlVectorLatencyThroughputPreparedStatementBhiveTest
+test = perfrunner.tests.n1ql.N1qlVectorLatencyThroughputPreparedStatementTest
 
 [showfast]
-title = Vector Search, 1 bucket, SIFT 1M doc 128dims, no replica, 1s 1c
+title = Vector Search, 1 bucket, SIFT 100M doc 128dims, no replica, 1s 1c
 component = n1ql
 category = vector
 sub_category = Bhive
@@ -10,7 +10,7 @@ sub_category = Bhive
 [cluster]
 mem_quota = 100000
 index_mem_quota = 100000
-initial_nodes = 6
+initial_nodes = 4
 num_buckets = 1
 
 [bucket]
@@ -25,18 +25,20 @@ doc_gen = vector_embedding
 
 [collection]
 config = collections/1bucket_1scope_1collection_basic_default.json
+scopes_per_bucket = 1
+collections_per_scope = 1
 
 [access]
-items = 100000000
+items = 10000000
 workers = 0
 time = 500
 n1ql_op = read
+doc_gen = vector_embedding
 latency_percentiles = 80,95,99
 n1ql_queries = q01
 n1ql_query_type = Vector
 n1ql_workers = 32
 workload_instances = 1
-doc_gen = vector_embedding
 
 [restore]
 backup_storage = s3://fts-vector-100m-sift-128-dims
@@ -50,6 +52,8 @@ aws_credential_path = /root/.ssh
 
 [index]
 vector_query_path = tests/fts/data/vector/testData/Sift_query_100M_128dim_top1000.txt
+ground_truth_file_name = Sift100M/gtiIdx100M.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
 top_k_results = 10
 
 [secondary]
@@ -59,9 +63,10 @@ indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_defaul
 vector_dimension = 128
 override_index_def = emb Vector
 vector_def_prefix = emb
+vector_index_type = bhive
 
 [n1ql-q01]
-statement = SELECT META().id FROM `bucket-1` ORDER BY ANN(emb, $1, 'L2_SQUARED', NPROBES) limit top_k_results
+statement = SELECT META().id FROM `bucket-1` ORDER BY ANN_DISTANCE(emb, $1, 'L2_SQUARED', NPROBES, RERANKING) limit top_k_results
 args = [{emb}]
 total_batches = 1000
 

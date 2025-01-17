@@ -933,6 +933,14 @@ class SeqUpsertsWorker(Worker):
 class SeqFetchModifyUpsertsWorker(Worker):
 
     def run(self, sid, *args):
+        if self.ws.throughput < float('inf'):
+                self.target_time = self.ws.workers / self.ws.throughput
+        else:
+            self.target_time = None
+        self.seed()
+        if self.target_time:
+            start_delay = random.random_sample() * self.target_time
+            time.sleep(start_delay * self.CORRECTION_FACTOR)
         logger.info("running SeqFetchModifyUpsertsWorker")
         self.cb.connect_collections(self.load_targets)
         self.default_load(sid)
@@ -962,9 +970,14 @@ class SeqFetchModifyUpsertsWorker(Worker):
             ws.items = self.load_map[target]
             self.init_doc_modifier(sid, ws, target)
             for key in SequentialKey(sid, ws, self.ts.prefix):
+                t0= time.time()
                 doc = self.cb.get(target, key.string)
                 doc = self.doc_modifier.next(doc)
                 self.cb.update(target, key.string, doc)
+                t1 = time.time() - t0
+                if self.target_time:
+                    start_delay = abs(self.target_time - t1)
+                    time.sleep(start_delay * self.CORRECTION_FACTOR)
 
 class FTSDataSpreadWorker(Worker):
 

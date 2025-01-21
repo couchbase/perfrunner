@@ -210,9 +210,8 @@ class ClusterSpec(Config):
     def is_openshift(self) -> bool:
         return self.cloud_provider == 'openshift'
 
-    def kubernetes_version(self, cluster_name):
-        return self.infrastructure_section(cluster_name)\
-            .get('version', '1.17')
+    def kubernetes_version(self, cluster_name: str) -> str:
+        return self.infrastructure_section(cluster_name).get("version", "1.32")
 
     def istio_enabled(self, cluster_name):
         istio_enabled = self.infrastructure_section(cluster_name).get('istio_enabled', 0)

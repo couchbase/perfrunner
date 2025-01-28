@@ -58,7 +58,9 @@ class BaseScanner:
         try:
             return self.bucket.get(key).content_as[type(default)]
         except DocumentNotFoundException:
-            return None
+            # For jobs checkpoints we want to return the 0 default. But for metrics checkpoints
+            # we specifically check for None since the stored checkpoints are empty dictionaries.
+            return default if isinstance(default, int) else None
         except Exception as ex:
             logger.error(ex)
         return default

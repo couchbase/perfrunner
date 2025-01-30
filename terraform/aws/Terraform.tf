@@ -301,7 +301,8 @@ resource "aws_route_table_association" "kafka_private" {
   route_table_id = one(aws_route_table.kafka_private[*].id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_ssh_from_allowed_ips" {
+# This rule is added to the default security group of the VPC
+resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   for_each = length(aws_vpc.main) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 22
@@ -311,105 +312,176 @@ resource "aws_vpc_security_group_ingress_rule" "enable_ssh_from_allowed_ips" {
   security_group_id = one(aws_vpc.main[*].default_security_group_id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_rabbitmq" {
+resource "aws_security_group" "allow_rabbitmq" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  name        = "allow_rabbitmq"
+  description = "Allow RabbitMQ inbound traffic"
+  vpc_id      = one(aws_vpc.main[*].id)
+
+  tags = {
+    Name = var.global_tag != "" ? "${var.global_tag}-allow-rabbitmq" : "Allow RabbitMQ"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_rabbitmq" {
+  for_each = length(aws_security_group.allow_rabbitmq) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 5672
   to_port           = 5672
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_rabbitmq[*].id)
 }
 
-# ["8091-8096","18091-18096","11210","11207"]
-resource "aws_vpc_security_group_ingress_rule" "enable_couchbase_default" {
+resource "aws_security_group" "allow_couchbase" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  name        = "allow_couchbase"
+  description = "Allow inbound traffic to main couchbase ports"
+  vpc_id      = one(aws_vpc.main[*].id)
+
+  tags = {
+    Name = var.global_tag != "" ? "${var.global_tag}-allow-couchbase" : "Allow Couchbase"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_couchbase" {
+  for_each = length(aws_security_group.allow_couchbase) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 8091
   to_port           = 8096
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_couchbase[*].id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_indexer" {
-  count = length(aws_vpc.main) != 0 ? 1 : 0
-
-  from_port         = 9102
-  to_port           = 9102
-  ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
-}
-
-resource "aws_vpc_security_group_ingress_rule" "enable_cbas" {
-  count = length(aws_vpc.main) != 0 ? 1 : 0
-
-  from_port         = 9110
-  to_port           = 9110
-  ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
-}
-
-resource "aws_vpc_security_group_ingress_rule" "enable_couchbase_secure" {
-  count = length(aws_vpc.main) != 0 ? 1 : 0
+resource "aws_vpc_security_group_ingress_rule" "allow_couchbase_secure" {
+  for_each = length(aws_security_group.allow_couchbase) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 18091
   to_port           = 18096
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_couchbase[*].id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_indexer_secure" {
+resource "aws_security_group" "allow_indexer" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  name        = "allow_indexer"
+  description = "Allow Indexer inbound traffic"
+  vpc_id      = one(aws_vpc.main[*].id)
+
+  tags = {
+    Name = var.global_tag != "" ? "${var.global_tag}-allow-indexer" : "Allow Indexer"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_indexer" {
+  for_each = length(aws_security_group.allow_indexer) != 0 ? toset(var.allowed_ips) : toset([])
+
+  from_port         = 9102
+  to_port           = 9102
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_indexer[*].id)
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_indexer_secure" {
+  for_each = length(aws_security_group.allow_indexer) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 19102
   to_port           = 19102
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_indexer[*].id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_cbas_secure" {
+resource "aws_security_group" "allow_cbas_admin" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  name        = "allow_cbas"
+  description = "Allow inbound traffic to CBAS admin port"
+  vpc_id      = one(aws_vpc.main[*].id)
+
+  tags = {
+    Name = var.global_tag != "" ? "${var.global_tag}-allow-cbas-admin" : "Allow CBAS Admin"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_cbas_admin" {
+  for_each = length(aws_security_group.allow_cbas_admin) != 0 ? toset(var.allowed_ips) : toset([])
+
+  from_port         = 9110
+  to_port           = 9110
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_cbas_admin[*].id)
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_cbas_admin_secure" {
+  for_each = length(aws_security_group.allow_cbas_admin) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 19110
   to_port           = 19110
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_cbas_admin[*].id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_memcached" {
+resource "aws_security_group" "allow_memcached" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  name        = "allow_memcached"
+  description = "Allow inbound traffic to memcached"
+  vpc_id      = one(aws_vpc.main[*].id)
+
+  tags = {
+    Name = var.global_tag != "" ? "${var.global_tag}-allow-memcached" : "Allow Memcached"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_memcached" {
+  for_each = length(aws_security_group.allow_memcached) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 11209
   to_port           = 11210
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_memcached[*].id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_memcached_secure" {
-  count = length(aws_vpc.main) != 0 ? 1 : 0
+resource "aws_vpc_security_group_ingress_rule" "allow_memcached_secure" {
+  for_each = length(aws_security_group.allow_memcached) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 11207
   to_port           = 11207
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_memcached[*].id)
 }
 
-resource "aws_vpc_security_group_ingress_rule" "enable_sgw" {
+resource "aws_security_group" "allow_sgw" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
+
+  name        = "allow_sgw"
+  description = "Allow SGW inbound traffic"
+  vpc_id      = one(aws_vpc.main[*].id)
+
+  tags = {
+    Name = var.global_tag != "" ? "${var.global_tag}-allow-sgw" : "Allow SGW"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_sgw" {
+  for_each = length(aws_security_group.allow_sgw) != 0 ? toset(var.allowed_ips) : toset([])
 
   from_port         = 4984
   to_port           = 5025
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  security_group_id = one(aws_vpc.main[*].default_security_group_id)
+  cidr_ipv4         = each.key
+  security_group_id = one(aws_security_group.allow_sgw[*].id)
 }
 
 resource "aws_instance" "cluster_instance" {
@@ -423,6 +495,14 @@ resource "aws_instance" "cluster_instance" {
   root_block_device {
     volume_size = 32
   }
+
+  vpc_security_group_ids = [
+    one(aws_vpc.main[*].default_security_group_id),
+    one(aws_security_group.allow_couchbase[*].id),
+    one(aws_security_group.allow_indexer[*].id),
+    one(aws_security_group.allow_cbas_admin[*].id),
+    one(aws_security_group.allow_memcached[*].id),
+  ]
 
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "ClusterNode${each.key}"
@@ -461,6 +541,8 @@ resource "aws_instance" "client_instance" {
   ami               = data.aws_ami.client_ami[each.key].id
   instance_type     = each.value.instance_type
 
+  vpc_security_group_ids = [one(aws_vpc.main[*].default_security_group_id)]
+
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "ClientNode${each.key}"
     role       = "client"
@@ -498,6 +580,11 @@ resource "aws_instance" "utility_instance" {
   ami               = data.aws_ami.utility_ami[each.key].id
   instance_type     = each.value.instance_type
 
+  vpc_security_group_ids = [
+    one(aws_vpc.main[*].default_security_group_id),
+    one(aws_security_group.allow_rabbitmq[*].id),
+  ]
+
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "UtilityNode${each.key}"
     role       = "utility"
@@ -534,6 +621,11 @@ resource "aws_instance" "syncgateway_instance" {
   subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.syncgateway_ami[each.key].id
   instance_type     = each.value.instance_type
+
+  vpc_security_group_ids = [
+    one(aws_vpc.main[*].default_security_group_id),
+    one(aws_security_group.allow_sgw[*].id),
+  ]
 
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "SyncGatewayNode${each.key}"

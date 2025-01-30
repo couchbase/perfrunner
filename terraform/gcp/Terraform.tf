@@ -84,8 +84,8 @@ resource "google_compute_subnetwork" "perf-sn" {
   network       = google_compute_network.perf-vn.id
 }
 
-resource "google_compute_firewall" "allow-custom" {
-  name    = "allow-custom-${var.uuid}"
+resource "google_compute_firewall" "allow-intra-subnet" {
+  name    = "allow-intra-subnet-${var.uuid}"
   network = google_compute_network.perf-vn.name
 
   direction = "INGRESS"
@@ -94,7 +94,10 @@ resource "google_compute_firewall" "allow-custom" {
     protocol = "all"
   }
 
-  source_ranges = [google_compute_subnetwork.perf-sn.ip_cidr_range]
+  source_ranges = concat(
+    [google_compute_subnetwork.perf-sn.ip_cidr_range],
+    [for vm in google_compute_instance.client_instance: vm.network_interface.0.access_config.0.nat_ip]
+  )
 }
 
 resource "google_compute_firewall" "allow-ssh" {
@@ -117,12 +120,14 @@ resource "google_compute_firewall" "allow-broker" {
 
   direction = "INGRESS"
 
+  target_tags = ["utility"]
+
   allow {
     protocol = "tcp"
     ports    = ["5672"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = var.allowed_ips
 }
 
 resource "google_compute_firewall" "allow-couchbase" {
@@ -138,7 +143,7 @@ resource "google_compute_firewall" "allow-couchbase" {
     ports    = ["4894-5025", "8091-8096", "9102", "9110", "18091-18096", "19102", "19110", "11207", "11209-11210"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = var.allowed_ips
 }
 
 resource "google_compute_instance" "cluster_instance" {

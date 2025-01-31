@@ -818,6 +818,25 @@ class ClusterSpec(Config):
         logger.info('All clusters set to active')
 
 
+class SystemdLimitsSettings:
+    UNIVERSAL_KEY = "*"
+
+    def __init__(self, options: dict):
+        universal_limits = options.get(self.UNIVERSAL_KEY, {})
+
+        self.limits = {
+            service: {k: v for k, v in universal_limits.items()}
+            for service in ["kv", "n1ql", "index", "fts", "eventing", "cbas"]
+        }
+
+        for service, limits in self.limits.items():
+            limits |= options.get(service, {})
+
+    @property
+    def has_any_limits(self) -> bool:
+        return any(limits for limits in self.limits.values())
+
+
 class TestCaseSettings:
 
     USE_WORKERS = 1
@@ -960,7 +979,9 @@ class ClusterSettings:
         self.bucket_name = options.get('bucket_name', self.BUCKET_NAME)
 
         self.cloud_server_groups = options.get('bucket_name', self.BUCKET_NAME)
-        self.enable_cgroups = options.get('enable_cgroups', False)
+        self.enable_indexer_systemd_mem_limits = options.get(
+            "enable_indexer_systemd_mem_limits", False
+        )
 
         self.cng_enabled = maybe_atoi(options.get("cng_enabled", self.CNG_ENABLED))
 
@@ -3668,6 +3689,47 @@ class TestConfig(Config):
     def cluster(self) -> ClusterSettings:
         options = self._get_options_as_dict('cluster')
         return ClusterSettings(options)
+
+    @property
+    def systemd_limits(self) -> SystemdLimitsSettings:
+        """Specify systemd service resource limits for Couchbase Server.
+
+        Limits can be specified per MDS service, but will be applied per *node*, so it left to the
+        user to ensure that limits don't conflict if multiple services are running on the same node.
+
+        Options and values are exactly as defined for cgroups v2:
+        https://man7.org/linux/man-pages/man5/systemd.resource-control.5.html
+
+        Example usage:
+        ```
+        [systemd_limit]
+        # limits for all nodes
+        AllowedCPUs = 0-7
+
+        [systemd_limit:index]
+        # limits for nodes running index service
+        MemoryMax = 20G
+
+        [systemd_limit:kv,index]
+        # limits for nodes running kv OR index service
+        IOReadBandwidthMax = /data 100M
+        IOWriteBandwidthMax = /data 100M
+        ```
+        """
+        options = {}
+        for section in self.config.sections():
+            if section.startswith("systemd_limit"):
+                services = (
+                    section.split(":")[-1].split(",")
+                    if ":" in section
+                    else [SystemdLimitsSettings.UNIVERSAL_KEY]
+                )
+                for service in services:
+                    key = service.strip()
+                    if key not in options:
+                        options[key] = {}
+                    options[key] |= self._get_options_as_dict(section)
+        return SystemdLimitsSettings(options)
 
     @property
     def direct_nebula(self) -> DirectNebulaSettings:

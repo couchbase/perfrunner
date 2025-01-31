@@ -3,15 +3,15 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from shlex import quote
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from urllib.parse import urlparse
 
-from fabric.api import cd, get, put, quiet, run, settings, shell_env
+from fabric.api import cd, env, execute, get, parallel, put, quiet, run, settings, shell_env
 from fabric.contrib.files import append
 from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
-from perfrunner.helpers.misc import run_local_shell_command, uhex
+from perfrunner.helpers.misc import pretty_dict, run_local_shell_command, uhex
 from perfrunner.remote import Remote
 from perfrunner.remote.context import (
     all_clients,
@@ -1358,8 +1358,11 @@ class RemoteLinux(Remote):
         run('curl -ks -X PUT http://localhost:8941/log?level={}'.format(level), warn_only=True)
 
     @servers_by_role(roles=['index'])
-    def add_system_limit_config(self):
-        logger.info("Add system_limits.conf for cgroup")
+    def set_indexer_systemd_mem_limits(self):
+        """Set systemd memory limit for index service equal to total node memory on each node."""
+        logger.info(
+            f"Adding system_limits.conf to set index service memory limit on {env.host_string}"
+        )
         run("mkdir -p /etc/systemd/system/couchbase-server.service.d")
         with cd('/etc/systemd/system/couchbase-server.service.d'):
             meminfo = run('cat /proc/meminfo')
@@ -1373,11 +1376,33 @@ class RemoteLinux(Remote):
             put('system_limits.conf', 'system_limits.conf')
         run('systemctl daemon-reload')
 
+    def set_systemd_resource_limits(
+        self, service: Literal["kv", "n1ql", "index", "fts", "eventing", "cbas"], limits: dict
+    ):
+        if not (hosts := self.cluster_spec.servers_by_role(service)) or not limits:
+            return
+
+        logger.info(
+            f"Setting systemd resource limits on nodes running {service} service: "
+            f"{pretty_dict(limits)}"
+        )
+        conf_string = "\n".join([f"{k}={v}" for k, v in limits.items()])
+
+        def task():
+            logger.info(f"Setting systemd resource limits on {env.host_string}")
+            conf_dir = "/etc/systemd/system/couchbase-server.service.d"
+            run(f"mkdir -p {conf_dir}")
+            with cd(conf_dir):
+                run(f"echo -e '[Service]\n{conf_string}' > {service}.conf")
+            run("systemctl daemon-reload")
+
+        execute(parallel(task), hosts=hosts)
+
     @all_servers
-    def clear_system_limit_config(self):
-        logger.info("Clear system_limits.conf")
+    def reset_systemd_service_conf(self):
+        logger.info(f"Remove custom systemd service configuration on {env.host_string}")
         run("rm -rf /etc/systemd/system/couchbase-server.service.d")
-        run('systemctl daemon-reload')
+        run("systemctl daemon-reload")
 
     @master_server
     def configure_columnar_cloud_storage(

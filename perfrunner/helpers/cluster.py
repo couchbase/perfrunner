@@ -787,15 +787,21 @@ class DefaultClusterManager(ClusterManagerBase):
             check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
             logger.info('new tls version: {}'.format(check_tls_version))
 
-    def deploy_couchbase_with_cgroups_for_index_nodes(self):
-        if self.test_config.cluster.enable_cgroups:
-            logger.info("starting server in cgroup")
-            self.remote.add_system_limit_config()
-            self.remote.restart()
-            time.sleep(200)
+    def set_systemd_resource_limits(self):
+        if not (limits_settings := self.test_config.systemd_limits).has_any_limits:
+            return
 
-    def clear_system_limit_config(self):
-        self.remote.clear_system_limit_config()
+        for service, limits in limits_settings.limits.items():
+            self.remote.set_systemd_resource_limits(service, limits)
+        self.remote.restart()
+
+    def set_indexer_systemd_mem_limits(self):
+        if self.test_config.cluster.enable_indexer_systemd_mem_limits:
+            self.remote.set_indexer_systemd_mem_limits()
+            self._restart_clusters()
+
+    def reset_systemd_service_conf(self):
+        self.remote.reset_systemd_service_conf()
         self.remote.restart()
 
     def set_columnar_cloud_storage(self):

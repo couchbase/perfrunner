@@ -126,7 +126,8 @@ def main():
     cm.tune_logging()
     cm.restart_with_alternative_num_vbuckets()
     cm.flush_iptables()
-    cm.clear_system_limit_config()
+    cm.reset_systemd_service_conf()
+    cm.set_systemd_resource_limits()
 
     cm.configure_internal_settings()
     cm.set_data_path()
@@ -178,7 +179,7 @@ def main():
 
     cm.tweak_memory()
     cm.enable_n2n_encryption()
-    cm.deploy_couchbase_with_cgroups_for_index_nodes()
+    cm.set_indexer_systemd_mem_limits()
 
 
 if __name__ == '__main__':

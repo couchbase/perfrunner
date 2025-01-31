@@ -304,10 +304,13 @@ class RemoteWindows(Remote):
     def disable_serverless_mode(self):
         pass
 
-    def clear_system_limit_config(self):
+    def reset_systemd_service_conf(self):
         pass
 
-    def add_system_limit_config(self):
+    def set_indexer_systemd_mem_limits(self):
+        pass
+
+    def set_systemd_resource_limits(self, *args, **kwargs):
         pass
 
     def set_cb_profile(self, *args):

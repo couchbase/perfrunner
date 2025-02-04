@@ -1,0 +1,57 @@
+[test_case]
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+
+[showfast]
+title = Throughput, Workload S0.7, 2 nodes, 250M x 1KB, read only, Uniform distribution, 2.4%% Resident Ratio, Magma, AWS
+component = hidd
+category = S0
+orderby = S07
+
+[cluster]
+mem_quota = 6144
+initial_nodes = 2
+num_buckets = 1
+num_vbuckets = 256
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 250000000
+size = 1024
+workers = 100
+key_fmtr = hex
+doc_gen = large
+key_prefix = 1ee266
+
+[extra_access]
+run_extra_access = true
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 250000000
+ops = 250000000
+time = 86400
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+creates = 0
+reads = 100
+updates = 0
+deletes = 0
+items = 250000000
+workers = 128
+time = 600
+requestdistribution = uniform

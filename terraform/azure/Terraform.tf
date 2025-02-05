@@ -336,6 +336,15 @@ resource "azurerm_network_interface_application_security_group_association" "syn
   depends_on = [azurerm_virtual_machine.perf-syncgateway-vm]
 }
 
+locals {
+  allowed_external_ips = concat(
+    var.allowed_ips,
+    [for ip in azurerm_public_ip.perf-public-client: ip.ip_address],
+    [for ip in azurerm_public_ip.perf-public-cluster: ip.ip_address],
+    [for ip in azurerm_public_ip.perf-public-syncgateway: ip.ip_address]
+  )
+}
+
 # Create network security group.
 resource "azurerm_network_security_group" "perf-nsg" {
   name                = "perf-nsg-${var.uuid}"
@@ -350,10 +359,7 @@ resource "azurerm_network_security_group" "perf-nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefixes    = concat(
-      var.allowed_ips,
-      [for ip in azurerm_public_ip.perf-public-client: ip.ip_address]
-    )
+    source_address_prefixes    = local.allowed_external_ips
     destination_address_prefix = "*"
   }
 
@@ -377,10 +383,7 @@ resource "azurerm_network_security_group" "perf-nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "5672"
-    source_address_prefixes    = concat(
-      var.allowed_ips,
-      [for ip in azurerm_public_ip.perf-public-client: ip.ip_address]
-    )
+    source_address_prefixes    = local.allowed_external_ips
     destination_application_security_group_ids = [azurerm_application_security_group.utility-asg.id]
   }
 
@@ -404,10 +407,7 @@ resource "azurerm_network_security_group" "perf-nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_ranges    = ["8091-8096", "9102", "9110", "18091-18096", "19102", "19110", "11209-11210","11207"]
-    source_address_prefixes    = concat(
-      var.allowed_ips,
-      [for ip in azurerm_public_ip.perf-public-client: ip.ip_address]
-    )
+    source_address_prefixes    = local.allowed_external_ips
     destination_application_security_group_ids = [azurerm_application_security_group.cluster-asg.id]
   }
 
@@ -431,10 +431,7 @@ resource "azurerm_network_security_group" "perf-nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "4984-5025"
-    source_address_prefixes    = concat(
-      var.allowed_ips,
-      [for ip in azurerm_public_ip.perf-public-client: ip.ip_address]
-    )
+    source_address_prefixes    = local.allowed_external_ips
     destination_application_security_group_ids = [azurerm_application_security_group.syncgateway-asg.id]
   }
 

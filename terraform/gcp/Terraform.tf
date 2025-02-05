@@ -84,8 +84,8 @@ resource "google_compute_subnetwork" "perf-sn" {
   network       = google_compute_network.perf-vn.id
 }
 
-resource "google_compute_firewall" "allow-intra-subnet" {
-  name    = "allow-intra-subnet-${var.uuid}"
+resource "google_compute_firewall" "allow-node-to-node" {
+  name    = "allow-node-to-node-${var.uuid}"
   network = google_compute_network.perf-vn.name
 
   direction = "INGRESS"
@@ -96,7 +96,9 @@ resource "google_compute_firewall" "allow-intra-subnet" {
 
   source_ranges = concat(
     [google_compute_subnetwork.perf-sn.ip_cidr_range],
-    [for vm in google_compute_instance.client_instance: vm.network_interface.0.access_config.0.nat_ip]
+    [for vm in google_compute_instance.client_instance: vm.network_interface.0.access_config.0.nat_ip],
+    [for vm in google_compute_instance.cluster_instance: vm.network_interface.0.access_config.0.nat_ip],
+    [for vm in google_compute_instance.syncgateway_instance: vm.network_interface.0.access_config.0.nat_ip],
   )
 }
 

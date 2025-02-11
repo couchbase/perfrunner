@@ -2101,6 +2101,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         eviction_policy: str = "nruEviction",
         ttl_value: int = 0,
         ttl_unit: str = None,
+        num_vbuckets: int = 1024,
     ):
         cluster_id = self.hostname_to_cluster_id(host)
 
@@ -2125,6 +2126,10 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         if bucket_type == "ephemeral":
             data['storageBackend'] = None
             data['evictionPolicy'] = eviction_policy
+
+        build = self.get_version(host)
+        if create_build_tuple(build) > (8, 0, 0, 0):
+            data['numVBuckets'] = num_vbuckets
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 

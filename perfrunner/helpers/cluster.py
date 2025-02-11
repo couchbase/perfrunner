@@ -989,6 +989,7 @@ class CapellaClusterManager(ClusterManagerBase):
                     durability=self.test_config.bucket.min_durability,
                     ttl_value=self.test_config.bucket.doc_ttl_value,
                     ttl_unit=self.test_config.bucket.doc_ttl_unit,
+                    num_vbuckets=self.test_config.cluster.num_vbuckets,
                 )
 
     def create_eventing_buckets(self):

@@ -6,6 +6,7 @@ title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, C
 component = analyticscloud
 category = ch2
 sub_category = {provider}
+orderby = ch2_05000_s_04n_a01_cbo_idx
 
 [stats]
 server_processes = java

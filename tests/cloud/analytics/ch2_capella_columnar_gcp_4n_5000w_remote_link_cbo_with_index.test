@@ -26,13 +26,12 @@ replica_index = 1
 
 [backup]
 obj_staging_dir = /stage
-obj_region = us-east-1
-aws_credential_path = /root/.ssh
+obj_region = us-west1
 
 [restore]
-backup_storage = s3://analytics-ch2-5000w
+backup_storage = gs://analytics-ch2-5000w
 backup_repo = ch2
-threads = 8
+threads = 12
 map_data = bench.ch2=bench.ch2
 
 [analytics]
@@ -58,6 +57,3 @@ analytics_statements =
     CREATE INDEX orderline_i_id ON orders(UNNEST o_orderline SELECT ol_i_id:BIGINT) EXCLUDE UNKNOWN KEY;
     CREATE INDEX orderline_delivery_d ON orders(UNNEST o_orderline SELECT ol_delivery_d:STRING) EXCLUDE UNKNOWN KEY;
 unoptimized_queries = true
-
-[clients]
-python_client = 4.2.1

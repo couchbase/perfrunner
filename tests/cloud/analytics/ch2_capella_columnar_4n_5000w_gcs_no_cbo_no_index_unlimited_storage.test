@@ -15,12 +15,10 @@ server_processes = java
 enable_n2n_encryption = all
 
 [analytics]
-external_dataset_type = s3
-external_dataset_region = us-east-1
+external_dataset_type = gcs
 external_bucket = analytics-ch2-5000w-gz
 external_file_format = json
 external_file_include = gz
-aws_credential_path = /root/.ssh/
 
 [ch2]
 warehouses = 5000

@@ -1,0 +1,15 @@
+{
+    "GCP_CH2_1": [
+        {"job": "ColumnarGCPWeekly", "cluster": "capella_gcp_4columnar_0c_c4a_standard_8_lssd.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_gcs_no_cbo_no_index_unlimited_storage.test", "groups": "P0"},
+        {"job": "ColumnarGCPWeekly", "cluster": "capella_gcp_4columnar_0c_c4a_standard_8_lssd.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_gcs_cbo_with_index_3_aclients.test", "groups": "P0"}
+    ],
+    "GCP_CH2_2": [
+        {"job": "ColumnarGCPWeekly2", "cluster": "capella_gcp_4s_4columnar_1c_c4a_standard_8_lssd_kv.spec", "test_config": "cloud/analytics/ch2_capella_columnar_gcp_4n_5000w_remote_link_cbo_with_index.test", "groups": "P0"},
+        {"job": "ColumnarGCPWeekly2", "cluster": "capella_gcp_4columnar_0c_c4a_standard_8_lssd.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_gcs_cbo_with_index.test", "groups": "P0"}
+    ],
+    "GCP_CH2_3": [
+        {"job": "ColumnarGCPWeekly3", "cluster": "capella_gcp_4columnar_0c_c4a_standard_8_lssd.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_gcs_no_cbo_with_index.test", "groups": "P0"},
+        {"job": "ColumnarGCPWeekly3", "cluster": "capella_gcp_8columnar_0c_c4a_standard_8_lssd.spec", "test_config": "cloud/analytics/ch2_capella_columnar_8n_5000w_gcs_cbo_with_index.test", "groups": "P0"},
+        {"job": "ColumnarGCPWeekly3", "cluster": "capella_gcp_4columnar_0c_c4a_standard_8_lssd.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_gcs_cbo_no_index.test", "groups": "P0"}
+    ]
+}

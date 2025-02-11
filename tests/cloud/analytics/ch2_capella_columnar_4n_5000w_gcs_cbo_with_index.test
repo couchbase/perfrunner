@@ -2,11 +2,11 @@
 test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTest
 
 [showfast]
-title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, No CBO, Hand-Optimized Queries, Analytics Indexes
+title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Indexes
 component = analyticscloud
 category = ch2
 sub_category = {provider}
-orderby = ch2_05000_s_04n_a01_nocbo_noidx
+orderby = ch2_05000_s_04n_a01_cbo_idx
 
 [stats]
 server_processes = java
@@ -15,12 +15,12 @@ server_processes = java
 enable_n2n_encryption = all
 
 [analytics]
-external_dataset_type = s3
-external_dataset_region = us-east-1
+external_dataset_type = gcs
 external_bucket = analytics-ch2-5000w-gz
 external_file_format = json
 external_file_include = gz
-aws_credential_path = /root/.ssh/
+use_cbo = true
+cbo_sample_size = high
 
 [ch2]
 warehouses = 5000
@@ -38,3 +38,4 @@ analytics_statements =
     CREATE INDEX orders_entry_d ON orders(o_entry_d:STRING);
     CREATE INDEX orderline_i_id ON orders(UNNEST o_orderline SELECT ol_i_id:BIGINT) EXCLUDE UNKNOWN KEY;
     CREATE INDEX orderline_delivery_d ON orders(UNNEST o_orderline SELECT ol_delivery_d:STRING) EXCLUDE UNKNOWN KEY;
+unoptimized_queries = true

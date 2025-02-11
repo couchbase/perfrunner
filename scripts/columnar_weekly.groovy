@@ -17,7 +17,6 @@ def buildTests(tests) {
                     string(name: 'test_config', value: test['test_config']),
                     string(name: 'cluster', value: test['cluster']),
                     string(name: 'capella_env', value: params.capella_env),
-                    string(name: 'cloud_backend', value: params.cloud_backend),
                     string(name: 'operational_server_version', value: params.operational_server_version),
                     string(name: 'columnar_ami', value: params.columnar_ami),
                     string(name: 'region', value: params.region)
@@ -30,7 +29,7 @@ def buildTests(tests) {
 }
 
 def buildComponent(component, testCases) {
-    for ( release in ['goldfish'] ) {
+    for ( release in ['goldfish', 'ionic'] ) {
         if ( testCases.containsKey(release) ) {
             echo "building tests for " + release + " : " + component
             buildTests(testCases[release][component])
@@ -46,6 +45,9 @@ pipeline {
                 script {
                     if ( params.goldfish_test_suite != '' ) {
                         testCases['goldfish'] = readJSON file: params.goldfish_test_suite
+                    }
+                    if ( params.ionic_test_suite != '' ) {
+                        testCases['ionic'] = readJSON file: params.ionic_test_suite
                     }
                 }
             }
@@ -68,6 +70,24 @@ pipeline {
                     when { expression { return params.AWS_CH2 } }
                     steps {
                         buildComponent('AWS_CH2_3', testCases)
+                    }
+                }
+                stage('GCP_CH2_1') {
+                    when { expression { return params.GCP_CH2 } }
+                    steps {
+                        buildComponent('GCP_CH2_1', testCases)
+                    }
+                }
+                stage('GCP_CH2_2') {
+                    when { expression { return params.GCP_CH2 } }
+                    steps {
+                        buildComponent('GCP_CH2_2', testCases)
+                    }
+                }
+                stage('GCP_CH2_3') {
+                    when { expression { return params.GCP_CH2 } }
+                    steps {
+                        buildComponent('GCP_CH2_3', testCases)
                     }
                 }
             }

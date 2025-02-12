@@ -483,6 +483,8 @@ class CloudVMDeployer:
 class ControlPlaneManager:
     """Prepares the control plane and updates cluster spec file for Capella perf tests."""
 
+    PROJECT_DELETE_TIMEOUT_MINS = 10
+
     def __init__(
         self,
         infra_spec: ClusterSpec,
@@ -668,14 +670,29 @@ class ControlPlaneManager:
             logger.info("No project was created during this run. Skipping project deletion.")
             return
 
-        logger.info(f"Deleting project {self.project_id} from organization {self.org_id}...")
-        resp = self.api_client.delete_project(self.org_id, self.project_id)
-        if resp.status_code == 400 and resp.json()["errorType"] == "DeleteProjectsWithDatabases":
-            logger.warn("Cannot delete project because there are still databases present.")
-            return
-        else:
+        interval_secs = 30
+        t0 = time()
+        while time() < t0 + self.PROJECT_DELETE_TIMEOUT_MINS * 60:
+            logger.info(
+                f"Trying to deleting project {self.project_id} from organization {self.org_id}..."
+            )
+            resp = self.api_client.delete_project(self.org_id, self.project_id)
+            if (
+                resp.status_code == 400
+                and (rjson := resp.json())["errorType"] == "DeleteProjectsWithDatabases"
+            ):
+                logger.warning(rjson["message"])
+                sleep(interval_secs)
+                continue
+
             raise_for_status(resp)
-        logger.info("Project successfully queued for deletion.")
+            logger.info("Project successfully queued for deletion.")
+            return
+
+        logger.error(
+            f"Timed out after {self.PROJECT_DELETE_TIMEOUT_MINS} mins "
+            "waiting for project to delete."
+        )
 
     def clean_up_api_keys(self):
         """Revoke API keys stored in creds file."""
@@ -719,6 +736,8 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
         self.tenant_id = self.infra_spec.controlplane_settings["org"]
         self.project_id = self.infra_spec.controlplane_settings["project"]
+
+        # right now this depends on capella columnar clusters being "inactive" in the infra spec
         self.cluster_ids = self.infra_spec.capella_cluster_ids
 
         self.capella_timeout = max(0, self.options.capella_timeout)
@@ -2002,6 +2021,10 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         self.project_id = self.infra_spec.controlplane_settings["project"]
         self.instance_ids = self.infra_spec.controlplane_settings.get("columnar_ids", "").split()
 
+        # right now this depends on capella operational clusters being "inactive" in the infra spec
+        self.cluster_ids = self.infra_spec.capella_cluster_ids
+
+        self.deployment_durations = {}
         self.capella_timeout = max(0, self.options.capella_timeout)
 
     def deploy(self):
@@ -2017,6 +2040,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
 
         # Deploy capella cluster(s)
         self.deploy_columnar_instances()
+        self.wait_for_columnar_instance_deploy()
 
         # Update cluster spec file
         self.update_spec()
@@ -2062,7 +2086,6 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             if (c := compute["compute"])
         }
 
-        deployment_durations = {}
         for name, size, node_group in zip(names, instance_sizes, node_groups):
             node_group_info = self.infra_spec.infrastructure_section(node_group)
             instance_type = node_group_info.get("instance_type")
@@ -2100,8 +2123,8 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             )
             raise_for_status(resp)
 
-            instance_id = resp.json().get('id')
-            deployment_durations[instance_id] = time()
+            instance_id = resp.json().get("id")
+            self.deployment_durations[instance_id] = time()
             self.instance_ids.append(instance_id)
 
             logger.info(f"Initialised Columnar instance deployment {instance_id}")
@@ -2109,6 +2132,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             self.infra_spec.config.set("controlplane", "columnar_ids", "\n".join(self.instance_ids))
             self.infra_spec.update_spec_file()
 
+    def wait_for_columnar_instance_deploy(self):
         timeout_mins = self.capella_timeout
         interval_secs = self.test_config.deployment.capella_poll_interval_secs
         pending_instances = [instance_id for instance_id in self.instance_ids]
@@ -2121,40 +2145,58 @@ class CapellaColumnarDeployer(CloudVMDeployer):
 
             statuses = []
             for instance_id in pending_instances:
-                resp = self.columnar_api.get_specific_columnar_instance(self.tenant_id,
-                                                                        self.project_id,
-                                                                        instance_id)
+                resp = self.columnar_api.get_specific_columnar_instance(
+                    self.tenant_id, self.project_id, instance_id
+                )
                 raise_for_status(resp)
-                status = resp.json()['data']['state']
-                logger.info(f'Instance state for {instance_id}: {status}')
-                if status == 'deploy_failed':
+                resp_payload = resp.json()
+                status = resp_payload["data"]["state"]
+                logger.info(f"Instance state for {instance_id}: {status}")
+
+                if status == "deploy_failed":
                     logger.error(f"Deployment failed for Columnar instance {instance_id}")
                     exit(1)
-                elif status == 'healthy':
-                    deployment_durations[instance_id] = time() - deployment_durations[instance_id]
+                elif status == "healthy":
+                    self.deployment_durations[instance_id] = (
+                        time() - self.deployment_durations[instance_id]
+                    )
                     logger.info(
                         f"Columnar instance {instance_id} deployed successfully after "
-                        f"{deployment_durations[instance_id]}s"
+                        f"{self.deployment_durations[instance_id]}s"
                     )
+
+                    cluster_id = resp_payload["data"]["config"]["clusterId"]
+                    logger.info(f"Cluster ID for instance {instance_id}: {cluster_id}")
+                    self.cluster_ids.append(cluster_id)
+                    existing_cluster_ids = self.infra_spec.controlplane_settings.get(
+                        "cluster_ids", ""
+                    )
+                    self.infra_spec.config.set(
+                        "controlplane", "cluster_ids", existing_cluster_ids + f"\n{cluster_id}"
+                    )
+                    self.infra_spec.update_spec_file()
+
                 statuses.append(status)
 
             pending_instances = [
-                pending_instances[i] for i, status in enumerate(statuses) if status != 'healthy'
+                pending_instances[i] for i, status in enumerate(statuses) if status != "healthy"
             ]
 
             poll_duration = time() - poll_start
 
         if pending_instances:
-            logger.error(f'Deployment timed out after {timeout_mins} mins')
+            logger.error(f"Deployment timed out after {timeout_mins} mins")
             exit(1)
 
         logger.info("Successfully deployed all Columnar instances")
-        timing_results = '\n\t'.join(f'{iid}: [{duration-interval_secs:4.0f} - {duration:4.0f}]s'
-                                     for iid, duration in deployment_durations.items())
-        logger.info(f'Deployment timings:\n\t{timing_results}')
+        timing_results = "\n\t".join(
+            f"{iid}: [{duration - interval_secs:4.0f} - {duration:4.0f}]s"
+            for iid, duration in self.deployment_durations.items()
+        )
+        logger.info(f"Deployment timings:\n\t{timing_results}")
 
         with TimeTrackingFile() as t:
-            t.config['columnar_instances'] = deployment_durations
+            t.config["columnar_instances"] = self.deployment_durations
 
     def destroy(self):
         if not self.options.capella_only:
@@ -2169,8 +2211,9 @@ class CapellaColumnarDeployer(CloudVMDeployer):
     def destroy_columnar_instance(self):
         for instance_id in self.instance_ids:
             logger.info(f"Deleting Columnar instance {instance_id}...")
-            resp = self.columnar_api.delete_columnar_instance(self.tenant_id, self.project_id,
-                                                              instance_id)
+            resp = self.columnar_api.delete_columnar_instance(
+                self.tenant_id, self.project_id, instance_id
+            )
             raise_for_status(resp)
             logger.info("Columnar instance successfully queued for deletion.")
 
@@ -2179,42 +2222,37 @@ class CapellaColumnarDeployer(CloudVMDeployer):
 
         timeout_mins = self.capella_timeout
         interval_secs = 30
-        pending_instances = [instance_id for instance_id in self.instance_ids]
+        pending_clusters = [cluster_id for cluster_id in self.cluster_ids]
         t0 = time()
-        while pending_instances and (time() - t0) < timeout_mins * 60:
+        while pending_clusters and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            resp = self.columnar_api.get_columnar_instances(self.tenant_id, self.project_id)
-            raise_for_status(resp)
+            still_pending_clusters = []
+            for cluster_id, instance_id in zip(pending_clusters, self.instance_ids):
+                resp = self.columnar_api.get_cluster_info_internal(cluster_id)
+                if resp.status_code != 404:
+                    raise_for_status(resp)
+                    logger.info(
+                        f"Cluster {cluster_id} (for instance {instance_id}) not destroyed yet."
+                    )
+                    still_pending_clusters.append(cluster_id)
 
-            pending_instances = []
-            for instance in resp.json().get('data'):
-                if (instance_id := instance.get('data', {}).get('id')) in self.instance_ids:
-                    pending_instances.append(instance_id)
-                    logger.info(f'Instance {instance_id} not destroyed yet')
+            pending_clusters = still_pending_clusters
 
-        if pending_instances:
-            logger.error(f'Timed out after {timeout_mins} mins waiting for instances to delete.')
+        if pending_clusters:
+            logger.error(
+                f"Timed out after {timeout_mins} mins waiting for "
+                "Columnar instance clusters to delete."
+            )
         else:
-            logger.info("All Columnar instances destroyed.")
+            logger.info("All Columnar instance clusters destroyed.")
 
     def update_spec(self):
-        """Update the infrastructure spec file with Columnar instance details.
-
-        This includes:
-        - Hostnames for compute nodes
-        - Cluster IDs (distinct from the "instance" ID)
-        """
-        cluster_ids = []
-
+        """Update the infrastructure spec file with hostnames of Columnar compute nodes."""
         for instance_id, (cluster_label, _) in zip(self.instance_ids, self.infra_spec.clusters):
             resp = self.columnar_api.get_columnar_nodes(instance_id)
             resp.raise_for_status()
             nodes = resp.json()
-
-            cluster_id = nodes[0]["clusterId"]
-            logger.info(f"Cluster ID for instance {instance_id}: {cluster_id}")
-            cluster_ids.append(cluster_id)
 
             hostnames_with_services = []
             for n in nodes:
@@ -2223,18 +2261,12 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 hostnames_with_services.append(f"{hostname}:{services}")
 
             logger.info(
-                f"Cluster nodes for instance {instance_id}: "
-                f"{pretty_dict(hostnames_with_services)}"
+                f"Cluster nodes for instance {instance_id}: {pretty_dict(hostnames_with_services)}"
             )
 
             self.infra_spec.config.set(
                 "clusters", cluster_label, "\n" + "\n".join(hostnames_with_services)
             )
-
-        existing_cluster_ids = self.infra_spec.controlplane_settings.get("cluster_ids", "")
-        self.infra_spec.config["controlplane"]["cluster_ids"] = (
-            existing_cluster_ids + "\n" + "\n".join(cluster_ids)
-        )
 
         self.infra_spec.update_spec_file()
 

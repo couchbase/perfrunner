@@ -685,7 +685,7 @@ class CloudInstaller(CouchbaseInstaller):
         package_name = f'couchbase.{self.remote.package}'
 
         if self.options.remote_copy:
-            for url in (self.options.couchbase_version, self.options.local_copy_url):
+            for url in (self.options.local_copy_url, self.options.couchbase_version):
                 if url and validators.url(url):
                     logger.info("Checking if provided package URL is valid.")
                     if url_exist(url):

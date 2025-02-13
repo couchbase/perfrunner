@@ -359,6 +359,11 @@ class Remote:
             self.cblite_update_submodule()
         except Exception as ex:
             logger.info("{}".format(ex))
+        logger.info('Building cblite: checking out version...')
+        try:
+            self.cblite_checkout_version()
+        except Exception as ex:
+            logger.info("{}".format(ex))
         logger.info('Building cblite: creating build directory...')
         try:
             self.cblite_make_build_dir()
@@ -383,7 +388,7 @@ class Remote:
     @all_clients_batch
     def cblite_checkout_version(self):
         with cd('/tmp/couchbase-mobile-tools/vendor/couchbase-lite-core'):
-            run('git checkout bc77f743d13fb6de86e56167425cdb3252ae7c71', quiet=True)
+            run('git checkout 91a72069bcb942c9e1bfb39e4f38abd544e6b742', quiet=True)
 
     @all_clients_batch
     def cblite_make_build_dir(self):

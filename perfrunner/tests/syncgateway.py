@@ -167,6 +167,30 @@ class SGPerfTest(PerfTest):
         log_config = self.rest.get_logging_config()
         logger.info(f'The deployed logging config for this db is: {log_config}')
 
+    def update_sync_function(self):
+        sync_function = (
+            'function (doc) {{ channel("channel-".concat((Date.now()) % {0}));}}'.
+            format(self.sg_settings.channels)
+        )
+        collections_map = self.test_config.collection.collection_map
+        if collections_map:
+            logger.info("Update sync function for db with named collections")
+            target_scope_collections = collections_map["bucket-1"]
+
+            for scope, collections in target_scope_collections.items():
+                for collection, options in collections.items():
+                    if options['load'] == 1 and options['access'] == 1:
+                        logger.info(f"The scope is: {scope}")
+                        logger.info(f"The collections is: {collection}")
+                        keyspace = f"db-1.{scope}.{collection}"
+                        logger.info(f"keyspace is: {keyspace}")
+                        self.rest.sgw_update_sync_function(self.sgw_master_node, keyspace,
+                                                            sync_function)
+        else:
+            logger.info("update sync function for default collection")
+            self.rest.sgw_update_sync_function(self.sgw_master_node, "db-1", sync_function)
+        logger.info("Updated sync function")
+
     def disable_log_streaming(self):
 
         if not self.capella_infra:
@@ -890,6 +914,8 @@ class SGImportLoad(PerfTest):
 
 class SGImportThroughputTest(SGPerfTest):
 
+    @with_stats
+    @with_profiles
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=ycsb_data_load_task)
 
@@ -996,6 +1022,10 @@ class SGImportThroughputTest(SGPerfTest):
     def run(self):
         self.download_ycsb()
         self.build_ycsb(ycsb_client=self.test_config.load_settings.ycsb_client)
+
+        if int(self.sg_settings.channels) != 1:
+            logger.info(f"The number of channels is: {int(self.sg_settings.channels)}")
+            self.update_sync_function()
 
         t0 = time()
 
@@ -3019,28 +3049,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             ycsb_instances=int(self.test_config.syncgateway_settings.instances_per_client))
         self.setup_cblite()
         if self.test_config.syncgateway_settings.e2e:
-            sync_function = (
-                'function (doc) {{ channel("channel-".concat((Date.now()) % {0}));}}'.
-                format(self.sg_settings.channels)
-            )
-            collections_map = self.test_config.collection.collection_map
-            if collections_map:
-                logger.info("Update sync function for db with named collections")
-                target_scope_collections = collections_map["bucket-1"]
-
-                for scope, collections in target_scope_collections.items():
-                    for collection, options in collections.items():
-                        if options['load'] == 1 and options['access'] == 1:
-                            logger.info(f"The scope is: {scope}")
-                            logger.info(f"The collections is: {collection}")
-                            keyspace = f"db-1.{scope}.{collection}"
-                            logger.info(f"keyspace is: {keyspace}")
-                            self.rest.sgw_update_sync_function(self.sgw_master_node, keyspace,
-                                                               sync_function)
-            else:
-                logger.info("update sync function for default collection")
-                self.rest.sgw_update_sync_function(self.sgw_master_node, "db-1", sync_function)
-            logger.info("Updated sync function")
+            self.update_sync_function()
         self.start_memcached()
         self.load_users()
         self.init_users()

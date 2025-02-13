@@ -25,6 +25,18 @@
           "test": "syncgateway_read_revcache_4node_replicator2.test"},
 
         {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_read_revcache_4node_replicator2_1MB.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_read_revcache_4node_replicator2_10MB.test"},
+
+        {"job": "syncgteway-hebe-new",
           "sg_cluster_map": "hebe_1node",
           "cb_cluster_map": "hebe_1node_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr",
@@ -114,6 +126,18 @@
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.0/hebe_channel_xattr",
           "test": "syncgateway_write_4node_no_roundtripwrite_replicator2.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_4node_no_roundtripwrite_replicator2_1MB.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_4node_no_roundtripwrite_replicator2_10MB.test"},
 
         {"job": "syncgteway-hebe-new",
           "sg_cluster_map": "hebe_1node",
@@ -294,6 +318,20 @@
         {"job": "hebe_sg_multiimport",
           "cluster": "hebe_import_5node_n1ql.spec",
           "test_config": "syncgateway_import_multinode_throughput_10M_48partition_16vCPU.test",
+          "sg_config": "3.0/hebe_channel_xattr_import_multinode_partition_48.config",
+          "test_type":  "",
+          "load_config": ""},
+
+        {"job": "hebe_sg_multiimport",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "test_config": "syncgateway_import_multinode_throughput_15K_10MB_48partition_16vCPU.test",
+          "sg_config": "3.0/hebe_channel_xattr_import_multinode_partition_48.config",
+          "test_type":  "",
+          "load_config": ""},
+
+        {"job": "hebe_sg_multiimport",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "test_config": "syncgateway_import_multinode_throughput_150K_1MB_48partition_16vCPU.test",
           "sg_config": "3.0/hebe_channel_xattr_import_multinode_partition_48.config",
           "test_type":  "",
           "load_config": ""},

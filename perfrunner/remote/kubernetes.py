@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 import time
-from typing import Optional
+from typing import Optional, Union
 
 import requests
 import yaml
@@ -96,9 +96,18 @@ class RemoteKubernetes(Remote):
     def delete_namespace(self, name):
         self.k8s_client("delete namespace {}".format(name))
 
-    def get_pods(self, namespace: str = "default", output: str = "json", selector: str = None):
-        cmd = [f"get pods -o {output} -n {namespace}", f"-l {selector}" if selector else ""]
-        raw_pods = self.k8s_client(" ".join(cmd), split_lines=False)
+    def get_pods(
+        self,
+        namespace: Optional[str] = "default",
+        output: str = "json",
+        selector: Optional[str] = None,
+    ) -> Union[list[dict], str]:
+        # If namespace is None, get pods from all namespaces
+        namespace_flag = f"-n {namespace}" if namespace else "-A"
+        selector_flag = f"-l {selector}" if selector else ""
+        raw_pods = self.k8s_client(
+            f"get pods -o {output} {namespace_flag} {selector_flag}", split_lines=False
+        )
         try:
             pods = json.loads(raw_pods.decode("utf8"))
             return pods["items"]
@@ -287,7 +296,7 @@ class RemoteKubernetes(Remote):
         cluster = json.loads(raw_cluster.decode('utf8'))
         return cluster
 
-    def get_operator_version(self):
+    def get_operator_version(self) -> str:
         for pod in self.get_pods():
             name = pod['metadata']['name']
             if 'couchbase-operator' in name and 'admission' not in name:
@@ -295,9 +304,8 @@ class RemoteKubernetes(Remote):
                 for container in containers:
                     if container['name'] == 'couchbase-operator':
                         image = container['image']
-                        build = image.split(":")[-1]
-                        return build.split("-")[0]
-        raise Exception("could not get operator version")
+                        return image.split(":")[-1]
+        return ""
 
     def delete_all_buckets(self, timeout=1200):
         self.k8s_client('delete couchbasebuckets --all')
@@ -666,17 +674,29 @@ class RemoteKubernetes(Remote):
         )
 
     def collect_k8s_logs(self):
-        # Collect operator and backup pods logs if one exists
-        pods = self.get_pods()
+        pods = self.get_pods(namespace=None)  # Get all pods in all namespaces
+        # Collect logs for operator, backup and server pods (server, metrics & CNG)
+        # and other relevant pods
+        pod_prefixes = (
+            "couchbase-operator-",
+            "my-backup-",
+            "cb-example-perf-",
+            "sync-gateway",
+            "external-dns-",
+            "aws-load-balancer-controller-",
+        )
         for pod in pods:
             pod_name = pod.get("metadata", {}).get("name", "")
-            # Collect logs for operator, backup and server pods (server, metrics & CNG)
-            pod_prefixes = ("couchbase-operator-", "my-backup-", "cb-example-perf-", "sync-gateway")
-            if pod_name.startswith(pod_prefixes) and 'admission' not in pod_name:
-                logger.info("Collecting pod '{}' logs".format(pod_name))
-                logs = self.get_logs(pod_name)
-                with open("{}.log".format(pod_name), 'w') as file:
-                    file.write(logs)
+            if not pod_name.startswith(pod_prefixes) or "admission" in pod_name:
+                continue
+            logger.info(f"Collecting pod '{pod_name}' logs")
+            options = ""
+            if pod_name.startswith("aws-load-balancer-controller-"):
+                options = "-n kube-system"
+
+            logs = self.get_logs(pod_name, options=options)
+            with open(f"{pod_name}.log", "w") as file:
+                file.write(logs)
 
     def istioctl(self, params, kube_config=None, split_lines=True, max_attempts=1):
         kube_config = kube_config or self.kube_config_path
@@ -849,7 +869,7 @@ class RemoteKubernetes(Remote):
         pass
 
     # Networking and load balancing
-    def setup_lb_controller(self, cert_manager_version: str, lbc_file: str):
+    def setup_lb_controller(self, cert_manager_version: str, lbc_file: str, lbc_ingclass_file: str):
         # Install cert-manager
         self.create_from_file(
             f"https://github.com/cert-manager/cert-manager/releases/download/v{cert_manager_version}/cert-manager.yaml",
@@ -861,6 +881,7 @@ class RemoteKubernetes(Remote):
 
         # Install load-balancer controller
         self.create_from_file(lbc_file, command="apply")
+        self.create_from_file(lbc_ingclass_file, command="apply")
         self.wait_for_pods_ready(
             "aws-load-balancer-controller", 1, namespace="kube-system", timeout=300
         )

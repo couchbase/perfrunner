@@ -3652,6 +3652,7 @@ class LoadBalancerSettings:
         # A lodbalancer type: nlb | alb. If None, a LB will not be deployed
         self.lb_type = options.get("type")
         self.lb_scheme = options.get("scheme", self.DEFAULT_LB_SCHEME)
+        self.create_ingress = maybe_atoi(options.get("create_ingress", "false"))
         # Certificate manager and load-balancer controller versions to install
         lbc_config = options.get("lbc_config")
         if lbc_config:
@@ -3731,6 +3732,28 @@ class AppTelemetrySettings:
         self.enabled = maybe_atoi(options.get("enabled", "false"))
         self.scrape_interval = int(options.get("scrape_interval", "60"))  # seconds
         self.max_clients_per_node = int(options.get("max_clients_per_node", "1024"))
+
+
+class MigrationSettings(RebalanceSettings):
+    """Provides settings to control cluster migration.
+
+    If enabled, the k8s-managed cluster will be created from an on-premise source cluster.
+    """
+
+    START_AFTER = 180
+    STOP_AFTER = 30
+
+    def __init__(self, options: dict):
+        super().__init__(options)
+        self.enabled = maybe_atoi(options.get("enabled", "false"))
+        self.source_cluster = options.get("migration_source_cluster")
+        self.num_unmanaged_nodes = int(
+            options.get("num_unmanaged_nodes", 0)
+        )  # 0 means migrate all nodes
+        self.max_concurrent_migrations = int(options.get("max_concurrent_migrations", 1))
+        # Time in seconds to wait for migration to complete before considering it failed
+        # This may defer based on the size of the cluster
+        self.migration_timeout_seconds = int(options.get("migration_timeout_seconds", 2700))
 
 
 class TestConfig(Config):
@@ -4186,6 +4209,11 @@ class TestConfig(Config):
     def vectordb_settings(self) -> VectorDBBenchSettings:
         options = self._get_options_as_dict("vectordb")
         return VectorDBBenchSettings(options)
+
+    @property
+    def migration_settings(self) -> MigrationSettings:
+        options = self._get_options_as_dict("migration")
+        return MigrationSettings(options)
 
     def _get_mixed_phase_settings(self, base_section, base_settings):
         settings_cls = type(base_settings)

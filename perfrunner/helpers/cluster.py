@@ -11,6 +11,7 @@ from perfrunner.helpers.config_files import (
     CAOCouchbaseClusterFile,
     CAOSyncgatewayDeploymentFile,
     LoadBalancerControllerFile,
+    record_time,
 )
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import (
@@ -26,6 +27,7 @@ from perfrunner.helpers.misc import (
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.remote.kubernetes import RemoteKubernetes
 from perfrunner.settings import ClusterSpec, TestConfig
 
 
@@ -1256,8 +1258,9 @@ class KubernetesClusterManager:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.cao_version = ''
-        self.remote = RemoteHelper(cluster_spec)
-
+        # When managing a kubernetes cluster, always use the RemoteKubernetes class
+        # even when running in mixed mode
+        self.remote = RemoteKubernetes(cluster_spec)
 
     def configure_cluster(self):
         logger.info('Preparing cluster configuration file')
@@ -1273,6 +1276,7 @@ class KubernetesClusterManager:
             cm.configure_auto_compaction()
             cm.configure_upgrade()
             cm.configure_networking()
+            cm.configure_migration()
             self.cluster_file = cm.dest_file
             logger.info(f"Cluster config stored at {self.cluster_file}")
 
@@ -1294,39 +1298,30 @@ class KubernetesClusterManager:
                 autoscaling_settings.target_value,
             )
 
-    def deploy_couchbase_cluster(self):
+    def deploy_couchbase_cluster(self, timeout: int = 1200):
         # Check if LBC and external DNS are needed
         load_balancer_settings = self.test_config.load_balancer_settings
         if load_balancer_settings.lb_type:
-            # Download the LBC spec
-            lbc_version = load_balancer_settings.lbc_config.get("lbc")
-
-            url = (
-                "https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/"
-                f"download/v{lbc_version}/v{lbc_version.replace('.', '_')}_full.yaml"
-            )
-            local(f'wget -nc "{url}" -P cloud/operator/templates/ -O lbc_template.yaml')
-            # Configure the LBC spec
-            with LoadBalancerControllerFile() as lbc:
-                lbc.configure_lbc(self.remote.k8s_cluster_name)
-                lbc_file = lbc.dest_file
-
-            self.remote.setup_lb_controller(
-                load_balancer_settings.lbc_config.get("cert-manager"), lbc_file
-            )
+            lbc_version = self.test_config.load_balancer_settings.lbc_config.get("lbc")
+            cert_manager_version = load_balancer_settings.lbc_config.get("cert-manager")
+            self._deploy_load_balancer_controller(lbc_version, cert_manager_version)
 
         if self.cluster_spec.external_client:
-            logger.info("Creating ingress")
-            self.remote.create_ingresses(
-                load_balancer_settings.lb_scheme, self.test_config.cluster.cng_enabled
-            )
+            self._deploy_external_dns(load_balancer_settings.lb_scheme)
 
-        logger.info('Creating couchbase cluster')
+        if load_balancer_settings.create_ingress:
+            self._deploy_an_ingress(load_balancer_settings.lb_scheme)
+
+        logger.info("Creating couchbase cluster")
         self.remote.create_from_file(self.cluster_file)
-        logger.info('Waiting for cluster')
-        self.remote.wait_for_cluster_ready()
+        logger.info("Waiting for cluster")
+        with record_time("k8s_cluster_deployment"):
+            self.remote.wait_for_cluster_ready(timeout=timeout)
 
     def create_buckets(self):
+        if self.test_config.migration_settings.enabled:
+            return  # Buckets are migrated from the source cluster as part of the migration
+
         bucket_quota = self.test_config.cluster.mem_quota // self.test_config.cluster.num_buckets
         self.remote.delete_all_buckets()
         for bucket_name in self.test_config.buckets:
@@ -1366,3 +1361,45 @@ class KubernetesClusterManager:
         logger.info("Waiting for syncgateway and its service...")
         self.remote.wait_for_pods_ready("sync-gateway", desired_size)
         self.remote.wait_for_svc_deployment("syncgateway-service")
+
+    def _deploy_load_balancer_controller(self, lbc_version: str, cert_manager_version: str):
+        # Download the LBC spec
+        url = (
+            "https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/"
+            f"download/v{lbc_version}/v{lbc_version.replace('.', '_')}"
+        )
+        run_local_shell_command(
+            f"wget -nc '{url}_full.yaml' -O cloud/operator/templates/lbc_template.yaml",
+            err_msg="Failed to download load balancer controller configuration",
+        )
+
+        lbc_ingclass_file = "cloud/operator/lbc_ingclass.yaml"
+        run_local_shell_command(
+            f"wget -nc '{url}_ingclass.yaml' -O {lbc_ingclass_file}",
+            err_msg="Failed to download the default ingressclass template",
+        )
+        # Configure the LBC spec
+        with LoadBalancerControllerFile() as lbc:
+            lbc.configure_lbc(self.remote.k8s_cluster_name)
+            lbc_file = lbc.dest_file
+
+        logger.info("Setting up load balancer controller")
+        self.remote.setup_lb_controller(cert_manager_version, lbc_file, lbc_ingclass_file)
+
+    def _deploy_external_dns(self, lb_scheme: str):
+        # Deploy ExternalDNS
+        logger.info("Deploying ExternalDNS")
+        try:
+            self.remote.create_from_file("cloud/operator/external-dns.yaml")
+        except Exception as e:
+            logger.error(f"Failed to deploy ExternalDNS: {e}")
+
+    def _deploy_an_ingress(self, lb_scheme: str):
+        cng_enabled = self.test_config.cluster.cng_enabled
+        logger.info(
+            f"Creating an ingress for {'Cloud Native Gateway' if cng_enabled else 'the cluster'}"
+        )
+        try:
+            self.remote.create_ingresses(lb_scheme, cng_enabled)
+        except Exception as e:
+            logger.error(f"Failed to create ingress: {e}")

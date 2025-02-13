@@ -31,6 +31,7 @@ Resources:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSClusterPolicy"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/ElasticLoadBalancingFullAccess"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AWSWAFConsoleReadOnlyAccess"
+        - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/PerfAllowExternalDNSUpdates"
       Path: /
 
 Outputs:

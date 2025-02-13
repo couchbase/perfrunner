@@ -254,26 +254,29 @@ class OperatorInstaller:
         # In the future we may need to only add available addresses to the certificate.
         # For now add all of our possible adresses
         addresses = {
-            'localhost',
-            'cbperfoc.com',
-            'cluster-1.cbperfoc.com',
-            '*.cluster-1.cbperfoc.com',
-            '*.cbperfoc.com',
-            'elb.us-east-1.amazonaws.com',
-            'host.elb.us-east-1.amazonaws.com',
-            '*.elb.us-east-1.amazonaws.com',
-            '*.cb-example-perf',
-            '*.cb-example-perf.default',
-            '*.cb-example-perf.default.svc',
-            '*.cb-example-perf.default.svc.cluster.local',
-            'cb-example-perf-srv',
-            'cb-example-perf-srv.default',
-            'cb-example-perf-srv.default.svc',
-            '*.cb-example-perf-srv.default.svc.cluster.local',
-            'cb-example-perf-cloud-native-gateway-service',
-            'cb-example-perf-cloud-native-gateway-service.default',
-            'cb-example-perf-cloud-native-gateway-service.default.svc',
-            '*.cb-example-perf-cloud-native-gateway-service.default.svc.cluster.local'
+            "localhost",
+            "cbperfoc.com",
+            "cb-example-perf.cbperfoc.com",
+            "*.cb-example-perf.cbperfoc.com",
+            "cluster-1.cbperfoc.com",
+            "*.cluster-1.cbperfoc.com",
+            "*.cbperfoc.com",
+            "elb.us-east-1.amazonaws.com",
+            "host.elb.us-east-1.amazonaws.com",
+            "*.elb.us-east-1.amazonaws.com",
+            "*.compute-1.amazonaws.com",
+            "*.cb-example-perf",
+            "*.cb-example-perf.default",
+            "*.cb-example-perf.default.svc",
+            "*.cb-example-perf.default.svc.cluster.local",
+            "cb-example-perf-srv",
+            "cb-example-perf-srv.default",
+            "cb-example-perf-srv.default.svc",
+            "*.cb-example-perf-srv.default.svc.cluster.local",
+            "cb-example-perf-cloud-native-gateway-service",
+            "cb-example-perf-cloud-native-gateway-service.default",
+            "cb-example-perf-cloud-native-gateway-service.default.svc",
+            "*.cb-example-perf-cloud-native-gateway-service.default.svc.cluster.local",
         }
         create_x509_certificates(addresses)
         self.remote.create_certificate_secrets()
@@ -354,8 +357,13 @@ class OperatorInstaller:
 
     def delete_operator_secrets(self):
         logger.info("deleting operator secrets")
-        secrets = ['regcred', 'couchbase-operator-tls',
-                   'couchbase-server-tls', 'user-password-secret']
+        secrets = [
+            "regcred",
+            "couchbase-operator-tls",
+            "couchbase-server-ca",
+            "couchbase-server-tls",
+            "user-password-secret",
+        ]
         self.remote.delete_secrets(secrets)
 
     def wait_for_operator_deletion(self):

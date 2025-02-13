@@ -1,0 +1,41 @@
+[test_case]
+test = perfrunner.tests.operator.ClusterMigrationTest
+
+[showfast]
+title = Migration time (sec), 3 nodes migration, 20M docs
+component = operator
+category = migration
+orderby = a10
+
+[cluster]
+mem_quota = 30000
+initial_nodes = 3
+num_buckets = 1
+enable_n2n_encryption = all
+
+[bucket]
+replica_number = 2
+
+[load]
+size = 512
+items = 20_000_000
+workers = 800
+doc_gen = large
+durability = 0
+
+[access]
+creates = 0
+reads = 100
+updates = 0
+deletes = 0
+items = 20_000_000
+workers = 128
+durability = 1
+
+[migration]
+enabled = true
+migration_timeout_seconds = 7200
+
+[load_balancer]
+type = alb
+scheme = internet-facing

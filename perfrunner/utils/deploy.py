@@ -169,7 +169,7 @@ class AWSDeployer(Deployer):
         self.deployed_infra['vpc']['subnets'] = {}
         # When using external clients, deploy two extra subnets for LB (one in each AZ)
         needed_subnets = 2 if self.infra_spec.external_client else 1
-        for i in range(1, len(self.desired_infra['k8s'].keys()) + needed_subnets):
+        for i in range(1, len(self.desired_infra["k8s"].keys()) + 1):
             cluster_name = f"{self.k8s_cluster_name}_{i}"
             if self.region == 'us-east-1':
                 availability_zones = ['us-east-1a', 'us-east-1b']
@@ -183,8 +183,10 @@ class AWSDeployer(Deployer):
                 {"Key": "Name", "Value": self.options.tag},
             ]
             if self.infra_spec.external_client:
+                # Make the subnets available for both internal and external load balancers
                 tags.append({'Key': 'kubernetes.io/role/internal-elb', 'Value': '1'})
-            for az in availability_zones:
+                tags.append({"Key": "kubernetes.io/role/elb", "Value": "1"})
+            for az in availability_zones * needed_subnets:
                 response = self.ec2client.create_subnet(
                     TagSpecifications=[
                         {'ResourceType': 'subnet',

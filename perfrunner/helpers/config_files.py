@@ -387,13 +387,14 @@ class CAOCouchbaseClusterFile(CAOFiles):
             }
         )
 
-    def configure_networking(self, domain: str = "cbperfoc.com"):
+    def configure_networking(self):
         # Setup basic tls support
         external_client = self.cluster_spec.external_client
+        n2n_encryption = self.test_config.cluster.enable_n2n_encryption
         ssl_enabled_modes = ("data", "auth")
         ssl_enabled = (
             external_client
-            or self.test_config.cluster.enable_n2n_encryption
+            or n2n_encryption
             or self.test_config.load_settings.ssl_mode in ssl_enabled_modes
             or self.test_config.access_settings.ssl_mode in ssl_enabled_modes
         )
@@ -406,6 +407,13 @@ class CAOCouchbaseClusterFile(CAOFiles):
                     }
                 }
             )
+
+        if n2n_encryption:
+            # Rename to match the CAO spec values [ControlPlaneOnly, All, Strict]
+            n2n_encryption = {"control": "ControlPlaneOnly"}.get(
+                n2n_encryption, n2n_encryption.capitalize()
+            )
+            self.config["spec"]["networking"]["tls"]["nodeToNodeEncryption"] = n2n_encryption
 
         if external_client:
             lb_scheme = self.test_config.load_balancer_settings.lb_scheme
@@ -423,9 +431,28 @@ class CAOCouchbaseClusterFile(CAOFiles):
                 {
                     "adminConsoleServiceTemplate": template,
                     "exposedFeatureServiceTemplate": template,
-                    "dns": {"domain": domain},
+                    "dns": {"domain": "cb-example-perf.cbperfoc.com"},
                 }
             )
+            exposed_features = self.config["spec"]["networking"]["exposedFeatures"]
+            if "external-cluster-connection" not in exposed_features:
+                exposed_features.append("external-cluster-connection")
+
+    def configure_migration(self):
+        """Configure the cluster to migrate data from an on-premise source cluster."""
+        migration_settings = self.test_config.migration_settings
+        if not migration_settings.enabled:
+            return
+
+        self.config["spec"].update(
+            {
+                "migration": {
+                    "unmanagedClusterHost": migration_settings.source_cluster,
+                    "numUnmanagedNodes": migration_settings.num_unmanaged_nodes,
+                    "maxConcurrentMigrations": migration_settings.max_concurrent_migrations,
+                }
+            }
+        )
 
 
 class CAOCouchbaseBucketFile(CAOFiles):
@@ -548,9 +575,10 @@ class LoadBalancerControllerFile(CAOFiles):
         # Replace the deployment args with the current deployed EKS cluster name
         for config in self.all_configs:
             if config["kind"] == "Deployment":
-                config["spec"]["template"]["spec"]["containers"][0]["args"].update([
-                    f"--cluster-name={cluster_name}"
-                ])
+                args = config["spec"]["template"]["spec"]["containers"][0]["args"]
+                args.remove("--cluster-name=your-cluster-name")
+                args.append(f"--cluster-name={cluster_name}")
+
 
 class IngressFile(CAOFiles):
     """Configure ingress with correct scheme and target backend."""

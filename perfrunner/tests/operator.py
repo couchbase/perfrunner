@@ -3,6 +3,9 @@ import time
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.cluster import KubernetesClusterManager
+from perfrunner.helpers.config_files import TimeTrackingFile
+from perfrunner.remote.kubernetes import RemoteKubernetes
 from perfrunner.settings import ClusterSpec, TargetIterator, TestConfig
 from perfrunner.tests import PerfTest
 from perfrunner.tests.ycsb import YCSBTest
@@ -13,6 +16,10 @@ class OperatorTest(PerfTest):
     COLLECTORS = {
         'ns_server_system': True
     }
+
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
+        super().__init__(cluster_spec, test_config, verbose)
+        self.reporter.build = f"{self.remote.get_operator_version()}:{self.build}"
 
 
 class OperatorBackupTest(OperatorTest):
@@ -271,3 +278,80 @@ class CNGThroughputTest (CNGOperatorTest):
         self.reporter.post(
             *self.metrics.ycsb_throughput()
         )
+
+
+class ClusterMigrationTest(OperatorTest):
+    """Test that measures the performance of migrating a cluster from self-managed to Kubernetes.
+
+    The test follows these steps:
+    1. Loads initial data into a self-managed cluster
+    2. Starts a background access workload against the self-managed cluster
+    3. Deploys and configures a new Kubernetes cluster to migrate the self-managed cluster
+    4. Migrates data to the K8s cluster while access workload continues
+    5. Reports KPIs:
+       - Time taken to deploy K8s cluster
+       - Latency percentiles for set and durable_set operations during migration
+    """
+
+    ALL_HOSTNAMES = True
+
+    COLLECTORS = {"ns_server_system": True, "latency": True}
+
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
+        # Skip loading operator version from OperatorTest, as we start from an self-managed cluster
+        PerfTest.__init__(self, cluster_spec, test_config, verbose)
+        # Workaround for mixed mode clusters, the default remote is a self-managed cluster
+        self.remote_k8s = RemoteKubernetes(self.cluster_spec)
+        self.reporter.build = f"{self.remote_k8s.get_operator_version()}:{self.build}"
+        self.migration_time = 0
+
+    @timeit
+    def _migrate(self, source_cluster: str, timeout: int):
+        logger.info(f"Migrating from source {source_cluster}")
+        cm = KubernetesClusterManager(self.cluster_spec, self.test_config)
+        cm.configure_cluster()
+        cm.deploy_couchbase_cluster(timeout=timeout)
+
+    def migrate(self):
+        migration_settings = self.test_config.migration_settings
+        logger.info(f"Waiting {migration_settings.start_after}s before starting cluster migration")
+        time.sleep(migration_settings.start_after)
+
+        self.migration_time = self._migrate(
+            migration_settings.source_cluster, migration_settings.migration_timeout_seconds
+        )
+        logger.info(f"Migration took {round(self.migration_time / 60, 1)} min")
+
+        logger.info(
+            f"Cluster migration completed. Waiting {migration_settings.stop_after}s before "
+            "continuing"
+        )
+        time.sleep(migration_settings.stop_after)
+        # At this point the access phase workload should be going to the k8s cluster
+        self.worker_manager.abort_all_tasks()
+
+    def _report_kpi(self, *args):
+        with TimeTrackingFile() as t:
+            k8s_deployment_time = t.get("k8s_cluster_deployment")
+
+        self.reporter.post(
+            *self.metrics.cluster_deployment_time(
+                k8s_deployment_time, "k8s", "Migration Time (sec)"
+            )
+        )
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # The self-managed cluster doesnt exist anymore after migration.
+        # So running anything against it will fail.
+        pass
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        # Start access workload on a self-managed cluster
+        self.access_bg()
+        self.migrate()
+
+        self.report_kpi()

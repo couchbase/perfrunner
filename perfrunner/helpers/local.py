@@ -503,8 +503,11 @@ def run_cbc_pillowfight(host: str,
     cmd += ' > /dev/null 2>&1'
 
     if time > 0:
-        # Use SIGINT (Ctrl+C) to exit pillowfight gracefully
-        cmd = f'timeout --preserve-status --signal INT {time} {cmd}'
+        # We hit temporary failures when using SIGINT (Ctrl+C) to exit pillowfight gracefully.
+        # So we revert to handling timeout manually.
+
+        # On timeout(exit code is 124), we return 0 to indicate success.
+        cmd = f"timeout {time} {cmd} || ( [[ $? -eq 124 ]] && exit 0 )"
 
     params = urllib.parse.urlencode(connstr_params)
 

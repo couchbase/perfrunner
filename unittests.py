@@ -28,7 +28,9 @@ class SettingsTest(TestCase):
         self.assertEqual(query_params, {'stale': 'false'})
 
     def test_cluster_specs(self):
-        for file_name in glob.glob("clusters/*.spec"):
+        for file_name in glob.glob("clusters/*.spec") + glob.glob(
+            "cloud/infrastructure/**/*.spec", recursive=True
+        ):
             cluster_spec = ClusterSpec()
             cluster_spec.parse(file_name, override=None)
 

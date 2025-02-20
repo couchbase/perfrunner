@@ -299,11 +299,12 @@ class ClusterSpec(Config):
         return clients
 
     @property
+    def utility_profile(self) -> str:
+        return self.infrastructure_utilities.get("profile", "default").strip().lower()
+
+    @property
     def utilities(self) -> list[str]:
-        utilities = []
-        for utility_servers in self.infrastructure_utilities.values():
-            utilities += utility_servers.strip().split('\n')
-        return utilities
+        return self.infrastructure_utilities.get("hosts", "").strip().split()
 
     @property
     def sgw_servers(self) -> list[str]:
@@ -542,18 +543,6 @@ class ClusterSpec(Config):
                 return clients
         else:
             return self.config.get('syncgateways', 'hosts').split()
-
-    @property
-    def brokers(self) -> list[str]:
-        if self.cloud_infrastructure:
-            if not self.kubernetes_infrastructure or self.external_client:
-                util_map = self.infrastructure_utilities
-                brokers = []
-                for k, v in util_map.items():
-                    if "brokers" in k:
-                        brokers += [host for host in v.split()]
-                return brokers
-        return []
 
     def _kafka_nodes_by_role(self, role: str) -> list[str]:
         has_service = []

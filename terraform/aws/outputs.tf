@@ -19,7 +19,6 @@ output "client_instance_ips" {
 output "utility_instance_ips" {
   value = {
     for k, v in aws_instance.utility_instance: k => {
-      node_group = v.tags_all["node_group"]
       public_ip  = v.public_dns
     }
   }

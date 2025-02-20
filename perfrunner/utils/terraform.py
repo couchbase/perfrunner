@@ -5,7 +5,7 @@ from argparse import ArgumentParser, Namespace
 from collections import Counter
 from ipaddress import IPv4Network
 from time import sleep, time
-from typing import Dict, Optional
+from typing import Optional
 from uuid import uuid4
 
 import requests
@@ -114,13 +114,13 @@ class CloudVMDeployer:
     IMAGE_MAP = {
         "aws": {
             "clusters": {
-                "x86_64": "perf-server-x86-ubuntu20-2023-07",  # ami-08d83f4b122efb564
-                "arm": "perf-server-arm-us-east",  # ami-0f249abfe3dd01b30
-                "al2": "perf-server-al_x86-2022-03-us-east",  # ami-060e286353d227c32
+                "x86_64": "perf-server-x86-ubuntu20-2023-07",
+                "arm": "perf-server-arm-us-east",
+                "al2": "perf-server-al_x86-2022-03-us-east",
             },
-            "clients": "perf-client-x86-ubuntu20-2023-06-v3",  # ami-0d9789eef66732b62
-            "utilities": "perf-broker-us-east",  # ami-0d9e5ee360aa02d94
-            "syncgateways": "perf-server-x86-ubuntu20-2023-07",  # ami-08d83f4b122efb564
+            "clients": "perf-client-x86-ubuntu20-2023-06-v3",
+            "utilities": "perf-broker-us-east",
+            "syncgateways": "perf-server-x86-ubuntu20-2023-07",
             "kafka_brokers": "perf-client-x86-ubuntu20-2023-06-v3",
         },
         "gcp": {
@@ -142,6 +142,12 @@ class CloudVMDeployer:
         },
     }
 
+    UTILITY_NODE_TYPES = {
+        "aws": {"default": "t3a.large"},
+        "gcp": {"default": "e2-standard-2"},
+        "azure": {"default": "Standard_B2as_v2"},
+    }
+
     def __init__(self, infra_spec: ClusterSpec, options: Namespace):
         self.infra_spec = infra_spec
         self.options = options
@@ -157,14 +163,14 @@ class CloudVMDeployer:
         self.infra_spec.config.set("infrastructure", "uuid", self.uuid)
 
         self.node_list = {
-            'clusters': [
-                n for nodes in self.infra_spec.infrastructure_clusters.values()
+            "clusters": [
+                n
+                for nodes in self.infra_spec.infrastructure_clusters.values()
                 for n in nodes.strip().split()
             ],
-            'clients': self.infra_spec.clients,
-            'utilities': self.infra_spec.utilities,
-            'syncgateways': self.infra_spec.sgw_servers,
-            'kafka_brokers': self.infra_spec.kafka_servers
+            "clients": self.infra_spec.clients,
+            "syncgateways": self.infra_spec.sgw_servers,
+            "kafka_brokers": self.infra_spec.kafka_servers,
         }
 
         self.cloud_storage = bool(
@@ -217,20 +223,27 @@ class CloudVMDeployer:
     def destroy(self):
         self.terraform_destroy(self.csp)
 
-    def create_tfvar_nodes(self) -> Dict[str, Dict]:
+    def create_tfvar_nodes(self) -> dict[str, dict]:
         tfvar_nodes = {
-            'clusters': {},
-            'clients': {},
-            'utilities': {},
-            'syncgateways': {},
-            'kafka_brokers': {}
+            "utilities": {}
+            if not self.infra_spec.infrastructure_utilities
+            else {
+                "1": {
+                    "image": self.options.utility_image or self.IMAGE_MAP[self.csp]["utilities"],
+                    "instance_type": self.UTILITY_NODE_TYPES[self.csp].get(
+                        self.infra_spec.utility_profile
+                    ),
+                }
+            },
+            "clusters": {},
+            "clients": {},
+            "syncgateways": {},
+            "kafka_brokers": {},
         }
 
         for role, nodes in self.node_list.items():
             # If this is a capella test, skip cluster nodes
-            if self.infra_spec.capella_infrastructure and (
-                role == "clusters" or role == "syncgateways"
-            ):
+            if self.infra_spec.capella_infrastructure and (role in ["clusters", "syncgateways"]):
                 continue
 
             i = 0
@@ -241,13 +254,17 @@ class CloudVMDeployer:
                 parameters['node_group'] = node_group
 
                 # Try getting image name from cli option
-                image = getattr(self.options, '{}_image'.format({
-                    'clusters': 'cluster',
-                    'clients': 'client',
-                    'utilities': 'utility',
-                    'syncgateways': 'sgw',
-                    'kafka_brokers': 'kafka'
-                }[role]))
+                image = getattr(
+                    self.options,
+                    "{}_image".format(
+                        {
+                            "clusters": "cluster",
+                            "clients": "client",
+                            "syncgateways": "sgw",
+                            "kafka_brokers": "kafka",
+                        }[role]
+                    ),
+                )
 
                 # If image name isn't provided as cli param, use hardcoded defaults
                 if image is None:
@@ -384,78 +401,85 @@ class CloudVMDeployer:
 
     # Update spec file with deployed infrastructure.
     def update_spec(self, output):
-        sections = ['clusters', 'clients', 'utilities', 'syncgateways', 'kafka_clusters']
+        # Handle utility nodes first as these don't have customizable node groups
+        if self.infra_spec.config.has_section("utilities") and (
+            ips := list(output["utility_instance_ips"]["value"].values())
+        ):
+            public_ips = [ip["public_ip"] for ip in ips]
+            self.infra_spec.config.set("utilities", "hosts", "\n".join(public_ips))
+            if private_ips := [ip["private_ip"] for ip in ips if "private_ip" in ip]:
+                if not self.infra_spec.config.has_section((section := "utility_private_ips")):
+                    self.infra_spec.config.add_section(section)
+                self.infra_spec.config.set(section, "hosts", "\n".join(private_ips))
+
+        sections = ["clusters", "clients", "syncgateways", "kafka_clusters"]
         cluster_dicts = [
             self.infra_spec.infrastructure_clusters,
             self.infra_spec.infrastructure_clients,
-            self.infra_spec.infrastructure_utilities,
             self.infra_spec.infrastructure_syncgateways,
             self.infra_spec.infrastructure_kafka_clusters,
         ]
         output_keys = [
-            'cluster_instance_ips',
-            'client_instance_ips',
-            'utility_instance_ips',
-            'syncgateway_instance_ips',
-            'kafka_instance_ips'
+            "cluster_instance_ips",
+            "client_instance_ips",
+            "syncgateway_instance_ips",
+            "kafka_instance_ips",
         ]
         private_sections = [
-            'cluster_private_ips',
-            'client_private_ips',
-            'utility_private_ips',
-            'syncgateway_private_ips',
-            'kafka_private_ips'
+            "cluster_private_ips",
+            "client_private_ips",
+            "syncgateway_private_ips",
+            "kafka_private_ips",
         ]
 
-        for section, cluster_dict, output_key, private_section in zip(sections,
-                                                                      cluster_dicts,
-                                                                      output_keys,
-                                                                      private_sections):
-            if (section not in self.infra_spec.config.sections()) or (
-                self.infra_spec.capella_infrastructure
-                and (section == "clusters" or section == "syncgateways")
+        for section, cluster_dict, output_key, private_section in zip(
+            sections, cluster_dicts, output_keys, private_sections
+        ):
+            if (not self.infra_spec.config.has_section(section)) or (
+                self.infra_spec.capella_infrastructure and (section in ["clusters", "syncgateways"])
             ):
                 continue
 
             for cluster, nodes in cluster_dict.items():
                 node_list = nodes.strip().split()
-                node_info = {'public_ips': [None for _ in node_list],
-                             'private_ips': [None for _ in node_list]}
+                node_info = {
+                    "public_ips": [None for _ in node_list],
+                    "private_ips": [None for _ in node_list],
+                    "subnet_ids": [None for _ in node_list],
+                }
 
-                if section == 'kafka_clusters':
-                    node_info['subnet_ids'] = [None for _ in node_list]
-
-                for _, info in output[output_key]['value'].items():
-                    node_group = info['node_group']
+                for _, info in output[output_key]["value"].items():
+                    node_group = info["node_group"]
                     for i, node in enumerate(node_list):
-                        hostname, *extras = node.split(':', maxsplit=1)
-                        if hostname.split('.', 2)[-1] == node_group:
-                            public_ip = info['public_ip']
+                        hostname, *extras = node.split(":", maxsplit=1)
+                        if hostname.split(".", 2)[-1] == node_group:
+                            public_ip = info["public_ip"]
                             if extras:
-                                public_ip += ':{}'.format(*extras)
-                            node_info['public_ips'][i] = public_ip
+                                public_ip += ":{}".format(*extras)
+                            node_info["public_ips"][i] = public_ip
 
-                            if 'private_ip' in info:
-                                node_info['private_ips'][i] = info['private_ip']
+                            if "private_ip" in info:
+                                node_info["private_ips"][i] = info["private_ip"]
 
-                            if section == 'kafka_clusters' and 'subnet_id' in info:
-                                node_info['subnet_ids'][i] = info['subnet_id']
+                            if "subnet_id" in info:
+                                node_info["subnet_ids"][i] = info["subnet_id"]
                             break
 
-                self.infra_spec.config.set(section, cluster,
-                                           '\n' + '\n'.join(node_info['public_ips']))
+                self.infra_spec.config.set(
+                    section, cluster, "\n" + "\n".join(node_info["public_ips"])
+                )
 
-                if any((private_ips := node_info['private_ips'])):
-                    if private_section not in self.infra_spec.config.sections():
+                if any((private_ips := node_info["private_ips"])):
+                    if not self.infra_spec.config.has_section(private_section):
                         self.infra_spec.config.add_section(private_section)
-                    self.infra_spec.config.set(private_section, cluster,
-                                               '\n' + '\n'.join(private_ips))
+                    self.infra_spec.config.set(
+                        private_section, cluster, "\n" + "\n".join(private_ips)
+                    )
 
-                if 'subnet_ids' in node_info:
-                    if (section := 'kafka_subnet_ids') not in self.infra_spec.config.sections():
+                if section == "kafka_clusters" and any((subnet_ids := node_info["subnet_ids"])):
+                    if not self.infra_spec.config.has_section((section := "kafka_subnet_ids")):
                         self.infra_spec.config.add_section(section)
-                    self.infra_spec.config.set(section, cluster,
-                                               '\n' + '\n'.join(node_info['subnet_ids']))
+                    self.infra_spec.config.set(section, cluster, "\n" + "\n".join(subnet_ids))
 
         if self.cloud_storage:
             cloud_storage_info = output['cloud_storage']['value']

@@ -22,13 +22,13 @@ workers1 =
         gce.gce_cluster_1.gce_node_group_3.1
 
 [utilities]
-brokers1 = gce.gce_cluster_1.gce_node_group_4.1
+profile = default
 
 [gce]
 clusters = gce_cluster_1,gce_cluster_2
 
 [gce_cluster_1]
-node_groups = gce_node_group_1,gce_node_group_3,gce_node_group_4
+node_groups = gce_node_group_1,gce_node_group_3
 storage_class = pd-ssd
 
 [gce_cluster_2]
@@ -45,10 +45,6 @@ instance_type = c4a-standard-8-lssd
 [gce_node_group_3]
 instance_type = n2-standard-64
 volume_size = 100
-
-[gce_node_group_4]
-instance_type = e2-standard-2
-volume_size = 50
 
 [credentials]
 rest = Administrator:Password123!

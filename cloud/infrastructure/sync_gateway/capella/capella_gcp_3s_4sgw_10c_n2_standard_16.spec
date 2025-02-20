@@ -29,13 +29,13 @@ workers1 =
         gce.gce_cluster_1.gce_node_group_3.10
 
 [utilities]
-brokers1 = gce.gce_cluster_1.gce_node_group_4.1
+profile = default
 
 [gce]
 clusters = gce_cluster_1
 
 [gce_cluster_1]
-node_groups = gce_node_group_1,gce_node_group_2,gce_node_group_3,gce_node_group_4
+node_groups = gce_node_group_1,gce_node_group_2,gce_node_group_3
 storage_class = pd-extreme
 
 [gce_node_group_1]
@@ -55,10 +55,6 @@ instance_type = n2-standard-32
 instance_capacity = 10
 volume_size = 300
 volume_type = pd-ssd
-
-[gce_node_group_4]
-instance_type = e2-standard-2
-instance_capacity = 1
 
 [storage]
 data = /data

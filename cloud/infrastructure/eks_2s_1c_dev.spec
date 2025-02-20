@@ -12,14 +12,13 @@ workers1 =
         k8s.k8s_cluster_1.k8s_node_group_2.1
 
 [utilities]
-brokers1 = k8s.k8s_cluster_1.k8s_node_group_3
-operators1 = k8s.k8s_cluster_1.k8s_node_group_3
+profile = default
 
 [k8s]
 clusters = k8s_cluster_1
 
 [k8s_cluster_1]
-node_groups = k8s_node_group_1,k8s_node_group_2,k8s_node_group_3
+node_groups = k8s_node_group_1,k8s_node_group_2
 version = 1.21
 storage_class = gp2
 
@@ -30,11 +29,6 @@ volume_size = 100
 
 [k8s_node_group_2]
 instance_type = c5.24xlarge
-instance_capacity = 1
-volume_size = 100
-
-[k8s_node_group_3]
-instance_type = t3a.large
 instance_capacity = 1
 volume_size = 100
 

@@ -17,13 +17,13 @@ workers1 =
     azurerm.azurerm_cluster_1.azurerm_node_group_4.1
 
 [utilities]
-brokers1 = azurerm.azurerm_cluster_1.azurerm_node_group_5.1
+profile = default
 
 [azurerm]
 clusters = azurerm_cluster_1
 
 [azurerm_cluster_1]
-node_groups = azurerm_node_group_1,azurerm_node_group_2,azurerm_node_group_3,azurerm_node_group_4,azurerm_node_group_5
+node_groups = azurerm_node_group_1,azurerm_node_group_2,azurerm_node_group_3,azurerm_node_group_4
 storage_class = Premium_LRS
 
 [azurerm_node_group_1]
@@ -51,11 +51,6 @@ iops = 16000
 instance_type = Standard_D32as_v4
 instance_capacity = 1
 volume_size = 256
-
-[azurerm_node_group_5]
-instance_type = Standard_B2as_v2
-instance_capacity = 1
-volume_size = 100
 
 [storage]
 data = /data

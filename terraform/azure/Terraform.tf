@@ -39,12 +39,8 @@ variable "client_nodes" {
 
 variable "utility_nodes" {
   type = map(object({
-    node_group    = string
     image         = string
     instance_type = string
-    storage_class = string
-    volume_size   = number
-    disk_tier     = string
   }))
 }
 
@@ -515,7 +511,7 @@ resource "azurerm_managed_disk" "perf-syncgateway-os-disk" {
 
 # Config and create cluster data disks.
 resource "azurerm_managed_disk" "perf-cluster-data-disk" {
-  for_each = var.cluster_nodes
+  for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
 
   name                 = "perf-cluster-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
@@ -533,7 +529,7 @@ resource "azurerm_managed_disk" "perf-cluster-data-disk" {
 
 # Config and create client data disks.
 resource "azurerm_managed_disk" "perf-client-data-disk" {
-  for_each = var.client_nodes
+  for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
 
   name                 = "perf-client-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
@@ -549,27 +545,9 @@ resource "azurerm_managed_disk" "perf-client-data-disk" {
   }
 }
 
-# Config and create utility data disks.
-resource "azurerm_managed_disk" "perf-utility-data-disk" {
-  for_each = var.utility_nodes
-
-  name                 = "perf-utility-data-disk-${each.key}-${var.uuid}"
-  location             = "East US"
-  resource_group_name  = "perf-resources-eastus"
-  storage_account_type = each.value.storage_class
-  create_option        = "Empty"
-  disk_size_gb         = each.value.volume_size
-  tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
-
-  tags = {
-    role       = "utility"
-    deployment = var.global_tag != "" ? var.global_tag : null
-  }
-}
-
 # Config and create syncgateway data disks.
 resource "azurerm_managed_disk" "perf-syncgateway-data-disk" {
-  for_each = var.syncgateway_nodes
+  for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
 
   name                 = "perf-syncgateway-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
@@ -687,21 +665,10 @@ resource "azurerm_virtual_machine" "perf-utility-vm" {
     os_type              = "Linux"
   }
 
-  storage_data_disk {
-    name            = azurerm_managed_disk.perf-utility-data-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-utility-data-disk[each.key].id
-    create_option   = "Attach"
-    lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-utility-data-disk[each.key].disk_size_gb
-    caching         = "ReadWrite"
-  }
-
   delete_os_disk_on_termination    = true
-  delete_data_disks_on_termination = true
 
   tags = {
     role       = "utility"
-    node_group = each.value.node_group
     deployment = var.global_tag != "" ? var.global_tag : null
   }
 }

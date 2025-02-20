@@ -45,12 +45,8 @@ variable "client_nodes" {
 
 variable "utility_nodes" {
   type = map(object({
-    node_group    = string
     image         = string
     instance_type = string
-    storage_class = string
-    volume_size   = number
-    iops          = number
   }))
 }
 
@@ -282,14 +278,13 @@ resource "google_compute_disk" "client-disk" {
 resource "google_compute_instance" "utility_instance" {
   for_each = var.utility_nodes
 
-  name         = "utility-${replace(replace(each.value.node_group, ".", "-"), "_", "-")}-vm-${var.uuid}"
+  name         = "utility-vm-${var.uuid}"
   machine_type = "${each.value.instance_type}"
 
   tags = ["utility"]
 
   labels = {
     role       = "utility"
-    node_group = replace(each.value.node_group, ".", "-")
     deployment = var.global_tag != "" ? var.global_tag : null
   }
 
@@ -298,16 +293,6 @@ resource "google_compute_instance" "utility_instance" {
       size = "50"
       type = "pd-balanced"
       image = each.value.image
-    }
-  }
-
-  dynamic "attached_disk"{
-    for_each = (
-      try(google_compute_disk.utility-disk[each.key].id, null) != null
-    ) ? [google_compute_disk.utility-disk[each.key].id] : []
-
-    content {
-      source = attached_disk.value
     }
   }
 
@@ -321,18 +306,6 @@ resource "google_compute_instance" "utility_instance" {
   service_account {
     email  = "perftest-tools@couchbase-qe.iam.gserviceaccount.com"
     scopes = ["cloud-platform"]
-  }
-}
-
-resource "google_compute_disk" "utility-disk" {
-  for_each = {for k, v in var.utility_nodes: k => v if v.volume_size > 0}
-
-  name             = "utility-data-disk-${each.key}-${var.uuid}"
-  type             = lower(each.value.storage_class)
-  size             = each.value.volume_size
-  provisioned_iops = each.value.iops > 0 ? each.value.iops : null
-  labels = {
-    deployment = var.global_tag != "" ? var.global_tag : null
   }
 }
 

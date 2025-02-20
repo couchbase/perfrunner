@@ -67,13 +67,13 @@ workers1 =
         ec2.ec2_cluster_1.ec2_node_group_3.50
 
 [utilities]
-brokers1 = ec2.ec2_cluster_1.ec2_node_group_4.1
+profile = default
 
 [ec2]
 clusters = ec2_cluster_1
 
 [ec2_cluster_1]
-node_groups = ec2_node_group_1,ec2_node_group_2,ec2_node_group_3,ec2_node_group_4
+node_groups = ec2_node_group_1,ec2_node_group_2,ec2_node_group_3
 storage_class = gp2
 
 [ec2_node_group_1]
@@ -90,11 +90,6 @@ volume_size = 1000
 instance_type = c5.2xlarge
 instance_capacity = 50
 volume_size = 100
-
-[ec2_node_group_4]
-instance_type = t3a.large
-instance_capacity = 1
-volume_size = 1000
 
 [storage]
 data = /data

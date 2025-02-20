@@ -17,6 +17,7 @@ from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
+from perfrunner.utils.terraform import CloudVMDeployer
 
 set_start_method("fork")
 
@@ -41,9 +42,20 @@ class Deployer:
 
 
 class AWSDeployer(Deployer):
+    UTILITY_NODE_GROUPS = {
+        "ec2": "ec2_node_group_utilities",
+        "k8s": "k8s_node_group_utilities",
+    }
 
     def __init__(self, infra_spec: ClusterSpec, options):
         super().__init__(infra_spec, options)
+        self.utility_node_group_config = {
+            "instance_type": CloudVMDeployer.UTILITY_NODE_TYPES["aws"].get(
+                self.infra_spec.utility_profile
+            ),
+            "instance_capacity": 1,
+            "volume_size": 20,
+        }
         self.desired_infra = self.gen_desired_infrastructure_config()
         self.deployed_infra = {}
         self.vpc_int = 0
@@ -65,27 +77,27 @@ class AWSDeployer(Deployer):
         self.deployed_infra["kubeconfigs"] = []
         self.deployed_infra["cluster_map"] = {}
 
-    def gen_desired_infrastructure_config(self):
-        desired_infra = {'k8s': {}, 'ec2': {}}
-        k8s = self.infra_spec.infrastructure_section('k8s')
-        if 'clusters' in list(k8s.keys()):
-            desired_k8s_clusters = k8s['clusters'].split(',')
-            for desired_k8s_cluster in desired_k8s_clusters:
-                k8s_cluster_config = self.infra_spec.infrastructure_section(desired_k8s_cluster)
-                for desired_node_group in k8s_cluster_config['node_groups'].split(','):
-                    node_group_config = self.infra_spec.infrastructure_section(desired_node_group)
-                    k8s_cluster_config[desired_node_group] = node_group_config
-                desired_infra['k8s'][desired_k8s_cluster] = k8s_cluster_config
-        ec2 = self.infra_spec.infrastructure_section('ec2')
-        if 'clusters' in list(ec2.keys()):
-            desired_ec2_clusters = ec2['clusters'].split(',')
-            for desired_ec2_cluster in desired_ec2_clusters:
-                ec2_cluster_config = self.infra_spec.infrastructure_section(desired_ec2_cluster)
-                for desired_node_group in ec2_cluster_config['node_groups'].split(','):
-                    node_group_config = self.infra_spec.infrastructure_section(desired_node_group)
-                    ec2_cluster_config[desired_node_group] = node_group_config
-                desired_infra['ec2'][desired_ec2_cluster] = ec2_cluster_config
-        logger.info("Desired infrastructure: {}".format(str(desired_infra)))
+    def gen_desired_infrastructure_config(self) -> dict:
+        desired_infra = {"k8s": {}, "ec2": {}}
+
+        for infra_type in desired_infra:
+            infra_settings = self.infra_spec.infrastructure_section(infra_type)
+            if "clusters" in infra_settings:
+                desired_clusters = infra_settings["clusters"].split(",")
+                for cluster in desired_clusters:
+                    cluster_config = self.infra_spec.infrastructure_section(cluster)
+                    for node_group in cluster_config["node_groups"].split(","):
+                        node_group_config = self.infra_spec.infrastructure_section(node_group)
+                        cluster_config[node_group] = node_group_config
+
+                    if self.utilities:
+                        utility_node_group = self.UTILITY_NODE_GROUPS[infra_type]
+                        cluster_config["node_groups"] += f",{utility_node_group}"
+                        cluster_config[utility_node_group] = self.utility_node_group_config
+
+                    desired_infra[infra_type][cluster] = cluster_config
+
+        logger.info(f"Desired infrastructure: {pretty_dict(desired_infra)}")
         return desired_infra
 
     def write_infra_file(self):
@@ -445,22 +457,24 @@ class AWSDeployer(Deployer):
                 raise Exception("EKS requires 2 or more subnets")
             for node_group in k8s_cluster_spec['node_groups'].split(','):
                 resource_path = f"k8s.{k8s_cluster_name}.{node_group}"
-                labels = {"NodeRoles": None}
-                for k, v in self.clusters.items():
-                    if "couchbase" in k and resource_path in v:
-                        labels["NodeRoles"] = k
-                        break
-                for k, v in self.clients.items():
-                    if ("workers" in k or "backups" in k) and resource_path in v:
-                        labels["NodeRoles"] = k
-                        break
-                for k, v in self.utilities.items():
-                    if ("brokers" in k or "operators" in k) and resource_path in v:
-                        labels["NodeRoles"] = "utilities"
-                for k, v in self.syncgateways.items():
-                    if resource_path in v:
-                        labels["NodeRoles"] = k
-                        break
+
+                if node_group.endswith("utilities"):
+                    labels = {"NodeRoles": "utilities"}
+                else:
+                    labels = {"NodeRoles": None}
+                    for k, v in self.clusters.items():
+                        if "couchbase" in k and resource_path in v:
+                            labels["NodeRoles"] = k
+                            break
+                    for k, v in self.clients.items():
+                        if ("workers" in k or "backups" in k) and resource_path in v:
+                            labels["NodeRoles"] = k
+                            break
+                    for k, v in self.syncgateways.items():
+                        if resource_path in v:
+                            labels["NodeRoles"] = k
+                            break
+
                 node_group_spec = k8s_cluster_spec[node_group]
                 response = self.eksclient.create_nodegroup(
                     clusterName=deployed_cluster_name,
@@ -483,26 +497,26 @@ class AWSDeployer(Deployer):
                         "SubRole": node_group,
                     },
                 )
-                cluster_infra['node_groups'][node_group] = response['nodegroup']
+                cluster_infra["node_groups"][node_group] = response["nodegroup"]
                 self.deployed_infra["vpc"]["eks_clusters"][deployed_cluster_name] = cluster_infra
                 self.write_infra_file()
-        waiter = self.eksclient.get_waiter('nodegroup_active')
-        for k8s_cluster_name, k8s_cluster_spec in self.desired_infra['k8s'].items():
+        waiter = self.eksclient.get_waiter("nodegroup_active")
+        for k8s_cluster_name, k8s_cluster_spec in self.desired_infra["k8s"].items():
             deployed_cluster_name = self.deployed_infra["cluster_map"].get(k8s_cluster_name)
-            for node_group in k8s_cluster_spec['node_groups'].split(','):
+            for node_group in k8s_cluster_spec["node_groups"].split(","):
                 waiter.wait(
                     clusterName=deployed_cluster_name,
                     nodegroupName=node_group,
                     WaiterConfig={"Delay": 10, "MaxAttempts": 600},
                 )
-        for k8s_cluster_name, k8s_cluster_spec in self.desired_infra['k8s'].items():
+        for k8s_cluster_name, k8s_cluster_spec in self.desired_infra["k8s"].items():
             deployed_cluster_name = self.deployed_infra["cluster_map"].get(k8s_cluster_name)
             cluster_infra = self.deployed_infra["vpc"]["eks_clusters"][deployed_cluster_name]
-            for node_group in k8s_cluster_spec['node_groups'].split(','):
+            for node_group in k8s_cluster_spec["node_groups"].split(","):
                 response = self.eksclient.describe_nodegroup(
                     clusterName=deployed_cluster_name, nodegroupName=node_group
                 )
-                cluster_infra['node_groups'][node_group] = response['nodegroup']
+                cluster_infra["node_groups"][node_group] = response["nodegroup"]
                 self.deployed_infra["vpc"]["eks_clusters"][deployed_cluster_name] = cluster_infra
                 self.write_infra_file()
 
@@ -510,71 +524,69 @@ class AWSDeployer(Deployer):
         self._tag_eks_node_group_instances()
 
     def _tag_eks_node_group_instances(self):
-        filters = [
-            {
-                'Name': 'vpc-id',
-                'Values': ['{}'.format(self.deployed_infra['vpc']['VpcId'])]
-            }
-        ]
+        filters = [{"Name": "vpc-id", "Values": ["{}".format(self.deployed_infra["vpc"]["VpcId"])]}]
         instances = self.ec2.instances.filter(Filters=filters)
         instance_ids = [instance.instance_id for instance in instances]
-        self.ec2client.create_tags(Resources=instance_ids,
-                                   Tags=[{'Key': 'Name', 'Value': self.options.tag}])
+        self.ec2client.create_tags(
+            Resources=instance_ids, Tags=[{"Key": "Name", "Value": self.options.tag}]
+        )
 
     def create_ec2s(self):
         logger.info("Creating ec2s...")
-        self.deployed_infra['vpc']['ec2'] = {}
-        if len(list(self.desired_infra['ec2'].keys())) > 0:
+        self.deployed_infra["vpc"]["ec2"] = {}
+        if len(list(self.desired_infra["ec2"].keys())) > 0:
             ec2_subnet = None
-            for subnet_name, subnet_config in self.deployed_infra['vpc']['subnets'].items():
-                for tag in subnet_config['Tags']:
-                    if tag['Key'] == 'Role' and tag['Value'] == 'ec2':
+            for subnet_name, subnet_config in self.deployed_infra["vpc"]["subnets"].items():
+                for tag in subnet_config["Tags"]:
+                    if tag["Key"] == "Role" and tag["Value"] == "ec2":
                         ec2_subnet = subnet_name
                         break
                 if ec2_subnet is not None:
                     break
             if ec2_subnet is None:
                 raise Exception("need at least one subnet with tag ec2 to deploy instances")
-            for ec2_cluster_name, ec2_cluster_config in self.desired_infra['ec2'].items():
-                for node_group in ec2_cluster_config['node_groups'].split(','):
-                    resource_path = 'ec2.{}.{}'.format(ec2_cluster_name, node_group)
-                    tags = [{'Key': 'Use', 'Value': 'CloudPerfTesting'},
-                            {'Key': 'Role', 'Value': node_group},
-                            {'Key': 'Jenkins Tag', 'Value': self.options.tag},
-                            {'Key': 'Name', 'Value': self.options.tag}]
-                    node_role = None
-                    for k, v in self.clusters.items():
-                        if 'couchbase' in k:
-                            for host in v.split():
-                                host_resource, services = host.split(":")
-                                if resource_path in host_resource:
-                                    node_role = k
-                                    tags.append({'Key': 'NodeRoles', 'Value': k})
+            for ec2_cluster_name, ec2_cluster_config in self.desired_infra["ec2"].items():
+                for node_group in ec2_cluster_config["node_groups"].split(","):
+                    resource_path = "ec2.{}.{}".format(ec2_cluster_name, node_group)
+                    tags = [
+                        {"Key": "Use", "Value": "CloudPerfTesting"},
+                        {"Key": "Role", "Value": node_group},
+                        {"Key": "Jenkins Tag", "Value": self.options.tag},
+                        {"Key": "Name", "Value": self.options.tag},
+                    ]
+
+                    if node_group.endswith("utilities"):
+                        node_role = "utilities"
+                        tags.append({"Key": "NodeRoles", "Value": "utilities"})
+                    else:
+                        node_role = None
+                        for k, v in self.clusters.items():
+                            if "couchbase" in k:
+                                for host in v.split():
+                                    host_resource, services = host.split(":")
+                                    if resource_path in host_resource:
+                                        node_role = k
+                                        tags.append({"Key": "NodeRoles", "Value": k})
+                                        break
+                                if node_role:
                                     break
-                            if node_role:
-                                break
-                    if not node_role:
-                        for k, v in self.clients.items():
-                            if 'workers' in k and resource_path in v:
-                                node_role = k
-                                tags.append({'Key': 'NodeRoles', 'Value': k})
-                                break
-                            if 'backups' in k and resource_path in v:
-                                node_role = k
-                                tags.append({'Key': 'NodeRoles', 'Value': k})
-                                break
-                    if not node_role:
-                        for k, v in self.syncgateways.items():
-                            if 'syncgateways' in k and resource_path in v:
-                                node_role = k
-                                tags.append({'Key': 'NodeRoles', 'Value': k})
-                                break
-                    if not node_role:
-                        for k, v in self.utilities.items():
-                            if ('brokers' in k or 'operators' in k) and resource_path in v:
-                                node_role = 'utilities'
-                                tags.append({'Key': 'NodeRoles', 'Value': 'utilities'})
-                                break
+                        if not node_role:
+                            for k, v in self.clients.items():
+                                if "workers" in k and resource_path in v:
+                                    node_role = k
+                                    tags.append({"Key": "NodeRoles", "Value": k})
+                                    break
+                                if "backups" in k and resource_path in v:
+                                    node_role = k
+                                    tags.append({"Key": "NodeRoles", "Value": k})
+                                    break
+                        if not node_role:
+                            for k, v in self.syncgateways.items():
+                                if "syncgateways" in k and resource_path in v:
+                                    node_role = k
+                                    tags.append({"Key": "NodeRoles", "Value": k})
+                                    break
+
                     node_group_spec = ec2_cluster_config[node_group]
                     block_device = '/dev/sda1'
                     if "workers" in node_role:  # perf client ami
@@ -997,23 +1009,32 @@ class AWSDeployer(Deployer):
                         s = s.replace(replace_pair[0], replace_pair[1], 1)
                     f.write(s)
 
-            for cluster, hosts in utilities.items():
-                address_replace_list = []
-                for host in hosts.split():
-                    node_group = host.split(".")[2]
-                    ip_list = node_group_ips[node_group]
-                    next_ip = ip_list.pop(0)
-                    node_group_ips[node_group] = ip_list
-                    address_replace_list.append((host, next_ip))
+            if utilities:
+                utility_ips = node_group_ips[self.UTILITY_NODE_GROUPS["ec2"]]
+                logger.info(f"utilities: hosts, hosts: {utility_ips}")
+                utility_hosts_line = "hosts = {}\n".format("\n".join(utility_ips))
 
-                logger.info("utilities: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                with open(self.cluster_path, "r+") as f:
+                    lines = f.readlines()
+                    in_section = False
+                    insert_idx = -1
+                    for i, line in enumerate(lines):
+                        if line.startswith("[utilities]"):
+                            in_section = True
 
-                with open(self.cluster_path) as f:
-                    s = f.read()
-                with open(self.cluster_path, 'w') as f:
-                    for replace_pair in address_replace_list:
-                        s = s.replace(replace_pair[0], replace_pair[1], 1)
-                    f.write(s)
+                        if in_section and line.strip() == "":
+                            in_section = False
+                            insert_idx = i
+                            break
+
+                    if insert_idx < 0:
+                        logger.interrupt(
+                            "Failed to update spec file with utility hosts. "
+                            "Could not find utilities section."
+                        )
+                    lines.insert(insert_idx, utility_hosts_line)
+                    f.seek(0)
+                    f.writelines(lines)
 
             # Replace backup storage bucket name in infra spec (if exists)
             with open(self.cluster_path) as f:
@@ -1117,11 +1138,9 @@ class OpenshiftDeployer(AWSDeployer):
 
         # utilities we only need broker nodes
         if not self.infra_spec.external_client:
-            for k, v in self.infra_spec.infrastructure_utilities.items():
-                if 'brokers' in k:
-                    for host in v.split():
-                        node = next(nodes)['metadata']['name']
-                        self.remote.add_node_label(node, 'NodeRoles=utilities ')
+            if self.infra_spec.infrastructure_utilities:
+                node = next(nodes)["metadata"]["name"]
+                self.remote.add_node_label(node, "NodeRoles=utilities ")
 
     def find_and_replace(self, path, find, replace):
         with open(path, 'r') as file:
@@ -1134,8 +1153,7 @@ class OpenshiftDeployer(AWSDeployer):
         # For external clients, only deploy server infrastructure in the Openshift cluster
         instance_count = len(self.infra_spec.servers)
         if not self.infra_spec.external_client:
-            instance_count = instance_count + len(self.infra_spec.clients) + \
-                len(self.infra_spec.utilities)
+            instance_count = instance_count + len(self.infra_spec.clients) + 1  # 1 broker node
         self.desired_infra['instance_count'] = instance_count
         # Node instance types can't be varied in openshift.
         # Will use k8s_node_group_1 type for everything when we work with internal clients

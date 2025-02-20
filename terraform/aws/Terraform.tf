@@ -46,13 +46,8 @@ variable "client_nodes" {
 
 variable "utility_nodes" {
   type = map(object({
-    node_group        = string
     image             = string
     instance_type     = string
-    storage_class     = string
-    volume_size       = number
-    iops              = number
-    volume_throughput = number
   }))
 }
 
@@ -602,30 +597,7 @@ resource "aws_instance" "utility_instance" {
   tags = {
     Name       = var.global_tag != "" ? var.global_tag : "UtilityNode${each.key}"
     role       = "utility"
-    node_group = each.value.node_group
   }
-}
-
-resource "aws_ebs_volume" "utility_ebs_volume" {
-  for_each = {for k, node in var.utility_nodes : k => node if node.volume_size > 0}
-
-  availability_zone = one(random_shuffle.az[*].result)[0]
-  type              = lower(each.value.storage_class)
-  size              = each.value.volume_size
-  throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
-  iops              = each.value.iops > 0 ? each.value.iops : null
-
-  tags = {
-    Name = var.global_tag != "" ? "${var.global_tag}-utility-ebs-${each.key}" : "UtilityEBS${each.key}"
-  }
-}
-
-resource "aws_volume_attachment" "utility_ebs_volume_attachment" {
-  for_each = {for k, node in var.utility_nodes : k => node if node.volume_size > 0}
-
-  device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.utility_ebs_volume[each.key].id
-  instance_id = aws_instance.utility_instance[each.key].id
 }
 
 resource "aws_instance" "syncgateway_instance" {

@@ -7,7 +7,7 @@ couchbase1 =
     azurerm.azurerm_cluster_1.azurerm_node_group_1.1:kv
     azurerm.azurerm_cluster_1.azurerm_node_group_1.2:kv
     azurerm.azurerm_cluster_1.azurerm_node_group_1.3:kv
-couchbase2 = 
+couchbase2 =
     azurerm.azurerm_cluster_2.azurerm_node_group_2.1:kv
     azurerm.azurerm_cluster_2.azurerm_node_group_2.2:kv
     azurerm.azurerm_cluster_2.azurerm_node_group_2.3:kv
@@ -17,13 +17,13 @@ workers1 =
     azurerm.azurerm_cluster_1.azurerm_node_group_3.1
 
 [utilities]
-brokers1 = azurerm.azurerm_cluster_1.azurerm_node_group_4.1
+profile = default
 
 [azurerm]
 clusters = azurerm_cluster_1,azurerm_cluster_2
 
 [azurerm_cluster_1]
-node_groups = azurerm_node_group_1,azurerm_node_group_3,azurerm_node_group_4
+node_groups = azurerm_node_group_1,azurerm_node_group_3
 storage_class = Premium_LRS
 
 [azurerm_cluster_2]
@@ -46,11 +46,6 @@ iops = 16000
 
 [azurerm_node_group_3]
 instance_type = Standard_F64s_v2
-instance_capacity = 1
-volume_size = 100
-
-[azurerm_node_group_4]
-instance_type = Standard_B2as_v2
 instance_capacity = 1
 volume_size = 100
 

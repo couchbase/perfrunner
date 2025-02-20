@@ -339,8 +339,9 @@ class RemoteWorkerManager:
                     worker_config.update_worker_spec()
                     self.worker_path = worker_config.dest_file
             else:
-                self.broker_url = 'amqp://couchbase:couchbase@{}:5672/broker'\
-                    .format(self.cluster_spec.brokers[0])
+                self.broker_url = "amqp://couchbase:couchbase@{}:5672/broker".format(
+                    self.cluster_spec.utilities[0]
+                )
         celery.conf.update(
             broker_url=self.broker_url,
             broker_pool_limit=None,

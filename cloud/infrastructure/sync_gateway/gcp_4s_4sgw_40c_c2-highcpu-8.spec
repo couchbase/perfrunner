@@ -60,13 +60,13 @@ workers1 =
         gce.gce_cluster_1.gce_node_group_3.40
 
 [utilities]
-brokers1 = gce.gce_cluster_1.gce_node_group_4.1
+profile = default
 
 [gce]
 clusters = gce_cluster_1
 
 [gce_cluster_1]
-node_groups = gce_node_group_1,gce_node_group_2,gce_node_group_3,gce_node_group_4
+node_groups = gce_node_group_1,gce_node_group_2,gce_node_group_3
 storage_class = pd-extreme
 
 [gce_node_group_1]
@@ -89,10 +89,6 @@ instance_capacity = 40
 volume_size = 1000
 volume_type = pd-extreme
 iops = 10000
-
-[gce_node_group_4]
-instance_type = e2-standard-2
-instance_capacity = 1
 
 [storage]
 data = /data

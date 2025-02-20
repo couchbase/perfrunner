@@ -21,7 +21,6 @@ output "client_instance_ips" {
 output "utility_instance_ips" {
   value = {
     for k, v in azurerm_virtual_machine.perf-utility-vm: k => {
-      node_group = v.tags["node_group"]
       public_ip  = azurerm_public_ip.perf-public-utility[k].ip_address
       private_ip = azurerm_network_interface.perf-utility-ni[k].private_ip_address
     }

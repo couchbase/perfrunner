@@ -23,13 +23,13 @@ workers1 =
         gce.gce_cluster_1.gce_node_group_2.1
 
 [utilities]
-brokers1 = gce.gce_cluster_1.gce_node_group_3.1
+profile = default
 
 [gce]
 clusters = gce_cluster_1,gce_cluster_2
 
 [gce_cluster_1]
-node_groups = gce_node_group_1,gce_node_group_2,gce_node_group_3
+node_groups = gce_node_group_1,gce_node_group_2
 storage_class = pd-ssd
 
 [gce_cluster_2]
@@ -48,11 +48,6 @@ volume_throughput = 400
 instance_type = n2-standard-64
 instance_capacity = 1
 volume_size = 200
-
-[gce_node_group_3]
-instance_type = e2-standard-2
-instance_capacity = 1
-volume_size = 0
 
 [gce_node_group_4]
 instance_type = c4a-standard-8-lssd

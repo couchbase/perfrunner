@@ -134,7 +134,7 @@ class CloudVMDeployer:
         },
         "azure": {
             "clusters": {
-                "x86_86": "perf-server-x86-ubuntu20-image-def",
+                "x86_64": "perf-server-x86-ubuntu20-image-def",
             },
             "clients": "perf-client-x86-ubuntu20-image-def",
             "utilities": "perf-broker-image-def",

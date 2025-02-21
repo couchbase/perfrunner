@@ -16,7 +16,7 @@ from fabric.api import local
 from requests.exceptions import HTTPError
 
 from logger import logger
-from perfrunner.helpers.config_files import TimeTrackingFile
+from perfrunner.helpers.config_files import TimeTrackingFile, record_time
 from perfrunner.helpers.misc import (
     maybe_atoi,
     my_public_ip,
@@ -753,11 +753,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             non_capella_output = self.terraform_output(self.csp)
             CloudVMDeployer.update_spec(self, non_capella_output)
 
-        if self.test_config.deployment.monitor_deployment_time:
-            logger.info("Start timing capella cluster deployment")
-            t0 = time()
         # Deploy capella cluster
-        self.deploy_cluster()
+        with record_time("capella_provisioned_cluster"):
+            self.deploy_cluster()
 
         if self.options.disable_autoscaling:
             self.disable_autoscaling()
@@ -769,14 +767,6 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             # Do VPC peering
             network_info = non_capella_output['network']['value']
             self.peer_vpc(network_info, self.cluster_ids[0])
-
-        if self.test_config.deployment.monitor_deployment_time:
-            logger.info("Finished timing capella cluster deployment")
-            deployment_time = time() - t0
-            logger.info("The total capella cluster deployment time is: {}".format(deployment_time))
-
-            with TimeTrackingFile() as t:
-                t.config['capella_provisioned_cluster'] = deployment_time
 
     def destroy(self):
         # Tear down VPC peering connection
@@ -1649,96 +1639,107 @@ class AppServicesDeployer(CloudVMDeployer):
         logger.info('Started deploying the AS')
         # Deploy capella cluster
         # Create sgw backend(app services)
-        if self.test_config.deployment.monitor_deployment_time:
-            logger.info('Started timing the app services deployment')
-            t0 = time()
-            logger.info('Deploying sgw backend')
-        sgw_cluster_id = self.deploy_cluster_internal_api()
+        with record_time("app_services_cluster"):
+            sgw_cluster_id = self.deploy_cluster_internal_api()
 
-        if self.test_config.deployment.monitor_deployment_time:
-            logger.info('Finished timing the app services deployment')
-            deployment_time = time() - t0
-            logger.info(f'The app services deployment time is: {deployment_time}')
-            logger.info('Started timing the app service database creation')
-            t0 = time()
+        with record_time("app_services_db"):
+            self.deploy_app_endpoints(sgw_cluster_id)
+
+        # Add allowed IPs
+        logger.info("Whitelisting IPs")
+        client_ips = self.infra_spec.clients
+        if self.csp == "aws":
+            client_ips = [
+                dns.split(".")[0].removeprefix("ec2-").replace("-", ".") for dns in client_ips
+            ]
+        logger.info(f"The client list is: {client_ips}")
+        for client_ip in client_ips:
+            self.api_client.add_allowed_ip_sgw(
+                self.tenant_id, self.project_id, sgw_cluster_id, self.cluster_id, client_ip
+            )
+
+        # Allow my IP
+        logger.info("Whitelisting own IP on sgw backend")
+        self.api_client.allow_my_ip_sgw(
+            self.tenant_id,
+            self.project_id,
+            self.cluster_id,
+            sgw_cluster_id,
+        )
+
+    def deploy_app_endpoints(self, sgw_cluster_id: str):
+        user = {
+            "email": "",
+            "password": "Password123!",
+            "name": "guest",
+            "disabled": False,
+            "admin_channels": ["*"],
+            "admin_roles": [],
+        }
+
         for bucket_name in self.test_config.buckets:
             # Create sgw database(app endpoint)
-            logger.info('Deploying sgw database')
-            sgw_db_id, sgw_db_name, coll_creation_time = self.deploy_sgw_db(sgw_cluster_id,
-                                                                            bucket_name)
+            logger.info("Deploying sgw database")
+            sgw_db_name = self.deploy_sgw_db(sgw_cluster_id, bucket_name)
 
             # Set sync function
-            logger.info('Setting sync function')
-            sync_function = 'function (doc) { channel(doc.channels); }'
-            self.api_client.update_sync_function_sgw(self.tenant_id, self.project_id,
-                                                     self.cluster_id, sgw_cluster_id,
-                                                     sgw_db_name, sync_function)
-
-            # Allow my IP
-            logger.info('Whitelisting own IP on sgw backend')
-            self.api_client.allow_my_ip_sgw(self.tenant_id, self.project_id,
-                                            self.cluster_id, sgw_cluster_id)
-
-            # Add allowed IPs
-            logger.info('Whitelisting IPs')
-            client_ips = self.infra_spec.clients
-            logger.info("The client list is: {}".format(client_ips))
-            if self.csp == "aws":
-                client_ips = [
-                    dns.split('.')[0].removeprefix('ec2-').replace('-', '.') for dns in client_ips
-                ]
-            logger.info(f'The client list is: {client_ips}')
-            for client_ip in client_ips:
-                self.api_client.add_allowed_ip_sgw(self.tenant_id, self.project_id,
-                                                   sgw_cluster_id, self.cluster_id,
-                                                   client_ip)
+            logger.info("Setting sync function")
+            self.api_client.update_sync_function_sgw(
+                self.tenant_id,
+                self.project_id,
+                self.cluster_id,
+                sgw_cluster_id,
+                sgw_db_name,
+                "function (doc) { channel(doc.channels); }",
+            )
 
             # Add app roles
-            logger.info('Adding app roles')
-            app_role = {"name": "moderator", "admin_channels": []}
-            self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
-                                             self.cluster_id, sgw_cluster_id,
-                                             sgw_db_name, app_role)
-            app_role = {"name": "admin", "admin_channels": []}
-            self.api_client.add_app_role_sgw(self.tenant_id, self.project_id,
-                                             self.cluster_id, sgw_cluster_id,
-                                             sgw_db_name, app_role)
+            logger.info("Adding app roles")
+            self.api_client.add_app_role_sgw(
+                self.tenant_id,
+                self.project_id,
+                self.cluster_id,
+                sgw_cluster_id,
+                sgw_db_name,
+                {"name": "moderator", "admin_channels": []},
+            )
+
+            self.api_client.add_app_role_sgw(
+                self.tenant_id,
+                self.project_id,
+                self.cluster_id,
+                sgw_cluster_id,
+                sgw_db_name,
+                {"name": "admin", "admin_channels": []},
+            )
 
             # Add user
-            logger.info('Adding user')
-            user = {"email": "", "password": "Password123!", "name": "guest",
-                    "disabled": False, "admin_channels": ["*"], "admin_roles": []}
-            self.api_client.add_user_sgw(self.tenant_id, self.project_id,
-                                         self.cluster_id, sgw_cluster_id,
-                                         sgw_db_name, user)
+            logger.info("Adding user")
+            self.api_client.add_user_sgw(
+                self.tenant_id,
+                self.project_id,
+                self.cluster_id,
+                sgw_cluster_id,
+                sgw_db_name,
+                user,
+            )
 
             # Add admin user
-            logger.info('Adding admin user')
             bucket_count = bucket_name.split("-")[1]
             admin_name = f"admin{bucket_count}"
-            logger.info("The admin name is: {}".format(admin_name))
-            admin_user = {"name": admin_name, "password": "Password123!",
-                          "allEndpoints": True,"endpoints": []}
-            resp = self.api_client.add_admin_user_sgw(self.tenant_id, self.project_id,
-                                                      self.cluster_id, sgw_cluster_id,
-                                                      admin_user)
-            logger.info(f'The response is: {resp}')
-
+            logger.info(f"Adding admin user: {admin_name}")
+            admin_user = {
+                "name": admin_name,
+                "password": "Password123!",
+                "allEndpoints": True,
+                "endpoints": [],
+            }
+            resp = self.api_client.add_admin_user_sgw(
+                self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id, admin_user
+            )
+            logger.info(f"The response is: {resp}")
             # Update cluster spec file
             self.update_spec(sgw_cluster_id, sgw_db_name)
-
-        if self.test_config.deployment.monitor_deployment_time:
-            logger.info('Finished creating the app services databases')
-            # Collection creation is a part of database creation, and we don't want to count twice
-            db_creation_time = time() - t0 - coll_creation_time
-            logger.info(f"The app services database creation time is: {db_creation_time}")
-
-            with TimeTrackingFile() as t:
-                t.config.update({
-                    'app_services_cluster': deployment_time,
-                    'app_services_coll': coll_creation_time,
-                    'app_services_db': db_creation_time
-                })
 
     def destroy(self):
         # Destroy capella cluster
@@ -1850,7 +1851,7 @@ class AppServicesDeployer(CloudVMDeployer):
 
         return sgw_cluster_id
 
-    def deploy_sgw_db(self, sgw_cluster_id, bucket_name):
+    def deploy_sgw_db(self, sgw_cluster_id: str, bucket_name: str) -> str:
         """Sample config.
 
         {
@@ -1870,7 +1871,7 @@ class AppServicesDeployer(CloudVMDeployer):
             "delta_sync": False,
         }
         collections_map = self.test_config.collection.collection_map
-        logger.info(f'The collections map is: {collections_map}')
+
         if collections_map:
             """Add collection parameters
             "scopes": {
@@ -1917,21 +1918,25 @@ class AppServicesDeployer(CloudVMDeployer):
             config["scopes"] = scopes
         logger.info(f'The configuration is: {config}')
 
-        logger.info('Started timing the collection creation')
-        t0 = time()
+        with record_time("app_services_per_db", sgw_db_name):
+            self._deploy_app_services_db(sgw_cluster_id, sgw_db_name, bucket_count, config)
 
-        resp = self.api_client.create_sgw_database(self.tenant_id, self.project_id,
-                                                   self.cluster_id, sgw_cluster_id, config)
-        # raise_for_status(resp)
+        return sgw_db_name
+
+    def _deploy_app_services_db(
+        self, sgw_cluster_id: str, sgw_db_name: str, bucket_count: int, config: dict
+    ):
+        resp = self.api_client.create_sgw_database(
+            self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id, config
+        )
         logger.info(f'The response for creating the sgw db is: {resp}')
         sgw_db_id = resp.json().get('id')
-        logger.info(f'Initialised sgw database deployment {sgw_db_id}')
-        logger.info('Saving sgw db ID to spec file.')
+        logger.info(f"Initialised sgw database deployment {sgw_db_id}")
 
         num_sgw = 0
         count = 0
-        logger.info('We need to have the same number of sgw databases as the number of buckets')
-        logger.info(f'The number of buckets is: {bucket_count}')
+        # We need to have the same number of sgw databases as the number of buckets
+        logger.info(f"Waiting for {sgw_db_name} sgw databases to be online")
         while num_sgw < bucket_count:
             sleep(10)
             resp = self.api_client.get_sgw_databases(self.tenant_id, self.project_id,
@@ -1956,17 +1961,10 @@ class AppServicesDeployer(CloudVMDeployer):
             count += 1
             logger.info(f'The number of sgw databases is: {num_sgw}')
             if count > 1000:
-                logger.error('Collection deployment timed out')
+                logger.error("SGW database deployment timed out")
                 exit(1)
 
-        logger.info('Finished creating the app services collections')
-        coll_creation_time = time() - t0
-        if not collections_map:
-            coll_creation_time = 0
-        logger.info(f'The app services collection creation time is: {coll_creation_time}')
-
-        logger.info('SGW databases successfully created')
-        return sgw_db_id, sgw_db_name, coll_creation_time
+        logger.info("SGW databases successfully created")
 
     def destroy_cluster_internal_api(self, sgw_cluster_id):
         logger.info('Deleting Capella App Services cluster...')
@@ -2196,7 +2194,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         logger.info(f"Deployment timings:\n\t{timing_results}")
 
         with TimeTrackingFile() as t:
-            t.config["columnar_instances"] = self.deployment_durations
+            t.update("columnar_instances", self.deployment_durations)
 
     def destroy(self):
         if not self.options.capella_only:
@@ -2295,7 +2293,8 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
         models = self.infra_spec.infrastructure_model_services
         for model_kind in ["embedding-generation", "text-generation"]:
             if model_config := models.get(model_kind):
-                self.deploy_model(model_kind, model_config)
+                with record_time("model_deployment", model_kind):
+                    self.deploy_model(model_kind, model_config)
 
         self.infra_spec.update_spec_file()
 
@@ -2339,12 +2338,13 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
                 continue
             try:
                 logger.info(f"Destroying {model_kind} model, id: {model_id}")
-                resp = self.provisioned_api.delete_model(
-                    self.tenant_id, self.project_id, self.cluster_ids[0], model_id
-                )
-                resp.raise_for_status()
-                logger.info(f"Model {model_id} successfully queued for deletion.")
-                self.wait_for_hosted_model_status(model_id, "")
+                with record_time("model_deletion", model_kind):
+                    resp = self.provisioned_api.delete_model(
+                        self.tenant_id, self.project_id, self.cluster_ids[0], model_id
+                    )
+                    resp.raise_for_status()
+                    logger.info(f"Model {model_id} successfully queued for deletion.")
+                    self.wait_for_hosted_model_status(model_id, "")
             except Exception as e:
                 logger.error(f"Error while destroying model {model_id}: {e}")
 
@@ -2563,3 +2563,6 @@ def main():
             deployer = CapellaProvisionedDeployer(infra_spec, args)
 
     deployer.deploy()
+    # Log the timing data at the end of the deployment
+    with TimeTrackingFile() as t:
+        t.log_content()

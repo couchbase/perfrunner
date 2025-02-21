@@ -1,13 +1,15 @@
 import json
+from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Optional
+from time import time
+from typing import Callable, Optional, Union
 
 import yaml
 from decorator import decorator
 
 from logger import logger
-from perfrunner.helpers.misc import create_build_tuple
+from perfrunner.helpers.misc import create_build_tuple, pretty_dict
 from perfrunner.settings import BucketSettings, ClusterSpec, Config, TestConfig
 
 
@@ -26,6 +28,24 @@ def supported_for(
         f"upto version {upto}" if upto else "",
     ]
     logger.warn(" ".join(msg_args))
+
+
+@contextmanager
+def record_time(operation_name: str, sub_operation_name: Optional[str] = None):
+    """Record the execution time of a code block to the TimeTrackingFile.
+
+    Args:
+        operation_name: Name to use as the key in timing data.
+        sub_operation_name: Optional name to use as the inner key in timing data.
+    Time is recorded in seconds.
+    """
+    t0 = time()
+    try:
+        yield
+    finally:
+        duration = time() - t0
+        with TimeTrackingFile() as t:
+            t.update(operation_name, duration, sub_operation_name)
 
 
 class FileType(Enum):
@@ -562,3 +582,35 @@ class TimeTrackingFile(ConfigFile):
 
     def __init__(self):
         super().__init__("timings.json", FileType.JSON)
+
+    def update(self, key: str, value: Union[float, dict], inner_key: Optional[str] = None):
+        """Update the timing data with a new key-value pair.
+
+        Args:
+            key: Name of the operation being timed
+            value: Duration of the operation in seconds
+            inner_key: Optional inner key to update within an existing dictionary value
+        """
+        if inner_key:
+            if not isinstance(self.config.get(key), dict):
+                # If the key is not a dictionary, create an empty dictionary for it.
+                # This will override the existing value but ensures that the key can be updated.
+                self.config[key] = {}
+            self.config[key].update({inner_key: value})
+        else:
+            self.config.update({key: value})
+
+    def get(self, key: str) -> Union[float, dict]:
+        """Get the timing data for a specific operation.
+
+        Args:
+            key: Name of the operation
+
+        Returns:
+            Duration of the operation in seconds, or a dictionary containing timing data
+        """
+        return self.config.get(key, 0)
+
+    def log_content(self):
+        """Log the current content of the timing data file."""
+        logger.info(f"Current timing data: {pretty_dict(self.config)}")

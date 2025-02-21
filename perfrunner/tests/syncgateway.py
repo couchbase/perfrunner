@@ -498,24 +498,15 @@ class SGLoad(SGPerfTest):
 
         if self.capella_infra and self.test_config.deployment.monitor_deployment_time:
             with TimeTrackingFile() as t:
-                deployment_time = t.config.get('app_services_cluster')
-                collection_time = t.config.get('app_services_coll')
-                creation_time = t.config.get('app_services_db')
-            logger.info(f'deployment_time is: {deployment_time}')
+                deployment_time = t.get("app_services_cluster")
+                creation_time = t.get("app_services_db")
+            logger.info(f"deployment_time is: {deployment_time}s")
             self.reporter.post(
                 *self.metrics.cluster_deployment_time(deployment_time, "cluster_deployment_time",
                                                       "App Services Deployment Time (sec)")
             )
 
-            if self.collections:
-                logger.info(f'collection_time is: {collection_time}')
-                self.reporter.post(
-                    *self.metrics.cluster_deployment_time(collection_time,
-                                                          "collection_creation_time",
-                                                          "Collection Creation Time (sec)")
-                )
-
-            logger.info(f'creation_time is: {creation_time}')
+            logger.info(f"creation_time is: {creation_time}s")
             self.reporter.post(
                 *self.metrics.cluster_deployment_time(creation_time, "bucket_creation_time",
                                                       "Database Creation Time (sec)")

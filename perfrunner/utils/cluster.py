@@ -1,14 +1,12 @@
 from argparse import ArgumentParser
 from multiprocessing import set_start_method
-from time import time
 
-from logger import logger
 from perfrunner.helpers.cluster import (
     CapellaClusterManager,
     DefaultClusterManager,
     KubernetesClusterManager,
 )
-from perfrunner.helpers.config_files import TimeTrackingFile
+from perfrunner.helpers.config_files import record_time
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
 
@@ -90,17 +88,10 @@ def main():
             not cm.cluster_spec.columnar_infrastructure
             or cm.cluster_spec.prov_cluster_in_columnar_test
         ):
-            if cm.test_config.deployment.monitor_deployment_time:
-                logger.info("Start timing the bucket creation")
-                t0 = time()
-            cm.create_buckets()
-            cm.create_eventing_buckets()
-            cm.create_eventing_metadata_bucket()
-            if cm.test_config.deployment.monitor_deployment_time:
-                deployment_time = time() - t0
-                logger.info("The total bucket creation time is: {}".format(deployment_time))
-                with TimeTrackingFile() as t:
-                    t.config['bucket'] = deployment_time
+            with record_time("bucket"):
+                cm.create_buckets()
+                cm.create_eventing_buckets()
+                cm.create_eventing_metadata_bucket()
             cm.capella_allow_client_ips()
         else:
             cm.set_analytics_settings()

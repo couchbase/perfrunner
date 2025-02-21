@@ -1073,10 +1073,10 @@ class YCSBLoadThroughputHIDDTest(YCSBThroughputHIDDTest):
         if self.cluster_spec.capella_infrastructure and \
            self.test_config.deployment.monitor_deployment_time:
             with TimeTrackingFile() as t:
-                deployment_time = t.config.get('capella_provisioned_cluster')
-                creation_time = t.config.get('bucket')
-            logger.info("deployment_time is: {}".format(deployment_time))
-            logger.info("creation_time is: {}".format(creation_time))
+                deployment_time = t.get("capella_provisioned_cluster")
+                creation_time = t.get("bucket")
+            logger.info(f"deployment_time is: {deployment_time}s")
+            logger.info(f"creation_time is: {creation_time}s")
             self.reporter.post(
                 *self.metrics.cluster_deployment_time(deployment_time, "cluster_deployment_time",
                                                       "Cluster Deployment Time (sec)")

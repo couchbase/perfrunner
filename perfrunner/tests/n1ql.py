@@ -12,7 +12,7 @@ from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict, run_aws_cli_command
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
-from perfrunner.tests.rebalance import CapellaRebalanceTest
+from perfrunner.tests.rebalance import CapellaRebalanceTest, DynamicServiceRebalanceTest
 from perfrunner.tests.tools import CapellaSnapshotBackupRestoreTest
 from perfrunner.utils.terraform import CapellaProvisionedDeployer
 
@@ -1808,3 +1808,18 @@ class JoinEnumTest(N1QLTest):
         self.run_cbq_script("indexstats")
 
         self.run_all_query_suites()
+
+
+class N1QLDynamicServiceRebalanceTest(N1QLThroughputRebalanceTest, DynamicServiceRebalanceTest):
+    def _rebalance(self, *args, **kwargs) -> float:
+        return DynamicServiceRebalanceTest._rebalance(self, *args, **kwargs)
+
+    def _report_kpi(self, *args):
+        super()._report_kpi(*args)
+
+        # Report rebalance time
+        value, snapshots, metric_info = self.metrics.elapsed_time(self.rebalance_time)
+        metric_info["title"] = metric_info.get("title", "").replace(
+            "Dynamic Service Rebalance", "Dynamic Service Rebalance (min)"
+        )
+        self.reporter.post(value, snapshots, metric_info)

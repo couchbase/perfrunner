@@ -68,9 +68,7 @@ def retry(method: Callable, *args, **kwargs):
             logger.warn(r.text)
             logger.warn('Retrying {}'.format(r.url))
             time.sleep(RETRY_DELAY)
-    logger.interrupt('Request {} failed after {} attempts'.format(
-        url, MAX_RETRY
-    ))
+    logger.interrupt(f"Request {url} failed after {MAX_RETRY} attempts")
 
 
 class RestHelper:
@@ -317,7 +315,16 @@ class DefaultRestHelper(RestBase):
         self.post(url=api, data=data)
 
     def add_node(self, host: str, new_host: str, services: str = None):
-        logger.info('Adding new node: {}'.format(new_host))
+        """
+        Add a new node to the cluster with the given services.
+
+        Args:
+            host: The host of the cluster to add the node to.
+            new_host: The hostname of the new node to add.
+            services: A comma separated list of services to add to the new node.
+            If None, kv will be set. If empty string, nothing will be set (Arbiter node).
+        """
+        logger.info(f"Adding new node: {new_host}, services: {services}")
         data = {
             'hostname': new_host,
             'user': self.rest_username,
@@ -346,14 +353,25 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=host, path=add_node_uri[1:])
         self.post(url=url, data=data)
 
-    def rebalance(self, host: str, known_nodes: list[str], ejected_nodes: list[str]):
-        logger.info('Starting rebalance')
+    def rebalance(
+        self,
+        host: str,
+        known_nodes: list[str],
+        ejected_nodes: list[str],
+        topology: dict = {},
+    ):
         known_nodes = ','.join(map(self.get_otp_node_name, known_nodes))
         ejected_nodes = ','.join(map(self.get_otp_node_name, ejected_nodes))
         data = {
             'knownNodes': known_nodes,
             'ejectedNodes': ejected_nodes
         }
+
+        if topology:
+            for svc_topology, nodes in topology.items():
+                data[svc_topology] = ",".join(map(self.get_otp_node_name, nodes))
+
+        logger.info(f"Starting rebalance with payload: {pretty_dict(data)}")
 
         url = self._get_api_url(host=host, path='controller/rebalance')
         self.post(url=url, data=data)

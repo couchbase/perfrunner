@@ -466,6 +466,15 @@ class ClusterSpec(Config):
                     has_service.append(host)
         return has_service
 
+    def servers_by_role_initial_nodes_only(self, role: str, initial_nodes: list[int]) -> list[str]:
+        has_service = []
+        for servers, nodes in zip(self.infrastructure_clusters.values(), initial_nodes):
+            for server in servers.split()[:nodes]:
+                host, roles, *group = server.split(":")
+                if role in roles:
+                    has_service.append(host)
+        return has_service
+
     def servers_by_cluster_and_role(self, role: str) -> list[str]:
         has_service = []
         for servers in self.infrastructure_clusters.values():
@@ -492,7 +501,8 @@ class ClusterSpec(Config):
         for servers in self.infrastructure_clusters.values():
             for server in servers.split():
                 host, roles, *group = server.split(':')
-                server_roles[host] = roles
+                # Use "empty" as a placeholder for empty services
+                server_roles[host] = roles if roles != "empty" else ""
         return server_roles
 
     @property
@@ -1314,6 +1324,15 @@ class RebalanceSettings:
                 self.ftspartitions
         if self.fts_max_dcp_partitions != self.FTS_MAX_DCP_PARTITIONS:
             self.fts_node_level_parameters["maxFeedsPerDCPAgent"] = self.fts_max_dcp_partitions
+
+        # Dynamic service rebalance settings
+        # Number of nodes to add or remove the service from.
+        # If positive, the service will be added to the number of nodes specified.
+        # If negative, the service will be removed from the number of nodes specified.
+        self.replace_nodes = int(options.get("replace_nodes", 1))
+        # When adding a service to a new node, select one with this service
+        # but not the service being moved.
+        self.colocate_with = options.get("colocate_with", "empty")
 
 
 class UpgradeSettings(RebalanceSettings):

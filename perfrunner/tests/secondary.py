@@ -19,7 +19,11 @@ from perfrunner.helpers.local import (
 from perfrunner.helpers.misc import SGPortRange, create_build_tuple, pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
-from perfrunner.tests.rebalance import AutoFailoverAndFailureDetectionTest, RebalanceTest
+from perfrunner.tests.rebalance import (
+    AutoFailoverAndFailureDetectionTest,
+    DynamicServiceRebalanceTest,
+    RebalanceTest,
+)
 from spring.docgen import decimal_fmtr
 
 
@@ -1612,6 +1616,7 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
+        self.update_category = True
 
     def get_config(self):
         with open('{}'.format(self.configfile)) as config_file:
@@ -1663,8 +1668,13 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            try:
+                logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
+            except Exception:
+                # Since this is for logging, we can ignore the exception as the service could have
+                # been removed from this node
+                pass
+
         self.report_kpi(rebalance_time=True)
         kill_process("cbindexperf")
         scan_thr = self.get_throughput()
@@ -1685,26 +1695,41 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
                     rebalance_time: bool = False):
 
         if rebalance_time:
-            self.reporter.post(
-                *self.metrics.rebalance_time(self.rebalance_time)
-            )
+            self.reporter.post(*self.metrics.rebalance_time(self.rebalance_time))
         else:
             title = "Secondary Scan Throughput (scanps) {}" \
                 .format(str(self.test_config.showfast.title).strip())
             self.reporter.post(
-                *self.metrics.scan_throughput(scan_thr,
-                                              metric_id_append_str="thr",
-                                              title=title)
+                *self.metrics.scan_throughput(
+                    scan_thr,
+                    metric_id_append_str="thr",
+                    title=title,
+                    update_category=self.update_category,
+                )
             )
             title = str(self.test_config.showfast.title).strip()
             self.reporter.post(
-                *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
-                                                           percentile=90,
-                                                           title=title))
+                *self.metrics.secondary_scan_latency_value(
+                    percentile_latencies[90],
+                    percentile=90,
+                    title=title,
+                    update_category=self.update_category,
+                )
+            )
             self.reporter.post(
-                *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
-                                                           percentile=95,
-                                                           title=title))
+                *self.metrics.secondary_scan_latency_value(
+                    percentile_latencies[95],
+                    percentile=95,
+                    title=title,
+                    update_category=self.update_category,
+                )
+            )
+
+
+class DynamicServiceSecondaryRebalanceTest(SecondaryRebalanceTest, DynamicServiceRebalanceTest):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.update_category = False
 
 
 class SecondaryIndexingThroughputCompactAllTest(SecondaryIndexTest):

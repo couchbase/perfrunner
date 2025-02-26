@@ -819,3 +819,61 @@ class FailoverSDKConfigPushTest(FailoverTest):
 
         if self.is_balanced():
             self.report_kpi()
+
+
+class DynamicServiceRebalanceTest(RebalanceTest):
+    """Test for rebalancing services across nodes without changing node membership.
+
+    This test focuses on moving services between nodes rather than adding/removing nodes.
+    """
+
+    @timeit
+    def _rebalance(self, *args, **kwargs):
+        """Rebalance services according to the specified topology."""
+        clusters = self.cluster_spec.clusters
+        initial_nodes = self.test_config.cluster.initial_nodes
+        topology = {}
+        rebalance_settings = self.test_config.rebalance_settings
+        target_nodes = self.cluster_spec.servers_by_role_initial_nodes_only(
+            rebalance_settings.colocate_with, initial_nodes
+        )
+        for service in rebalance_settings.services.split(","):
+            nodes_with_service = self.cluster_spec.servers_by_role_initial_nodes_only(
+                service, initial_nodes
+            )
+            if rebalance_settings.replace_nodes > 0:
+                logger.info(f"Adding {rebalance_settings.replace_nodes} nodes to {service} service")
+                available_nodes = list(set(target_nodes) - set(nodes_with_service))
+
+                # All the nodes running the service and {replace_nodes} from available nodes
+                new_nodes = nodes_with_service + available_nodes[: rebalance_settings.replace_nodes]
+
+            elif rebalance_settings.replace_nodes < 0:
+                logger.info(
+                    f"Removing {abs(rebalance_settings.replace_nodes)} nodes from {service} service"
+                )
+                # Remove {replace_nodes} from the nodes running the service
+                new_nodes = nodes_with_service[: rebalance_settings.replace_nodes]
+            else:
+                # No change in service topology
+                logger.info(f"No change in {service} service topology")
+                continue
+
+            topology[f"topology[{service}]"] = new_nodes
+
+        for (_, servers), initial_nodes in zip(clusters, initial_nodes):
+            master = servers[0]
+
+            # Get current nodes and their services
+            known_nodes = servers[:initial_nodes]
+
+            # Rebalance with the new service topology
+            self.rest.rebalance(
+                master, known_nodes=known_nodes, ejected_nodes=[], topology=topology
+            )
+
+            self.monitor_progress(master)
+
+
+class FTSDynamicServiceRebalanceTest(RebalanceForFTS, DynamicServiceRebalanceTest):
+    pass

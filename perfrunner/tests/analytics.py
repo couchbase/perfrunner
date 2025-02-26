@@ -38,7 +38,11 @@ from perfrunner.settings import (
     ColumnarSettings,
 )
 from perfrunner.tests import PerfTest
-from perfrunner.tests.rebalance import CapellaRebalanceKVTest, RebalanceTest
+from perfrunner.tests.rebalance import (
+    CapellaRebalanceKVTest,
+    DynamicServiceRebalanceTest,
+    RebalanceTest,
+)
 from perfrunner.tests.xdcr import SrcTargetIterator
 from perfrunner.workloads.bigfun.driver import QueryMethod, bigfun
 from perfrunner.workloads.bigfun.query_gen import Query
@@ -893,6 +897,9 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
 
         if self.is_balanced():
             self.report_kpi()
+
+class AnalyticsDynamicServiceRebalanceTest(BigFunRebalanceTest, DynamicServiceRebalanceTest):
+    pass
 
 
 class BigFunRebalanceCapellaTest(BigFunRebalanceTest, CapellaRebalanceKVTest):

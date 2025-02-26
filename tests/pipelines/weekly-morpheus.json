@@ -21,5 +21,40 @@
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloada_3nodes_1rr_30k_128v_magma.test", "groups": "P0"},
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloadb_3nodes_1rr_30k_128v_magma.test", "groups": "P0"},
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloadc_3nodes_1rr_30k_128v_magma.test", "groups": "P0"}
-    ]
+    ],
+    "Rebalance-Demeter": [
+        {
+            "job": "demeter_rebalance",
+            "cluster": "demeter_4node_kv_index_n1ql_colocated_empty.spec",
+            "test_config": "rebalance/dynamic_service_rebalance_index_query_multiple.test",
+            "groups": "P0"
+        }
+    ],
+    "FTS-Rebalance": [
+        {
+            "job": "atlas_rebalance",
+            "cluster": "atlas_1kv_2fts_empty.spec",
+            "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_swap_1s_1000c_dynamic_services.test",
+            "groups": "P0"
+        },
+        {
+            "job": "atlas_rebalance",
+            "cluster": "atlas_setupF.spec",
+            "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_swap_1s_1000c_dynamic_services_remove.test",
+            "groups": "P0"
+        }
+    ],
+    "GSI-Rebalance": [
+        {
+            "job": "aether",
+            "cluster": "aether_3kv_2index_empty.spec",
+            "test_config": "gsi/rebalance/secondary_scan100M_plasma_1000_indexes_dynamic_services_rebalance.test",
+            "groups": "P0"
+        },
+        {
+            "job": "aether",
+            "cluster": "aether_5indexes.spec",
+            "test_config": "gsi/rebalance/secondary_scan100M_plasma_1000_indexes_dynamic_services_rebalance_remove.test",
+            "groups": "P0"
+        },
 }

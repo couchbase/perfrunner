@@ -242,8 +242,8 @@ class CAOCouchbaseClusterFile(CAOFiles):
         server_types = dict()
         server_roles = self.cluster_spec.roles
         for _, role in server_roles.items():
-            # Ignore any empty services coming from overprovisioned nodes
-            if "empty" in role:
+            # If role is empty, it is a node used for overprovisioning, so dont set it up
+            if not role:
                 continue
 
             role = role.replace("kv", "data").replace("n1ql", "query")

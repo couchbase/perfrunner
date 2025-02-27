@@ -1570,10 +1570,14 @@ class Monitor:
         """Execute additional steps for shard based rebalance."""
         logger.info("Checking and sleeping until all snapshots are ready")
         is_snapshot_ready = False
+        retries = 0
         while not is_snapshot_ready:
             time.sleep(self.MONITORING_DELAY)
             is_snapshot_ready = all(self.rest.is_persistence_active(host=host) == "done" for host
                                     in index_nodes)
+            retries += 1
+            if retries >= self.MAX_RETRY_RECOVERY:
+                raise Exception("Snapshot persistence failed. Not all nodes are done")
 
     def _wait_for_columnar_instance_state(
         self,

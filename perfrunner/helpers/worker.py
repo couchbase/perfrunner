@@ -1,13 +1,18 @@
+import functools
 import os
-import signal
 import socket
 import sys
 import time
+from collections.abc import Callable, Iterable, Iterator
+from contextlib import suppress
 from itertools import cycle
 from multiprocessing import set_start_method
-from typing import Callable, Iterable, Iterator, Optional
+from pathlib import Path
+from typing import Optional
 
-from celery import Celery, Signature, group
+import psutil
+from celery import Celery, Task, group
+from celery.canvas import Signature
 from celery.result import AsyncResult
 from kombu.serialization import registry
 from sqlalchemy import create_engine
@@ -128,67 +133,113 @@ if "env/bin/perfrunner" not in sys.argv and "env/bin/nostests" not in sys.argv:
     else:
         raise Exception(f"Invalid worker type: {worker_type}")
 
+TASK_PIDFILE_DIR = "celery_task_pids"
 
-@celery.task
+
+def store_pid(func: Callable):
+    """Define a decorator to store the PID of a celery task in a file.
+
+    The wrapper function requires the celery task instance as the first argument, meaning this
+    decorator must be used on a bound celery task:
+    ```
+    @celery.task(bind=True)  # creates a bound task
+    @store_pid
+    def my_task(*args):
+        do_something(*args)
+    ```
+    """
+
+    @functools.wraps(func)
+    def wrapper(self: Task, *args, **kwargs):
+        pid = os.getpid()
+        pidfile = Path(f"{TASK_PIDFILE_DIR}/{self.request.id}.pid")
+        pidfile.parent.mkdir(parents=True, exist_ok=True)
+        with open(pidfile, "w") as f:
+            f.write(str(pid))
+        try:
+            return func(*args, **kwargs)
+        finally:
+            # Drop the pidfile once we're done, so that the PID of a finished task can't be
+            # recycled by an unrelated process and then signalled by mistake
+            pidfile.unlink(missing_ok=True)
+
+    return wrapper
+
+
+@celery.task(bind=True)
+@store_pid
 def spring_task(*args):
     spring_workload(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def pillowfight_data_load_task(*args):
     pillowfight_data_load(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def pillowfight_task(*args):
     pillowfight_workload(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def ycsb_data_load_task(*args):
     ycsb_data_load(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def ycsb_mongo_data_load_task(*args):
     ycsb_mongo_data_load(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def ycsb_mongo_workload_task(*args):
     ycsb_mongo_workload(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def ycsb_task(*args):
     ycsb_workload(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def jts_run_task(*args):
     jts_run(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def jts_warmup_task(*args):
     jts_warmup(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def tpcds_initial_data_load_task(*args):
     tpcds_initial_data_load(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def tpcds_remaining_data_load_task(*args):
     tpcds_remaining_data_load(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def java_dcp_client_task(*args):
     java_dcp_client(*args)
 
-@celery.task
+
+@celery.task(bind=True)
+@store_pid
 def dcpdrain_task(workload_settings, target, timer=None, instance: int = 0):
     """
     Celery wrapper for run_dcpdrain.
@@ -201,111 +252,135 @@ def dcpdrain_task(workload_settings, target, timer=None, instance: int = 0):
     # Call implementation in workloads/dcp.py and return its result.
     return run_dcpdrain(workload_settings, target, timer, instance)
 
-@celery.task
+
+@celery.task(bind=True)
+@store_pid
 def run_conflictsim_task(*args):
     run_conflictsim(*args)
 
-@celery.task
+
+@celery.task(bind=True)
+@store_pid
 def syncgateway_task_load_users(*args):
     syncgateway_load_users(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_task_init_users(*args):
     syncgateway_init_users(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_task_grant_access(*args):
     syncgateway_grant_access(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_task_warmup_cache(*args):
     syncgateway_warmup_cache(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_task_load_docs(*args):
     syncgateway_load_docs(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_task_run_test(*args):
     syncgateway_run_test(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_task_start_memcached(*args):
     syncgateway_start_memcached(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_bh_puller_task(*args):
     blackholepuller_runtest(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_new_docpush_task(*args):
     newdocpusher_runtest(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_delta_sync_task_load_docs(*args):
     syncgateway_delta_sync_load_docs(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_delta_sync_task_run_test(*args):
     syncgateway_delta_sync_run_test(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_e2e_cbl_task_load_docs(*args):
     syncgateway_e2e_cbl_load_docs(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_e2e_cbl_task_run_test(*args):
     syncgateway_e2e_cbl_run_test(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_e2e_multi_cbl_task_load_docs(*args):
     syncgateway_e2e_multi_cbl_load_docs(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_e2e_multi_cbl_task_run_test(*args):
     syncgateway_e2e_multi_cbl_run_test(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_e2e_multi_cb_task_load_docs(*args):
     syncgateway_e2e_multi_cb_load_docs(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def syncgateway_e2e_multi_cb_task_run_test(*args):
     syncgateway_e2e_multi_cb_run_test(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def sdks_benchmark_task(*args):
     sdks_benchmark_workload(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def vectordb_bench_task(*args):
     run_vectordb_bench_case(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def aibench_task(*args):
     run_aibench_task(*args)
 
 
-@celery.task
+@celery.task(bind=True)
+@store_pid
 def ch2_load(conn_settings: CH2ConnectionSettings, task_settings: CH2, driver: str, log_file: str):
     local.ch2_load_task(conn_settings, task_settings, driver, log_file)
 
@@ -368,6 +443,9 @@ class RemoteWorkerManager:
 
     PING_INTERVAL = 1
 
+    # How long to give aborted tasks to shut down gracefully before they get killed
+    TASK_TERMINATE_TIMEOUT = 60
+
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
                  verbose: bool):
         self.cluster_spec = cluster_spec
@@ -407,8 +485,9 @@ class RemoteWorkerManager:
         self.terminate()
         self.start()
         self.wait_until_workers_are_ready()
-        self.fg_async_results = []
-        self.bg_async_results = []
+        self.fg_async_results: list[AsyncResult] = []
+        self.bg_async_results: list[AsyncResult] = []
+        self._aborted_results: list[AsyncResult] = []
 
     @property
     def is_remote(self) -> bool:
@@ -518,11 +597,55 @@ class RemoteWorkerManager:
             os.mkdir('celery')
         self.remote.get_celery_logs(self.WORKER_HOME)
 
+    def _abort_task(self, task_result: AsyncResult):
+        task_result.revoke(terminate=True, signal="SIGTERM")
+
     def abort_all_tasks(self):
-        for result in self.fg_async_results + self.bg_async_results:
-            logger.info('Terminating Celery task (SIGTERM): {}'.format(result))
-            result.revoke(terminate=True, signal='SIGTERM')
+        self._aborted_results = self.fg_async_results + self.bg_async_results
+        for result in self._aborted_results:
+            logger.info(f"Terminating Celery task (SIGTERM): {result}")
+            try:
+                self._abort_task(result)
+            except Exception as e:
+                # Aborting is best-effort: a task we cannot signal must not stop us from
+                # signalling the rest, or from finishing the rest of the test teardown.
+                logger.warning(f"Failed to terminate Celery task {result}: {e}")
         logger.info('All Celery tasks have been sent SIGTERM')
+        # The aborted tasks are no longer ours to track, and re-aborting them later would only
+        # produce confusing log lines
+        self.fg_async_results.clear()
+        self.bg_async_results.clear()
+        # Don't return until the tasks have actually stopped. Aborting exists so that workers get
+        # to persist their stats (CBPS-430), and a phase is usually aborted from inside a
+        # `with_stats` block which reconstructs measurements from those files as soon as it exits,
+        # so returning early would race the workers writing them.
+        self.wait_for_aborted_tasks()
+
+    def wait_for_aborted_tasks(self):
+        """Wait for the aborted tasks to finish, so they can shut down gracefully.
+
+        Bounded by `TASK_TERMINATE_TIMEOUT`, after which the caller is free to kill the workers.
+        """
+        pending = self._aborted_results
+        self._aborted_results = []
+        if not pending:
+            return
+
+        logger.info(f"Waiting up to {self.TASK_TERMINATE_TIMEOUT}s for aborted tasks to finish")
+        deadline = time.time() + self.TASK_TERMINATE_TIMEOUT
+        for result in pending:
+            try:
+                # A task that was aborted mid-flight may well end in failure, which is expected
+                # here rather than an error, so don't let `get` re-raise it
+                result.get(timeout=max(0, deadline - time.time()), propagate=False)
+            except Exception as e:
+                # The deadline is shared, so once one task runs out of time the rest have too
+                logger.warning(
+                    f"Aborted Celery tasks did not all finish within "
+                    f"{self.TASK_TERMINATE_TIMEOUT}s, they will be killed: {e}"
+                )
+                return
+        logger.info('All aborted Celery tasks have finished')
 
     def terminate(self):
         logger.info('Terminating Celery workers')
@@ -631,6 +754,7 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.wait_until_workers_are_ready()
         self.fg_async_results = []
         self.bg_async_results = []
+        self._aborted_results = []
 
     @property
     def is_remote(self) -> bool:
@@ -661,18 +785,57 @@ class LocalWorkerManager(RemoteWorkerManager):
     def download_celery_logs(self):
         pass
 
-    @property
-    def pid(self) -> int:
-        with open('worker.pid') as f:
-            pid = f.read()
-        return int(pid)
+    @staticmethod
+    def _task_ids(task_result: AsyncResult) -> list[str]:
+        """Return the ids of the tasks covered by a result.
 
-    def abort_all_tasks(self):
-        logger.info('Interrupting Celery workers')
-        os.kill(self.pid, signal.SIGTERM)
-        logger.info('All Celery workers have been sent SIGTERM')
-        self.wait_for_fg_tasks()
-        self.wait_for_bg_tasks()
+        A group result's own id is a group id, which no task ever writes a pidfile for, so we need
+        the ids of the individual tasks it contains instead.
+        """
+        if members := getattr(task_result, "results", None):
+            return [member.id for member in members]
+        return [task_result.id]
+
+    @staticmethod
+    def _task_process(task_id: str) -> Optional[psutil.Process]:
+        """Return the process running a celery task, or None if it isn't running.
+
+        The pidfile is dropped once it has been read. From that point we hold a process handle
+        instead, so cleaning it up doesn't depend on the task surviving long enough to do it
+        itself: a task killed outright never gets to run the `finally` in `store_pid`.
+        """
+        pidfile = Path(TASK_PIDFILE_DIR) / f"{task_id}.pid"
+        if not pidfile.exists():
+            # The task was queued but never started, so there is no process to terminate
+            logger.info(f"No pidfile for Celery task {task_id}, nothing to terminate")
+            return None
+
+        try:
+            return psutil.Process(int(pidfile.read_text()))
+        except (ValueError, psutil.Error) as e:
+            # The task has most likely already finished
+            logger.info(f"No process found for Celery task {task_id}: {e}")
+            return None
+        finally:
+            pidfile.unlink(missing_ok=True)
+
+    def _abort_task(self, task_result: AsyncResult):
+        # For local celery workers we don't have remote control because we use SQLAlchemy+SQLite as
+        # the broker instead of RabbitMQ, so can't revoke tasks with celery.
+        # Instead we manually send SIGTERM to task processes based on their PID.
+        #
+        # Only the task process itself is signalled: spring installs a SIGTERM handler which shuts
+        # its worker processes down gracefully, so that they get to dump their stats. The worker
+        # processes don't handle SIGTERM themselves, so signalling them directly would kill them
+        # outright. Anything still alive afterwards is dealt with by `terminate`.
+        #
+        # Note that this process is the celery pool worker running the task, which is the right
+        # thing to signal but the wrong thing to wait on: it is long-lived and goes on to run the
+        # next task, so it doesn't exit when this one ends. Waiting is done on the task result.
+        for task_id in self._task_ids(task_result):
+            if process := self._task_process(task_id):
+                with suppress(psutil.Error):
+                    process.terminate()
 
     def terminate(self):
         logger.info('Terminating Celery workers')

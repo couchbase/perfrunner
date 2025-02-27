@@ -1736,13 +1736,6 @@ class WorkloadGen:
             if shutdown_event:
                 shutdown_event.set()
 
-    @staticmethod
-    def store_pid():
-        """Store PID of the current Celery worker."""
-        pid = os.getpid()
-        with open('worker.pid', 'w') as f:
-            f.write(str(pid))
-
     def start_timers(self):
         """Start the optional timers."""
         if self.timer is not None and self.ws.ops == float('inf'):
@@ -1768,8 +1761,6 @@ class WorkloadGen:
         self.start_all_workers()
 
         self.start_timers()
-
-        self.store_pid()
 
         self.set_signal_handler()
 

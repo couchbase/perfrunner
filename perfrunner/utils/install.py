@@ -627,6 +627,7 @@ class CouchbaseInstaller:
 
     def clean_data(self):
         self.remote.clean_data()
+        self.remote.reset_systemd_service_conf()
 
     def install_debuginfo(self):
         if not url_exist(self.debuginfo_url):
@@ -640,7 +641,10 @@ class CouchbaseInstaller:
 
     def set_cb_profile(self):
         profile = CBProfile.DEFAULT
-        if self.options.serverless_profile:
+        if set_profile := self.test_config.cluster.profile:
+            # If a test specifies a profile, use that regardless of the install flags
+            profile = CBProfile(set_profile)
+        elif self.options.serverless_profile:
             profile = CBProfile.SERVERLESS
         elif self.options.columnar_profile:
             profile = CBProfile.COLUMNAR
@@ -655,12 +659,18 @@ class CouchbaseInstaller:
 
         self.remote.set_cb_profile(profile)
 
+    def set_ns_server_managed_cgroup(self):
+        if self.test_config.cluster.cgroup_managed:
+            logger.info("Setting provisioned profile cgroup overrides")
+            self.remote.enable_resource_management_with_cgroup()
+
     def install(self):
         logger.info("Finding package to install...")
         logger.info(f'Package URL: {self.url}')
         self.kill_processes()
         self.uninstall_package()
         self.clean_data()
+        self.set_ns_server_managed_cgroup()
         self.set_cb_profile()
         self.install_package()
 

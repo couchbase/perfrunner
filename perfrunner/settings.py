@@ -984,6 +984,9 @@ class ClusterSettings:
         self.enable_indexer_systemd_mem_limits = options.get(
             "enable_indexer_systemd_mem_limits", False
         )
+        # When enabled, start Couchbase server in cgroup managemed mode
+        self.cgroup_managed = maybe_atoi(options.get("cgroup_managed", "false"))
+        self.profile = options.get("profile")  # ns-server profile to use
 
         self.cng_enabled = maybe_atoi(options.get("cng_enabled", self.CNG_ENABLED))
 

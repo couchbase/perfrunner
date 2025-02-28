@@ -313,6 +313,9 @@ class RemoteWindows(Remote):
     def set_systemd_resource_limits(self, *args, **kwargs):
         pass
 
+    def enable_resource_management_with_cgroup(self):
+        pass
+
     def set_cb_profile(self, *args):
         logger.info('Perfrunner cannot set ns_server profile on Windows. '
                     'Default profile will be used.')

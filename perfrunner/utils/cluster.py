@@ -126,7 +126,7 @@ def main():
     cm.tune_logging()
     cm.restart_with_alternative_num_vbuckets()
     cm.flush_iptables()
-    cm.reset_systemd_service_conf()
+
     cm.set_systemd_resource_limits()
 
     cm.configure_internal_settings()

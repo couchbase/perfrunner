@@ -1405,6 +1405,22 @@ class RemoteLinux(Remote):
         run("rm -rf /etc/systemd/system/couchbase-server.service.d")
         run("systemctl daemon-reload")
 
+    @all_servers
+    def enable_resource_management_with_cgroup(self):
+        run("mkdir -p /etc/systemd/system/couchbase-server.service.d")
+        with cd("/etc/systemd/system/couchbase-server.service.d"):
+            # This is the content we want to store, keeping it here for now and if it grows,
+            # it can be moved in a static file
+            content = (
+                "[Service]\n"
+                "Delegate=yes\n"
+                "ExecStartPre=/opt/couchbase/bin/create-provisioned-cgroups.sh"
+                " '/sys/fs/cgroup/system.slice/couchbase-server.service/'\n"
+                "DelegateSubgroup=babysitter"
+            )
+            run(f"echo -e '{content}' > override.conf")
+        run("systemctl daemon-reload")
+
     @master_server
     def configure_columnar_cloud_storage(
         self, bucket_name: str = "cb-perf-columnar", scheme: str = "s3", region: str = "us-east-1"

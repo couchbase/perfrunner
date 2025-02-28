@@ -455,9 +455,11 @@ class DefaultClusterManager(ClusterManagerBase):
 
     def configure_internal_settings(self):
         internal_settings = self.test_config.internal_settings
+        if not internal_settings:
+            return
+
         for master in self.cluster_spec.masters:
-            for parameter, value in internal_settings.items():
-                self.rest.set_internal_settings(master, {parameter: maybe_atoi(value)})
+            self.rest.set_internal_settings(master, internal_settings)
 
     def configure_xdcr_settings(self):
         xdcr_cluster_settings = self.test_config.xdcr_cluster_settings
@@ -824,10 +826,6 @@ class DefaultClusterManager(ClusterManagerBase):
         if self.test_config.cluster.enable_indexer_systemd_mem_limits:
             self.remote.set_indexer_systemd_mem_limits()
             self._restart_clusters()
-
-    def reset_systemd_service_conf(self):
-        self.remote.reset_systemd_service_conf()
-        self.remote.restart()
 
     def set_columnar_cloud_storage(self):
         scheme, bucket_name = self.cluster_spec.backup.split("://")

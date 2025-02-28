@@ -670,9 +670,9 @@ class Monitor:
 
         def get_index_status(json2i, index):
             """Return the index status."""
-            for d in json2i["status"]:
-                if d["name"] == index:
-                    return d["status"]
+            for d in json2i.get("status", {}):
+                if d.get("name") == index:
+                    return d.get("status")
             return None
 
         @misc.retry(catch=(KeyError,), iterations=10, wait=30)

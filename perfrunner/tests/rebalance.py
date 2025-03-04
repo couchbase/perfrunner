@@ -475,12 +475,12 @@ class FailureDetectionTest(FailoverTest):
     def _report_kpi(self, *args):
         t_failover = self.remote.detect_auto_failover(self.master_node)
 
-        if t_failover:
-            t_failover = self.convert_time(t_failover)
-            delta = round(t_failover - self.t_failure, 1)
-            self.reporter.post(
-                *self.metrics.failover_time(delta)
-            )
+        if not t_failover:
+            logger.interrupt("Failed to detect auto failover")
+
+        t_failover = self.convert_time(t_failover)
+        delta = round(t_failover - self.t_failure, 1)
+        self.reporter.post(*self.metrics.failover_time(delta))
 
     def _failover(self, *args):
         clusters = self.cluster_spec.clusters
@@ -513,7 +513,10 @@ class AutoFailoverAndFailureDetectionTest(FailoverTest):
 
         # Failure detection time
         t_failure_detection = self.remote.detect_auto_failover(self.master_node)
-        if t_failure_detection and self.t_failure:
+        if not t_failure_detection:
+            logger.interrupt("Failed to detect auto failover")
+
+        if self.t_failure:
             t_failure_detection = self.convert_time(t_failure_detection)
             failure_detection_delta = round(t_failure_detection - self.t_failure, 1)  # sec
             self.reporter.post(
@@ -772,9 +775,11 @@ class FailoverSDKConfigPushTest(FailoverTest):
         # Failure detection time
         failure_detection_time = None
         t_failure_detection = self.remote.detect_auto_failover(self.master_node)
-        if t_failure_detection:
-            t_failure_detection = self.convert_time(t_failure_detection)
-            failure_detection_time = round(t_failure_detection - self.t_failure[0], 2)  # sec
+        if not t_failure_detection:
+            logger.interrupt("Failed to detect auto failover")
+
+        t_failure_detection = self.convert_time(t_failure_detection)
+        failure_detection_time = round(t_failure_detection - self.t_failure[0], 2)  # sec
 
         logger.info('Failover time: {}s Failure detection time: {}s'.format(
             failover_time, failure_detection_time))

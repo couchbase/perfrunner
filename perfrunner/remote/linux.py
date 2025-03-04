@@ -582,29 +582,37 @@ class RemoteLinux(Remote):
 
     def detect_auto_failover(self, host):
         with settings(host_string=host):
-            r = run('grep "Starting failing over" '
-                    '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
+            r = run(
+                f'grep "Starting failing over" {self.CB_DIR}/var/lib/couchbase/logs/info.log',
+                warn_only=True,
+            )
             if not r.return_code:
                 return r.strip().split(',')[1]
 
     def detect_hard_failover_start(self, host):
         with settings(host_string=host):
-            r = run('grep "Starting failing" '
-                    '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
+            r = run(
+                f'grep "Starting failing" {self.CB_DIR}/var/lib/couchbase/logs/info.log',
+                warn_only=True,
+            )
             if not r.return_code:
                 return r.strip().split(',')[1]
 
     def detect_graceful_failover_start(self, host):
         with settings(host_string=host):
-            r = run('grep "Starting vbucket moves" '
-                    '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
+            r = run(
+                f'grep "Starting vbucket moves" {self.CB_DIR}/var/lib/couchbase/logs/info.log',
+                warn_only=True,
+            )
             if not r.return_code:
                 return r.strip().split(',')[1]
 
     def detect_failover_end(self, host):
         with settings(host_string=host):
-            r = run('grep "Failed over .*: ok" '
-                    '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
+            r = run(
+                f'grep "Failed over .*: ok" {self.CB_DIR}/var/lib/couchbase/logs/info.log',
+                warn_only=True,
+            )
             if not r.return_code:
                 return r.strip().split(',')[1]
 

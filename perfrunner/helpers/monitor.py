@@ -11,6 +11,7 @@ from perfrunner.settings import ClusterSpec
 class Monitor:
 
     MAX_RETRY = 150
+    MAX_RETRY_HEALTHY = 300
     MAX_RETRY_RECOVERY = 1200
     MAX_RETRY_TIMER_EVENT = 18000
     MAX_RETRY_BOOTSTRAP = 1200
@@ -521,7 +522,7 @@ class Monitor:
         polling_interval_secs: Optional[int] = None,
         max_retries: Optional[int] = None,
     ):
-        max_retries = max_retries or self.MAX_RETRY
+        max_retries = max_retries or self.MAX_RETRY_HEALTHY
         polling_interval_secs = polling_interval_secs or self.POLLING_INTERVAL
         logger.info('Monitoring node health')
 

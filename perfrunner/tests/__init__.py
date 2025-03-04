@@ -85,6 +85,10 @@ class PerfTest:
                 self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE,
                                                   self.worker_manager.WORKER_HOME)
 
+        if self.test_config.app_telemetry_settings.enabled:
+            # If app telemetry is enabled, we also collect app telemetry metrics
+            self.COLLECTORS["app_telemetry"] = True
+
     def __enter__(self):
         return self
 

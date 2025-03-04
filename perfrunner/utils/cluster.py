@@ -181,6 +181,7 @@ def main():
     cm.tweak_memory()
     cm.enable_n2n_encryption()
     cm.set_indexer_systemd_mem_limits()
+    cm.enable_app_telemetry()
 
 
 if __name__ == '__main__':

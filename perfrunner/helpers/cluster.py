@@ -985,6 +985,20 @@ class DefaultClusterManager(ClusterManagerBase):
             # Set settings within metakv
             self.remote.set_kafka_links_metakv_settings(settings)
 
+    def enable_app_telemetry(self):
+        app_telemetry_settings = self.test_config.app_telemetry_settings
+        if not app_telemetry_settings.enabled:
+            return
+
+        settings = {
+            "enabled": True,
+            "scrapeIntervalSeconds": app_telemetry_settings.scrape_interval,
+            "maxScrapeClientsPerNode": app_telemetry_settings.max_clients_per_node,
+        }
+        logger.info(f"Enabling app telemetry with settings: {pretty_dict(settings)}")
+        for master in self.cluster_spec.masters:
+            self.rest.enable_app_telemetry(master, settings)
+
 
 class CapellaClusterManager(ClusterManagerBase):
     def create_buckets(self):

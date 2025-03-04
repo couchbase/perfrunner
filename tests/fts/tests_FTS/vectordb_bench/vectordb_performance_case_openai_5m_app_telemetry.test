@@ -1,0 +1,23 @@
+[test_case]
+test = perfrunner.tests.vectordb.VectorDBBenchTest
+
+[showfast]
+title = 3 nodes, 1 bucket, FTS, app telemetry enabled
+component = jts
+category = vectordb
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 25000
+
+[vectordb]
+cases = Performance1536D5M
+batch_size = 100000
+
+[telemetry]
+enabled = true
+
+[stats]
+server_processes = prometheus

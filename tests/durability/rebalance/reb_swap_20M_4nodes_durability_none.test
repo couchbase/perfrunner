@@ -34,3 +34,5 @@ durability = 0
 [rebalance]
 nodes_after = 4
 swap = 1
+start_after = 180
+stop_after = 180

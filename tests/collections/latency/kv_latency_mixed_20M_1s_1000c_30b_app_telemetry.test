@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.kv.MixedLatencyTest
+
+[showfast]
+title = latency (ms), 4 nodes, 30 buckets x 666K x 1KB, 10K ops/sec, s=1 c=1000, app telemetry enabled
+component = kv
+category = latency
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 30
+
+[collection]
+config = collections/30buckets_1scope_33collections_basic.json
+
+[load]
+items = 666666
+size = 1024
+workers = 3
+doc_gen = large
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 333
+items = 666666
+workers = 1
+time = 1200
+
+[telemetry]
+enabled = true
+
+[stats]
+server_processes = prometheus

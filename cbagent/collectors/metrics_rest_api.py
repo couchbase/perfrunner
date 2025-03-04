@@ -365,3 +365,46 @@ class MetricsRestApiThroughputCollection(MetricsRestApiBase):
                 bucket = self.serverless_db_names.get(bucket, bucket)
                 bucket_group = self.bucket_stat_group(bucket, stat_group)
                 self.add_stats(stats, bucket=bucket_group)
+
+
+class MetricsRestApiAppTelemetry(MetricsRestApiBase):
+    COLLECTOR = "metrics_rest_api_app_telemetry"
+
+    METRICS = (
+        "cm_app_telemetry_curr_connections",
+        "kv_current_external_client_connections",
+        "sdk_.*(_r_total|_r_cancelled|_r_timedout)",
+        # This covers the per service meters as described in RFC-0084
+    )
+
+    def __init__(self, settings: CbAgentSettings):
+        super().__init__(settings)
+        self.stats_data = [
+            {
+                "metric": [{"label": "name", "value": metric, "operator": "=~"}],
+                "step": 1,
+                "start": -1,
+            }
+            for metric in self.METRICS
+        ]
+
+    def get_stats(self) -> dict:
+        samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
+        metrics = {}
+        for data in samples:
+            for metric in data["data"]:
+                node = metric["metric"]["nodes"][0].split(":")[0]
+                metric_name = metric["metric"]["name"]
+                value = float(metric["values"][-1][-1])
+                if metric_name == "kv_current_external_client_connections":
+                    sdk_name = metric["metric"]["sdk"].split("/")[0]
+                    metric_name = f"{metric_name}_{sdk_name}"
+                if node not in metrics:
+                    metrics[node] = {metric_name: value}
+                else:
+                    metrics[node][metric_name] = value
+        return metrics
+
+    def sample(self):
+        for node, stats in self.get_stats().items():
+            self.add_stats(stats, node=self.get_external_hostnames(node))

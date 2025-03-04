@@ -996,6 +996,7 @@ class ClusterSettings:
             else:
                 self.bucket_name = self.bucket_name.split(",")
 
+
 class DirectNebulaSettings:
 
     LOG_LEVEL = None
@@ -3723,6 +3724,15 @@ class AIBenchSettings(PhaseSettings):
         self.ops = int(self.ops)
 
 
+class AppTelemetrySettings:
+    """Provides settings to control app telemetry."""
+
+    def __init__(self, options: dict):
+        self.enabled = maybe_atoi(options.get("enabled", "false"))
+        self.scrape_interval = int(options.get("scrape_interval", "60"))  # seconds
+        self.max_clients_per_node = int(options.get("max_clients_per_node", "1024"))
+
+
 class TestConfig(Config):
 
     def _configure_phase_settings(method):  # noqa: N805
@@ -4206,6 +4216,11 @@ class TestConfig(Config):
     def aibench_settings(self) -> AIBenchSettings:
         options = self._get_options_as_dict("ai_bench")
         return AIBenchSettings(options)
+
+    @property
+    def app_telemetry_settings(self) -> AppTelemetrySettings:
+        options = self._get_options_as_dict("telemetry")
+        return AppTelemetrySettings(options)
 
 
 class TargetSettings:

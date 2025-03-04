@@ -1921,6 +1921,12 @@ class DefaultRestHelper(RestBase):
             keys.append(resp.json().get('key'))
         return keys
 
+    def enable_app_telemetry(self, host: str, settings: dict):
+        """Enable app telemetry for the cluster."""
+        url = self._get_api_url(host=host, path="settings/appTelemetry")
+        resp = self.post(url=url, json=settings)
+        resp.raise_for_status()
+
 
 class KubernetesRestHelper(DefaultRestHelper):
 

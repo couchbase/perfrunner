@@ -234,7 +234,9 @@ class RebalanceDurabilityTest(RebalanceTest):
     @with_profiles
     def rebalance(self, services=None):
         self.access_bg()
+        self.pre_rebalance()
         self.rebalance_time = self._rebalance(services)
+        self.post_rebalance()
         self.worker_manager.abort_all_tasks()
 
     def _report_kpi(self, *args):

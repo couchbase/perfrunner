@@ -487,11 +487,11 @@ class GKEInstaller(KubernetesInstaller):
 
 
 class CouchbaseInstaller:
-
-    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, options: Namespace):
         self.remote = RemoteHelper(cluster_spec, options.verbose)
         self.options = options
         self.cluster_spec = cluster_spec
+        self.test_config = test_config
 
     @cached_property
     def url(self) -> str:
@@ -666,9 +666,8 @@ class CouchbaseInstaller:
 
 
 class CloudInstaller(CouchbaseInstaller):
-
-    def __init__(self, cluster_spec, options):
-        super().__init__(cluster_spec, options)
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, options: Namespace):
+        super().__init__(cluster_spec, test_config, options)
 
     def install_package(self):
         def upload_couchbase(to_host, to_user, to_password, package):
@@ -835,6 +834,13 @@ def get_args():
                         required=True,
                         dest='couchbase_version',
                         help='the build version or the HTTP URL to a package')
+    parser.add_argument(
+        "-t",
+        "--test",
+        dest="test_config_fname",
+        default=None,
+        help="path to a test configuration file",
+    )
     parser.add_argument('-c', '--cluster',
                         required=True,
                         help='the path to a cluster specification file')
@@ -910,6 +916,12 @@ def main():
     if args.cluster_name:
         cluster_spec.set_active_clusters_by_name([args.cluster_name])
 
+    test_config = TestConfig()
+    if args.test_config_fname:
+        test_config.parse(args.test_config_fname, override=args.override)
+    else:
+        test_config.override(args.override)
+
     if cluster_spec.cloud_infrastructure:
         if cluster_spec.kubernetes_infrastructure:
             infra_provider = cluster_spec.infrastructure_settings['provider']
@@ -922,16 +934,16 @@ def main():
             else:
                 raise Exception(f'{infra_provider} is not a valid infrastructure provider')
         elif cluster_spec.capella_infrastructure:
-            installer = ClientUploader(cluster_spec, args)
+            installer = ClientUploader(cluster_spec, test_config, args)
         else:
-            installer = CloudInstaller(cluster_spec, args)
+            installer = CloudInstaller(cluster_spec, test_config, args)
 
         if args.uninstall:
             installer.uninstall()
         else:
             installer.install()
     else:
-        installer = CouchbaseInstaller(cluster_spec, args)
+        installer = CouchbaseInstaller(cluster_spec, test_config, args)
         installer.install()
         if args.local_copy:
             installer.download_local(args.local_copy_url)
@@ -940,9 +952,6 @@ def main():
             installer.download_remote()
 
         # Here we install CB debuginfo
-        # It only works if the linux_perf_profile_flag setting is set through an OVERRIDE
-        test_config = TestConfig()
-        test_config.override(args.override)
         if test_config.profiling_settings.linux_perf_profile_flag:
             installer.install_debuginfo()
 

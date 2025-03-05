@@ -110,10 +110,13 @@ class RestBase:
     def post(self, **kwargs) -> requests.Response:
         return self._post(**kwargs)
 
-    @retry
-    def session_post(self, session: requests.Session, **kwargs) -> requests.Response:
+    def _session_post(self, session: requests.Session, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
         return session.post(verify=False, **kwargs)
+
+    @retry
+    def session_post(self, session: requests.Session, **kwargs) -> requests.Response:
+        return self._session_post(session, **kwargs)
 
     def _put(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))

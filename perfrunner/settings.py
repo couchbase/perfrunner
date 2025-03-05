@@ -2865,12 +2865,15 @@ class ColumnarKafkaLinksSettings:
 
 
 class ColumnarCopyToSettings:
-    OBJECT_STORE_FILE_FORMATS = "json"  # alt: csv
+    QUERY_LOOPS = 3
+    OBJECT_STORE_FILE_FORMATS = "json"  # alt: csv, parquet
     MAX_OBJECTS_PER_FILES = "10000"
-    OBJECT_STORE_COMPRESSIONS = "none"  # alt: gzip
+    OBJECT_STORE_COMPRESSIONS = "none"  # alt: gzip, snappy (parquet-only), zstd (parquet-only)
     GZIP_COMPRESSION_LEVELS = "6"  # ranges from 1-9
+    PARQUET_SCHEMA_INFERENCE = "false"
 
     def __init__(self, options: dict):
+        self.query_loops = int(options.get("query_loops", self.QUERY_LOOPS))
         self.object_store_file_formats = (
             options.get("object_store_file_formats", self.OBJECT_STORE_FILE_FORMATS)
             .replace(",", " ")
@@ -2891,23 +2894,33 @@ class ColumnarCopyToSettings:
             .replace(",", " ")
             .split()
         )
+        self.parquet_schema_inference = maybe_atoi(
+            options.get("parquet_schema_inference", self.PARQUET_SCHEMA_INFERENCE)
+        )
+        self.parquet_row_group_sizes = (
+            options.get("parquet_row_group_sizes", "").replace(",", " ").split()
+        ) or [None]
+        self.parquet_page_sizes = (
+            options.get("parquet_page_sizes", "").replace(",", " ").split()
+        ) or [None]
+        self.parquet_max_schemas = (
+            options.get("parquet_max_schemas", "").replace(",", " ").split()
+        ) or [None]
         self.object_store_query_file = options.get("object_store_query_file")
         self.kv_query_file = options.get("kv_query_file")
 
+    @property
     def all_param_combinations(self) -> list[tuple[Any, ...]]:
         """Return all combinations of COPY TO statement "WITH" clause parameters."""
-        compression_settings = []
-        for c in self.object_store_compressions:
-            if c == "gzip":
-                compression_settings.extend((c, level) for level in self.gzip_compression_levels)
-                continue
-            compression_settings.append((c, None))
-
         return list(
             itertools.product(
                 self.object_store_file_formats,
                 self.max_objects_per_files,
-                compression_settings,
+                self.object_store_compressions,
+                self.gzip_compression_levels,
+                self.parquet_row_group_sizes,
+                self.parquet_page_sizes,
+                self.parquet_max_schemas,
             )
         )
 
@@ -2941,10 +2954,14 @@ class ColumnarSettings:
             options.get("sweep_threshold_bytes", self.SWEEP_THRESHOLD_BYTES)
         )
         # setting to override which datasets are imported from an object store (e.g. S3, GCS),
-        # where applicable. Can be used e.g. to import only a subset of all datasets
-        self.object_store_import_datasets = (
-            options.get("object_store_import_datasets", "").replace(",", " ").split()
-        )
+        # where applicable. Can be used e.g. to import only a subset of all datasets.
+        # datasets can be specified as a pair <source>:<target> or just <source>, in which case
+        # <target> is assumed to be the same as <source>
+        self.object_store_import_datasets = [
+            (s[0], s[1] if len(s) > 1 else s[0])
+            for dataset in options.get("object_store_import_datasets", "").replace(",", " ").split()
+            if (s := dataset.split(":"))
+        ]
 
 
 class AuditSettings:

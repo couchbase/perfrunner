@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2CapellaColumnarCopyToObjectStoreTest
+
+[showfast]
+title = Copy To S3, CH2++0 1000W, 4A, c=11 (standalone collections), 10 Heterogeneous Schemas
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+initial_nodes = 4
+enable_n2n_encryption = all
+
+[analytics]
+external_dataset_type = s3
+external_dataset_region = us-east-1
+external_bucket = analytics-ch2pp0-1000w-heterogeneous-schemas-gz
+external_file_format = json
+external_file_include = gz
+aws_credential_path = /root/.ssh/
+
+[ch2]
+schema = ch2pp
+
+[columnar]
+object_store_import_datasets = customer_10schemas_no_empty_arrays:customer, stock_10schemas:stock, orders_10schemas:orders
+
+[columnar_copy_to]
+object_store_file_formats = json, parquet
+max_objects_per_files = 10000
+object_store_compressions = none
+object_store_query_file = tests/cloud/analytics/workload/ch2pp_copy_to_s3_parquet_queries.json
+parquet_schema_inference = true
+parquet_max_schemas = 10

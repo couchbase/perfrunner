@@ -191,7 +191,8 @@ def is_null(element) -> bool:
         return False if element else True
 
 
-def remove_nulls(d: dict) -> dict:
+def remove_nulls(d: Union[dict, Any]) -> Union[dict, Any]:
+    """Remove None-valued keys from a dict."""
     if not isinstance(d, dict):
         return d
     return {k: new_v for k, v in d.items() if not is_null(new_v := remove_nulls(v))}

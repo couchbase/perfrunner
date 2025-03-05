@@ -4,6 +4,7 @@ import json
 import os
 import random
 import time
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Callable, Literal, Optional, Union
 from urllib.parse import urlparse
@@ -19,6 +20,7 @@ from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import (
     get_cloud_storage_bucket_stats,
     pretty_dict,
+    remove_nulls,
 )
 from perfrunner.helpers.rest import (
     ANALYTICS_PORT,
@@ -280,7 +282,7 @@ class AnalyticsTest(PerfTest):
         return self.rest_session
 
     def exec_analytics_statement(
-        self, host: str, statement: str, *, verbose: bool = False
+        self, host: str, statement: str, *, verbose: bool = False, with_retry: bool = True
     ) -> requests.Response:
         """Execute an analytics statement."""
         if verbose:
@@ -292,9 +294,9 @@ class AnalyticsTest(PerfTest):
             plain_port=ANALYTICS_PORT,
             ssl_port=ANALYTICS_PORT_SSL,
         )
-        resp = self.rest.session_post(
-            self.long_query_session(), url=url, data={"statement": statement}
-        )
+
+        post_func = self.rest.session_post if with_retry else self.rest._session_post
+        resp = post_func(self.long_query_session(), url=url, data={"statement": statement})
 
         if verbose:
             logger.info(f"Result: {resp}")
@@ -768,66 +770,148 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryExternalTest):
         self.report_kpi(results)
 
 
+@dataclass(unsafe_hash=True)
+class CopyToParameters:
+    output_format: str
+    max_objects_per_file: Optional[str] = None
+    compression: Optional[str] = None
+    gzip_compression_level: Optional[str] = None
+
+    # Parquet specific options
+    row_group_size: Optional[str] = None
+    page_size: Optional[str] = None
+    max_schemas: Optional[int] = None
+
+    def __post_init__(self):
+        if str(self.compression).lower() == "none":
+            self.compression = None
+
+        if self.compression not in ("gz", "gzip"):
+            self.gzip_compression_level = None
+
+        if self.output_format != "parquet":
+            self.row_group_size = None
+            self.page_size = None
+            self.max_schemas = None
+
+    def to_dict(self) -> dict:
+        return remove_nulls(
+            {
+                "format": self.output_format,
+                "max-objects-per-file": self.max_objects_per_file,
+                "compression": self.compression,
+                "gzipCompressionLevel": self.gzip_compression_level,
+                "row-group-size": self.row_group_size,
+                "page-size": self.page_size,
+                "max-schemas": self.max_schemas,
+            }
+        )
+
+    def gen_output_path_prefix(self) -> str:
+        comp = (self.compression or "none") + (
+            f"-{self.gzip_compression_level}" if self.gzip_compression_level else ""
+        )
+        return "/".join(
+            filter(
+                None,
+                [
+                    f"mopf-{self.max_objects_per_file}",
+                    self.output_format,
+                    f"compression-{comp}",
+                    f"rgsize-{self.row_group_size}" if self.row_group_size else None,
+                    f"psize-{self.page_size}" if self.page_size else None,
+                    f"max-schemas-{self.max_schemas}" if self.max_schemas else None,
+                ],
+            )
+        )
+
+
 class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
-    @with_stats
-    def access(self):
-        copy_to_settings = self.test_config.columnar_copy_to_settings
-
-        with open(copy_to_settings.object_store_query_file, "r") as f:
-            queries = json.load(f)
-
-        obj_store_uri = self.cluster_spec.backup
-        obj_store_name = obj_store_uri.split("://")[1]
-
+    def gen_query_statement(
+        self, query_config: dict, obj_store_name: str, params: CopyToParameters, repeat: int = 0
+    ) -> str:
         query_template = (
             f"COPY {{}} TO `{obj_store_name}` AT `external_link` PATH ({{}}) {{}} {{}} {{}}"
         )
 
-        objects, size = get_cloud_storage_bucket_stats(obj_store_uri, aws_profile="default")
+        query_id = query_config["id"]
+        output_path_expr = f'"{params.gen_output_path_prefix()}/{query_id}-{repeat}"'
+        if output_path_exps := query_config.get("output_path_exps"):
+            output_path_expr += f", {', '.join(output_path_exps)}"
 
-        for fmt, mopf, (comp_type, comp_level) in copy_to_settings.all_param_combinations():
-            for query in queries:
-                comp = comp_type + (f"-{comp_level}" if comp_level else "")
-                output_path_prefix = f"\"mopf-{mopf}/{fmt}/compression-{comp}/{query['id']}\""
+        partition_clause = ""
+        if partition_exps := query_config.get("partition_exps"):
+            partition_clause = f"PARTITION BY {', '.join(partition_exps)}"
 
-                output_path_expr = output_path_prefix
-                if output_path_exps := query.get("output_path_exps"):
-                    output_path_expr += f", {', '.join(output_path_exps)}"
+        order_clause = ""
+        if order_exps := query_config.get("order_exps"):
+            order_clause = f"ORDER BY {', '.join(order_exps)}"
 
-                partition_clause = ""
-                if partition_exps := query.get("partition_exps"):
-                    partition_clause = f"PARTITION BY {', '.join(partition_exps)}"
+        over_clause = ""
+        if partition_clause or order_clause:
+            over_clause = f"OVER ({' '.join(filter(None, (partition_clause, order_clause)))})"
 
-                order_clause = ""
-                if order_exps := query.get("order_exps"):
-                    order_clause = f"ORDER BY {', '.join(order_exps)}"
+        schema_clause = ""
+        if params.output_format == "csv" or (
+            params.output_format == "parquet"
+            and not self.test_config.columnar_copy_to_settings.parquet_schema_inference
+        ):
+            obj_type_def = json.dumps(query_config["obj_type_def"]).replace('"', "")
+            schema_clause = f"TYPE ({obj_type_def})"
 
-                over_clause = ""
-                if partition_clause or order_clause:
-                    over_clause = (
-                        f"OVER ({' '.join(filter(None, (partition_clause, order_clause)))})"
-                    )
+        with_clause = f"WITH {json.dumps(params.to_dict())}"
 
-                schema_clause = ""
-                if fmt == "csv":
-                    obj_type_def = json.dumps(query["obj_type_def"]).replace('"', "")
-                    schema_clause = f"TYPE ({obj_type_def})"
+        return query_template.format(
+            query_config["source_def"],
+            output_path_expr,
+            over_clause,
+            schema_clause,
+            with_clause,
+        )
 
-                with_options = {"format": fmt, "max-objects-per-file": mopf}
-                if comp_type != "none":
-                    with_options["compression"] = comp_type
-                    if comp_level:
-                        with_options["gzipCompressionLevel"] = comp_level
+    def gen_all_queries(self, repeat: int = 0) -> dict[str, str]:
+        query_statements = {}
 
-                with_clause = f"WITH {json.dumps(with_options)}"
+        copy_to_settings = self.test_config.columnar_copy_to_settings
 
-                statement = query_template.format(
-                    query["source_def"], output_path_expr, over_clause, schema_clause, with_clause
+        with open(copy_to_settings.object_store_query_file, "r") as f:
+            query_configs = json.load(f)
+
+        obj_store_name = self.cluster_spec.backup.split("://")[1]
+
+        valid_param_combinations = set(
+            CopyToParameters(*p) for p in copy_to_settings.all_param_combinations
+        )
+
+        for params in valid_param_combinations:
+            for conf in query_configs:
+                query_id = f"{params.gen_output_path_prefix()}/{conf['id']}"
+                query_statements[query_id] = self.gen_query_statement(
+                    conf, obj_store_name, params, repeat
                 )
 
+        return query_statements
+
+    @with_stats
+    def access(self) -> dict[str, list[float]]:
+        obj_store_uri = self.cluster_spec.backup
+        objects, size = get_cloud_storage_bucket_stats(obj_store_uri, aws_profile="default")
+        query_times = defaultdict(list)
+
+        for i in range(self.test_config.columnar_copy_to_settings.query_loops):
+            for query_id, statement in self.gen_all_queries(repeat=i).items():
                 t0 = time.time()
-                resp = self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
+                resp = self.exec_analytics_statement(
+                    self.analytics_node, statement, verbose=True, with_retry=False
+                )
                 latency = time.time() - t0
+
+                if not resp.ok:
+                    logger.error(f"Query failed: {resp.text}")
+                    query_times[query_id].append(float("nan"))
+                    continue
+
+                query_times[query_id].append(latency)
 
                 logger.info(resp.json())
                 logger.info(f"client-side query response time (s): {latency}")
@@ -837,10 +921,12 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
                 )
                 if not (new_objects > objects and new_size > size):
                     logger.warning(
-                        "Cloud storage bucket object count and data size have not both increased. "
-                        "COPY TO statement has not written any data!"
+                        "Cloud storage bucket object count and data size have not "
+                        "both increased. COPY TO statement has not written any data!"
                     )
                 objects, size = new_objects, new_size
+
+        return query_times
 
     def run(self):
         random.seed(8095)
@@ -848,18 +934,22 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
         self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
-        # If object_store_import_datasets is empty, all pre-defined datasets will be imported
         datasets_to_import = [
-            d
-            for d in self.datasets
-            if d.name in self.test_config.columnar_settings.object_store_import_datasets
-        ]
+            DatasetDef(target, source)
+            for source, target in self.test_config.columnar_settings.object_store_import_datasets
+        ] or self.datasets
 
         copy_from_items, copy_from_time = self.copy_data_from_object_store(datasets_to_import)
         logger.info(f"Total items ingested using COPY FROM: {copy_from_items}")
         logger.info(f"Total data ingestion time using COPY FROM (s): {copy_from_time:.2f}")
 
-        self.access()
+        query_times = self.access()
+        logger.info(f"Raw query times (seconds): {pretty_dict(query_times)}")
+        summarised_times = {
+            query_id: {"mean": np.mean(latencies), "std": np.std(latencies)}
+            for query_id, latencies in query_times.items()
+        }
+        logger.info(f"Summarised query times (seconds): {pretty_dict(summarised_times)}")
 
 
 class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromObjectStoreTest):

@@ -38,4 +38,4 @@ object_store_file_formats = json, csv
 max_objects_per_files = 10000
 object_store_compressions = gzip
 gzip_compression_levels = 1, 6, 9
-object_store_query_file = tests/cloud/analytics/workload/ch2ppf_copy_to_s3_queries.json
+object_store_query_file = tests/cloud/analytics/workload/ch2ppf_copy_to_s3_csv_queries.json

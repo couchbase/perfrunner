@@ -16,8 +16,7 @@ from perfrunner.settings import REPO, ClusterSpec
 
 
 class Remote:
-
-    CLIENT_PROCESSES = 'celery', 'cbc-pillowfight', 'memcached', 'cblite'
+    CLIENT_PROCESSES = "celery", "cbc-pillowfight", "memcached", "cblite", "com.yahoo.ycsb", "tpcc"
 
     def __init__(self, cluster_spec: ClusterSpec):
         self.cluster_spec = cluster_spec
@@ -32,7 +31,13 @@ class Remote:
 
     @all_clients
     def terminate_client_processes(self):
-        run('killall -9 {}'.format(' '.join(self.CLIENT_PROCESSES)), quiet=True)
+        run(f"killall -9 {' '.join(self.CLIENT_PROCESSES)}", quiet=True)
+        # Kill the rest of client processes by pattern matching.
+        run(
+            f"kill -9 $(ps -eo pid,cmd | grep -E '{'|'.join(self.CLIENT_PROCESSES)}' "
+            "| awk '{print $1}')",
+            quiet=True,
+        )
 
     @all_clients
     def init_repo(self, worker_home: str, cherrypick: Optional[str] = None):

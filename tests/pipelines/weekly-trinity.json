@@ -86,5 +86,8 @@
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/mixed_multibucket/jts_fts_recall_accuracy_cohere_1M_1000queries.test", "groups": "P1"},
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/mixed_multibucket/jts_fts_recall_accuracy_openai_500K_1000queries.test", "groups": "P1"},
         {"job": "atlas-multiclient", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/mixed_multibucket/jts_fts_throughput_vector_search_1s_1c_openAI_5M_dataset.test", "groups": "P0"}
+    ],
+    "N1QL-SQL": [
+        {"job": "hebe_sql", "cluster": "hebe.spec", "test_config": "n1ql/n1ql_lat_sql.test", "groups": "P0"}
     ]
 }

@@ -53,9 +53,6 @@
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_flatten_overlap_gsi_moi_ok_1s_1c_1i.test", "groups": "P0"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q4_20M_unique_gsi_moi_ok_1s_1c_1i.test", "groups": "P0"}
     ],
-    "N1QL-SQL": [
-        {"job": "hebe_sql", "cluster": "hebe.spec", "test_config": "n1ql/n1ql_lat_sql.test", "groups": "P0"}
-    ],
     "GSI-Rebalance": [
         {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_20RR_1s_10c_2irebalance_out_partitioned.test", "groups": "P0"},
         {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_20RR_1s_10c_2irebalance_in_partitioned.test", "groups": "P0"},

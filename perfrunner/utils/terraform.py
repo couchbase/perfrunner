@@ -814,12 +814,12 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         while pending_clusters and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            resp = self.provisioned_api.get_clusters({'projectId': self.project_id, 'perPage': 100})
+            resp = self.provisioned_api.get_project_clusters(self.tenant_id, self.project_id)
             raise_for_status(resp)
 
             pending_clusters = []
-            for cluster in resp.json()['data'].get('items', []):
-                if (cluster_id := cluster['id']) in self.cluster_ids:
+            for cluster in resp.json().get("data", []):
+                if (cluster_id := cluster.get("data", {}).get("id")) in self.cluster_ids:
                     pending_clusters.append(cluster_id)
                     logger.info(f"Cluster {cluster_id} not destroyed yet")
 
@@ -991,9 +991,17 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
             statuses = []
             for cluster_id in pending_clusters:
-                status = self.provisioned_api.get_cluster_status(cluster_id).json().get('status')
+                status = (
+                    self.provisioned_api.get_cluster_internal(
+                        self.tenant_id, self.project_id, cluster_id
+                    )
+                    .json()
+                    .get("data", {})
+                    .get("status", {})
+                    .get("state")
+                )
                 logger.info('Cluster state for {}: {}'.format(cluster_id, status))
-                if status == 'deploymentFailed':
+                if status == "deployment_failed":
                     logger.error('Deployment failed for cluster {}. DataDog link for debugging: {}'
                                  .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
                     exit(1)
@@ -1012,18 +1020,22 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
     def destroy_cluster(self):
         for cluster_id in self.cluster_ids:
-            logger.info('Deleting Capella cluster {}...'.format(cluster_id))
-            resp = self.provisioned_api.delete_cluster(cluster_id)
+            logger.info(f"Deleting Capella cluster {cluster_id}...")
+            resp = self.provisioned_api.delete_cluster_internal(
+                self.tenant_id, self.project_id, cluster_id
+            )
             raise_for_status(resp)
-            logger.info('Capella cluster successfully queued for deletion.')
+            logger.info("Capella cluster successfully queued for deletion.")
 
     def get_available_cidr(self):
         resp = self.provisioned_api.get_deployment_options(self.tenant_id, self.csp)
         return resp.json().get('suggestedCidr')
 
-    def get_deployed_cidr(self, cluster_id):
-        resp = self.provisioned_api.get_cluster_info(cluster_id)
-        return resp.json().get('place', {}).get('CIDR')
+    def get_deployed_cidr(self, cluster_id: str) -> Optional[str]:
+        resp = self.provisioned_api.get_cluster_internal(
+            self.tenant_id, self.project_id, cluster_id
+        )
+        return resp.json().get("data", {}).get("cidr")
 
     def get_hostnames(self, cluster_id):
         resp = self.provisioned_api.get_nodes(tenant_id=self.tenant_id,

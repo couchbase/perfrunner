@@ -2539,7 +2539,13 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         """Return a job running status and its progress percentage."""
         cluster_id = self.hostname_to_cluster_id(host)
         # Cluster status should reach healthy for a complete deployment/rebalance tasks
-        status = self.dedicated_client.get_cluster_status(cluster_id).json().get("status")
+        status = (
+            self.dedicated_client.get_cluster_internal(self.tenant_id, self.project_id, cluster_id)
+            .json()
+            .get("data", {})
+            .get("status", {})
+            .get("state")
+        )
         is_running = status != "healthy"
         if not is_running:
             return is_running, None  # No job will be there, no need to check for progress

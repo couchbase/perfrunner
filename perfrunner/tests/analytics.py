@@ -3,6 +3,7 @@ import itertools
 import json
 import os
 import random
+import re
 import time
 from dataclasses import dataclass
 from typing import Callable, Literal, Optional, Union
@@ -1194,11 +1195,16 @@ class CH2Test(AnalyticsTest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
         self.schema = self.test_config.ch2_settings.schema
         self.dataset_names = (
             self.FLAT_DATASETS if self.schema is CH2Schema.CH2PPF else self.DATASETS
         )
+        self.analytics_index_def_statements = []
+        if self.test_config.ch2_settings.analytics_index_def_file:
+            with open(self.test_config.ch2_settings.analytics_index_def_file, "r") as f:
+                for statement in f.read().split(";"):
+                    if cleaned := re.sub(r"\s+", " ", statement.strip()):
+                        self.analytics_index_def_statements.append(cleaned)
 
     @property
     def datasets(self) -> list[DatasetDef]:
@@ -1266,9 +1272,9 @@ class CH2Test(AnalyticsTest):
             )
 
     def create_analytics_indexes(self):
-        if self.analytics_statements:
+        if statements := self.analytics_index_def_statements:
             logger.info('Creating analytics indexes')
-            for statement in self.analytics_statements:
+            for statement in statements:
                 self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
 
     def create_gsi_indexes(self):

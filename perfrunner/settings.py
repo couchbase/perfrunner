@@ -3175,7 +3175,6 @@ class CH2:
     WARMUP_DURATION_SECS = 0
     DURATION_SECS = 0
     WORKLOAD = "ch2_mixed"
-    ANALYTICS_STATEMENTS = ""
     USE_BACKUP = "true"
     LOAD_TCLIENTS = 0
     LOAD_TASKS = 1
@@ -3222,13 +3221,7 @@ class CH2:
         self.orders_extra_fields = int(options.get("orders_extra_fields", self.ORDERS_EXTRA_FIELDS))
         self.item_extra_fields = int(options.get("item_extra_fields", self.ITEM_EXTRA_FIELDS))
 
-        self.raw_analytics_statements = options.get(
-            "analytics_statements", self.ANALYTICS_STATEMENTS
-        )
-        if self.raw_analytics_statements:
-            self.analytics_statements = self.raw_analytics_statements.strip().split("\n")
-        else:
-            self.analytics_statements = ""
+        self.analytics_index_def_file = options.get("analytics_index_def_file")
 
         self.starting_warehouse = 1
 

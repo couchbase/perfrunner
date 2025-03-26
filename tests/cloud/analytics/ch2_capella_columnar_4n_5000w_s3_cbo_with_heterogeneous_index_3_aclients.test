@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTest
 
 [showfast]
-title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Indexes, 3 aclients
+title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Heterogeneous Indexes, 3 aclients
 component = analyticscloud
 category = ch2
 sub_category = {provider}
@@ -15,10 +15,12 @@ server_processes = java
 enable_n2n_encryption = all
 
 [analytics]
-external_dataset_type = gcs
+external_dataset_type = s3
+external_dataset_region = us-east-1
 external_bucket = analytics-ch2-5000w-gz
 external_file_format = json
 external_file_include = gz
+aws_credential_path = /root/.ssh/
 use_cbo = true
 cbo_sample_size = high
 
@@ -33,5 +35,5 @@ warmup_duration = 0
 workload = ch2_analytics
 use_backup = false
 create_gsi_index = false
-analytics_index_def_file = tests/analytics/config/ch2_analytics_secondary_indexes.sql
+analytics_index_def_file = tests/analytics/config/ch2_analytics_heterogeneous_secondary_indexes.sql
 unoptimized_queries = true

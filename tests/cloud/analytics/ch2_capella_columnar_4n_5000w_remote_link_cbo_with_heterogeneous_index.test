@@ -2,10 +2,11 @@
 test = perfrunner.tests.analytics.CH2CapellaColumnarRemoteLinkTest
 
 [showfast]
-title = CH2 1000W, 4A, c=11 (remote collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Indexes
+title = CH2 5000W, 4A, c=11 (remote collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Heterogeneous Indexes
 component = analyticscloud
 category = ch2
 sub_category = {provider}
+orderby = ch2_05000_r_04n_a01_cbo_idx
 
 [stats]
 server_processes = java
@@ -29,7 +30,7 @@ obj_region = us-east-1
 aws_credential_path = /root/.ssh
 
 [restore]
-backup_storage = s3://analytics-ch2-1000w
+backup_storage = s3://analytics-ch2-5000w
 backup_repo = ch2
 threads = 8
 map_data = bench.ch2=bench.ch2
@@ -40,7 +41,7 @@ use_cbo = true
 cbo_sample_size = high
 
 [ch2]
-warehouses = 1000
+warehouses = 5000
 aclients = 1
 tclients = 0
 load_tclients = 48
@@ -51,5 +52,5 @@ warmup_duration = 0
 workload = ch2_analytics
 use_backup = true
 create_gsi_index = false
-analytics_index_def_file = tests/analytics/config/ch2_analytics_secondary_indexes.sql
+analytics_index_def_file = tests/analytics/config/ch2_analytics_heterogeneous_secondary_indexes.sql
 unoptimized_queries = true

@@ -54,11 +54,4 @@ warmup_iterations = 1
 duration = 0
 warmup_duration = 0
 workload = ch2_mixed
-analytics_statements =
-    CREATE INDEX customer_c_balance ON customer(c_balance:DOUBLE);
-    CREATE INDEX orders_entry_d ON orders(o_entry_d:STRING);
-    CREATE INDEX orderline_i_id ON orders(UNNEST o_orderline SELECT ol_i_id:BIGINT) EXCLUDE UNKNOWN KEY;
-    CREATE INDEX orderline_delivery_d ON orders(UNNEST o_orderline SELECT ol_delivery_d:STRING) EXCLUDE UNKNOWN KEY;
-
-[clients]
-python_client = 4.0.2
+analytics_index_def_file = tests/analytics/config/ch2_analytics_secondary_indexes.sql

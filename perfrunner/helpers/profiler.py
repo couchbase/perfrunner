@@ -158,6 +158,16 @@ class GoDebugProfiler (ProfilerBase):
                 self.save(host, service, profile, response.content)
 
             self.copy_profiles(host=host)
+
+        elif self.cluster_spec.capella_infrastructure:
+            endpoint = self.ENDPOINTS[profile]
+            port = 10000 + self.DEBUG_PORTS[service]
+            logger.info('Collecting {} profile on {}'.format(profile, host))
+            url = endpoint.format(str(port))
+            url = url.replace("http://127.0.0.1", f"https://{host}")
+            response = self.rest.get(url=url)
+            self.save(host, service, profile, response.content)
+
         else:
             endpoint = self.ENDPOINTS[profile]
             port = self.DEBUG_PORTS[service]

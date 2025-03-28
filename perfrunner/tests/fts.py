@@ -280,6 +280,9 @@ class FTSTest(JTSTest):
                                                                                  None)
 
                 for scope_name in scope_names:
+                    if self.jts_access.skip_indexing_collection is not None:
+                        collection_map[bucket_name][scope_name].pop(
+                            self.jts_access.skip_indexing_collection, None)
                     collection_name_list = list(collection_map[bucket_name][scope_name].keys())
                     collection_list = self.collection_split(collection_map, bucket_name, scope_name)
                     index_type_mapping_per_group = self.get_collection_index_def(collection_list,

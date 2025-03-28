@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.fts.FTSIndexTest
+
+[showfast]
+title = Index build time, initial (sec), Synonym Dataset Term, No Synonym Mapping, wiki 1M, 3 node, FTS, s=1 c=1
+component = jts
+category = 1M
+sub_category = Index
+orderby = q0b00000010
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[collection]
+config = collections/1bucket_1scope_2collection_fts_synonyms.json
+
+[load]
+items = 1000000
+
+[jts]
+jts_repo_branch = multi_query_support
+logging_method = bucket_wise
+test_collection_query_mode = default
+index_groups = 1
+indexes_per_group = 1
+jts_instances = 1
+test_duration = 600
+test_total_docs = 1000000
+test_query_workers = 1
+test_kv_workers = 0
+test_kv_throughput_goal = 0
+test_data_file = ../tests/fts/data/benchmark/synonym_keys.txt
+test_driver = couchbase
+test_stats_limit = 1000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_query_type = term
+test_query_limit = 10
+test_query_field = text
+test_worker_type = validatedLatency
+skip_indexing_collection = c2
+couchbase_index_name = perf_fts_index
+couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
+
+[restore]
+backup_storage =  /fts/backup/fts_1M_synonym_dataset
+backup_repo =  fts_1M_synonym_dataset
+map_data = bucket-1.s1=bucket-1.s1
+
+[profiling]
+services = fts

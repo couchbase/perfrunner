@@ -262,10 +262,10 @@ class PerfTest:
         )
 
     def fts_collections_restore(self):
-        restore_mapping = None
+        restore_mapping = self.test_config.restore_settings.map_data
         collection_map = self.test_config.collection.collection_map
         for target in self.target_iterator:
-            if not collection_map.get(
+            if restore_mapping is None and not collection_map.get(
                     target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
                 restore_mapping = \
                     "{0}._default._default={0}.scope-1.collection-1"\

@@ -2101,6 +2101,7 @@ class JTSAccessSettings(PhaseSettings):
         self.aggregation_buffer_ms = options.get("aggregation_buffer_ms", "1000")
         self.max_segment_size = options.get("max_segment_size", None)
         self.vector_index_optimized_for = options.get("vector_index_optimized_for", None)
+        self.skip_indexing_collection = options.get("skip_indexing_collection", None)
 
     def __str__(self) -> str:
         return str(self.__dict__)

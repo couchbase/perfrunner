@@ -1210,6 +1210,10 @@ class BucketSettings:
     HISTORY_SECONDS = 0
     HISTORY_BYTES = 0
     MAX_TTL = 0
+    ENCRYPTION_AT_REST = "false"
+    DEK_INTERVAL_SECS = 30 * 24 * 60 * 60
+    DEK_LIFETIME_SECS = 365 * 24 * 60 * 60
+    MAX_DEKS = 50
 
     def __init__(self, options: dict):
         self.password = options.get('password', self.PASSWORD)
@@ -1259,6 +1263,15 @@ class BucketSettings:
         self.history_bytes = int(options.get('history_bytes', self.HISTORY_BYTES))
 
         self.max_ttl = int(options.get('max_ttl', self.MAX_TTL))
+
+        self.encryption_at_rest = maybe_atoi(
+            options.get("encryption_at_rest", self.ENCRYPTION_AT_REST)
+        )
+        self.dek_interval_secs = int(
+            options.get("dek_rotation_interval_secs", self.DEK_INTERVAL_SECS)
+        )
+        self.dek_lifetime_secs = int(options.get("dek_lifetime_secs", self.DEK_LIFETIME_SECS))
+        self.max_deks = int(options.get("max_deks", self.MAX_DEKS))
 
 
 class CollectionSettings:

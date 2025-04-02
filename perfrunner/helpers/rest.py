@@ -429,6 +429,62 @@ class DefaultRestHelper(RestBase):
                 replication_id = task['settingsURI']
         return replication_id.split('/')[-1]
 
+    def bypass_encryption_config(self, host: str):
+        logger.info("Enabling encryption config restrictions bypass")
+        self.run_diag_eval(host, 'ns_config:set(test_bypass_encr_cfg_restrictions, true).')
+
+    def create_encryption_key(self, host: str, name: str, key_type: str, data: dict) -> str:
+        payload = {
+            "type": key_type,
+            "usage": ["bucket-encryption", "config-encryption"],
+            "data": data,
+            "name": name,
+        }
+        logger.info(f"Creating encryption key with payload: {pretty_dict(payload)}")
+        url = self._get_api_url(host=host, path="settings/encryptionKeys")
+        secret_id = self.post(url=url, data=json.dumps(payload)).json()["id"]
+        logger.info(f"Created encryption key with ID: {secret_id}")
+        return secret_id
+
+    def rest_encrypt_bucket(self, host: str, bucket: str, secret_id: str):
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
+        data = {"encryptionAtRestKeyId": secret_id}
+        logger.info(f"Encrypting bucket {bucket} with key {secret_id}")
+        self.post(url=url, data=data)
+
+    def get_bucket_uuid(self, host: str, bucket: str) -> Optional[str]:
+        logger.info(f"Getting UUID for bucket {bucket}")
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
+        bucket_uuid = self.get(url=url).json().get("uuid")
+        logger.info(f"UUID for bucket {bucket}: {bucket_uuid}")
+        return bucket_uuid
+
+    def set_max_deks(self, host: str, bucket: str, max_deks: int):
+        if (bucket_uuid := self.get_bucket_uuid(host, bucket)) is None:
+            logger.interrupt(f"UUID for bucket {bucket} not found. Cannot set max DEKs.")
+            return
+
+        logger.info(f"Setting max DEKs for bucket {bucket}: {max_deks}")
+        dek_kind = f'{{bucketDek, <<"{bucket_uuid}">>}}'
+        self.run_diag_eval(
+            host,
+            f"ns_config:set({{cb_cluster_secrets, {{max_dek_num, {dek_kind}}}}}, {max_deks}).",
+        )
+
+    def configure_dek(self, host: str, bucket: str, interval_secs: int, lifetime_secs: int):
+        if interval_secs <= 0 or lifetime_secs <= 0:
+            raise ValueError("DEK interval and lifetime must be positive.")
+
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
+        data = {
+            "encryptionAtRestDekRotationInterval": interval_secs,
+            "encryptionAtRestDekLifetime": lifetime_secs,
+        }
+        logger.info(
+            f"Setting DEK rotation settings for bucket {bucket} (in seconds): {pretty_dict(data)}"
+        )
+        self.post(url=url, data=data)
+
     def delete_bucket(self, host: str, name: str):
         logger.info('Deleting new bucket: {}'.format(name))
         self.delete(url=self._get_api_url(host=host, path='pools/default/buckets/{}'.format(name)))

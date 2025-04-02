@@ -1,6 +1,7 @@
 import random
 import re
 import time
+from datetime import datetime, timedelta, timezone
 from typing import Iterable, List, Optional
 from uuid import uuid4
 
@@ -345,20 +346,40 @@ class DefaultClusterManager(ClusterManagerBase):
         for master in self.cluster_spec.masters:
             self.rest.increase_bucket_limit(master, num_buckets)
 
+    def create_encryption_key(self, host: str) -> str:
+        rot_interval = 60
+        data = {
+            "autoRotation": True,
+            "rotationIntervalInDays": rot_interval,
+            "nextRotationTime": (
+                datetime.now(timezone.utc).astimezone() + timedelta(days=rot_interval)
+            ).isoformat(),
+        }
+        return self.rest.create_encryption_key(
+            host, "CBSM Secret", "cb-server-managed-aes-key-256", data
+        )
+
     def create_buckets(self):
         mem_quota = self.test_config.cluster.mem_quota
 
         if self.test_config.cluster.num_buckets > 7:
             self.increase_bucket_limit(self.test_config.cluster.num_buckets + 3)
 
-        mem_quota -= (self.test_config.cluster.eventing_metadata_bucket_mem_quota +
-                      self.test_config.cluster.eventing_bucket_mem_quota +
-                      self.test_config.cluster.conflict_bucket_mem_quota
+        mem_quota -= (
+            self.test_config.cluster.eventing_metadata_bucket_mem_quota
+            + self.test_config.cluster.eventing_bucket_mem_quota
+            + self.test_config.cluster.conflict_bucket_mem_quota
         )
 
         per_bucket_quota = mem_quota // self.test_config.cluster.num_buckets
 
         for master in self.cluster_spec.masters:
+            secret_id = (
+                self.create_encryption_key(master)
+                if self.test_config.bucket.encryption_at_rest
+                else None
+            )
+
             for bucket_name in self.test_config.buckets:
                 self.rest.create_bucket(
                     host=master,
@@ -376,6 +397,16 @@ class DefaultClusterManager(ClusterManagerBase):
                     history_bytes=self.test_config.bucket.history_bytes,
                     max_ttl=self.test_config.bucket.max_ttl,
                 )
+
+                if secret_id is not None:
+                    self.rest.rest_encrypt_bucket(master, bucket_name, secret_id)
+                    self.rest.configure_dek(
+                        master,
+                        bucket_name,
+                        self.test_config.bucket.dek_interval_secs,
+                        self.test_config.bucket.dek_lifetime_secs,
+                    )
+                    self.rest.set_max_deks(master, bucket_name, self.test_config.bucket.max_deks)
 
     def create_eventing_buckets(self):
         if not self.test_config.cluster.eventing_bucket_mem_quota:
@@ -588,6 +619,11 @@ class DefaultClusterManager(ClusterManagerBase):
             for group in groups:
                 if group not in existing_server_groups:
                     self.rest.create_server_group(self.master_node, group)
+
+    def bypass_encryption_config(self):
+        if self.test_config.bucket.encryption_at_rest:
+            self.remote.enable_nonlocal_diag_eval()
+            self.rest.bypass_encryption_config(self.master_node)
 
     def change_group_membership(self):
         if self.cluster_spec.server_group_map:

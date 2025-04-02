@@ -1,0 +1,60 @@
+[test_case]
+test = perfrunner.tests.magma.EnhancedDurabilityLatencyDGMTest
+
+[showfast]
+title = latency (ms), 4 nodes, 1 bucket x 50M x 1KB, 0/100 R/W, 500 ops/sec, Durability Persist Majority, 100%% Resident Ratio, Magma, Native Encryption
+component = hidd
+category = durability
+sub_category = Latency
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+kernel_mem_limit = 60G
+kernel_mem_limit_services = kv
+enable_cpu_cores = false
+
+[bucket]
+replica_number = 2
+backend_storage = magma
+eviction_policy = fullEviction
+encryption_at_rest = true
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 50000000
+size = 1024
+workers = 128
+key_fmtr = hex
+doc_gen = large
+
+[extra_access]
+run_extra_access = true
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 50000000
+ops = 50000000
+time = 86400
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 500
+items = 50000000
+workers = 128
+time = 1800
+durability = 3

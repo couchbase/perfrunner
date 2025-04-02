@@ -112,6 +112,9 @@ def main():
         cm.set_columnar_blob_storage()
         cm.set_columnar_storage_partitions()
 
+    if test_config.bucket.encryption_at_rest:
+        cm.bypass_encryption_config()
+
     cm.disable_wan()
     cm.clear_login_history()
     cm.tune_memory_settings()

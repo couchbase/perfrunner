@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1qlVectorLatencyThroughputPreparedStatementFilterTest
 
 [showfast]
-title = Vector Search, 1 bucket, SIFT 100M 1 Filter doc 128dims, no replica, 1s 1c
+title = Vector Search, 1 bucket, SIFT 100M, 1 %% selectivity doc 128dims, no replica, 1s 1c
 component = n1ql
 category = vector
 sub_category = Plasma
@@ -10,8 +10,11 @@ sub_category = Plasma
 [cluster]
 mem_quota = 100000
 index_mem_quota = 100000
-initial_nodes = 6
+initial_nodes = 4
 num_buckets = 1
+online_cores = 16
+kernel_mem_limit = 128G
+kernel_mem_limit_services = kv,index
 
 [bucket]
 replica_number = 0
@@ -62,7 +65,7 @@ fields = composite
 
 [secondary]
 indexer.settings.storage_mode = plasma
-vector_scan_probes = 250
+vector_scan_probes = 125
 indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_default.json
 vector_dimension = 128
 vector_filter_percentage = 1

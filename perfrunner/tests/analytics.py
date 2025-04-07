@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Callable, Literal, Optional, Union
 from urllib.parse import urlparse
 
+import numpy as np
 import requests
 from celery import group
 from requests_toolbelt.adapters import socket_options
@@ -403,6 +404,7 @@ class AnalyticsTest(PerfTest):
             map_data=self.test_config.restore_settings.map_data,
             encrypted=self.test_config.restore_settings.encrypted,
             passphrase=self.test_config.restore_settings.passphrase,
+            include_data=self.test_config.restore_settings.include_data,
         )
 
     def restore_data(self):
@@ -446,6 +448,14 @@ class AnalyticsTest(PerfTest):
 
         blob_storage_scheme = analytics_settings.get("blobStorageScheme")
         get_cloud_storage_bucket_stats(f"{blob_storage_scheme}://{bucket_name}")
+
+    def get_dataset_items(self, dataset: str) -> int:
+        logger.info(f"Getting number of items in dataset {dataset}")
+        statement = f"SELECT COUNT(*) from {sqlpp_escape(dataset)};"
+        result = self.exec_analytics_statement(self.analytics_node, statement)
+        num_items = result.json()["results"][0]["$1"]
+        logger.info(f"Number of items in dataset {dataset}: {num_items}")
+        return num_items
 
 
 class BigFunTest(AnalyticsTest):
@@ -507,14 +517,6 @@ class BigFunTest(AnalyticsTest):
             self.monitor.monitor_data_synced(
                 self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
             )
-
-    def get_dataset_items(self, dataset: str):
-        logger.info('Get number of items in dataset {}'.format(dataset))
-        statement = "SELECT COUNT(*) from `{}`;".format(dataset)
-        result = self.exec_analytics_statement(self.analytics_node, statement)
-        num_items = result.json()['results'][0]['$1']
-        logger.info("Number of items in dataset {}: {}".format(dataset, num_items))
-        return num_items
 
 
 class BigFunSyncTest(BigFunTest):
@@ -1200,9 +1202,14 @@ class CH2Test(AnalyticsTest):
 
     @property
     def datasets(self) -> list[DatasetDef]:
+        dataset_names = self.dataset_names
+        if self.test_config.ch2_settings.use_backup:
+            dataset_names = [
+                coll_string.split(".")[-1]
+                for coll_string in self.test_config.restore_settings.include_data.split(",")
+            ]
         return [
-            DatasetDef(name, f"{self.BUCKET}.{self.schema.value}.{name}")
-            for name in self.dataset_names
+            DatasetDef(name, f"{self.BUCKET}.{self.schema.value}.{name}") for name in dataset_names
         ]
 
     @property
@@ -1921,6 +1928,190 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
                     if not self.cluster.get_msk_connect_connector_arns():
                         logger.warn('Failed to get Kafka Connect connector ARNs')
                 self.disconnect_link()
+
+
+class CH2ColumnarStandaloneDatasetTruncateTest(CH2ColumnarStandaloneDatasetTest):
+    @timeit
+    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []):
+        AnalyticsTest.copy_data_from_object_store(self, datasets)
+
+    def ingest_dataset(self, dataset: DatasetDef):
+        ingest_time = self.copy_data_from_object_store([dataset])
+        self.get_dataset_items(dataset.name)
+        self.timings["ingest"][dataset.name].append(ingest_time)
+
+    def empty_dataset(
+        self,
+        dataset: DatasetDef,
+        statements: list[str],
+        op: Literal["truncate", "delete", "recreate"],
+    ):
+        t0 = time.time()
+        for statement in statements:
+            st0 = time.time()
+            self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
+            logger.info(f"Statement execution time (s): {time.time() - st0:.2f}")
+        empty_time = time.time() - t0
+        self.timings[op][dataset.name].append(empty_time)
+
+        num_items = self.get_dataset_items(dataset.name)
+        if num_items != 0:
+            logger.interrupt(
+                f"Failed to empty dataset {dataset.name} ({op}): {num_items} items left."
+            )
+
+    def truncate_dataset(self, dataset: DatasetDef):
+        statement = f"TRUNCATE DATASET {sqlpp_escape(dataset.name)}"
+        self.empty_dataset(dataset, [statement], "truncate")
+
+    def delete_from_dataset(self, dataset: DatasetDef):
+        statement = f"DELETE FROM {sqlpp_escape(dataset.name)}"
+        self.empty_dataset(dataset, [statement], "delete")
+
+    def recreate_dataset(self, dataset: DatasetDef):
+        statements = [
+            f"DROP DATASET {sqlpp_escape(dataset.name)}",
+            dataset.create_standalone_statement(),
+        ]
+        self.empty_dataset(dataset, statements, "recreate")
+
+    @with_stats
+    def access(self, datasets: list[DatasetDef]):
+        for _ in range(3):
+            for d in datasets:
+                self.ingest_dataset(d)
+                self.truncate_dataset(d)
+
+                self.ingest_dataset(d)
+                self.delete_from_dataset(d)
+
+                self.ingest_dataset(d)
+                self.recreate_dataset(d)
+
+        logger.info(f"Raw timings: {pretty_dict(self.timings)}")
+
+    def summarize_timings(self):
+        summary_timings = {
+            op: {
+                dname: {"mean": np.mean(values), "std": np.std(values)}
+                for dname, values in op_timings.items()
+            }
+            for op, op_timings in self.timings.items()
+        }
+        logger.info(f"Summarized timings: {pretty_dict(summary_timings)}")
+
+    def run(self):
+        self.create_external_link()
+        self.create_standalone_datasets(verbose=True)
+
+        self.create_analytics_indexes()
+
+        # If object_store_import_datasets is empty, all pre-defined datasets will be imported
+        datasets_to_import = [
+            d
+            for d in self.datasets
+            if d.name in self.test_config.columnar_settings.object_store_import_datasets
+        ]
+
+        self.timings = {
+            op: {d.name: [] for d in datasets_to_import}
+            for op in ["ingest", "truncate", "delete", "recreate"]
+        }
+
+        self.access(datasets_to_import)
+        self.summarize_timings()
+
+
+class CH2CapellaColumnarRemoteLinkTruncateTest(
+    CH2CapellaColumnarRemoteLinkTest, CH2ColumnarStandaloneDatasetTruncateTest
+):
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        return CH2CapellaColumnarRemoteLinkTest.datasets.fget(self)
+
+    def empty_dataset(
+        self,
+        dataset: DatasetDef,
+        statements: list[str],
+        op: Literal["truncate", "recreate"],
+    ):
+        bucket, scope, coll = dataset.source.split(".")
+
+        t0 = time.time()
+        for statement in statements:
+            st0 = time.time()
+            self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
+            logger.info(f"Statement execution time (s): {time.time() - st0:.2f}")
+        empty_time = time.time() - t0
+        self.timings[op][dataset.name].append(empty_time)
+
+        self.monitor.monitor_data_synced(
+            self.data_node,
+            bucket,
+            self.test_config.bucket.replica_number,
+            self.analytics_node,
+            self.test_config.access_settings.sql_suite,
+            scope,
+            coll,
+        )
+        self.timings["ingest"][dataset.name].append(time.time() - t0)
+
+    def recreate_dataset(self, dataset: DatasetDef):
+        statements = [
+            f"DROP DATASET {sqlpp_escape(dataset.name)}",
+            dataset.create_at_link_statement(self.analytics_link, self.storage_format),
+        ]
+        self.empty_dataset(dataset, statements, "recreate")
+
+    @with_stats
+    def access(self):
+        for _ in range(3):
+            for d in self.datasets:
+                self.truncate_dataset(d)
+                self.recreate_dataset(d)
+
+        logger.info(f"Raw timings: {pretty_dict(self.timings)}")
+
+    def run(self):
+        instance_id = self.rest.instance_ids[0]
+        self.rest.create_capella_remote_link(
+            instance_id, self.analytics_link, self.cluster_spec.capella_cluster_ids[0]
+        )
+        self.monitor.wait_for_columnar_remote_link_ready(
+            instance_id, self.analytics_link, timeout_secs=1200
+        )
+        self.disconnect_link()
+
+        if self.test_config.analytics_settings.ingest_during_load:
+            self.create_datasets_at_link()
+            self.create_analytics_indexes()
+            self.connect_link()
+
+        if self.test_config.ch2_settings.use_backup:
+            self.restore_data()
+        else:
+            self.init_ch2_repo()
+            self.load_ch2()
+
+        if not self.test_config.analytics_settings.ingest_during_load:
+            # Only wait for the KV cluster
+            self.wait_for_persistence()
+            sync_time = self.sync()
+            self.report_sync_kpi(sync_time)
+        else:
+            bucket_replica = self.test_config.bucket.replica_number
+            sql_suite = self.test_config.access_settings.sql_suite
+            for bucket in self.test_config.buckets:
+                self.num_items += self.monitor.monitor_data_synced(
+                    self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
+                )
+
+        self.timings = {
+            op: {d.name: [] for d in self.datasets} for op in ["ingest", "truncate", "recreate"]
+        }
+
+        self.access()
+        self.summarize_timings()
 
 
 class CH3Test(CH2Test):

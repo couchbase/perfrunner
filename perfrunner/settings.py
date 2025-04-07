@@ -2135,6 +2135,7 @@ class RestoreSettings:
         self.import_file = options.get('import_file', self.IMPORT_FILE)
         self.threads = options.get('threads', self.THREADS)
         self.map_data = options.get('map_data', self.MAP_DATA)
+        self.include_data = options.get("include_data", None)
         self.use_tls = int(options.get('use_tls', self.USE_TLS))
         self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
         self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)

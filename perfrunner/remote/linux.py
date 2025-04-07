@@ -1057,24 +1057,63 @@ class RemoteLinux(Remote):
         run(cmd, warn_only=True)
 
     @master_client
-    def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,
-                archive: str = '', repo: str = 'default', obj_staging_dir: Optional[str] = None,
-                obj_region: Optional[str] = None, obj_access_key_id: Optional[str] = None,
-                use_tls: bool = False, map_data: str = None, encrypted: bool = False,
-                passphrase: str = 'couchbase', filter_keys=None):
-        logger.info('Restore from {}'.format(archive or cluster_spec.backup))
+    def restore(
+        self,
+        master_node: str,
+        cluster_spec: ClusterSpec,
+        threads: int,
+        worker_home: str,
+        archive: str = "",
+        repo: str = "default",
+        obj_staging_dir: Optional[str] = None,
+        obj_region: Optional[str] = None,
+        obj_access_key_id: Optional[str] = None,
+        use_tls: bool = False,
+        map_data: Optional[str] = None,
+        encrypted: bool = False,
+        passphrase: str = "couchbase",
+        filter_keys: Optional[str] = None,
+        include_data: Optional[str] = None,
+    ):
+        logger.info(f"Restore from {archive or cluster_spec.backup}")
 
-        self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home,
-                                 archive, repo, obj_staging_dir, obj_region, obj_access_key_id,
-                                 use_tls, map_data, encrypted, passphrase, filter_keys)
+        self.cbbackupmgr_restore(
+            master_node,
+            cluster_spec,
+            threads,
+            worker_home,
+            archive,
+            repo,
+            obj_staging_dir,
+            obj_region,
+            obj_access_key_id,
+            use_tls,
+            map_data,
+            encrypted,
+            passphrase,
+            filter_keys,
+            include_data,
+        )
 
     @master_client
-    def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
-                            worker_home: str, archive: str = '', repo: str = 'default',
-                            obj_staging_dir: Optional[str] = None, obj_region: Optional[str] = None,
-                            obj_access_key_id: Optional[str] = None, use_tls: bool = False,
-                            map_data: Optional[str] = None, encrypted: bool = False,
-                            passphrase: str = 'couchbase', filter_keys: str = None):
+    def cbbackupmgr_restore(
+        self,
+        master_node: str,
+        cluster_spec: ClusterSpec,
+        threads: int,
+        worker_home: str,
+        archive: str = "",
+        repo: str = "default",
+        obj_staging_dir: Optional[str] = None,
+        obj_region: Optional[str] = None,
+        obj_access_key_id: Optional[str] = None,
+        use_tls: bool = False,
+        map_data: Optional[str] = None,
+        encrypted: bool = False,
+        passphrase: str = "couchbase",
+        filter_keys: Optional[str] = None,
+        include_data: Optional[str] = None,
+    ):
         restore_to_capella = cluster_spec.capella_infrastructure
         use_tls = use_tls or restore_to_capella
 
@@ -1101,6 +1140,7 @@ class RemoteLinux(Remote):
                 f"--passphrase '{passphrase}'" if encrypted else None,
                 f'--filter-keys "{filter_keys}"' if filter_keys else None,
                 "--no-progress-bar --purge --disable-gsi-indexes --disable-ft-indexes",
+                f"--include-data {include_data}" if include_data else None,
             ]
 
             cmd = "./opt/couchbase/bin/cbbackupmgr restore --force-updates " + " ".join(

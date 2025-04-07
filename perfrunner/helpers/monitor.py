@@ -971,7 +971,9 @@ class Monitor:
         bucket: str,
         bucket_replica: int,
         analytics_node: str,
-        sql_suite: str = None,
+        sql_suite: Optional[str] = None,
+        scope: Optional[str] = None,
+        coll: Optional[str] = None,
     ) -> int:
         logger.info('Waiting for data to be synced from {}'.format(data_node))
         time.sleep(self.MONITORING_DELAY * 3)
@@ -979,7 +981,11 @@ class Monitor:
         analytics_node_version = misc.create_build_tuple(self.rest.get_version(analytics_node))
         is_columnar = self.rest.is_columnar(analytics_node)
 
-        num_items = self._get_num_items(data_node, bucket, bucket_replica)
+        if scope:
+            num_items = self._get_num_items_scope_and_collection(data_node, bucket, scope, coll)
+        else:
+            num_items = self._get_num_items(data_node, bucket, bucket_replica)
+
         while True:
             if (analytics_node_version > (8, 0, 0, 0)) or (
                 is_columnar and analytics_node_version >= (1, 0, 1, 0)

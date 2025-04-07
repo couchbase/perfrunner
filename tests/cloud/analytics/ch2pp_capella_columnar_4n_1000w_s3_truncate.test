@@ -1,0 +1,29 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTruncateTest
+
+[showfast]
+title = TRUNCATE, CH2++0 1000W, 4A, c=11 (standalone collections)
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+initial_nodes = 4
+enable_n2n_encryption = all
+
+[analytics]
+external_dataset_type = s3
+external_dataset_region = us-east-1
+external_bucket = analytics-ch2pp0-1000w-gz
+external_file_format = json
+external_file_include = gz
+aws_credential_path = /root/.ssh/
+
+[ch2]
+schema = ch2pp
+
+[columnar]
+object_store_import_datasets = customer, orders, stock

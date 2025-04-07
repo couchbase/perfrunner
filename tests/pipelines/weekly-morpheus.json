@@ -34,7 +34,7 @@
         {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/rebalance/secondary_scan100M_plasma_1000_indexes_dynamic_services_rebalance_remove.test", "groups": "P0"}
     ],
     "GSI": [
-        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim.test", "groups": "P0"},
-        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_1Filter.test", "groups": "P0"}
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_1Filter.test", "groups": "P0"}
     ]
 }

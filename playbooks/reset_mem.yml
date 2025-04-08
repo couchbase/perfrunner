@@ -7,8 +7,9 @@
 
   tasks:
   - name: removing custom systemd service configuration
-    file: path=/etc/systemd/system/couchbase-server.service.d
-    state: absent
+    file:
+      path: /etc/systemd/system/couchbase-server.service.d
+      state: absent
 
   - name: checking if there are custom memory settings
     shell: grep -E 'mem=[0-9]+[kmgKMG]' {{ grub_defaults }}

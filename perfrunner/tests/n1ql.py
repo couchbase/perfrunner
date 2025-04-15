@@ -1871,6 +1871,7 @@ class N1qlVectorLatencyThroughputPreparedStatementFilterTest(
         access_settings.n1ql_workers = 0
         access_settings.filtering_percentage = \
             int(self.test_config.gsi_settings.vector_filter_percentage)
+        access_settings.vector_query_map = self.test_config.index_settings.vector_query_map
         if access_settings.workers > 0:
             PerfTest.access(self, settings=access_settings)
 

@@ -15,7 +15,6 @@ num_buckets = 1
 [bucket]
 failover_min = 1
 replica_number = 1
-replica_index = 1
 
 [load]
 items = 100000000
@@ -43,8 +42,9 @@ stop_after = 300
 indexes = myindex:alt_email
 cbindexperf_configfile = tests/gsi/new_plasma/config/config_scan_random_range.json
 indexer.settings.storage_mode = plasma
+indexer.settings.num_replica = 1
 indexer.settings.gc_percent = 200
-indexer.settings.max_cpu_percent = 4800
+indexer.settings.max_cpu_percent = 3200
 
 [stats]
 server_processes = projector

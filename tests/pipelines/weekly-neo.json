@@ -89,7 +89,8 @@
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_in_1B_4nodes_kv_1s_1000c_ssl.test", "groups": "P1"}
     ],
     "Rebalance-Demeter": [
-        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_memcached.test", "groups": "P0"}
+        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_memcached.test", "groups": "P0"},
+        {"job": "demeter_rebalance", "cluster": "demeter_2kv_2index.spec", "test_config": "rebalance/reb_failover_100M_indexer_single_index.test", "groups": "P0"}
     ],
     "Rebalance-Windows": [
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "rebalance/reb_failover_100M_dgm_kv_memcached.test", "groups": "P0"}

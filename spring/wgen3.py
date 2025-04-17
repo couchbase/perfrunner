@@ -675,7 +675,7 @@ class KVWorker(Worker):
 
 class SubDocWorker(KVWorker):
 
-    NAME = 'sub-doc-worker'
+    NAME = 'sub-doc-kv-worker'
 
     def init_db(self):
         params = {'bucket': self.ts.bucket,
@@ -711,7 +711,7 @@ class SubDocWorker(KVWorker):
 
 class XATTRWorker(SubDocWorker):
 
-    NAME = 'xattr-worker'
+    NAME = 'xattr-kv-worker'
 
     def read_args(self, cb: Client,
                   curr_items: int,

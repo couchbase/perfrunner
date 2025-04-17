@@ -68,9 +68,12 @@ def with_timer(cblite_replicate, *args, **kwargs):
 
 
 class SGPerfTest(PerfTest):
-
-    COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False,
-                  'active_tasks': False, 'syncgateway_stats': True}
+    COLLECTORS = {
+        "disk": False,
+        "ns_server": False,
+        "active_tasks": False,
+        "syncgateway_stats": True,
+    }
 
     ALL_HOSTNAMES = True
     LOCAL_DIR = "YCSB"
@@ -925,8 +928,12 @@ class SGImportThroughputTest(SGPerfTest):
     def access_bg(self, *args, **kwargs):
         PerfTest.access_bg(self, task=ycsb_task)
 
-    COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False,
-                  'active_tasks': False, 'syncgateway_stats': True}
+    COLLECTORS = {
+        "disk": False,
+        "ns_server": False,
+        "active_tasks": False,
+        "syncgateway_stats": True,
+    }
 
     def _report_kpi(self, time_elapsed_load, items_in_range_load, time_elapsed_access,
                     items_in_range_access):
@@ -1075,9 +1082,13 @@ class SGImportLatencyTest(SGPerfTest):
             local.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
                              branch=self.test_config.ycsb_settings.branch)
 
-    COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False,
-                  'active_tasks': False, 'syncgateway_stats': True,
-                  'sgimport_latency': True}
+    COLLECTORS = {
+        "disk": False,
+        "ns_server": False,
+        "active_tasks": False,
+        "syncgateway_stats": True,
+        "sgimport_latency": True,
+    }
 
     def _report_kpi(self, *args):
         self.collect_execution_logs()

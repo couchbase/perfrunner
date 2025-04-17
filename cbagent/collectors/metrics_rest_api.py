@@ -1,5 +1,3 @@
-from functools import cached_property
-
 from cbagent.collectors.collector import Collector
 from cbagent.settings import CbAgentSettings
 
@@ -11,10 +9,10 @@ class MetricsRestApiBase(Collector):
         self.server_processes = settings.server_processes
         self.stats_uri = '/pools/default/stats/range/'
         self.stats_data = []
+        self._hostname_map_cache = {}
 
-    @cached_property
-    def internal_to_external_hostnames(self) -> dict[str, str]:
-        """Return a mapping of internal hostnames to external hostnames.
+    def _internal_to_external_hostnames(self):
+        """Generate a mapping of internal hostnames to external hostnames.
 
         The internal hostname is used within the CB cluster and is what is returned by the metrics
         REST API.
@@ -22,15 +20,27 @@ class MetricsRestApiBase(Collector):
         In cbmonitor reports though we use the external hostname, so for consistency with all the
         other metrics we need to map the internal hostnames to the external ones.
         """
-        hostname_map = {}
-        for node in self.nodes:
-            cluster_info = self.get_http(path='/pools/default', server=node)
-            for node_info in cluster_info['nodes']:
-                if node_info.get('thisNode', False):
-                    internal_hostname = node_info['hostname'].split(':')[0]
-                    hostname_map[internal_hostname] = node
-                    break
-        return hostname_map
+        # Get the cluster info again as the topology may have changed
+        cluster_info = self.get_http(path="/pools/default")
+        self._hostname_map_cache = {}
+        for node_info in cluster_info["nodes"]:
+            internal_hostname = node_info["hostname"].split(":")[0]
+            otp_name = node_info["otpNode"].split("@")[-1]
+            self._hostname_map_cache[internal_hostname] = otp_name
+
+    def get_external_hostnames(self, node: str) -> str:
+        """Get the external hostnames for a node from the cached data.
+
+        If the value is not found in the cache, we invalidate the cache and try again.
+        If the value is still not found, we return the node itself.
+        """
+        try:
+            return self._hostname_map_cache[node]
+        except KeyError:
+            # Invalidate the cache and try again
+            self._internal_to_external_hostnames()
+            # Return the node itself if the value is not found after reloading the cache
+            return self._hostname_map_cache.get(node, node)
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -106,7 +116,7 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
 
     def sample(self):
         for node, stats in self.get_stats().items():
-            self.add_stats(stats, node=self.internal_to_external_hostnames[node])
+            self.add_stats(stats, node=self.get_external_hostnames(node))
 
 
 class MetricsRestApiMetering(MetricsRestApiBase):
@@ -220,9 +230,7 @@ class MetricsRestApiDeduplication(MetricsRestApiBase):
         for node, per_bucket_stats in current_stats.items():
             for bucket, stats in per_bucket_stats.items():
                 bucket = self.serverless_db_names.get(bucket, bucket)
-                self.add_stats(stats,
-                               node=self.internal_to_external_hostnames[node],
-                               bucket=bucket)
+                self.add_stats(stats, node=self.get_external_hostnames(node), bucket=bucket)
 
 
 class MetricsRestApiThroughputCollection(MetricsRestApiBase):

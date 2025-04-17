@@ -938,7 +938,6 @@ class CapellaSnapshotBackupWithSGWTest(SGRead, CapellaSnapshotBackupRestoreTest)
     COLLECTORS = {
         "disk": False,
         "ns_server": False,
-        "ns_server_overview": False,
         "active_tasks": False,
         "syncgateway_stats": True,
     }

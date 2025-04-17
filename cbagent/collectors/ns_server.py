@@ -39,30 +39,6 @@ class NSServer(Collector):
             self.mc.add_bucket(bucket)
 
 
-class NSServerOverview(NSServer):
-
-    METRICS = 'ops',
-
-    def _get_overview_stats(self):
-        overview = self.get_http(path='/pools/default/overviewStats')
-
-        stats = {}
-        for metric, values in overview.items():
-            stats[metric] = values[-1]  # only the most recent sample
-        return stats
-
-    def sample(self):
-        overview = self._get_overview_stats()
-        if not overview:
-            return
-
-        self.store.append(overview, cluster=self.cluster,
-                          collector=self.COLLECTOR)
-
-    def update_metadata(self):
-        self.update_metric_metadata(self.METRICS)
-
-
 class NSServerSystem(NSServer):
 
     COLLECTOR = "ns_server_system"

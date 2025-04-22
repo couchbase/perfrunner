@@ -441,6 +441,15 @@ class SGPerfTest(PerfTest):
             channels.append(channel)
         return channels
 
+    def get_index_status(self):
+        logger.info("Getting index status")
+        index_status = self.rest.get_index_status(self.index_nodes[0])
+        index_list = index_status['status']
+        for index in index_list:
+            logger.info(
+                f"The partition map for the index {index['name']} is: {index['partitionMap']}"
+            )
+
     def run(self):
         self.download_ycsb()
         self.start_memcached()
@@ -448,6 +457,7 @@ class SGPerfTest(PerfTest):
         self.load_docs()
         self.init_users()
         self.grant_access()
+        self.get_index_status()
         self.run_test()
         self.report_kpi()
 

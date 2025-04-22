@@ -1919,7 +1919,7 @@ class MetricHelper:
                 for line in fh.readlines():
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
                         throughput += float(line.split()[-1])
-        if throughput < 1:
+        if throughput < 100:
             throughput = round(throughput, 2)
         else:
             throughput = round(throughput, 0)

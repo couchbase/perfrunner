@@ -3565,7 +3565,8 @@ class SyncgatewaySettings:
         self.sg_docsize = int(options.get("sg_docsize", self.SG_DOCSIZE))
         self.sgtool_changebatchset = int(options.get("sgtool_changebatchset",
                                                      self.SGTOOL_CHANGEBATCHSET))
-        self.resync_new_function = options.get("resync_new", self.DEFAULT_RESYNC_NEW_FUNCTION)
+        self.resync_new_function = options.get("resync_new_function",
+                                               self.DEFAULT_RESYNC_NEW_FUNCTION)
         self.db_config_path = options.get("db_config_path", None)
 
         self.delta_sync = self.DELTA_SYNC

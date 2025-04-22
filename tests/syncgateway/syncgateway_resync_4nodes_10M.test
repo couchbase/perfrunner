@@ -4,7 +4,8 @@ test = perfrunner.tests.syncgateway.ResyncTest
 [showfast]
 title = Resync time (min), 10M docs, no doc changed
 component = syncgateway
-category = resync
+category = sync
+sub_category = xattr
 orderby = 000001
 
 [cluster]

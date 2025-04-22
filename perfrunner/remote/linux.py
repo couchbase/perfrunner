@@ -82,16 +82,16 @@ class RemoteLinux(Remote):
         port = 8091
         if is_ssl:
             port = 18091
-        options = \
-            "-auth='{}:{}' " \
-            "-server {index_node}:{port} " \
-            "-type build " \
-            "-indexes {all_indexes}".format(auth[0], auth[1], port=port, index_node=index_node,
-                                            all_indexes=",".join(indexes))
+        options = (
+            f"-auth='{auth[0]}:{auth[1]}' "
+            f"-server {index_node}:{port} "
+            "-type build "
+            f"-indexes {','.join(indexes)} "
+        )
         if is_ssl:
             put("root.pem", "/root/root.pem")
             options = options + " -use_tools=true -cacert ./root.pem"
-
+        options = options + " -refresh_settings true"
         self.run_cbindex_command(options)
 
     def create_index(self, index_nodes, bucket, indexes, storage, is_ssl, auth):
@@ -108,12 +108,12 @@ class RemoteLinux(Remote):
             port = 8091
             if is_ssl:
                 port = 18091
-            options = \
-                "-auth='{}:{}' " \
-                "-server {index_node}:{port} " \
-                "-type create " \
-                "-bucket {bucket} ".format(auth[0], auth[1], port=port, index_node=index_nodes[0],
-                                           bucket=bucket)
+            options = (
+                f"-auth='{auth[0]}:{auth[1]}' "
+                f"-server {index_nodes[0]}:{port} "
+                "-type create "
+                f"-bucket {bucket} "
+            )
             options += "-fields "
             for field in fields_list:
                 options += "\\\\\\`{}\\\\\\`,".format(field)
@@ -138,6 +138,7 @@ class RemoteLinux(Remote):
             if is_ssl:
                 put("root.pem", "/root/root.pem")
                 options = options + " -use_tools=true -cacert ./root.pem"
+            options = options + " -refresh_settings true"
             self.run_cbindex_command(options)
 
         return bucket_indexes

@@ -72,3 +72,6 @@ rachell
 !rachell/
 loader
 !loader/
+
+.capella_creds
+.secrets.json

@@ -39,10 +39,6 @@ volume_size = 300
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-
 [parameters]
 OS = Amazon Linux 2
 CPU = Data/Index: c5.2xlarge (8 vCPU)

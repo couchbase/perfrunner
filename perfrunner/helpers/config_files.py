@@ -1,4 +1,5 @@
 import json
+import os
 from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
@@ -699,3 +700,38 @@ class ClusterAnsibleInventoryFile(ConfigFile):
     def set_kafka_brokers(self, kafka_brokers: list[str]):
         """Update the `kafka_brokers` section of the inventory file."""
         self.add_hosts_section("kafka_brokers", kafka_brokers)
+
+
+class MetadataFile(ConfigFile):
+    """JSON file for storing test metadata."""
+
+    DEFAULT_KEY_GROUP = "default"
+
+    def __init__(self, file_path: str):
+        super().__init__(file_path, FileType.JSON)
+
+    def get_metadata(self, key_group: str, key: str) -> str:
+        """Get metadata with a specific key from a key group.
+
+        If the key_group doesn't exist, fall back to the default key group.
+
+        Then if the key doesn't exist, search for the key in the default key group.
+        """
+        if key_group not in self.config:
+            logger.warning(
+                f"Key group '{key_group}' not found in metadata file. Using default group."
+            )
+
+        # Combine the default group with the target group so that any keys not in the target group
+        # are taken from the default group.
+        combined_group = self.config.get(self.DEFAULT_KEY_GROUP, {}) | self.config.get(
+            key_group, {}
+        )
+        return combined_group.get(key, "")
+
+
+class SecretsFile(MetadataFile):
+    """JSON file for storing test secrets."""
+
+    def __init__(self):
+        super().__init__(os.getenv("PERFRUNNER_SECRETS_JSON", ".secrets.json"))

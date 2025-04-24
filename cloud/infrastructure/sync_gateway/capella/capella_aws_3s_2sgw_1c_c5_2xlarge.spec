@@ -45,9 +45,8 @@ instance_type = c5.24xlarge
 instance_capacity = 1
 volume_size = 100
 
-[credentials]
-rest = Administrator:Password123!
-ssh = root:couchbase
+[metadata]
+source = default_capella
 
 [parameters]
 OS = Amazon Linux 2

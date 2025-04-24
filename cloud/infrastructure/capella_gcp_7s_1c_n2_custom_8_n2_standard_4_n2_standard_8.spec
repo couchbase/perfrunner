@@ -54,9 +54,8 @@ volume_type = pd-ssd
 data = /data
 backup = gs://perftest-gcp-backup
 
-[credentials]
-rest = Administrator:Password123!
-ssh = root:couchbase
+[metadata]
+source = default_capella
 
 [parameters]
 OS = Ubuntu 20

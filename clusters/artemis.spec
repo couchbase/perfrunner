@@ -8,16 +8,11 @@ artemis =
 [clients]
 hosts =
     172.23.99.200
-credentials = root:couchbase
 
 [storage]
 data = /data
 index = /index
 backup = /data/workspace/backup
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

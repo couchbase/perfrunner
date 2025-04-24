@@ -12,7 +12,13 @@ from typing import Any, Iterable, Iterator, Optional, Tuple
 from decorator import decorator
 
 from logger import logger
-from perfrunner.helpers.misc import SafeEnum, maybe_atoi, run_aws_cli_command, target_hash
+from perfrunner.helpers.misc import (
+    SafeEnum,
+    creds_tuple,
+    maybe_atoi,
+    run_aws_cli_command,
+    target_hash,
+)
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
@@ -588,13 +594,6 @@ class ClusterSpec(Config):
         return subnet_ids
 
     @property
-    def client_credentials(self) -> tuple[str, str]:
-        if creds := self.config.get("clients", "credentials", fallback=""):
-            return self._creds_tuple(creds)
-        else:
-            return self.ssh_credentials
-
-    @property
     def data_path(self) -> Optional[str]:
         return self.config.get("storage", "data", fallback=None)
 
@@ -619,30 +618,36 @@ class ClusterSpec(Config):
     def backup(self) -> Optional[str]:
         return self.config.get('storage', 'backup', fallback=None)
 
-    @staticmethod
-    def _creds_tuple(creds: str) -> tuple[str, str]:
-        """Turn a string like "<user>:<pwd>" into a tuple (<user>, <pwd>)."""
-        return tuple(creds.split(":")) if ":" in creds else ("", "")
+    def _get_secret(self, key: str) -> str:
+        from perfrunner.helpers.config_files import SecretsFile
+
+        key_group = self.config.get("metadata", "source", fallback=SecretsFile.DEFAULT_KEY_GROUP)
+        with SecretsFile() as s:
+            return s.get_metadata(key_group, key)
 
     @property
     def rest_credentials(self) -> tuple[str, str]:
-        return self._creds_tuple(self.config.get("credentials", "rest", fallback=""))
+        return creds_tuple(self._get_secret("rest"))
+
+    @property
+    def ssh_credentials(self) -> tuple[str, str]:
+        return creds_tuple(self._get_secret("ssh"))
+
+    @property
+    def client_credentials(self) -> tuple[str, str]:
+        return creds_tuple(self._get_secret("client"))
+
+    @property
+    def aws_key_name(self) -> str:
+        return self._get_secret("aws_key_name")
 
     @property
     def capella_admin_credentials(self) -> list[tuple[str, str]]:
         return [
-            self._creds_tuple(creds)
+            creds_tuple(creds)
             for i, creds in enumerate(self.config.get("credentials", "admin", fallback="").split())
             if i not in self.inactive_cluster_idxs
         ]
-
-    @property
-    def ssh_credentials(self) -> tuple[str, str]:
-        return self._creds_tuple(self.config.get("credentials", "ssh", fallback=""))
-
-    @property
-    def aws_key_name(self) -> list[str]:
-        return self.config.get('credentials', 'aws_key_name')
 
     @property
     def parameters(self) -> dict:

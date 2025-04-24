@@ -9,15 +9,10 @@ hosts =
     {% for client in clients -%}
         {{client}}
     {% endfor %}
-credentials = root:couchbase
 
 [storage]
 data = /data
 backup = s3://cb-backup-to-s3-perftest
-
-[credentials]
-rest = Administrator:password
-ssh =  root:couchbase
 
 [parameters]
 OS = {{os_info}}

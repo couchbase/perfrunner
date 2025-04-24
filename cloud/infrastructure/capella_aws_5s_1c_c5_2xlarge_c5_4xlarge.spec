@@ -44,9 +44,8 @@ volume_size = 100
 [storage]
 data = var/cb/data
 
-[credentials]
-rest = Administrator:Password123!
-ssh = root:couchbase
+[metadata]
+source = default_capella
 
 [parameters]
 os = Amazon Linux 2

@@ -10,15 +10,10 @@ oceanus =
 [clients]
 hosts =
     172.23.96.22
-credentials = root:couchbase
 
 [storage]
 data = /data
 analytics = /data3 /data4 /data5 /data6 /data7
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

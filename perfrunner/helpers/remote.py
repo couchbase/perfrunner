@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from fabric import state
 from fabric.api import run, settings
 
@@ -35,9 +33,9 @@ class RemoteHelper:
         return RemoteLinux(cluster_spec)
 
     @staticmethod
-    def detect_os_platform(host: str, credentials: Tuple[str, str]) -> str:
+    def detect_os_platform(host: str, credentials: tuple[str, str]) -> str:
         state.env.user, state.env.password = credentials
-        logger.info('Detecting OS platform on host {} using Python'.format(host))
+        logger.info(f"Detecting OS platform on host {host} using Python")
 
         with settings(host_string=host):
             platform = run('python3 -c "import platform; print(platform.system())"', quiet=True)
@@ -46,19 +44,20 @@ class RemoteHelper:
                                warn_only=True)
 
         if not platform:
-            logger.warn('Could not determine OS platform on host {}. Assuming "linux" by default.'
-                        .format(host))
+            logger.warning(
+                f'Could not determine OS platform on host {host}. Assuming "linux" by default.'
+            )
             platform = 'linux'
 
         platform = platform.lower()
-        logger.info('Detected OS platform is {}'.format(platform))
+        logger.info(f"Detected OS platform is {platform}")
 
         return platform
 
     @staticmethod
-    def detect_client_os(server: str, cluster_spec: ClusterSpec):
-        state.env.user, state.env.password = cluster_spec.client_credentials
-        logger.info('Detecting OS on client {}'.format(server))
+    def detect_client_os(server: str, credentials: tuple[str, str]) -> str:
+        state.env.user, state.env.password = credentials
+        logger.info(f"Detecting OS on client {server}")
         with settings(host_string=server):
             os = run('egrep "^(ID)=" /etc/os-release')
             os = os.replace("\"", "").split("=")[-1]

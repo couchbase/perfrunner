@@ -41,11 +41,6 @@ volume_size = 0
 data = /data/data
 analytics = /data/analytics
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-aws_key_name = korry
-
 [parameters]
 OS = Amazon Linux 2
 CPU = Data + Analytics: m7gd.4xlarge (16 vCPU)

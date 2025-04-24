@@ -363,6 +363,11 @@ def my_public_ip() -> str:
     return resp.content.decode()
 
 
+def creds_tuple(creds: str) -> tuple[str, str]:
+    """Turn a string like "<user>:<pwd>" into a tuple (<user>, <pwd>)."""
+    return tuple(creds.split(":")) if ":" in creds else ("", "")
+
+
 class SSLCertificate:
 
     """Generate a self signed CA and node certificate with SAN including cluster nodes IPs.

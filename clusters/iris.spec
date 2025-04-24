@@ -13,14 +13,9 @@ hosts =
     172.23.100.44
     172.23.100.104
     172.23.100.105
-credentials = root:couchbase
 
 [storage]
 data = /data
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

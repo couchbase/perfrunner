@@ -11,14 +11,9 @@ triton =
 hosts =
     172.23.132.14
     172.23.132.13
-credentials = root:couchbase
 
 [storage]
 data = /data
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

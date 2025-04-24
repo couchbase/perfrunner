@@ -13,10 +13,6 @@ cblites =
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-
 [parameters]
 OS = Ubuntu 22.04
 CPU = Intel(R) Xeon(R) Gold 6338N CPU @ 2.20GHz (8 vCPU)

@@ -10,14 +10,12 @@ hemera =
 [clients]
 hosts =
     ubu-s703.perf.couchbase.com
-credentials = root:couchbase1
 
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase1
+[metadata]
+source = hemera
 
 [parameters]
 OS = Ubuntu 20.04

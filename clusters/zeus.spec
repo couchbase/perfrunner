@@ -10,15 +10,13 @@ zeus =
 [clients]
 hosts =
     zeus-cnt-01.perf.couchbase.com
-credentials = root:couchbase
 
 [storage]
 data = f:\data
 index = e:\data
 
-[credentials]
-rest = Administrator:password
-ssh = Administrator:Membase123
+[metadata]
+source = zeus
 
 [parameters]
 OS = Windows Server 2012

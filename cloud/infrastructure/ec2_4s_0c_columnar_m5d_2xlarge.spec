@@ -27,10 +27,6 @@ volume_size = 0
 data = /data/data
 analytics = /data/analytics
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-
 [parameters]
 OS = Ubuntu 20.04
 CPU = m5d.2xlarge (8 vCPU)

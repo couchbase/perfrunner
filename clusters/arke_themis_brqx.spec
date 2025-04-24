@@ -17,15 +17,10 @@ themis =
 hosts =
     172.23.97.16
     172.23.97.17
-credentials = root:couchbase
 
 [storage]
 data = /data
 backup = /workspace/backup
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

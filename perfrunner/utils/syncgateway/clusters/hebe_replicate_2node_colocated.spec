@@ -16,15 +16,10 @@ syncgateways =
 [clients]
 hosts =
     172.23.100.194
-credentials = root:couchbase
 
 [storage]
 data = /data
 index = /data
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20

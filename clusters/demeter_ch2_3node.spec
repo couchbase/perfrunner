@@ -7,15 +7,10 @@ demeter =
 [clients]
 hosts =
     172.23.100.165
-credentials = root:couchbase
 
 [storage]
 data = /data
 analytics = /data1
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

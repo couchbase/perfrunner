@@ -5,14 +5,9 @@ hera =
 [clients]
 hosts =
     172.23.96.123
-credentials = root:couchbase
 
 [storage]
 data = /data
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

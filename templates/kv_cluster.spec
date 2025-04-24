@@ -9,14 +9,9 @@ hosts =
     {% for client in clients -%}
         {{client}}
     {% endfor %}
-credentials = root:couchbase
 
 [storage]
 data = /data
-
-[credentials]
-rest = Administrator:password
-ssh =  root:couchbase
 
 [parameters]
 OS = {{os_info}}

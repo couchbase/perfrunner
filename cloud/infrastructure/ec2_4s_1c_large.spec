@@ -36,11 +36,6 @@ volume_size = 100
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-aws_key_name = korry
-
 [parameters]
 OS = Ubuntu 20.04
 CPU = t3.large (2 vCPU)

@@ -36,10 +36,6 @@ volume_size = 100
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-
 [parameters]
 os = Ubuntu 20.04
 cpu = Standard_F8s_v2 (8 vCPU)

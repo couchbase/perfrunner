@@ -47,10 +47,6 @@ volume_size = 100
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-
 [parameters]
 os = Ubuntu 20.04
 cpu = Data: D16as v4, syncgateways: D16as v4

@@ -6,12 +6,8 @@ optane =
 [clients]
 hosts =
     172.23.96.22
-credentials = root:couchbase
 
 [storage]
 data = /data1
 analytics = /data2 /data3 /data4
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase

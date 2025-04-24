@@ -16,10 +16,6 @@ credentials = root:couchbase
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-
 [parameters]
 OS = Ubuntu 20.04
 CPU = Data: Gold 6230 2.1GHz (80 vCPU), Index: AMD EPYC 7643 (192 vCPU)

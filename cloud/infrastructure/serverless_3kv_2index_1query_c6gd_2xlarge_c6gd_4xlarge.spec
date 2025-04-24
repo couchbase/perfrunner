@@ -52,9 +52,6 @@ override_count = 1
 [storage]
 data = /data
 
-[credentials]
-ssh = root:couchbase
-
 [parameters]
 OS = Amazon Linux 2
 CPU = KV: c6gd.2xlarge (8 vCPU), Index+Query: c6gd.4xlarge (16 vCPU)

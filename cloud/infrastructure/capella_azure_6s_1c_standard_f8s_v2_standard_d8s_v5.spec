@@ -47,9 +47,8 @@ volume_size = 256
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:Password123!
-ssh = root:couchbase
+[metadata]
+source = default_capella
 
 [parameters]
 os = Ubuntu 20.04

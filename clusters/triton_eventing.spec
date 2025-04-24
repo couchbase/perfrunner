@@ -9,14 +9,9 @@ triton =
 [clients]
 hosts =
     triton-cnt-01.perf.couchbase.com
-credentials = root:couchbase
 
 [storage]
 data = /data
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

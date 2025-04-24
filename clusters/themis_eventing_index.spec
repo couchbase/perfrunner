@@ -10,14 +10,9 @@ themis =
 [clients]
 hosts =
     172.23.99.247
-credentials = root:couchbase
 
 [storage]
 data = /data
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

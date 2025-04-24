@@ -11,17 +11,11 @@ hebe_c2 =
 hosts =
     172.23.97.250
     172.23.97.251
-credentials = root:couchbase
 
 [storage]
 data = /data
 index = /data
 backup = /data/workspace/backup
-
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

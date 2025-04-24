@@ -40,11 +40,6 @@ volume_size = 100
 data = /data
 analytics = /analytics
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-aws_key_name = korry
-
 [parameters]
 OS = Ubuntu 20.04
 CPU = m5.2xlarge (8 vCPU)

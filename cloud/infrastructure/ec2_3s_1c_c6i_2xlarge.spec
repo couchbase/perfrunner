@@ -37,11 +37,6 @@ volume_size = 100
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-aws_key_name = korry
-
 [parameters]
 OS = Amazon Linux 2
 CPU = c6i.2xlarge (8 vCPU)

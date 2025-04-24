@@ -88,8 +88,9 @@ class ClientInstaller:
         state.output.stdout = options.verbose
 
         if self.cluster_spec.workers:
-            self.client_os = RemoteHelper.detect_client_os(self.cluster_spec.workers[0],
-                                                           self.cluster_spec).lower()
+            self.client_os = RemoteHelper.detect_client_os(
+                self.cluster_spec.workers[0], self.cluster_spec.client_credentials
+            ).lower()
         else:
             logger.info('Detecting OS on localhost')
             stdout, _, returncode = run_local_shell_command('egrep "^(ID)=" /etc/os-release')

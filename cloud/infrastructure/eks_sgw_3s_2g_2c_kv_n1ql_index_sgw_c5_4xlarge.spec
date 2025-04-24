@@ -49,11 +49,6 @@ volume_size = 100
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-aws_key_name = korry
-
 [parameters]
 CPU = c5.4xlarge (16 vCPU)
 Memory = 32 GB

@@ -12,14 +12,9 @@ titan_c3 =
 hosts =
     172.23.97.208
     172.23.97.209
-credentials = root:couchbase
 
 [storage]
 data = /data
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

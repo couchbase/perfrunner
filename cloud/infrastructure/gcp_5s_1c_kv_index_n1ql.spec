@@ -47,10 +47,6 @@ iops = 20000
 data = /data
 backup = gs://perftest-gcp-backup
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-
 [parameters]
 OS = Ubuntu 20.04
 CPU = 8vCPU

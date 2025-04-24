@@ -35,10 +35,8 @@ volume_size = 100
 data = /data/data
 analytics = /data/analytics
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-aws_key_name = korry
+[metadata]
+source = default_capella
 
 [parameters]
 OS = Amazon Linux 2

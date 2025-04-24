@@ -28,10 +28,6 @@ local_nvmes = 2
 data = /data/data
 analytics = /data/analytics
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-
 [parameters]
 OS = Ubuntu 20.04
 CPU = c4a-highmem-8-lssd (8 vCPU)

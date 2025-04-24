@@ -52,11 +52,6 @@ iops = 3000
 data = /data/data
 analytics = /data/analytics
 
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
-aws_key_name = korry
-
 [parameters]
 OS = Amazon Linux 2
 CPU = Data: c6gd.2xlarge (8 vCPU), Analytics: c7g.large (2 vCPU)

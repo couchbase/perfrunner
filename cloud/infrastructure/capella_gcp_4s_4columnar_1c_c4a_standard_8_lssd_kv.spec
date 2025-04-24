@@ -46,9 +46,8 @@ instance_type = c4a-standard-8-lssd
 instance_type = n2-standard-64
 volume_size = 100
 
-[credentials]
-rest = Administrator:Password123!
-ssh = root:couchbase
+[metadata]
+source = default_capella
 
 [parameters]
 OS = Ubuntu

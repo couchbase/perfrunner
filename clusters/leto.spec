@@ -8,16 +8,11 @@ leto =
 [clients]
 hosts =
     leto-cnt-01.perf.couchbase.com
-credentials = root:couchbase
 
 [storage]
 data = /data
 index = /index
 backup = /data/workspace/backup
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20.04

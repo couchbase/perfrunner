@@ -49,9 +49,8 @@ iops = 16000
 [storage]
 data = /data
 
-[credentials]
-rest = Administrator:Password123!
-ssh = root:couchbase
+[metadata]
+source = default_capella
 
 [parameters]
 cpu = Data: Standard_F16s_v2 (16 vCPU), FTS: Standard_F64s_v2 (64vCPU)

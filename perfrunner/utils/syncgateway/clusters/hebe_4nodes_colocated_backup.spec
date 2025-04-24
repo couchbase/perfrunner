@@ -18,16 +18,11 @@ hosts =
     172.23.97.251
     172.23.97.252
     172.23.97.253
-credentials = root:couchbase
 
 [storage]
 data = /data
 index = /data
 backup = /workspace/backup
-
-[credentials]
-rest = Administrator:password
-ssh = root:couchbase
 
 [parameters]
 OS = Ubuntu 20

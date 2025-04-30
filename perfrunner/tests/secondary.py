@@ -408,7 +408,8 @@ class SecondaryIndexTest(PerfTest):
             total_num_rec_compressed = 0, 0, 0, 0, 0
 
         for index in storage_stats:
-            if "_system:_query:#primary" not in index["Index"]:
+            if "_system:_query:#primary" not in index["Index"] \
+            and "_system:_query:ix_system_query" not in index["Index"]:
                 total_num_rec_compressed += index["Stats"]["MainStore"]["num_rec_compressed"] + \
                                             index["Stats"]["BackStore"]["num_rec_compressed"]
                 total_num_rec_allocs += index["Stats"]["MainStore"]["num_rec_allocs"] + \

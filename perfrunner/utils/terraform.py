@@ -2338,7 +2338,6 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
 
     def deploy_model(self, model_kind: str, model_config: dict):
         payload = {
-            "name": model_config.get("model_name"),
             "compute": model_config.get("instance_type"),
             "configuration": {
                 "name": model_config.get("model_name"),

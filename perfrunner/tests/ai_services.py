@@ -1,4 +1,6 @@
+import json
 import os
+from glob import glob
 from time import sleep
 from typing import Optional
 from uuid import uuid4
@@ -6,7 +8,9 @@ from uuid import uuid4
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.settings import AIServicesSettings
+from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.worker import aibench_task
+from perfrunner.settings import AIGatewayTargetSettings, AIServicesSettings, ClusterSpec, TestConfig
 from perfrunner.tests import PerfTest
 
 
@@ -222,3 +226,105 @@ class AutoVecWorkflowTest(WorkflowIngestionAndLatencyTest):
         self.runtimes["workflow_delete_time"] = self.destroy_workflow()
         logger.info(f"{self.runtimes=}")
         logger.info(f"{latencies=}")
+
+
+class AIGatewayTest(PerfTest):
+    # Depending on the model
+    MODEL_KIND_ENDPOINTS = {
+        "embedding-generation": ["embeddings"],
+        "text-generation": ["chat-completions"],
+    }
+
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
+        super().__init__(cluster_spec, test_config, verbose)
+        self.aibench_settings = self.test_config.aibench_settings
+        self.aibench_settings.tag = self.build_tag
+        self.username, self.password = self.cluster_spec.rest_credentials
+
+        model = self.cluster_spec.infrastructure_model_services.get(
+            self.aibench_settings.model_kind
+        )
+        self.gateway_endpoint = model.get("model_endpoint")
+        self.aibench_settings.model_name = model.get("model_name")
+        self.target_iterator = [
+            AIGatewayTargetSettings(
+                host=self.cluster_spec.workers[0],
+                bucket=self.test_config.buckets[0],
+                username=self.username,
+                password=self.password,
+                endpoint=self.gateway_endpoint,
+            )
+        ]
+        ai_gateway_info = self.rest.get_ai_gateway_info(self.gateway_endpoint)
+        logger.info(f"AI Gateway info: {ai_gateway_info}")
+        self.gateway_version = ai_gateway_info.get("version")
+        self.reporter.build = f"{self.gateway_version}:{self.build}"
+
+    @property
+    def build_tag(self):
+        return os.getenv("BUILD_TAG", "local")
+
+    def download_aibench(self):
+        if not self.worker_manager.is_remote:
+            return
+        # Download the repo locally first
+        local.clone_git_repo(
+            repo=self.aibench_settings.repo,
+            branch=self.aibench_settings.branch,
+            keep_if_exists=True,  # Workaround for local testing, no need to re-download the repo
+        )
+        local.copy_aibench_to_remote(
+            hosts=self.cluster_spec.workers,
+            user=self.cluster_spec.ssh_credentials[0],
+            password=self.cluster_spec.ssh_credentials[1],
+            worker_home=self.worker_manager.WORKER_HOME,
+        )
+
+    def build_aibench(self):
+        if not self.worker_manager.is_remote:
+            return
+        self.worker_manager.remote.update_pyenv_and_install_python(py_version="3.11.8")
+        self.worker_manager.remote.build_aibench(worker_home=self.worker_manager.WORKER_HOME)
+
+    def run_aibench(self):
+        for endpoint in self.MODEL_KIND_ENDPOINTS[self.aibench_settings.model_kind]:
+            self.aibench_settings.endpoint = endpoint
+            phase = self.generic_phase(
+                phase_name="ai_bench",
+                default_settings=self.aibench_settings,
+                default_mixed_settings=None,
+                task=aibench_task,
+            )
+            self.worker_manager.run_fg_phases(phase)
+
+            sleep(120)  # Sleep to allow for rate limits to reset
+
+    def collect_results(self) -> dict:
+        if not self.worker_manager.is_remote:
+            return {}
+        self.worker_manager.remote.get_aibench_result_files(
+            worker_home=self.worker_manager.WORKER_HOME
+        )
+        results = {}
+        for filename in glob("ai_bench/results/*.json"):
+            with open(filename) as file:
+                results[filename] = json.load(file)
+        return results
+
+    def _report_kpi(self):
+        for filename, results in self.collect_results().items():
+            logger.info(f"Collected {filename}: {pretty_dict(results)}")
+
+            if results.pop("errors"):
+                # A workload is considered failed if it has any errors and will not be reported
+                logger.error(f"Workload {filename} failed")
+                continue
+            for metric in self.metrics.aibench_metrics(results):
+                self.reporter.post(*metric)
+
+    def run(self):
+        self.download_aibench()
+        self.build_aibench()
+
+        self.run_aibench()
+        self.report_kpi()

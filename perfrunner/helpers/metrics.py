@@ -2245,6 +2245,29 @@ class MetricHelper:
 
         return reported_metrics
 
+    def aibench_metrics(self, metrics: dict) -> list[Metric]:
+        reported_metrics = []
+        tracked_metrics = {
+            "requests_per_second": "Throughput (requests/sec)",
+            "p50_latency": "50th percentile latency (ms)",
+            "p99_latency": "99th percentile latency (ms)",
+            "ttft_avg": "Time to first token (ms)",
+        }
+        metadata = metrics.pop("metadata", {})
+        endpoint = metadata.get("endpoint", "")
+        model_name = metadata.get("model_name", "")
+        sub_title = f"({model_name} - {endpoint})"
+
+        for name, proper_name in tracked_metrics.items():
+            value = float(metrics.get(name, 0))
+            if value == 0:
+                continue
+            metric_id = f"{self.test_config.name}_{name}_{endpoint}"
+            title = f"{proper_name}, {self._title} {sub_title}"
+            metric_info = self._metric_info(metric_id, title, order_by=name)
+            reported_metrics.append((value, self._snapshots, metric_info))
+        return reported_metrics
+
 
 class DailyMetricHelper(MetricHelper):
 

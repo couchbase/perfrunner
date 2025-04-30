@@ -12,12 +12,7 @@ from typing import Any, Iterable, Iterator, Optional, Tuple
 from decorator import decorator
 
 from logger import logger
-from perfrunner.helpers.misc import (
-    SafeEnum,
-    maybe_atoi,
-    run_aws_cli_command,
-    target_hash,
-)
+from perfrunner.helpers.misc import SafeEnum, maybe_atoi, run_aws_cli_command, target_hash
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
@@ -3694,6 +3689,37 @@ class AIServicesSettings:
         self.aws_credential_path = options.get("aws_credential_path", "/root/.ssh")
 
 
+class AIBenchSettings(PhaseSettings):
+    """Provides settings for AI Bench workload generator."""
+
+    REPO = "https://github.com/couchbaselabs/ai_bench.git"
+    BRANCH = "main"
+
+    def __init__(self, options: dict):
+        super().__init__(options)
+        self.repo = options.get("repo", self.REPO)
+        self.branch = options.get("branch", self.BRANCH)
+
+        self.model_kind = options.get("model_kind")
+        self.dataset = options.get("dataset", "random")
+        self.subset = options.get("subset", "all")
+        self.split = options.get("split")
+
+        # Model serving request parameters
+        self.max_tokens = options.get("max_tokens", 256)
+        self.best_of = options.get("best_of", 1)
+        self.logprobs = options.get("logprobs")
+        self.ignore_eos = maybe_atoi(options.get("ignore_eos", "false"))
+        self.encoding_format = options.get("encoding_format", "base64")
+
+        # Tool configuration
+        self.handler = options.get("handler", "openai")
+
+        self.endpoint = ""  # Individal endpoint to run the workload on
+        self.tag = ""
+        self.ops = int(self.ops)
+
+
 class TestConfig(Config):
 
     def _configure_phase_settings(method):  # noqa: N805
@@ -4173,6 +4199,11 @@ class TestConfig(Config):
         options = self._get_options_as_dict("ai_services")
         return AIServicesSettings(options)
 
+    @property
+    def aibench_settings(self) -> AIBenchSettings:
+        options = self._get_options_as_dict("ai_bench")
+        return AIBenchSettings(options)
+
 
 class TargetSettings:
 
@@ -4193,6 +4224,21 @@ class TargetSettings:
             host=self.node,
             bucket=self.bucket,
         )
+
+
+class AIGatewayTargetSettings(TargetSettings):
+    def __init__(
+        self,
+        host: str,
+        bucket: str,
+        username: str,
+        password: str,
+        prefix: str = None,
+        cloud: dict = {},
+        endpoint: str = "",
+    ):
+        super().__init__(host, bucket, username, password, prefix, cloud)
+        self.gateway_endpoint = endpoint
 
 
 class TargetIterator(Iterable):

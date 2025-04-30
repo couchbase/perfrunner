@@ -9,18 +9,13 @@ from pathlib import Path
 from sys import platform
 from typing import List, Optional, Tuple
 
+import paramiko
 from fabric.api import hide, lcd, local, quiet, settings, shell_env, warn_only
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
 from perfrunner.helpers.misc import SSLCertificate, run_local_shell_command
-from perfrunner.settings import (
-    CH2,
-    CH3,
-    CH2ConnectionSettings,
-    CH3ConnectionSettings,
-    ClusterSpec,
-)
+from perfrunner.settings import CH2, CH3, CH2ConnectionSettings, CH3ConnectionSettings, ClusterSpec
 
 
 def extract_cb(filename: str):
@@ -55,6 +50,55 @@ def extract_any(filename: str, to_path: str = None, remove_after: bool = True):
         local(" ".join(cmd))
         if remove_after:
             local(f"rm -f {filename}")
+
+
+def upload_directory(
+    directory: str, dest_host: str, dest_user: str, dest_password: str, dest_directory: str
+):
+    """Upload a directory to a remote host.
+
+    Args:
+        directory: Local directory to upload
+        dest_host: Remote host address
+        dest_user: Remote host username
+        dest_password: Remote host password
+        dest_directory: Remote directory path where to upload (default: current directory)
+    """
+    logger.info(f"Uploading directory {directory} to {dest_host}:{dest_directory}")
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(dest_host, username=dest_user, password=dest_password)
+    sftp = client.open_sftp()
+
+    # Create remote directory if it doesn't exist
+    try:
+        sftp.stat(dest_directory)
+    except FileNotFoundError:
+        sftp.mkdir(dest_directory)
+
+    # Walk through the local directory and upload all files
+    for root, _, files in os.walk(directory):
+        # Create relative path
+        relative_path = os.path.relpath(root, directory)
+        if relative_path == ".":
+            remote_dir = dest_directory
+        else:
+            remote_dir = os.path.join(dest_directory, relative_path)
+            # Create remote directory if it doesn't exist
+            try:
+                sftp.stat(remote_dir)
+            except FileNotFoundError:
+                sftp.mkdir(remote_dir)
+
+        # Upload all files in the current directory
+        for file in files:
+            local_file_path = os.path.join(root, file)
+            remote_file_path = os.path.join(remote_dir, file)
+            sftp.put(local_file_path, remote_file_path)
+
+    sftp.close()
+    client.close()
 
 
 def cleanup(backup_dir: str):
@@ -930,21 +974,28 @@ def start_celery_worker(queue: str):
 
 
 def clone_git_repo(
-    repo: str, branch: str, commit: Optional[str] = None, cherrypick: Optional[str] = None
+    repo: str,
+    branch: str,
+    commit: Optional[str] = None,
+    cherrypick: Optional[str] = None,
+    keep_if_exists: bool = False,
 ):
     repo_name = repo.split("/")[-1].split(".")[0]
-    logger.info('checking if repo {} exists...'.format(repo_name))
+    logger.info(f"checking if repo {repo_name} exists...")
 
-    if os.path.exists("{}".format(repo_name)):
-        logger.info("repo {} exists...removing...".format(repo_name))
+    if os.path.exists(repo_name):
+        if keep_if_exists:
+            logger.info(f"repo {repo_name} exists...keeping local version...")
+            return
+        logger.info(f"repo {repo_name} exists...removing...")
         shutil.rmtree(repo_name, ignore_errors=True)
 
-    logger.info('Cloning repository: {} branch: {}'.format(repo, branch))
-    local('git clone -q -b {} --single-branch {}'.format(branch, repo))
+    logger.info(f"Cloning repository: {repo} branch: {branch}")
+    local(f"git clone -q -b {branch} --single-branch {repo}")
 
     if commit:
         with lcd(repo_name):
-            local('git checkout {}'.format(commit))
+            local(f"git checkout {commit}")
 
     if cherrypick:
         with lcd(repo_name):
@@ -1688,3 +1739,15 @@ def collect_cbopinfo_logs(kubeconfig: str):
     # If the cao binaries exists, use them to collect extra logs
     with settings(warn_only=True), shell_env(KUBECONFIG=kubeconfig):
         local("couchbase-operator/bin/cao collect-logs --collectinfo --collectinfo-collect=all")
+
+
+def run_aibench(options: str, api_key: str, gateway_endpoint: str):
+    with lcd("../ai_bench"):
+        with shell_env(AIGATEWAY_API_KEY=api_key, AIGATEWAY_BASE_URL=gateway_endpoint):
+            local(f"env/bin/ai_bench {options} > ai_bench.log 2>&1")
+
+
+def copy_aibench_to_remote(hosts: list[str], user: str, password: str, worker_home: str):
+    to_directory = os.path.join(worker_home, "ai_bench")
+    for host in hosts:
+        upload_directory("ai_bench", host, user, password, to_directory)

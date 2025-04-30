@@ -1,0 +1,21 @@
+[test_case]
+test = perfrunner.tests.ai_services.AIGatewayTest
+
+[showfast]
+title = AI Gateway LLM model serving latency, random text
+component = aiservices
+category = models
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 5
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[ai_bench]
+model_kind = text-generation
+time = 300
+workers = 3

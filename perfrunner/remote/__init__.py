@@ -568,6 +568,20 @@ class Remote:
                 get(pattern, local_path="VectorDBBench/")
 
     @all_clients
+    def build_aibench(self, worker_home: str):
+        logger.info("Building AI Bench")
+        with cd(worker_home), cd("ai_bench"):
+            run("echo 3.11.8 > .python-version && make", shell_escape=False, pty=True)
+
+    @all_clients
+    def get_aibench_result_files(self, worker_home: str):
+        logger.info("Collecting AI Bench result files")
+        with cd(worker_home), cd("ai_bench"):
+            r = run("stat results/*.json", quiet=True)
+            if not r.return_code:
+                get("results/*.json", local_path="ai_bench/results/")
+
+    @all_clients
     def update_pyenv_and_install_python(self, py_version: str = None):
         """Update pyenv and maybe install another python version if provided."""
         logger.info("Updating pyenv ...")

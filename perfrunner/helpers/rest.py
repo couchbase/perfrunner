@@ -2622,6 +2622,11 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         )
         return resp.json().get("data", {})
 
+    def get_ai_gateway_info(self, gateway_endpoint: str) -> dict:
+        """Get the AI Gateway information."""
+        resp = self.get(url=f"{gateway_endpoint}/v1/info")
+        return resp.json()
+
 
 class CapellaServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec):

@@ -25,6 +25,7 @@ from perfrunner.settings import (
     TestConfig,
 )
 from perfrunner.workloads import spring_workload
+from perfrunner.workloads.ai_bench import run_aibench_task
 from perfrunner.workloads.blackholepuller import (
     blackholepuller_runtest,
     newdocpusher_runtest,
@@ -272,6 +273,12 @@ def sdks_benchmark_task(*args):
 @celery.task
 def vectordb_bench_task(*args):
     run_vectordb_bench_case(*args)
+
+
+@celery.task
+def aibench_task(*args):
+    run_aibench_task(*args)
+
 
 @celery.task
 def ch2_load(conn_settings: CH2ConnectionSettings, task_settings: CH2, driver: str, log_file: str):

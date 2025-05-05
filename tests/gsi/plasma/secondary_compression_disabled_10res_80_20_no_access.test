@@ -34,7 +34,6 @@ workers = 100
 doc_gen = sequential_plasma
 key_fmtr = hash
 
-
 [secondary]
 indexes = myindex:city
 incremental_only = 1

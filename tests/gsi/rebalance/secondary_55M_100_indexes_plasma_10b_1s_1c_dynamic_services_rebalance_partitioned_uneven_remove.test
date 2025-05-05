@@ -79,7 +79,6 @@ stop_after = 180
 services = index
 replace_nodes = -1
 
-
 [secondary]
 indexes = tests/gsi/index_defs/10bucket_1scope_1collections_100_indexes_partitioned.json
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_sessionconsistent_10b_100_indexes_1s_10c_partitioned.json

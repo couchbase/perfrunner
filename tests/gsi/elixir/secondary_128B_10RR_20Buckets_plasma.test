@@ -44,7 +44,6 @@ indexes = tests/gsi/index_defs/20bucket_1scope_5collections_2indexes_1.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 1600
 
-
 [access]
 updates = 100
 ops = 1000000

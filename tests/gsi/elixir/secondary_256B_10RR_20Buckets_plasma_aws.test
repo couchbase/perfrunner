@@ -45,7 +45,6 @@ doc_gen = large_doc_random
 indexes = tests/gsi/index_defs/20bucket_1scope_5collections_2indexes_1.json
 indexer.settings.storage_mode = plasma
 
-
 [access]
 updates = 100
 ops = 2500000

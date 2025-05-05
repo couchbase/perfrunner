@@ -18,7 +18,6 @@ num_buckets = 1
 enable_cpu_cores = false
 enable_n2n_encryption = all
 
-
 [bucket]
 replica_number=1
 replica_index=0

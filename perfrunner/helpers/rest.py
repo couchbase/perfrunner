@@ -95,10 +95,13 @@ class RestBase:
     def _set_auth(self, **kwargs) -> tuple[str, str]:
         return self.auth
 
-    @retry
-    def get(self, **kwargs) -> requests.Response:
+    def _get(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
         return requests.get(verify=False, **kwargs)
+
+    @retry
+    def get(self, **kwargs) -> requests.Response:
+        return self._get(**kwargs)
 
     def _post(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
@@ -1494,11 +1497,14 @@ class DefaultRestHelper(RestBase):
         )
         return self.get(url=api).json()['num_indexes']
 
-    def indexes_instances_per_node(self, host: str) -> int:
+    def indexes_instances_per_node(self, host: str, with_retry: bool = True) -> int:
         api = self._get_api_url(
             host=host, path="stats", plain_port=INDEXING_PORT, ssl_port=INDEXING_PORT_SSL
         )
-        return self.get(url=api).json()['num_storage_instances']
+        if with_retry:
+            return self.get(url=api).json()["num_storage_instances"]
+        else:
+            return self._get(url=api).json()["num_storage_instances"]
 
     def backup_index(self, host: str, bucket: str) -> dict:
         logger.info(f"Backing up index metadata on host {host} bucket {bucket}")

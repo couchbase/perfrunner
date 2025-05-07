@@ -1670,7 +1670,10 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         logger.info("Indexes after rebalance")
         for server in self.index_nodes:
             try:
-                logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
+                logger.info(
+                    f"{server} : {self.rest.indexes_instances_per_node(server, with_retry=False)} "
+                    "Indexes"
+                )
             except Exception:
                 # Since this is for logging, we can ignore the exception as the service could have
                 # been removed from this node

@@ -153,7 +153,7 @@ ssh = root:couchbase
 aws_key_name = korry
 
 [parameters]
-OS = CentOS 7
+OS = Ubuntu 20.04
 CPU = Data: m5.4xlarge (16 vCPU), syncgateways: c5.2xlarge (8 vCPU)
 Memory = Data: 64 GB, syncgateways: 16 GB
 Disk = Data: EBS 1TB, syncgateways: 10 GB

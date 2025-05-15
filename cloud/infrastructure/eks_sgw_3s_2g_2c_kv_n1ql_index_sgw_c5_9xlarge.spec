@@ -55,7 +55,6 @@ ssh = root:couchbase
 aws_key_name = korry
 
 [parameters]
-OS = Ubuntu 20
 CPU = c5.9xlarge (36 vCPU)
 Memory = 72 GB
 Disk = EBS 1TB

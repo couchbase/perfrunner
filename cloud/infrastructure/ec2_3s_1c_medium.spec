@@ -41,7 +41,7 @@ ssh = root:couchbase
 aws_key_name = korry
 
 [parameters]
-OS = CentOS 7
+OS = Ubuntu 20.04
 CPU = t3.medium (2 vCPU)
 Memory = 4 GB
 Disk = EBS 20GB

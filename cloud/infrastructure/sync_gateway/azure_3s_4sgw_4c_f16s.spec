@@ -55,7 +55,7 @@ rest = Administrator:password
 ssh = root:couchbase
 
 [parameters]
-os = CentOS 7
+os = Ubuntu 20.04
 cpu = Data: Standard_F16s_v2, syncgateways: Standard_F16s_v2
 memory = Data: 32 GB, syncgateways: 32 GB
 disk = Data: Premium SSD 4100GB (P60), 16000 IOPS, syncgateways: Premium SSD 4100GB (P60), 16000 IOPS

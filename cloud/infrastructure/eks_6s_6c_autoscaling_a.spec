@@ -50,7 +50,6 @@ ssh = root:couchbase
 aws_key_name = korry
 
 [parameters]
-OS = CentOS 7
 CPU = c5.24xlarge (96 vCPU)
 Memory = 192 GB
 Disk = EBS 250GB

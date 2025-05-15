@@ -54,7 +54,7 @@ rest = Administrator:Password123!
 ssh = root:couchbase
 
 [parameters]
-OS = CentOS 7
+OS = Ubuntu 20.04
 CPU = Data: n2-highmem-16 (16vCPU), Index/Query: n2-highmem-32 (32vCPU)
 Memory = Data: 128GB, Index/Query: 256GB
 Disk = pd-ssd, Data: 1TB 25000 IOPS, Index/Query: 1.5TB 51000 IOPS

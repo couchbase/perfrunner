@@ -41,7 +41,7 @@ rest = Administrator:password
 ssh = root:couchbase
 
 [parameters]
-os = CentOS 7
+os = Ubuntu 20.04
 cpu = Standard_F8s_v2 (8 vCPU)
 memory = 16 GB
 disk = Premium SSD 256GB (P15)

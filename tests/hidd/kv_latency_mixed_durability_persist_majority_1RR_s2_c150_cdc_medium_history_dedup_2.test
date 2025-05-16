@@ -62,5 +62,3 @@ time = 1800
 durability = 3
 latency_percentiles = 50,99
 
-[clients]
-python_client = 3.2.7

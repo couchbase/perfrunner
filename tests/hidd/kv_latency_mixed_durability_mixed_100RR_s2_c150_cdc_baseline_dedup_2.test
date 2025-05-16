@@ -73,5 +73,3 @@ throughput = 1500
 durability = 3
 workers = 15
 
-[clients]
-python_client = 3.2.7

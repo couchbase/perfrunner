@@ -52,5 +52,3 @@ workers = 128
 time = 1800
 requestdistribution = uniform
 
-[clients]
-python_client = 3.2.7

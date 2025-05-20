@@ -70,4 +70,3 @@ latency_percentiles = 50,99
 
 [backup]
 backup_directory = /data2/4n_1b_cdc
-

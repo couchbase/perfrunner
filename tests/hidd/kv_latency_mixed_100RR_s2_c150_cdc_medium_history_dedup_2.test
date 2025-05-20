@@ -59,4 +59,3 @@ throughput = 80000
 power_alpha = 220
 time = 1800
 latency_percentiles = 50,99
-

@@ -61,4 +61,3 @@ power_alpha=1000000
 time = 1800
 durability = 3
 latency_percentiles = 50,99
-

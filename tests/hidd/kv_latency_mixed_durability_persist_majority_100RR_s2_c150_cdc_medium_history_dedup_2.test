@@ -62,4 +62,3 @@ working_set_access = 90
 time = 1800
 durability = 3
 latency_percentiles = 50,99
-

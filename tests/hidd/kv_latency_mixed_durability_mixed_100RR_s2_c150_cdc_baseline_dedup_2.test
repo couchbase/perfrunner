@@ -72,4 +72,3 @@ deletes = 0
 throughput = 1500
 durability = 3
 workers = 15
-

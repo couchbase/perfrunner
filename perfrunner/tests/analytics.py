@@ -79,9 +79,16 @@ class DatasetDef:
 
         return f"CREATE DATASET {name}{with_clause} ON {source} AT {link_name} {self.where or ''}"
 
-    def create_standalone_statement(self, pk_field: str = "key", pk_type: str = "string") -> str:
+    def create_standalone_statement(
+        self, pk_field: str = "key", pk_type: str = "string", storage_format: Optional[str] = None
+    ) -> str:
         name, pk_field, pk_type = sqlpp_escape(self.name, pk_field, pk_type)
-        return f"CREATE DATASET {name} PRIMARY KEY ({pk_field}: {pk_type})"
+
+        with_clause = ""
+        if storage_format:
+            with_clause = f' WITH {{"storage-format": {{"format": "{storage_format}"}}}}'
+
+        return f"CREATE DATASET {name} PRIMARY KEY ({pk_field}: {pk_type}){with_clause}"
 
     def create_external_statement(
         self,
@@ -272,7 +279,9 @@ class AnalyticsTest(PerfTest):
     def create_standalone_datasets(self, *, verbose: bool = False):
         logger.info("Creating standalone datasets")
         self._run_statements(
-            self.datasets, lambda dataset: dataset.create_standalone_statement(), verbose=verbose
+            self.datasets,
+            lambda dataset: dataset.create_standalone_statement(storage_format=self.storage_format),
+            verbose=verbose,
         )
 
     def create_external_datasets(self, *, verbose: bool = False):

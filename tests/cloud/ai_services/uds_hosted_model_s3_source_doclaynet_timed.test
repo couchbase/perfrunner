@@ -1,8 +1,9 @@
 [test_case]
 test = perfrunner.tests.ai_services.WorkflowIngestionAndLatencyTest
+use_workers = 0
 
 [showfast]
-title = Ingestion and embedding generation
+title = Ingestion and embedding generation using hosted model, timed workflow, DocLayNet
 component = aicloud
 category = lat
 sub_category = {provider}
@@ -14,13 +15,15 @@ server_processes = eventing-produc
 initial_nodes = 5
 num_buckets = 1
 enable_n2n_encryption = all
+eventing_metadata_bucket_name = vulcan_workflows
+eventing_metadata_bucket_mem_quota = 1024
 
 [bucket]
 eviction_policy = fullEviction
 backend_storage = magma
 
 [access]
-time = 1200
+time = 1800
 ssl_mode = capella
 
 [ai_services]

@@ -89,7 +89,12 @@ class AIWorkflow:
 
 
 class WorkflowIngestionAndLatencyTest(PerfTest):
-    COLLECTORS = {"eventing_stats": True, "ns_server_system": True, "fts_stats": True}
+    COLLECTORS = {
+        "eventing_stats": True,
+        "ns_server_system": True,
+        "fts_stats": True,
+        "ai_workflow_stats": True,
+    }
 
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
@@ -120,10 +125,11 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
             self.workflow_id = self.rest.create_workflow(
                 self.master_node, self.workflow.get_workflow_payload(self.test_config.buckets[0])
             )
-            logger.info(f"Workflow created with id {self.workflow_id}")
-            self.autovec_func = self.monitor.wait_for_workflow_status(
+            workflow_details = self.monitor.wait_for_workflow_status(
                 host=self.eventing_nodes[0], workflow_id=self.workflow_id
             )
+            logger.info(f"Workflow details: {pretty_dict(workflow_details)}")
+            # When a workflow reaches a running state, it will start processing the data
         except Exception as e:
             logger.error(f"Error while waiting for workflow deployment: {e}")
 
@@ -131,8 +137,8 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
     def destroy_workflow(self):
         try:
             self.rest.delete_workflow(self.master_node, self.workflow_id)
-            self.monitor.wait_for_function_status(
-                node=self.eventing_nodes[0], function=self.autovec_func, status="undeployed"
+            self.monitor.wait_for_workflow_status(
+                host=self.eventing_nodes[0], workflow_id=self.workflow_id, status=""
             )
         except Exception as e:
             logger.error(f"Error while waiting for undeploy: {e}")
@@ -144,23 +150,37 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
         # strategy. As such we need a way here to decide for how long to run the ingestion.
         # We have two options:
         # 1. Run for a fixed amount of time
-        # 2. Run until all the Vulcan jobs finish (need to monitor vectorisation stats)
+        # 2. Run until all the UDS workflow runs finish
 
         access_settings = self.test_config.access_settings
         if access_settings.time > 0:
             logger.info(f"Running ingestion for {access_settings.time} seconds")
             sleep(access_settings.time)
         else:
-            pass  # Will be implemented in a separate PR
+            logger.info("Running ingestion. Waiting for workflow to complete")
+            self.monitor.wait_for_workflow_status(
+                host=self.eventing_nodes[0],
+                workflow_id=self.workflow_id,
+                status="completed",
+                max_retries=1200,
+            )
 
-    @with_stats
-    def run_workflow(self):
+    def prepare_and_deploy_workflow(self):
         cluster_uuid = self.cluster_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
         self.workflow = AIWorkflow(self.ai_services_settings, self.hosted_model_id, cluster_uuid)
         sleep(30)  # collect some initial metrics before starting the workflow
         workflow_deploy_time = self.deploy_workflow()
         self.runtimes["workflow_deploy_time"] = workflow_deploy_time
 
+        eventing_functions = (
+            self.rest.get_eventing_apps(self.eventing_nodes[0]).get("apps", []) or []
+        )
+        if len(eventing_functions) > 0:
+            logger.info(f"Eventing functions: {pretty_dict(eventing_functions)}")
+
+    @with_stats
+    def run_workflow(self):
+        self.prepare_and_deploy_workflow()
         ingestion_time = self.data_ingestion()
         self.runtimes["ingestion_time"] = ingestion_time
 
@@ -168,10 +188,28 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
         self.run_workflow()
 
         latencies = self.get_eventing_latencies()
+        logger.info(f"{latencies=}")
+        self.report_kpi()
 
         self.runtimes["workflow_delete_time"] = self.destroy_workflow()
         logger.info(f"{self.runtimes=}")
-        logger.info(f"{latencies=}")
+
+    def _report_kpi(self):
+        workflow_details = self.rest.get_workflow_details(self.master_node, self.workflow_id)
+        uds_metadata = workflow_details.get("workflowRuns", [{}])[0].get("udsMetadata")
+        ingestion_time = self.runtimes.get("ingestion_time", 0)
+        if not ingestion_time:
+            return
+        self.reporter.post(
+            *self.metrics.uds_throughput(
+                ingestion_time=ingestion_time,
+                num_successful_files=uds_metadata.get("numSuccessfulFiles", 0),
+            )
+        )
+
+        if self.test_config.access_settings.time <= 0:
+            # Also report ingestion time if we are not running for a fixed amount of time
+            self.reporter.post(*self.metrics.uds_processing_time(ingestion_time))
 
     def get_eventing_latencies(self) -> dict:
         latency_stats = self.process_latency_stats()
@@ -206,12 +244,7 @@ class AutoVecWorkflowTest(WorkflowIngestionAndLatencyTest):
 
     @with_stats
     def run_workflow(self):
-        cluster_uuid = self.cluster_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
-        self.workflow = AIWorkflow(self.ai_services_settings, self.hosted_model_id, cluster_uuid)
-        sleep(30)  # collect some initial metrics before starting the workflow
-        workflow_deploy_time = self.deploy_workflow()
-        self.runtimes["workflow_deploy_time"] = workflow_deploy_time
-
+        self.prepare_and_deploy_workflow()
         autovec_time = self.wait_for_eventing_backlog()
         self.runtimes["autovec_time"] = autovec_time
         sleep(120)  # collect metrics after eventing work is done

@@ -2628,6 +2628,20 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         )
         return resp.json().get("data", {})
 
+    def get_all_workflows(self, host: str) -> list[dict]:
+        """Get all workflows for a given cluster."""
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.list_autovec_workflows(self.tenant_id)
+        # Filter workflows to only include those for the specified cluster
+        all_workflows = resp.json().get("data", [])
+        cluster_workflows = []
+        for workflow in all_workflows:
+            workflow_data = workflow.get("data", {})
+            if workflow_data.get("clusterId") == cluster_id:
+                cluster_workflows.append(workflow)
+
+        return cluster_workflows
+
     def get_ai_gateway_info(self, gateway_endpoint: str) -> dict:
         """Get the AI Gateway information."""
         resp = self.get(url=f"{gateway_endpoint}/v1/info")

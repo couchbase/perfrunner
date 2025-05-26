@@ -2268,6 +2268,19 @@ class MetricHelper:
             reported_metrics.append((value, self._snapshots, metric_info))
         return reported_metrics
 
+    def uds_throughput(self, ingestion_time: float, num_successful_files: int) -> Metric:
+        title = f"UDS Throughput (docs/sec), {self._title}"
+        metric_id = f"{self.test_config.name}_uds_throughput"
+        metric_info = self._metric_info(metric_id, title)
+        throughput = num_successful_files / ingestion_time
+        return round(throughput, 2), self._snapshots, metric_info
+
+    def uds_processing_time(self, ingestion_time: float) -> Metric:
+        title = f"UDS Processing Time (min), {self._title}"
+        metric_id = f"{self.test_config.name}_uds_processing_time"
+        metric_info = self._metric_info(metric_id, title)
+        return s2m(ingestion_time), self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

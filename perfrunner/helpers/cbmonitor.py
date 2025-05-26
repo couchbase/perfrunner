@@ -57,6 +57,7 @@ from cbagent.collectors import (
     XdcrLag,
     XdcrStats,
 )
+from cbagent.collectors.ai_services import WorkflowMetadataStats
 from cbagent.collectors.metrics_rest_api import MetricsRestApiAppTelemetry
 from cbagent.metadata_client import MetadataClient
 from cbagent.settings import CbAgentSettings
@@ -168,6 +169,7 @@ class CbAgent:
         regulator_stats=False,
         utilisation_stats=False,
         app_telemetry=False,
+        ai_workflow_stats=False,
     ):
         self.collectors = []
         self.processes = []
@@ -278,6 +280,9 @@ class CbAgent:
             self.add_collector(SyncGatewayStats, self.test)
         if sgimport_latency:
             self.add_sgimport_latency()
+
+        if ai_workflow_stats:
+            self.add_collector(WorkflowMetadataStats)
 
     def add_sgimport_latency(self):
         for cluster_id, master_node in self.cluster_map.items():

@@ -434,7 +434,7 @@ class DefaultClusterManager(ClusterManagerBase):
         for master in self.cluster_spec.masters:
             self.rest.create_bucket(
                 host=master,
-                name=self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME,
+                name=self.test_config.cluster.eventing_metadata_bucket_name,
                 ram_quota=self.test_config.cluster.eventing_metadata_bucket_mem_quota,
                 replica_number=self.test_config.bucket.replica_number,
                 replica_index=self.test_config.bucket.replica_index,
@@ -1065,7 +1065,7 @@ class CapellaClusterManager(ClusterManagerBase):
         for master in self.cluster_spec.masters:
             self.rest.create_bucket(
                 host=master,
-                name=self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME,
+                name=self.test_config.cluster.eventing_metadata_bucket_name,
                 ram_quota=self.test_config.cluster.eventing_metadata_bucket_mem_quota,
                 replica_number=self.test_config.bucket.replica_number,
                 eviction_policy=self.test_config.bucket.eviction_policy,

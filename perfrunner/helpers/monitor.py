@@ -1758,25 +1758,32 @@ class Monitor:
         logger.info("Snapshot restore completed")
 
     def wait_for_workflow_status(
-        self, host: str, workflow_id: str, status: str = "running"
-    ) -> Optional[str]:
+        self, host: str, workflow_id: str, status: str = "running", max_retries: int = 0
+    ) -> Optional[dict]:
         logger.info(f"Waiting for workflow {workflow_id} to reach status {status}")
         retries = 0
+        max_retries = max_retries or self.MAX_RETRY
+        # Progress states: deploying, running, pending, destroying
+        # Final states: deployFailed, completed, partiallyCompleted, failed, destroyFailed
         while True:
             workflow_details = self.rest.get_workflow_details(host, workflow_id)
-            workflow_status = workflow_details.get("status", "").lower()
+            workflow_status = (
+                workflow_details.get("workflowRuns", [{}])[0].get("status", "").lower()
+            )
             if workflow_status == status.lower():
-                logger.info(f"Deployed workflow: {workflow_details}")
-                eventing_apps = self.rest.get_eventing_apps(host).get("apps", []) or []
-                logger.info(f"Eventing apps: {eventing_apps}")
-                if len(eventing_apps) > 0:
-                    return eventing_apps[0].get("name")
+                return workflow_details
+
+            if workflow_status in ["deployFailed", "failed", "destroyFailed", "partiallyCompleted"]:
+                raise Exception(
+                    f"Workflow {workflow_id} is stuck in {workflow_status}. {workflow_details}"
+                )
             retries += 1
             if retries % 60 == 0:
                 logger.info(f"Workflow status: {workflow_status}")
-            if retries >= self.MAX_RETRY:
+
+            if retries >= max_retries:
                 raise Exception(
-                    f"Workflow {workflow_id} failed to reach the desired status {workflow_details}"
+                    f"Workflow {workflow_id} failed to reach the desired status. {workflow_details}"
                 )
 
             time.sleep(self.MONITORING_DELAY)

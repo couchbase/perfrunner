@@ -933,6 +933,9 @@ class ClusterSettings:
         self.eventing_metadata_bucket_mem_quota = \
             int(options.get('eventing_metadata_bucket_mem_quota',
                             self.EVENTING_METADATA_BUCKET_MEM_QUOTA))
+        self.eventing_metadata_bucket_name = options.get(
+            "eventing_metadata_bucket_name", self.EVENTING_METADATA_BUCKET_NAME
+        )
         self.eventing_buckets = int(options.get('eventing_buckets',
                                                 self.EVENTING_BUCKETS))
         self.num_vbuckets = int(options.get('num_vbuckets', self.NUM_VBUCKETS))

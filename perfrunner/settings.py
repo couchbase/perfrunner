@@ -3095,7 +3095,7 @@ class YCSBSettings:
         self.sdk_version = options.get('sdk_version', self.SDK_VERSION)
         self.latency_percentiles = options.get('latency_percentiles', self.LATENCY_PERCENTILES)
         if isinstance(self.latency_percentiles, str):
-            self.latency_percentiles = [int(x) for x in self.latency_percentiles.split(',')]
+            self.latency_percentiles = [float(x) for x in self.latency_percentiles.split(',')]
         self.average_latency = int(options.get('average_latency', self.AVERAGE_LATENCY))
 
     def __str__(self) -> str:

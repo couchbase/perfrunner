@@ -2172,7 +2172,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             data['evictionPolicy'] = eviction_policy
 
         build = self.get_version(host)
-        if create_build_tuple(build) > (8, 0, 0, 0):
+        if create_build_tuple(build) > (8, 0, 0, 0) and backend_storage == "magma":
             data['numVBuckets'] = num_vbuckets
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))

@@ -1,5 +1,7 @@
+import sys
 from argparse import ArgumentParser
 
+from logger import logger
 from perfrunner.settings import ClusterSpec, TestConfig
 
 
@@ -33,9 +35,18 @@ def main():
     test_config = TestConfig()
     test_config.parse(args.test_config_fname, args.override)
 
+    # If cluster doesnot contain clients, dont allow --remote and --remote-copy
+    clients = cluster_spec.clients
+    if not clients and args.remote:
+        logger.warning("Cluster spec does not contain clients. --remote flag will be ignored.")
+        sys.argv.remove("--remote")
+    if not clients and args.remote_copy:
+        logger.warning("Cluster spec does not contain clients. --remote-copy flag will be ignored.")
+        sys.argv.remove("--remote-copy")
+
     test_module = test_config.test_case.test_module
     test_class = test_config.test_case.test_class
-    exec('from {} import {}'.format(test_module, test_class))
+    exec(f"from {test_module} import {test_class}")
 
     with eval(test_class)(cluster_spec, test_config, args.verbose) as test:
         test.run()

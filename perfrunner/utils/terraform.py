@@ -16,7 +16,11 @@ from fabric.api import local
 from requests.exceptions import HTTPError
 
 from logger import logger
-from perfrunner.helpers.config_files import TimeTrackingFile, record_time
+from perfrunner.helpers.config_files import (
+    ClusterAnsibleInventoryFile,
+    TimeTrackingFile,
+    record_time,
+)
 from perfrunner.helpers.misc import (
     maybe_atoi,
     my_public_ip,
@@ -208,9 +212,10 @@ class CloudVMDeployer:
         self.infra_spec.config.set("infrastructure", "region", self.region)
         self.infra_spec.update_spec_file()
 
-    def deploy(self):
+    def deploy(self) -> dict:
         # Configure terraform
-        self.populate_tfvars()
+        if not self.populate_tfvars():
+            return {}
         self.terraform_init(self.csp)
 
         # Deploy resources
@@ -219,6 +224,7 @@ class CloudVMDeployer:
         # Get info about deployed resources and update cluster spec file
         output = self.terraform_output(self.csp)
         self.update_spec(output)
+        return output
 
     def destroy(self):
         self.terraform_destroy(self.csp)
@@ -312,6 +318,16 @@ class CloudVMDeployer:
             return ""
         return json.loads(stdout).get("id", "").replace("/resourcegroups/", "/resourceGroups/")
 
+    def _can_terraform(self) -> tuple[dict, bool]:
+        """Return the tfvar nodes and a boolean indicating if terraform can be run."""
+        tfvar_nodes = self.create_tfvar_nodes()
+
+        if not any(tfvar_nodes.values()) and not self.cloud_storage:
+            logger.warn("Nothing to deploy with Terraform.")
+            return {}, False
+
+        return tfvar_nodes, True
+
     def populate_tfvars(self) -> bool:
         logger.info("Setting tfvars")
         global_tag = self.options.tag if self.options.tag else ''
@@ -319,10 +335,8 @@ class CloudVMDeployer:
             # GCP doesn't allow uppercase letters in tags
             global_tag = global_tag.lower()
 
-        tfvar_nodes = self.create_tfvar_nodes()
-
-        if not any(tfvar_nodes.values()) and not self.cloud_storage:
-            logger.warn('Nothing to deploy with Terraform.')
+        tfvar_nodes, can_terraform = self._can_terraform()
+        if not can_terraform:
             return False
 
         managed_id = self._get_managed_id()
@@ -493,17 +507,11 @@ class CloudVMDeployer:
 
         self.infra_spec.update_spec_file()
 
-        with open('cloud/infrastructure/cloud.ini', 'r+') as f:
-            s = f.read()
-            if not self.infra_spec.capella_infrastructure:
-                s = s.replace("server_list", "\n".join(self.infra_spec.servers))
-            s = s.replace("worker_list", "\n".join(self.infra_spec.clients))
-            if self.infra_spec.sgw_servers:
-                s = s.replace("sgw_list", "\n".join(self.infra_spec.sgw_servers))
-            if self.infra_spec.kafka_brokers:
-                s = s.replace("kafka_broker_list", "\n".join(self.infra_spec.kafka_brokers))
-            f.seek(0)
-            f.write(s)
+        with ClusterAnsibleInventoryFile(*self.infra_spec.ssh_credentials) as cloud_ini:
+            cloud_ini.set_servers(self.infra_spec.servers)
+            cloud_ini.set_syncgateways(self.infra_spec.sgw_servers)
+            cloud_ini.set_clients(self.infra_spec.clients)
+            cloud_ini.set_kafka_brokers(self.infra_spec.kafka_brokers)
 
 
 class ControlPlaneManager:
@@ -769,15 +777,10 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         self.capella_timeout = max(0, self.options.capella_timeout)
 
     def deploy(self):
+        non_capella_output = None
         if not self.options.capella_only:
-            # Configure terraform
-            self.populate_tfvars()
-            self.terraform_init(self.csp)
-
-            # Deploy non-capella resources
-            self.terraform_apply(self.csp)
-            non_capella_output = self.terraform_output(self.csp)
-            CloudVMDeployer.update_spec(self, non_capella_output)
+            # Deploy non-capella resource
+            non_capella_output = super().deploy()
 
         # Deploy capella cluster
         with record_time("capella_provisioned_cluster"):
@@ -787,9 +790,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             self.disable_autoscaling()
 
         # Update cluster spec file
-        self.update_spec()
+        self.update_capella_spec()
 
-        if not self.options.capella_only and self.options.vpc_peering:
+        if not non_capella_output and self.options.vpc_peering:
             # Do VPC peering
             network_info = non_capella_output['network']['value']
             self.peer_vpc(network_info, self.cluster_ids[0])
@@ -1059,7 +1062,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         ret_list = kv_nodes + non_kv_nodes
         return ret_list
 
-    def update_spec(self):
+    def update_capella_spec(self):
         self.infra_spec.config.add_section('clusters_schemas')
         for option, value in self.infra_spec.infrastructure_clusters.items():
             self.infra_spec.config.set('clusters_schemas', option, value)
@@ -1270,14 +1273,10 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
     NEBULA_OVERRIDE_ARGS = ['override_count', 'min_count', 'max_count', 'instance_type']
 
     def __init__(self, infra_spec: ClusterSpec, options: Namespace):
-        CloudVMDeployer.__init__(self, infra_spec, options)
-        if not options.test_config:
+        super().__init__(infra_spec, options)
+        if not self.test_config:
             logger.error('Test config required if deploying serverless infrastructure.')
             exit(1)
-
-        test_config = TestConfig()
-        test_config.parse(options.test_config, override=options.override)
-        self.test_config = test_config
 
         for prefix, section in {'dapi': 'data_api', 'nebula': 'direct_nebula'}.items():
             for arg in self.NEBULA_OVERRIDE_ARGS:
@@ -1293,31 +1292,12 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
             os.getenv("CBC_TOKEN_FOR_INTERNAL_SUPPORT"),
         )
 
-        self.dedicated_client = CapellaAPIDedicated(
-            self.infra_spec.controlplane_settings["public_api_url"],
-            None,  # Don't need access key and secret key for creating a project or getting tenant
-            None,  # IDs (which are the only things we need it for)
-            os.getenv("CBC_USER"),
-            os.getenv("CBC_PWD"),
-        )
-
-        self.tenant_id = self.infra_spec.controlplane_settings["org"]
         self.dp_id = self.infra_spec.controlplane_settings["dataplane_id"]
-
-        self.project_id = self.infra_spec.controlplane_settings.get("project")
         self.cluster_id = self.infra_spec.capella_cluster_ids[0]
 
     def deploy(self):
         if not self.options.capella_only:
-            logger.info('Deploying non-Capella resources')
-            # Configure terraform
-            CloudVMDeployer.populate_tfvars(self)
-            self.terraform_init(self.csp)
-
-            # Deploy non-capella resources
-            self.terraform_apply(self.csp)
-            non_capella_output = self.terraform_output(self.csp)
-            CloudVMDeployer.update_spec(self, non_capella_output)
+            super().deploy()
         else:
             logger.info('Skipping deploying non-Capella resources as --capella-only flag is set')
 
@@ -1329,7 +1309,7 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
         else:
             logger.info('Skipping deploying serverless dbs as --no-serverless-dbs flag is set')
 
-        self.update_spec()
+        self.update_serverless_spec()
 
     def destroy(self):
         # Destroy non-capella resources
@@ -1539,7 +1519,7 @@ class CapellaServerlessDeployer(CapellaProvisionedDeployer):
         else:
             logger.info('All serverless DBs deployed')
 
-    def update_spec(self):
+    def update_serverless_spec(self):
         resp = self.serverless_client.get_serverless_dataplane_info(self.dp_id)
         raise_for_status(resp)
         dp_info = resp.json()
@@ -1640,37 +1620,10 @@ class EKSDeployer(CloudVMDeployer):
     pass
 
 
-class AppServicesDeployer(CloudVMDeployer):
+class AppServicesDeployer(CapellaProvisionedDeployer):
     def __init__(self, infra_spec: ClusterSpec, options: Namespace):
         super().__init__(infra_spec, options)
-
-        self.test_config = None
-        if options.test_config:
-            test_config = TestConfig()
-            test_config.parse(options.test_config, override=options.override)
-            self.test_config = test_config
-
-        self.tenant_id = self.infra_spec.controlplane_settings["org"]
-        self.project_id = self.infra_spec.controlplane_settings["project"]
-        self.cluster_ids = self.infra_spec.capella_cluster_ids
         self.cluster_id = self.cluster_ids[0]
-
-        logger.info(f'The tenant id is: {self.tenant_id}')
-        logger.info(f'The project id is: {self.project_id}')
-        logger.info(f'The cluster id is: {self.cluster_id}')
-
-        self.api_client = CapellaAPIDedicated(
-            self.infra_spec.controlplane_settings["public_api_url"],
-            None,
-            None,
-            os.getenv("CBC_USER"),
-            os.getenv("CBC_PWD"),
-        )
-
-        if api_keys := ControlPlaneManager.get_api_keys():
-            self.api_client.ACCESS, self.api_client.SECRET = api_keys
-
-        self.capella_timeout = max(0, self.options.capella_timeout)
 
     def deploy(self):
         # Configure terraform
@@ -1692,13 +1645,13 @@ class AppServicesDeployer(CloudVMDeployer):
             ]
         logger.info(f"The client list is: {client_ips}")
         for client_ip in client_ips:
-            self.api_client.add_allowed_ip_sgw(
+            self.provisioned_api.add_allowed_ip_sgw(
                 self.tenant_id, self.project_id, sgw_cluster_id, self.cluster_id, client_ip
             )
 
         # Allow my IP
         logger.info("Whitelisting own IP on sgw backend")
-        self.api_client.allow_my_ip_sgw(
+        self.provisioned_api.allow_my_ip_sgw(
             self.tenant_id,
             self.project_id,
             self.cluster_id,
@@ -1722,7 +1675,7 @@ class AppServicesDeployer(CloudVMDeployer):
 
             # Set sync function
             logger.info("Setting sync function")
-            self.api_client.update_sync_function_sgw(
+            self.provisioned_api.update_sync_function_sgw(
                 self.tenant_id,
                 self.project_id,
                 self.cluster_id,
@@ -1733,7 +1686,7 @@ class AppServicesDeployer(CloudVMDeployer):
 
             # Add app roles
             logger.info("Adding app roles")
-            self.api_client.add_app_role_sgw(
+            self.provisioned_api.add_app_role_sgw(
                 self.tenant_id,
                 self.project_id,
                 self.cluster_id,
@@ -1742,7 +1695,7 @@ class AppServicesDeployer(CloudVMDeployer):
                 {"name": "moderator", "admin_channels": []},
             )
 
-            self.api_client.add_app_role_sgw(
+            self.provisioned_api.add_app_role_sgw(
                 self.tenant_id,
                 self.project_id,
                 self.cluster_id,
@@ -1753,7 +1706,7 @@ class AppServicesDeployer(CloudVMDeployer):
 
             # Add user
             logger.info("Adding user")
-            self.api_client.add_user_sgw(
+            self.provisioned_api.add_user_sgw(
                 self.tenant_id,
                 self.project_id,
                 self.cluster_id,
@@ -1772,23 +1725,23 @@ class AppServicesDeployer(CloudVMDeployer):
                 "allEndpoints": True,
                 "endpoints": [],
             }
-            resp = self.api_client.add_admin_user_sgw(
+            resp = self.provisioned_api.add_admin_user_sgw(
                 self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id, admin_user
             )
             logger.info(f"The response is: {resp}")
             # Update cluster spec file
-            self.update_spec(sgw_cluster_id, sgw_db_name)
+            self.update_app_services_spec(sgw_cluster_id, sgw_db_name)
 
     def destroy(self):
         # Destroy capella cluster
         sgw_cluster_id = self.infra_spec.infrastructure_settings['app_services_cluster']
         self.destroy_cluster_internal_api(sgw_cluster_id)
 
-    def update_spec(self, sgw_cluster_id, sgw_db_name):
+    def update_app_services_spec(self, sgw_cluster_id, sgw_db_name):
         # Get sgw public and private ips
-        resp = self.api_client.get_sgw_links(self.tenant_id, self.project_id,
-                                             self.cluster_id, sgw_cluster_id,
-                                             sgw_db_name)
+        resp = self.provisioned_api.get_sgw_links(
+            self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id, sgw_db_name
+        )
 
         logger.info(f'The connect response is: {resp}')
         adminurl = resp.json().get('data').get('adminURL').split(':')[1].split('//')[1]
@@ -1800,7 +1753,7 @@ class AppServicesDeployer(CloudVMDeployer):
 
         sgw_option = self.infra_spec.config.options('syncgateways')[0]
         sgw_list = []
-        for i in range(0, self.test_config.syncgateway_settings.nodes):
+        for _ in range(0, self.test_config.syncgateway_settings.nodes):
             sgw_list.append(adminurl)
         logger.info(f'the sgw list is: {sgw_list}')
         self.infra_spec.config.set('syncgateways', sgw_option, '\n' + '\n'.join(sgw_list))
@@ -1856,7 +1809,7 @@ class AppServicesDeployer(CloudVMDeployer):
 
         logger.info(f'The payload is: {config}')
 
-        resp = self.api_client.create_sgw_backend(self.tenant_id, config)
+        resp = self.provisioned_api.create_sgw_backend(self.tenant_id, config)
         raise_for_status(resp)
         sgw_cluster_id = resp.json().get('id')
         logger.info(f'Initialised app services deployment {sgw_cluster_id}')
@@ -1872,11 +1825,15 @@ class AppServicesDeployer(CloudVMDeployer):
         while pending_sgw_cluster and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
 
-            status = self.api_client.get_sgw_info(self.tenant_id, self.project_id,
-                                                  self.cluster_id, sgw_cluster_id).json() \
-                                                                                  .get('data') \
-                                                                                  .get('status') \
-                                                                                  .get('state')
+            status = (
+                self.provisioned_api.get_sgw_info(
+                    self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id
+                )
+                .json()
+                .get("data")
+                .get("status")
+                .get("state")
+            )
             logger.info(f'Cluster state for {pending_sgw_cluster}: {status}')
             if status == "deploymentFailed":
                 logger.error('Deployment failed for cluster {}. DataDog link for debugging: {}'
@@ -1964,7 +1921,7 @@ class AppServicesDeployer(CloudVMDeployer):
     def _deploy_app_services_db(
         self, sgw_cluster_id: str, sgw_db_name: str, bucket_count: int, config: dict
     ):
-        resp = self.api_client.create_sgw_database(
+        resp = self.provisioned_api.create_sgw_database(
             self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id, config
         )
         logger.info(f'The response for creating the sgw db is: {resp}')
@@ -1977,8 +1934,9 @@ class AppServicesDeployer(CloudVMDeployer):
         logger.info(f"Waiting for {sgw_db_name} sgw databases to be online")
         while num_sgw < bucket_count:
             sleep(10)
-            resp = self.api_client.get_sgw_databases(self.tenant_id, self.project_id,
-                                                     self.cluster_id, sgw_cluster_id).json()
+            resp = self.provisioned_api.get_sgw_databases(
+                self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id
+            ).json()
             new_resp = resp.get('data')
             if new_resp is not None:
                 num_sgw = 0
@@ -1990,9 +1948,13 @@ class AppServicesDeployer(CloudVMDeployer):
                     if state == 'Offline':
                         # Resume sgw database
                         logger.info('Resuming sgw database')
-                        self.api_client.resume_sgw_database(self.tenant_id, self.project_id,
-                                                            self.cluster_id, sgw_cluster_id,
-                                                            sgw_db_name)
+                        self.provisioned_api.resume_sgw_database(
+                            self.tenant_id,
+                            self.project_id,
+                            self.cluster_id,
+                            sgw_cluster_id,
+                            sgw_db_name,
+                        )
 
                     if state == 'Online':
                         num_sgw += 1
@@ -2006,8 +1968,9 @@ class AppServicesDeployer(CloudVMDeployer):
 
     def destroy_cluster_internal_api(self, sgw_cluster_id):
         logger.info('Deleting Capella App Services cluster...')
-        resp = self.api_client.delete_sgw_backend(self.tenant_id, self.project_id,
-                                                  self.cluster_id, sgw_cluster_id)
+        resp = self.provisioned_api.delete_sgw_backend(
+            self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id
+        )
 
         timeout_mins = self.capella_timeout
         interval_secs = 30
@@ -2016,8 +1979,9 @@ class AppServicesDeployer(CloudVMDeployer):
         while pending_sgw_cluster and (time() - t0) < timeout_mins * 60:
             sleep(interval_secs)
             try:
-                status = self.api_client.get_sgw_info(self.tenant_id, self.project_id,
-                                                      self.cluster_id, sgw_cluster_id)
+                status = self.provisioned_api.get_sgw_info(
+                    self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id
+                )
                 status = status.json().get('data').get('status').get('state')
                 logger.info(f'Cluster state for {pending_sgw_cluster}: {status}')
             except Exception as e:
@@ -2065,21 +2029,14 @@ class CapellaColumnarDeployer(CloudVMDeployer):
 
     def deploy(self):
         if not self.options.capella_only:
-            # Configure terraform
-            if self.populate_tfvars():
-                self.terraform_init(self.csp)
-
-                # Deploy non-capella resources
-                self.terraform_apply(self.csp)
-                non_capella_output = self.terraform_output(self.csp)
-                super().update_spec(non_capella_output)
+            super().deploy()
 
         # Deploy capella cluster(s)
         self.deploy_columnar_instances()
         self.wait_for_columnar_instance_deploy()
 
         # Update cluster spec file
-        self.update_spec()
+        self.update_columnar_spec()
         self.update_allowlists()
 
     def update_allowlists(self):
@@ -2283,7 +2240,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         else:
             logger.info("All Columnar instance clusters destroyed.")
 
-    def update_spec(self):
+    def update_columnar_spec(self):
         """Update the infrastructure spec file with hostnames of Columnar compute nodes."""
         for instance_id, (cluster_label, _) in zip(self.instance_ids, self.infra_spec.clusters):
             resp = self.columnar_api.get_columnar_nodes(instance_id)

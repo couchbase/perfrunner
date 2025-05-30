@@ -528,7 +528,7 @@ class ClusterSpec(Config):
                         clients += [host for host in v.split()]
                 return clients
         else:
-            return self.config.get('clients', 'hosts').split()
+            return self.config.get("clients", "hosts", fallback="").split()
 
     @property
     def syncgateways(self) -> list[str]:

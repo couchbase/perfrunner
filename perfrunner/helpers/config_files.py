@@ -107,6 +107,7 @@ class ConfigFile:
         # If the source file does not exist, return an empty dict.
         # File will be created when calling write()
         if not Path(self.source_file).is_file():
+            self.ini_config = None
             return [{}]
 
         if self.file_type != FileType.INI:
@@ -119,7 +120,8 @@ class ConfigFile:
         else:
             self.ini_config = Config()
             self.ini_config.parse(self.source_file)
-            return [self.ini_config._get_options_as_dict() or {}]
+            # For simplicity, we can treat ConfigParser object as a dict
+            return [self.ini_config.config]
 
     def write(self):
         """Write the content of all configurations to the destination file."""
@@ -130,6 +132,10 @@ class ConfigFile:
                 else:
                     json.dump(self.config, file, indent=4)
         else:
+            if not self.ini_config:
+                # The file didnt exist and we are working with an empty config
+                self.ini_config = Config()
+                self.ini_config.config.read_dict(self.config)
             self.ini_config.update_spec_file(self.dest_file)
 
 
@@ -614,3 +620,54 @@ class TimeTrackingFile(ConfigFile):
     def log_content(self):
         """Log the current content of the timing data file."""
         logger.info(f"Current timing data: {pretty_dict(self.config)}")
+
+
+class ClusterAnsibleInventoryFile(ConfigFile):
+    """Generates Ansible INI inventory file from a cluster spec.
+
+    If cluster name is provided, the file is generated in the `clusters` directory.
+    Otherwise, it generates the `cloud/infrastructure/cloud.ini` file.
+
+    Sections can be created in two ways:
+    - Special sections: `couchbase_servers`, `syncgateways`, `clients`, `kafka_brokers`
+    - Service-based sections: any other section such as `kv`, `index`, `n1ql` and more
+    """
+
+    def __init__(self, username: str, password: str, cluster_name: str = None):
+        ini_file = "cloud/infrastructure/cloud.ini"
+        if cluster_name:
+            ini_file = f"clusters/{cluster_name}.ini"
+
+        super().__init__(ini_file, FileType.INI)
+        self.username = username
+        self.password = password
+
+    def load_config(self):
+        super().load_config()
+        # Set the ansible ssh access variables using cluster credentials
+        if "all:vars" not in self.config:
+            self.config["all:vars"] = {}
+        self.config["all:vars"].update(
+            {"ansible_user": self.username, "ansible_ssh_pass": self.password}
+        )
+
+    def add_hosts_section(self, section: str, hosts: list[str]):
+        """Add hosts to the specific section of the inventory file."""
+        if hosts:
+            self.config[section] = {host: "" for host in hosts}
+
+    def set_servers(self, servers: list[str]):
+        """Update the `couchbase_servers` section of the inventory file."""
+        self.add_hosts_section("couchbase_servers", servers)
+
+    def set_syncgateways(self, syncgateways: list[str]):
+        """Update the `syncgateways` section of the inventory file."""
+        self.add_hosts_section("syncgateways", syncgateways)
+
+    def set_clients(self, clients: dict[str, list[str]]):
+        """Update the `clients` section of the inventory file."""
+        self.add_hosts_section("clients", clients)
+
+    def set_kafka_brokers(self, kafka_brokers: list[str]):
+        """Update the `kafka_brokers` section of the inventory file."""
+        self.add_hosts_section("kafka_brokers", kafka_brokers)

@@ -784,6 +784,10 @@ class ClientUploader(CouchbaseInstaller):
             process.join()
 
     def install(self):
+        if not self.cluster_spec.workers:
+            logger.info("There are not clients defined. Nothing to install.")
+            return
+
         package_name = 'couchbase.rpm' if self.url.endswith('.rpm') else 'couchbase.deb'
 
         logger.info(f'Saving a local copy of {self.url}')

@@ -1044,11 +1044,10 @@ class Monitor:
         bucket: str,
         bucket_replica: int,
         analytics_node: str,
-        sql_suite: Optional[str] = None,
         scope: Optional[str] = None,
         coll: Optional[str] = None,
     ) -> int:
-        logger.info('Waiting for data to be synced from {}'.format(data_node))
+        logger.info(f"Waiting for data to be synced from {data_node}")
         time.sleep(self.MONITORING_DELAY * 3)
 
         # We get analytics node version and columnar status from the last cluster in the spec
@@ -1057,24 +1056,24 @@ class Monitor:
         is_columnar = server_info.is_columnar
 
         if scope:
-            num_items = self._get_num_items_scope_and_collection(data_node, bucket, scope, coll)
+            source_items = self._get_num_items_scope_and_collection(data_node, bucket, scope, coll)
+            source = f"{bucket}.{scope}" + (f".{coll}" if coll else "")
         else:
-            num_items = self._get_num_items(data_node, bucket, bucket_replica)
+            source_items = self._get_num_items(data_node, bucket, bucket_replica)
+            source = bucket
+
+        if (analytics_node_version > (8, 0, 0, 0)) or (
+            is_columnar and analytics_node_version >= (1, 0, 1, 0)
+        ):
+            metric = "cbas_incoming_records_total"
+        else:
+            metric = "cbas_incoming_records_count"
 
         while True:
-            if (analytics_node_version > (8, 0, 0, 0)) or (
-                is_columnar and analytics_node_version >= (1, 0, 1, 0)
-            ):
-                metric = "cbas_incoming_records_total"
-            else:
-                metric = "cbas_incoming_records_count"
-
-            if sql_suite is not None:
-                incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node, bucket,
-                                                                         metric)
-            else:
-                incoming_records = self.rest.get_cbas_incoming_records_count(analytics_node, None,
-                                                                        metric)
+            ingestion_progress = self.get_ingestion_progress(analytics_node)
+            incoming_records = self.rest.get_cbas_incoming_records_count(
+                analytics_node, bucket, metric
+            )
 
             try:
                 num_analytics_items = int(incoming_records["data"][0]["values"][-1][1])
@@ -1085,16 +1084,18 @@ class Monitor:
                     f"REST API response: {incoming_records}"
                 )
 
-            logger.info(f"Analytics has {num_analytics_items:,} docs (target is {num_items:,})")
-
-            ingestion_progress = self.get_ingestion_progress(analytics_node)
+            logger.info(
+                f"Analytics has ingested {num_analytics_items:,} docs "
+                f"(KV source {source} has {source_items:,})"
+            )
             logger.info(f"Ingestion progress: {ingestion_progress:.2f}%")
+
             if int(ingestion_progress) == 100:
                 break
 
             time.sleep(self.POLLING_INTERVAL_ANALYTICS)
 
-        return num_items
+        return source_items
 
     def monitor_cbas_pending_ops(self, analytics_nodes: list[str]):
         logger.info("Wait until cbas_pending_ops reaches 0")

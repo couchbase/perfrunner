@@ -1,0 +1,73 @@
+customer:
+- name: CustomerRF3
+  type: where
+  body: c_discount >= 0.1
+
+- name: CustomerRF1
+  type: udf
+  body: SELECT c.* FROM [customer] AS c
+
+- name: CustomerRF3
+  body: SELECT c.* FROM [customer] AS c WHERE c.c_discount >= 0.1
+  type: udf
+
+- name: CustomerM1
+  type: udf
+  body: SELECT c.* EXCLUDE c_discount, c_credit, c_credit_lim FROM [customer] AS c
+
+- name: CustomerM2
+  type: udf
+  body: SELECT c.*,
+              (c.c_name.c_first || ' ' || c.c_name.c_middle || ' ' || c.c_name.c_last) AS full_name,
+              (c.c_payment_cnt - c.c_delivery_cnt) AS undelivered_orders,
+              (c.c_ytd_payment / (1 - c.c_discount)) AS ytd_saved,
+              SUBSTR(c.c_data, 0, 100) AS c_data_head
+        EXCLUDE c_name, c_data
+        FROM [customer] AS c
+
+- name: CustomerH2
+  type: udf
+  body: 'SELECT VALUE {
+          "id": c.c_id,
+          "warehouse_id": c.c_w_id,
+          "district_id": c.c_d_id,
+          "full_name": CONCAT(c.c_name.c_first, " ", c.c_name.c_middle, " ", c.c_name.c_last),
+          "credit": c.c_credit,
+          "vip_status": CASE WHEN c.c_credit = "GC" AND c.c_discount > 0.4 THEN "VIP"
+                             WHEN c.c_credit = "GC" AND c.c_discount > 0.2 THEN "LOYAL"
+                             ELSE "REGULAR" END,
+          "home_address": c_addr,
+          "mobile_phone": (
+            SELECT RAW p.c_phone_number
+            FROM c.c_phones as p
+            WHERE p.c_phone_kind = "mobile"
+            LIMIT 1
+          ),
+          "num_categories": ARRAY_LENGTH(c.c_item_categories),
+          "joined_since": c.c_since,
+          "has_extra_data": IFMISSINGORNULL(c.c_extra_001, "") != "",
+          "ytd_payment": c.c_ytd_payment
+        } FROM [customer] as c LEFT UNNEST c.c_addresses as c_addr
+        WHERE c_addr IS NOT NULL
+          AND c_addr.c_address_kind = "home"
+          AND ARRAY_LENGTH(c.c_item_categories) > 0'
+
+orders:
+- name: OrdersRF4
+  type: where
+  body: o_carrier_id != 0
+
+- name: OrdersRF2
+  type: udf
+  body: SELECT o.* FROM [orders] AS o
+
+- name: OrdersRF4
+  type: udf
+  body: SELECT o.* FROM [orders] AS o WHERE o.o_carrier_id != 0
+
+- name: OrdersH1
+  type: udf
+  body: SELECT o.*, (SELECT VALUE SUM(ol.ol_quantity) FROM o.o_orderline AS ol)[0] AS total
+        EXCLUDE o_orderline
+        FROM [orders] AS o
+        WHERE o.o_carrier_id != 0

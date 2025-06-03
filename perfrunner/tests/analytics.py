@@ -3,6 +3,7 @@ import itertools
 import json
 import os
 import random
+import re
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -72,7 +73,8 @@ def sqlpp_escape(*identifiers: str) -> Union[str, tuple[str, ...]]:
 class DatasetDef:
     name: str
     source: Optional[str] = None
-    where: Optional[str] = None
+    where_clause: Optional[str] = None
+    transform_func: Optional[str] = None
 
     def create_at_link_statement(self, link_name: str, storage_format: Optional[str] = None) -> str:
         name, source, link_name = sqlpp_escape(self.name, self.source or self.name, link_name)
@@ -81,11 +83,16 @@ class DatasetDef:
         if storage_format:
             with_clause = f' WITH {{"storage-format": {{"format": "{storage_format}"}}}}'
 
-        where_clause = ""
-        if self.where:
-            where_clause = f" WHERE {self.where}"
+        # these shouldn't both be defined, but if they are then 'where' takes precedence.
+        where_clause = f" WHERE {self.where_clause}" if self.where_clause else ""
+        transform_clause = (
+            f" APPLY FUNCTION {sqlpp_escape(self.transform_func)}" if self.transform_func else ""
+        )
 
-        return f"CREATE DATASET {name}{with_clause} ON {source} AT {link_name}{where_clause}"
+        return (
+            f"CREATE DATASET {name}{with_clause} ON {source} AT {link_name}" +
+            (where_clause or transform_clause)
+        )
 
     def create_standalone_statement(
         self, pk_field: str = "key", pk_type: str = "string", storage_format: Optional[str] = None
@@ -459,10 +466,9 @@ class AnalyticsTest(PerfTest):
     @timeit
     def wait_for_data_ingestion(self):
         bucket_replica = self.test_config.bucket.replica_number
-        sql_suite = self.test_config.access_settings.sql_suite
         for bucket in self.test_config.buckets:
             self.num_items += self.monitor.monitor_data_synced(
-                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
+                self.data_node, bucket, bucket_replica, self.analytics_node
             )
 
     def _restore_remote(self):
@@ -587,6 +593,18 @@ class AnalyticsTest(PerfTest):
             metric_info["subCategory"] = "Initial"
 
         self.reporter.post(rate, snapshots, metric_info)
+
+    def get_average_encoded_doc_size(self, dataset: str) -> float:
+        logger.info(f"Getting average encoded document size in dataset {dataset}")
+        limit = 1063 * 4  # sample size same as "high" sample size in Analytics CBO
+        statement = (
+            "SELECT AVG(sizes) FROM "
+            f"(SELECT VALUE ENCODED_SIZE(x) FROM {sqlpp_escape(dataset)} x LIMIT {limit}) AS sizes;"
+        )
+        result = self.exec_analytics_statement(self.analytics_node, statement)
+        avg_size = result.json()["results"][0]["$1"]
+        logger.info(f"Average encoded document size in dataset {dataset} (bytes): {avg_size:.2f}")
+        return avg_size
 
 
 class BigFunTest(AnalyticsTest):
@@ -1822,6 +1840,117 @@ class CH2CapellaColumnarRemoteLinkTest(CH2Test):
         pass
 
 
+class CH2CapellaColumnarTransformOnIngestTest(CH2CapellaColumnarRemoteLinkTest):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        with open(self.test_config.columnar_settings.dataset_transform_def_file, "r") as f:
+            self.dataset_transforms = yaml.safe_load(f)
+
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        ds = []
+        for source_coll, transforms in self.dataset_transforms.items():
+            source = f"{self.BUCKET}.{self.schema.value}.{source_coll}"
+
+            # Add baseline without any filter or transform
+            ds.append(DatasetDef(source_coll, source))
+
+            for transform in transforms:
+                t_type = transform["type"]
+                name = f"{source_coll}_{t_type}_{transform['name']}"
+                ds.append(
+                    DatasetDef(
+                        name,
+                        source,
+                        where_clause=transform["body"] if t_type == "where" else None,
+                        transform_func=transform["name"] if t_type == "udf" else None,
+                    )
+                )
+
+        return ds
+
+    def create_transform_udfs(self):
+        logger.info("Creating transform UDFs")
+        for transforms in self.dataset_transforms.values():
+            for transform in transforms:
+                if transform.get("type") != "udf":
+                    continue
+
+                udf_body = transform.get("body", "")
+                assert udf_body, f"UDF body for {transform['name']} is empty"
+                udf_param = next(re.finditer(r"(?:from|FROM) \[(\w+)\]", udf_body)).group(1)
+                statement = (
+                    f"CREATE OR REPLACE TRANSFORM FUNCTION `{transform['name']}` ({udf_param}) {{ "
+                    f"SELECT VALUE doc FROM ( {udf_body} ) AS doc LIMIT 1 }};"
+                )
+                self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
+
+    @with_stats
+    def access(self) -> dict:
+        results = {}
+        for d in self.datasets:
+            self.exec_analytics_statement(
+                self.analytics_node,
+                d.create_at_link_statement(self.analytics_link, self.storage_format),
+                verbose=True,
+            )
+
+            bucket, scope, coll = d.source.split(".")
+            self.connect_link()
+            t0 = time.time()
+            self.monitor.monitor_data_synced(
+                data_node=self.data_node,
+                bucket=bucket,
+                bucket_replica=self.test_config.bucket.replica_number,
+                analytics_node=self.analytics_node,
+                scope=scope,
+                coll=coll,
+            )
+            ingest_time = time.time() - t0
+            self.disconnect_link()
+
+            ingested_items = self.get_dataset_items(d.name)
+            avg_item_size = self.get_average_encoded_doc_size(d.name)
+            items_per_sec = ingested_items / ingest_time if ingest_time > 0 else 0
+            bytes_per_sec = items_per_sec * avg_item_size
+            logger.info(f"Ingestion time for {d.name} (s): {ingest_time}")
+            logger.info(f"Average items/sec: {items_per_sec:.2f}")
+            logger.info(f"Average MB/sec: {bytes_per_sec / 1e6:.2f}")
+            results[d.name] = {
+                "time": ingest_time,
+                "items": ingested_items,
+                "avg_item_size": avg_item_size,
+                "items_per_sec": items_per_sec,
+                "bytes_per_sec": bytes_per_sec,
+            }
+
+            self.exec_analytics_statement(
+                self.analytics_node, f"DROP DATASET {sqlpp_escape(d.name)} IF EXISTS", verbose=True
+            )
+            self.monitor.monitor_cbas_pending_ops(self.analytics_nodes)
+
+        return results
+
+    def run(self):
+        self.create_transform_udfs()
+
+        self.init_ch2_repo()
+
+        self.create_remote_link()
+        self.disconnect_link()
+
+        if self.test_config.ch2_settings.use_backup:
+            self.restore_data()
+        else:
+            self.load_ch2()
+
+        # Only wait for the KV cluster
+        self.wait_for_persistence()
+
+        results = self.access()
+        logger.info(f"Results: {pretty_dict(results)}")
+
+
 class CapellaColumnarManualOnOffTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2155,7 +2284,6 @@ class CH2CapellaColumnarRemoteLinkTruncateTest(
             bucket,
             self.test_config.bucket.replica_number,
             self.analytics_node,
-            self.test_config.access_settings.sql_suite,
             scope,
             coll,
         )

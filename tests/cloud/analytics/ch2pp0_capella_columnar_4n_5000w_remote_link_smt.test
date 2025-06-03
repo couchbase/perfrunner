@@ -1,0 +1,59 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2CapellaColumnarTransformOnIngestTest
+
+[showfast]
+title = CH2++0 5000W, 4A, remote collections, transform on ingestion
+component = analyticscloud
+category = sync
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+num_buckets = 1
+bucket_name = bench
+enable_n2n_encryption = all
+
+[collection]
+config = collections/1bucket_1scope_11collections_analytics_ch2pp.json
+
+[bucket]
+backend_storage = magma
+eviction_policy = fullEviction
+replica_index = 1
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[restore]
+backup_storage = s3://analytics-ch2pp0-5000w
+backup_repo = default
+threads = 8
+map_data = bench.ch2pp=bench.ch2pp
+include_data = bench.ch2pp.customer,bench.ch2pp.orders
+
+[analytics]
+analytics_link = RemoteLink
+
+[columnar]
+dataset_transform_def_file = tests/cloud/analytics/config/ch2pp_smt.yaml
+
+[ch2]
+warehouses = 5000
+aclients = 0
+tclients = 0
+load_tclients = 48
+iterations = 0
+warmup_iterations = 0
+duration = 0
+warmup_duration = 0
+workload = ch2_analytics
+use_backup = true
+create_gsi_index = false
+schema = ch2pp
+customer_extra_fields = 0
+orders_extra_fields = 0
+item_extra_fields = 0

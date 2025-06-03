@@ -3034,6 +3034,7 @@ class ColumnarSettings:
             for dataset in options.get("object_store_import_datasets", "").replace(",", " ").split()
             if (s := dataset.split(":"))
         ]
+        self.dataset_transform_def_file = options.get("dataset_transform_def_file")
 
         # Enterprise Analytics settings
         self.blob_storage_endpoint = options.get("blob_storage_endpoint")

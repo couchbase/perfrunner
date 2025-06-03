@@ -177,31 +177,35 @@ def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec, threads: int
                        include_data: str, use_tls: bool = False, encrypted: bool = False,
                        passphrase: str = 'couchbase'):
     if not mode:
-        flags = ['--archive {}'.format(cluster_spec.backup),
-                 '--repo default',
-                 '--include-data {}'.format(include_data) if include_data else None,
-                 '--encrypted --passphrase {}'.format(passphrase) if encrypted else None]
+        flags = [
+            f"--archive {cluster_spec.backup}",
+            "--repo default",
+            f"--include-data {include_data}" if include_data else None,
+            f"--encrypted --passphrase '{passphrase}'" if encrypted else None,
+        ]
 
-        cmd = './opt/couchbase/bin/cbbackupmgr config {}'.format(' '.join(filter(None, flags)))
-        logger.info('Running: {}'.format(cmd))
+        cmd = f"./opt/couchbase/bin/cbbackupmgr config {' '.join(filter(None, flags))}"
+        logger.info(f"Running: {cmd}")
         run_local_shell_command(cmd)
 
-    flags = ['--archive {}'.format(cluster_spec.backup),
-             '--repo default',
-             '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
-             '--cacert root.pem' if use_tls else None,
-             '--username {}'.format(cluster_spec.rest_credentials[0]),
-             '--password {}'.format(cluster_spec.rest_credentials[1]),
-             '--threads {}'.format(threads) if threads else None,
-             '--storage {}'.format(storage_type) if storage_type else None,
-             '--sink {}'.format(sink_type) if sink_type else None,
-             '--value-compression compressed' if compression else '--value-compression unchanged',
-             '--shards {}'.format(shards) if shards else None,
-             '--passphrase {}'.format(passphrase) if encrypted else None]
+    flags = [
+        f"--archive {cluster_spec.backup}",
+        "--repo default",
+        f"--cluster http{'s' if use_tls else ''}://{master_node}",
+        "--cacert root.pem" if use_tls else None,
+        f"--username {cluster_spec.rest_credentials[0]}",
+        f"--password '{cluster_spec.rest_credentials[1]}'",
+        f"--threads {threads}" if threads else None,
+        f"--storage {storage_type}" if storage_type else None,
+        f"--sink {sink_type}" if sink_type else None,
+        f"--value-compression {'compressed' if compression else 'unchanged'}",
+        f"--shards {shards}" if shards else None,
+        f"--passphrase '{passphrase}'" if encrypted else None,
+    ]
 
-    cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(' '.join(filter(None, flags)))
+    cmd = f"./opt/couchbase/bin/cbbackupmgr backup {' '.join(filter(None, flags))}"
 
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
     run_local_shell_command(cmd)
 
 
@@ -312,24 +316,24 @@ def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec, threads: in
                         map_data: Optional[str] = None, use_tls: bool = False,
                         encrypted: bool = False, passphrase: str = 'couchbase',
                         disable_hlv: bool = False, disable_analytics: bool = False):
+    flags = [
+        f"--archive {archive or cluster_spec.backup}",
+        f"--repo {repo}",
+        f"--include-data {include_data}" if include_data else None,
+        f"--threads {threads}",
+        f"--cluster http{'s' if use_tls else ''}://{master_node}",
+        "--cacert root.pem" if use_tls else None,
+        f"--username {cluster_spec.rest_credentials[0]}",
+        f"--password '{cluster_spec.rest_credentials[1]}'",
+        f"--map-data {map_data}" if map_data else None,
+        f"--passphrase '{passphrase}'" if encrypted else None,
+        "--disable-hlv" if disable_hlv else None,
+        "--disable-analytics --disable-cluster-analytics" if disable_analytics else None,
+    ]
 
-    flags = ['--archive {}'.format(archive or cluster_spec.backup),
-             '--repo {}'.format(repo),
-             '--include-data {}'.format(include_data) if include_data else None,
-             '--threads {}'.format(threads),
-             '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
-             '--cacert root.pem' if use_tls else None,
-             '--username {}'.format(cluster_spec.rest_credentials[0]),
-             '--password {}'.format(cluster_spec.rest_credentials[1]),
-             '--map-data {}'.format(map_data) if map_data else None,
-             '--passphrase {}'.format(passphrase) if encrypted else None,
-             '--disable-hlv' if disable_hlv else None,
-             '--disable-analytics --disable-cluster-analytics' if disable_analytics else None]
+    cmd = f"./opt/couchbase/bin/cbbackupmgr restore --force-updates {' '.join(filter(None, flags))}"
 
-    cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
-        ' '.join(filter(None, flags)))
-
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
     run_local_shell_command(cmd)
 
 

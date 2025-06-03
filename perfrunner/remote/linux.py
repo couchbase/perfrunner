@@ -999,18 +999,17 @@ class RemoteLinux(Remote):
                            passphrase: str = 'couchbase'):
         with cd(worker_home), cd('perfrunner'):
             flags = [
-                '--archive {}'.format(cluster_spec.backup),
-                '--repo default',
-                '--obj-region {}'.format(obj_region) if obj_region else None,
-                '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-                '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
-                '--encrypted --passphrase {}'.format(passphrase) if encrypted else None
+                f"--archive {cluster_spec.backup}",
+                "--repo default",
+                f"--obj-region {obj_region}" if obj_region else None,
+                f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
+                f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
+                f"--encrypted --passphrase '{passphrase}'" if encrypted else None,
             ]
 
-            cmd = './opt/couchbase/bin/cbbackupmgr config {}'.format(
-                ' '.join(filter(None, flags)))
+            cmd = f"./opt/couchbase/bin/cbbackupmgr config {' '.join(filter(None, flags))}"
 
-            logger.info('Running: {}'.format(cmd))
+            logger.info(f"Running: {cmd}")
             run(cmd)
 
     @master_client
@@ -1022,28 +1021,27 @@ class RemoteLinux(Remote):
                            encrypted: bool = False, passphrase: str = 'couchbase'):
         with cd(worker_home), cd('perfrunner'):
             flags = [
-                '--archive {}'.format(cluster_spec.backup),
-                '--repo default',
-                '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
-                '--cacert root.pem' if use_tls else None,
-                '--username {}'.format(cluster_spec.rest_credentials[0]),
-                '--password {}'.format(cluster_spec.rest_credentials[1]),
-                '--threads {}'.format(threads) if threads else None,
-                '--storage {}'.format(storage_type) if storage_type else None,
-                '--sink {}'.format(sink_type) if sink_type else None,
-                '--value-compression compressed' if compression else None,
-                '--shards {}'.format(shards) if shards else None,
-                '--obj-region {}'.format(obj_region) if obj_region else None,
-                '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-                '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
-                '--passphrase {}'.format(passphrase) if encrypted else None,
-                '--no-progress-bar'
+                f"--archive {cluster_spec.backup}",
+                "--repo default",
+                f"--cluster http{'s' if use_tls else ''}://{master_node}",
+                "--cacert root.pem" if use_tls else None,
+                f"--username {cluster_spec.rest_credentials[0]}",
+                f"--password '{cluster_spec.rest_credentials[1]}'",
+                f"--threads {threads}" if threads else None,
+                f"--storage {storage_type}" if storage_type else None,
+                f"--sink {sink_type}" if sink_type else None,
+                "--value-compression compressed" if compression else None,
+                f"--shards {shards}" if shards else None,
+                f"--obj-region {obj_region}" if obj_region else None,
+                f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
+                f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
+                f"--passphrase '{passphrase}'" if encrypted else None,
+                "--no-progress-bar",
             ]
 
-            cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(
-                ' '.join(filter(None, flags)))
+            cmd = f"./opt/couchbase/bin/cbbackupmgr backup {' '.join(filter(None, flags))}"
 
-            logger.info('Running: {}'.format(cmd))
+            logger.info(f"Running: {cmd}")
             run(cmd)
 
     @master_client
@@ -1093,22 +1091,23 @@ class RemoteLinux(Remote):
                 f"--cluster http{'s' if use_tls else ''}://{master_node}",
                 "--cacert root.pem" if use_tls else None,
                 f"--username {user}",
-                f"--password {pwd}",
+                f"--password '{pwd}'",
                 f"--threads {threads}" if threads else None,
                 f"--obj-region {obj_region}" if obj_region else None,
                 f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
                 f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
                 f"--map-data {map_data}" if map_data else None,
                 "--disable-analytics --disable-cluster-analytics" if restore_to_capella else None,
-                f"--passphrase {passphrase}" if encrypted else None,
+                f"--passphrase '{passphrase}'" if encrypted else None,
                 f'--filter-keys "{filter_keys}"' if filter_keys else None,
                 "--no-progress-bar --purge --disable-gsi-indexes --disable-ft-indexes",
             ]
 
-            cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
-                ' '.join(filter(None, flags)))
+            cmd = "./opt/couchbase/bin/cbbackupmgr restore --force-updates " + " ".join(
+                filter(None, flags)
+            )
 
-            logger.info('Running: {}'.format(cmd))
+            logger.info(f"Running: {cmd}")
             run(cmd)
 
     @all_servers

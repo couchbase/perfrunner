@@ -1034,7 +1034,8 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
     def get_available_cidr(self):
         resp = self.provisioned_api.get_deployment_options(self.tenant_id, self.csp)
-        return resp.json().get('suggestedCidr')
+
+        return resp.json().get("cidr", {}).get("suggestedBlock")
 
     def get_deployed_cidr(self, cluster_id: str) -> Optional[str]:
         resp = self.provisioned_api.get_cluster_internal(
@@ -2068,16 +2069,10 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             names = [f'{name}-{i}'for i, name in enumerate(names)]
 
         logger.info("Fetching deployment options for Columnar instances.")
-        resp = self.columnar_api.get_deployment_options(
-            self.tenant_id, self.csp, self.region, free_tier=False
-        )
+        resp = self.columnar_api.get_deployment_options(self.tenant_id, self.csp, self.region)
         raise_for_status(resp)
         deployment_options = resp.json()
-        instance_type_options = {
-            c.pop("key"): c
-            for compute in deployment_options["compute"]
-            if (c := compute["compute"])
-        }
+        instance_type_options = {c.pop("key"): c for c in deployment_options["compute"]}
 
         for name, size, node_group in zip(names, instance_sizes, node_groups):
             node_group_info = self.infra_spec.infrastructure_section(node_group)
@@ -2095,7 +2090,10 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 "provider": self.csp,
                 "region": self.region,
                 "nodes": size,
-                "instanceTypes": instance_type_info,
+                "instanceTypes": {
+                    "vcpus": f"{instance_type_info['cpus']}vCPUs",
+                    "memory": f"{instance_type_info['memoryInGb']}GB",
+                },
                 "availabilityZone": "multi" if self.options.multi_az else "single",
                 "package": {"key": "enterprise", "timezone": "PT"},
             }

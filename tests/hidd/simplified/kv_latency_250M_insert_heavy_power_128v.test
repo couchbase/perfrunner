@@ -21,8 +21,8 @@ eviction_policy = fullEviction
 backend_storage = magma
 
 [bucket_extras]
-num_reader_threads = 64
-num_writer_threads = 64
+num_reader_threads = disk_io_optimized
+num_writer_threads = disk_io_optimized
 
 [load]
 items = 250000000

@@ -199,6 +199,7 @@ class CapellaRebalanceKVTest(RebalanceKVTest, CapellaRebalanceTest):
         self.load()
         self.wait_for_persistence()
 
+        self.access_bg()
         self.rebalance()
 
         if self.is_balanced():

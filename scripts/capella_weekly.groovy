@@ -31,7 +31,7 @@ def buildTests(tests) {
 }
 
 def buildComponent(component, testCases) {
-    for ( release in ['trinity', 'neo'] ) {
+    for ( release in ['trinity', 'neo', 'morpheus'] ) {
         if ( testCases.containsKey(release) ) {
             echo "building tests for " + release + " : " + component
             buildTests(testCases[release][component])
@@ -50,6 +50,9 @@ pipeline {
                     }
                     if ( params.trinity_test_suite != '' ) {
                         testCases['trinity'] = readJSON file: params.trinity_test_suite
+                    }
+                    if ( params.morpheus_test_suite != '' ) {
+                        testCases['morpheus'] = readJSON file: params.morpheus_test_suite
                     }
                 }
             }

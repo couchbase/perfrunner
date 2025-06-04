@@ -1,0 +1,65 @@
+{
+    "AWS_Analytics": [],
+    "AWS_KV": [
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_8kops_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloadb_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloadb_3nodes_lat_8kops_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_8kops_375m_128v.test", "groups": "P0"}
+    ],
+    "AWS_N1QL": [],
+    "AWS_Rebalance": [
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_6s_1c_c5_2xlarge.spec", "test_config": "cloud/rebalance/capella_reb_in_375M_128v.test", "groups": "P0"},
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_6s_1c_c5_2xlarge.spec", "test_config": "cloud/rebalance/capella_reb_out_375M_128v.test", "groups": "P0"}
+    ],
+    "AWS_XDCR": [],
+    "AWS_FTS": [],
+    "AWS_Eventing": [],
+    "AWS_GSI": [],
+    "AWS_Tools": [],
+    "AWS_SGW": [],
+    "AWS_Infrastructure": [],
+    "GCP_Analytics": [],
+    "GCP_KV": [
+      {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8_500GB.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8_500GB.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_8kops_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8_500GB.spec", "test_config": "cloud/kv/capella_ycsb_workloadb_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8_500GB.spec", "test_config": "cloud/kv/capella_ycsb_workloadb_3nodes_lat_8kops_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8_500GB.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8_500GB.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_8kops_375m_128v.test", "groups": "P0"}
+    ],
+    "GCP_N1QL": [],
+    "GCP_Rebalance": [
+      {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_6s_1c_n2custom8.spec", "test_config": "cloud/rebalance/capella_reb_in_375M_128v.test", "groups": "P0"},
+      {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_6s_1c_n2custom8.spec", "test_config": "cloud/rebalance/capella_reb_out_375M_128v.test", "groups": "P0"}
+    ],
+    "GCP_XDCR": [],
+    "GCP_FTS": [],
+    "GCP_Eventing": [],
+    "GCP_GSI": [],
+    "GCP_Tools": [],
+    "GCP_SGW": [],
+    "GCP_Infrastructure": [],
+    "Azure_Analytics": [],
+    "Azure_KV": [
+      {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_lat_8kops_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloadb_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloadb_3nodes_lat_8kops_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_375m_128v.test", "groups": "P0"},
+      {"job": "CapellaAzureWeekly", "cluster": "capella_azure_3s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/kv/capella_ycsb_workloadc_3nodes_lat_8kops_375m_128v.test", "groups": "P0"}
+    ],
+    "Azure_N1QL": [],
+    "Azure_Rebalance": [
+      {"job": "CapellaAzureWeekly", "cluster": "capella_azure_6s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/rebalance/capella_reb_in_375M_128v.test", "groups": "P0"},
+      {"job": "CapellaAzureWeekly", "cluster": "capella_azure_6s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/rebalance/capella_reb_out_375M_128v.test", "groups": "P0"}
+    ],
+    "Azure_XDCR": [],
+    "Azure_FTS": [],
+    "Azure_Eventing": [],
+    "Azure_GSI": [],
+    "Azure_Tools": [],
+    "Azure_SGW": [],
+    "Azure_Infrastructure": []
+}

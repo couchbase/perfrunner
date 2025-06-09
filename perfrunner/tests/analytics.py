@@ -1203,11 +1203,10 @@ class CH2Test(AnalyticsTest):
     @property
     def datasets(self) -> list[DatasetDef]:
         dataset_names = self.dataset_names
-        if self.test_config.ch2_settings.use_backup:
-            dataset_names = [
-                coll_string.split(".")[-1]
-                for coll_string in self.test_config.restore_settings.include_data.split(",")
-            ]
+        if self.test_config.ch2_settings.use_backup and (
+            included := self.test_config.restore_settings.include_data
+        ):
+            dataset_names = [coll_string.split(".")[-1] for coll_string in included.split(",")]
         return [
             DatasetDef(name, f"{self.BUCKET}.{self.schema.value}.{name}") for name in dataset_names
         ]

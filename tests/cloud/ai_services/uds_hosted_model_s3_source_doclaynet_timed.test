@@ -28,3 +28,11 @@ ssl_mode = capella
 
 [ai_services]
 workflow_type = unstructured
+
+[jts]
+index_partitions = 1
+vector_dimension = 1536
+vector_similarity_type = dot_product
+vector_index_optimized_for = recall
+couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_only_vector_index.json
+test_total_docs = 0

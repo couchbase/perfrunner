@@ -12,6 +12,7 @@ from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.worker import aibench_task
 from perfrunner.settings import AIGatewayTargetSettings, AIServicesSettings, ClusterSpec, TestConfig
 from perfrunner.tests import PerfTest
+from perfrunner.tests.fts import FTSTest
 
 
 class AIWorkflow:
@@ -45,7 +46,11 @@ class AIWorkflow:
         }
 
     def get_workflow_payload(
-        self, bucket: str, scope: str = "_default", collection: str = "_default"
+        self,
+        index_name: str,
+        bucket: str,
+        scope: str = "_default",
+        collection: str = "_default",
     ) -> dict:
         try:
             access_key_id, secret_access_key = local.get_aws_credential(
@@ -56,15 +61,16 @@ class AIWorkflow:
 
         payload = {
             "type": self.ai_services_settings.workflow_type,
-            "schemaFields": self.ai_services_settings.schema_fields,
             "embeddingModel": self._get_embedding_model(),
             "cbKeyspace": {
                 "bucket": bucket,
                 "scope": scope,
                 "collection": collection,
             },
-            "vectorIndexName": self.ai_services_settings.fts_index_name,
-            "embeddingFieldName": "emb",
+            "vectorIndexName": index_name,
+            "embeddingFieldMappings": {
+                "emb": {"sourceFields": self.ai_services_settings.schema_fields}
+            },
             "name": f"perfflow{self.flow_uuid}",
         }
         if self.ai_services_settings.workflow_type == "unstructured":
@@ -88,7 +94,7 @@ class AIWorkflow:
         return payload
 
 
-class WorkflowIngestionAndLatencyTest(PerfTest):
+class WorkflowIngestionAndLatencyTest(FTSTest):
     COLLECTORS = {
         "eventing_stats": True,
         "ns_server_system": True,
@@ -100,13 +106,10 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
         super().__init__(cluster_spec, test_config, verbose)
         self.ai_services_settings = self.test_config.ai_services_settings
         self.hosted_model_id = self._get_embedding_model_id()
-        # FTS specific settings
-        self.jts_access = self.test_config.access_settings
-        self.jts_access.couchbase_index_name = self.ai_services_settings.fts_index_name
-        self.jts_access.fts_index_map = {"fts_index_map": {"bucket": test_config.buckets[0]}}
         self.functions = {}
-
         self.runtimes = {}
+        # Default index name to use for the workflow
+        self.fts_index_name = self.jts_access.couchbase_index_name
 
     def _get_embedding_model_id(self) -> Optional[str]:
         """
@@ -122,9 +125,10 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
     @timeit
     def deploy_workflow(self):
         try:
-            self.workflow_id = self.rest.create_workflow(
-                self.master_node, self.workflow.get_workflow_payload(self.test_config.buckets[0])
+            payload = self.workflow.get_workflow_payload(
+                self.fts_index_name, self.test_config.buckets[0]
             )
+            self.workflow_id = self.rest.create_workflow(self.master_node, payload)
             workflow_details = self.monitor.wait_for_workflow_status(
                 host=self.eventing_nodes[0], workflow_id=self.workflow_id
             )
@@ -145,19 +149,19 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
             sleep(60)
 
     @timeit
-    def data_ingestion(self):
-        # We dont know how many docs we will endup with, as it depends on the workflow chunking
-        # strategy. As such we need a way here to decide for how long to run the ingestion.
-        # We have two options:
+    def wait_for_workflow_completion_or_time(self):
+        # For UDS, we dont know how many docs we will endup with, as it depends on the workflow
+        # chunking strategy. As such we need a way here to decide for how long to run the ingestion.
+        # So we introduce two options:
         # 1. Run for a fixed amount of time
         # 2. Run until all the UDS workflow runs finish
 
         access_settings = self.test_config.access_settings
         if access_settings.time > 0:
-            logger.info(f"Running ingestion for {access_settings.time} seconds")
+            logger.info(f"Running workflow for {access_settings.time} seconds")
             sleep(access_settings.time)
         else:
-            logger.info("Running ingestion. Waiting for workflow to complete")
+            logger.info("Running workflow. Waiting for workflow to complete")
             self.monitor.wait_for_workflow_status(
                 host=self.eventing_nodes[0],
                 workflow_id=self.workflow_id,
@@ -178,13 +182,25 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
         if len(eventing_functions) > 0:
             logger.info(f"Eventing functions: {pretty_dict(eventing_functions)}")
 
+    def create_indexes_for_workflow(self):
+        if not self.ai_services_settings.create_index:
+            return
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.wait_for_index_persistence()
+        # If the FTS index was created by the test, the name will have changed.
+        # Get the new name from the map
+        self.fts_index_name = list(self.fts_index_map.keys())[0]
+
     @with_stats
     def run_workflow(self):
         self.prepare_and_deploy_workflow()
-        ingestion_time = self.data_ingestion()
-        self.runtimes["ingestion_time"] = ingestion_time
+        workflow_time = self.wait_for_workflow_completion_or_time()
+        self.runtimes["workflow_time"] = workflow_time
 
     def run(self):
+        self.create_indexes_for_workflow()
+
         self.run_workflow()
 
         latencies = self.get_eventing_latencies()
@@ -196,20 +212,41 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
 
     def _report_kpi(self):
         workflow_details = self.rest.get_workflow_details(self.master_node, self.workflow_id)
-        uds_metadata = workflow_details.get("workflowRuns", [{}])[0].get("udsMetadata")
-        ingestion_time = self.runtimes.get("ingestion_time", 0)
-        if not ingestion_time:
-            return
-        self.reporter.post(
-            *self.metrics.uds_throughput(
-                ingestion_time=ingestion_time,
-                num_successful_files=uds_metadata.get("numSuccessfulFiles", 0),
-            )
+        uds_metadata = workflow_details.get("workflowRuns", [{}])[0].get("udsMetadata", {})
+        autovec_metadata = workflow_details.get("workflowRuns", [{}])[0].get(
+            "vectorizationMetadata", {}
         )
+        workflow_time = self.runtimes.get("workflow_time", 0)
+        logger.info(f"UDS metadata: {uds_metadata}")
+        logger.info(f"Autovec metadata: {autovec_metadata}")
+        if not workflow_time:
+            return
+
+        model_name = self.ai_services_settings.model_name
+        if success_files := uds_metadata.get("numSuccessfulFiles", 0):
+            self.reporter.post(
+                *self.metrics.uds_throughput(
+                    ingestion_time=workflow_time,
+                    num_successful_files=success_files,
+                    model_name=model_name,
+                )
+            )
+        if success_embeddings := autovec_metadata.get("numSuccessfulEmbeddingWrites", 0):
+            self.reporter.post(
+                *self.metrics.vectorization_throughput(
+                    autovec_time=workflow_time,
+                    num_successful_embeddings=success_embeddings,
+                    model_name=model_name,
+                )
+            )
 
         if self.test_config.access_settings.time <= 0:
-            # Also report ingestion time if we are not running for a fixed amount of time
-            self.reporter.post(*self.metrics.uds_processing_time(ingestion_time))
+            # Also report workflow execution time if we are not running for a fixed duration
+            self.reporter.post(
+                *self.metrics.workflow_execution_time(
+                    workflow_time=workflow_time, model_name=model_name
+                )
+            )
 
     def get_eventing_latencies(self) -> dict:
         latency_stats = self.process_latency_stats()
@@ -236,29 +273,11 @@ class WorkflowIngestionAndLatencyTest(PerfTest):
 
 
 class AutoVecWorkflowTest(WorkflowIngestionAndLatencyTest):
-    @timeit
-    def wait_for_eventing_backlog(self):
-        self.monitor.monitor_eventing_dcp_mutation(
-            self.eventing_nodes[0], self.test_config.load_settings.items
-        )
-
-    @with_stats
-    def run_workflow(self):
-        self.prepare_and_deploy_workflow()
-        autovec_time = self.wait_for_eventing_backlog()
-        self.runtimes["autovec_time"] = autovec_time
-        sleep(120)  # collect metrics after eventing work is done
 
     def run(self):
         self.load()
         self.wait_for_persistence()
-
-        self.run_workflow()
-        latencies = self.get_eventing_latencies()
-
-        self.runtimes["workflow_delete_time"] = self.destroy_workflow()
-        logger.info(f"{self.runtimes=}")
-        logger.info(f"{latencies=}")
+        super().run()
 
 
 class AIGatewayTest(PerfTest):

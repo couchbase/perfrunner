@@ -1791,7 +1791,7 @@ class Monitor:
             if workflow_status == status.lower():
                 return workflow_details
 
-            if workflow_status in ["deployFailed", "failed", "destroyFailed", "partiallyCompleted"]:
+            if workflow_status in ["deployfailed", "failed", "destroyfailed", "partiallycompleted"]:
                 raise Exception(
                     f"Workflow {workflow_id} is stuck in {workflow_status}. {workflow_details}"
                 )

@@ -3,8 +3,8 @@ test = perfrunner.tests.ai_services.AutoVecWorkflowTest
 
 [showfast]
 title = Autovec 100k docs x 1kb, Capella hosted model
-component = aicloud
-category = lat
+component = aiservices
+category = autovec
 sub_category = {provider}
 
 [stats]
@@ -25,6 +25,17 @@ size = 1024
 workers = 100
 ssl_mode = capella
 
+[access]
+time = 0
+
 [ai_services]
 workflow_type = structured
 schema_fields = body
+
+[jts]
+index_partitions = 1
+vector_dimension = 1536
+vector_similarity_type = dot_product
+vector_index_optimized_for = recall
+couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_only_vector_index.json
+test_total_docs = 100000

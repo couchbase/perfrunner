@@ -3668,6 +3668,8 @@ class AIServicesSettings:
         # Generic Workflow settings
         self.workflow_type = options.get("workflow_type", "structured")  # alt: unstructured
         self.schema_fields = options.get("schema_fields", "text-to-embed").split(",")
+        # True to manually create the FTS index before running the workflow
+        self.create_index = maybe_atoi(options.get("create_index", "true"))
 
         # Pre-processing settings
         self.chunk_size = int(options.get("chunk_size", 200))  # current min: 5, max: 200
@@ -3688,8 +3690,6 @@ class AIServicesSettings:
         self.model_name = options.get("model_name", "text-embedding-3-small")
         self.model_provider = options.get("provider", "openAI")
 
-        # Indexing settitngs
-        self.fts_index_name = options.get("fts_index_name", "embedding-index")
         # Will be fixed as part of CBPS-1490
         self.aws_credential_path = options.get("aws_credential_path", "/root/.ssh")
 

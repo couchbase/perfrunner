@@ -3,8 +3,8 @@ test = perfrunner.tests.ai_services.AutoVecWorkflowTest
 
 [showfast]
 title = Autovec 100k docs x 10kb, OpenAI model
-component = aicloud
-category = lat
+component = aiservices
+category = autovec
 sub_category = {provider}
 
 [stats]
@@ -25,8 +25,19 @@ size = 10240
 workers = 100
 ssl_mode = capella
 
+[access]
+time = 0
+
 [ai_services]
 model_source = external
 workflow_type = structured
 model_name = text-embedding-3-small
 schema_fields = body
+
+[jts]
+index_partitions = 1
+vector_dimension = 1536
+vector_similarity_type = dot_product
+vector_index_optimized_for = recall
+couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_only_vector_index.json
+test_total_docs = 100000

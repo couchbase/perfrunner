@@ -2268,18 +2268,39 @@ class MetricHelper:
             reported_metrics.append((value, self._snapshots, metric_info))
         return reported_metrics
 
-    def uds_throughput(self, ingestion_time: float, num_successful_files: int) -> Metric:
-        title = f"UDS Throughput (docs/sec), {self._title}"
-        metric_id = f"{self.test_config.name}_uds_throughput"
+    def _workflow_throughput(
+        self,
+        workflow_time: float,
+        successful_items: int,
+        workflow_type: str,
+        unit: str,
+        model_name: str,
+    ) -> Metric:
+        title = f"{workflow_type} Throughput ({unit}/sec), {self._title} ({model_name})"
+        metric_id = f"{self.test_config.name}_{workflow_type}_throughput"
         metric_info = self._metric_info(metric_id, title)
-        throughput = num_successful_files / ingestion_time
+        throughput = successful_items / workflow_time
         return round(throughput, 2), self._snapshots, metric_info
 
-    def uds_processing_time(self, ingestion_time: float) -> Metric:
-        title = f"UDS Processing Time (min), {self._title}"
-        metric_id = f"{self.test_config.name}_uds_processing_time"
+    def uds_throughput(
+        self, ingestion_time: float, num_successful_files: int, model_name: str
+    ) -> Metric:
+        return self._workflow_throughput(
+            ingestion_time, num_successful_files, "UDS", "docs", model_name
+        )
+
+    def workflow_execution_time(self, workflow_time: float, model_name: str) -> Metric:
+        title = f"Workflow Processing Time (min), {self._title} ({model_name})"
+        metric_id = f"{self.test_config.name}_processing_time"
         metric_info = self._metric_info(metric_id, title)
-        return s2m(ingestion_time), self._snapshots, metric_info
+        return s2m(workflow_time), self._snapshots, metric_info
+
+    def vectorization_throughput(
+        self, autovec_time: float, num_successful_embeddings: int, model_name: str
+    ) -> Metric:
+        return self._workflow_throughput(
+            autovec_time, num_successful_embeddings, "Autovec", "embeddings", model_name
+        )
 
     def fio_iops(self, iops: float, cluster: str, node: str, job_name: str) -> Metric:
         title = f"{node}, {job_name} (iops), {self._title}"

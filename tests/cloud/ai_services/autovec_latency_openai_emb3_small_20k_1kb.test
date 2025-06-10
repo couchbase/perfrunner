@@ -1,11 +1,10 @@
 [test_case]
-test = perfrunner.tests.ai_services.WorkflowIngestionAndLatencyTest
-use_workers = 0
+test = perfrunner.tests.ai_services.AutoVecWorkflowTest
 
 [showfast]
-title = Ingestion and embedding generation using hosted model for full dataset, DocLayNet
-component = aicloud
-category = lat
+title = Autovec 20K docs (1KB), OpenAI model
+component = aiservices
+category = autovec
 sub_category = {provider}
 
 [stats]
@@ -15,19 +14,25 @@ server_processes = eventing-produc
 initial_nodes = 5
 num_buckets = 1
 enable_n2n_encryption = all
-eventing_metadata_bucket_name = vulcan_workflows
-eventing_metadata_bucket_mem_quota = 1024
 
 [bucket]
 eviction_policy = fullEviction
 backend_storage = magma
 
-[access]
-time = 0
+[load]
+items = 20000
+size = 1024
+workers = 100
 ssl_mode = capella
 
+[access]
+time = 0
+
 [ai_services]
-workflow_type = unstructured
+model_source = external
+workflow_type = structured
+model_name = text-embedding-3-small
+schema_fields = body
 
 [jts]
 index_partitions = 1
@@ -35,4 +40,4 @@ vector_dimension = 1536
 vector_similarity_type = dot_product
 vector_index_optimized_for = recall
 couchbase_index_configfile = tests/fts/index/fts_vector_l2_norm_only_vector_index.json
-test_total_docs = 0
+test_total_docs = 20000

@@ -17,9 +17,9 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.misc import pretty_dict, run_local_shell_command
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.rest import RestHelper, RestType
 from perfrunner.remote.linux import RemoteLinux
-from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.settings import ClusterSpec
 
 set_start_method("fork")
 
@@ -83,37 +83,18 @@ class LogsVerifier:
 class LokiLogsProcessor(LogsVerifier):
     # <logger>:<level>,<datetime>,<user@address>:<component><line>:<error_title>:<line>]<error_body>
     # Keep the following groups: logger, title, error_body
-    ERROR_LOG_RE = r'\[(\w+):\w+,\d+-\d+-\d+T\d+:\d+:\d+.\d+-\d+:\d+,\w+@.*?:\w+<.*>:(.*):\d+\](.*)'
+    ERROR_LOG_RE = r"\[(\w+):\w+,[^,]+,[^:]+@[^:]+:[^:]+<[^>]*>:([^:]+(?::[^:]+)*?):\d+\](.*)"
 
     LOKI_PUSH_API = 'http://172.23.123.237/loki/loki/api/v1/push'
 
-    def __init__(self):
+    def __init__(self, version: str):
         super().__init__()
         self.logs: list[ErrorEvent] = []
-        self.version = None
+        self.version = version.split("-")[0].strip()
 
     @cached_property
     def _job_name(self) -> str:
         return os.environ.get('BUILD_TAG', 'local')
-
-    def get_version(self, filename: str) -> str:
-        # Assume all nodes have the same server version, so get it once
-        if self.version:
-            return self.version
-
-        self.check_file_for(filename,
-                            lambda name: 'memcached.log' in name,
-                            self._read_server_version)
-        return self.version
-
-    def _read_server_version(self, data: bytes):
-        try:
-            file_content = data.decode()
-            group = re.search(r'[.*\s*.*]*(\sINFO\sCouchbase\sversion\s)(.*)\sstarting',
-                              file_content).group()
-            self.version = group.split('-')[0].split()[-1]
-        except Exception:
-            self.version = 'Unknown'
 
     def process_logs(self, is_capella: bool, remote):
         for filename in glob.iglob('./*.zip'):
@@ -121,7 +102,7 @@ class LokiLogsProcessor(LogsVerifier):
                 self.check_file_for(filename,
                                     lambda name: 'error.log' in name,
                                     self.collect_errors)
-                self.store_logs(filename, is_capella, self.get_version(filename))
+                self.store_logs(filename, is_capella)
                 self.logs.clear()
             except Exception as e:
                 logger.warn(e)
@@ -130,7 +111,7 @@ class LokiLogsProcessor(LogsVerifier):
         for error in  re.findall(self.ERROR_LOG_RE, data.decode()):
             self.logs.append(ErrorEvent(error))
 
-    def store_logs(self, filename: str, is_capella: bool, version: str):
+    def store_logs(self, filename: str, is_capella: bool):
         # For each error, convert to loki with extra parameters
         # source: ns_server | datadog | others
         # job: jenkins-job-number | local
@@ -139,23 +120,25 @@ class LokiLogsProcessor(LogsVerifier):
         # capella: True | False
         # node: node name/ip
 
-        node = filename.replace('./', '').replace('.zip','')
+        node = filename.replace("./", "").replace(".zip", "")
         if not self.logs:
             logger.info(f"No error logs found for node {node}")
             return
 
         data = {
-            'streams': [{
-               'stream': {
-                    'source': 'ns_server',
-                    'job': self._job_name,
-                    'cb_version': version,
-                    'level': 'error',
-                    'capella': str(is_capella).lower(),
-                    'node': node
-                },
-                'values': [log.get_values() for log in self.logs]
-            }]
+            "streams": [
+                {
+                    "stream": {
+                        "source": "ns_server",
+                        "job": self._job_name,
+                        "cb_version": self.version,
+                        "level": "error",
+                        "capella": str(is_capella).lower(),
+                        "node": node,
+                    },
+                    "values": [log.get_values() for log in self.logs],
+                }
+            ]
         }
 
         logger.info(f"Sending {len(self.logs)} error logs to Loki for node {node}")
@@ -239,9 +222,7 @@ def check_if_log_file_exists(path_name_pattern: str):
     logger.interrupt(f"Log file not found due to the following error: {stdout}")
 
 
-def get_capella_cluster_logs(cluster_spec: ClusterSpec, s3_bucket_name: str):
-    test_config = TestConfig()
-    rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
+def get_capella_cluster_logs(rest: RestType, s3_bucket_name: str):
 
     rest.trigger_all_cluster_log_collection()
     rest.wait_until_all_logs_uploaded()
@@ -266,6 +247,9 @@ def main():
     cluster_spec.parse(args.cluster_spec_fname)
 
     remote = RemoteHelper(cluster_spec, verbose=False)
+    # In any case, TLS ports are available. We use this for compatibility with tests
+    # that may have configured strict N2N encryption.
+    rest = RestHelper(cluster_spec, use_tls=True)
 
     # Collect and upload logs
     if cluster_spec.serverless_infrastructure:
@@ -288,7 +272,7 @@ def main():
                     z.write(fname, arcname=Path(fname).name)
 
     if cluster_spec.capella_infrastructure:
-        get_capella_cluster_logs(cluster_spec, args.s3_bucket_name)
+        get_capella_cluster_logs(rest, args.s3_bucket_name)
     elif cluster_spec.dynamic_infrastructure:
         remote.collect_k8s_logs()
         local.collect_cbopinfo_logs(remote.kube_config_path)
@@ -308,7 +292,7 @@ def main():
             shutil.make_archive('tools', 'zip', logs)
 
     # Push log lines to Loki
-    loki_manager = LokiLogsProcessor()
+    loki_manager = LokiLogsProcessor(rest.get_version(cluster_spec.servers[0]))
     loki_manager.process_logs(cluster_spec.capella_infrastructure, remote)
     # Process logs, throw exception if any
     analyser = LogsVerifier()

@@ -1,59 +1,63 @@
-from collections import defaultdict
-
-import requests
+import json
+from datetime import datetime
 
 from logger import logger
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.tests import PerfTest
 
 
 class FIOTest(PerfTest):
 
-    TRACKER = 'fio.sc.couchbase.com'
-
-    TEMPLATE = {
-        'group': '{}, random mixed reads and writes, IOPS',
-        'metric': None,
-        'value': None,
-    }
-
     def __init__(self, cluster_spec, test_config, verbose):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.remote = RemoteHelper(cluster_spec, verbose)
+        build = datetime.now().strftime("%Y-%m-%d")
+        self.reporter = ShowFastReporter(cluster_spec, test_config, build)
+        self.dynamic_infra = False
+        self.metrics = MetricHelper(self)
 
     def __exit__(self, *args, **kwargs):
         pass
 
     @staticmethod
-    def _parse(results):
-        """Parse the test output.
-
-        See also https://github.com/axboe/fio/blob/master/HOWTO
-        """
-        stats = defaultdict(int)
+    def _parse(results: dict) -> dict:
+        """Parse the fio json output from each node."""
+        stats = {}
         for host, output in results.items():
-            for job in output.split():
-                stats[host] += int(job.split(';')[7])  # reads
-                stats[host] += int(job.split(';')[48])  # writes
+            host_output = json.loads(output)
+            json_output = host_output.get("jobs", [])
+            stats[host] = {}
+            # Get read and write iops from each job
+            for job in json_output:
+                job_name = job.get("jobname", "")
+                job_iops = stats[host].get(job_name, 0)
+                stats[host][job_name] = (
+                    job_iops
+                    + job.get("read", {}).get("iops", 0)
+                    + job.get("write", {}).get("iops", 0)
+                    + job.get("trim", {}).get("iops", 0)
+                )
+            # replace the output with the deserialised output so we store it as a json file
+            results[host] = host_output
+
         return stats
 
-    def _post(self, data):
-        data = pretty_dict(data)
-        logger.info('Posting: {}'.format(data))
-        requests.post('http://{}/api/v1/benchmarks'.format(self.TRACKER),
-                      data=data)
-
-    def _report_kpi(self, stats):
-        for host, iops in stats.items():
-            data = self.TEMPLATE.copy()
-            data['group'] = data['group'].format(self.cluster_spec.name.title())
-            data['metric'] = host
-            data['value'] = iops
-
-            self._post(data)
+    def _report_kpi(self, stats: dict):
+        logger.info(f"Fio stats: {stats}")
+        for host, data in stats.items():
+            for job_name, iops in data.items():
+                self.reporter.post(
+                    *self.metrics.fio_iops(iops, self.cluster_spec.name, host, job_name)
+                )
 
     def run(self):
-        stats = self.remote.fio(self.test_config.fio['config'])
-        self._report_kpi(self._parse(stats))
+        config = self.test_config.fio["config"]
+        logger.info(f"Running fio job: {config}")
+        results = self.remote.fio(config)
+        self.report_kpi(self._parse(results))
+        # save the results to a file
+        with open("fio.json", "w") as file:
+            json.dump(results, file, indent=4)

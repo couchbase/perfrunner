@@ -2,5 +2,9 @@
 test = perfrunner.tests.fio.FIOTest
 use_workers = 0
 
+[showfast]
+title = random reads and writes, 4 jobs, 10GB filesize, 4 iodepth, 4k block size
+component = fio
+
 [fio]
 config = tests/fio/mixed.ini

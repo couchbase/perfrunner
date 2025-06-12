@@ -575,12 +575,11 @@ class RemoteLinux(Remote):
         run(cmd)
 
     @all_servers
-    def fio(self, config):
-        logger.info('Running fio job: {}'.format(config))
+    def fio(self, config: str) -> str:
         filename = os.path.basename(config)
         remote_path = os.path.join('/tmp', filename)
         put(config, remote_path)
-        return run('fio --minimal {}'.format(remote_path))
+        return run(f"fio --output-format=json {remote_path}")
 
     def detect_auto_failover(self, host):
         with settings(host_string=host):

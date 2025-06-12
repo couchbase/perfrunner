@@ -2712,6 +2712,8 @@ class EventingSettings:
         self.eventing_dest_bkt_doc_gen = options.get("eventing_dest_bkt_doc_gen",
                                                      self.EVENTING_DEST_BKT_DOC_GEN)
         self.cursor_aware = options.get("cursor_aware", self.CURSOR_AWARE)
+        self.functions_count = int(options.get("functions_count", 0))
+        self.num_nodes_running = int(options.get("num_nodes_running", 1))
 
     def __str__(self) -> str:
         return str(self.__dict__)

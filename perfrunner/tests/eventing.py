@@ -2,6 +2,7 @@ import calendar
 import copy
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -328,6 +329,8 @@ class EventingTest(PerfTest):
 
     def debug(self):
         self.print_max_rss_values()
+        if self.test_config.eventing_settings.functions_count > 10:
+            return super().debug()
         failure = self.validate_failures()
         return failure or super().debug()
 
@@ -861,3 +864,48 @@ class FunctionsThroughputAccessPhaseTest(EventingTest):
         time_elapsed = self.access_and_wait()
 
         self.report_kpi(time_elapsed)
+
+class FunctionsDeployTimeTest(EventingTest):
+    @timeit
+    def deploy_and_bootstrap(self, func: dict, name: str, wait_for_bootstrap: bool = True):
+        self.functions_count = self.test_config.eventing_settings.functions_count
+
+        num_nodes_running = self.test_config.eventing_settings.num_nodes_running
+        self.rest.deploy_with_num_nodes_running(
+            node=self.eventing_nodes[0],
+            bucket="eventing-bucket-1",
+            scope="_default",
+            num_nodes_running=num_nodes_running,
+        )
+
+        function_names = [f"{name}_func_{i}" for i in range(self.functions_count)]
+
+        with ThreadPoolExecutor(max_workers=self.functions_count) as executor:
+            futures = [
+                executor.submit(
+                    self.rest.deploy_multi_function,
+                    node=self.eventing_nodes[0],
+                    func=func,
+                    name=name,
+                )
+                for name in function_names
+            ]
+            timings = []
+        for future in as_completed(futures):
+            timings.append(future.result())
+
+        self.monitor.wait_for_bootstrap_bulk(
+            nodes=self.eventing_nodes, functions=function_names, num_functions=self.functions_count
+        )
+
+    def _report_kpi(self, time_to_deploy: float):
+        self.reporter.post(
+            *self.metrics.function_time(
+                time=time_to_deploy, time_type="bootstrap", initials="Bootstrap time(min)"
+            )
+        )
+
+    def run(self):
+        time_to_deploy = self.set_functions()
+
+        self.report_kpi(time_to_deploy)

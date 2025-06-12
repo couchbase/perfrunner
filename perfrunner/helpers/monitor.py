@@ -917,6 +917,24 @@ class Monitor:
                 logger.info('Failed to bootstrap function: {}, node: {}'.
                             format(function, node))
 
+    def wait_for_bootstrap_bulk(self, nodes: list, functions: list[str], num_functions: int):
+        logger.info('Waiting for bootstrap of eventing functions')
+        for node in nodes:
+            retry = 1
+            while retry < self.MAX_RETRY_BOOTSTRAP:
+                apps = self.rest.get_apps_with_status(node, "deployed")
+                num_deployed = 0
+                for func in functions:
+                    if func in apps:
+                        num_deployed += 1
+                logger.info(f"Number of deployed functions: {num_deployed}")
+                if num_deployed == num_functions:
+                    break
+                time.sleep(self.POLLING_INTERVAL)
+                retry += 1
+            if retry == self.MAX_RETRY_BOOTSTRAP:
+                logger.info(f'Failed to bootstrap functions on node: {node}')
+
     def get_num_analytics_items(self, analytics_node: str, bucket: str) -> int:
         stats_key = '{}:all:incoming_records_count_total'.format(bucket)
         num_items = 0

@@ -1214,10 +1214,32 @@ class DefaultRestHelper(RestBase):
         resp.raise_for_status()
 
     def deploy_function(self, node: str, func: dict, name: str):
-        logger.info('Deploying function on node {}: {}'.format(node, pretty_dict(func)))
-        url = self._get_api_url(host=node, path='api/v1/functions/{}'.format(name),
+        logger.info(f'Deploying function on node {node}: {pretty_dict(func)}')
+        url = self._get_api_url(host=node, path=f'api/v1/functions/{name}',
                                 plain_port=EVENTING_PORT, ssl_port=EVENTING_PORT_SSL)
         self.post(url=url, data=json.dumps(func))
+
+    def deploy_multi_function(self, node: str, func: dict, name: str):
+        func["appname"] = name
+        logger.info(f'Deploying function on node {node}: {pretty_dict(func)}')
+        url = self._get_api_url(host=node, path=f'api/v1/functions/{name}',
+                                plain_port=EVENTING_PORT, ssl_port=EVENTING_PORT_SSL)
+        self.post(url=url, data=json.dumps(func))
+
+    def deploy_with_num_nodes_running(
+        self, node: str, bucket: str, scope: str, num_nodes_running: int
+    ):
+        payload = {"num_nodes_running": num_nodes_running}
+        url = self._get_api_url(
+            host=node,
+            path=f'/api/v1/config/?bucket={bucket}&scope={scope}',
+            plain_port=EVENTING_PORT,
+            ssl_port=EVENTING_PORT_SSL
+        )
+        self.post(
+            url=url,
+            data=json.dumps(payload)
+        )
 
     def get_functions(self, node: str):
         logger.info('Getting all functions')
@@ -1255,7 +1277,6 @@ class DefaultRestHelper(RestBase):
         return 0
 
     def get_apps_with_status(self, node: str, status: str):
-        logger.info('get apps with status {} on node {}'.format(status, node))
         data = self.get_eventing_apps(node)
         apps = []
         for app in data.get("apps", []) or []:

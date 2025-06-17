@@ -55,6 +55,8 @@ class SyncGatewayStats(Collector):
         "syncgateway__per_db__db__cache__high_seq_stable",
         "syncgateway__per_db__db__cache__skipped_seq_len",
         "syncgateway__per_db__db__cache__pending_seq_len",
+        "syncgateway__per_db__db__cache__skipped_sequence_skip_list_nodes",
+        "syncgateway__per_db__db__cache__current_skipped_seq_count",
 
         "syncgateway__per_db__db__database__sequence_get_count",
         "syncgateway__per_db__db__database__sequence_incr_count",
@@ -80,6 +82,7 @@ class SyncGatewayStats(Collector):
         "syncgateway__per_db__db__database__dcp_received_time",
         "syncgateway__per_db__db__database__dcp_caching_count",
         "syncgateway__per_db__db__database__dcp_caching_time",
+        "syncgateway__per_db__db__database__num_doc_writes_rejected",
 
         "syncgateway__per_db__db__delta_sync__deltas_requested",
         "syncgateway__per_db__db__delta_sync__deltas_sent",

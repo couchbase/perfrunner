@@ -33,11 +33,11 @@ size = 1024
 workers = 160
 
 [eventing]
-worker_count = 5
+worker_count = 2
 cpp_worker_thread_count = 2
 config_file = tests/eventing/config/function_noop.json
 functions_count = 1000
-num_nodes_running = 4
+num_nodes_running = 1
 
 [access]
 updates = 100

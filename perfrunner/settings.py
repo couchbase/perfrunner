@@ -2775,7 +2775,8 @@ class AnalyticsSettings:
     NUM_IO_DEVICES = 1
     REPLICA_ANALYTICS = 0
     QUERIES = ""
-    ANALYTICS_CONFIG_FILE = ""
+    DATASET_CONF_FILE = ""
+    INDEX_CONF_FILE = ""
     DROP_DATASET = ""
     ANALYTICS_LINK = "Local"
     EXTERNAL_DATASET_TYPE = "s3"
@@ -2794,8 +2795,8 @@ class AnalyticsSettings:
             options.pop('replica_analytics', self.REPLICA_ANALYTICS)
         )
         self.queries = options.pop("queries", self.QUERIES)
-        self.analytics_config_file = options.pop("analytics_config_file",
-                                                 self.ANALYTICS_CONFIG_FILE)
+        self.dataset_conf_file = options.pop("dataset_conf_file", self.DATASET_CONF_FILE)
+        self.index_conf_file = options.pop("index_conf_file", self.INDEX_CONF_FILE)
         self.drop_dataset = options.pop("drop_dataset", self.DROP_DATASET)
         self.analytics_link = options.pop("analytics_link", self.ANALYTICS_LINK)
         self.external_dataset_type = options.pop("external_dataset_type",
@@ -3248,8 +3249,6 @@ class CH2:
         self.aclient_request_params = options.get(
             "aclient_request_params", self.ACLIENT_REQUEST_PARAMS
         )
-
-        self.analytics_index_def_file = options.get("analytics_index_def_file")
 
         self.starting_warehouse = 1
 

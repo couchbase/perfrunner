@@ -20,6 +20,8 @@ ui_http = disabled
 enable_n2n_encryption = all
 
 [analytics]
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
 num_io_devices = 8
 
 [bucket]

@@ -3,7 +3,6 @@ import itertools
 import json
 import os
 import random
-import re
 import time
 from dataclasses import dataclass
 from typing import Callable, Literal, Optional, Union
@@ -77,7 +76,11 @@ class DatasetDef:
         if storage_format:
             with_clause = f' WITH {{"storage-format": {{"format": "{storage_format}"}}}}'
 
-        return f"CREATE DATASET {name}{with_clause} ON {source} AT {link_name} {self.where or ''}"
+        where_clause = ""
+        if self.where:
+            where_clause = f" WHERE {self.where}"
+
+        return f"CREATE DATASET {name}{with_clause} ON {source} AT {link_name}{where_clause}"
 
     def create_standalone_statement(
         self, pk_field: str = "key", pk_type: str = "string", storage_format: Optional[str] = None
@@ -162,11 +165,18 @@ class DatasetDef:
 class IndexDef:
     name: str
     collection: str
-    fields: tuple[str]
+    elements: tuple[str]  # index fields or array index elements
+
+    # "INCLUDE", "EXCLUDE" or None to omit.
+    # Determines whether missing or null values are included in the index.
+    unknown_modifier: Optional[str] = None
 
     def create_statement(self) -> str:
         name, collection = sqlpp_escape(self.name, self.collection)
-        return f"CREATE INDEX {name} ON {collection}({', '.join(self.fields)})"
+        unknown = ""
+        if self.unknown_modifier:
+            unknown = f" {self.unknown_modifier} UNKNOWN KEY"
+        return f"CREATE INDEX {name} ON {collection}({', '.join(self.elements)}){unknown}"
 
 
 class AnalyticsTest(PerfTest):
@@ -177,12 +187,19 @@ class AnalyticsTest(PerfTest):
         self.analytics_settings = self.test_config.analytics_settings
         self.analytics_link = self.analytics_settings.analytics_link
         self.storage_format = self.test_config.analytics_settings.storage_format
-        self.config_file = self.analytics_settings.analytics_config_file
+        self.dataset_conf_file = self.analytics_settings.dataset_conf_file
+        self.index_conf_file = self.analytics_settings.index_conf_file
+        self.dataset_config = []
+        self.index_config = []
         self.rest_session = None
 
-        if self.config_file:
-            with open(self.config_file, "r") as f:
+        if self.dataset_conf_file:
+            with open(self.dataset_conf_file, "r") as f:
                 self.dataset_config = json.load(f)
+
+        if self.index_conf_file:
+            with open(self.index_conf_file, "r") as f:
+                self.index_config = json.load(f)
 
     def __exit__(self, *args):
         if self.rest.is_columnar(self.analytics_node) and self.cluster_spec.cloud_infrastructure:
@@ -210,11 +227,37 @@ class AnalyticsTest(PerfTest):
 
     @property
     def datasets(self) -> list[DatasetDef]:
-        return []
+        return [
+            DatasetDef(
+                d["name"].format(repeat=r),
+                d["source"].format(bucket=bucket, repeat=r),
+                d.get("where", "").format(repeat=r),
+            )
+            for bucket in self.test_config.buckets
+            for d in self.dataset_config
+            for r in range(1, d.get("repeat", 1) + 1)
+        ]
 
     @property
     def indexes(self) -> list[IndexDef]:
-        return []
+        indexes = []
+        ds_repeats = {d["name"]: d.get("repeat", 1) for d in self.dataset_config}
+
+        for idx in self.index_config:
+            idx_name = idx["name"]
+            idx_ds = idx["dataset"]
+
+            indexes.extend(
+                IndexDef(
+                    idx_name.format(repeat=r),
+                    idx_ds.format(repeat=r),
+                    tuple(idx["elements"]),
+                    idx.get("unknown_modifier"),
+                )
+                for r in range(1, ds_repeats.get(idx_ds, 1) + 1)
+            )
+
+        return indexes
 
     def long_query_session(self) -> requests.Session:
         if self.rest_session is None:
@@ -298,7 +341,11 @@ class AnalyticsTest(PerfTest):
         )
 
     def create_analytics_indexes(self, *, verbose: bool = False):
-        logger.info("Creating indexes")
+        if not self.indexes:
+            logger.info("No analytics secondary indexes to create")
+            return
+
+        logger.info("Creating analytics secondary indexes")
         self._run_statements(self.indexes, lambda index: index.create_statement(), verbose=verbose)
 
     def create_primary_indexes(self, *, verbose: bool = False):
@@ -487,50 +534,6 @@ class BigFunTest(AnalyticsTest):
         super().__init__(*args, **kwargs)
         self.QUERIES = self.analytics_settings.queries
 
-    @property
-    def indexes(self) -> list[IndexDef]:
-        if self.config_file:
-            return [
-                IndexDef(index["Index"], index["Dataset"], (f"{index['Field']}: string",))
-                for index in self.dataset_config["Analytics"]
-            ]
-
-        return [
-            IndexDef("usrSinceIdx", "GleambookUsers-1", ("user_since: string",)),
-            IndexDef("gbmSndTimeIdx", "GleambookMessages-1", ("send_time: string",)),
-            IndexDef("cmSndTimeIdx", "ChirpMessages-1", ("send_time: string",)),
-        ]
-
-    @property
-    def datasets(self) -> list[DatasetDef]:
-        datasets = []
-        for bucket in self.test_config.buckets:
-            if self.config_file:
-                for dataset in self.dataset_config["Analytics"]:
-                    name = dataset["Dataset"]
-                    where = None
-                    if self.dataset_config["DefaultCollection"]:
-                        source = f"`{bucket}`"
-                        where = (
-                            f"WHERE `type` = \"{dataset['Type']}\" "
-                            f"AND meta().id LIKE \"%-{dataset['Group']}\";"
-                        )
-                    else:
-                        source = f"`{bucket}`.`scope-1`.`{dataset['Collection']}`"
-
-                    datasets.append(DatasetDef(name, source, where))
-            else:
-                datasets += [
-                    DatasetDef(dataset, f"`{bucket}`", f"WHERE `{key}` IS NOT UNKNOWN;")
-                    for dataset, key in (
-                        ("GleambookUsers-1", "id"),
-                        ("GleambookMessages-1", "message_id"),
-                        ("ChirpMessages-1", "chirpid"),
-                    )
-                ]
-
-        return datasets
-
     def re_sync(self):
         self.connect_link()
         bucket_replica = self.test_config.bucket.replica_number
@@ -674,19 +677,7 @@ class BigFunQueryTest(BigFunTest):
         self.report_kpi(results)
 
 
-class BigFunQueryNoIndexTest(BigFunQueryTest):
-    def create_analytics_indexes(self, *args, **kwargs):
-        pass
-
-
-class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
-    @property
-    def datasets(self) -> list[DatasetDef]:
-        return [
-            DatasetDef(dataset["Dataset"], dataset["Collection"])
-            for dataset in self.dataset_config["Analytics"]
-        ]
-
+class BigFunQueryExternalTest(BigFunQueryTest):
     @with_stats
     def access(self, nodes: list = [], *args, **kwargs) -> list[QueryLatencyPair]:
         if len(nodes) == 0:
@@ -716,7 +707,7 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
         self.report_kpi(results)
 
 
-class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
+class ColumnarCopyFromObjectStoreTest(BigFunQueryExternalTest):
     COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
 
     @with_stats
@@ -755,6 +746,8 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
 
         self.create_external_link()
         self.create_standalone_datasets(verbose=True)
+
+        self.create_analytics_indexes()
 
         copy_from_items, copy_from_time = self.copy_data_from_object_store()
         logger.info(f"Total items ingested using COPY FROM: {copy_from_items}")
@@ -1236,12 +1229,6 @@ class CH2Test(AnalyticsTest):
         self.dataset_names = (
             self.FLAT_DATASETS if self.schema is CH2Schema.CH2PPF else self.DATASETS
         )
-        self.analytics_index_def_statements = []
-        if self.test_config.ch2_settings.analytics_index_def_file:
-            with open(self.test_config.ch2_settings.analytics_index_def_file, "r") as f:
-                for statement in f.read().split(";"):
-                    if cleaned := re.sub(r"\s+", " ", statement.strip()):
-                        self.analytics_index_def_statements.append(cleaned)
 
     @property
     def datasets(self) -> list[DatasetDef]:
@@ -1255,7 +1242,7 @@ class CH2Test(AnalyticsTest):
         ]
 
     @property
-    def indexes(self) -> list[IndexDef]:
+    def gsi_indexes(self) -> list[IndexDef]:
         return [
             IndexDef(name, f"{self.BUCKET}.{self.schema.value}.{coll}", fields)
             for name, coll, fields in self.GSI_INDEXES
@@ -1308,16 +1295,10 @@ class CH2Test(AnalyticsTest):
                 )
             )
 
-    def create_analytics_indexes(self):
-        if statements := self.analytics_index_def_statements:
-            logger.info('Creating analytics indexes')
-            for statement in statements:
-                self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
-
     def create_gsi_indexes(self):
-        logger.info("Creating indexes")
-        for index_def in self.indexes:
-            statement = f"{index_def.create_statement()} using gsi;"
+        logger.info("Creating GSI indexes")
+        for index_def in self.gsi_indexes:
+            statement = f"{index_def.create_statement()} USING GSI;"
             logger.info(f"Running: {statement}")
             res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
             logger.info(f"Result: {res}")
@@ -1326,7 +1307,7 @@ class CH2Test(AnalyticsTest):
     def sync(self) -> float:
         self.disconnect_link()
         self.create_datasets_at_link(verbose=True)
-        self.create_analytics_indexes()
+        self.create_analytics_indexes(verbose=True)
         self.connect_link()
 
         t0 = time.time()

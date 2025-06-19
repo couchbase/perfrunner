@@ -22,6 +22,7 @@ config = collections/1bucket_1scope_11collections_analytics_ch2.json
 
 [analytics]
 num_io_devices = 4
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
 
 [bucket]
 eviction_policy = fullEviction
@@ -53,4 +54,3 @@ warmup_iterations = 0
 duration = 2500
 warmup_duration = 1250
 workload = ch2_transaction
-analytics_index_def_file = tests/analytics/config/ch2_analytics_secondary_indexes.sql

@@ -23,7 +23,8 @@ config = collections/1bucket_1scope_999collections_analytics.json
 
 [analytics]
 num_io_devices = 4
-analytics_config_file = tests/analytics/config/999_datasets_collection_config.json
+dataset_conf_file = tests/analytics/config/bigfun_999_to_999_datasets.json
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
 
 [bucket]
 eviction_policy = fullEviction

@@ -39,6 +39,7 @@ map_data = bench.ch2=bench.ch2
 analytics_link = RemoteLink
 use_cbo = true
 cbo_sample_size = high
+index_conf_file = tests/analytics/config/ch2_analytics_heterogeneous_secondary_indexes.json
 
 [ch2]
 warehouses = 5000
@@ -52,5 +53,4 @@ warmup_duration = 0
 workload = ch2_analytics
 use_backup = true
 create_gsi_index = false
-analytics_index_def_file = tests/analytics/config/ch2_analytics_heterogeneous_secondary_indexes.sql
 unoptimized_queries = true

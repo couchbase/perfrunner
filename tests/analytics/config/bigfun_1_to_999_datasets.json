@@ -1,0 +1,20 @@
+[
+  {
+    "name": "GleambookUsers-{repeat}",
+    "source": "`{bucket}`",
+    "where": "`type` = \"GleambookUsers\" AND meta().id LIKE \"%-{repeat}\"",
+    "repeat": 333
+  },
+  {
+    "name": "GleambookMessages-{repeat}",
+    "source": "`{bucket}`",
+    "where": "`type` = \"GleambookMessages\" AND meta().id LIKE \"%-{repeat}\"",
+    "repeat": 333
+  },
+  {
+    "name": "ChirpMessages-{repeat}",
+    "source": "`{bucket}`",
+    "where": "`type` = \"ChirpMessages\" AND meta().id LIKE \"%-{repeat}\"",
+    "repeat": 333
+  }
+]

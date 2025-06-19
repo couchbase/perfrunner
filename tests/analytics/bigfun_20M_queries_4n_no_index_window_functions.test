@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunQueryNoIndexTest
+test = perfrunner.tests.analytics.BigFunQueryTest
 use_workers = 0
 
 [showfast]
@@ -19,6 +19,7 @@ initial_nodes = 6
 num_buckets = 1
 
 [analytics]
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
 num_io_devices = 4
 queries = perfrunner/workloads/bigfun/queries_without_index_window_functions.json
 

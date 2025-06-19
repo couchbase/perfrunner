@@ -20,6 +20,7 @@ serverless_mode = enabled
 
 [analytics]
 analytics_link = RemoteLink
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
 
 [backup]
 obj_staging_dir = /stage
@@ -37,4 +38,3 @@ duration = 0
 warmup_duration = 0
 workload = ch2_analytics
 use_backup = false
-analytics_index_def_file = tests/analytics/config/ch2_analytics_secondary_indexes.sql

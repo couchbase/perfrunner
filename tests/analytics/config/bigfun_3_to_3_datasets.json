@@ -1,0 +1,14 @@
+[
+  {
+    "name": "GleambookUsers-1",
+    "source": "`{bucket}`.`scope-1`.`GleambookUsers-1`"
+  },
+  {
+    "name": "GleambookMessages-1",
+    "source": "`{bucket}`.`scope-1`.`GleambookMessages-1`"
+  },
+  {
+    "name": "ChirpMessages-1",
+    "source": "`{bucket}`.`scope-1`.`ChirpMessages-1`"
+  }
+]

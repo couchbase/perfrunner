@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunQueryNoIndexTest
+test = perfrunner.tests.analytics.BigFunQueryTest
 use_workers = 0
 
 [showfast]
@@ -24,7 +24,7 @@ config = collections/1bucket_1scope_3collections_analytics.json
 [analytics]
 num_io_devices = 4
 queries = perfrunner/workloads/bigfun/queries_without_index.json
-analytics_config_file = tests/analytics/config/3_datasets_collection_config.json
+dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets.json
 
 [bucket]
 eviction_policy = fullEviction

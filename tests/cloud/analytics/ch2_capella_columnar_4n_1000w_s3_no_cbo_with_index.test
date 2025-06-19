@@ -20,6 +20,7 @@ external_bucket = analytics-ch2-1000w-json
 external_file_format = json
 external_file_include = json
 aws_credential_path = /root/.ssh/
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
 
 [ch2]
 warehouses = 1000
@@ -32,4 +33,3 @@ warmup_duration = 0
 workload = ch2_analytics
 use_backup = false
 create_gsi_index = false
-analytics_index_def_file = tests/analytics/config/ch2_analytics_secondary_indexes.sql

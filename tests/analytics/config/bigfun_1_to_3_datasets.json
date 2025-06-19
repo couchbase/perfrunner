@@ -1,0 +1,17 @@
+[
+  {
+    "name": "GleambookUsers-1",
+    "source": "`{bucket}`",
+    "where": "`id` IS NOT UNKNOWN"
+  },
+  {
+    "name": "GleambookMessages-1",
+    "source": "`{bucket}`",
+    "where": "`message_id` IS NOT UNKNOWN"
+  },
+  {
+    "name": "ChirpMessages-1",
+    "source": "`{bucket}`",
+    "where": "`chirpid` IS NOT UNKNOWN"
+  }
+]

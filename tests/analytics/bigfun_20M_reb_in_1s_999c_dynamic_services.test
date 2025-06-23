@@ -34,5 +34,4 @@ map_data = bucket-1.scope-1=bucket-1.scope-1
 
 [rebalance]
 start_after = 180
-stop_after = 180
 services = cbas

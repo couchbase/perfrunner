@@ -52,4 +52,3 @@ args = ["{capped_small}"]
 [rebalance]
 services = index,n1ql
 start_after = 180
-stop_after = 180

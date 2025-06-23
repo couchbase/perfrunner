@@ -33,7 +33,6 @@ fts_file_based_rebal_disabled = false
 [rebalance]
 nodes_after = 4
 start_after = 300
-stop_after = 600
 
 [profiling]
 services = fts

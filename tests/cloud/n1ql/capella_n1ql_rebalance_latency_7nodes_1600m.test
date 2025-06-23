@@ -105,4 +105,3 @@ args = ["{uid}"]
 [rebalance]
 nodes_after = 8
 start_after = 300
-stop_after = 300

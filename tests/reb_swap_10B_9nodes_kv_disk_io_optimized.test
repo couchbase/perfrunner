@@ -45,7 +45,6 @@ working_set_access = 90
 nodes_after = 9
 swap = 1
 start_after = 1800
-stop_after = 1800
 
 [bucket_extras]
 num_writer_threads = disk_io_optimized

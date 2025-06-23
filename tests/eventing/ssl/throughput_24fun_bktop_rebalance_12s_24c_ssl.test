@@ -24,7 +24,6 @@ enable_n2n_encryption = strict
 [rebalance]
 nodes_after = 7
 start_after = 180
-stop_after = 180
 
 [bucket]
 replica_number=0

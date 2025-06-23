@@ -35,7 +35,6 @@ ssl_mode = capella
 [rebalance]
 nodes_after = 6
 start_after = 300
-stop_after = 300
 
 [secondary]
 indexer.settings.rebalance.redistribute_indexes = True

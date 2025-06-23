@@ -35,4 +35,3 @@ working_set_access = 98
 [rebalance]
 nodes_after = 5
 start_after = 1200
-stop_after = 1200

@@ -32,7 +32,6 @@ time = 1200
 
 [rebalance]
 start_after = 30
-stop_after = 30
 
 [n1ql-key-value-lookup]
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];

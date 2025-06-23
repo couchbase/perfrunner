@@ -51,4 +51,3 @@ working_set_access = 90
 nodes_after = 3
 swap = 1
 start_after = 600
-stop_after = 600

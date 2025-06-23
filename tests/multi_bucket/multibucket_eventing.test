@@ -47,4 +47,3 @@ workers = 1
 [rebalance]
 nodes_after = 10 2
 start_after = 600
-stop_after = 600

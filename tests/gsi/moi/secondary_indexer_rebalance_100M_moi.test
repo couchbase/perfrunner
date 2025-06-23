@@ -32,7 +32,6 @@ workers = 100
 [rebalance]
 nodes_after = 9
 start_after = 180
-stop_after = 180
 swap = 1
 
 [secondary]

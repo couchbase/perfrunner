@@ -19,10 +19,4 @@ db_percentage = 100
 
 [rebalance]
 nodes_after = 4
-start_after = 1200
-stop_after = 1200
-
-[rebalance]
-nodes_after = 4
 start_after = 0
-stop_after = 0

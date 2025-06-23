@@ -48,5 +48,4 @@ working_set_access = 90
 [rebalance]
 nodes_after = 4
 start_after = 300
-stop_after = 300
 swap = 1

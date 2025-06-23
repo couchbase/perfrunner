@@ -38,4 +38,3 @@ working_set_access = 98
 [rebalance]
 failed_nodes = 1
 start_after = 300
-stop_after = 300

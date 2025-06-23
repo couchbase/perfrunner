@@ -45,4 +45,3 @@ use_tls = 1
 [rebalance]
 nodes_after = 6
 start_after = 300
-stop_after = 300

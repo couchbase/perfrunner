@@ -41,4 +41,3 @@ map_data = bucket-1.scope-1=bucket-1.scope-1
 [rebalance]
 nodes_after = 6
 start_after = 180
-stop_after = 180

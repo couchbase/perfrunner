@@ -38,7 +38,6 @@ backup_repo = fts_generic_20M
 [rebalance]
 nodes_after = 4
 start_after = 120
-stop_after = 120
 
 [profiling]
 services = fts

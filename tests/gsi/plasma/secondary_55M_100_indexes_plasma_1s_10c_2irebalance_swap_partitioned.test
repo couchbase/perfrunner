@@ -37,7 +37,6 @@ doc_groups = 1
 [rebalance]
 nodes_after = 5
 start_after = 180
-stop_after = 180
 swap = 1
 
 [secondary]

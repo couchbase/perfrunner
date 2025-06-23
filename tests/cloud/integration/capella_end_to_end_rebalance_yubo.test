@@ -35,7 +35,6 @@ uniform_collection_load_time = 1
 [rebalance]
 nodes_after = 8
 start_after = 300
-stop_after = 300
 services = index,n1ql
 
 [index]

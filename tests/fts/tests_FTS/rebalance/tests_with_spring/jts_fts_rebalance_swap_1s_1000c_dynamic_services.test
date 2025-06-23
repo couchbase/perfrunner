@@ -31,5 +31,4 @@ couchbase_index_configfile = tests/fts/index/fts_rebal_basic.json
 
 [rebalance]
 start_after = 300
-stop_after = 600
 services = fts

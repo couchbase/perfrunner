@@ -34,7 +34,6 @@ bench_name = config_push
 [rebalance]
 failed_nodes = 1
 start_after = 60
-stop_after = 180
 
 [clients]
 dotnet_client = 3.4.12

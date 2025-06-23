@@ -41,4 +41,3 @@ failover = graceful
 delta_recovery = 1
 delay_before_failover = 1200
 start_after = 1200
-stop_after = 1200

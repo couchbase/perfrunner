@@ -27,7 +27,6 @@ indexer.settings.storage_mode = plasma
 [rebalance]
 nodes_after = 7 7
 start_after = 300
-stop_after = 300
 
 [load]
 items = 75000000

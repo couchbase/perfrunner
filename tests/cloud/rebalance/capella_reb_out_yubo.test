@@ -31,7 +31,6 @@ ssl_mode = capella
 [rebalance]
 nodes_after = 5
 start_after = 300
-stop_after = 300
 rebalance_config = tests/gsi/elixir/rebalance_config/disk_scaling.json
 
 [secondary]

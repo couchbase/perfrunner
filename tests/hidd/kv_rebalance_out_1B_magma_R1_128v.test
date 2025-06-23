@@ -68,7 +68,6 @@ working_set_access = 90
 [rebalance]
 nodes_after = 4
 start_after = 180
-stop_after = 180
 
 [backup]
 backup_directory = /data2/5n_1b_128v

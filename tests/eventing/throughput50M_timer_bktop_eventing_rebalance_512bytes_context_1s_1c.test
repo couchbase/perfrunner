@@ -24,7 +24,6 @@ online_cores = 12
 [rebalance]
 nodes_after = 5
 start_after = 10
-stop_after = 10
 
 [bucket]
 replica_number=0

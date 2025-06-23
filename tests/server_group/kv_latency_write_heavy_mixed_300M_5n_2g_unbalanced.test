@@ -35,4 +35,3 @@ time = 1200
 [rebalance]
 nodes_after = 5
 start_after = 300
-stop_after = 300

@@ -38,7 +38,6 @@ doc_groups = 1
 [rebalance]
 nodes_after = 5
 start_after = 180
-stop_after = 180
 
 [secondary]
 indexes = tests/gsi/index_defs/10bucket_1scope_1collections_100_indexes_partitioned.json

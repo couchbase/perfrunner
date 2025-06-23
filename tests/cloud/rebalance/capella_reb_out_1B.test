@@ -29,7 +29,6 @@ ssl_mode = capella
 [rebalance]
 nodes_after = 3
 start_after = 300
-stop_after = 300
 
 [index]
 statements =

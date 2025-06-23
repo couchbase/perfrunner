@@ -75,7 +75,6 @@ items = 10000000
 
 [rebalance]
 start_after = 180
-stop_after = 180
 services = index
 replace_nodes = -1
 

@@ -209,4 +209,3 @@ args = []
 [rebalance]
 nodes_after = 6
 start_after = 600
-stop_after = 600

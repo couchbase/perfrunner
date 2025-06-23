@@ -34,7 +34,6 @@ bench_name = config_push
 [rebalance]
 failed_nodes = 1
 start_after = 300
-stop_after = 300
 
 [clients]
 libcouchbase = 3.3.11

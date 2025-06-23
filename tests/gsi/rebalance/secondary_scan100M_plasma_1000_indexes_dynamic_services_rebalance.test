@@ -58,5 +58,4 @@ workers = 2
 
 [rebalance]
 start_after = 180
-stop_after = 180
 services = index

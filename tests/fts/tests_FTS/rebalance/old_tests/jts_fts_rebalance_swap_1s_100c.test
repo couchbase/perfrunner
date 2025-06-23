@@ -36,7 +36,6 @@ backup_repo =  fts_generic_20M
 [rebalance]
 nodes_after = 3
 start_after = 300
-stop_after = 600
 swap = 1
 
 [profiling]

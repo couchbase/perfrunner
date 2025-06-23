@@ -1324,7 +1324,7 @@ class RebalanceSettings:
     DELTA_RECOVERY = 0  # Full recovery by default
     DELAY_BEFORE_FAILOVER = 600
     START_AFTER = 1200
-    STOP_AFTER = 1200
+    STOP_AFTER = 180
     FTS_PARTITIONS = "1"
     FTS_MAX_DCP_PARTITIONS = "0"
 

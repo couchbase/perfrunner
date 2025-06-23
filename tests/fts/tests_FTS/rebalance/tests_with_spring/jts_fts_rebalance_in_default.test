@@ -31,7 +31,6 @@ couchbase_index_configfile =  tests/fts/index/fts_rebal_basic.json
 [rebalance]
 nodes_after = 4
 start_after = 120
-stop_after = 120
 
 [profiling]
 services = fts

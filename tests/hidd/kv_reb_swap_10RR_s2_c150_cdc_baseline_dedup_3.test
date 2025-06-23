@@ -62,4 +62,3 @@ latency_percentiles = 50,99
 nodes_after = 4
 swap = 1
 start_after = 300
-stop_after = 300

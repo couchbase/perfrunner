@@ -72,7 +72,8 @@ class RemoteLinux(Remote):
         logger.info('Running: {}'.format(cmd))
         run(cmd, shell_escape=False, pty=False)
 
-    def run_cbindex_command_cloud(self, options, worker_home='/tmp/perfrunner'):
+    def run_cbindex_command_cloud(self, options:str, worker_home='/tmp/perfrunner'):
+        options = options.replace("$", "\\$")
         with cd(worker_home), cd('perfrunner'):
             cmd = "ulimit -n 20000 && opt/couchbase/bin/cbindex {options}".format(options=options)
             logger.info('Running: {}'.format(cmd))

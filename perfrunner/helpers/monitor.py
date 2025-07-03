@@ -1775,6 +1775,35 @@ class Monitor:
 
         logger.info("Snapshot restore completed")
 
+    def wait_for_rebalance_to_complete(self, host: str):
+        """Monitor a cluster rebalance operation from start to completion."""
+        is_running = True
+        is_started = False
+        last_progress = 0
+        last_progress_time = time.time()
+
+        while is_running or not is_started:
+            time.sleep(self.POLLING_INTERVAL)
+
+            is_running, progress = self.rest.get_job_status(host, job_type="scale")
+
+            if not progress:
+                continue
+
+            is_started = True
+            logger.info(f"Rebalance progress: {progress} %")
+
+            if progress == last_progress:
+                if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
+                    logger.interrupt("Rebalance hung")
+            else:
+                last_progress = progress
+                last_progress_time = time.time()
+
+        self.wait_for_cluster_balanced(host, timeout_secs=self.REBALANCE_TIMEOUT)
+
+        logger.info("Rebalance completed")
+
     def wait_for_workflow_status(
         self, host: str, workflow_id: str, status: str = "running", max_retries: int = 0
     ) -> Optional[dict]:

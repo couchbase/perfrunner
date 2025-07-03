@@ -161,8 +161,7 @@ class CapellaRebalanceTest(RebalanceTest):
                 }
 
                 self.rest.update_cluster_configuration(master, new_cluster_config)
-                self.monitor.wait_for_rebalance_to_begin(master)
-                self.monitor_progress(master)
+                self.monitor.wait_for_rebalance_to_complete(master)
 
 
 class RebalanceKVTest(RebalanceTest):

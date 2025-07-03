@@ -1029,16 +1029,20 @@ class DefaultRestHelper(RestBase):
         cluster_info = self.get_analytics_cluster_info(host)
         return cluster_info["state"] == "ACTIVE"
 
-    def exec_analytics_statement(self, analytics_node: str, statement: str) -> requests.Response:
-        data = {'statement': statement}
+    def exec_analytics_statement(
+        self, analytics_node: str, statement: str, params: dict = {}
+    ) -> requests.Response:
+        data = params | {"statement": statement}
         url = self._get_api_url(host=analytics_node, path='analytics/service',
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
         return self.post(url=url, data=data)
 
-    def exec_analytics_statement_curl(self, analytics_node: str, statement: str) -> str:
+    def exec_analytics_statement_curl(
+        self, analytics_node: str, statement: str, params: dict = {}
+    ) -> str:
         url = self._get_api_url(host=analytics_node, path='analytics/service',
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
-        data_json = json.dumps({"statement": statement})
+        data_json = json.dumps(params | {"statement": statement})
         user, pwd = self._set_auth(url=url)
         cmd = (
             f"curl -v -k -u {user}:{pwd} "

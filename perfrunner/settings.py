@@ -2805,9 +2805,18 @@ class AnalyticsSettings:
         self.ingest_during_load = maybe_atoi(
             options.pop("ingest_during_load", self.INGEST_DURING_LOAD)
         )
+        self._bigfun_request_params_undecoded = options.pop("bigfun_request_params", "{}")
 
         # Remaining settings are for analytics config REST API
         self.config_settings = {k: maybe_atoi(v) for k, v in options.items()}
+
+    @property
+    def bigfun_request_params(self) -> dict:
+        try:
+            return json.loads(self._bigfun_request_params_undecoded)
+        except json.JSONDecodeError:
+            logger.warning("Failed to decode JSON from bigfun_request_params option")
+            return {}
 
 
 class ColumnarKafkaLinksSettings:
@@ -3187,6 +3196,7 @@ class CH2:
     CUSTOMER_EXTRA_FIELDS = 128
     ORDERS_EXTRA_FIELDS = 128
     ITEM_EXTRA_FIELDS = 128
+    ACLIENT_REQUEST_PARAMS = ""
 
     def __init__(self, options: dict):
         self.repo = options.get("repo", self.REPO)
@@ -3220,6 +3230,9 @@ class CH2:
         )
         self.orders_extra_fields = int(options.get("orders_extra_fields", self.ORDERS_EXTRA_FIELDS))
         self.item_extra_fields = int(options.get("item_extra_fields", self.ITEM_EXTRA_FIELDS))
+        self.aclient_request_params = options.get(
+            "aclient_request_params", self.ACLIENT_REQUEST_PARAMS
+        )
 
         self.analytics_index_def_file = options.get("analytics_index_def_file")
 
@@ -3246,6 +3259,9 @@ class CH2:
             "--nonOptimizedQueries" if self.unoptimized_queries else None,
             "--ignore-skip-index-hints" if self.ignore_skip_index_hints else None,
             f"--{self.schema.value}" if self.schema is not CH2Schema.CH2 else None,
+            f"--aclient-request-params '{self.aclient_request_params}'"
+            if self.aclient_request_params
+            else None,
         ]
         return " ".join(filter(None, flags))
 

@@ -607,11 +607,14 @@ class BigFunQueryTest(BigFunTest):
         else:
             analytics_nodes = nodes
         logger.info("analytics_nodes = {}".format(analytics_nodes))
-        results = bigfun(self.rest,
-                         nodes=analytics_nodes,
-                         concurrency=self.test_config.access_settings.analytics_warmup_workers,
-                         num_requests=int(self.test_config.access_settings.analytics_warmup_ops),
-                         query_set=self.QUERIES)
+        results = bigfun(
+            self.rest,
+            nodes=analytics_nodes,
+            concurrency=self.test_config.access_settings.analytics_warmup_workers,
+            num_requests=int(self.test_config.access_settings.analytics_warmup_ops),
+            query_set=self.QUERIES,
+            request_params=self.analytics_settings.bigfun_request_params,
+        )
 
         return [(query, latency) for query, latency in results]
 
@@ -622,11 +625,14 @@ class BigFunQueryTest(BigFunTest):
         else:
             analytics_nodes = nodes
         logger.info("analytics_nodes = {}".format(analytics_nodes))
-        results = bigfun(self.rest,
-                         nodes=analytics_nodes,
-                         concurrency=int(self.test_config.access_settings.workers),
-                         num_requests=int(self.test_config.access_settings.ops),
-                         query_set=self.QUERIES)
+        results = bigfun(
+            self.rest,
+            nodes=analytics_nodes,
+            concurrency=int(self.test_config.access_settings.workers),
+            num_requests=int(self.test_config.access_settings.ops),
+            query_set=self.QUERIES,
+            request_params=self.analytics_settings.bigfun_request_params,
+        )
         return [(query, latency) for query, latency in results]
 
     def _report_kpi(self, results: list[QueryLatencyPair]):
@@ -671,12 +677,15 @@ class BigFunQueryNoIndexExternalTest(BigFunQueryTest):
         else:
             analytics_nodes = nodes
         logger.info("analytics_nodes = {}".format(analytics_nodes))
-        results = bigfun(self.rest,
-                         nodes=analytics_nodes,
-                         concurrency=int(self.test_config.access_settings.workers),
-                         num_requests=int(self.test_config.access_settings.ops),
-                         query_set=self.QUERIES,
-                         query_method=QueryMethod.CURL_CBAS)
+        results = bigfun(
+            self.rest,
+            nodes=analytics_nodes,
+            concurrency=int(self.test_config.access_settings.workers),
+            num_requests=int(self.test_config.access_settings.ops),
+            query_set=self.QUERIES,
+            query_method=QueryMethod.CURL_CBAS,
+            request_params=self.analytics_settings.bigfun_request_params,
+        )
         return [(query, latency) for query, latency in results]
 
     def run(self):
@@ -704,12 +713,15 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
         query_method = QueryMethod.CURL_CBAS
 
         logger.info("analytics_nodes = {}".format(nodes))
-        results = bigfun(self.rest,
-                         nodes=nodes,
-                         concurrency=int(self.test_config.access_settings.workers),
-                         num_requests=int(self.test_config.access_settings.ops),
-                         query_set=self.QUERIES,
-                         query_method=query_method)
+        results = bigfun(
+            self.rest,
+            nodes=nodes,
+            concurrency=int(self.test_config.access_settings.workers),
+            num_requests=int(self.test_config.access_settings.ops),
+            query_set=self.QUERIES,
+            query_method=query_method,
+            request_params=self.analytics_settings.bigfun_request_params,
+        )
         return [(query, latency) for query, latency in results]
 
     def report_ingestion_kpi(self, ingestion_time: float):

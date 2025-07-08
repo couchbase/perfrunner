@@ -26,7 +26,7 @@ def main():
     if 'toy' in _build:
         base_url = "http://172.23.126.166/builds/latestbuilds/sync_gateway/toys/{}"\
             .format(_build.split("/")[7])
-        _build = "3.2.3-{}".format(_build.split("/")[7])
+        _build = (_build.split("/")[-1]).split("_")[1]
         sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
         accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
     elif "-" not in _build:

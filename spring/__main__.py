@@ -38,6 +38,11 @@ def get_args():
         help="phase to run. Example: load, access",
     )
     parser.add_argument(
+        "--no-timer",
+        action="store_true",
+        help="the phase time is used to limit the phase runtime unless explicitly turned off",
+    )
+    parser.add_argument(
         "-c",
         "--cloud",
         default="{}",
@@ -71,7 +76,9 @@ def main():
         prefix=args.prefix,
         cloud=json.loads(args.cloud),
     )
-    wg = WorkloadGen(phase_settings, target_settings)
+    # Use the phase time unless explicitly turned off
+    timer = phase_settings.time if not args.no_timer else None
+    wg = WorkloadGen(phase_settings, target_settings, timer=timer)
     wg.run()
 
 

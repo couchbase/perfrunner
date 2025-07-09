@@ -10,6 +10,9 @@ sub_category = Plasma
 [cluster]
 mem_quota = 100000
 index_mem_quota = 100000
+online_cores = 16
+kernel_mem_limit = 128G
+kernel_mem_limit_services = kv,index
 initial_nodes = 6
 num_buckets = 1
 
@@ -35,7 +38,7 @@ workers = 50
 time = 500
 n1ql_op = read
 modify_doc_loader = filter_vector
-latency_percentiles = 80,95,99
+latency_percentiles = 80,95
 n1ql_queries = q01
 n1ql_query_type = Vector
 n1ql_workers = 32

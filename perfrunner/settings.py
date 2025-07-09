@@ -2304,7 +2304,7 @@ class GSISettings:
         self.aws_credential_path = options.get("aws_credential_path", self.AWS_CREDENTIAL_PATH)
         # GSI vector settings
         self.vector_dimension = int(options.get('vector_dimension', 0))
-        self.vector_description = options.get('vector_description', None)
+        self.vector_description = options.get('vector_description', "'IVF,SQ4'")
         self.vector_similarity = options.get('vector_similarity', 'L2')
         self.index_def_prefix = options.get("index_def_prefix", None)
         self.vector_train_list = options.get("train_list")

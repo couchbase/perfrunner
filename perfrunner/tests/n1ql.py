@@ -214,6 +214,13 @@ class N1QLTest(PerfTest):
 
         self.report_kpi()
 
+    def get_n1ql_request_count_until_now(self) -> int:
+        total_requests = 0
+        for query_node in self.query_nodes:
+            vitals = self.rest.get_query_stats(query_node)
+            total_requests += vitals['requests.count']
+        return total_requests
+
 
 class N1QLLatencyTest(N1QLTest):
 
@@ -651,16 +658,9 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
         logger.info('Sleeping for {} seconds before taking actions'
                     .format(self.test_config.rebalance_settings.start_after))
         time.sleep(self.test_config.rebalance_settings.start_after)
-
-        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
-        vitals = self.rest.get_query_stats(query_node)
-        total_requests_before = vitals['requests.count']
-
+        total_requests_before = self.get_n1ql_request_count_until_now()
         rebalance_time = self._rebalance(initial_nodes)
-
-        vitals = self.rest.get_query_stats(query_node)
-        total_requests_after = vitals['requests.count']
-
+        total_requests_after = self.get_n1ql_request_count_until_now()
         logger.info('Sleeping for {} seconds before finishing'
                     .format(self.test_config.rebalance_settings.stop_after))
         time.sleep(self.test_config.rebalance_settings.stop_after)
@@ -2061,16 +2061,15 @@ class N1qlVectorLatencyRebalanceTest(N1qlVectorLatencyThroughputPreparedStatemen
                               "indexer.settings.enable_shard_affinity", False)
         self.access_n1ql_bg()
         self.pre_rebalance()
-        vitals = self.rest.get_query_stats(self.query_nodes[0])
-        total_requests_before = vitals['requests.count']
-
+        total_requests_before = self.get_n1ql_request_count_until_now()
         self.rebalance_time = self._rebalance(services="index")
-
-        vitals = self.rest.get_query_stats(self.cluster_spec.servers_by_role('n1ql')[0])
-        total_requests_after = vitals['requests.count']
+        total_requests_after = self.get_n1ql_request_count_until_now()
         self.post_rebalance()
 
         total_requests_during_rebalance = total_requests_after - total_requests_before
+        logger.info(f"Queries before rebalance: {total_requests_before}, "
+                    f"after rebalance: {total_requests_after}, "
+                    f"during rebalance: {total_requests_during_rebalance}")
         return total_requests_during_rebalance
 
     def recall_pre_rebalance(self):

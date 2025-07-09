@@ -2,10 +2,10 @@
 test = perfrunner.tests.n1ql.N1qlVectorLatencyThroughputPreparedStatementTest
 
 [showfast]
-title = Vector Search, 1 bucket, SIFT 5M doc 1536dims, no replica, 1s 1c
-component = n1ql
-category = vector
-sub_category = bhive
+title = Vector Search, 1 bucket, SIFT 10 M doc 128dims, no replica, 1s 1c
+component = secondarycloud
+category = lat
+sub_category = Bhive
 
 [cluster]
 mem_quota = 100000
@@ -13,24 +13,29 @@ index_mem_quota = 100000
 online_cores = 16
 kernel_mem_limit = 128G
 kernel_mem_limit_services = kv,index
-initial_nodes = 4
+initial_nodes = 5
 num_buckets = 1
+bucket_name = bucket-1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
 
 [bucket]
-replica_number = 0
+replica_number = 1
 backend_storage = magma
+
+[load]
+items = 1000000000
+size = 1024
+workers = 80
+doc_gen = vector_embedding
+ssl_mode = capella
 
 [collection]
 config = collections/1bucket_1scope_1collection_basic_default.json
 
-[load]
-items = 5000000
-size = 1024
-workers = 80
-doc_gen = vector_embedding
-
 [access]
-items = 5000000
+items = 1000000000
 workers = 0
 time = 500
 n1ql_op = read
@@ -40,11 +45,14 @@ n1ql_queries = q01
 n1ql_query_type = Vector
 n1ql_workers = 32
 workload_instances = 1
+vector_query_path =  tests/fts/data/vector/testData/Sift_query_100M_128dim.txt
+ssl_mode = capella
 
 [restore]
-backup_storage = s3://fts-vector-openai-5m-1536dim
-backup_repo = fts_openai_large_5m_1536_dims
+backup_storage = s3://fts-vector-100m-sift-128-dims
+backup_repo = fts_vector_100m_sift_128_dims
 threads = 50
+filter_keys = ^[0-9]$|^[1-9][0-9]{0,6}$
 
 [backup]
 obj_staging_dir = /stage
@@ -52,22 +60,23 @@ obj_region = us-east-1
 aws_credential_path = /root/.ssh
 
 [index]
-vector_query_path = tests/fts/data/vector/testData/openai_5M_100Numeric_4915To6500TextHits.txt
-ground_truth_file_name = Openai5M/openai_5M_groundtruth.txt
+vector_query_path = tests/fts/data/vector/testData/Sift_query_100M_128dim.txt
+ground_truth_file_name = Sift100M/gtiIdx10M.txt
 ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
 top_k_results = 10
 
 [secondary]
 indexer.settings.storage_mode = plasma
-vector_scan_probes = 25
+vector_scan_probes = 90
 indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_default.json
-vector_dimension = 1536
+vector_dimension = 128
+train_list = 1000000
 override_index_def = emb Vector
 vector_def_prefix = emb
 vector_index_type = bhive
 
 [n1ql-q01]
-statement = SELECT META().id FROM `bucket-1` ORDER BY ANN_DISTANCE(emb, $1, 'SIMILARITY', NPROBES, RERANKING) limit top_k_results
+statement = SELECT META().id FROM `bucket-1` ORDER BY ANN(emb, $1, 'L2_SQUARED', NPROBES, RERANKING) limit top_k_results
 args = [{emb}]
 total_batches = 1000
 

@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1qlVectorLatencyThroughputPreparedStatementTest
 
 [showfast]
-title = Vector Search, 1 bucket, SIFT 1B doc 128dims, no replica, 1s 1c
+title = Vector Search, 1 bucket, SIFT 1B doc 128dims, 1 replica, 1s 1c
 component = secondarycloud
 category = lat
 sub_category = Bhive
@@ -10,10 +10,9 @@ sub_category = Bhive
 [cluster]
 mem_quota = 100000
 index_mem_quota = 100000
-initial_nodes = 5
+initial_nodes = 7
 num_buckets = 1
 bucket_name = bigann
-enable_cpu_cores = false
 ui_http = disabled
 enable_n2n_encryption = all
 
@@ -63,12 +62,13 @@ top_k_results = 10
 
 [secondary]
 indexer.settings.storage_mode = plasma
-vector_scan_probes = 125
+vector_scan_probes = 90
 indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_default_bigann.json
 vector_dimension = 128
 train_list = 1000000
 override_index_def = embedding Vector
 vector_def_prefix = embedding
+num_index_replica = 1
 vector_index_type = bhive
 
 [n1ql-q01]

@@ -10,6 +10,9 @@ sub_category = Bhive
 [cluster]
 mem_quota = 100000
 index_mem_quota = 100000
+online_cores = 16
+kernel_mem_limit = 128G
+kernel_mem_limit_services = kv,index
 initial_nodes = 4
 num_buckets = 1
 bucket_name = bigann
@@ -63,7 +66,7 @@ fields = composite
 
 [secondary]
 indexer.settings.storage_mode = plasma
-vector_scan_probes = 125
+vector_scan_probes = 90
 indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_default_bigann.json
 vector_dimension = 128
 train_list = 1000000

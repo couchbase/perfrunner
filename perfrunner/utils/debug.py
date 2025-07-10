@@ -2,6 +2,7 @@ import glob
 import os
 import re
 import shutil
+import sys
 import time
 import zipfile
 from argparse import ArgumentParser
@@ -21,7 +22,10 @@ from perfrunner.helpers.rest import RestHelper, RestType
 from perfrunner.remote.linux import RemoteLinux
 from perfrunner.settings import ClusterSpec
 
-set_start_method("fork")
+try:
+    set_start_method("fork")
+except RuntimeError:
+    pass
 
 GOLANG_LOG_FILES = ("eventing.log",
                     "fts.log",
@@ -32,7 +36,6 @@ GOLANG_LOG_FILES = ("eventing.log",
 
 
 class LogsVerifier:
-
     def check_file_for(self, filename: str, predicate_func: Callable,
                        processor_func: Callable) -> list[str]:
         """Check files contained in the zipfile for conditions provided by the functions.
@@ -64,20 +67,22 @@ class LogsVerifier:
                                    lambda name: 'indexer.log' in name,
                                    lambda data: 'Storage corrupted and unrecoverable' in str(data))
 
-    def process_logs(self, is_capella: bool, remote: RemoteLinux):
+    def process_logs(self, is_capella: bool, remote: RemoteLinux) -> dict:
         failures = defaultdict(dict)
-        for filename in glob.iglob('./*.zip'):
+        for filename in glob.iglob("./*.zip"):
             if panic_files := self.check_for_golang_panic(filename):
-                failures['panics'][filename] = panic_files
+                failures["panics"][filename] = panic_files
             if crash_files := self.check_for_crash_files(filename):
-                failures['crashes'][filename] = crash_files
+                failures["crashes"][filename] = crash_files
             if storage_corrupted_files := self.check_for_storage_corrupted(filename):
-                failures['storage_corrupted'][filename] = storage_corrupted_files
+                failures["storage_corrupted"][filename] = storage_corrupted_files
                 if not is_capella:
                     remote.collect_index_datafiles()
 
         if failures:
-            logger.interrupt(f"Following failures found: {pretty_dict(failures)}")
+            logger.error(f"Following failures found: {pretty_dict(failures)}")
+
+        return failures
 
 
 class LokiLogsProcessor(LogsVerifier):
@@ -90,7 +95,7 @@ class LokiLogsProcessor(LogsVerifier):
     def __init__(self, version: str):
         super().__init__()
         self.logs: list[ErrorEvent] = []
-        self.version = version.split("-")[0].strip()
+        self.release = version.split("-")[0].strip()
 
     @cached_property
     def _job_name(self) -> str:
@@ -131,7 +136,7 @@ class LokiLogsProcessor(LogsVerifier):
                     "stream": {
                         "source": "ns_server",
                         "job": self._job_name,
-                        "cb_version": self.version,
+                        "cb_version": self.release,
                         "level": "error",
                         "capella": str(is_capella).lower(),
                         "node": node,
@@ -276,6 +281,25 @@ def get_capella_cluster_logs(rest: RestType, s3_bucket_name: str):
                 local.download_all_s3_logs(path_name, file_name)
 
 
+def maybe_install_debug_package(remote: RemoteLinux, server_version: str):
+    from perfrunner.utils.install import CouchbaseInstaller
+
+    try:
+        # This is a hack to get the debuginfo_url for the given server_version
+        # without supplying all the installer parameters
+        installer_options = type(
+            "InstallerOptions",
+            (object,),
+            {"couchbase_version": server_version, "edition": "enterprise", "verbose": False},
+        )()
+        installer = CouchbaseInstaller(remote.cluster_spec, None, installer_options)
+        remote.maybe_install_debug_package(url=installer.debuginfo_url)
+    except Exception:
+        # This is expected to fail if the debug symbols are already installed,
+        # a toy build is used or running in cloud environment
+        pass
+
+
 def main():
     args = get_args()
 
@@ -286,6 +310,7 @@ def main():
     # In any case, TLS ports are available. We use this for compatibility with tests
     # that may have configured strict N2N encryption.
     rest = RestHelper(cluster_spec, use_tls=True)
+    is_capella = cluster_spec.capella_infrastructure
 
     # Collect and upload logs
     if cluster_spec.serverless_infrastructure:
@@ -307,7 +332,7 @@ def main():
                 for fname in log_fnames:
                     z.write(fname, arcname=Path(fname).name)
 
-    if cluster_spec.capella_infrastructure:
+    if is_capella:
         get_capella_cluster_logs(rest, args.s3_bucket_name)
     elif cluster_spec.dynamic_infrastructure:
         remote.collect_k8s_logs()
@@ -328,11 +353,22 @@ def main():
             shutil.make_archive('tools', 'zip', logs)
 
     # Push log lines to Loki
-    loki_manager = LokiLogsProcessor(rest.get_version(cluster_spec.servers[0]))
-    loki_manager.process_logs(cluster_spec.capella_infrastructure, remote)
+    server_version = rest.get_version(cluster_spec.servers[0])
+    loki_manager = LokiLogsProcessor(server_version)
+    loki_manager.process_logs(is_capella, remote)
     # Process logs, throw exception if any
     analyser = LogsVerifier()
-    analyser.process_logs(cluster_spec.capella_infrastructure, remote)
+    failures = analyser.process_logs(is_capella, remote)
+
+    if failures.get("crashes") and not is_capella:
+        # We have found crash minidumps and intend to generate backtraces.
+        # To get backtraces, we need debug packages installed on the node.
+        # This code assumes the debug symbols are already installed through `install_debug_sym`
+        # perfrunner flag or we are running a non-toy build on an on-prem internal machines.
+        logger.info("Found crash files. Generating backtraces...")
+        maybe_install_debug_package(remote, server_version)
+        remote.generate_minidump_backtrace()
+        sys.exit(1)
 
 
 if __name__ == '__main__':

@@ -38,7 +38,7 @@
         {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_1Filter.test", "groups": "P0"}
     ],
     "Eventing": [
-        {"job": "themis", "cluster": "themis_1+4.spec", "test_config": "deploytime_1000_functions_noop.test", "groups": "P0"}
+        {"job": "themis", "cluster": "themis_1_4.spec", "test_config": "deploytime_1000_functions_noop.test", "groups": "P0"}
     ],
     "XDCR-BIDI": [
         {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_2x2.spec", "test_config": "tests/xdcr_init_1x1_bidir_100M.test", "groups": "P0"},

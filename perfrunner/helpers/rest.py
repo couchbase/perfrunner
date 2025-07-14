@@ -2628,6 +2628,25 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         resp = self.get(url=f"{gateway_endpoint}/v1/info")
         return resp.json()
 
+    def get_eventing_app_logs(self, host: str, bucket: str, scope: str = "_default") -> dict:
+        eventing_functions = self.get_eventing_apps(host).get("apps", []) or []
+        eventing_logs = {}
+        for function in eventing_functions:
+            function_name = function.get("name")
+            if function.get("composite_status") != "deployed":
+                continue
+            logger.info(f"Getting logs for eventing function: {function_name}")
+            function_logs = self.get(
+                url=self._get_api_url(
+                    host=host,
+                    path=f"getAppLog?name={function_name}&aggregate=true&bucket={bucket}&scope={scope}",
+                    plain_port=EVENTING_PORT,
+                    ssl_port=EVENTING_PORT_SSL,
+                )
+            )
+            eventing_logs[function_name] = function_logs.text
+        return eventing_logs
+
 
 class CapellaServerlessRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec):

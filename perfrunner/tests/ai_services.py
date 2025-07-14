@@ -129,6 +129,9 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
                 self.fts_index_name, self.test_config.buckets[0]
             )
             self.workflow_id = self.rest.create_workflow(self.master_node, payload)
+            # Store the workflow id in the cluster spec so it can be destroyed later
+            self.cluster_spec.config.set("controlplane", "workflow_id", self.workflow_id)
+            self.cluster_spec.update_spec_file()
             workflow_details = self.monitor.wait_for_workflow_status(
                 host=self.eventing_nodes[0], workflow_id=self.workflow_id
             )
@@ -136,17 +139,6 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
             # When a workflow reaches a running state, it will start processing the data
         except Exception as e:
             logger.error(f"Error while waiting for workflow deployment: {e}")
-
-    @timeit
-    def destroy_workflow(self):
-        try:
-            self.rest.delete_workflow(self.master_node, self.workflow_id)
-            self.monitor.wait_for_workflow_status(
-                host=self.eventing_nodes[0], workflow_id=self.workflow_id, status=""
-            )
-        except Exception as e:
-            logger.error(f"Error while waiting for undeploy: {e}")
-            sleep(60)
 
     @timeit
     def wait_for_workflow_completion_or_time(self):
@@ -205,10 +197,9 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
 
         latencies = self.get_eventing_latencies()
         logger.info(f"{latencies=}")
-        self.report_kpi()
-
-        self.runtimes["workflow_delete_time"] = self.destroy_workflow()
         logger.info(f"{self.runtimes=}")
+
+        self.report_kpi()
 
     def _report_kpi(self):
         workflow_details = self.rest.get_workflow_details(self.master_node, self.workflow_id)
@@ -270,6 +261,19 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
             )
 
         return ret_val
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Before doing other cleanup, we need to collect eventing app logs
+        eventing_logs = self.rest.get_eventing_app_logs(
+            self.eventing_nodes[0], self.test_config.buckets[0]
+        )
+        if eventing_logs:
+            # store each log to a file function_name.log
+            for function_name, log in eventing_logs.items():
+                with open(f"{function_name}.log", "w") as f:
+                    f.write(log)
+
+        super().__exit__(exc_type, exc_value, traceback)
 
 
 class AutoVecWorkflowTest(WorkflowIngestionAndLatencyTest):

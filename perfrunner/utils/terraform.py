@@ -806,6 +806,8 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
         # Destroy capella cluster
         if not self.options.keep_cluster:
+            # A provisional cluster can have a workflow attached that needs to be destroyed first
+            self.destroy_workflow()
             self.destroy_cluster()
             self.wait_for_cluster_destroy()
 
@@ -1269,6 +1271,34 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
               .format(peering_connection, client_vpc))
         local('gcloud dns managed-zones delete {}'.format(dns_managed_zone))
 
+    def destroy_workflow(self):
+        # In the future we could go through all the deployed workflows attached to the
+        # cluster and destroy them. But, as of now, the APIs to check this may not exist in some
+        # branches. Instead here we will only destroy the workflow if the test has explicitly
+        # deployed it.
+        workflow_id = self.infra_spec.controlplane_settings.get("workflow_id")
+        if not workflow_id:
+            return
+
+        cluster_id = self.cluster_ids[0]
+        try:
+            logger.info(f"Destroying workflow {workflow_id}")
+            resp = self.provisioned_api.delete_autovec_workflow(
+                self.tenant_id, self.project_id, cluster_id, workflow_id
+            )
+            raise_for_status(resp)
+            self.wait_for_workflow_destroy(cluster_id, workflow_id)
+        except Exception as e:
+            logger.error(f"Error while waiting for a workflow to be destroyed: {e}")
+
+    def wait_for_workflow_destroy(self, cluster_id: str, workflow_id: str):
+        logger.info(f"Waiting for workflow {workflow_id} to be destroyed")
+        while True:
+            resp = self.provisioned_api.get_autovec_workflow(
+                self.tenant_id, self.project_id, cluster_id, workflow_id
+            )
+            if resp.status_code == 404:
+                break
 
 class CapellaServerlessDeployer(CapellaProvisionedDeployer):
     NEBULA_OVERRIDE_ARGS = ['override_count', 'min_count', 'max_count', 'instance_type']

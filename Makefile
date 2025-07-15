@@ -1,9 +1,9 @@
 SHELL := /bin/bash
 
 PATH := ${GOPATH}/bin:$(PATH):/usr/local/go/bin/
-
 ENV := env
-PYTHON := python3.9
+VERSION := 3.9.7
+PYTHON := python$$(echo ${VERSION} | cut -d. -f1,2)
 PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
 .PHONY: docker
 
@@ -11,12 +11,12 @@ all:
 	export PYENV_ROOT="$$HOME/.pyenv" && \
 	export PATH="$$PYENV_ROOT/bin:$$PATH" && \
 	eval "$$(pyenv init --path)" && \
-	pyenv install 3.9.7 -s && \
-	pyenv local 3.9.7 && \
+	pyenv install ${VERSION} -s && \
+	pyenv local ${VERSION} && \
 	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
 	${ENV}/bin/pip install --quiet --no-warn-script-location -r requirements.txt
-	${ENV}/bin/python setup.py --quiet install
+	${ENV}/bin/python -m pip install --quiet .
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:

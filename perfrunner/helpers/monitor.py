@@ -30,6 +30,7 @@ class Monitor:
     POLLING_INTERVAL_SGW_RESYNC = 60  # 1m delay is ok since this takes hours to complete
 
     REBALANCE_TIMEOUT = 600
+    REBALANCE_JOB_TIMEOUT = 3600
     TIMEOUT = 3600 * 12
 
     DISK_QUEUES = (
@@ -1783,7 +1784,7 @@ class Monitor:
         last_progress_time = time.time()
 
         while is_running or not is_started:
-            time.sleep(self.POLLING_INTERVAL)
+            time.sleep(self.MONITORING_DELAY)
 
             is_running, progress = self.rest.get_job_status(host, job_type="scale")
 
@@ -1794,13 +1795,13 @@ class Monitor:
             logger.info(f"Rebalance progress: {progress} %")
 
             if progress == last_progress:
-                if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
+                if time.time() - last_progress_time > self.REBALANCE_JOB_TIMEOUT:
                     logger.interrupt("Rebalance hung")
             else:
                 last_progress = progress
                 last_progress_time = time.time()
 
-        self.wait_for_cluster_balanced(host, timeout_secs=self.REBALANCE_TIMEOUT)
+        self.wait_for_cluster_balanced(host, timeout_secs=self.REBALANCE_JOB_TIMEOUT)
 
         logger.info("Rebalance completed")
 

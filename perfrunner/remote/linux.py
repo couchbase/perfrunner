@@ -376,18 +376,16 @@ class RemoteLinux(Remote):
     @all_servers
     def uninstall_couchbase(self):
         logger.info('Uninstalling Couchbase Server')
-        packages = [
-            "couchbase-server",
-            "couchbase-server-dbg",  # Before Morpheus (deb only)
-            "couchbase-server-dbgsym",  # Morpheus and above (deb only)
-            "couchbase-server-community",
-            "couchbase-server-analytics",
-            "couchbase-server-debuginfo",  # rpm only
-        ]
         if self.package == 'deb':
-            run("yes | apt-get remove " + " ".join(packages), quiet=True)
+            run('yes | apt-get remove couchbase-server', quiet=True)
+            run('yes | apt-get remove couchbase-server-dbg', quiet=True)
+            run('yes | apt-get remove couchbase-server-community', quiet=True)
+            run('yes | apt-get remove couchbase-server-analytics', quiet=True)
         else:
-            run("yes | yum remove " + " ".join(packages), quiet=True)
+            run('yes | yum remove couchbase-server', quiet=True)
+            run('yes | yum remove couchbase-server-debuginfo', quiet=True)
+            run('yes | yum remove couchbase-server-community', quiet=True)
+            run('yes | yum remove couchbase-server-analytics', quiet=True)
 
     def upload_iss_files(self, release: str):
         pass
@@ -1159,7 +1157,8 @@ class RemoteLinux(Remote):
             logger.info(f"Running: {cmd}")
             run(cmd)
 
-    def _install_cb_debug_package(self, url: str, quiet: bool = False):
+    @all_servers
+    def install_cb_debug_package(self, url):
         logger.info('Installing Couchbase Debug package')
         if url.endswith('deb'):
             self.wget(url, outdir='/tmp')
@@ -1168,16 +1167,7 @@ class RemoteLinux(Remote):
         else:
             cmd = 'rpm -iv {}'.format(url)
 
-        run(cmd, warn_only=True, quiet=quiet)
-
-    @all_servers
-    def install_cb_debug_package(self, url: str):
-        self._install_cb_debug_package(url)
-
-    @all_servers
-    def maybe_install_debug_package(self, url: str):
-        if not self._is_debug_package_installed():
-            self._install_cb_debug_package(url, quiet=True)
+        run(cmd, warn_only=True)
 
     @all_servers
     def generate_linux_perf_script(self):
@@ -1765,40 +1755,3 @@ class RemoteLinux(Remote):
 
         logger.info("Running: {}".format(command))
         run(command)
-
-    @all_servers
-    def generate_minidump_backtrace(self):
-        response = run(f"ls {self.CB_DIR}/var/lib/couchbase/crash/*.dmp", quiet=True)
-        if response.return_code:
-            return  # This node doesnot contain any crash minidumps
-
-        crash_files = response.stdout.split()
-        if not self._is_debug_package_installed():
-            logger.warning(
-                "Crash files exists but debug symbols are missing. Will not generate backtraces."
-            )
-            return
-
-        for crash_file in crash_files:
-            core_file = crash_file.replace(".dmp", ".core")
-            backtrace_file = crash_file.replace(".dmp", ".txt")
-            # Generate the native core file
-            run(f"{self.CB_DIR}/bin/minidump-2-core {crash_file} > {core_file}")
-            # Produce the full backtrace using gdb and store it in a file
-            run(
-                f"gdb -batch -iex 'set auto-load safe-path /' -iex 'set pagination off' "
-                f"-ex 'backtrace full' -ex 'quit' {self.CB_DIR}/bin/memcached -c {core_file} "
-                f"| sed '/^\\[New LWP/d' > {backtrace_file}"
-            )
-        # Now zip all the backtraces files into a single file
-        backtraces_zip = f"{self.CB_DIR}/var/lib/couchbase/crash/backtraces_{env.host_string}.zip"
-        run(f"zip -q {backtraces_zip} {self.CB_DIR}/var/lib/couchbase/crash/*.txt")
-        get(backtraces_zip, local_path=".")
-
-    def _is_debug_package_installed(self) -> bool:
-        """Return true if the debug package is installed."""
-        # This assumes we are on a Debian based system.
-        return_code = run(
-            "dpkg -l | grep -E 'couchbase-server-dbg|couchbase-server-dbgsym'", quiet=True
-        ).return_code
-        return return_code == 0

@@ -320,9 +320,3 @@ class RemoteWindows(Remote):
         logger.info('Perfrunner cannot set ns_server profile on Windows. '
                     'Default profile will be used.')
         pass
-
-    def generate_minidump_backtrace(self, host: str):
-        pass
-
-    def maybe_install_debug_package(self, url: str):
-        pass

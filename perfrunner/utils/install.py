@@ -28,7 +28,10 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.context import master_client
 from perfrunner.settings import CBProfile, ClusterSpec, TestConfig
 
-set_start_method("fork")
+try:
+    set_start_method("fork")
+except RuntimeError:
+    pass
 
 LATESTBUILDS_BASE_URL = "http://latestbuilds.service.couchbase.com/builds"
 
@@ -517,7 +520,7 @@ class CouchbaseInstaller:
         if self.url.endswith('.rpm'):
             debuginfo_str = '-debuginfo'
         elif self.url.endswith('.deb'):
-            debuginfo_str = '-dbg'
+            debuginfo_str = "-dbg" if self.build_tuple < (8, 0, 0) else "-dbgsym"
 
         return re.sub(
             rf'couchbase-(server|columnar)-{self.options.edition}',
@@ -974,7 +977,10 @@ def main():
             installer.download_remote()
 
         # Here we install CB debuginfo
-        if test_config.profiling_settings.linux_perf_profile_flag:
+        if (
+            test_config.profiling_settings.linux_perf_profile_flag
+            or test_config.cluster.install_debug_sym
+        ):
             installer.install_debuginfo()
 
     if cluster_spec.infrastructure_kafka_clusters:

@@ -999,6 +999,9 @@ class ClusterSettings:
             else:
                 self.bucket_name = self.bucket_name.split(",")
 
+        # Debugging
+        self.install_debug_sym = maybe_atoi(options.get("install_debug_sym", "false"))
+
 
 class DirectNebulaSettings:
 

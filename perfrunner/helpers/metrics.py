@@ -1727,19 +1727,14 @@ class MetricHelper:
 
         return max_consumer_rss, max_producer_rss
 
-    def avg_ingestion_rate(self, num_items: int, time_elapsed: float) -> Metric:
-        metric_info = self._metric_info(chirality=1)
-
-        rate = round(num_items / time_elapsed)
-
-        return rate, self._snapshots, metric_info
-
-    def ingestion_time(self, time_elapsed: float, ingest_method: str) -> Metric:
+    def avg_ingestion_rate(
+        self, num_items: int, time_elapsed: float, sync_type: str = "initial"
+    ) -> Metric:
         return self.custom_metric(
-            round(time_elapsed, 2),
-            f"Data ingestion time (sec), {ingest_method.replace('_', ' ').title()}, {{}}",
-            f"ingest_time_{ingest_method.lower().replace(' ', '_')}",
-            chirality=-1,
+            round(num_items / time_elapsed),
+            f"Avg. {sync_type.replace('_', ' ')} ingestion rate (items/sec), {{}}",
+            f"{sync_type.lower().replace(' ', '_')}_ingest_rate",
+            chirality=1,
         )
 
     def avg_drop_rate(self, num_items: int, time_elapsed: float) -> Metric:

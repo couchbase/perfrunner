@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.BigFunSyncTest
 
 [showfast]
-title = Avg. ingestion rate (items/sec), 2 nodes, BigFUN 20M users (320M docs), 3 indexes, AWS/Capella
+title = 2 nodes, BigFUN 20M users (320M docs), 3 indexes, AWS/Capella
 component = cloud
 category = analytics
 sub_category = AWS

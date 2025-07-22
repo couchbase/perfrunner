@@ -3,7 +3,7 @@ test = perfrunner.tests.analytics.BigFunIncrSyncTest
 use_workers = 0
 
 [showfast]
-title = Avg. incremental ingestion rate (items/sec), 1 node, BigFUN 20M users (320M docs), 3 indexes, HDD
+title = 1 node, BigFUN 20M users (320M docs), 3 indexes, HDD
 component = analytics
 category = sync
 sub_category = Incremental

@@ -3,7 +3,7 @@ test = perfrunner.tests.analytics.BigFunSyncTest
 use_workers = 0
 
 [showfast]
-title = Avg. ingestion rate (items/sec), 4 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD
+title = 4 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD
 component = analytics
 category = sync
 sub_category = Initial

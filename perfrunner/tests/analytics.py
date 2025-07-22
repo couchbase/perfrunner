@@ -423,7 +423,11 @@ class AnalyticsTest(PerfTest):
         else:
             self.restore_local()
 
-    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []):
+    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []) -> tuple[int, float]:
+        """Ingest data from cloud object store using COPY FROM.
+
+        Returns the total number of items copied and the total time taken to copy the data.
+        """
         logger.info("Ingesting data from cloud object store using COPY FROM")
 
         datasets_to_import = datasets or self.datasets
@@ -438,13 +442,22 @@ class AnalyticsTest(PerfTest):
         ):
             path_keyword = "USING"
 
+        total_items_copied = 0
+        total_copy_time = 0
         for dataset in datasets_to_import:
             statement = dataset.copy_into_statement(
                 external_bucket, file_format, file_include, path_keyword
             )
             t0 = time.time()
             self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
-            logger.info(f"Statement execution time: {time.time() - t0}")
+            copy_time = time.time() - t0
+            logger.info(f"Statement execution time: {copy_time}")
+            items_copied = self.get_dataset_items(dataset.name)
+            logger.info(f"Average ingestion rate (items/sec): {items_copied / copy_time:.2f}")
+            total_items_copied += items_copied
+            total_copy_time += copy_time
+
+        return total_items_copied, total_copy_time
 
     def report_columnar_cloud_storage_stats(self):
         """Report cloud storage bucket stats for Columnar tests."""
@@ -460,7 +473,6 @@ class AnalyticsTest(PerfTest):
         get_cloud_storage_bucket_stats(f"{blob_storage_scheme}://{bucket_name}")
 
     def get_dataset_items(self, dataset: str) -> int:
-        logger.info(f"Getting number of items in dataset {dataset}")
         statement = f"SELECT COUNT(*) from {sqlpp_escape(dataset)};"
         result = self.exec_analytics_statement(self.analytics_node, statement)
         num_items = result.json()["results"][0]["$1"]
@@ -556,6 +568,11 @@ class BigFunSyncTest(BigFunTest):
 
 
 class BigFunIncrSyncTest(BigFunSyncTest):
+    def _report_kpi(self, sync_time: int):
+        self.reporter.post(
+            *self.metrics.avg_ingestion_rate(self.num_items, sync_time, "incremental")
+        )
+
     @with_stats
     @timeit
     def re_sync(self):
@@ -703,9 +720,8 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
     COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
 
     @with_stats
-    @timeit
-    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []):
-        super().copy_data_from_object_store(datasets)
+    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []) -> tuple[int, float]:
+        return super().copy_data_from_object_store(datasets)
 
     @with_stats
     def access(self) -> list[QueryLatencyPair]:
@@ -724,15 +740,12 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
         )
         return [(query, latency) for query, latency in results]
 
-    def report_ingestion_kpi(self, ingestion_time: float):
+    def report_ingestion_kpi(self, ingestion_items: int, ingestion_time: float):
         if self.test_config.stats_settings.enabled:
-            storage_svc = {"aws": "s3", "gcp": "gcs", "azure": "azblob"}[
-                self.cluster_spec.capella_backend
-                if self.cluster_spec.capella_infrastructure
-                else self.cluster_spec.cloud_provider
-            ]
-            v, snapshots, metric_info = self.metrics.ingestion_time(
-                ingestion_time, f"copy_from_{storage_svc}"
+            v, snapshots, metric_info = self.metrics.avg_ingestion_rate(
+                ingestion_items,
+                ingestion_time,
+                f"copy_from_{self.analytics_settings.external_dataset_type.lower()}",
             )
             metric_info["category"] = "sync"
             self.reporter.post(v, snapshots, metric_info)
@@ -743,9 +756,10 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryNoIndexExternalTest):
         self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.copy_data_from_object_store()
-        logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
-        self.report_ingestion_kpi(copy_from_time)
+        copy_from_items, copy_from_time = self.copy_data_from_object_store()
+        logger.info(f"Total items ingested using COPY FROM: {copy_from_items}")
+        logger.info(f"Total data ingestion time using COPY FROM (s): {copy_from_time:.2f}")
+        self.report_ingestion_kpi(copy_from_items, copy_from_time)
 
         results = self.access()
         self.report_kpi(results)
@@ -838,8 +852,9 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
             if d.name in self.test_config.columnar_settings.object_store_import_datasets
         ]
 
-        copy_from_time = self.copy_data_from_object_store(datasets_to_import)
-        logger.info(f'Total data ingestion time using COPY FROM: {copy_from_time}')
+        copy_from_items, copy_from_time = self.copy_data_from_object_store(datasets_to_import)
+        logger.info(f"Total items ingested using COPY FROM: {copy_from_items}")
+        logger.info(f"Total data ingestion time using COPY FROM (s): {copy_from_time:.2f}")
 
         self.access()
 
@@ -870,8 +885,9 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromObjectStoreTest):
         self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
-        copy_from_time = self.copy_data_from_object_store()
-        logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
+        copy_from_items, copy_from_time = self.copy_data_from_object_store()
+        logger.info(f"Total items ingested using COPY FROM: {copy_from_items}")
+        logger.info(f"Total data ingestion time using COPY FROM (s): {copy_from_time:.2f}")
 
         self.rest.create_analytics_link(
             self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
@@ -1490,7 +1506,6 @@ class CH2RemoteLinkTest(CH2Test):
         if self.test_config.stats_settings.enabled:
             v, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
             metric_info["category"] = "sync"
-            metric_info["title"] = "Avg. ingestion rate (items/sec), " + metric_info["title"]
             self.reporter.post(v, snapshots, metric_info)
 
     @with_stats
@@ -1628,9 +1643,10 @@ class CH2ColumnarStandaloneDatasetTest(CH2Test, ColumnarCopyFromObjectStoreTest)
 
         self.create_analytics_indexes()
 
-        copy_from_time = self.copy_data_from_object_store()
-        logger.info(f"Total data ingestion time using COPY FROM: {copy_from_time}")
-        self.report_ingestion_kpi(copy_from_time)
+        copy_from_items, copy_from_time = self.copy_data_from_object_store()
+        logger.info(f"Total items ingested using COPY FROM: {copy_from_items}")
+        logger.info(f"Total data ingestion time using COPY FROM (s): {copy_from_time:.2f}")
+        self.report_ingestion_kpi(copy_from_items, copy_from_time)
 
         if self.test_config.analytics_settings.use_cbo:
             self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
@@ -1957,13 +1973,11 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
 
 
 class CH2ColumnarStandaloneDatasetTruncateTest(CH2ColumnarStandaloneDatasetTest):
-    @timeit
-    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []):
-        AnalyticsTest.copy_data_from_object_store(self, datasets)
+    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []) -> tuple[int, float]:
+        return AnalyticsTest.copy_data_from_object_store(self, datasets)
 
     def ingest_dataset(self, dataset: DatasetDef):
-        ingest_time = self.copy_data_from_object_store([dataset])
-        self.get_dataset_items(dataset.name)
+        _, ingest_time = self.copy_data_from_object_store([dataset])
         self.timings["ingest"][dataset.name].append(ingest_time)
 
     def empty_dataset(

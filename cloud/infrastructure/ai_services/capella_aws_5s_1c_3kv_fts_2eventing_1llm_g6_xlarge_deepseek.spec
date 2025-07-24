@@ -38,7 +38,7 @@ volume_size = 100
 iops = 3000
 
 [text-generation]
-model_name = deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+model_name = deepseek-ai/deepseek-r1-distill-llama-8b
 instance_type = g6.xlarge
 instance_capacity = 1
 

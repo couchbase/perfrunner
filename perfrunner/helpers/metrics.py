@@ -2312,6 +2312,17 @@ class MetricHelper:
             autovec_time, num_successful_embeddings, "Autovec", "embeddings", model_name
         )
 
+    def model_deployment_time(
+        self, deployment_time: float, model_name: str, model_kind: str
+    ) -> Metric:
+        title = f"Model Deployment Time, {model_name}, {model_kind} (min)"
+        model_name = (
+            model_name.replace(" ", "_").replace("-", "_").replace(".", "_").replace("/", "_")
+        )
+        metric_id = f"model_deployment_time_{model_name}"
+        metric_info = self._metric_info(metric_id, title)
+        return s2m(deployment_time), self._snapshots, metric_info
+
     def fio_iops(self, iops: float, cluster: str, node: str, job_name: str) -> Metric:
         title = f"{node}, {job_name} (iops), {self._title}"
         metric_id = f"{self.test_config.name}_{node.replace('.', '')}_{job_name}"

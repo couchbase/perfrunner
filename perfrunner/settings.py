@@ -4331,14 +4331,14 @@ class AIGatewayTargetSettings(TargetSettings):
         self,
         host: str,
         bucket: str,
-        username: str,
-        password: str,
+        endpoint: str,
+        api_key: str,
         prefix: str = None,
         cloud: dict = {},
-        endpoint: str = "",
     ):
-        super().__init__(host, bucket, username, password, prefix, cloud)
+        super().__init__(host, bucket, "", "", prefix, cloud)
         self.gateway_endpoint = endpoint
+        self.api_key = api_key
 
 
 class TargetIterator(Iterable):

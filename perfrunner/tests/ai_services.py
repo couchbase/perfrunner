@@ -8,11 +8,13 @@ from uuid import uuid4
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.worker import aibench_task
 from perfrunner.settings import AIGatewayTargetSettings, AIServicesSettings, ClusterSpec, TestConfig
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSTest
+from perfrunner.utils.terraform import ControlPlaneManager
 
 
 class AIWorkflow:
@@ -302,19 +304,33 @@ class AIGatewayTest(PerfTest):
         )
         self.gateway_endpoint = model.get("model_endpoint")
         self.aibench_settings.model_name = model.get("model_name")
+        self.api_key = ControlPlaneManager.get_model_api_key()
+        first_bucket = self.test_config.buckets[0] if self.test_config.buckets else ""
         self.target_iterator = [
             AIGatewayTargetSettings(
-                host=self.cluster_spec.workers[0],
-                bucket=self.test_config.buckets[0],
-                username=self.username,
-                password=self.password,
+                host="",
+                bucket=first_bucket,
                 endpoint=self.gateway_endpoint,
+                api_key=self.api_key,
             )
         ]
-        ai_gateway_info = self.rest.get_ai_gateway_info(self.gateway_endpoint)
-        logger.info(f"AI Gateway info: {ai_gateway_info}")
-        self.gateway_version = ai_gateway_info.get("version")
-        self.reporter.build = f"{self.gateway_version}:{self.build}"
+
+        self.gateway_version = self.get_ai_gateway_info().get("version")
+        if self.build == "0.0.0":
+            self.reporter.build = f"{self.gateway_version}"
+        else:
+            self.reporter.build = f"{self.gateway_version}:{self.build}"
+
+    def get_ai_gateway_info(self) -> dict:
+        """Get the AI Gateway information."""
+        resp_data = self.rest.get(
+            url=f"{self.gateway_endpoint}/v1/info",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            auth=None,  # Ensures it is not overridden with basic auth
+        ).json()
+        resp_data.pop("models", [])  # Remove models from the response due to large size
+        logger.info(f"AI Gateway info: {pretty_dict(resp_data)}")
+        return resp_data
 
     @property
     def build_tag(self):
@@ -367,7 +383,22 @@ class AIGatewayTest(PerfTest):
                 results[filename] = json.load(file)
         return results
 
+    def report_model_deployment_time(self):
+        with TimeTrackingFile() as timings:
+            model_deployment_time = timings.get("model_deployment")
+
+        if not model_deployment_time:
+            return
+
+        models = self.cluster_spec.infrastructure_model_services
+        for model_kind, deployment_time in model_deployment_time.items():
+            model_name = models.get(model_kind, {}).get("model_name", "")
+            self.reporter.post(
+                *self.metrics.model_deployment_time(deployment_time, model_name, model_kind)
+            )
+
     def _report_kpi(self):
+        self.report_model_deployment_time()
         for filename, results in self.collect_results().items():
             logger.info(f"Collected {filename}: {pretty_dict(results)}")
 
@@ -377,6 +408,7 @@ class AIGatewayTest(PerfTest):
                 continue
             for metric in self.metrics.aibench_metrics(results):
                 self.reporter.post(*metric)
+
 
     def run(self):
         self.download_aibench()

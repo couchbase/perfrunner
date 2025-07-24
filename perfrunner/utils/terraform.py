@@ -328,6 +328,20 @@ class CloudVMDeployer:
 
         return tfvar_nodes, True
 
+    def _get_allowed_ips(self) -> list[str]:
+        """Return a list of IPs that are allowed to access the deployed resources."""
+        allowed_ips = [
+            f"{cidr}/32" if "/" not in cidr else cidr
+            for cidr in os.environ.get("PERF_ALLOWED_IPS", "").split(",")
+            if cidr
+        ]
+        myip = my_public_ip()
+        if not any(IPv4Network(cidr).overlaps(IPv4Network(myip)) for cidr in allowed_ips):
+            # Azure NSGs require non-overlapping CIDRs/addresses in security rules, so at minimum
+            # we will check if our public ip is already covered in allowed_ips
+            allowed_ips.append(f"{myip}/32")
+        return allowed_ips
+
     def populate_tfvars(self) -> bool:
         logger.info("Setting tfvars")
         global_tag = self.options.tag if self.options.tag else ''
@@ -340,16 +354,7 @@ class CloudVMDeployer:
             return False
 
         managed_id = self._get_managed_id()
-        allowed_ips = [
-            f"{cidr}/32" if "/" not in cidr else cidr
-            for cidr in os.environ.get("PERF_ALLOWED_IPS", "").split(",")
-            if cidr
-        ]
-        myip = my_public_ip()
-        if not any(IPv4Network(cidr).overlaps(IPv4Network(myip)) for cidr in allowed_ips):
-            # Azure NSGs require non-overlapping CIDRs/addresses in security rules, so at minimum
-            # we will check if our public ip is already covered in allowed_ips
-            allowed_ips.append(f"{myip}/32")
+        allowed_ips = self._get_allowed_ips()
 
         replacements = {
             "<CLOUD_REGION>": self.region,
@@ -737,6 +742,30 @@ class ControlPlaneManager:
                 self.api_client.revoke_access_secret_key(self.org_id, creds["id"])
             os.remove(CAPELLA_CREDS_FILE)
 
+    @staticmethod
+    def save_model_api_key(model_api_key: str):
+        """Save the model API key in the temporary credentials file."""
+        existing_creds = {}
+        try:
+            with open(CAPELLA_CREDS_FILE, "r") as f:
+                existing_creds = json.load(f)
+        except Exception:
+            pass
+
+        with open(CAPELLA_CREDS_FILE, "w") as f:
+            existing_creds.update({"model_api_key": model_api_key})
+            json.dump(existing_creds, f)
+
+    @staticmethod
+    def get_model_api_key() -> str:
+        """Get the model API key from the temporary credentials file."""
+        if not os.path.isfile(CAPELLA_CREDS_FILE):
+            return ""
+
+        with open(CAPELLA_CREDS_FILE, "r") as f:
+            existing_creds = json.load(f)
+        return existing_creds.get("model_api_key", "")
+
 
 class CapellaProvisionedDeployer(CloudVMDeployer):
     def __init__(self, infra_spec: ClusterSpec, options: Namespace):
@@ -1066,7 +1095,8 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         return ret_list
 
     def update_capella_spec(self):
-        self.infra_spec.config.add_section('clusters_schemas')
+        if not self.infra_spec.config.has_section("clusters_schemas"):
+            self.infra_spec.config.add_section("clusters_schemas")
         for option, value in self.infra_spec.infrastructure_clusters.items():
             self.infra_spec.config.set('clusters_schemas', option, value)
 
@@ -2311,30 +2341,69 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
 
     def deploy_model_services(self):
         logger.info("Deploying model services...")
+        models = self.infra_spec.infrastructure_model_services
+        # We need model information from the  model catalog to deploy the models
+        catalog_data = self._get_model_catalog()
+        deployed_models = []
         # We always want to deploy embedding model first as an LLM with value-added services may
         # have dependency on the embedding model
-        models = self.infra_spec.infrastructure_model_services
         for model_kind in ["embedding-generation", "text-generation"]:
-            if model_config := models.get(model_kind):
-                with record_time("model_deployment", model_kind):
-                    self.deploy_model(model_kind, model_config)
+            model_config = models.get(model_kind)
+            if not model_config:
+                continue
+            model_name = model_config.get("model_name")
+            # We dont have a way to get model by name from the catalog so we need to iterate over
+            # the catalog and find the model matching the name
+            catalog_model = next(
+                (model for model in catalog_data if model.get("modelName") == model_name),
+                None,
+            )
+            if not catalog_model:
+                logger.error(f"Model {model_name} not found in the catalog")
+                continue
 
+            model_id = model_config.get("model_id")
+            if model_id:
+                # For working with shared existing models and debugging purposes
+                logger.info(f"Skipping deploying {model_name}, using existing model id {model_id}")
+                self._store_model_endpoint(model_id, model_kind)
+            else:
+                with record_time("model_deployment", model_kind):
+                    model_id = self.deploy_model(model_kind, model_config, catalog_model)
+            deployed_models.append(model_id)
+
+        # For easy of management, we generate a single API key for all the models
+        if deployed_models:
+            self.create_model_api_key(deployed_models)
+        else:
+            # We didnt deploy any models, so we log the model catalog data for debugging purposes
+            logger.info(f"Model catalog data: {pretty_dict(catalog_data)}")
+            raise Exception("No models deployed")
+
+    def _store_model_endpoint(self, model_id: str, model_kind: str):
+        model_endpoint = self._get_model_data(model_id).get("network", {}).get("endpoint")
+        self.infra_spec.config.set(model_kind, "model_endpoint", model_endpoint)
         self.infra_spec.update_spec_file()
 
-    def deploy_model(self, model_kind: str, model_config: dict):
+    def deploy_model(self, model_kind: str, model_config: dict, catalog: dict) -> str:
+        model_name = model_config.get("model_name")
+        logger.info(f"Deploying model {model_name} using catalog entry: {pretty_dict(catalog)}")
         payload = {
-            "compute": model_config.get("instance_type"),
-            "configuration": {
-                "name": model_config.get("model_name"),
-                "kind": model_kind,
-                "parameters": {},
+            "name": model_name,
+            "modelCatalogId": catalog.get("id"),
+            "config": {
+                "provider": self.csp,
+                "region": self.region,
+                "multiAZ": self.options.multi_az,
+                "compute": {
+                    "instanceType": model_config.get("instance_type"),
+                    "instanceCount": int(model_config.get("instance_capacity", 1)),
+                },
             },
         }
         logger.info(f"Deploying model with payload: {payload}")
         try:
-            resp = self.provisioned_api.deploy_model(
-                self.tenant_id, self.project_id, self.cluster_ids[0], payload
-            )
+            resp = self.provisioned_api.deploy_model(self.tenant_id, payload)
             resp.raise_for_status()
             hosted_model_id = resp.json().get("id")
             logger.info(f"Hosted model created with id {hosted_model_id}")
@@ -2344,8 +2413,8 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
             self.infra_spec.update_spec_file()
 
             self.wait_for_hosted_model_status(hosted_model_id, "healthy")
-            model_endpoint = self._get_model_data(hosted_model_id).get("endpoint")
-            self.infra_spec.config.set(model_kind, "model_endpoint", model_endpoint)
+            self._store_model_endpoint(hosted_model_id, model_kind)
+            return hosted_model_id
         except Exception as e:
             logger.error(f"Error while deploying a hosted model: {e}")
             raise e  # Reraise the exception to stop the deployment
@@ -2361,9 +2430,7 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
             try:
                 logger.info(f"Destroying {model_kind} model, id: {model_id}")
                 with record_time("model_deletion", model_kind):
-                    resp = self.provisioned_api.delete_model(
-                        self.tenant_id, self.project_id, self.cluster_ids[0], model_id
-                    )
+                    resp = self.provisioned_api.delete_model(self.tenant_id, model_id)
                     resp.raise_for_status()
                     logger.info(f"Model {model_id} successfully queued for deletion.")
                     self.wait_for_hosted_model_status(model_id, "")
@@ -2371,13 +2438,14 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
                 logger.error(f"Error while destroying model {model_id}: {e}")
 
     def wait_for_hosted_model_status(self, model_id: str, status: str):
-        logger.info(f"Waiting for hosted model {model_id} to reach status {status}")
+        if status:
+            logger.info(f"Waiting for hosted model {model_id} to reach status {status}")
         retries = 0
         status = status.lower()
         interval_secs = 60  # Check for status every minute
         while True:
             model_details = self._get_model_data(model_id)
-            model_status = model_details.get("status", "").lower()
+            model_status = model_details.get("modelConfig", {}).get("status", "").lower()
             if model_status == status:
                 logger.info(f"Deployed model: {model_details}")
                 return
@@ -2394,11 +2462,33 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
             sleep(interval_secs)
 
     def _get_model_data(self, model_id: str) -> dict:
-        resp = self.provisioned_api.get_model_details(
-            self.tenant_id, self.project_id, self.cluster_ids[0], model_id
-        )
+        resp = self.provisioned_api.get_model_details(self.tenant_id, model_id)
         return resp.json().get("data", {})
 
+    def _get_model_catalog(self) -> dict:
+        """Get the model catalog from the environment Catalog."""
+        logger.info(
+            f"Getting model catalog from {self.infra_spec.controlplane_settings['env']} catalog..."
+        )
+        resp = self.provisioned_api.get_model_catalog()
+        return resp.json() or []
+
+    def create_model_api_key(self, model_ids: list[str]):
+        """Get an API key for a list of model ids."""
+        payload = {
+            "name": f"model_api_key-{self.uuid}",
+            "description": "",
+            "expiryDuration": 60 * 60 * 24,  # 1 day
+            "accessPolicy": {
+                "allowedModels": model_ids,
+                "allowedIPs": self._get_allowed_ips(),
+            },
+        }
+        logger.info(f"Creating models API key with payload: {pretty_dict(payload)}")
+        resp = self.provisioned_api.create_model_api_key(self.tenant_id, payload)
+        api_key_data = resp.json()
+        logger.info(f"Model API key created: {api_key_data}")
+        ControlPlaneManager.save_model_api_key(api_key_data.get("apiKey", ""))
 
 # CLI args.
 def get_args():

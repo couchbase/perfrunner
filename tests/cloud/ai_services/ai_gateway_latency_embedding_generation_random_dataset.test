@@ -2,7 +2,7 @@
 test = perfrunner.tests.ai_services.AIGatewayTest
 
 [showfast]
-title = AI Gateway LLM model serving, random text, 50 concurrent requests, 10000 total requests, 250 max tokens
+title = AI Gateway embedding generation, random text, 50 concurrent requests, 10000 total requests
 component = aiservices
 category = models
 sub_category = {provider}
@@ -16,7 +16,7 @@ eviction_policy = fullEviction
 backend_storage = magma
 
 [ai_bench]
-model_kind = text-generation
+model_kind = embedding-generation
 time = 0
 workers = 50
 ops = 10000

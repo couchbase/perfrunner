@@ -1,5 +1,3 @@
-import base64
-
 from perfrunner.helpers.local import run_aibench
 from perfrunner.settings import AIBenchSettings, AIGatewayTargetSettings
 
@@ -22,6 +20,4 @@ def run_aibench_task(aibench_settings: AIBenchSettings, target: AIGatewayTargetS
         f"--handler {aibench_settings.handler}",
         f"--tag {aibench_settings.tag}",
     ]
-    user_pass_string = f"{target.username}:{target.password}"
-    api_key = str(base64.b64encode(user_pass_string.encode("utf-8")), "utf-8")
-    run_aibench(" ".join(options), api_key=api_key, gateway_endpoint=target.gateway_endpoint)
+    run_aibench(" ".join(options), api_key=target.api_key, gateway_endpoint=target.gateway_endpoint)

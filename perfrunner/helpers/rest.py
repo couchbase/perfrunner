@@ -2623,11 +2623,6 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
 
         return cluster_workflows
 
-    def get_ai_gateway_info(self, gateway_endpoint: str) -> dict:
-        """Get the AI Gateway information."""
-        resp = self.get(url=f"{gateway_endpoint}/v1/info")
-        return resp.json()
-
     def get_eventing_app_logs(self, host: str, bucket: str, scope: str = "_default") -> dict:
         eventing_functions = self.get_eventing_apps(host).get("apps", []) or []
         eventing_logs = {}

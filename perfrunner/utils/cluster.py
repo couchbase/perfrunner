@@ -75,6 +75,8 @@ def main():
             rest.create_db_user_all_clusters(*cluster_spec.rest_credentials)
 
         cm = CapellaClusterManager(cluster_spec, test_config, args.verbose)
+        if not cm.has_clusters():
+            return
 
         if (
             not cm.cluster_spec.columnar_infrastructure

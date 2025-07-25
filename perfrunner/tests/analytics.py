@@ -28,6 +28,7 @@ from perfrunner.helpers.rest import (
     QUERY_PORT,
     QUERY_PORT_SSL,
 )
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.helpers.worker import ch2_load, tpcds_initial_data_load_task
 from perfrunner.settings import (
     CH2,
@@ -202,7 +203,10 @@ class AnalyticsTest(PerfTest):
                 self.index_config = json.load(f)
 
     def __exit__(self, *args):
-        if self.rest.is_columnar(self.analytics_node) and self.cluster_spec.cloud_infrastructure:
+        if (
+            ServerInfoManager().get_server_info(-1).is_columnar
+            and self.cluster_spec.cloud_infrastructure
+        ):
             self.report_columnar_cloud_storage_stats()
 
         super().__exit__(*args)
@@ -1672,9 +1676,9 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
         (self.data_cluster_user, self.data_cluster_pwd), (self.columnar_user, self.columnar_pwd) = (
             self.cluster_spec.capella_admin_credentials
         )
-        self.reporter.build = (
-            f"{self.rest.get_version(self.analytics_node)} : {self.reporter.build}"
-        )
+        # Get server build from the last cluster in the spec
+        server_info = ServerInfoManager().get_server_info(-1)
+        self.reporter.build = f"{server_info.build} : {self.reporter.build}"
 
     @with_stats
     def restore_data(self):

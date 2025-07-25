@@ -8,6 +8,7 @@ import requests
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.helpers.tableau import TableauTerminalHelper
 from perfrunner.settings import SHOWFAST_HOST, ClusterSpec, TestConfig
 
@@ -24,8 +25,9 @@ class Reporter:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.build = build + test_config.showfast.build_label
-        self.master_node = next(self.cluster_spec.masters)
         self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
+        self.server_info = ServerInfoManager().get_server_info()
+        self.master_node = self.server_info.master_node
         self.sgw = sgw
 
 

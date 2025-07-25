@@ -14,7 +14,7 @@ from decorator import decorator
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import create_build_tuple, pretty_dict, run_local_shell_command
+from perfrunner.helpers.misc import pretty_dict, run_local_shell_command
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec
 from perfrunner.utils.terraform import (
@@ -656,35 +656,17 @@ class DefaultRestHelper(RestBase):
                                                                                view_name))
         self.get(url=url, params=params)
 
-    def _get_version_raw(self, host: str) -> str:
-        r = self.get(url=self._get_api_url(host=host, path="pools")).json()
-        return r["implementationVersion"]
-
-    def get_version(self, host: str) -> str:
-        logger.info(f"Getting Couchbase Server version on server {host}")
-        version = (
-            self._get_version_raw(host)
-            .replace("-rel-enterprise", "")
-            .replace("-enterprise", "")
-            .replace("-community", "")
-            .replace("-columnar", "")
-        )
-        logger.info(f"Couchbase Server version: {version}")
-        return version
+    def get_version_raw(self, host: str) -> str:
+        """Get the raw version of the cluster."""
+        return self.get(url=self._get_api_url(host=host, path="pools")).json()[
+            "implementationVersion"
+        ]
 
     def supports_rbac(self, host: str) -> bool:
         """Return true if the cluster supports RBAC."""
         rbac_url = self._get_api_url(host=host, path="settings/rbac/roles")
         r = self.get(url=rbac_url)
         return r.status_code == requests.codes.ok
-
-    def is_columnar(self, host: str) -> bool:
-        logger.info("Checking if using a Couchbase Columnar build")
-        return "columnar" in self._get_version_raw(host)
-
-    def is_community(self, host: str) -> bool:
-        logger.info('Getting Couchbase Server edition')
-        return "community" in self._get_version_raw(host)
 
     def get_memcached_port(self, host: str) -> int:
         logger.info('Getting memcached port from {}'.format(host))
@@ -752,15 +734,10 @@ class DefaultRestHelper(RestBase):
         raise Exception('Autofailover setting combinations rejected')
 
     def get_certificate(self, host: str) -> str:
-        logger.info(f'Getting remote certificate on host: {host}')
-
-        build = self.get_version(host)
-        if create_build_tuple(build) < (7, 1, 0, 0) and not self.is_columnar(host):
-            return self.get(url=self._get_api_url(host=host, path='pools/default/certificate')).text
-        else:
-            r = self.get(url=self._get_api_url(host=host, path='pools/default/trustedCAs'))
-            certs = ''.join(cert['pem'] for cert in r.json())
-            return certs
+        logger.info(f"Getting remote certificate on host: {host}")
+        r = self.get(url=self._get_api_url(host=host, path="pools/default/trustedCAs"))
+        certs = "".join(cert["pem"] for cert in r.json())
+        return certs
 
     def fail_over(self, host: str, node: str):
         logger.info('Failing over node: {}'.format(node))
@@ -1422,21 +1399,19 @@ class DefaultRestHelper(RestBase):
             data = {'tlsMinVersion': tls_version}
             self.post(url=api, data=data)
         else:
-            build = self.get_version(node)
-            if create_build_tuple(build) < (7, 1, 0, 0) and not self.is_columnar(node):
-                logger.info("TLSv1.3 is not supported by this version of couchbase server")
-                logger.info("Reverting to TLSv1.2")
-                api = url_prefix
-                data = {'tlsMinVersion': 'tlsv1.2'}
-                self.post(url=api, data=data)
-            else:
-                data = {'tlsMinVersion': tls_version}
+            data = {"tlsMinVersion": tls_version}
 
-                for suffix in [
-                    'data', 'fullTextSearch', 'index', 'query', 'eventing', 'analytics', 'backup'
-                ]:
-                    api = f'{url_prefix}/{suffix}'
-                    self.post(url=api, data=data)
+            for suffix in [
+                "data",
+                "fullTextSearch",
+                "index",
+                "query",
+                "eventing",
+                "analytics",
+                "backup",
+            ]:
+                api = f"{url_prefix}/{suffix}"
+                self.post(url=api, data=data)
 
     def create_scope(self, host, bucket, scope):
         logger.info("Creating scope {}:{}".format(bucket, scope))
@@ -2106,6 +2081,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         ttl_value: int = 0,
         ttl_unit: str = None,
         num_vbuckets: int = 1024,
+        supports_vbuckets_update: bool = False,
     ):
         cluster_id = self.hostname_to_cluster_id(host)
 
@@ -2131,8 +2107,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             data['storageBackend'] = None
             data['evictionPolicy'] = eviction_policy
 
-        build = self.get_version(host)
-        if create_build_tuple(build) > (8, 0, 0, 0) and backend_storage == "magma":
+        if supports_vbuckets_update and backend_storage == "magma":
             data['numVBuckets'] = num_vbuckets
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))

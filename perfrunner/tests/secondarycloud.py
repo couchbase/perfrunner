@@ -95,9 +95,8 @@ class SecondaryIndexCloudTest(PerfTest):
             self.remote.create_aws_config_gsi(credential)
             self.remote.client_drop_caches()
 
-        self.build = self.rest.get_version(self.master_node)
         self.refresh_settings = False
-        if create_build_tuple(self.build) >= (7, 6, 0, 1874):
+        if self.server_info.build_tuple >= (7, 6, 0, 1874):
             self.refresh_settings = True
 
         self.download_certificate()

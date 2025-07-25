@@ -4,6 +4,7 @@ from typing import Callable, Optional
 from logger import logger
 from perfrunner.helpers import misc
 from perfrunner.helpers.rest import RestType
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.remote import Remote
 from perfrunner.settings import ClusterSpec
 
@@ -55,7 +56,6 @@ class Monitor:
         cluster_spec: ClusterSpec,
         rest: RestType,
         remote: Remote,
-        build: str,
         awr_bucket: str,
         awr_scope: str,
         rebalance_timeout: int = 0
@@ -63,10 +63,11 @@ class Monitor:
         self.cluster_spec = cluster_spec
         self.remote = remote
         self.rest = rest
-        self.master_node = next(cluster_spec.masters)
-        self.build = build
-        self.build_version_number = misc.create_build_tuple(self.build)
-        self.is_columnar = self.rest.is_columnar(self.master_node)
+        self.server_info = ServerInfoManager().get_server_info()
+        self.master_node = self.server_info.master_node
+        self.build_version_number = self.server_info.build_tuple
+        self.is_columnar = self.server_info.is_columnar
+
         self.awr_bucket = awr_bucket
         self.awr_scope = awr_scope
         self.rebalance_timeout = rebalance_timeout or self.REBALANCE_TIMEOUT
@@ -999,8 +1000,10 @@ class Monitor:
         logger.info('Waiting for data to be synced from {}'.format(data_node))
         time.sleep(self.MONITORING_DELAY * 3)
 
-        analytics_node_version = misc.create_build_tuple(self.rest.get_version(analytics_node))
-        is_columnar = self.rest.is_columnar(analytics_node)
+        # We get analytics node version and columnar status from the last cluster in the spec
+        server_info = ServerInfoManager().get_server_info(-1)
+        analytics_node_version = server_info.build_tuple
+        is_columnar = server_info.is_columnar
 
         if scope:
             num_items = self._get_num_items_scope_and_collection(data_node, bucket, scope, coll)

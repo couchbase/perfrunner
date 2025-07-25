@@ -16,7 +16,6 @@ from perfrunner.helpers.config_files import (
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import (
     SGPortRange,
-    create_build_tuple,
     maybe_atoi,
     pretty_dict,
     run_aws_cli_command,
@@ -27,6 +26,7 @@ from perfrunner.helpers.misc import (
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.remote.kubernetes import RemoteKubernetes
 from perfrunner.settings import ClusterSpec, TestConfig
 
@@ -50,27 +50,25 @@ class ClusterManagerBase:
         self.rest = RestHelper(cluster_spec, bool(cluster.enable_n2n_encryption))
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.memcached = MemcachedHelper(cluster_spec, test_config)
-        self.master_node = next(self.cluster_spec.masters)
         self.initial_nodes = [
             num_nodes
             for i, num_nodes in enumerate(test_config.cluster.initial_nodes)
             if i not in self.cluster_spec.inactive_cluster_idxs
         ]
-        self.build = self.rest.get_version(self.master_node)
-        self.build_tuple = create_build_tuple(self.build)
-        self.is_columnar = self.rest.is_columnar(self.master_node)
-        self.monitor = Monitor(
-            cluster_spec,
-            self.rest,
-            self.remote,
-            self.build,
-            cluster.query_awr_bucket,
-            cluster.query_awr_scope,
-        )
 
-    def is_compatible(self, min_release: str) -> bool:
-        for master in self.cluster_spec.masters:
-            return (self.rest.get_version(master) >= min_release) or self.rest.is_columnar(master)
+        self.server_info = ServerInfoManager(self.cluster_spec, self.rest).get_server_info()
+
+        self.monitor = Monitor(
+            cluster_spec, self.rest, self.remote, cluster.query_awr_bucket, cluster.query_awr_scope
+        )
+        self.master_node = self.server_info.master_node
+        self.build_tuple = self.server_info.build_tuple
+        self.is_columnar = self.server_info.is_columnar
+        self.is_community = self.server_info.is_community
+
+    def has_clusters(self):
+        """Check if there are any clusters by checking if the first cluster is a valid cluster."""
+        return self.server_info.is_valid()
 
     def set_analytics_settings(self):
         replica_analytics = self.test_config.analytics_settings.replica_analytics
@@ -203,7 +201,7 @@ class ClusterManagerBase:
         return list(disabled)
 
     def enable_audit(self):
-        if not self.is_compatible(min_release="4.0.0") or self.rest.is_community(self.master_node):
+        if self.is_community:
             return
 
         if not self.test_config.audit_settings.enabled:
@@ -311,9 +309,6 @@ class DefaultClusterManager(ClusterManagerBase):
                     logger.info('Index settings: {}'.format(cluster_settings))
 
     def set_services(self):
-        if not self.is_compatible(min_release="4.0.0"):
-            return
-
         for master in self.cluster_spec.masters:
             roles = self.cluster_spec.roles[master]
             self.rest.set_services(master, roles)
@@ -655,9 +650,6 @@ class DefaultClusterManager(ClusterManagerBase):
         return roles
 
     def delete_rbac_users(self):
-        if not self.is_compatible(min_release='5.0'):
-            return
-
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 self.rest.delete_rbac_user(
@@ -670,7 +662,7 @@ class DefaultClusterManager(ClusterManagerBase):
             logger.info('RBAC not supported - skipping adding RBAC users')
             return
 
-        if self.rest.is_community(self.master_node):
+        if self.is_community:
             roles = self.generate_ce_roles()
         else:
             roles = self.generate_ee_roles()
@@ -702,7 +694,7 @@ class DefaultClusterManager(ClusterManagerBase):
             logger.info('RBAC not supported - skipping adding RBAC users')
             return
 
-        if self.rest.is_community(self.master_node):
+        if self.is_community:
             roles = self.generate_ce_roles()
         else:
             roles = self.generate_ee_roles()
@@ -997,6 +989,10 @@ class DefaultClusterManager(ClusterManagerBase):
 
 
 class CapellaClusterManager(ClusterManagerBase):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool = False):
+        super().__init__(cluster_spec, test_config, verbose)
+        self.supports_vbuckets_update = self.server_info.build_tuple > (8, 0, 0, 0)
+
     def create_buckets(self):
         mem_quota = self.test_config.cluster.mem_quota
 
@@ -1028,6 +1024,7 @@ class CapellaClusterManager(ClusterManagerBase):
                     ttl_value=self.test_config.bucket.doc_ttl_value,
                     ttl_unit=self.test_config.bucket.doc_ttl_unit,
                     num_vbuckets=self.test_config.cluster.num_vbuckets,
+                    supports_vbuckets_update=self.supports_vbuckets_update,
                 )
 
     def create_eventing_buckets(self):
@@ -1052,6 +1049,7 @@ class CapellaClusterManager(ClusterManagerBase):
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                     flush=self.test_config.bucket.flush,
                     durability=self.test_config.bucket.min_durability,
+                    supports_vbuckets_update=self.supports_vbuckets_update,
                 )
 
     def create_eventing_metadata_bucket(self):
@@ -1070,6 +1068,7 @@ class CapellaClusterManager(ClusterManagerBase):
                 conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                 flush=self.test_config.bucket.flush,
                 durability=self.test_config.bucket.min_durability,
+                supports_vbuckets_update=self.supports_vbuckets_update,
             )
 
     def capella_allow_client_ips(self):

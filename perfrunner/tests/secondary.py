@@ -110,7 +110,6 @@ class SecondaryIndexTest(PerfTest):
             self.remote.create_aws_config_gsi(credential)
             self.remote.client_drop_caches()
 
-        self.build = self.rest.get_version(self.master_node)
         self.is_cloud = False
         if self.cluster_spec.cloud_infrastructure and self.is_ssl:
             self.is_cloud = True
@@ -124,7 +123,7 @@ class SecondaryIndexTest(PerfTest):
         self.shard_affinity = self.test_config.gsi_settings.settings.get(
                               "indexer.settings.enable_shard_affinity", False)
         self.refresh_settings = False
-        if create_build_tuple(self.build) >= (7, 6, 0, 1874):
+        if self.server_info.build_tuple >= (7, 6, 0, 1874):
             self.refresh_settings = True
 
     def admin_creds(self, host: str):

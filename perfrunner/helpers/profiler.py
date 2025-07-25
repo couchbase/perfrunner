@@ -13,6 +13,7 @@ from sshtunnel import SSHTunnelForwarder
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.settings import ClusterSpec, TestConfig
 
 
@@ -55,7 +56,8 @@ class ProfilerBase:
         self.test_config = test_config
         self.cluster_spec = cluster_spec
         self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
-        self.master_node = next(cluster_spec.masters)
+        self.server_info = ServerInfoManager().get_server_info()
+        self.master_node = self.server_info.master_node
         self.ssh_username, self.ssh_password = cluster_spec.ssh_credentials
         self.profiling_settings = copy.deepcopy(test_config.profiling_settings)
 

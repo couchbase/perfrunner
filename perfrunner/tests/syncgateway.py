@@ -24,6 +24,7 @@ from perfrunner.helpers.profiler import ProfilerHelper, with_profiles
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import SGW_ADMIN_PORT, SGW_PUBLIC_PORT, RestHelper
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.helpers.worker import (
     WorkerManager,
     WorkloadPhase,
@@ -88,12 +89,13 @@ class SGPerfTest(PerfTest):
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
-        self.master_node = next(self.cluster_spec.masters)
+        self.cluster = ClusterManager(cluster_spec, test_config)
+        self.server_info = ServerInfoManager().get_server_info()
+        self.master_node = self.server_info.master_node
         self.sgw_master_node = next(cluster_spec.sgw_masters)
         self.metrics = MetricHelper(self)
         if self.capella_infra:
-            self.build = f'{self.rest.get_sgversion(self.sgw_master_node)}:' \
-                         f'{self.rest.get_version(self.master_node)}'
+            self.build = f"{self.rest.get_sgversion(self.sgw_master_node)}:{self.server_info.build}"
         else:
             self.build = self.rest.get_sgversion(self.sgw_master_node)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build, sgw=True)
@@ -102,13 +104,11 @@ class SGPerfTest(PerfTest):
         self.settings = self.test_config.access_settings
         self.settings.syncgateway_settings = self.test_config.syncgateway_settings
         self.profiler = ProfilerHelper(cluster_spec, test_config)
-        self.cluster = ClusterManager(cluster_spec, test_config)
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.monitor = Monitor(
             cluster_spec,
             self.rest,
             self.remote,
-            self.rest.get_version(self.master_node),
             test_config.cluster.query_awr_bucket,
             test_config.cluster.query_awr_scope,
         )

@@ -18,6 +18,7 @@ from perfrunner.helpers import local
 from perfrunner.helpers.misc import pretty_dict, run_local_shell_command
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper, RestType
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.remote.linux import RemoteLinux
 from perfrunner.settings import ClusterSpec
 
@@ -334,7 +335,8 @@ def main():
             shutil.make_archive('tools', 'zip', logs)
 
     # Push log lines to Loki
-    server_version = rest.get_version(cluster_spec.servers[0])
+    server_info = ServerInfoManager(cluster_spec, rest).get_server_info()
+    server_version = server_info.build
     loki_manager = LokiLogsProcessor(server_version)
     loki_manager.process_logs(is_capella, remote)
     # Process logs, throw exception if any

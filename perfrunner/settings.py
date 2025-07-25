@@ -168,6 +168,8 @@ class ClusterSpec(Config):
 
     @property
     def infrastructure_clusters(self):
+        if not self.config.has_section("clusters"):
+            return {}
         return {k: v for i, (k, v) in enumerate(self.config.items('clusters'))
                 if i not in self.inactive_cluster_idxs}
 
@@ -219,6 +221,9 @@ class ClusterSpec(Config):
         # When exposing the cluster through route53, cluster names are used to create records.
         # To avoid conflicting records when running multiple tests,
         # we append the deployment id to the names.
+
+        if not self.config.has_section("clusters"):
+            return []
         cluster_uuid = self.get_or_create_infrastructure_uuid()
         return [
             f"{cluster_name}-{cluster_uuid}" for cluster_name in self.config.options("clusters")

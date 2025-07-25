@@ -7,12 +7,16 @@ from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import create_build_tuple, human_format, pretty_dict
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.settings import LoadSettings, TargetIterator
 from perfrunner.tests import PerfTest
 from perfrunner.tests.syncgateway import SGRead
 
 
 class BackupRestoreTest(PerfTest):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.edition = "CE" if self.is_community else "EE"
 
     def extract_tools(self):
         local.extract_cb_any(filename='couchbase')
@@ -23,11 +27,15 @@ class BackupRestoreTest(PerfTest):
             self.rest.flush_bucket(master_node or self.master_node, bucket)
 
     def backup(self, master_node: Optional[str] = None, mode: Optional[str] = None):
+        server_info = ServerInfoManager().get_server_info_by_master_node(
+            master_node or self.master_node
+        )
+        is_community = server_info.is_community
         local.backup(
             master_node=master_node or self.master_node,
             cluster_spec=self.cluster_spec,
             threads=self.test_config.backup_settings.threads,
-            wrapper=self.rest.is_community(master_node or self.master_node),
+            wrapper=is_community,
             mode=mode,
             compression=self.test_config.backup_settings.compression,
             storage_type=self.test_config.backup_settings.storage_type,
@@ -49,19 +57,19 @@ class BackupRestoreTest(PerfTest):
             threads = self.test_config.backup_settings.threads
 
         snapshots = local.get_backup_snapshots(self.cluster_spec)
-        local.compact(self.cluster_spec,
-                      snapshots,
-                      threads,
-                      self.rest.is_community(self.master_node))
+        local.compact(self.cluster_spec, snapshots, threads, self.is_community)
 
     def restore(self, master_node: Optional[str] = None):
         local.drop_caches()
-
+        server_info = ServerInfoManager().get_server_info_by_master_node(
+            master_node or self.master_node
+        )
+        is_community = server_info.is_community
         local.restore(
             cluster_spec=self.cluster_spec,
             master_node=master_node or self.master_node,
             threads=self.test_config.restore_settings.threads,
-            wrapper=self.rest.is_community(master_node or self.master_node),
+            wrapper=is_community,
             include_data=self.test_config.backup_settings.include_data,
             use_tls=self.test_config.restore_settings.use_tls,
             encrypted=self.test_config.backup_settings.encrypted,
@@ -108,7 +116,6 @@ class BackupTest(BackupRestoreTest):
         super().backup(mode)
 
     def _report_kpi(self, time_elapsed):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backup_size = local.calc_backup_size(self.cluster_spec)
 
         backing_store = self.test_config.backup_settings.storage_type
@@ -121,17 +128,16 @@ class BackupTest(BackupRestoreTest):
         elif sink_type:
             storage = sink_type
 
-        self.reporter.post(
-            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
-        )
+        self.reporter.post(*self.metrics.bnr_throughput(time_elapsed, self.edition, tool, storage))
 
         if sink_type != 'blackhole':
             self.reporter.post(
                 *self.metrics.backup_size(
                     backup_size,
-                    edition,
+                    self.edition,
                     tool if backing_store or sink_type else None,
-                    storage)
+                    storage,
+                )
             )
 
     def run(self):
@@ -170,9 +176,7 @@ class BackupXATTRTest(BackupTest):
 
 
 class BackupSizeTest(BackupTest):
-
     def _report_kpi(self, *args):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backup_size = local.calc_backup_size(self.cluster_spec)
 
         backing_store = self.test_config.backup_settings.storage_type
@@ -182,9 +186,7 @@ class BackupSizeTest(BackupTest):
         if backing_store:
             storage = backing_store
 
-        self.reporter.post(
-            *self.metrics.backup_size(backup_size, edition, tool, storage)
-        )
+        self.reporter.post(*self.metrics.backup_size(backup_size, self.edition, tool, storage))
 
 
 class BackupTestWithCompact(BackupRestoreTest):
@@ -195,7 +197,6 @@ class BackupTestWithCompact(BackupRestoreTest):
         super().compact()
 
     def _report_kpi(self, time_elapsed: float, backup_size_difference: float):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backing_store = self.test_config.backup_settings.storage_type
 
         tool = 'compact'
@@ -206,17 +207,19 @@ class BackupTestWithCompact(BackupRestoreTest):
         self.reporter.post(
             *self.metrics.tool_size_diff(
                 backup_size_difference,
-                edition,
+                self.edition,
                 tool,
-                storage)
+                storage,
+            )
         )
 
         self.reporter.post(
             *self.metrics.tool_time(
                 time_elapsed,
-                edition,
+                self.edition,
                 tool,
-                storage)
+                storage,
+            )
         )
 
     def run(self):
@@ -264,7 +267,6 @@ class BackupIncrementalTest(BackupRestoreTest):
         super().backup(mode=mode)
 
     def _report_kpi(self, time_elapsed: int, backup_size: float):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backing_store = self.test_config.backup_settings.storage_type
         sink_type = self.test_config.backup_settings.sink_type
 
@@ -276,19 +278,22 @@ class BackupIncrementalTest(BackupRestoreTest):
             storage = sink_type
 
         self.reporter.post(
-            *self.metrics.tool_time(time_elapsed,
-                                    edition,
-                                    tool=tool,
-                                    storage=storage)
+            *self.metrics.tool_time(
+                time_elapsed,
+                self.edition,
+                tool=tool,
+                storage=storage,
+            )
         )
 
         if sink_type != 'blackhole':
             self.reporter.post(
                 *self.metrics.backup_size(
                     backup_size,
-                    edition,
+                    self.edition,
                     tool=tool,
-                    storage=storage)
+                    storage=storage,
+                )
             )
 
     def run(self):
@@ -355,15 +360,13 @@ class MergeTest(BackupRestoreTest):
                                 threads)
 
     def _report_kpi(self, time_elapsed):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         tool = 'merge'
         storage = None
         if self.test_config.backup_settings.storage_type:
             storage = self.test_config.backup_settings.storage_type
 
         self.reporter.post(
-            *self.metrics.merge_throughput(
-                time_elapsed, edition, tool, storage)
+            *self.metrics.merge_throughput(time_elapsed, self.edition, tool, storage)
         )
 
     def run(self):
@@ -398,8 +401,6 @@ class RestoreTest(BackupRestoreTest):
         super().restore(master_node)
 
     def _report_kpi(self, time_elapsed):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
-
         backing_store = self.test_config.backup_settings.storage_type
         sink_type = self.test_config.backup_settings.sink_type
 
@@ -410,9 +411,7 @@ class RestoreTest(BackupRestoreTest):
         elif sink_type:
             storage = sink_type
 
-        self.reporter.post(
-            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
-        )
+        self.reporter.post(*self.metrics.bnr_throughput(time_elapsed, self.edition, tool, storage))
 
     def run(self):
         super().run()
@@ -455,10 +454,7 @@ class RestoreXATTRTest(RestoreTest):
 
 
 class ListTest(BackupRestoreTest):
-
     def _report_kpi(self, time_elapsed: float):
-
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backing_store = self.test_config.backup_settings.storage_type
 
         tool = 'list'
@@ -466,8 +462,7 @@ class ListTest(BackupRestoreTest):
         if backing_store:
             storage = backing_store
 
-        self.reporter.post(
-            *self.metrics.tool_time(time_elapsed, edition, tool, storage))
+        self.reporter.post(*self.metrics.tool_time(time_elapsed, self.edition, tool, storage))
 
     @with_stats
     @timeit
@@ -657,8 +652,6 @@ class CloudBackupTest(CloudBackupRestoreTest):
         super().backup(master_node=master_node)
 
     def _report_kpi(self, time_elapsed):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
-
         backing_store = self.test_config.backup_settings.storage_type
         sink_type = self.test_config.backup_settings.sink_type
 
@@ -669,9 +662,7 @@ class CloudBackupTest(CloudBackupRestoreTest):
         elif sink_type:
             storage = sink_type
 
-        self.reporter.post(
-            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
-        )
+        self.reporter.post(*self.metrics.bnr_throughput(time_elapsed, self.edition, tool, storage))
 
     def run(self):
         self.setup_run()
@@ -720,8 +711,6 @@ class CloudRestoreTest(CloudBackupRestoreTest):
         super().restore(master_node=master_node)
 
     def _report_kpi(self, time_elapsed):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
-
         backing_store = self.test_config.backup_settings.storage_type
         sink_type = self.test_config.backup_settings.sink_type
 
@@ -732,9 +721,7 @@ class CloudRestoreTest(CloudBackupRestoreTest):
         elif sink_type:
             storage = sink_type
 
-        self.reporter.post(
-            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
-        )
+        self.reporter.post(*self.metrics.bnr_throughput(time_elapsed, self.edition, tool, storage))
 
     def run(self):
         self.setup_run()

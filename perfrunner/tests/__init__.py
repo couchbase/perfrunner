@@ -17,6 +17,7 @@ from perfrunner.helpers.profiler import ProfilerHelper
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.helpers.worker import WorkerManager, WorkloadPhase, spring_task
 from perfrunner.settings import (
     CBProfile,
@@ -51,16 +52,19 @@ class PerfTest:
         self.cluster = ClusterManager(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.profiler = ProfilerHelper(cluster_spec, test_config)
-        self.master_node = next(cluster_spec.masters)
         self.memcached = MemcachedHelper(cluster_spec, test_config)
         self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
-        self.build = self.rest.get_version(self.master_node)
-        self.is_columnar = self.rest.is_columnar(self.master_node)
+        # At this point, the server info manager has already been initialised by the ClusterManager.
+        # First cluster info can then be retrieved from the server info manager.
+        self.server_info = ServerInfoManager().get_server_info()
+        self.master_node = self.server_info.master_node
+        self.build = self.server_info.build
+        self.is_columnar = self.server_info.is_columnar
+        self.is_community = self.server_info.is_community
         self.monitor = Monitor(
             cluster_spec,
             self.rest,
             self.remote,
-            self.build,
             test_config.cluster.query_awr_bucket,
             test_config.cluster.query_awr_scope,
             test_config.rebalance_settings.rebalance_timeout

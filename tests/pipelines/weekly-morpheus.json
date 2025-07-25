@@ -37,12 +37,12 @@
         {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim.test", "groups": "P0"},
         {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_amd_epyc_cpu.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_1Filter.test", "groups": "P0"},
         {"job": "bhive-nvme", "cluster": "bhive.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_1BM_128dim_bhive.test", "groups": "P0"},
+        {"job": "bhive-nvme", "cluster": "bhive.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_1BM_128dim_bhive_with_ops.test", "groups": "P0"},
         {"job": "composite-nvme", "cluster": "composite.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_laion_768dim_bhive.test", "groups": "P0"},
         {"job": "composite-nvme", "cluster": "composite.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_Bhive.test", "groups": "P0"},
         {"job": "composite-nvme", "cluster": "composite.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_bhive_1selectivity.test", "groups": "P0"},
-        {"job": "vector-multinode", "cluster": "bhive_composite_multinodes.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_10partitions_by_part_elimination.test", "groups": "P0"}
-        {"job": "vector-multinode", "cluster": "bhive_composite_multinodes.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_10partitions_by_part_elimination.test", "groups": "P0"}
-
+        {"job": "vector-multinode", "cluster": "bhive_composite_multinodes.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_10partitions_by_part_elimination.test", "groups": "P0"},
+        {"job": "vector-multinode", "cluster": "bhive_composite_multinodes.spec", "test_config": "n1ql/n1ql_Vector_rebalance_throughput_1B_128dim_with_partitions.test", "groups": "P0"}
     ],
     "Eventing": [
         {"job": "themis", "cluster": "themis_1_4.spec", "test_config": "deploytime_1000_functions_noop.test", "groups": "P0"}

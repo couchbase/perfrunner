@@ -1193,24 +1193,28 @@ class PytpccBenchmarkTest(N1QLTest):
 
     def load_tpcc(self):
         master_node = self.cluster.master_node
-        warehouse = self.test_config.pytpcc_settings.warehouse
+        warehouses = self.test_config.pytpcc_settings.warehouse
         client_threads = self.test_config.pytpcc_settings.client_threads
         query_port = self.test_config.pytpcc_settings.query_port
         multi_query_node = self.test_config.pytpcc_settings.multi_query_node
         driver = self.test_config.pytpcc_settings.driver
         nodes = self.cluster_spec.servers[:self.test_config.cluster.initial_nodes[0]]
 
-        local.pytpcc_load_data(master_node=master_node, warehouse=warehouse,
-                               client_threads=client_threads, port=query_port,
-                               cluster_spec=self.cluster_spec,
-                               multi_query_node=multi_query_node,
-                               driver=driver,
-                               nodes=nodes)
+        local.pytpcc_load_data(
+            master_node=master_node,
+            warehouses=warehouses,
+            client_threads=client_threads,
+            port=query_port,
+            cluster_spec=self.cluster_spec,
+            multi_query_node=multi_query_node,
+            driver=driver,
+            nodes=nodes,
+        )
 
     @with_profiles
     @with_stats
     def run_tpcc(self):
-        warehouse = self.test_config.pytpcc_settings.warehouse
+        warehouses = self.test_config.pytpcc_settings.warehouse
         duration = self.test_config.pytpcc_settings.duration
         client_threads = self.test_config.pytpcc_settings.client_threads
         query_port = self.test_config.pytpcc_settings.query_port
@@ -1220,17 +1224,22 @@ class PytpccBenchmarkTest(N1QLTest):
         nodes = self.cluster_spec.servers[:self.test_config.cluster.initial_nodes[0]]
         durability_level = self.test_config.pytpcc_settings.durability_level
         scan_consistency = self.test_config.pytpcc_settings.scan_consistency
-        txtimetout = self.test_config.pytpcc_settings.txtimeout
+        txtimeout = self.test_config.pytpcc_settings.txtimeout
 
-        local.pytpcc_run_task(warehouse=warehouse, duration=duration,
-                              client_threads=client_threads, port=query_port,
-                              driver=driver, master_node=master_node,
-                              multi_query_node=multi_query_node,
-                              cluster_spec=self.cluster_spec,
-                              nodes=nodes,
-                              durability_level=durability_level,
-                              scan_consistency=scan_consistency,
-                              txtimeout=txtimetout)
+        local.pytpcc_run_task(
+            warehouses=warehouses,
+            duration=duration,
+            client_threads=client_threads,
+            port=query_port,
+            driver=driver,
+            master_node=master_node,
+            multi_query_node=multi_query_node,
+            cluster_spec=self.cluster_spec,
+            nodes=nodes,
+            durability_level=durability_level,
+            scan_consistency=scan_consistency,
+            txtimeout=txtimeout,
+        )
 
     def restore_pytpcc(self):
         master_node = self.cluster.master_node

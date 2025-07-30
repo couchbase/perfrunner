@@ -3155,7 +3155,7 @@ class CH2ConnectionSettings:
 
     @property
     def cli_args_common(self) -> list[str]:
-        flags = [f"--userid {self.userid}", f"--password '{self.password}'"]
+        flags = [f"--userid {self.userid}", f"--password='{self.password}'"]
 
         if self.use_tls:
             flags += ["--tls"]
@@ -3164,7 +3164,7 @@ class CH2ConnectionSettings:
             flags += [f"--userid-analytics {self.userid_analytics}"]
 
         if self.password_analytics:
-            flags += [f"--password-analytics '{self.password_analytics}'"]
+            flags += [f"--password-analytics='{self.password_analytics}'"]
 
         return flags
 

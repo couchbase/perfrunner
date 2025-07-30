@@ -1303,93 +1303,75 @@ def pytpcc_create_functions(master_node: str, run_function_shell: str, cbrfuncti
     local(cmd)
 
 
-def pytpcc_load_data(warehouse: int, client_threads: int,
-                     master_node: str, port: str,
-                     cluster_spec: ClusterSpec,
-                     multi_query_node: bool,
-                     driver: str,
-                     nodes: list):
+def pytpcc_load_data(
+    warehouses: int,
+    client_threads: int,
+    master_node: str,
+    port: str,
+    cluster_spec: ClusterSpec,
+    multi_query_node: bool,
+    driver: str,
+    nodes: list,
+):
+    flags = [
+        "--no-execute",
+        f"--warehouses {warehouses}",
+        f"--clients {client_threads}",
+        f"--userid {cluster_spec.rest_credentials[0]}",
+        f"--password='{cluster_spec.rest_credentials[1]}'",
+        f"--query-url {master_node}:{port}",
+    ]
 
     if multi_query_node:
-        nodes_length = len(nodes)
-        multi_query_url = master_node + ':' + port
+        multi_query_url = ",".join(f"{node}:{port}" for node in [master_node] + nodes[1:])
+        flags.append(f"--multi-query-url {multi_query_url}")
 
-        for node in range(1, nodes_length):
-            multi_query_url = multi_query_url + ',' + nodes[node] + ':' + port
+    cmd = f"../../env/bin/python3 ./tpcc.py {driver} {' '.join(flags)}"
 
-        cmd = '../../env/bin/python3 ./tpcc.py --warehouses {}' \
-              ' --clients {} {} --no-execute --query-url {}:{}' \
-              ' --multi-query-url {}' \
-              ' --userid {} --password {}'.format(warehouse, client_threads, driver,
-                                                  master_node,
-                                                  port,
-                                                  multi_query_url,
-                                                  cluster_spec.rest_credentials[0],
-                                                  cluster_spec.rest_credentials[1])
-    else:
+    logger.info(f"Loading Docs: {cmd}")
 
-        cmd = '../../env/bin/python3 ./tpcc.py --warehouses {}' \
-              ' --clients {} {} --no-execute --query-url {}:{}' \
-              ' --userid {} --password {}'.format(warehouse, client_threads, driver,
-                                                  master_node,
-                                                  port,
-                                                  cluster_spec.rest_credentials[0],
-                                                  cluster_spec.rest_credentials[1])
-
-    logger.info("Loading Docs : {}".format(cmd))
-
-    with lcd('py-tpcc/pytpcc/'):
-
+    with lcd("py-tpcc/pytpcc/"):
         for line in local(cmd, capture=True).split('\n'):
             print(line)
 
 
-def pytpcc_run_task(warehouse: int, duration: int, client_threads: int,
-                    driver: str, master_node:  str,
-                    multi_query_node: bool, cluster_spec: ClusterSpec, port: str,
-                    nodes: list, durability_level: str, scan_consistency: str, txtimeout: str):
+def pytpcc_run_task(
+    warehouses: int,
+    duration: int,
+    client_threads: int,
+    driver: str,
+    master_node: str,
+    multi_query_node: bool,
+    cluster_spec: ClusterSpec,
+    port: str,
+    nodes: list,
+    durability_level: str,
+    scan_consistency: str,
+    txtimeout: str,
+):
+    flags = [
+        "--no-load",
+        f"--warehouses {warehouses}",
+        f"--duration {duration}",
+        f"--clients {client_threads}",
+        f"--userid {cluster_spec.rest_credentials[0]}",
+        f"--password='{cluster_spec.rest_credentials[1]}'",
+        f"--durability_level {durability_level}",
+        f"--scan_consistency {scan_consistency}",
+        f"--txtimeout {txtimeout}",
+        f"--query-url {master_node}:{port}",
+    ]
 
     if multi_query_node:
-        nodes_length = len(nodes)
-        multi_query_url = master_node + ':' + port
+        multi_query_url = ",".join(f"{node}:{port}" for node in [master_node] + nodes[1:])
+        flags.append(f"--multi-query-url {multi_query_url}")
 
-        for node in range(1, nodes_length):
-            multi_query_url = multi_query_url + ',' + nodes[node] + ':' + port
+    cmd = f"../../env/bin/python3 ./tpcc.py {driver} {' '.join(flags)} > pytpcc_run_result.log"
 
-        cmd = '../../env/bin/python3 ./tpcc.py --warehouses {} --duration {} ' \
-              '--clients {} {} --query-url {}:{} ' \
-              '--multi-query-url {} --userid {} --no-load --durability_level {} ' \
-              '--password {} --scan_consistency {}' \
-              ' --txtimeout {} > pytpcc_run_result.log'.format(warehouse,
-                                                               duration,
-                                                               client_threads, driver,
-                                                               master_node, port,
-                                                               multi_query_url,
-                                                               cluster_spec.rest_credentials[0],
-                                                               durability_level,
-                                                               cluster_spec.rest_credentials[1],
-                                                               scan_consistency, txtimeout)
+    logger.info(f"Running: {cmd}")
 
-    else:
-        cmd = '../../env/bin/python3 ./tpcc.py --warehouses {} --duration {} ' \
-              '--clients {} {} --query-url {}:{} ' \
-              '--no-load --userid {} --password {} --durability_level {} ' \
-              '--scan_consistency {} ' \
-              '--txtimeout {} > pytpcc_run_result.log'.format(warehouse,
-                                                              duration,
-                                                              client_threads,
-                                                              driver,
-                                                              master_node,
-                                                              port,
-                                                              cluster_spec.rest_credentials[0],
-                                                              cluster_spec.rest_credentials[1],
-                                                              durability_level,
-                                                              scan_consistency, txtimeout)
-
-    logger.info("Running : {}".format(cmd))
-
-    with lcd('py-tpcc/pytpcc/'):
-        for line in local(cmd, capture=True).split('\n'):
+    with lcd("py-tpcc/pytpcc/"):
+        for line in local(cmd, capture=True).split("\n"):
             print(line)
 
 

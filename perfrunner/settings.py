@@ -2578,6 +2578,7 @@ class CbbackupmgrSettings:
     MIN_TLS_VERSION = None
     ENCRYPTED = False
     PASSPHRASE = "couchbase"
+    INCLUDE_DATA = None
     CLOUD = None
 
     def __init__(self, options: dict):
@@ -2587,6 +2588,7 @@ class CbbackupmgrSettings:
         self.min_tls_version = options.get("min_tls_version", self.MIN_TLS_VERSION)
         self.encrypted = int(options.get("encrypted", self.ENCRYPTED))
         self.passphrase = options.get("passphrase", self.PASSPHRASE)
+        self.include_data = options.get("include_data", self.INCLUDE_DATA)
         self.env_vars = dict(
             tuple(kv.split("="))
             for kv in options.get("env_vars", "").replace(" ", "").split(",")
@@ -2604,7 +2606,6 @@ class BackupSettings(CbbackupmgrSettings):
     OBJ_REGION = None
     OBJ_ACCESS_KEY_ID = None
     AWS_CREDENTIAL_PATH = None
-    INCLUDE_DATA = None
     BACKUP_DIRECTORY = None
 
     def __init__(self, options: dict):
@@ -2617,7 +2618,6 @@ class BackupSettings(CbbackupmgrSettings):
         self.obj_region = options.get("obj_region", self.OBJ_REGION)
         self.obj_access_key_id = options.get("obj_access_key_id", self.OBJ_ACCESS_KEY_ID)
         self.aws_credential_path = options.get("aws_credential_path", self.AWS_CREDENTIAL_PATH)
-        self.include_data = options.get("include_data", self.INCLUDE_DATA)
         self.backup_directory = options.get("backup_directory", self.BACKUP_DIRECTORY)
 
         if self.backup_directory:

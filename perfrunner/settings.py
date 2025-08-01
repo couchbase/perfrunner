@@ -3695,8 +3695,11 @@ class AIServicesSettings:
         # These will only be used during testing when `model_source` is external
         self.model_source = options.get("model_source", "internal")  # alt: external
         self.model_name = options.get("model_name", "text-embedding-3-small")
+        # Options: capella | openAI | bedrock
         self.model_provider = options.get("provider", "openAI")
         self.model_dimensions = int(options.get("model_dimensions", "1024"))
+        # AI functions names
+        self.functions_names = options.get("functions_names", "").split(",")
 
         # Will be fixed as part of CBPS-1490
         self.aws_credential_path = options.get("aws_credential_path", "/root/.ssh")

@@ -11,9 +11,15 @@ from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.worker import aibench_task
-from perfrunner.settings import AIGatewayTargetSettings, AIServicesSettings, ClusterSpec, TestConfig
+from perfrunner.settings import (
+    AIGatewayTargetSettings,
+    AIServicesSettings,
+    ClusterSpec,
+    TestConfig,
+)
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSTest
+from perfrunner.tests.n1ql import N1QLTest
 from perfrunner.utils.terraform import ControlPlaneManager
 
 
@@ -266,6 +272,9 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
             return
 
         model_name = self.ai_services_settings.model_name
+        if self.hosted_model:
+            model_name = self.hosted_model.get("model_name")
+
         if success_files := uds_metadata.get("numSuccessfulFiles", 0):
             self.reporter.post(
                 *self.metrics.uds_throughput(
@@ -467,3 +476,113 @@ class AIGatewayTest(PerfTest):
 
         self.run_aibench()
         self.report_kpi()
+
+
+class AIFunctionsTest(N1QLTest):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
+        super().__init__(cluster_spec, test_config, verbose)
+        self.ai_services_settings = self.test_config.ai_services_settings
+        self.llm_model = self._get_llm_model()
+        self.model_name = self.ai_services_settings.model_name
+        if self.llm_model:
+            self.model_name = self.llm_model.get("model_name")
+
+    def _get_llm_model(self) -> dict:
+        """
+        Retrieve the LLM model from the infrastructure model services.
+
+        Returns:
+            dict: The LLM model details if available.
+        """
+        models = self.cluster_spec.infrastructure_model_services
+        return models.get("text-generation", {})
+
+    def _create_ai_functions_payload(self) -> dict:
+        provider = self.ai_services_settings.model_provider.lower()
+        payload = {
+            "name": self.ai_services_settings.functions_names,
+            "modelSource": provider,
+        }
+        if provider == "capella":
+            model_id = self.llm_model.get("model_id")
+            payload.update(
+                {
+                    f"{provider}Model": {
+                        "modelName": self.model_name,
+                        "modelID": model_id,
+                        "apiKeyID": ControlPlaneManager.get_model_api_key_id(model_id),
+                        "apiKeyToken": ControlPlaneManager.get_model_api_key(model_id),
+                        "privateNetworking": False,
+                        "region": self.cluster_spec.cloud_region,
+                        "aiGatewayURL": self.llm_model.get("model_endpoint"),
+                    },
+                }
+            )
+        else:
+            payload.update(
+                {
+                    f"{provider}Model": {
+                        "modelID": self.model_name,
+                        "integrationID": self.openai_integration_id,
+                    }
+                }
+            )
+
+        return payload
+
+    def create_openai_integration(self, cluster_uuid: str):
+        """
+        Create integrations to use for the AI functions.
+
+        - OpenAI integration for external models
+        """
+        # Check if we need to create an openai integration
+        if self.ai_services_settings.model_provider.lower() == "capella":
+            # If we are using a Capella model, we don't need to create an integration
+            return
+
+        self.openai_integration_id = self.rest.create_openai_integration(
+            name=f"perfopenai{cluster_uuid}",
+            access_key=os.getenv("PROVIDER_KEY", ""),
+        )
+        logger.info(f"Created openAI integration: {self.openai_integration_id}")
+
+    def deploy_ai_functions(self):
+        uuid = self.cluster_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
+        self.create_openai_integration(uuid)
+        payload = self._create_ai_functions_payload()
+        logger.info(f"Deploying AI functions with payload: {pretty_dict(payload)}")
+        self.rest.create_ai_functions(self.master_node, payload)
+        # Cant deteministically monitor deployment due to AV-108636, so wait for 30 seconds
+        sleep(30)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
+        self.create_indexes()
+        self.wait_for_indexing()
+        self.store_plans()
+
+        self.deploy_ai_functions()
+        # Workaround for AV-110058
+        self.rest.refresh_cluster_allowlist(self.master_node)
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
+
+class QueryThroughputWithAIFunctionsTest(AIFunctionsTest):
+    def _report_kpi(self):
+        self.reporter.post(*self.metrics.avg_n1ql_throughput(self.master_node))
+
+
+class QueryLatencyWithAIFunctionsTest(AIFunctionsTest):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
+        super().__init__(cluster_spec, test_config, verbose)
+        self.COLLECTORS["n1ql_latency"] = True
+
+    def _report_kpi(self):
+        self.reporter.post(*self.metrics.query_latency(percentile=90))

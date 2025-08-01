@@ -2662,6 +2662,40 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             eventing_logs[function_name] = function_logs.text
         return eventing_logs
 
+    def create_ai_functions(self, host: str, payload: dict) -> dict:
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.create_ai_functions(
+            self.tenant_id, self.project_id, cluster_id, payload
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def list_ai_functions(self, host: str) -> list[dict]:
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.get_ai_functions(self.tenant_id, self.project_id, cluster_id)
+        return resp.json().get("data", [])
+
+    def refresh_cluster_allowlist(self, host: str):
+        # Workaround for AV-110058
+        # Delete all allowed IPs and add them back
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.get_allowed_ips_list(
+            self.tenant_id, self.project_id, cluster_id
+        )
+        data = resp.json().get("data", [])
+        ips = []
+        for ip in data:
+            ip_data = ip.get("data", {})
+            cidr = ip_data.get("cidr")
+            logger.info(f"Refreshing allowlist for CIDR: {cidr}")
+            self.dedicated_client.delete_allowed_ip(
+                self.tenant_id, self.project_id, cluster_id, ip_data.get("id")
+            )
+            ips.append(cidr.split("/")[0])
+
+        time.sleep(5)
+        self.add_allowed_ips(cluster_id, ips)
+
 
 class CapellaColumnarRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec):

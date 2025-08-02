@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 import requests
 from capella.columnar.CapellaAPI import CapellaAPI as CapellaAPIColumnar
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
-from capella.serverless.CapellaAPI import CapellaAPI as CapellaAPIServerless
 from decorator import decorator
 from requests.exceptions import ConnectionError
 
@@ -76,7 +75,7 @@ class RestHelper:
         if cluster_spec.dynamic_infrastructure:
             return KubernetesRestHelper(cluster_spec, use_tls)
         elif cluster_spec.serverless_infrastructure:
-            return CapellaServerlessRestHelper(cluster_spec)
+            logger.interrupt("Serverless no longer supported in perfrunner.")
         elif cluster_spec.capella_infrastructure:
             if cluster_spec.columnar_infrastructure:
                 return CapellaColumnarRestHelper(cluster_spec)
@@ -861,26 +860,6 @@ class DefaultRestHelper(RestBase):
         if errors := resp_data.get("errors"):
             logger.warn(f"Query failed: {errors}")
         return resp_data
-
-    def set_serverless_throttle(self, node, values):
-        api = self._get_api_url(host=node, path='settings/serverless')
-        for key in values:
-            limit = values[key]
-            if limit != 0:
-                data = {key: limit}
-                logger.info('Setting throttle limit: {}'.format(data))
-                self.post(url=api, data=data)
-
-    def reset_serverless_throttle(self, node):
-        api = self._get_api_url(host=node, path='settings/serverless')
-        serverless_throttle = {'dataThrottleLimit': 5000,
-                               'indexThrottleLimit': 5000,
-                               'searchThrottleLimit': 5000,
-                               'queryThrottleLimit': 5000}
-        for service, limit in serverless_throttle.items():
-            data = {service: limit}
-            logger.info('Setting throttle limit: {}'.format(data))
-            self.post(url=api, data=data)
 
     def explain_n1ql_statement(self, host: str, statement: str, query_context: str = None):
         statement = 'EXPLAIN {}'.format(statement)
@@ -2683,123 +2662,6 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         return eventing_logs
 
 
-class CapellaServerlessRestHelper(CapellaRestBase):
-    def __init__(self, cluster_spec: ClusterSpec):
-        super().__init__(cluster_spec=cluster_spec)
-        self.serverless_client = CapellaAPIServerless(
-            self.base_url, self._cbc_user, self._cbc_pwd, self._cbc_token
-        )
-        self.dp_id = self.cluster_spec.controlplane_settings["dataplane_id"]
-
-    def get_db_info(self, db_id):
-        logger.info('Getting debug info for DB {}'.format(db_id))
-        resp = self.serverless_client.get_database_debug_info(db_id)
-        resp.raise_for_status()
-        return resp.json()
-
-    def get_dataplane_info(self) -> dict:
-        resp = self.serverless_client.get_serverless_dataplane_info(self.dp_id)
-        resp.raise_for_status()
-        return resp.json()
-
-    @retry
-    def allow_my_ip(self, db_id):
-        logger.info('Whitelisting own IP on DB {}'.format(db_id))
-        resp = self.serverless_client.allow_my_ip(self.tenant_id, self.project_id, db_id)
-        return resp
-
-    @retry
-    def add_allowed_ips(self, db_id, ips: list[str]):
-        logger.info('Whitelisting IPs on DB {}: {}'.format(db_id, ips))
-
-        data = {
-            "create": [
-                {"cidr": "{}/32".format(ip), "comment": ""} for ip in ips
-            ]
-        }
-
-        resp = self.serverless_client.add_ip_allowlists(self.tenant_id, db_id, self.project_id,
-                                                        data)
-        return resp
-
-    @retry
-    def bypass_nebula(self, client_ip):
-        logger.info('Bypassing Nebula for {}'.format(client_ip))
-
-        url = "{}/internal/support/serverless-dataplanes/{}/bypass"\
-              .format(self.base_url.replace('cloudapi', 'api'), self.dp_id)
-
-        body = {"allowCIDR": "{}/32".format(client_ip)}
-
-        resp = self.serverless_client.request(url, "POST", params=json.dumps(body))
-        resp.raise_for_status()
-        return resp
-
-    @retry
-    def get_db_api_key(self, db_id):
-        logger.info('Getting API key for serverless DB {}'.format(db_id))
-        resp = self.serverless_client.generate_keys(self.tenant_id, self.project_id, db_id)
-        return resp
-
-    @retry
-    def _update_db(self, db_id, width, weight):
-        data = {
-            'overRide': {
-                'width': width,
-                'weight': weight
-            }
-        }
-        resp = self.serverless_client.update_db(db_id, data)
-        return resp
-
-    def _get_dataplane_node_configs(self):
-        resp = self.serverless_client.get_serverless_dataplane_node_configs(self.dp_id)
-        resp.raise_for_status()
-        return resp.json()
-
-    def get_nebula_certificate(self):
-        dp_node_configs = self._get_dataplane_node_configs()
-        for node in dp_node_configs['state']:
-            if node['kind'] == 'nebula':
-                certs = node['config']['gateway']['certificate']
-                first_cert = certs['certificate']
-                intermediates = certs['intermediates']
-                return first_cert + intermediates
-
-    def get_dapi_certificate(self):
-        dp_node_configs = self._get_dataplane_node_configs()
-        for node in dp_node_configs['state']:
-            if node['kind'] == 'dataApi':
-                certs = node['config']['gateway']['certificate']
-                first_cert = certs['certificate']
-                intermediates = certs['intermediates']
-                return first_cert + intermediates
-
-    def create_fts_index(self, host: str, index: str, definition: dict):
-        logger.info('Creating a new FTS index: {}'.format(index))
-        headers = {'Content-Type': 'application/json'}
-        data = json.dumps(definition, ensure_ascii=False)
-
-        url = self._get_api_url(host=host, path='api/index/{}'.format(index), plain_port=FTS_PORT,
-                                ssl_port=FTS_PORT_SSL)
-        self.put(url=url, data=data, headers=headers)
-
-    def exec_n1ql_statement(self, host: str, statement: str, query_context: str) -> dict:
-        api = f"https://{host}:{REST_PORT_SSL}/_p/query/query/service"
-
-        data = {"statement": statement, "query_context": query_context}
-        return self.post(url=api, data=data).json()
-
-    def get_active_nodes_by_role(self, master_node: str, role: str) -> list[str]:
-        resp = self.get_dataplane_info()
-        node_list = resp["couchbase"]["nodes"]
-        has_role = []
-        for node_config in node_list:
-            if role in node_config["services"][0]["type"]:
-                has_role.append(node_config["hostname"])
-        return has_role
-
-
 class CapellaColumnarRestHelper(CapellaRestBase):
     def __init__(self, cluster_spec: ClusterSpec):
         super().__init__(cluster_spec=cluster_spec)
@@ -2847,6 +2709,5 @@ RestType = Union[
     DefaultRestHelper,
     KubernetesRestHelper,
     CapellaProvisionedRestHelper,
-    CapellaServerlessRestHelper,
     CapellaColumnarRestHelper,
 ]

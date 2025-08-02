@@ -602,9 +602,6 @@ class N1QLElixirThroughputTest(N1QLThroughputTest):
         if self.test_config.users.num_users_per_bucket > 0:
             self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
 
-        if self.test_config.access_settings.reset_throttle_limit:
-            self.rest.reset_serverless_throttle(self.master_node)
-
         self.access_bg()
         self.access()
 

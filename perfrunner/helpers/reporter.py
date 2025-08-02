@@ -101,17 +101,6 @@ class ShowFastReporter(Reporter):
             connector_version = tableau_helper.get_connector_version()
             build_str = connector_version + ' : ' + build_str
 
-        if (nebula_mode := self.test_config.access_settings.nebula_mode) != 'none':
-            db_config = self.rest.get_db_info(self.test_config.buckets[0])
-            if nebula_mode == 'nebula':
-                nebula_version = db_config['dataplane']['nebula']['image']\
-                    .removeprefix('direct-nebula-')
-            elif nebula_mode == 'dapi':
-                nebula_version = db_config['dataplane']['dataApi']['image']\
-                    .removeprefix('couchbase-data-api-')
-
-            build_str = nebula_version + ' : ' + build_str
-
         return {
             'build': build_str,
             'buildURL': os.environ.get('BUILD_URL'),

@@ -18,7 +18,6 @@ from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
 from perfrunner.settings import PhaseSettings as WorkloadSettings
 from perfrunner.settings import TargetSettings
-from spring.dapigen import DAPIGen
 from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
@@ -139,7 +138,7 @@ def set_cpu_afinity(sid):
 
 
 Sequence = List[Tuple[str, Callable, Tuple]]
-Client = Union[CBAsyncGen, CBGen, DAPIGen, SubDocGen]
+Client = Union[CBAsyncGen, CBGen, SubDocGen]
 
 
 class Worker:

@@ -486,28 +486,6 @@ class ThroughputTest(KVTest):
         )
 
 
-class ElixirThroughputTest(KVTest):
-
-    def _report_kpi(self, pre_access_ops: int):
-        total_ops = self._measure_curr_ops_rest()
-
-        self.reporter.post(
-            *self.metrics.kv_throughput(total_ops - pre_access_ops)
-        )
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.check_num_items()
-        self.compact_bucket()
-        self.hot_load()
-
-        pre_access_ops = self._measure_curr_ops_rest()
-        self.access()
-
-        self.report_kpi(pre_access_ops)
-
-
 class EvictionTest(KVTest):
 
     COLLECTORS = {'net': False}

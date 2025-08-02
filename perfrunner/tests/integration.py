@@ -6,12 +6,12 @@ from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest
 from perfrunner.tests.fts import FTSLatencyLoadTest
-from perfrunner.tests.n1ql import N1QLElixirThroughputTest
+from perfrunner.tests.n1ql import N1QLThroughputTest
 from perfrunner.tests.rebalance import CapellaRebalanceTest
 from perfrunner.tests.xdcr import CapellaXdcrTest, SrcTargetIterator
 
 
-class EndToEndLatencyTest(N1QLElixirThroughputTest):
+class EndToEndLatencyTest(N1QLThroughputTest):
     ALL_BUCKETS = False
 
     COLLECTORS = {

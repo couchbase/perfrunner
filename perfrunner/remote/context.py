@@ -99,26 +99,6 @@ def master_client(task: Callable, *args, **kwargs):
 
 
 @decorator
-def all_dn_nodes(task, *args, **kwargs):
-    """Execute the decorated function on all remote Direct Nebula nodes."""
-    helper = args[0]
-
-    hosts = helper.cluster_spec.direct_nebula_instance_ids
-
-    return execute(parallel(task), *args, hosts=hosts, **kwargs)
-
-
-@decorator
-def all_dapi_nodes(task, *args, **kwargs):
-    """Execute the decorated function on all remote Data API nodes."""
-    helper = args[0]
-
-    hosts = helper.cluster_spec.dapi_instance_ids
-
-    return execute(parallel(task), *args, hosts=hosts, **kwargs)
-
-
-@decorator
 def all_kafka_nodes(task, *args, **kwargs):
     """Execute the decorated function on all remote Kafka nodes."""
     helper = args[0]

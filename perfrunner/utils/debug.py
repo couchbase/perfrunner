@@ -10,7 +10,6 @@ from collections import defaultdict
 from collections.abc import Callable
 from functools import cached_property
 from multiprocessing import set_start_method
-from pathlib import Path
 
 import requests
 
@@ -314,25 +313,6 @@ def main():
     is_capella = cluster_spec.capella_infrastructure
 
     # Collect and upload logs
-    if cluster_spec.serverless_infrastructure:
-        remote.collect_dn_logs()
-        remote.collect_dapi_logs()
-
-        dapi_logs = [
-            fname for iid in cluster_spec.dapi_instance_ids for fname in glob.glob(f"{iid}/*.log")
-        ]
-
-        dn_logs = [
-            fname
-            for iid in cluster_spec.direct_nebula_instance_ids
-            for fname in glob.glob(f"{iid}/*.log")
-        ]
-
-        for zip_name, log_fnames in zip(['dapi', 'direct_nebula'], [dapi_logs, dn_logs]):
-            with zipfile.ZipFile(f"{zip_name}.zip", "w", compression=zipfile.ZIP_DEFLATED) as z:
-                for fname in log_fnames:
-                    z.write(fname, arcname=Path(fname).name)
-
     if is_capella:
         get_capella_cluster_logs(rest, args.s3_bucket_name)
     elif cluster_spec.dynamic_infrastructure:

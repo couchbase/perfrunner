@@ -18,8 +18,6 @@ from perfrunner.helpers.misc import (
 from perfrunner.remote import Remote
 from perfrunner.remote.context import (
     all_clients,
-    all_dapi_nodes,
-    all_dn_nodes,
     all_kafka_nodes,
     all_servers,
     cbl_clients,
@@ -304,26 +302,6 @@ class RemoteLinux(Remote):
         if not r.return_code:
             get(fname)
             run(f"rm -f {fname}")
-
-    @all_dn_nodes
-    def collect_dn_logs(self):
-        logger.info('Collecting Direct Nebula logs')
-
-        r = run('curl http://169.254.169.254/latest/meta-data/instance-id')
-        fname = 'dn_{}.log'.format(r.stdout)
-        run('journalctl -u direct-nebula > {}'.format(fname))
-        get('{}'.format(fname))
-        run('rm -f {}'.format(fname))
-
-    @all_dapi_nodes
-    def collect_dapi_logs(self):
-        logger.info('Collecting Data API logs')
-
-        r = run('curl http://169.254.169.254/latest/meta-data/instance-id')
-        fname = 'dapi_{}.log'.format(r.stdout)
-        run('journalctl -u couchbase-data-api > {}'.format(fname))
-        get('{}'.format(fname))
-        run('rm -f {}'.format(fname))
 
     @all_servers
     def collect_index_datafiles(self):

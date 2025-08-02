@@ -48,12 +48,7 @@ def update_settings_for_mixed_queries(settings: PhaseSettings, bucket):
 def execute_jts_run(settings: PhaseSettings, target, full_index_name, index_map):
     host = target.node
     if target.cloud:
-        if settings.nebula_mode == 'nebula':
-            host = target.cloud['nebula_uri']
-        elif settings.nebula_mode == 'dapi':
-            host = target.cloud['dapi_uri']
-        else:
-            host = target.cloud.get('cluster_svc', host)
+        host = target.cloud.get("cluster_svc", host)
 
     params = CMD.format(
             couchbase_index_name=full_index_name,
@@ -113,12 +108,7 @@ def execute_jts_warmup(settings: PhaseSettings, target, full_index_name, index_m
 
     host = target.node
     if target.cloud:
-        if settings.nebula_mode == 'nebula':
-            host = target.cloud['nebula_uri']
-        elif settings.nebula_mode == 'dapi':
-            host = target.cloud['dapi_uri']
-        else:
-            host = target.cloud.get('cluster_svc', host)
+        host = target.cloud.get("cluster_svc", host)
 
     params = CMD.format(
         couchbase_index_name=full_index_name,

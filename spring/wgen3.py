@@ -437,15 +437,7 @@ class Worker:
             'connstr_params': self.ws.connstr_params
         }
         if self.ts.cloud:
-            if self.ws.nebula_mode == 'nebula':
-                params['host'] = self.ts.cloud['nebula_uri']
-            elif self.ws.nebula_mode == 'dapi':
-                params['host'] = self.ts.cloud['dapi_uri']
-                params['meta'] = self.ws.dapi_request_meta
-                params['logs'] = self.ws.dapi_request_logs
-                workload_client = DAPIGen
-            else:
-                params['host'] = self.ts.cloud.get('cluster_svc', params['host'])
+            params["host"] = self.ts.cloud.get("cluster_svc", params["host"])
 
         try:
             self.cb = workload_client(**params)

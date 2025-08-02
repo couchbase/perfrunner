@@ -74,7 +74,7 @@ class PerfTest:
         if self.test_config.test_case.use_workers:
             self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
 
-        ssl_enabled_modes = ('data', 'n2n', 'capella', 'nebula', 'dapi')
+        ssl_enabled_modes = ("data", "n2n", "capella")
         need_certificate = (
             self.test_config.cluster.enable_n2n_encryption or
             self.test_config.load_settings.ssl_mode in ssl_enabled_modes or

@@ -133,9 +133,9 @@ def get_connection(**kwargs) -> tuple[str, Optional[str]]:
     cert_path = None
     connstr_params: dict = kwargs.get("connstr_params", {})
     ssl_mode = kwargs.get("ssl_mode", "none")
-    if ssl_mode in ["data", "n2n", "capella", "nebula", "dapi"]:
+    if ssl_mode in ["data", "n2n", "capella"]:
         scheme = "couchbases"
-        if ssl_mode in ["nebula", "dapi", "capella"]:
+        if ssl_mode in ["capella"]:
             connstr_params.update({"ssl": "no_verify"})
         else:
             cert_path = "root.pem"

@@ -437,23 +437,11 @@ class ClusterSpec(Config):
         return host_map
 
     @property
-    def instance_ids_per_nebula_cluster(self):
-        return {k: v.split() for k, v in self.config.items('nebula_instance_ids')}
-
-    @property
     def cluster_instance_ids(self) -> list[str]:
         iids = []
         for cluster_iids in self.instance_ids_per_cluster.values():
             iids += cluster_iids
         return iids
-
-    @property
-    def direct_nebula_instance_ids(self) -> list[str]:
-        return self.instance_ids_per_nebula_cluster.get('direct_nebula', [])
-
-    @property
-    def dapi_instance_ids(self) -> list[str]:
-        return self.instance_ids_per_nebula_cluster.get('dapi', [])
 
     @property
     def sgw_instance_ids_per_cluster(self):
@@ -758,60 +746,25 @@ class ClusterSpec(Config):
                 self.config.set("cluster_instance_ids", cluster_name, "\n" + "\n".join(iids))
             self.update_spec_file()
 
-    def set_nebula_instance_ids(self) -> None:
+    def set_sgw_instance_ids(self) -> None:
+        if not self.config.has_section("sgw_instance_ids"):
+            self.config.add_section("sgw_instance_ids")
+
         if self.capella_backend == "aws":
-            logger.info("Getting Nebula instance IDs")
-
-            if not self.config.has_section("nebula_instance_ids"):
-                self.config.add_section("nebula_instance_ids")
-
             command_template = (
                 "ec2 describe-instances --region {} "
-                '--filters "Name=tag-key,Values={{}}" '
-                '"Name=tag:couchbase-cloud-dataplane-id,Values={}" '
-                '--query "Reservations[].Instances[].InstanceId" '
-                "--output text"
-            ).format(self.cloud_region, self.controlplane_settings["dataplane_id"])
-
-            stdout = run_aws_cli_command(command_template, 'couchbase-cloud-nebula')
-            dn_iids = stdout.split()
-            logger.info('Found DN instance IDs: {}'.format(', '.join(dn_iids)))
-            self.config.set('nebula_instance_ids', 'direct_nebula', '\n' + '\n'.join(dn_iids))
-
-            stdout = run_aws_cli_command(command_template, 'couchbase-cloud-data-api')
-            dapi_iids = stdout.split()
-            logger.info('Found DAPI instance IDs: {}'.format(', '.join(dapi_iids)))
-            self.config.set('nebula_instance_ids', 'dapi', '\n' + '\n'.join(dapi_iids))
-
-        self.update_spec_file()
-
-    def set_sgw_instance_ids(self) -> None:
-        if not self.config.has_section('sgw_instance_ids'):
-            self.config.add_section('sgw_instance_ids')
-
-        if self.capella_backend == "aws":
-            command_template = (
-                'ec2 describe-instances --region {} '
                 '--filters "Name=tag-key,Values=couchbase-cloud-syncgateway-id" '
                 '"Name=tag:couchbase-app-services,Values={}" '
                 '--query "Reservations[].Instances[].InstanceId" '
-                '--output text'
+                "--output text"
             )
             stdout = run_aws_cli_command(
                 command_template, self.cloud_region, self.controlplane_settings["cluster_ids"]
             )
             sgids = stdout.split()
-            logger.info("Found Instance IDs for sgw: {}".format(', '.join(sgids)))
-            self.config.set('sgw_instance_ids', 'sync_gateways', '\n', + '\n'.join(sgids))
+            logger.info("Found Instance IDs for sgw: {}".format(", ".join(sgids)))
+            self.config.set("sgw_instance_ids", "sync_gateways", "\n", +"\n".join(sgids))
             self.update_spec_file()
-
-    @property
-    def direct_nebula(self) -> dict:
-        return self._get_options_as_dict('direct_nebula')
-
-    @property
-    def data_api(self) -> dict:
-        return self._get_options_as_dict('data_api')
 
     def _cluster_names_to_idxs(self, cluster_names: Iterable[str]) -> list[int]:
         cluster_idxs = []
@@ -1042,22 +995,6 @@ class ClusterSettings:
 
         # Debugging
         self.install_debug_sym = maybe_atoi(options.get("install_debug_sym", "false"))
-
-
-class DirectNebulaSettings:
-
-    LOG_LEVEL = None
-
-    def __init__(self, options: dict):
-        self.log_level = options.get('log_level', self.LOG_LEVEL)
-
-
-class DataApiSettings:
-
-    LOG_LEVEL = None
-
-    def __init__(self, options: dict):
-        self.log_level = options.get('log_level', self.LOG_LEVEL)
 
 
 class StatsSettings:
@@ -1643,11 +1580,6 @@ class PhaseSettings:
     WORKLOAD_MIX = []
     NUM_BUCKETS = []
 
-    NEBULA_MODE = 'none'  # options: none, nebula, dapi
-
-    DAPI_REQUEST_META = 'false'
-    DAPI_REQUEST_LOGS = 'false'
-
     PER_COLLECTION_LATENCY = False
 
     CONFLICT_RATIO = 0
@@ -1942,18 +1874,8 @@ class PhaseSettings:
                     start, end = b.split('-')
                     self.num_buckets.extend(range(int(start), int(end) + 1))
 
-        self.nebula_mode = options.get('nebula_mode', self.NEBULA_MODE)
-
-        self.dapi_request_meta = maybe_atoi(
-            options.get('dapi_request_meta', self.DAPI_REQUEST_META)
-        )
-        self.dapi_request_logs = maybe_atoi(
-            options.get('dapi_request_logs', self.DAPI_REQUEST_LOGS)
-        )
-
         # Default setting. Is set based on collection stat groups in configure_collection_settings
         self.per_collection_latency = self.PER_COLLECTION_LATENCY
-
 
         self.conflict_ratio = float(options.get('conflict_ratio', self.CONFLICT_RATIO))
 
@@ -3914,16 +3836,6 @@ class TestConfig(Config):
                         options[key] = {}
                     options[key] |= self._get_options_as_dict(section)
         return SystemdLimitsSettings(options)
-
-    @property
-    def direct_nebula(self) -> DirectNebulaSettings:
-        options = self._get_options_as_dict('direct_nebula')
-        return DirectNebulaSettings(options)
-
-    @property
-    def data_api(self) -> DataApiSettings:
-        options = self._get_options_as_dict('data_api')
-        return DataApiSettings(options)
 
     @property
     def bucket(self) -> BucketSettings:

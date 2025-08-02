@@ -929,7 +929,6 @@ class ClusterSettings:
     QUERY_AWR_COLLECTION = 'collection-awr'
     BUCKET_NAME = 'bucket-1'
     DISABLE_UI_HTTP = None
-    SERVERLESS_MODE = None
     SHOW_CP_VERSION = None
     CNG_ENABLED = "false"
 
@@ -989,16 +988,7 @@ class ClusterSettings:
         self.query_awr_collection = options.get('query_awr_collection',
                                                 self.QUERY_AWR_COLLECTION)
         self.ui_http = options.get('ui_http', self.DISABLE_UI_HTTP)
-        self.serverless_mode = options.get('serverless_mode', self.SERVERLESS_MODE)
-        self.show_cp_version = options.get('show_cp_version', self.SHOW_CP_VERSION)
-        self.serverless_throttle = {'dataThrottleLimit': int(options.get('data_throttle',
-                                                                         0)),
-                                    'indexThrottleLimit': int(options.get('index_throttle',
-                                                                          0)),
-                                    'searchThrottleLimit': int(options.get('search_throttle',
-                                                                           0)),
-                                    'queryThrottleLimit': int(options.get('query_throttle',
-                                                                          0))}
+        self.show_cp_version = options.get("show_cp_version", self.SHOW_CP_VERSION)
 
         kernel_mem_limit_services = options.get('kernel_mem_limit_services')
         if kernel_mem_limit_services:
@@ -4339,8 +4329,6 @@ class TargetIterator(Iterable):
 
                 if self.cluster_spec.dynamic_infrastructure:
                     cloud = {"cluster_svc": self.target_svc}
-                elif self.test_config.cluster.serverless_mode == "enabled":
-                    cloud = {"serverless": True}
 
                 yield TargetSettings(
                     host=master,

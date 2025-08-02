@@ -20,7 +20,6 @@ from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.helpers.worker import WorkerManager, WorkloadPhase, spring_task
 from perfrunner.settings import (
-    CBProfile,
     ClusterSpec,
     PhaseSettings,
     TargetIterator,
@@ -155,9 +154,6 @@ class PerfTest:
             self.collect_logs()
 
             self.reset_memory_settings()
-
-        if self.test_config.cluster.serverless_mode and not self.cloud_infra:
-            self.remote.set_cb_profile(CBProfile.DEFAULT)
 
     def collect_linux_perf_profiles(self):
         self.remote.generate_linux_perf_script()

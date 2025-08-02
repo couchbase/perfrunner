@@ -16,7 +16,6 @@ analytics_mem_quota = 25600
 initial_nodes = 4 4
 num_buckets = 1
 bucket_name = bench
-serverless_mode = enabled
 
 [backup]
 obj_staging_dir = /stage

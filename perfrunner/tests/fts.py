@@ -135,15 +135,6 @@ class FTSTest(JTSTest):
 
     def update_index_def(self, index_def):
         collection_map = self.test_config.collection.collection_map
-        # changing index configuration for serverless mode
-        if self.test_config.cluster.serverless_mode:
-            index_def["planParams"]["maxPartitionsPerPIndex"] = 1024
-            if "indexPartitions" not in list(index_def["planParams"].keys()) \
-                    or index_def["planParams"]["indexPartitions"] < 1:
-                index_def["planParams"]["indexPartitions"] = 1
-            if "numReplicas" not in list(index_def["planParams"].keys()) \
-                    or index_def["planParams"]["numReplicas"] < 1:
-                index_def["planParams"]["numReplicas"] = 1
 
         if self.jts_access.couchbase_index_type:
             index_def["params"]["store"]["indexType"] = \

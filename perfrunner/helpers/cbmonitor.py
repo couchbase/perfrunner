@@ -25,7 +25,6 @@ from cbagent.collectors import (
     EventingPerNodeStats,
     EventingStats,
     FTSCollector,
-    FTSUtilisationCollector,
     JTSCollector,
     KVLatency,
     KVStoreStats,
@@ -41,7 +40,6 @@ from cbagent.collectors import (
     ObserveSecondaryIndexLatency,
     PageCache,
     QueryLatency,
-    RegulatorStats,
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
     SecondaryDebugStatsIndex,
@@ -181,13 +179,6 @@ class CbAgent:
 
         if active_tasks:
             self.add_collector(ActiveTasks)
-
-        if (
-            self.test.test_config.cluster.fts_index_mem_quota != 0
-            and self.test.test_config.cluster.serverless_mode == "enabled"
-        ):
-            self.add_collector(RegulatorStats, self.test)
-            self.add_collector(FTSUtilisationCollector, self.test)
 
         if latency:
             self.add_collector(KVLatency)

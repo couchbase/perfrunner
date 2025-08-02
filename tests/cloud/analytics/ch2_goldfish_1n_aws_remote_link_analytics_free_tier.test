@@ -16,7 +16,6 @@ analytics_mem_quota = 2870
 initial_nodes = 2 1
 num_buckets = 1
 bucket_name = bench
-serverless_mode = enabled
 
 [analytics]
 analytics_link = RemoteLink

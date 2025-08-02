@@ -11,8 +11,6 @@ from cbagent.collectors.eventing_stats import (
 from cbagent.collectors.fts_stats import (
     ElasticStats,
     FTSCollector,
-    FTSUtilisationCollector,
-    RegulatorStats,
 )
 from cbagent.collectors.jts_stats import JTSCollector
 from cbagent.collectors.kvstore_stats import KVStoreStats

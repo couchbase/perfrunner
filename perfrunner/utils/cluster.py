@@ -65,9 +65,7 @@ def main():
             cluster_spec.set_active_clusters_by_name([prov_cluster])
             cluster_spec.config["infrastructure"].pop("service")
 
-        if (
-            not cluster_spec.serverless_infrastructure and not cluster_spec.columnar_infrastructure
-        ) or cluster_spec.prov_cluster_in_columnar_test:
+        if not cluster_spec.columnar_infrastructure or cluster_spec.prov_cluster_in_columnar_test:
             # If on provisioned Capella, we need to do two things before anything else:
             # 1. Create some DB credentials
             # 2. Whitelist the local IP
@@ -77,14 +75,7 @@ def main():
 
         cm = CapellaClusterManager(cluster_spec, test_config, args.verbose)
 
-        if cm.cluster_spec.serverless_infrastructure:
-            cm.allow_ips_for_serverless_dbs()
-            cm.provision_serverless_db_keys()
-            cm.bypass_nebula_for_clients()
-            cm.serverless_throttle()
-            cm.init_nebula_ssh()
-            cm.set_nebula_log_levels()
-        elif (
+        if (
             not cm.cluster_spec.columnar_infrastructure
             or cm.cluster_spec.prov_cluster_in_columnar_test
         ):
@@ -149,7 +140,6 @@ def main():
     cm.configure_auto_compaction()
     cm.enable_audit()
     cm.set_magma_min_quota()
-    cm.serverless_throttle()
 
     if need_buckets := (
         not cm.cluster_spec.columnar_infrastructure and cm.test_config.cluster.num_buckets

@@ -178,12 +178,6 @@ class ClusterManagerBase:
             self.rest.create_collection(master, bucket, scope, collection)
             logger.info(f"Creating Query AWR scope and collection: {bucket}.{scope}.{collection}")
 
-    def serverless_throttle(self):
-        if not all(value == 0 for value in self.test_config.cluster.serverless_throttle.values()):
-            self.rest.set_serverless_throttle(
-                self.master_node, self.test_config.cluster.serverless_throttle
-            )
-
     def wait_until_warmed_up(self):
         if self.test_config.bucket.bucket_type in ("ephemeral", "memcached"):
             return
@@ -1087,42 +1081,6 @@ class CapellaClusterManager(ClusterManagerBase):
                 ]
             self.rest.add_allowed_ips_all_clusters(client_ips)
 
-    def allow_ips_for_serverless_dbs(self):
-        for db_id in self.test_config.buckets:
-            self.rest.allow_my_ip(db_id)
-            client_ips = self.cluster_spec.clients
-            if self.cluster_spec.capella_backend == "aws":
-                client_ips = [
-                    dns.split(".")[0].removeprefix("ec2-").replace("-", ".") for dns in client_ips
-                ]
-            self.rest.add_allowed_ips(db_id, client_ips)
-
-    def bypass_nebula_for_clients(self):
-        client_ips = self.cluster_spec.clients
-        if self.cluster_spec.capella_backend == "aws":
-            client_ips = [
-                dns.split(".")[0].removeprefix("ec2-").replace("-", ".") for dns in client_ips
-            ]
-        for ip in client_ips:
-            self.rest.bypass_nebula(ip)
-
-    def provision_serverless_db_keys(self):
-        dbs = self.test_config.serverless_db.db_map
-        for db_id in dbs.keys():
-            resp = self.rest.get_db_api_key(db_id)
-            dbs[db_id]["access"] = resp.json()["access"]
-            dbs[db_id]["secret"] = resp.json()["secret"]
-
-        self.test_config.serverless_db.update_db_map(dbs)
-
-    def init_nebula_ssh(self):
-        if (
-            self.cluster_spec.serverless_infrastructure
-            and self.cluster_spec.capella_backend == "aws"
-        ):
-            self.cluster_spec.set_nebula_instance_ids()
-            self.remote.nebula_init_ssh()
-
     def open_capella_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
         if self.cluster_spec.capella_infrastructure:
             logger.info(
@@ -1243,13 +1201,6 @@ class CapellaClusterManager(ClusterManagerBase):
             logger.info("Found Security Group ID: {}".format(sg_id))
 
         return sg_id
-
-    def set_nebula_log_levels(self):
-        if dn_log_level := self.test_config.direct_nebula.log_level:
-            self.remote.set_dn_log_level(dn_log_level)
-
-        if dapi_log_level := self.test_config.data_api.log_level:
-            self.remote.set_dapi_log_level(dapi_log_level)
 
 
 class KubernetesClusterManager:

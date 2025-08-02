@@ -13,7 +13,6 @@ from fabric.exceptions import CommandTimeout, NetworkError
 from logger import logger
 from perfrunner.helpers.misc import (
     pretty_dict,
-    run_local_shell_command,
     uhex,
 )
 from perfrunner.remote import Remote
@@ -1413,57 +1412,6 @@ class RemoteLinux(Remote):
         run(cmd)
         cmd = 'chmod +x blackholePuller-linux-x64'
         run(cmd)
-
-    def nebula_init_ssh(self):
-        if not (self.cluster_spec.serverless_infrastructure and
-                self.cluster_spec.capella_backend == 'aws'):
-            return
-
-        iids = self.cluster_spec.direct_nebula_instance_ids + self.cluster_spec.dapi_instance_ids
-
-        logger.info('Configuring SSH for Nebula nodes.')
-        logger.info('Uploading SSH key to {}'.format(', '.join(iids)))
-
-        upload_keys_command = (
-            'env/bin/aws ssm send-command '
-            '--region $AWS_REGION '
-            '--instance-ids "{}" '
-            '--document-name \'AWS-RunShellScript\' '
-            '--parameters commands="\\"\n'
-            'mkdir -p ~root/.ssh\n'
-            'cd ~root/.ssh || exit 1\n'
-            'grep -q \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub)\' authorized_keys '
-            '|| echo \'$(cat ${{HOME}}/.ssh/id_ed25519_capella.pub) ssm-session\' >> '
-            'authorized_keys\n'
-            '\\""'
-        ).format('" "'.join(iids))
-
-        _, _, returncode = run_local_shell_command(
-            command=upload_keys_command,
-            success_msg='Successfully uploaded SSH key to Nebula nodes.',
-            err_msg='Failed to upload SSH key to Nebula nodes.'
-        )
-
-        if returncode == 0:
-            for iid in iids:
-                logger.info('Testing SSH to {}'.format(iid))
-                test_ssh_command = 'ssh root@{} echo'.format(iid)
-
-                _, _, returncode = run_local_shell_command(
-                    command=test_ssh_command,
-                    success_msg='SSH connection established with {}'.format(iid),
-                    err_msg='Failed to establish SSH connection with {}'.format(iid)
-                )
-
-    @all_dapi_nodes
-    def set_dapi_log_level(self, level: str = 'debug'):
-        logger.info('Setting log level on Data API nodes: {}'.format(level))
-        run('curl -ks -X PUT http://localhost:8942/log?level={}'.format(level), warn_only=True)
-
-    @all_dn_nodes
-    def set_dn_log_level(self, level: str = 'debug'):
-        logger.info('Setting log level on Direct nebula nodes: {}'.format(level))
-        run('curl -ks -X PUT http://localhost:8941/log?level={}'.format(level), warn_only=True)
 
     @servers_by_role(roles=['index'])
     def set_indexer_systemd_mem_limits(self):

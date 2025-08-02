@@ -119,60 +119,6 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
             self.add_stats(stats, node=self.get_external_hostnames(node))
 
 
-class MetricsRestApiMetering(MetricsRestApiBase):
-
-    COLLECTOR = "metrics_rest_api_metering"
-
-    METRICS = (
-        "meter_ru_total",
-        "meter_wu_total",
-        "meter_cu_total"
-    )
-
-    def __init__(self, settings: CbAgentSettings):
-        super().__init__(settings)
-        self.stats_data = [
-            {
-                "metric": [
-                    {"label": "name", "value": metric}
-                ],
-                "applyFunctions": ["irate"],
-                "step": 1,
-                "start": -1
-            }
-            for metric in self.METRICS
-        ]
-
-    def update_metadata(self):
-        self.mc.add_cluster()
-        for bucket in self.get_buckets():
-            self.mc.add_bucket(bucket)
-
-    def get_stats(self) -> dict:
-        samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
-        stats = {}
-        for data in samples:
-            for metric in data['data']:
-                if 'bucket' in metric['metric']:
-                    metric_name = metric['metric']['name']
-                    bucket = metric['metric']['bucket']
-                    instance = metric['metric']['instance']
-                    value = float(metric['values'][-1][-1])
-                    title = '{}_{}'.format(instance, metric_name)
-                    if bucket not in stats:
-                        stats[bucket] = {title: value}
-                    elif title not in stats[bucket]:
-                        stats[bucket][title] = value
-                    else:
-                        stats[bucket][title] += value
-        return stats
-
-    def sample(self):
-        for bucket, stats in self.get_stats().items():
-            bucket = self.serverless_db_names.get(bucket, bucket)
-            self.add_stats(stats, bucket=bucket)
-
-
 class MetricsRestApiDeduplication(MetricsRestApiBase):
 
     COLLECTOR = "metrics_rest_api_dedup"

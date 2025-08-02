@@ -19,7 +19,6 @@ from cbagent.collectors.kvstore_stats import KVStoreStats
 from cbagent.collectors.latency import KVLatency, Latency, QueryLatency
 from cbagent.collectors.metrics_rest_api import (
     MetricsRestApiDeduplication,
-    MetricsRestApiMetering,
     MetricsRestApiProcesses,
     MetricsRestApiThroughputCollection,
     MetricsRestApiAppTelemetry,

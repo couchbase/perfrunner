@@ -31,7 +31,6 @@ from cbagent.collectors import (
     KVStoreStats,
     Memory,
     MetricsRestApiDeduplication,
-    MetricsRestApiMetering,
     MetricsRestApiProcesses,
     MetricsRestApiThroughputCollection,
     N1QLStats,
@@ -206,9 +205,6 @@ class CbAgent:
             self.add_collector(AnalyticsStats, self.test)
         if kv_dedup:
             self.add_collector(MetricsRestApiDeduplication)
-
-        if self.test.test_config.cluster.serverless_mode == 'enabled':
-            self.add_collector(MetricsRestApiMetering)
 
         # Always collect ns-server managed processes utilisation metrics
         self.add_collector(MetricsRestApiProcesses)

@@ -152,11 +152,6 @@ class ClusterSpec(Config):
         return False
 
     @property
-    def serverless_infrastructure(self) -> bool:
-        return self.capella_infrastructure and \
-            self.infrastructure_settings.get('capella_arch', 'dedicated') == 'serverless'
-
-    @property
     def columnar_infrastructure(self) -> bool:
         if self.cloud_infrastructure:
             return self.infrastructure_settings.get("service", "") == "columnar"
@@ -306,7 +301,7 @@ class ClusterSpec(Config):
 
     @property
     def clusters_schemas(self) -> Iterator:
-        if self.capella_infrastructure and not self.serverless_infrastructure:
+        if self.capella_infrastructure:
             for i, (cluster_name, servers) in enumerate(self.config.items('clusters_schemas')):
                 if i not in self.inactive_cluster_idxs:
                     schemas = servers.split()

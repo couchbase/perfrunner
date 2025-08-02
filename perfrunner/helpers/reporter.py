@@ -49,9 +49,7 @@ class ShowFastReporter(Reporter):
 
         if self.cluster_spec.capella_infrastructure:
             sub_category = sub_category.format(provider=self.cluster_spec.capella_backend.upper())
-            if self.cluster_spec.serverless_infrastructure:
-                metric['provider'] = "serverless"
-            elif self.cluster_spec.columnar_infrastructure:
+            if self.cluster_spec.columnar_infrastructure:
                 metric["provider"] = "columnar"
             else:
                 metric['provider'] = self.cluster_spec.cloud_provider.lower()

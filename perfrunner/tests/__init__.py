@@ -708,11 +708,6 @@ class PerfTest:
     def _report_kpi(self, *args, **kwargs):
         pass
 
-    def _measure_curr_ops(self) -> int:
-        if self.cluster_spec.serverless_infrastructure:
-            return self._measure_curr_ops_rest()
-        return self._measure_curr_ops_mc()
-
     def _measure_curr_ops_rest(self) -> int:
         ops = 0
         samples = self.rest.get_kv_ops(self.master_node)

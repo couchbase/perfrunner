@@ -479,7 +479,7 @@ class KeyFraggerFrozenTest(PathoGenTest):
 class ThroughputTest(KVTest):
 
     def _report_kpi(self):
-        total_ops = self._measure_curr_ops()
+        total_ops = self._measure_curr_ops_mc()
 
         self.reporter.post(
             *self.metrics.kv_throughput(total_ops)

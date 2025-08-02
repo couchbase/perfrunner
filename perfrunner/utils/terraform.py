@@ -2241,8 +2241,6 @@ def destroy():
 
     if infra_spec.cloud_provider != 'capella':
         deployer = CloudVMDeployer(infra_spec, args)
-    elif infra_spec.serverless_infrastructure:
-        logger.interrupt("Serverless no longer supported in perfrunner.")
     elif infra_spec.app_services == 'true':
         deployer = AppServicesDeployer(infra_spec, args)
     elif infra_spec.columnar_infrastructure:
@@ -2293,9 +2291,7 @@ def main():
         cp_prepper.save_api_keys()
         cp_prepper.save_project_id()
 
-        if infra_spec.serverless_infrastructure:
-            logger.interrupt("Serverless no longer supported in perfrunner.")
-        elif infra_spec.app_services == "true":
+        if infra_spec.app_services == "true":
             deployer = AppServicesDeployer(infra_spec, args)
         elif infra_spec.columnar_infrastructure:
             if prov_cluster := infra_spec.prov_cluster_in_columnar_test:

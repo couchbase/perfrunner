@@ -1218,7 +1218,7 @@ class N1QLWorker(Worker):
         self.delta = 0.0
         self.op_delay = 0.0
         self.first = True
-        self.use_query_context = self.ts.cloud.get('serverless', False) if self.ts.cloud else False
+        self.use_query_context = False
 
     def do_batch_create(self, *args, **kwargs):
         if self.target_time:

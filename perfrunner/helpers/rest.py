@@ -74,8 +74,6 @@ class RestHelper:
     def __new__(cls, cluster_spec: ClusterSpec, use_tls: bool):
         if cluster_spec.dynamic_infrastructure:
             return KubernetesRestHelper(cluster_spec, use_tls)
-        elif cluster_spec.serverless_infrastructure:
-            logger.interrupt("Serverless no longer supported in perfrunner.")
         elif cluster_spec.capella_infrastructure:
             if cluster_spec.columnar_infrastructure:
                 return CapellaColumnarRestHelper(cluster_spec)

@@ -29,8 +29,7 @@ class NSServer(Collector):
             if not stats:
                 continue
             self.update_metric_metadata(stats.keys(), bucket)
-            self.append_to_store(stats, cluster=self.cluster, bucket=bucket,
-                                 collector=self.COLLECTOR)
+            self.store.append(stats, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -98,8 +97,7 @@ class XdcrStats(Collector):
             if not stats:
                 continue
             self.update_metric_metadata(stats.keys(), bucket)
-            self.append_to_store(stats, cluster=self.cluster, bucket=bucket,
-                                 collector=self.COLLECTOR)
+            self.store.append(stats, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()

@@ -107,21 +107,25 @@ class KVLatency(Latency):
             # Latency in ms
             data = {'latency_' + operation: float(latency_single) * 1000}
 
-            await self.append_to_store_async(data=data,
-                                             timestamp=int(timestamp),
-                                             cluster=self.cluster,
-                                             bucket=bucket_group,
-                                             collector=self.COLLECTOR)
+            await self.store.append_async(
+                data=data,
+                timestamp=int(timestamp),
+                cluster=self.cluster,
+                bucket=bucket_group,
+                collector=self.COLLECTOR,
+            )
 
             if latency_total:
                 # Latency in ms
                 data = {'latency_total_' + operation: float(latency_total) * 1000}
 
-                await self.append_to_store_async(data=data,
-                                                 timestamp=int(timestamp),
-                                                 cluster=self.cluster,
-                                                 bucket=bucket_group,
-                                                 collector=self.COLLECTOR)
+                await self.store.append_async(
+                    data=data,
+                    timestamp=int(timestamp),
+                    cluster=self.cluster,
+                    bucket=bucket_group,
+                    collector=self.COLLECTOR,
+                )
 
     async def post_all_results(self):
         async with ClientSession(connector=TCPConnector()) as self.store.async_session:

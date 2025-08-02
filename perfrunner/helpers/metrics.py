@@ -140,15 +140,6 @@ class MetricHelper:
         }
 
     @property
-    def _bucket_names(self):
-        bucket_names = self.test_config.buckets
-        if self.cluster_spec.serverless_infrastructure:
-            bucket_names = [
-                self.test_config.serverless_db.db_map[bucket]['name'] for bucket in bucket_names
-            ]
-        return bucket_names
-
-    @property
     def _custom_bucket_names(self):
         return [
             'bucket-{}'.format(i + 1)
@@ -309,7 +300,7 @@ class MetricHelper:
 
     def _jts_metric(self, collector, metric, percentile=None):
         timings = []
-        bucket_names = self._bucket_names
+        bucket_names = self.test_config.buckets
         if int(self.test_config.jts_access_settings.custom_num_buckets) > 0:
             bucket_names = self._custom_bucket_names
         bucket_metric_list = []
@@ -355,7 +346,7 @@ class MetricHelper:
 
         If no cluster_idx is specified, use the first cluster (the default).
         """
-        buckets = buckets or self._bucket_names
+        buckets = buckets or self.test_config.buckets
         values = []
         for bucket in buckets:
             bucket_group = '{}{}'.format(bucket, '_' + stat_group if stat_group != '' else '')
@@ -546,7 +537,7 @@ class MetricHelper:
 
     def get_collector_values(self, collector):
         values = []
-        for bucket in self._bucket_names:
+        for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector=collector,
                                          bucket=bucket)
@@ -662,7 +653,7 @@ class MetricHelper:
         metric_info = self._metric_info(chirality=-1)
 
         values = []
-        for bucket in self._bucket_names:
+        for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
@@ -676,7 +667,7 @@ class MetricHelper:
         metric_info = self._metric_info(chirality=-1)
 
         values = []
-        for bucket in self._bucket_names:
+        for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
@@ -690,7 +681,7 @@ class MetricHelper:
         metric_info = self._metric_info(chirality=1)
 
         values = []
-        for bucket in self._bucket_names:
+        for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
@@ -727,7 +718,7 @@ class MetricHelper:
 
     def _query_latency(self, percentile: Number, cluster_idx: int = 0) -> float:
         values = []
-        for bucket in self._bucket_names:
+        for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
                                          collector='spring_query_latency',
                                          bucket=bucket)
@@ -854,7 +845,7 @@ class MetricHelper:
                     cluster_idx: int = 0) -> list[float]:
         timings = []
         metric = 'latency_{}'.format(operation)
-        for bucket in self._bucket_names:
+        for bucket in self.test_config.buckets:
             bucket_group = '{}{}'.format(bucket, '_' + stat_group if stat_group != '' else '')
 
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
@@ -882,7 +873,7 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id, title, chirality=-1)
 
         timings = []
-        for bucket in self._bucket_names:
+        for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='observe',
                                          bucket=bucket)
@@ -899,7 +890,7 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id, title, chirality=-1)
 
         cluster = self.test.cbmonitor_clusters[0]
-        bucket = self._bucket_names[0]
+        bucket = self.test_config.buckets[0]
 
         db = self.store.build_dbname(cluster=cluster,
                                      collector='ns_server',
@@ -1716,8 +1707,6 @@ class MetricHelper:
 
     def get_max_rss_values(self, function_name: str, server: str):
         ratio = 1024 * 1024
-        if self.cluster_spec.serverless_infrastructure:
-            function_name = self.test_config.serverless_db.db_map[function_name]['name']
         db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                      collector='eventing_consumer_stats',
                                      bucket=function_name, server=server)

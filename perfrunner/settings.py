@@ -1289,40 +1289,6 @@ class CollectionSettings:
         }
 
 
-class ServerlessDBSettings:
-
-    INIT_CONFIG = None
-    CONFIG = 'cloud/serverless_db/generated/db_config.json'
-    INIT_DB_MAP = {}
-    DB_MAP = {}
-
-    def __init__(self, options: dict):
-        self.init_config = options.get('init_config', self.INIT_CONFIG)
-        self.config = options.get('config', self.CONFIG)
-        self.init_db_map = self.INIT_DB_MAP
-        self.db_map = self.DB_MAP
-
-        if self.init_config is not None:
-            with open(self.init_config) as f:
-                self.init_db_map = json.load(f)
-
-        if self.config is not None:
-            with open(self.config) as f:
-                try:
-                    self.db_map = json.load(f)
-                except json.JSONDecodeError:
-                    self.db_map = {}
-
-    def bucket_creds(self, bucket: str) -> Tuple[str, str]:
-        access = self.db_map[bucket]['access']
-        secret = self.db_map[bucket]['secret']
-        return (access, secret)
-
-    def update_db_map(self, db_map):
-        with open(self.config, 'w') as f:
-            json.dump(db_map, f, indent=4)
-
-
 class UserSettings:
 
     NUM_USERS_PER_BUCKET = 0
@@ -3901,18 +3867,7 @@ class TestConfig(Config):
     def collection(self) -> CollectionSettings:
         options = self._get_options_as_dict('collection')
         settings = CollectionSettings(options, self.buckets)
-        if settings.config is not None and (db_map := self.serverless_db.db_map):
-            coll_map = settings.collection_map
-            new_coll_map = {}
-            for db_id in db_map:
-                new_coll_map[db_id] = coll_map[db_map[db_id]['name']]
-            settings.collection_map = new_coll_map
         return settings
-
-    @property
-    def serverless_db(self) -> ServerlessDBSettings:
-        options = self._get_options_as_dict('serverless_db')
-        return ServerlessDBSettings(options)
 
     @property
     def users(self) -> UserSettings:
@@ -3948,9 +3903,7 @@ class TestConfig(Config):
 
     @property
     def buckets(self) -> list[str]:
-        if self.serverless_db.db_map:
-            return list(self.serverless_db.db_map.keys())
-        elif self.cluster.num_buckets == 1 and self.cluster.bucket_name != 'bucket-1':
+        if self.cluster.num_buckets == 1 and self.cluster.bucket_name != "bucket-1":
             return [self.cluster.bucket_name]
         elif self.cluster.num_buckets != 1 and isinstance(self.cluster.bucket_name, list):
             return self.cluster.bucket_name
@@ -4377,31 +4330,23 @@ class TargetIterator(Iterable):
             if self.prefix is None:
                 prefix = target_hash(master)
 
-            if self.cluster_spec.serverless_infrastructure:
-                for bucket in self.buckets:
-                    params = self.test_config.serverless_db.db_map[bucket]
-                    access = params['access']
-                    secret = params['secret']
-                    cloud = {
-                        'serverless': True,
-                        'nebula_uri': params['nebula_uri'],
-                        'dapi_uri': params['dapi_uri']
-                    }
+            for bucket in self.buckets:
+                if "perfrunner.tests.views" in self.test_config.test_case.test_module:
+                    username = bucket
+                    password = self.test_config.bucket.password
 
-                    yield TargetSettings(host=master, bucket=bucket, username=access,
-                                         password=secret, prefix=prefix, cloud=cloud)
-            else:
-                for bucket in self.buckets:
-                    if "perfrunner.tests.views" in self.test_config.test_case.test_module:
-                        username = bucket
-                        password = self.test_config.bucket.password
+                cloud = {}
 
-                    cloud = {}
+                if self.cluster_spec.dynamic_infrastructure:
+                    cloud = {"cluster_svc": self.target_svc}
+                elif self.test_config.cluster.serverless_mode == "enabled":
+                    cloud = {"serverless": True}
 
-                    if self.cluster_spec.dynamic_infrastructure:
-                        cloud = {'cluster_svc': self.target_svc}
-                    elif self.test_config.cluster.serverless_mode == 'enabled':
-                        cloud = {'serverless': True}
-
-                    yield TargetSettings(host=master, bucket=bucket, username=username,
-                                         password=password, prefix=prefix, cloud=cloud)
+                yield TargetSettings(
+                    host=master,
+                    bucket=bucket,
+                    username=username,
+                    password=password,
+                    prefix=prefix,
+                    cloud=cloud,
+                )

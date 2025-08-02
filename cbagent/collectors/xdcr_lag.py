@@ -65,10 +65,7 @@ class XdcrLag(Latency):
     def sample(self):
         for bucket, src_pool, dst_pool in self.pools:
             lags = self.measure(src_pool, dst_pool)
-            self.append_to_store(lags,
-                                 cluster=self.cluster,
-                                 bucket=bucket,
-                                 collector=self.COLLECTOR)
+            self.store.append(lags, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR)
 
     def _init_pool(self):
         params = {

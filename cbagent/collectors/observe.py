@@ -88,10 +88,9 @@ class ObserveIndexLatency(Latency):
             try:
                 for bucket, pool in self.pools:
                     stats, sleep_time = self._measure_lags(pool)
-                    self.append_to_store(stats,
-                                         cluster=self.cluster,
-                                         bucket=bucket,
-                                         collector=self.COLLECTOR)
+                    self.store.append(
+                        stats, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR
+                    )
                     sleep(sleep_time)
             except Exception as e:
                 logger.warn(e)
@@ -140,10 +139,9 @@ class ObserveSecondaryIndexLatency(ObserveIndexLatency):
             try:
                 for bucket, pool in self.pools:
                     stats, sleep_time = self._measure_lags(pool, cb=cb, query=query)
-                    self.append_to_store(stats,
-                                         cluster=self.cluster,
-                                         bucket=bucket,
-                                         collector=self.COLLECTOR)
+                    self.store.append(
+                        stats, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR
+                    )
                     sleep(sleep_time)
             except Exception as e:
                 logger.warn(e)
@@ -197,10 +195,9 @@ class DurabilityLatency(ObserveIndexLatency, Latency):
                 for metric in self.METRICS:
                     try:
                         stats, sleep_time = self.endure(pool, metric)
-                        self.append_to_store(stats,
-                                             cluster=self.cluster,
-                                             bucket=bucket,
-                                             collector=self.COLLECTOR)
+                        self.store.append(
+                            stats, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR
+                        )
                         sleep(sleep_time)
                     except Exception as e:
                         logger.warn(e)

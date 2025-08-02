@@ -35,8 +35,9 @@ class EventingStats(Collector):
             stats = all_stats[name]
             if stats:
                 self.update_metric_metadata(stats.keys(), bucket=name)
-                self.append_to_store(stats, cluster=self.cluster,
-                                     bucket=name, collector=self.COLLECTOR)
+                self.store.append(
+                    stats, cluster=self.cluster, bucket=name, collector=self.COLLECTOR
+                )
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -68,9 +69,9 @@ class EventingPerNodeStats(EventingStats):
         if server_stats:
             for server, stats in server_stats.items():
                 self.update_metric_metadata(stats.keys(), server=server)
-                self.append_to_store(stats, cluster=self.cluster,
-                                     server=server,
-                                     collector=self.COLLECTOR)
+                self.store.append(
+                    stats, cluster=self.cluster, server=server, collector=self.COLLECTOR
+                )
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -106,9 +107,9 @@ class EventingPerHandlerStats(EventingStats):
                 stats = handler_stats[name]
                 self.update_metric_metadata(stats.keys(),
                                             bucket=name)
-                self.append_to_store(stats, cluster=self.cluster,
-                                     bucket=name,
-                                     collector=self.COLLECTOR)
+                self.store.append(
+                    stats, cluster=self.cluster, bucket=name, collector=self.COLLECTOR
+                )
 
 
 class EventingConsumerStats(EventingPerNodeStats):
@@ -180,6 +181,10 @@ class EventingConsumerStats(EventingPerNodeStats):
                 for server, stats in server_stats.items():
                     self.update_metric_metadata(stats.keys(), server=server,
                                                 bucket=name)
-                    self.append_to_store(stats, cluster=self.cluster,
-                                         server=server, bucket=name,
-                                         collector=self.COLLECTOR)
+                    self.store.append(
+                        stats,
+                        cluster=self.cluster,
+                        server=server,
+                        bucket=name,
+                        collector=self.COLLECTOR,
+                    )

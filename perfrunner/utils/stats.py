@@ -9,7 +9,7 @@ from logger import logger
 from perfrunner.settings import CBMONITOR_HOST
 from perfrunner.utils.jenkins import BaseScanner, JenkinsScanner
 
-StatsSettings = namedtuple("StatsSettings", ("cluster", "cbmonitor_host", "serverless_db_names"))
+StatsSettings = namedtuple("StatsSettings", ("cluster", "cbmonitor_host"))
 
 
 class StatsScanner(BaseScanner):
@@ -46,7 +46,7 @@ class StatsScanner(BaseScanner):
 
     @staticmethod
     def get_metadata_client(cluster: str) -> MetadataClient:
-        return MetadataClient(settings=StatsSettings(cluster, CBMONITOR_HOST, {}))
+        return MetadataClient(settings=StatsSettings(cluster, CBMONITOR_HOST))
 
     def store_metric_info(self, attributes: dict):
         key = self.generate_key(attributes)

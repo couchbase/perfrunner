@@ -79,20 +79,27 @@ class JTSCollector(Collector):
                     data = {
                         'jts_throughput': float(self.results["throughput"][bucket][k])
                     }
-                    self.append_to_store(data=data,
-                                         timestamp=timestamp_offset +
-                                         int(k) * int(self.settings.aggregation_buffer_ms),
-                                         cluster=self.cluster, bucket=bucket,
-                                         collector=self.COLLECTOR)
+                    self.store.append(
+                        data=data,
+                        timestamp=timestamp_offset
+                        + int(k) * int(self.settings.aggregation_buffer_ms),
+                        cluster=self.cluster,
+                        bucket=bucket,
+                        collector=self.COLLECTOR,
+                    )
 
             if "latency" in self.results:
                 for k in self.results["latency"][bucket].keys():
                     data = {
                         'jts_latency': float(self.results["latency"][bucket][k])
                     }
-                    self.append_to_store(data=data, timestamp=timestamp_offset + int(k) * 1000,
-                                         cluster=self.cluster, bucket=bucket,
-                                         collector=self.COLLECTOR)
+                    self.store.append(
+                        data=data,
+                        timestamp=timestamp_offset + int(k) * 1000,
+                        cluster=self.cluster,
+                        bucket=bucket,
+                        collector=self.COLLECTOR,
+                    )
 
 
 class JTSThroughputCollector(JTSCollector):
@@ -113,11 +120,14 @@ class JTSThroughputCollector(JTSCollector):
                     data = {
                         'jts_throughput': float(self.results["throughput"][bucket][k])
                     }
-                    self.append_to_store(data=data,
-                                         timestamp=timestamp_offset +
-                                         int(k) * int(self.settings.aggregation_buffer_ms),
-                                         cluster=self.cluster, bucket=bucket,
-                                         collector=self.COLLECTOR)
+                    self.store.append(
+                        data=data,
+                        timestamp=timestamp_offset
+                        + int(k) * int(self.settings.aggregation_buffer_ms),
+                        cluster=self.cluster,
+                        bucket=bucket,
+                        collector=self.COLLECTOR,
+                    )
 
 
 class JTSLatencyCollector(JTSCollector):
@@ -137,6 +147,10 @@ class JTSLatencyCollector(JTSCollector):
                 data = {
                     'jts_latency': float(self.results["latency"][bucket][k])
                 }
-                self.append_to_store(data=data, timestamp=timestamp_offset + int(k) * 1000,
-                                     cluster=self.cluster, bucket=bucket,
-                                     collector=self.COLLECTOR)
+                self.store.append(
+                    data=data,
+                    timestamp=timestamp_offset + int(k) * 1000,
+                    cluster=self.cluster,
+                    bucket=bucket,
+                    collector=self.COLLECTOR,
+                )

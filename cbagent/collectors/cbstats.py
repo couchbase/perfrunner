@@ -57,9 +57,9 @@ class CBStatsMemory(Collector):
 
             if stats:
                 self.update_metric_metadata(stats.keys(), bucket=bucket)
-                self.append_to_store(stats, cluster=self.cluster,
-                                     bucket=bucket,
-                                     collector=self.COLLECTOR)
+                self.store.append(
+                    stats, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR
+                )
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -140,9 +140,9 @@ class CBStatsAll(Collector):
                     if metric in stats:
                         stats[metric] /= len(self.nodes)
                 self.update_metric_metadata(stats.keys(), bucket=bucket)
-                self.append_to_store(stats, cluster=self.cluster,
-                                     bucket=bucket,
-                                     collector=self.COLLECTOR)
+                self.store.append(
+                    stats, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR
+                )
 
     def update_metadata(self):
         self.mc.add_cluster()

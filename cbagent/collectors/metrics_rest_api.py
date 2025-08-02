@@ -175,7 +175,6 @@ class MetricsRestApiDeduplication(MetricsRestApiBase):
         current_stats = self.get_stats()
         for node, per_bucket_stats in current_stats.items():
             for bucket, stats in per_bucket_stats.items():
-                bucket = self.serverless_db_names.get(bucket, bucket)
                 self.add_stats(stats, node=self.get_external_hostnames(node), bucket=bucket)
 
 
@@ -308,7 +307,6 @@ class MetricsRestApiThroughputCollection(MetricsRestApiBase):
         current_stats = self.get_stats()
         for stat_group, per_bucket_stats in current_stats.items():
             for bucket, stats in per_bucket_stats.items():
-                bucket = self.serverless_db_names.get(bucket, bucket)
                 bucket_group = self.bucket_stat_group(bucket, stat_group)
                 self.add_stats(stats, bucket=bucket_group)
 

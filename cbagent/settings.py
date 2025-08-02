@@ -32,7 +32,6 @@ class CbAgentSettings:
         self.traced_processes = test.test_config.stats_settings.traced_processes
         self.workers = test.cluster_spec.workers
         self.cloud = {"enabled": False}
-        self.serverless_db_names = {}
 
         self.remote = False
         if test.test_config.test_case.use_workers:
@@ -48,10 +47,7 @@ class CbAgentSettings:
             self.cloud.update({'enabled': True, 'dynamic': False, 'cloud_rest': test.rest})
             self.hostnames = test.cluster_spec.servers
             if test.cluster_spec.serverless_infrastructure:
-                self.cloud.update({'serverless': True})
-                self.serverless_db_names = {
-                    k: v['name'] for k, v in test.test_config.serverless_db.db_map.items()
-                }
+                self.cloud.update({"serverless": True})
 
         if test.test_config.collection.collection_map:
             self.collections = test.test_config.collection.collection_map

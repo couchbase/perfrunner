@@ -26,6 +26,6 @@ class ActiveTasks(Collector):
     def sample(self):
         for task, progress, bucket in self._get_tasks():
             self.update_metric_metadata(metrics=(task, ), bucket=bucket)
-            self.append_to_store(data={task: progress},
-                                 cluster=self.cluster, bucket=bucket,
-                                 collector=self.COLLECTOR)
+            self.store.append(
+                data={task: progress}, cluster=self.cluster, bucket=bucket, collector=self.COLLECTOR
+            )

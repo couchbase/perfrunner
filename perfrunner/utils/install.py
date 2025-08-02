@@ -5,9 +5,7 @@ from argparse import ArgumentParser, Namespace
 from collections import namedtuple
 from functools import cached_property
 from multiprocessing import Process, set_start_method
-from pathlib import Path
 from typing import Iterator, Optional
-from urllib.parse import urlparse
 
 import paramiko
 import requests
@@ -673,18 +671,8 @@ class CouchbaseInstaller:
         if set_profile := self.test_config.cluster.profile:
             # If a test specifies a profile, use that regardless of the install flags
             profile = CBProfile(set_profile)
-        elif self.options.serverless_profile:
-            profile = CBProfile.SERVERLESS
-        elif self.options.columnar_profile:
+        elif self.options.columnar_profile or self.cluster_spec.columnar_infrastructure:
             profile = CBProfile.COLUMNAR
-        elif self.cluster_spec.columnar_infrastructure:
-            if (
-                (7, 6, 100) <= self.build_tuple < (8, 0, 0) or
-                Path(urlparse(self.url).path).name.startswith('couchbase-columnar')
-            ):
-                profile = CBProfile.COLUMNAR
-            else:
-                profile = CBProfile.SERVERLESS
 
         self.remote.set_cb_profile(profile)
 
@@ -926,11 +914,6 @@ def get_args():
     parser.add_argument('-u', '--uninstall',
                         action='store_true',
                         help='uninstall the installed build')
-    parser.add_argument('--serverless-profile',
-                        type=maybe_atoi,
-                        default=False,
-                        help='use to convert the cb-server profile to \
-                        serverless on non-capella machines')
     parser.add_argument('--columnar-profile',
                         type=maybe_atoi,
                         default=False,

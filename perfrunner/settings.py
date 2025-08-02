@@ -27,10 +27,9 @@ REPO = 'https://github.com/couchbase/perfrunner'
 CAPELLA_PUBLIC_API_URL_TEMPLATE = "https://cloudapi.{}.nonprod-project-avengers.com"
 
 class CBProfile(Enum):
-    DEFAULT = 'default'
-    PROVISIONED = 'provisioned'
-    SERVERLESS = 'serverless'
-    COLUMNAR = 'columnar'
+    DEFAULT = "default"
+    PROVISIONED = "provisioned"
+    COLUMNAR = "columnar"
 
 
 @decorator

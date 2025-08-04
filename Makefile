@@ -14,7 +14,7 @@ all:
 	pyenv install ${VERSION} -s && \
 	pyenv local ${VERSION} && \
 	virtualenv --quiet --python ${PYTHON} ${ENV}
-	${ENV}/bin/pip install --upgrade --quiet pip wheel
+	${ENV}/bin/pip install --upgrade --quiet pip wheel setuptools
 	${ENV}/bin/pip install --quiet --no-warn-script-location -r requirements.txt
 	${ENV}/bin/python -m pip install --quiet .
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth

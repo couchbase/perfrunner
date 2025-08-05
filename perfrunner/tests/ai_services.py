@@ -23,13 +23,14 @@ class AIWorkflow:
         ai_services_settings: AIServicesSettings,
         hosted_model_id: Optional[str],
         infra_uuid: Optional[str],
+        s3_integration_id: Optional[str],
+        openai_integration_id: Optional[str],
     ):
         self.flow_uuid = infra_uuid
         self.ai_services_settings = ai_services_settings
         self.hosted_model_id = hosted_model_id
-
-    def _get_api_key(self):
-        return os.getenv("PROVIDER_KEY", "")
+        self.s3_integration_id = s3_integration_id
+        self.openai_integration_id = openai_integration_id
 
     def _get_embedding_model(self):
         if self.ai_services_settings.model_source == "internal" and self.hosted_model_id:
@@ -40,10 +41,9 @@ class AIWorkflow:
         # Otherwise we are using an external model specified by the test
         return {
             "external": {
-                "name": f"perftestkey{self.flow_uuid}",
+                "id": self.openai_integration_id,
                 "modelName": self.ai_services_settings.model_name,
                 "provider": self.ai_services_settings.model_provider,
-                "apiKey": self._get_api_key(),
             }
         }
 
@@ -54,13 +54,6 @@ class AIWorkflow:
         scope: str = "_default",
         collection: str = "_default",
     ) -> dict:
-        try:
-            access_key_id, secret_access_key = local.get_aws_credential(
-                self.ai_services_settings.aws_credential_path, True
-            )
-        except Exception:
-            access_key_id, secret_access_key = ("", "")
-
         payload = {
             "type": self.ai_services_settings.workflow_type,
             "embeddingModel": self._get_embedding_model(),
@@ -82,14 +75,7 @@ class AIWorkflow:
                         "strategyType": self.ai_services_settings.chunking_strategy,
                         "chunkSize": self.ai_services_settings.chunk_size,
                     },
-                    "dataSource": {
-                        "bucket": self.ai_services_settings.s3_bucket,
-                        "path": self.ai_services_settings.s3_path,
-                        "region": self.ai_services_settings.s3_bucket_region,
-                        "accessKey": access_key_id,
-                        "secretKey": secret_access_key,
-                        "name": f"s3dataset{self.flow_uuid}",
-                    },
+                    "dataSource": {"id": self.s3_integration_id},
                 }
             )
         logger.info(f"Workflow payload: {payload}")
@@ -112,6 +98,11 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
         self.runtimes = {}
         # Default index name to use for the workflow
         self.fts_index_name = self.jts_access.couchbase_index_name
+        self.s3_integration_id = ""
+        self.openai_integration_id = ""
+
+    def _get_api_key(self):
+        return os.getenv("PROVIDER_KEY", "")
 
     def _get_embedding_model_id(self) -> Optional[str]:
         """
@@ -163,9 +154,53 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
                 max_retries=1200,
             )
 
+    def create_integrations(self, cluster_uuid: str):
+        """
+        Create integrations for the workflow if needed.
+
+        - S3 integration for unstructured workflows
+        - OpenAI integration for internal models
+        """
+        # Check if we need to create an s3 integration
+        if self.ai_services_settings.workflow_type == "unstructured":
+            try:
+                access_key_id, secret_access_key = local.get_aws_credential(
+                    self.ai_services_settings.aws_credential_path, True
+                )
+            except Exception:
+                access_key_id, secret_access_key = ("", "")
+
+            self.s3_integration_id = self.rest.create_s3_integration(
+                name=f"perfs3{cluster_uuid}",
+                access_key=access_key_id,
+                secret_key=secret_access_key,
+                bucket=self.ai_services_settings.s3_bucket,
+                region=self.ai_services_settings.s3_bucket_region,
+                folder_path=self.ai_services_settings.s3_path,
+            )
+            logger.info(f"Created s3 integration: {self.s3_integration_id}")
+
+        # Check if we need to create an openai integration
+        if self.ai_services_settings.model_source == "internal":
+            # If we are using an internal model, we don't need to create an openai integration
+            return
+
+        self.openai_integration_id = self.rest.create_openai_integration(
+            name=f"perfopenai{cluster_uuid}",
+            access_key=self._get_api_key(),
+        )
+        logger.info(f"Created openAI integration: {self.openai_integration_id}")
+
     def prepare_and_deploy_workflow(self):
         cluster_uuid = self.cluster_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
-        self.workflow = AIWorkflow(self.ai_services_settings, self.hosted_model_id, cluster_uuid)
+        self.create_integrations(cluster_uuid)
+        self.workflow = AIWorkflow(
+            self.ai_services_settings,
+            self.hosted_model_id,
+            cluster_uuid,
+            self.s3_integration_id,
+            self.openai_integration_id,
+        )
         sleep(30)  # collect some initial metrics before starting the workflow
         workflow_deploy_time = self.deploy_workflow()
         self.runtimes["workflow_deploy_time"] = workflow_deploy_time

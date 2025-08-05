@@ -2623,6 +2623,46 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
 
         return cluster_workflows
 
+    def create_s3_integration(
+        self,
+        name: str,
+        access_key: str,
+        secret_key: str,
+        bucket: str,
+        region: str,
+        folder_path: str,
+    ) -> str:
+        payload = {
+            "name": name,
+            "integrationType": "s3",
+            "data": {
+                "accessKeyId": access_key,
+                "secretAccessKey": secret_key,
+                "bucket": bucket,
+                "awsRegion": region,
+                "folderPath": folder_path,
+            },
+        }
+        resp = self.dedicated_client.create_autovec_integration(self.tenant_id, payload)
+        resp.raise_for_status()
+        return resp.json().get("id")
+
+    def create_openai_integration(self, name: str, access_key: str) -> str:
+        payload = {
+            "name": name,
+            "integrationType": "openAI",
+            "data": {
+                "key": access_key,
+            },
+        }
+        resp = self.dedicated_client.create_autovec_integration(self.tenant_id, payload)
+        resp.raise_for_status()
+        return resp.json().get("id")
+
+    def delete_integration(self, integration_id: str):
+        resp = self.dedicated_client.delete_autovec_integration(self.tenant_id, integration_id)
+        resp.raise_for_status()
+
     def get_eventing_app_logs(self, host: str, bucket: str, scope: str = "_default") -> dict:
         eventing_functions = self.get_eventing_apps(host).get("apps", []) or []
         eventing_logs = {}

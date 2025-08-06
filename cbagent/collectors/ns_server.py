@@ -79,15 +79,15 @@ class XdcrStats(Collector):
 
     def _get_stats_uri(self):
         for bucket in self.get_buckets():
-            uri = '/_uistats?bucket={}&zoom=minute'.format(bucket)
+            uri = f'/pools/default/buckets/@xdcr-{bucket}/stats'
             yield bucket, uri
 
     def _get_stats(self, bucket, uri):
         samples = self.get_http(path=uri)
 
         stats = dict()
-        for metric, values in samples['stats']['@xdcr-{}'.format(bucket)].items():
-            if 'replications' in metric:
+        for metric, values in samples['op']['samples'].items():
+            if 'replications' in metric and 'backfill' not in metric:
                 metric = metric.split('/')[-1]
                 stats[metric] = values[-1]
         return stats

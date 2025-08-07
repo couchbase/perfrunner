@@ -351,10 +351,11 @@ class AIGatewayTest(PerfTest):
         ]
 
         self.gateway_version = self.get_ai_gateway_info().get("version")
-        if self.build == "0.0.0":
-            self.reporter.build = f"{self.gateway_version}"
-        else:
-            self.reporter.build = f"{self.gateway_version}:{self.build}"
+        cp_version = self.rest.get_cp_version()
+        build_str = f"{self.gateway_version}:{cp_version}"
+        if self.build != "0.0.0":
+            build_str = f"{self.build}:{build_str}"
+        self.reporter.build = build_str
 
     def get_ai_gateway_info(self) -> dict:
         """Get the AI Gateway information."""

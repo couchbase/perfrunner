@@ -1,0 +1,14 @@
+[test_case]
+test = perfrunner.tests.ai_services.AIGatewayTest
+
+[showfast]
+title = AI Gateway embedding generation, random text, 16 concurrent requests, 5000 total requests
+component = aiservices
+category = models
+sub_category = {provider}
+
+[ai_bench]
+model_kind = embedding-generation
+time = 0
+workers = 16
+ops = 5000

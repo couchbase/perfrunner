@@ -2275,7 +2275,7 @@ class MetricHelper:
             metric_id = f"{self.test_config.name}_{name}_{endpoint}"
             title = f"{proper_name}, {self._title} {sub_title}"
             metric_info = self._metric_info(metric_id, title, order_by=name)
-            reported_metrics.append((value, self._snapshots, metric_info))
+            reported_metrics.append((round(value, 2), self._snapshots, metric_info))
         return reported_metrics
 
     def _workflow_throughput(

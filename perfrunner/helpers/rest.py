@@ -2570,6 +2570,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         )
 
         logger.info(f"Workflow creation response: {resp.json()}")
+        resp.raise_for_status()
         return resp.json().get("id")
 
     def delete_workflow(self, host: str, workflow_id: str):

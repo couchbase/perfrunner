@@ -3758,10 +3758,9 @@ class AIServicesSettings:
         self.create_index = maybe_atoi(options.get("create_index", "true"))
 
         # Pre-processing settings
-        self.chunk_size = int(options.get("chunk_size", 200))  # current min: 5, max: 200
-        # Options: TEXT_SPLITTER | JSON_SPLITTER | WORD_SPLITTER | SENTENCE_SPLITTER |
-        # PARAGRAPH_SPLITTER | RECURSIVE_SPLITTER
-        self.chunking_strategy = options.get("chunking_strategy", "SENTENCE_SPLITTER").upper()
+        self.chunk_size = int(options.get("chunk_size", 512))  # current min: 256, max: 8192
+        # Options: RECURSIVE_SPLITTER | SEMANTIC_SPLITTER
+        self.chunking_strategy = options.get("chunking_strategy", "RECURSIVE_SPLITTER").upper()
         self.pages = options.get("pages", "").split(",")
         self.exclusions = options.get("exclusions", "").split(",")
 

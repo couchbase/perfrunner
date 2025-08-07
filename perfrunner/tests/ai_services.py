@@ -78,6 +78,8 @@ class AIWorkflow:
                     "dataSource": {"id": self.s3_integration_id},
                 }
             )
+            # Unstructured workflows should not set embeddingFieldMappings
+            payload.pop("embeddingFieldMappings")
         logger.info(f"Workflow payload: {payload}")
         return payload
 
@@ -100,6 +102,7 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
         self.fts_index_name = self.jts_access.couchbase_index_name
         self.s3_integration_id = ""
         self.openai_integration_id = ""
+        self.workflow_id = None
 
     def _get_api_key(self):
         return os.getenv("PROVIDER_KEY", "")
@@ -203,6 +206,9 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
         )
         sleep(30)  # collect some initial metrics before starting the workflow
         workflow_deploy_time = self.deploy_workflow()
+        if not self.workflow_id:
+            raise Exception("Failed to create workflow")
+
         self.runtimes["workflow_deploy_time"] = workflow_deploy_time
 
         eventing_functions = (

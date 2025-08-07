@@ -63,6 +63,7 @@ class PerfTest:
             self.build,
             test_config.cluster.query_awr_bucket,
             test_config.cluster.query_awr_scope,
+            test_config.rebalance_settings.rebalance_timeout
         )
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)

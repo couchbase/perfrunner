@@ -58,6 +58,7 @@ class Monitor:
         build: str,
         awr_bucket: str,
         awr_scope: str,
+        rebalance_timeout: int = 0
     ):
         self.cluster_spec = cluster_spec
         self.remote = remote
@@ -68,6 +69,7 @@ class Monitor:
         self.is_columnar = self.rest.is_columnar(self.master_node)
         self.awr_bucket = awr_bucket
         self.awr_scope = awr_scope
+        self.rebalance_timeout = rebalance_timeout or self.REBALANCE_TIMEOUT
 
     def wait_for_rebalance_to_begin(self, host):
         logger.info('Waiting for rebalance to start')
@@ -94,7 +96,7 @@ class Monitor:
 
             is_running, progress = self.rest.get_task_status(host, task_type="rebalance")
             if progress == last_progress:
-                if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
+                if time.time() - last_progress_time > self.rebalance_timeout:
                     logger.interrupt("Rebalance hung")
             else:
                 last_progress = progress

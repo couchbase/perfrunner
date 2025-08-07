@@ -1378,6 +1378,7 @@ class RebalanceSettings:
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
         self.services = options.get('services', 'kv')
         self.rebalance_config = options.get('rebalance_config', None)
+        self.rebalance_timeout = int(options.get('rebalance_timeout', 0))
 
         # The reblance settings for FTS
         self.ftspartitions = options.get('ftspartitions', self.FTS_PARTITIONS)

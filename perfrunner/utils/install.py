@@ -169,7 +169,6 @@ class OperatorInstaller:
         self.docker_config_path = os.path.expanduser("~") + "/.docker/config.json"
         self.crd_path = "cloud/operator/crd.yaml"
         self.auth_path = "cloud/operator/auth_secret.yaml"
-        self.cb_cluster_path = "cloud/operator/couchbase-cluster.yaml"
         self.rmq_operator_path = "cloud/broker/rabbitmq/0.48/cluster-operator.yaml"
         self.rmq_cluster_path = "cloud/broker/rabbitmq/0.48/rabbitmq.yaml"
 
@@ -219,7 +218,8 @@ class OperatorInstaller:
         self.wait_for_operator_and_admission()
         self.create_auth()
         # At this stage, just prepare the cb cluster config, but dont deploy anything
-        self.create_cluster_config()
+        for cluster_name in self.cluster_spec.clusters_modified_names:
+            self.create_cluster_config(cluster_name)
 
     def install_celery_broker(self):
         logger.info("installing celery broker")
@@ -254,33 +254,40 @@ class OperatorInstaller:
 
     def create_secrets(self):
         logger.info("creating secrets")
+        cluster_names = self.cluster_spec.clusters_modified_names
+
         # In the future we may need to only add available addresses to the certificate.
         # For now add all of our possible adresses
         addresses = {
             "localhost",
             "cbperfoc.com",
-            "cb-example-perf.cbperfoc.com",
-            "*.cb-example-perf.cbperfoc.com",
-            "cluster-1.cbperfoc.com",
-            "*.cluster-1.cbperfoc.com",
             "*.cbperfoc.com",
             "elb.us-east-1.amazonaws.com",
             "host.elb.us-east-1.amazonaws.com",
             "*.elb.us-east-1.amazonaws.com",
             "*.compute-1.amazonaws.com",
-            "*.cb-example-perf",
-            "*.cb-example-perf.default",
-            "*.cb-example-perf.default.svc",
-            "*.cb-example-perf.default.svc.cluster.local",
-            "cb-example-perf-srv",
-            "cb-example-perf-srv.default",
-            "cb-example-perf-srv.default.svc",
-            "*.cb-example-perf-srv.default.svc.cluster.local",
-            "cb-example-perf-cloud-native-gateway-service",
-            "cb-example-perf-cloud-native-gateway-service.default",
-            "cb-example-perf-cloud-native-gateway-service.default.svc",
-            "*.cb-example-perf-cloud-native-gateway-service.default.svc.cluster.local",
         }
+
+        # Add cluster-specific addresses for each cluster. Use shared certificates for all clusters.
+        for cluster_name in cluster_names:
+            addresses.update(
+                {
+                    f"{cluster_name}.cbperfoc.com",
+                    f"*.{cluster_name}.cbperfoc.com",
+                    f"*.{cluster_name}",
+                    f"*.{cluster_name}.default",
+                    f"*.{cluster_name}.default.svc",
+                    f"*.{cluster_name}.default.svc.cluster.local",
+                    f"{cluster_name}-srv",
+                    f"{cluster_name}-srv.default",
+                    f"{cluster_name}-srv.default.svc",
+                    f"*.{cluster_name}-srv.default.svc.cluster.local",
+                    f"{cluster_name}-cloud-native-gateway-service",
+                    f"{cluster_name}-cloud-native-gateway-service.default",
+                    f"{cluster_name}-cloud-native-gateway-service.default.svc",
+                    f"*.{cluster_name}-cloud-native-gateway-service.default.svc.cluster.local",
+                }
+            )
         create_x509_certificates(addresses)
         self.remote.create_certificate_secrets()
         self.remote.create_docker_secret(self.docker_config_path)
@@ -303,9 +310,12 @@ class OperatorInstaller:
         logger.info("creating auth")
         self.remote.create_from_file(self.auth_path)
 
-    def create_cluster_config(self):
-        logger.info("preparing couchbase cluster config")
-        with CAOCouchbaseClusterFile(self.couchbase_release, self.cluster_spec) as cb_config:
+    def create_cluster_config(self, cluster_name: str):
+        logger.info(f"Preparing couchbase cluster config for {cluster_name}")
+        with CAOCouchbaseClusterFile(
+            self.couchbase_release, self.cluster_spec, cluster_name
+        ) as cb_config:
+            cb_config.set_cluster_name()
             cb_config.set_server_spec(self.couchbase_tag)
             cb_config.set_backup(self.operator_backup_tag)
             cb_config.set_exporter(self.exporter_tag, self.refresh_rate)
@@ -350,13 +360,21 @@ class OperatorInstaller:
 
     def delete_operator_files(self):
         logger.info("deleting operator files")
-        files = [
-            self.cb_cluster_path,
-            self.auth_path,
-            CAOConfigFile(self.operator_release, self.operator_tag, self.controller_tag).dest_file,
-            self.crd_path,
+        # Add cluster specs first as they should be deleted before the operator files
+        files_for_deletion = [
+            f"{CAOCouchbaseClusterFile.CLUSTER_DEST_DIR}/{cluster_name}.yaml"
+            for cluster_name in self.cluster_spec.clusters_modified_names
         ]
-        self.remote.delete_from_files(files)
+        files_for_deletion.extend(
+            [
+                self.auth_path,
+                CAOConfigFile(
+                    self.operator_release, self.operator_tag, self.controller_tag
+                ).dest_file,
+                self.crd_path,
+            ]
+        )
+        self.remote.delete_from_files(files_for_deletion)
 
     def delete_operator_secrets(self):
         logger.info("deleting operator secrets")

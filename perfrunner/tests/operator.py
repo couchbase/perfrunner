@@ -263,7 +263,7 @@ class CNGOperatorTest(YCSBTest):
         self.target_iterator = TargetIterator(cluster_spec, test_config, target_svc=svc_host)
 
     def _get_service_host(self):
-        svc_host = "cb-example-perf"
+        svc_host = self.cluster_spec.clusters_modified_names[0]
         scheme = "couchbase2" if self.test_config.cng else "couchbases"
         if self.cluster_spec.external_client:
             svc_host = f"{scheme}://{self.remote.get_external_service_dns()}"

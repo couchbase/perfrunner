@@ -23,7 +23,7 @@ class RemoteKubernetes(Remote):
 
     PLATFORM = 'kubernetes'
 
-    def __init__(self, cluster_spec: ClusterSpec):
+    def __init__(self, cluster_spec: ClusterSpec, cluster_name: Optional[str] = None):
         super().__init__(cluster_spec)
         if cluster_spec.is_openshift:
             self.k8s_client = self._oc
@@ -35,6 +35,8 @@ class RemoteKubernetes(Remote):
             infra_config = json.load(f)
             self.kube_config_path = infra_config.get("kubeconfigs", [self.kube_config_path])[0]
             self.k8s_cluster_name = infra_config.get("cluster_map").get("k8s_cluster_1")
+
+        self.cb_cluster_name = cluster_name or cluster_spec.clusters_modified_names[0]
 
     @property
     def _git_access_token(self):
@@ -119,7 +121,7 @@ class RemoteKubernetes(Remote):
         return [
             pod["spec"]["nodeName"]
             for pod in self.get_pods()
-            if "cb-example-perf" in pod.get("metadata", {}).get("name", "")
+            if self.cb_cluster_name in pod.get("metadata", {}).get("name", "")
         ]
 
     def get_all_server_nodes(self) -> dict:
@@ -256,7 +258,7 @@ class RemoteKubernetes(Remote):
 
     def delete_cluster(self, ignore_errors=True):
         try:
-            self.k8s_client("delete cbc cb-example-perf")
+            self.k8s_client(f"delete cbc {self.cb_cluster_name}")
         except Exception as ex:
             if not ignore_errors:
                 raise ex
@@ -266,7 +268,7 @@ class RemoteKubernetes(Remote):
         return yaml.safe_load(ret)
 
     def get_cluster(self):
-        raw_cluster = self.k8s_client("get cbc cb-example-perf -o json", split_lines=False)
+        raw_cluster = self.k8s_client(f"get cbc {self.cb_cluster_name} -o json", split_lines=False)
         cluster = json.loads(raw_cluster.decode('utf8'))
         return cluster
 
@@ -292,7 +294,7 @@ class RemoteKubernetes(Remote):
         return backup
 
     def get_bucket(self):
-        raw_cluster = self.k8s_client("get cbc cb-example-perf -o json", split_lines=False)
+        raw_cluster = self.k8s_client(f"get cbc {self.cb_cluster_name} -o json", split_lines=False)
         cluster = json.loads(raw_cluster.decode('utf8'))
         return cluster
 
@@ -372,20 +374,20 @@ class RemoteKubernetes(Remote):
 
         return all(statuses)
 
-    def wait_for_pods_ready(self, pod, desired_num, namespace="default", timeout=1200):
-        self.wait_for(self.pods_ready,
-                      condition_params=(pod, desired_num, namespace),
-                      timeout=timeout)
+    def wait_for_pods_ready(self, deployment, desired_num, namespace="default", timeout=1200):
+        self.wait_for(
+            self.pods_ready, condition_params=(deployment, desired_num, namespace), timeout=timeout
+        )
 
     def pods_ready(self, condition_params):
-        pod = condition_params[0]
+        deployment = condition_params[0]
         desired_num = condition_params[1]
         namespace = condition_params[2]
         pods = self.get_pods(namespace=namespace)
         num_rdy = 0
         for check_pod in pods:
             check_pod_name = check_pod.get("metadata", {}).get("name", "")
-            if pod in check_pod_name and check_pod_name.count("-") == pod.count("-") + 2:
+            if self._pod_name_belongs_to_deployment(deployment, check_pod_name):
                 check_pod_status = check_pod["status"]
                 initialized = False
                 ready = False
@@ -405,14 +407,42 @@ class RemoteKubernetes(Remote):
                     num_rdy += 1
         return num_rdy == desired_num
 
+    def _pod_name_belongs_to_deployment(self, deployment_name: str, pod_name: str) -> bool:
+        """
+        Check if the pod name belongs to the deployment.
+
+        Args:
+            deployment_name: The expected deployment name.
+            pod_name: The pod name to check.
+
+        Returns:
+            Pods created from a deployment will conventionally have a naming pattern of
+            <deployment-name>-<replica-set-hash>-<random-string>.
+
+            While those created by a stateful set, such as the CouchbaseCluster CRD, rolling
+            numbers are used to form the pod name <deployment-name>-<rolling-number>.
+
+            This function provides a workaround by checking that the pod name follows one of the
+            above patterns. This function does not cover corner cases where the pod names are
+            created using custom tagging.
+        """
+        # Notes: A better way to do this is to use the ownerReferences metadata in the pod spec
+        # and also filter pods by labels instead of looping through all pods.
+        pod_name_dash_count = pod_name.count("-")
+        dep_name_dash_count = deployment_name.count("-")
+        return (
+            deployment_name in pod_name
+            and (
+                pod_name_dash_count == dep_name_dash_count + 1
+                or pod_name_dash_count == dep_name_dash_count + 2
+            )
+        )
+
     def wait_for_admission_controller_ready(self):
         self.wait_for_pods_ready("couchbase-operator-admission", 1)
 
     def wait_for_operator_ready(self):
         self.wait_for_pods_ready("couchbase-operator", 1)
-
-    def wait_for_couchbase_pods_ready(self, node_count):
-        self.wait_for_pods_ready("cb-example", node_count)
 
     def wait_for_rabbitmq_operator_ready(self):
         self.wait_for_pods_ready("rabbitmq-cluster-operator", 1, "rabbitmq-system")
@@ -420,13 +450,11 @@ class RemoteKubernetes(Remote):
     def wait_for_rabbitmq_broker_ready(self):
         self.wait_for_pods_ready("rabbitmq-rabbitmq", 1)
 
-    def wait_for_pods_deleted(self, pod, namespace="default", timeout=1200):
-        self.wait_for(self.pods_deleted,
-                      condition_params=(pod, namespace),
-                      timeout=timeout)
+    def wait_for_pods_deleted(self, deployment, namespace="default", timeout=1200):
+        self.wait_for(self.pods_deleted, condition_params=(deployment, namespace), timeout=timeout)
 
     def wait_for_operator_deletion(self):
-        self.wait_for_pods_deleted('cb-example')
+        self.wait_for_pods_deleted(self.cb_cluster_name)
         self.wait_for_pods_deleted('couchbase-operator-admission')
         self.wait_for_pods_deleted('couchbase-operator')
 
@@ -438,12 +466,12 @@ class RemoteKubernetes(Remote):
         self.wait_for_pods_deleted("worker")
 
     def pods_deleted(self, condition_params):
-        pod = condition_params[0]
+        deployment = condition_params[0]
         namespace = condition_params[1]
         pods = self.get_pods(namespace=namespace)
         for check_pod in pods:
             check_pod_name = check_pod.get("metadata", {}).get("name", "")
-            if pod in check_pod_name and check_pod_name.count("-") == pod.count("-") + 2:
+            if self._pod_name_belongs_to_deployment(deployment, check_pod_name):
                 return False
         return True
 
@@ -680,7 +708,7 @@ class RemoteKubernetes(Remote):
         pod_prefixes = (
             "couchbase-operator-",
             "my-backup-",
-            "cb-example-perf-",
+            f"{self.cb_cluster_name}-",
             "sync-gateway",
             "external-dns-",
             "aws-load-balancer-controller-",
@@ -738,10 +766,10 @@ class RemoteKubernetes(Remote):
 
         for pod in pods:
             pod_name = pod['metadata']['name']
-            if "cb-example-perf" in pod_name:
+            if self.cb_cluster_name in pod_name:
                 pod_node = pod['spec']['nodeName']
                 pod_node_ip = host_to_ip[pod_node]
-                pod_host_name = "{}.cb-example-perf.default.svc".format(pod_name)
+                pod_host_name = f"{pod_name}.{self.cb_cluster_name}.default.svc"
                 host_to_ip[pod_host_name] = pod_node_ip
                 host_to_ip[pod_name] = pod_node_ip
                 host_to_ip[pod_node_ip] = pod_node_ip
@@ -845,7 +873,7 @@ class RemoteKubernetes(Remote):
 
     def upgrade_couchbase_server(self, target_version: str):
         new_spec = json.dumps({"spec": {"image": target_version}}, separators=(",", ":"))
-        cmd = f"patch --type=merge cbc cb-example-perf -p {new_spec}"
+        cmd = f"patch --type=merge cbc {self.cb_cluster_name} -p {new_spec}"
         self.k8s_client(cmd)
 
     def get_current_server_version(self) -> str:
@@ -890,7 +918,7 @@ class RemoteKubernetes(Remote):
         )
 
     def create_ingresses(self, lb_scheme: str, cng_enabled: bool = False):
-        with IngressFile() as ingress:
+        with IngressFile(self.cb_cluster_name) as ingress:
             ingress.configure_ingress(cng_enabled, lb_scheme, self._certificate_arn)
             ingress_file = ingress.dest_file
 
@@ -898,7 +926,7 @@ class RemoteKubernetes(Remote):
 
     def get_external_service_dns(self) -> str:
         return self.k8s_client(
-            "get service cb-example-perf-ui "
+            f"get service {self.cb_cluster_name}-ui "
             "-o jsonpath={.status.loadBalancer.ingress[0].hostname}",
             split_lines=False,
         ).decode("utf8")

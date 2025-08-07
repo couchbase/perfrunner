@@ -213,6 +213,30 @@ class ClusterSpec(Config):
     def is_openshift(self) -> bool:
         return self.cloud_provider == 'openshift'
 
+    @property
+    def clusters_modified_names(self) -> list[str]:
+        """Return cluster names appended with the deployment id."""
+        # When exposing the cluster through route53, cluster names are used to create records.
+        # To avoid conflicting records when running multiple tests,
+        # we append the deployment id to the names.
+        cluster_uuid = self.get_or_create_infrastructure_uuid()
+        return [
+            f"{cluster_name}-{cluster_uuid}" for cluster_name in self.config.options("clusters")
+        ]
+
+    def get_or_create_infrastructure_uuid(self) -> str:
+        """Get the UUID for the infrastructure if it exists, otherwise create a new one."""
+        if not self.config.has_section("infrastructure"):
+            return ""  # For on-prem tests, we don't need a UUID
+
+        cluster_uuid = self.infrastructure_settings.get("uuid")
+        if not cluster_uuid:
+            # Create a new UUID for the infrastructure and save it to the spec file
+            cluster_uuid = uuid4().hex[:6]
+            self.config.set("infrastructure", "uuid", cluster_uuid)
+            self.update_spec_file()
+        return cluster_uuid
+
     def kubernetes_version(self, cluster_name: str) -> str:
         return self.infrastructure_section(cluster_name).get("version", "1.32")
 
@@ -4350,13 +4374,15 @@ class TargetIterator(Iterable):
         test_config: TestConfig,
         prefix: str = None,
         buckets: Iterable[str] = None,
-        target_svc: str = "cb-example-perf",
+        target_svc: Optional[str] = None,
     ):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.prefix = prefix
         self.buckets = list(buckets) if buckets else self.test_config.buckets
         self.target_svc = target_svc
+        if not target_svc and len(cluster_spec.clusters_modified_names) > 0:
+            self.target_svc = cluster_spec.clusters_modified_names[0]
 
     def __iter__(self) -> Iterator[TargetSettings]:
         username = self.cluster_spec.rest_credentials[0]

@@ -186,13 +186,23 @@ class CAOConfigFile(CAOFiles):
 class CAOCouchbaseClusterFile(CAOFiles):
     """Couchbase cluster configuration."""
 
-    def __init__(self, version: str, cluster_spec: ClusterSpec, test_config: TestConfig = None):
+    CLUSTER_DEST_DIR = "cloud/operator"
+
+    def __init__(
+        self,
+        version: str,
+        cluster_spec: ClusterSpec,
+        cluster_name: str,
+        test_config: TestConfig = None,
+    ):
         super().__init__("couchbase-cluster_template", version)
+        self.cluster_name = cluster_name
+        self.dest_file = f"{self.CLUSTER_DEST_DIR}/{self.cluster_name}.yaml"
         self.test_config = test_config or TestConfig()
         self.cluster_spec = cluster_spec
 
-    def get_cluster_name(self) -> str:
-        return self.config["metadata"]["name"]
+    def set_cluster_name(self):
+        self.config["metadata"]["name"] = self.cluster_name
 
     def set_server_spec(self, server_tag: str):
         self.config["spec"]["image"] = server_tag
@@ -432,7 +442,7 @@ class CAOCouchbaseClusterFile(CAOFiles):
                 {
                     "adminConsoleServiceTemplate": template,
                     "exposedFeatureServiceTemplate": template,
-                    "dns": {"domain": "cb-example-perf.cbperfoc.com"},
+                    "dns": {"domain": f"{self.cluster_name}.cbperfoc.com"},
                 }
             )
             exposed_features = self.config["spec"]["networking"]["exposedFeatures"]
@@ -552,10 +562,11 @@ class CAOSyncgatewayDeploymentFile(CAOFiles):
     - Syncgateway service
     """
 
-    def __init__(self, syncgateway_image: str, node_count: int):
+    def __init__(self, syncgateway_image: str, node_count: int, cb_cluster_name: str):
         super().__init__("syncgateway_template", "")
         self.syncgateway_image = syncgateway_image
         self.node_count = node_count
+        self.cb_cluster_name = cb_cluster_name
 
     def configure_sgw(self):
         for config in self.all_configs:
@@ -584,8 +595,10 @@ class LoadBalancerControllerFile(CAOFiles):
 class IngressFile(CAOFiles):
     """Configure ingress with correct scheme and target backend."""
 
-    def __init__(self):
+    def __init__(self, cluster_name: str):
         super().__init__("ingress_template", "")
+        self.cluster_name = cluster_name
+        self.dest_file = f"cloud/operator/{self.cluster_name}-ingress.yaml"
 
     def configure_ingress(self, is_cng: bool, lb_scheme: str, cert_arn: str):
         self.config["metadata"]["annotations"].update(
@@ -594,16 +607,22 @@ class IngressFile(CAOFiles):
                 "alb.ingress.kubernetes.io/scheme": lb_scheme,
             }
         )
+        self.config["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"] = (
+            f"{self.cluster_name}"
+        )
+
         if is_cng:
             self.config["metadata"]["annotations"].update(
                 {
                     "alb.ingress.kubernetes.io/backend-protocol-version": "GRPC",
                 }
             )
-            self.config["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"].update({
-                "name": "cb-example-perf-cloud-native-gateway-service",
-                "port": {"number": 443},
-            })
+            self.config["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"].update(
+                {
+                    "name": f"{self.cluster_name}-cloud-native-gateway-service",
+                    "port": {"number": 443},
+                }
+            )
 
 
 class TimeTrackingFile(ConfigFile):

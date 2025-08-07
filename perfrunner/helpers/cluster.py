@@ -1204,10 +1204,12 @@ class CapellaClusterManager(ClusterManagerBase):
 
 
 class KubernetesClusterManager:
-
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+    def __init__(
+        self, cluster_spec: ClusterSpec, test_config: TestConfig, cluster_name: Optional[str] = None
+    ):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+        self.cluster_name = cluster_name or cluster_spec.clusters_modified_names[0]
         self.cao_version = ''
         # When managing a kubernetes cluster, always use the RemoteKubernetes class
         # even when running in mixed mode
@@ -1215,7 +1217,9 @@ class KubernetesClusterManager:
 
     def configure_cluster(self):
         logger.info('Preparing cluster configuration file')
-        with CAOCouchbaseClusterFile(self.cao_version, self.cluster_spec, self.test_config) as cm:
+        with CAOCouchbaseClusterFile(
+            self.cao_version, self.cluster_spec, self.cluster_name, self.test_config
+        ) as cm:
             cm.reload_from_dest()  # Installer will have set image tags in the dest file
             cm.set_server_count()
             cm.set_memory_quota()
@@ -1236,11 +1240,13 @@ class KubernetesClusterManager:
         if not autoscaling_settings.enabled:
             return
         logger.info("Configuring auto-scaling")
-        with CAOCouchbaseClusterFile(self.cao_version, self.cluster_spec, self.test_config) as cm:
+        with CAOCouchbaseClusterFile(
+            self.cao_version, self.cluster_spec, self.cluster_name, self.test_config
+        ) as cm:
             cm.reload_from_dest()  # Full cluster config already exists
             cm.configure_autoscaling(autoscaling_settings.server_group)
             self.remote.create_horizontal_pod_autoscaler(
-                cm.get_cluster_name(),
+                self.cluster_name,
                 autoscaling_settings.server_group,
                 int(autoscaling_settings.min_nodes),
                 int(autoscaling_settings.max_nodes),
@@ -1263,10 +1269,10 @@ class KubernetesClusterManager:
         if load_balancer_settings.create_ingress:
             self._deploy_an_ingress(load_balancer_settings.lb_scheme)
 
-        logger.info("Creating couchbase cluster")
+        logger.info(f"Creating couchbase cluster {self.cluster_name}")
         self.remote.create_from_file(self.cluster_file)
-        logger.info("Waiting for cluster")
-        with record_time("k8s_cluster_deployment"):
+        logger.info(f"Waiting for cluster {self.cluster_name} to become healthy")
+        with record_time("k8s_cluster_deployment", self.cluster_name):
             self.remote.wait_for_cluster_ready(timeout=timeout)
 
     def create_buckets(self):
@@ -1304,7 +1310,7 @@ class KubernetesClusterManager:
         sgw_image = self.cluster_spec.infrastructure_section("sgw").get(
             "image", "couchbase/sync-gateway:latest"
         )
-        with CAOSyncgatewayDeploymentFile(sgw_image, desired_size) as sgw_config:
+        with CAOSyncgatewayDeploymentFile(sgw_image, desired_size, self.cluster_name) as sgw_config:
             sgw_config.configure_sgw()
             sgw_deployment = sgw_config.dest_file
 

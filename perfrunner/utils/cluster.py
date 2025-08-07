@@ -46,13 +46,14 @@ def main():
     test_config.parse(args.test_config_fname, override=args.override)
 
     if cluster_spec.dynamic_infrastructure:
-        cm = KubernetesClusterManager(cluster_spec, test_config)
-        cm.configure_cluster()
-        cm.configure_autoscaling()
-        cm.deploy_couchbase_cluster()
-        cm.add_rbac_users()
-        cm.create_buckets()
-        cm.install_syncgateway()
+        for cluster_name in cluster_spec.clusters_modified_names:
+            cm = KubernetesClusterManager(cluster_spec, test_config, cluster_name)
+            cm.configure_cluster()
+            cm.configure_autoscaling()
+            cm.deploy_couchbase_cluster()
+            cm.add_rbac_users()
+            cm.create_buckets()
+            cm.install_syncgateway()
         return
 
     if cluster_spec.capella_infrastructure:

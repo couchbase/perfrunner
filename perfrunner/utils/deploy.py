@@ -71,7 +71,7 @@ class AWSDeployer(Deployer):
         self.ebs_csi_iam_policy_path = "cloud/infrastructure/aws/eks/ebs-csi-iam-policy.json"
         self.cloud_ini = self.settings.get('cloud_ini', 'cloud/infrastructure/cloud.ini')
         self.os_arch = self.settings.get('os_arch', 'x86_64')
-        self.deployment_id = uuid4().hex[:6]
+        self.deployment_id = self.infra_spec.get_or_create_infrastructure_uuid()
         name_prefix = options.tag.replace("jenkins-", "").lower()
         self.k8s_cluster_name = f"{name_prefix}-{self.deployment_id}"
         self.deployed_infra["kubeconfigs"] = []

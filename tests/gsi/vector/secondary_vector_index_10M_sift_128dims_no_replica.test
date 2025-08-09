@@ -18,7 +18,6 @@ kernel_mem_limit = 128G
 kernel_mem_limit_services = kv,index
 initial_nodes = 4
 num_buckets = 1
-online_cores = 16
 
 [compaction]
 db_percentage = 100

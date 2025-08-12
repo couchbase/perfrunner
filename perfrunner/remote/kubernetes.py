@@ -837,6 +837,9 @@ class RemoteKubernetes(Remote):
     def collect_info(self, timeout: int = 1200, task_regexp: str = None):
         pass
 
+    def get_pprof_files(self, worker_home: str):
+        pass
+
     def reset_memory_settings(self, host_string: str):
         pass
 

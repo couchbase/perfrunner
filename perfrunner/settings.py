@@ -3740,6 +3740,7 @@ class AIServicesSettings:
         self.model_source = options.get("model_source", "internal")  # alt: external
         self.model_name = options.get("model_name", "text-embedding-3-small")
         self.model_provider = options.get("provider", "openAI")
+        self.model_dimensions = int(options.get("model_dimensions", "1024"))
 
         # Will be fixed as part of CBPS-1490
         self.aws_credential_path = options.get("aws_credential_path", "/root/.ssh")

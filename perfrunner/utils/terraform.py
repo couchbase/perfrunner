@@ -2052,6 +2052,12 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
                 },
             },
         }
+
+        if model_kind == "embedding-generation":
+            payload["parameters"] = {
+                "tuning": {"dimensions": self.test_config.ai_services_settings.model_dimensions}
+            }
+
         logger.info(f"Deploying model with payload: {payload}")
         try:
             resp = self.provisioned_api.deploy_model(self.tenant_id, payload)

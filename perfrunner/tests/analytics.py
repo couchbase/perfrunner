@@ -527,6 +527,11 @@ class AnalyticsTest(PerfTest):
         logger.info(f"Number of items in dataset {dataset}: {num_items}")
         return num_items
 
+    def monitor_cbas_pending_ops(self):
+        t0 = time.time()
+        self.monitor.monitor_cbas_pending_ops(self.analytics_nodes)
+        logger.info(f"Time spent waiting to finish pending ops (s): {time.time() - t0:.2f}")
+
 
 class BigFunTest(AnalyticsTest):
     COLLECTORS = {"analytics": True}
@@ -926,7 +931,7 @@ class BigFunQueryFailoverTest(BigFunQueryTest):
         self.sync()
 
         self.disconnect_link()
-        self.monitor.monitor_cbas_pending_ops(self.analytics_nodes)
+        self.monitor_cbas_pending_ops()
         active_analytics_nodes = self.failover()
 
         logger.info('Running warmup phase')
@@ -955,6 +960,9 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
         self.wait_for_persistence()
 
         self.sync()
+
+        self.disconnect_link()
+        self.monitor_cbas_pending_ops()
 
         self.rebalance_cbas()
 

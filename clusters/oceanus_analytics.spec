@@ -13,8 +13,5 @@ hosts =
 data = /data
 analytics = /data1 /data2
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = E5-2680 v3 (24 cores)
-Memory = 64 GB
-Disk = 2 x Samsung SM863
+[metadata]
+cluster = oceanus

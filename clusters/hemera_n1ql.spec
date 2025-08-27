@@ -17,9 +17,4 @@ data = /data
 
 [metadata]
 source = hemera
-
-[parameters]
-OS = Ubuntu 20.04
-CPU = Data: 2xGold 6230 (80 vCPU), Index: CPU 2xGold 6230 (80 vCPU)
-Memory = Data: 128 GB, Index: 512 GB
-Disk = Samsung DCT883 960GB
+cluster = hemera

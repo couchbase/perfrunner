@@ -16,8 +16,5 @@ hosts =
 [storage]
 data = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = Data: E5-2630 v2 (24 vCPU), Query & Index: E5-2680 v3 (48 vCPU)
-Memory = Data & Query: 64GB, Index: 320GB
-Disk = Samsung SM863
+[metadata]
+cluster = arke

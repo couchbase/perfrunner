@@ -12,8 +12,5 @@ hosts =
 [storage]
 data = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = 2 x Gold 6230 (80 vCPU)
-Memory = 128 GB
-Disk = Samsung SM863
+[metadata]
+cluster = athena

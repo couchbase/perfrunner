@@ -9,8 +9,9 @@ hosts =
 [storage]
 data = /data
 
+[metadata]
+cluster = triton
+
 [parameters]
-OS = Ubuntu 20.04
 CPU = E5-2680 v3 (48 vCPU)
 Memory = 256GB
-Disk = Samsung SM863

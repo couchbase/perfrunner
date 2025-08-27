@@ -19,8 +19,5 @@ hosts =
 [storage]
 data = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = 2 x Gold 6230 (80 vCPU)
-Memory = 128GB
-Disk =  Samsung DCT883 960GB
+[metadata]
+cluster = hercules

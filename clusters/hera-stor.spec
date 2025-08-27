@@ -9,8 +9,5 @@ hosts =
 [storage]
 data = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = E5-2630 v3 (32 vCPU)
-Memory = 64GB
-Disk = Samsung SM863
+[metadata]
+cluster = hera

@@ -13,8 +13,5 @@ hosts =
 data = /data
 backup = /workspace/backup
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = Data: E5-2630 v4 (40 vCPU)
-Memory = 64GB
-Disk = Samsung SM863
+[metadata]
+cluster = triton

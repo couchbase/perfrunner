@@ -11,8 +11,5 @@ hosts =
 data = /data
 index = /data1
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = E5-2680 v3 (24 cores)
-Memory = 64 GB
-Disk = Samsung SM863
+[metadata]
+cluster = oceanus

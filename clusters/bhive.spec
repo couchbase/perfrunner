@@ -12,8 +12,5 @@ hosts =
 [storage]
 data = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = Data/Index: AMD EPYC 7643 (192 vCPU)
-Memory = Data/Index: 256 GB
-Disk = Samsung PM1743 15.36TB
+[metadata]
+cluster = bhive

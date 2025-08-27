@@ -14,9 +14,4 @@ data = f:\data
 
 [metadata]
 source = zeus
-
-[parameters]
-OS = Windows Server 2012
-CPU = E5-2630 v2 (24 vCPU)
-Memory = 64 GB
-Disk = Samsung Pro 850
+cluster = zeus

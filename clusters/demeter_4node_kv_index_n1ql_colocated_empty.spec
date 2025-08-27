@@ -13,8 +13,5 @@ hosts =
 data = /data
 index = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = E5-2630 v3 (32 vCPU)
-Memory = 64 GB
-Disk = Samsung 860 1TB
+[metadata]
+cluster = demeter

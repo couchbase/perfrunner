@@ -15,8 +15,8 @@ hosts =
 data = /data
 analytics = /data3 /data4 /data5 /data6 /data7
 
+[metadata]
+cluster = oceanus
+
 [parameters]
-OS = Ubuntu 20.04
-CPU = E5-2680 v3 (24 cores)
-Memory = 64 GB
 Disk = 5 x Seagate HDD

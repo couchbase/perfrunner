@@ -17,8 +17,5 @@ hosts =
 [storage]
 data = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = E5-2680 v3 (24 vCPU)
-Memory = 64GB
-Disk = Samsung Pro 850
+[metadata]
+cluster = themis

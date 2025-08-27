@@ -19,8 +19,5 @@ hosts =
 data = /data
 index = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = E5-2680 v4 (16 vCPU)
-Memory = 32GB
-Disk = Samsung DCT883
+[metadata]
+cluster = rhea

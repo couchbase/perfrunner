@@ -17,8 +17,5 @@ data = /data
 index = /data
 backup = /data/workspace/backup
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = E5-2680 v3 (48 vCPU)
-Memory = 64GB
-Disk = Samsung Pro 850
+[metadata]
+cluster = hebe

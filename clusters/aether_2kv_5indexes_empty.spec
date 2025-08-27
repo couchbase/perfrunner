@@ -15,8 +15,5 @@ hosts =
 [storage]
 data = /data
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = Data: 2xGold 6230 (80 vCPU), Index: CPU 2xGold 6230 (80 vCPU)
-Memory = Data: 128 GB, Index: 512 GB
-Disk = Samsung SSD 860 1TB
+[metadata]
+cluster = aether

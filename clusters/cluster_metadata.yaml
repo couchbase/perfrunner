@@ -1,0 +1,129 @@
+default:
+  parameters:
+    OS: Ubuntu 24.04
+aether:
+  parameters:
+    CPU: "Data: 2xGold 6230 (80 vCPU), Index: CPU 2xGold 6230 (80 vCPU)"
+    Memory: "Data: 128 GB, Index: 512 GB"
+    Disk: Samsung SSD 860 1TB
+ares:
+  parameters:
+    CPU: E5-2630 v4 (40 vCPU)
+    Memory: 64 GB
+    Disk: Samsung SM863
+arke:
+  parameters:
+    CPU: "Data: E5-2630 v2 (24 vCPU), Query & Index: E5-2680 v3 (48 vCPU)"
+    Memory: "Data & Query: 64GB, Index: 320GB"
+    Disk: Samsung SM863
+artemis:
+  parameters:
+    CPU: E5-2640 v4 (40 vCPU)
+    Memory: 64 GB
+    Disk: "Data: Samsung 870 EVO, Index: Samsung 850 Pro"
+athena:
+  parameters:
+    CPU: 2 x Gold 6230 (80 vCPU)
+    Memory: 128 GB
+    Disk: Samsung SM863
+atlas:
+  parameters:
+    CPU: E5-2680 v3 (48 vCPU)
+    Memory: 256 GB
+    Disk: Samsung PM863
+bhive:
+  parameters:
+    CPU: "Data/Index: AMD EPYC 7643 (192 vCPU)"
+    Memory: "Data/Index: 256 GB"
+    Disk: Samsung PM1743 15.36TB
+demeter:
+  parameters:
+    CPU: E5-2630 v3 (32 vCPU)
+    Memory: 64 GB
+    Disk: Samsung 860 1TB
+dev-nvme:
+  parameters:
+    CPU: Gold 6230 2.1GHz (80 vCPU)
+    Memory: 128 GB
+    Disk: Intel P4610 3.2TB NVMe x3, RAID0
+hebe:
+  parameters:
+    CPU: E5-2680 v3 (48 vCPU)
+    Memory: 64 GB
+    Disk: Samsung PM863a
+hemera:
+  parameters:
+    CPU: "Data: 2xGold 6230 (80 vCPU), Index: CPU 2xGold 6230 (80 vCPU)"
+    Memory: "Data: 128 GB, Index: 512 GB"
+    Disk: "Samsung DCT883 960GB"
+hera:
+  parameters:
+    CPU: E5-2630 v3 (32 vCPU)
+    Memory: 64GB
+    Disk: Samsung PM863
+hercules:
+  parameters:
+    CPU: 2 x Gold 6230 (80 vCPU)
+    Memory: 128GB
+    Disk: Samsung DCT883 960GB
+hestia:
+  parameters:
+    CPU: E5-2630 (24 vCPU)
+    Memory: 64GB
+    Disk: Samsung Pro 850
+iris:
+  parameters:
+    CPU: "Data: E5-2680 v3 (48 vCPU), Query & Index: E5-2680 v3 (48 vCPU)"
+    Memory: "Data & Query: 64GB, Index: 512GB"
+    Disk: Samsung Pro 850
+leto:
+  parameters:
+    CPU: E5-2630 (24 vCPU)
+    Memory: 64GB
+    Disk: Samsung Pro 850
+magma-nvme:
+  parameters:
+    CPU: "Data: Gold 6230 2.1GHz (80 vCPU), Index: AMD EPYC 7643 (192 vCPU)"
+    Memory: "Data: 128 GB, Index: 256 GB"
+    Disk: "Data: Intel P4610 3.2TB NVMe x3, RAID0; Index: Samsung PM1743 15.36TB"
+magma:
+  parameters:
+    CPU: E5-2680 4 (56 vCPU)
+    Memory: 256GB
+    Disk: Samsung PM863
+nyx:
+  parameters:
+    CPU: "Data: E5-2630 (24 vCPU), Index: CPU E5-2680 v3 (48 vCPU)"
+    Memory: "Data: 64GB, Index: 512GB"
+    Disk: Samsung PM863 SSD
+oceanus:
+  parameters:
+    CPU: E5-2680 v3 (24 cores)
+    Memory: 64 GB
+    Disk: 2 x Samsung SM863
+rhea:
+  parameters:
+    CPU: E5-2680 v4 2.40GHz (56 vCPU)
+    Memory: 64 GB
+    Disk: Samsung SSD 883 x3, RAID0
+themis:
+  parameters:
+    CPU: E5-2680 v3 (24 vCPU)
+    Memory: 64GB
+    Disk: Samsung Pro 850
+titan:
+  parameters:
+    CPU: E5-2680 v3 (48 vCPU)
+    Memory: 256 GB
+    Disk: Samsung PM863a
+triton:
+  parameters:
+    CPU: "Data: E5-2630 v4 (40 vCPU), Query & Index: E5-2680 v3 (48 vCPU)"
+    Memory: "Data & Query: 64GB, Index: 256GB"
+    Disk: Samsung SM863
+zeus:
+  parameters:
+    OS: Windows Server 2012
+    CPU: "Data: E5-2630 v2 (24 vCPU), Query & Index: E5-2680 v3 (48 vCPU)"
+    Memory: "Data: 64GB, Query & Index: 256GB"
+    Disk: Samsung Pro 850

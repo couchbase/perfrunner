@@ -14,8 +14,5 @@ data = /data
 index = /index
 backup = /data/workspace/backup
 
-[parameters]
-OS = Ubuntu 20.04
-CPU = E5-2630 (24 vCPU)
-Memory = 64 GB
-Disk = Samsung Pro 850
+[metadata]
+cluster = leto

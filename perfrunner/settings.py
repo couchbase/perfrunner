@@ -676,7 +676,18 @@ class ClusterSpec(Config):
 
     @property
     def parameters(self) -> dict:
-        return self._get_options_as_dict('parameters')
+        from perfrunner.helpers.config_files import ClusterMetadataFile
+
+        csp = ""
+        if self.cloud_infrastructure:
+            csp = self.capella_backend or self.cloud_provider
+
+        overrides = self._get_options_as_dict("parameters")
+        cluster_name = self.config.get(
+            "metadata", "cluster", fallback=ClusterMetadataFile.DEFAULT_KEY_GROUP
+        )
+        with ClusterMetadataFile(csp) as metadata_file:
+            return metadata_file.get_parameters(cluster_name, overrides)
 
     @property
     def capella_cluster_ids(self) -> list[str]:

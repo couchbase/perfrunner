@@ -726,8 +726,8 @@ class MetadataFile(ConfigFile):
 
     DEFAULT_KEY_GROUP = "default"
 
-    def __init__(self, file_path: str):
-        super().__init__(file_path, FileType.JSON)
+    def __init__(self, file_path: str, file_type: FileType = FileType.JSON):
+        super().__init__(file_path, file_type)
 
     def get_metadata(self, key_group: str, key: str) -> str:
         """Get metadata with a specific key from a key group.
@@ -754,3 +754,37 @@ class SecretsFile(MetadataFile):
 
     def __init__(self):
         super().__init__(os.getenv("PERFRUNNER_SECRETS_JSON", ".secrets.json"))
+
+
+class ClusterMetadataFile(MetadataFile):
+    """YAML file containing cluster metadata."""
+
+    def __init__(self, csp: Optional[str] = None):
+        # Separate cluster metadata files for on-prem and cloud clusters. This is because for
+        # on-prem we have a limited number of clusters whose parameters are shared for cluster specs
+        # derived from the same machines. For cloud clusters, parameters are derived from instance
+        # types used in the cluster spec.
+        cluster_metadata_file = "clusters/cluster_metadata.yaml"
+        if csp:
+            cluster_metadata_file = f"cloud/infrastructure/{csp}_cluster_metadata.yaml"
+
+        super().__init__(cluster_metadata_file, FileType.YAML)
+
+    def get_parameters(self, name: str, overrides: dict = {}) -> dict:
+        """Get cluster parameters for the given name."""
+        cluster_params = self.config.get(self.DEFAULT_KEY_GROUP, {}).get(
+            "parameters", {}
+        ) | self.config.get(name, {}).get("parameters", {})
+
+        # We want to treat OS and CPU keys as all uppercase,
+        # and everything else as first letter uppercase
+        for key, value in overrides.items():
+            capkey = key.capitalize()
+            if capkey in ("Os", "Cpu", "Gpu"):
+                capkey = key.upper()
+            cluster_params[capkey] = value
+        return cluster_params
+
+    def write(self):
+        # Ensures we dont write back to the metadata file
+        pass

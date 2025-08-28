@@ -1501,61 +1501,71 @@ def rename_troublemaker_logs(from_host: str):
     local('rm ./troublemaker.log')
 
 
-def run_blackholepuller(host, clients, timeout, stderr_file_name, log_file_name):
-    local('./blackholePuller -url http://sg-user-0:password@{}:4984/db-1 -clients {}'
-          ' -timeout {}s 2>{}.log 1>{}.json'.format(host, clients,
-                                                    timeout,
-                                                    stderr_file_name,
-                                                    log_file_name))
+def run_blackholepuller(host: str, clients: int, timeout: int, subprotocolVersion: int,
+                        stderr_file_name: str, log_file_name: str):
+    local(f'./blackholePuller -url http://sg-user-0:password@{host}:4984/db-1 -clients {clients}'
+          f' -timeout {timeout}s -subprotocolVersion {subprotocolVersion}'
+          f' 2>{stderr_file_name}.log 1>{log_file_name}.json')
 
 
-def run_blackholepuller_adv(url_str, clients, timeout, stderr_file_name, log_file_name):
-    local('./blackholePuller -url {} -clients {}'
-          ' -timeout {}s 2>{}.log 1>{}.json'.format(url_str, clients,
-                                                    timeout,
-                                                    stderr_file_name,
-                                                    log_file_name))
+def run_blackholepuller_adv(url_str: str, clients: int, timeout: int, subprotocolVersion: int,
+                            stderr_file_name: str, log_file_name: str):
+    local(f'./blackholePuller -url {url_str} -clients {clients}'
+          f' -timeout {timeout}s -subprotocolVersion {subprotocolVersion}'
+          f' 2>{stderr_file_name}.log 1>{log_file_name}.json')
 
 
-def run_blackholepuller_users(host, clients, timeout, users_file_name, stderr_file_name,
-                              log_file_name):
-    local('./blackholePuller -url http://sg-user-0:password@{}:4984/db-1 -clients {}'
-          ' -timeout {}s -userPasswordFilepath {} 2>{}.log 1>{}.json'.format(host, clients,
-                                                                             timeout,
-                                                                             users_file_name,
-                                                                             stderr_file_name,
-                                                                             log_file_name))
+def run_blackholepuller_users(host: str, clients: int, timeout: int, subprotocolVersion: int,
+                              users_file_name: str, stderr_file_name: str, log_file_name: str):
+    local(f'./blackholePuller -url http://sg-user-0:password@{host}:4984/db-1 -clients {clients}'
+          f' -timeout {timeout}s -userPasswordFilepath {users_file_name}'
+          f' -subprotocolVersion {subprotocolVersion}'
+          f' 2>{stderr_file_name}.log 1>{log_file_name}.json')
 
 
-def run_blackholepuller_users_adv(url_str, clients, timeout, users_file_name, stderr_file_name,
-                                  log_file_name):
-    local('./blackholePuller -url {} -clients {}'
-          ' -timeout {}s -userPasswordFilepath {} 2>{}.log 1>{}.json'.format(url_str, clients,
-                                                                             timeout,
-                                                                             users_file_name,
-                                                                             stderr_file_name,
-                                                                             log_file_name))
+def run_blackholepuller_users_adv(url_str: str, clients: int, timeout: int,
+                                  subprotocolVersion: int, users_file_name: str,
+                                  stderr_file_name: str, log_file_name: str):
+    local(f'./blackholePuller -url {url_str} -clients {clients}'
+          f' -timeout {timeout}s -userPasswordFilepath {users_file_name}'
+          f' -subprotocolVersion {subprotocolVersion}'
+          f' 2>{stderr_file_name}.log 1>{log_file_name}.json')
 
 
-def run_newdocpusher(host, changebatchset, clients, timeout, stderr_file_name,
-                     log_file_name, doc_id_prefix, doc_size):
+def run_newdocpusher(host: str, changebatchset: int, clients: int, timeout: int,
+                     subprotocolVersion: int, useProposeChanges: bool, stderr_file_name: str,
+                     log_file_name: str, doc_id_prefix: str, doc_size: int):
 
-    local('./newDocPusher -url http://sg-user-0:password@{}:4984/db-1 -changesBatchSize {} '
-          '-clients {} -docSize {} -docIDPrefix {}'
-          ' -timeout {}s 2>{}.log 1>{}.json'.format(host, changebatchset, clients,
-                                                    doc_size, doc_id_prefix,
-                                                    timeout, stderr_file_name,
-                                                    log_file_name))
+    args = filter(None, [
+        f"-url http://sg-user-0:password@{host}:4984/db-1",
+        f"-changesBatchSize {changebatchset}",
+        f"-clients {clients}",
+        f"-docSize {doc_size}",
+        f"-docIDPrefix {doc_id_prefix}",
+        f"-timeout {timeout}s",
+        f"-subprotocolVersion {subprotocolVersion}",
+        "-useProposeChanges" if useProposeChanges else None,
+        ])
+
+    local(f"./newDocPusher {' '.join(args)} 2>{stderr_file_name}.log 1>{log_file_name}.json")
 
 
-def run_newdocpusher_adv(url_str, changebatchset, clients, timeout, stderr_file_name,
-                         log_file_name, doc_id_prefix, doc_size):
+def run_newdocpusher_adv(url_str: str, changebatchset: int, clients: int, timeout: int,
+                         subprotocolVersion: int, useProposeChanges: bool, stderr_file_name: str,
+                         log_file_name: str, doc_id_prefix: str, doc_size: int):
     print('printing url string', url_str)
-    local('./newDocPusher -url {} -changesBatchSize {} -clients {} '
-          '-docSize {} -docIDPrefix {}'
-          ' -timeout {}s 2>{}.log 1>{}.json'.format(url_str, changebatchset, clients,
-                                                    doc_size, doc_id_prefix, timeout,
-                                                    stderr_file_name, log_file_name))
+    args = filter(None, [
+        f"-url {url_str}",
+        f"-changesBatchSize {changebatchset}",
+        f"-clients {clients}",
+        f"-docSize {doc_size}",
+        f"-docIDPrefix {doc_id_prefix}",
+        f"-timeout {timeout}s",
+        f"-subprotocolVersion {subprotocolVersion}",
+        "-useProposeChanges" if useProposeChanges else None,
+        ])
+
+    local(f"./newDocPusher {' '.join(args)} 2>{stderr_file_name}.log 1>{log_file_name}.json")
 
 
 def download_blockholepuller():

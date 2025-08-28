@@ -294,14 +294,14 @@ class Remote:
     @all_clients
     def download_blackholepuller(self, worker_home: str):
         logger.info("downloading blackholepuller")
-        with cd('/root/sg_dev_tools_new/replicator/blackholePuller'):
+        with cd('/root/sg_dev_tools/replicator/blackholePuller'):
             run('cp blackholePuller /tmp/perfrunner/perfrunner/')
             run('chmod +x /tmp/perfrunner/perfrunner/blackholePuller')
 
     @all_clients
     def download_newdocpusher(self, worker_home: str):
         logger.info('downloading newdocpusher')
-        with cd('/root/sg_dev_tools_new/replicator/newDocPusher'):
+        with cd('/root/sg_dev_tools/replicator/newDocPusher'):
             run('cp newDocPusher /tmp/perfrunner/perfrunner/')
             run('chmod +x /tmp/perfrunner/perfrunner/newDocPusher')
 

@@ -3470,6 +3470,8 @@ class SyncgatewaySettings:
     SG_BLACKHOLEPULLER_CLIENTS = 6
     SG_BLACKHOLEPULLER_USERS = 0
     SG_BLACKHOLEPULLER_TIMEOUT = 600    # in seconds
+    SG_BLACKHOLEPULLER_SUBPROTOCOL = 3
+    SG_BLACKHOLEPULLER_USE_PROPOSE_CHANGES = False
     SG_DOCSIZE = 10240
     SGTOOL_CHANGEBATCHSET = 200
 
@@ -3569,6 +3571,12 @@ class SyncgatewaySettings:
                                                         self.SG_BLACKHOLEPULLER_USERS))
         self.sg_blackholepuller_timeout = options.get("sg_blackholepuller_timeout",
                                                       self.SG_BLACKHOLEPULLER_TIMEOUT)
+        self.sg_blackholepuller_subprotocol = options.get("sg_blackholepuller_subprotocol",
+                                                          self.SG_BLACKHOLEPULLER_SUBPROTOCOL)
+        self.sg_blackholepuller_use_propose_changes = bool(options.get(
+            "sg_blackholepuller_use_propose_changes",
+            self.SG_BLACKHOLEPULLER_USE_PROPOSE_CHANGES,
+        ))
         self.sg_docsize = int(options.get("sg_docsize", self.SG_DOCSIZE))
         self.sgtool_changebatchset = int(options.get("sgtool_changebatchset",
                                                      self.SGTOOL_CHANGEBATCHSET))

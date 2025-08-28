@@ -12,7 +12,7 @@ server_processes = projector
 
 [cluster]
 mem_quota = 100000
-index_mem_quota = 100000
+index_mem_quota = 117760
 online_cores = 16
 kernel_mem_limit = 128G
 kernel_mem_limit_services = kv,index

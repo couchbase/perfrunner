@@ -2045,6 +2045,7 @@ class N1qlVectorLatencyThroughputTestWithBgOps(
     def access(self):
         access_settings = self.test_config.access_settings
         access_settings.n1ql_workers = 0
+        access_settings.vector_query_map = self.test_config.index_settings.vector_query_map
         PerfTest.access_bg(self, settings=access_settings)
         time.sleep(60) # to start background workload
         super().access()

@@ -339,7 +339,7 @@ class AIGatewayTest(PerfTest):
         )
         self.gateway_endpoint = model.get("model_endpoint")
         self.aibench_settings.model_name = model.get("model_name")
-        self.api_key = ControlPlaneManager.get_model_api_key()
+        self.api_key = ControlPlaneManager.get_model_api_key(model.get("model_id"))
         first_bucket = self.test_config.buckets[0] if self.test_config.buckets else ""
         self.target_iterator = [
             AIGatewayTargetSettings(

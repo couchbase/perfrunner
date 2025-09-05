@@ -2636,6 +2636,7 @@ class RestoreSettings(CbbackupmgrSettings):
         self.import_file = options.get("import_file", self.IMPORT_FILE)
         self.map_data = options.get("map_data", self.MAP_DATA)
         self.modify_storage_dir_name = bool(options.get("modify_storage_dir_name", 0))
+        self.filter_keys = options.get("filter_keys", None)
 
         if self.backup_storage:
             if self.backup_storage.startswith("s3://"):

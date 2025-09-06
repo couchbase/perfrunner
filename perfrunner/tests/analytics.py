@@ -1254,7 +1254,9 @@ class CH2Test(AnalyticsTest):
             self.test_config.ch2_settings.duration - self.test_config.ch2_settings.warmup_duration
         )
         ch2_metrics = self.metrics.ch2_metrics(
-            duration=measure_time, logfile=log_file or self.test_config.ch2_settings.workload
+            duration=measure_time,
+            logfile=log_file or self.test_config.ch2_settings.workload,
+            tclients=self.test_config.ch2_settings.tclients,
         )
 
         if self.test_config.ch2_settings.tclients:
@@ -1276,14 +1278,14 @@ class CH2Test(AnalyticsTest):
         if self.test_config.ch2_settings.aclients:
             self.reporter.post(
                 *self.metrics.ch2_geo_mean_query_time(
-                    ch2_metrics.geo_mean_cbas_query_time,
+                    ch2_metrics.geo_mean_cbas_query_time_secs,
                     self.test_config.ch2_settings.tclients,
                     extra_metric_id_suffix,
                 )
             )
             self.reporter.post(
                 *self.metrics.ch2_analytics_query_set_time(
-                    ch2_metrics.average_cbas_query_set_time,
+                    ch2_metrics.average_cbas_query_set_time_secs,
                     self.test_config.ch2_settings.tclients,
                     extra_metric_id_suffix,
                 )
@@ -2176,7 +2178,9 @@ class CH3Test(CH2Test):
             self.test_config.ch3_settings.duration - self.test_config.ch3_settings.warmup_duration
         )
         ch3_metrics = self.metrics.ch3_metrics(
-            duration=measure_time, logfile=self.test_config.ch3_settings.workload
+            duration=measure_time,
+            logfile=self.test_config.ch3_settings.workload,
+            tclients=self.test_config.ch3_settings.tclients,
         )
 
         self.reporter.post(
@@ -2192,7 +2196,8 @@ class CH3Test(CH2Test):
         if self.test_config.ch3_settings.workload == 'ch3_mixed':
             self.reporter.post(
                 *self.metrics.ch2_analytics_query_set_time(
-                    ch3_metrics.average_cbas_query_set_time, self.test_config.ch3_settings.tclients
+                    ch3_metrics.average_cbas_query_set_time_secs,
+                    self.test_config.ch3_settings.tclients,
                 )
             )
 

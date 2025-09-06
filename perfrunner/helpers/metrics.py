@@ -5,7 +5,7 @@ import os
 import re
 import statistics
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -46,29 +46,30 @@ def strip(s: str) -> str:
 @dataclass
 class CH2Metrics:
     # transactions
-    total_txn_time_us: float = 0
-    txn_success_count: int = 0
+    total_no_txn_time_us: float = 0
+    no_txn_success_count: int = 0
+    txn_workload_duration_secs: float = 0
 
     # analytical queries
-    geo_mean_cbas_query_time: float = 0
-    average_cbas_query_set_time: float = 0
+    geo_mean_cbas_query_time_secs: float = 0
+    average_cbas_query_set_time_secs: float = 0
     cbas_qph: float = 0
 
     @property
     def tpm(self) -> float:
-        """Return transactions per minute."""
+        """Return NewOrder txns successfully executed per minute while other txns were running."""
         return (
-            self.txn_success_count * 60 / self.average_cbas_query_set_time
-            if self.average_cbas_query_set_time > 0
+            self.no_txn_success_count * 60 / self.txn_workload_duration_secs
+            if self.txn_workload_duration_secs > 0
             else 0
         )
 
     @property
     def txn_response_time(self) -> float:
-        """Return average transaction response time in seconds."""
+        """Return average NewOrder txn response time in seconds."""
         return (
-            self.total_txn_time_us / 1e6 / self.txn_success_count
-            if self.txn_success_count > 0
+            self.total_no_txn_time_us / 1e6 / self.no_txn_success_count
+            if self.no_txn_success_count > 0
             else float("inf")
         )
 
@@ -79,6 +80,9 @@ class CH3Metrics(CH2Metrics):
     average_fts_query_set_time_ms: float = 0
     average_fts_client_time_ms: float = 0
     fts_qph: float = 0
+
+
+CHXMetrics = TypeVar("CHXMetrics", CH2Metrics, CH3Metrics)
 
 
 class MetricHelper:
@@ -1751,24 +1755,48 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
-    def ch2_metrics(self, duration: float, logfile: str) -> CH2Metrics:
-        filename = logfile + '.log'
-        metrics = CH2Metrics(average_cbas_query_set_time=duration)
+    def _chX_process_line(self, line: str, metrics: CHXMetrics, tclients: int):
+        """Process a line from a CH2/CH3 log file and update the given metrics object if needed."""
+        if "NEW_ORDER" in line and "success" in line:
+            elements = line.split()
+            # "total_no_txn_time_us" is number of microsecs spent executing NEW_ORDER txns
+            # by all tclients (so wall-clock time spent is total_no_txn_time_us / tclients)
+            metrics.total_no_txn_time_us = float(elements[2])
+            metrics.no_txn_success_count = int("".join(filter(str.isdigit, elements[-1])))
+        elif line.strip().startswith("TOTAL"):
+            # TOTAL time is the sum of microsecs spent executing txns by all tclients,
+            # hence we divide by tclients to get average wall-clock time spent per client
+            metrics.txn_workload_duration_secs = float(line.split()[2]) / 1e6 / tclients
+        elif "OVERALL GEOMETRIC MEAN" in line:
+            metrics.geo_mean_cbas_query_time_secs = float(line.split()[-1])
+        elif "AVERAGE TIME PER QUERY SET" in line:
+            metrics.average_cbas_query_set_time_secs = float(line.split()[-1])
+        elif "QUERIES PER HOUR" in line:
+            metrics.cbas_qph = float(line.split()[-1])
+
+        if isinstance(metrics, CH3Metrics):
+            if "AVERAGE TIME PER FTS QUERY SET" in line:
+                metrics.average_fts_query_set_time_ms = float(line.split()[-1])
+            elif "AVERAGE TIME PER FTS CLIENT" in line:
+                metrics.average_fts_client_time_ms = float(line.split()[-1])
+            elif "FTS QUERIES PER HOUR" in line:
+                metrics.fts_qph = float(line.split()[-1])
+
+    def _chX_metrics(
+        self, metrics: CHXMetrics, duration: float, logfile: str, tclients: int
+    ) -> CHXMetrics:
+        filename = logfile + ".log"
+        metrics.txn_workload_duration_secs = duration
         with open(filename) as fh:
             for line in fh.readlines():
-                if 'NEW_ORDER' in line and 'success' in line:
-                    elements = line.split()
-                    # "total_txn_time" is the number of microseconds spent executing NEW_ORDER txns
-                    # by all tclients (so wall-clock time spent is total_txn_time / tclients)
-                    metrics.total_txn_time_us = float(elements[2].split(".")[0])
-                    metrics.txn_success_count = int("".join(filter(str.isdigit, elements[-1])))
-                if "OVERALL GEOMETRIC MEAN" in line:
-                    metrics.geo_mean_cbas_query_time = float(line.split()[-1])
-                if 'AVERAGE TIME PER QUERY SET' in line:
-                    metrics.average_cbas_query_set_time = float(line.split()[-1])
-                if "QUERIES PER HOUR" in line:
-                    metrics.cbas_qph = float(line.split()[-1])
+                self._chX_process_line(line, metrics, tclients)
         return metrics
+
+    def ch2_metrics(self, duration: float, logfile: str, tclients: int) -> CH2Metrics:
+        return self._chX_metrics(CH2Metrics(), duration, logfile, tclients)
+
+    def ch3_metrics(self, duration: float, logfile: str, tclients: int) -> CH3Metrics:
+        return self._chX_metrics(CH3Metrics(), duration, logfile, tclients)
 
     def custom_metric(
         self, value: float, title_template: str, metric_id_suffix: str, chirality: int = 1
@@ -1835,26 +1863,6 @@ class MetricHelper:
             f"Analytics queries per hour, {{}}, {tclients} tclients",
             f"analytics_qph{'_' + extra_metric_id_suffix if extra_metric_id_suffix else ''}",
         )
-
-    def ch3_metrics(self, duration: float, logfile: str) -> CH3Metrics:
-        filename = logfile + '.log'
-        metrics = CH3Metrics(average_cbas_query_set_time=duration)
-        with open(filename) as fh:
-            for line in fh.readlines():
-                if 'NEW_ORDER' in line and 'success' in line:
-                    elements = line.split()
-                    # For CH3 the txn times are in ms not us so we have to convert
-                    metrics.total_txn_time_us = float(elements[2].split(".")[0]) * 1000
-                    metrics.txn_success_count = int("".join(filter(str.isdigit, elements[-1])))
-                if 'AVERAGE TIME PER ANALYTICS QUERY SET' in line:
-                    metrics.average_cbas_query_set_time = float(line.split()[-1])
-                if 'AVERAGE TIME PER FTS QUERY SET' in line:
-                    metrics.average_fts_query_set_time_ms = float(line.split()[-1])
-                if 'AVERAGE TIME PER FTS CLIENT' in line:
-                    metrics.average_fts_client_time_ms = float(line.split()[-1])
-                if 'FTS QUERIES PER HOUR' in line:
-                    metrics.fts_qph = float(line.split()[-1])
-        return metrics
 
     def ch3_fts_query_time(self, query_time: float, tclients: int) -> Metric:
         return self.custom_metric(

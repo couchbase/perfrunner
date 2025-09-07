@@ -32,6 +32,9 @@ pip-log.txt
 *.rpm
 *.zip
 *.gz
+*.lock.hcl
+*.tfvars*
+.terraform
 target/
 spring_latency/
 

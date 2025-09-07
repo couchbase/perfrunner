@@ -17,6 +17,7 @@ from requests.exceptions import HTTPError
 from logger import logger
 from perfrunner.helpers.config_files import (
     ClusterAnsibleInventoryFile,
+    ConfigFile,
     TimeTrackingFile,
     record_time,
 )
@@ -350,33 +351,23 @@ class CloudVMDeployer:
         if not can_terraform:
             return False
 
-        managed_id = self._get_managed_id()
-        allowed_ips = self._get_allowed_ips()
-
-        replacements = {
-            "<CLOUD_REGION>": self.region,
-            "<CLOUD_ZONE>": self.zone or "",
-            "<CLUSTER_NODES>": tfvar_nodes["clusters"],
-            "<CLIENT_NODES>": tfvar_nodes["clients"],
-            "<UTILITY_NODES>": tfvar_nodes["utilities"],
-            "<SYNCGATEWAY_NODES>": tfvar_nodes["syncgateways"],
-            "<KAFKA_NODES>": tfvar_nodes["kafka_brokers"],
-            "<CLOUD_STORAGE>": self.cloud_storage,
-            "<GLOBAL_TAG>": global_tag,
-            "<UUID>": self.uuid,
-            "<MANAGED_ID>": managed_id,
-            "<ALLOWED_IPS>": allowed_ips,
+        tfvars = {
+            "cloud_region": self.region,
+            "cloud_zone": self.zone or "",
+            "cluster_nodes": tfvar_nodes["clusters"],
+            "client_nodes": tfvar_nodes["clients"],
+            "utility_nodes": tfvar_nodes["utilities"],
+            "syncgateway_nodes": tfvar_nodes["syncgateways"],
+            "kafka_nodes": tfvar_nodes["kafka_brokers"],
+            "cloud_storage": self.cloud_storage,
+            "global_tag": global_tag,
+            "uuid": self.uuid,
+            "managed_id": self._get_managed_id(),
+            "allowed_ips": self._get_allowed_ips(),
         }
 
-        with open(f"terraform/{self.csp}/terraform.tfvars", "r+") as tfvars:
-            file_string = tfvars.read()
-
-            for k, v in replacements.items():
-                file_string = file_string.replace(k, json.dumps(v, indent=4))
-
-            tfvars.seek(0)
-            tfvars.write(file_string)
-            tfvars.truncate()
+        with ConfigFile(f"terraform/{self.csp}/terraform.tfvars.json") as tfvars_file:
+            tfvars_file.config = tfvars
 
         return True
 

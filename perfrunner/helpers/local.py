@@ -226,7 +226,7 @@ def cbbackupmgr_backup(
 
         cmd = f"./opt/couchbase/bin/cbbackupmgr config {' '.join(flags)}"
         logger.info(f"Running: {cmd}")
-        run_local_shell_command(cmd)
+        run_local_shell_command(cmd, raise_error=True)
 
     flags = filter(
         None,
@@ -243,13 +243,14 @@ def cbbackupmgr_backup(
             f"--value-compression {'compressed' if compression else 'unchanged'}",
             f"--shards {shards}" if shards else None,
             f"--passphrase '{passphrase}'" if encrypted else None,
+            "--no-progress-bar",
         ],
     )
 
     cmd = f"./opt/couchbase/bin/cbbackupmgr backup {' '.join(flags)}"
 
     logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
-    run_local_shell_command(cmd, env=env_vars)
+    run_local_shell_command(cmd, env=env_vars, raise_error=True)
 
 
 def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
@@ -291,21 +292,22 @@ def get_backup_snapshots(cluster_spec: ClusterSpec) -> List[str]:
 
 
 
-def cbbackupmgr_merge(cluster_spec: ClusterSpec, snapshots: List[str],
-                      storage_type: str, threads: int):
+def cbbackupmgr_merge(
+    cluster_spec: ClusterSpec, snapshots: list[str], storage_type: str, threads: int
+):
+    flags = [
+        f"--archive {cluster_spec.backup}",
+        "--repo default",
+        f"--start {snapshots[0]}",
+        f"--end {snapshots[1]}",
+        f"--storage {storage_type}" if storage_type else None,
+        f"--threads {threads}" if threads else None,
+    ]
 
-    flags = ['--archive {}'.format(cluster_spec.backup),
-             '--repo default',
-             '--start {}'.format(snapshots[0]),
-             '--end {}'.format(snapshots[1]),
-             '--storage {}'.format(storage_type) if storage_type else None,
-             '--threads {}'.format(threads) if threads else None]
+    cmd = f"./opt/couchbase/bin/cbbackupmgr merge {' '.join(filter(None, flags))}"
 
-    cmd = './opt/couchbase/bin/cbbackupmgr merge {}'.format(
-        ' '.join(filter(None, flags)))
-
-    logger.info('Running: {}'.format(cmd))
-    local(cmd)
+    logger.info(f"Running: {cmd}")
+    run_local_shell_command(cmd, raise_error=True)
 
 
 def calc_backup_size(cluster_spec: ClusterSpec,
@@ -387,6 +389,7 @@ def cbbackupmgr_restore(
     flags = filter(
         None,
         [
+            "--force-updates",
             f"--archive {archive or cluster_spec.backup}",
             f"--repo {repo}",
             f"--include-data {include_data}" if include_data else None,
@@ -399,43 +402,42 @@ def cbbackupmgr_restore(
             f"--passphrase '{passphrase}'" if encrypted else None,
             "--disable-hlv" if disable_hlv else None,
             "--disable-analytics --disable-cluster-analytics" if disable_analytics else None,
+            "--no-progress-bar",
         ],
     )
 
-    cmd = f"./opt/couchbase/bin/cbbackupmgr restore --force-updates {' '.join(flags)}"
+    cmd = f"./opt/couchbase/bin/cbbackupmgr restore {' '.join(flags)}"
 
     logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
-    run_local_shell_command(cmd, env=env_vars)
+    run_local_shell_command(cmd, env=env_vars, raise_error=True)
 
 
-def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: List[str],
-                        threads: int):
+def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: list[str], threads: int):
+    flags = [
+        f"--archive {cluster_spec.backup}",
+        "--repo default",
+        f"--backup {snapshots[0]}",
+        f"--threads {threads}" if threads else None,
+    ]
 
-    flags = ['--archive {}'.format(cluster_spec.backup),
-             '--repo default',
-             '--backup {}'.format(snapshots[0]),
-             '--threads {}'.format(threads) if threads else None]
+    cmd = f"./opt/couchbase/bin/cbbackupmgr compact {' '.join(filter(None, flags))}"
 
-    cmd = './opt/couchbase/bin/cbbackupmgr compact {}'.format(
-        ' '.join(filter(None, flags)))
-
-    logger.info('Running: {}'.format(cmd))
-    local(cmd)
+    logger.info(f"Running: {cmd}")
+    run_local_shell_command(cmd, raise_error=True)
 
 
-def cbbackupmgr_list(cluster_spec: ClusterSpec, snapshots: List[str],
-                     bucket: str = None):
+def cbbackupmgr_list(cluster_spec: ClusterSpec, snapshots: list[str], bucket: Optional[str] = None):
+    flags = [
+        f"--archive {cluster_spec.backup}",
+        "--repo default",
+        f"--backup {snapshots[0]}",
+        f"--bucket {bucket}" if bucket else None,
+    ]
 
-    flags = ['--archive {}'.format(cluster_spec.backup),
-             '--repo default',
-             '--backup {}'.format(snapshots[0]),
-             '--bucket {}'.format(bucket) if bucket else None]
+    cmd = f"./opt/couchbase/bin/cbbackupmgr list {' '.join(filter(None, flags))}"
 
-    cmd = './opt/couchbase/bin/cbbackupmgr list {}'.format(
-        ' '.join(filter(None, flags)))
-
-    logger.info('Running: {}'.format(cmd))
-    local(cmd)
+    logger.info(f"Running: {cmd}")
+    run_local_shell_command(cmd, raise_error=True)
 
 
 def cbexport_version():
@@ -445,44 +447,43 @@ def cbexport_version():
     logger.info(result)
 
 
-def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
-             data_format: str, threads: int, collection_field: str, scope_field: str,
-             key_field: str = None,
-             log_file: str = None):
-
+def cbexport(
+    master_node: str,
+    cluster_spec: ClusterSpec,
+    bucket: str,
+    data_format: str,
+    threads: int,
+    collection_field: str,
+    scope_field: str,
+    key_field: Optional[str] = None,
+    log_file: Optional[str] = None,
+):
     export_path = os.path.join(cluster_spec.backup, 'data.json')
 
     cleanup(cluster_spec.backup)
 
+    flags = [
+        f"--format {data_format}",
+        f"--output {export_path}",
+        f"--cluster http://{master_node}",
+        f"--bucket {bucket}",
+        f"--username {cluster_spec.rest_credentials[0]}",
+        f"--password '{cluster_spec.rest_credentials[1]}'",
+        f"--threads {threads}" if threads else None,
+        f"--include-key {key_field}" if key_field else None,
+        f"--verbose --log-file {log_file}" if log_file else None,
+    ]
+
     if collection_field and scope_field:
-        flags = ['--format {}'.format(data_format),
-                 '--output {}'.format(export_path),
-                 '--cluster http://{}'.format(master_node),
-                 '--bucket {}'.format(bucket),
-                 '--username {}'.format(cluster_spec.rest_credentials[0]),
-                 '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 '--collection-field {}'.format(collection_field),
-                 '--scope-field {}'.format(scope_field),
-                 '--threads {}'.format(threads) if threads else None,
-                 '--include-key key',
-                 '--verbose --log-file {}'.format(log_file) if log_file else None]
+        flags += [
+            f"--collection-field {collection_field}",
+            f"--scope-field {scope_field}",
+        ]
 
-    else:
-        flags = ['--format {}'.format(data_format),
-                 '--output {}'.format(export_path),
-                 '--cluster http://{}'.format(master_node),
-                 '--bucket {}'.format(bucket),
-                 '--username {}'.format(cluster_spec.rest_credentials[0]),
-                 '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 '--threads {}'.format(threads) if threads else None,
-                 '--include-key {}'.format(key_field) if key_field else None,
-                 '--verbose --log-file {}'.format(log_file) if log_file else None]
+    cmd = f"./opt/couchbase/bin/cbexport json {' '.join(filter(None, flags))}"
 
-    cmd = './opt/couchbase/bin/cbexport json {}'.format(
-        ' '.join(filter(None, flags)))
-
-    logger.info('Running: {}'.format(cmd))
-    local(cmd)
+    logger.info(f"Running: {cmd}")
+    run_local_shell_command(cmd, raise_error=True)
 
 
 def cbimport_version():
@@ -492,59 +493,50 @@ def cbimport_version():
     logger.info(result)
 
 
-def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
-             data_type: str, data_format: str, import_file: str, threads: int,
-             scope_collection_exp: str, field_separator: str = None, limit_rows: int = None,
-             skip_rows: int = None, infer_types: int = None,
-             omit_empty: int = None, errors_log: str = None, generate_key: str = '"#MONO_INCR#"',
-             log_file: str = None, is_sample_format: bool = False):
+def cbimport(
+    master_node: str,
+    cluster_spec: ClusterSpec,
+    bucket: str,
+    data_type: str,
+    data_format: str,
+    import_file: str,
+    threads: int,
+    scope_collection_exp: str,
+    field_separator: Optional[str] = None,
+    limit_rows: Optional[int] = None,
+    skip_rows: Optional[int] = None,
+    infer_types: Optional[int] = None,
+    omit_empty: Optional[int] = None,
+    errors_log: Optional[str] = None,
+    generate_key: str = '"#MONO_INCR#"',
+    log_file: Optional[str] = None,
+    is_sample_format: bool = False,
+):
+    flags = [
+        f"--format {data_format}" if data_type == "json" else None,
+        f"--dataset {import_file}",
+        f"--cluster http://{master_node}",
+        f"--bucket {bucket}",
+        f"--username {cluster_spec.rest_credentials[0]}",
+        f"--password '{cluster_spec.rest_credentials[1]}'",
+        f"--generate-key {generate_key}" if not is_sample_format else None,
+        f"--threads {threads}" if threads else None,
+        f"--field-separator {field_separator}" if field_separator else None,
+        f"--limit-rows {limit_rows}" if limit_rows else None,
+        f"--skip-rows {skip_rows}" if skip_rows else None,
+        "--infer-types" if infer_types else None,
+        "--omit-empty" if omit_empty else None,
+        f"--errors-log {errors_log}" if errors_log else None,
+        f"--verbose --log-file {log_file}" if log_file else None,
+    ]
 
-    if not scope_collection_exp:
+    if scope_collection_exp:
+        flags.append(f"--scope-collection-exp {scope_collection_exp}")
 
-        flags = ['--format {}'.format(data_format) if data_type == 'json'
-                 else None,
-                 '--dataset {}'.format(import_file),
-                 '--cluster http://{}'.format(master_node),
-                 '--bucket {}'.format(bucket),
-                 '--username {}'.format(cluster_spec.rest_credentials[0]),
-                 '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 f'--generate-key {generate_key}' if not is_sample_format else None,
-                 '--threads {}'.format(threads) if threads else None,
-                 '--field-separator {}'.format(field_separator) if field_separator
-                 else None,
-                 '--limit-rows {}'.format(limit_rows) if limit_rows else None,
-                 '--skip-rows {}'.format(skip_rows) if skip_rows else None,
-                 '--infer-types' if infer_types else None,
-                 '--omit-empty' if omit_empty else None,
-                 '--errors-log {}'.format(errors_log) if errors_log else None,
-                 '--verbose --log-file {}'.format(log_file) if log_file else None]
+    cmd = f"./opt/couchbase/bin/cbimport {data_type} {' '.join(filter(None, flags))}"
 
-    else:
-
-        flags = ['--format {}'.format(data_format) if data_type == 'json'
-                 else None,
-                 '--dataset {}'.format(import_file),
-                 '--cluster http://{}'.format(master_node),
-                 '--bucket {}'.format(bucket),
-                 '--username {}'.format(cluster_spec.rest_credentials[0]),
-                 '--password {}'.format(cluster_spec.rest_credentials[1]),
-                 f'--generate-key {generate_key}' if not is_sample_format else None,
-                 '--threads {}'.format(threads) if threads else None,
-                 '--field-separator {}'.format(field_separator) if field_separator
-                 else None,
-                 '--limit-rows {}'.format(limit_rows) if limit_rows else None,
-                 '--skip-rows {}'.format(skip_rows) if skip_rows else None,
-                 '--infer-types' if infer_types else None,
-                 '--omit-empty' if omit_empty else None,
-                 '--errors-log {}'.format(errors_log) if errors_log else None,
-                 '--verbose --log-file {}'.format(log_file) if log_file else None,
-                 '--scope-collection-exp {}'.format(scope_collection_exp)]
-
-    cmd = './opt/couchbase/bin/cbimport {} {}'.format(
-        data_type, ' '.join(filter(None, flags)))
-
-    logger.info('Running: {}'.format(cmd))
-    local(cmd)
+    logger.info(f"Running: {cmd}")
+    run_local_shell_command(cmd, raise_error=True)
 
 
 def run_cbc_pillowfight(host: str,

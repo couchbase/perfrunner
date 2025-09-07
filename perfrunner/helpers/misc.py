@@ -204,6 +204,7 @@ def run_local_shell_command(
     err_msg: str = "",
     quiet: bool = False,
     env: dict[str, str] = {},
+    raise_error: bool = False,
 ) -> tuple[str, str, int]:
     """Run a shell command locally using `subprocess` and print stdout + stderr on failure.
 
@@ -214,6 +215,7 @@ def run_local_shell_command(
     err_msg: message to print on failure (in addition to command stdout and stderr)
     quiet: if True, don't print stdout and stderr on failure
     env: environment variables to set (adding to the current environment)
+    raise_error: if True, raise exception if the command fails
 
     Returns
     -------
@@ -227,10 +229,11 @@ def run_local_shell_command(
     elif not quiet:
         if err_msg:
             logger.error(err_msg)
-        logger.error('Command failed with return code {}: {}'
-                     .format(returncode, process.args))
-        logger.error('Command stdout: {}'.format(process.stdout.decode()))
-        logger.error('Command stderr: {}'.format(process.stderr.decode()))
+        logger.error(f"Command failed with return code {returncode}: {process.args}")
+        logger.error(f"Command stdout: {process.stdout.decode()}")
+        logger.error(f"Command stderr: {process.stderr.decode()}")
+        if raise_error:
+            raise Exception(f"Command failed with return code {returncode}: {process.args}")
 
     return process.stdout.decode(), process.stderr.decode(), returncode
 

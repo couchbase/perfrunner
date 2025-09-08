@@ -1625,7 +1625,7 @@ class Monitor:
         self,
         instance_id: str,
         end_state: str,
-        temp_state: str,
+        temp_states: list[str],
         state_func: Optional[Callable[[dict], Optional[str]]] = None,
         state_object: Optional[str] = None,
         poll_interval_secs: Optional[int] = None,
@@ -1639,6 +1639,8 @@ class Monitor:
         logger.info(f'Waiting for {state_object} to be in state "{end_state}"...')
         t0 = time.time()
         while time.time() - t0 < timeout_secs:
+            time.sleep(poll_interval_secs)
+
             instance_info = self.rest.get_instance_info(instance_id)
             state = state_func(instance_info)
             logger.info(f"State of {state_object}: {state}")
@@ -1646,11 +1648,9 @@ class Monitor:
             if state == end_state:
                 logger.info(f'{state_object} has reached state "{end_state}"')
                 return
-            elif state != temp_state:
+            elif state not in temp_states:
                 logger.interrupt(f"Unexpected state for {state_object}: {state}")
                 return
-
-            time.sleep(poll_interval_secs)
 
         logger.interrupt(
             f"Timed out after {timeout_secs} seconds waiting for {state_object} "
@@ -1666,7 +1666,7 @@ class Monitor:
         self._wait_for_columnar_instance_state(
             instance_id,
             "turned_off",
-            "turning_off",
+            ["turning_off"],
             poll_interval_secs=poll_interval_secs,
             timeout_secs=timeout_secs,
         )
@@ -1680,7 +1680,7 @@ class Monitor:
         self._wait_for_columnar_instance_state(
             instance_id,
             "healthy",
-            "turning_on",
+            ["turned_off", "turning_on"],
             poll_interval_secs=poll_interval_secs,
             timeout_secs=timeout_secs,
         )
@@ -1704,7 +1704,7 @@ class Monitor:
         self._wait_for_columnar_instance_state(
             instance_id,
             "ready",
-            "pending",
+            ["pending"],
             state_func=get_link_state,
             state_object=f'link "{link_name}" on columnar instance {instance_id}',
             poll_interval_secs=poll_interval_secs,

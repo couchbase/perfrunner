@@ -21,22 +21,31 @@ class AIWorkflow:
     def __init__(
         self,
         ai_services_settings: AIServicesSettings,
-        hosted_model_id: Optional[str],
+        hosted_model: dict,
         infra_uuid: Optional[str],
         s3_integration_id: Optional[str],
         openai_integration_id: Optional[str],
     ):
         self.flow_uuid = infra_uuid
         self.ai_services_settings = ai_services_settings
-        self.hosted_model_id = hosted_model_id
+        self.hosted_model = hosted_model
         self.s3_integration_id = s3_integration_id
         self.openai_integration_id = openai_integration_id
 
-    def _get_embedding_model(self):
-        if self.ai_services_settings.model_source == "internal" and self.hosted_model_id:
+    def _get_embedding_model(self) -> dict:
+        if self.ai_services_settings.model_source == "internal" and self.hosted_model:
             # If we have a model id and did not intentionally set source to external,
             # we are using a Capella hosted model
-            return {"capellaHosted": {"id": self.hosted_model_id}}
+            model_id = self.hosted_model.get("model_id")
+            return {
+                "capellaHosted": {
+                    "id": model_id,
+                    "modelName": self.hosted_model.get("model_name"),
+                    "apiKeyId": ControlPlaneManager.get_model_api_key_id(model_id),
+                    "apiKeyToken": ControlPlaneManager.get_model_api_key(model_id),
+                    "privateEndpointEnabled": False,
+                }
+            }
 
         # Otherwise we are using an external model specified by the test
         return {
@@ -95,7 +104,7 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
         self.ai_services_settings = self.test_config.ai_services_settings
-        self.hosted_model_id = self._get_embedding_model_id()
+        self.hosted_model = self._get_embedding_model()
         self.functions = {}
         self.runtimes = {}
         # Default index name to use for the workflow
@@ -107,16 +116,16 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
     def _get_api_key(self):
         return os.getenv("PROVIDER_KEY", "")
 
-    def _get_embedding_model_id(self) -> Optional[str]:
+    def _get_embedding_model(self) -> dict:
         """
-        Retrieve the embedding model ID from the infrastructure model services.
+        Retrieve the embedding model from the infrastructure model services.
 
         Returns:
-            Optional[str]: The embedding model ID if available, otherwise None.
+            dict: The embedding model details if available, otherwise None.
         """
         # Embedding model, when present, can be interated with the workflow
         models = self.cluster_spec.infrastructure_model_services
-        return models.get("embedding-generation", {}).get("model_id")
+        return models.get("embedding-generation", {})
 
     @timeit
     def deploy_workflow(self):
@@ -199,7 +208,7 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
         self.create_integrations(cluster_uuid)
         self.workflow = AIWorkflow(
             self.ai_services_settings,
-            self.hosted_model_id,
+            self.hosted_model,
             cluster_uuid,
             self.s3_integration_id,
             self.openai_integration_id,

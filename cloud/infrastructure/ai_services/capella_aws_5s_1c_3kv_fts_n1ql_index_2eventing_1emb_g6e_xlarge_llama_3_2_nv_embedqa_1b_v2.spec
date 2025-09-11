@@ -38,7 +38,7 @@ volume_size = 100
 iops = 3000
 
 [embedding-generation]
-model_name = meta-llama/Llama-3.1-8B-Instruct
+model_name = nvidia/llama-3.2-nv-embedqa-1b-v2
 instance_type = g6e.xlarge
 instance_capacity = 1
 

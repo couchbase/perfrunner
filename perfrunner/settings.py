@@ -48,7 +48,7 @@ class Config:
         self.name = ''
         self.fname = ''
 
-    def parse(self, fname: str, override=None):
+    def parse(self, fname: str, override: Optional[list[str]] = None):
         logger.info('Reading configuration file: {}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt("File doesn't exist: {}".format(fname))
@@ -62,10 +62,36 @@ class Config:
         if override is not None:
             self.override(override)
 
-    def override(self, override: list[str]):
-        override = [x for x in csv.reader(override, delimiter='.')]
+    def _reinsert_spaces_in_overrides(self, overrides: list[str]) -> list[str]:
+        """Reinsert spaces into overrides that were removed by shell word splitting."""
+        new_overrides = []
+        quote_stack = []
+        current_override = ""
+        for arg in overrides:
+            for char in arg:
+                if char not in ["'", '"']:
+                    continue
 
-        for section, option, value in override:
+                if quote_stack and char == quote_stack[-1]:
+                    quote_stack.pop()
+                else:
+                    quote_stack.append(char)
+
+            if not quote_stack:
+                new_overrides.append(current_override + arg)
+                current_override = ""
+            else:
+                current_override += arg + " "
+
+        return new_overrides
+
+    def override(self, overrides: list[str]):
+        overrides = [
+            [col.strip("'") for col in row]  # csv.reader strips double quotes but not single quotes
+            for row in csv.reader(self._reinsert_spaces_in_overrides(overrides), delimiter=".")
+        ]
+
+        for section, option, value in overrides:
             if not self.config.has_section(section):
                 self.config.add_section(section)
             self.config.set(section, option, value)

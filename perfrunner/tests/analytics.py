@@ -1250,11 +1250,7 @@ class CH2Test(AnalyticsTest):
         ]
 
     def _report_kpi(self, log_file: Optional[str] = None, extra_metric_id_suffix: str = ""):
-        measure_time = (
-            self.test_config.ch2_settings.duration - self.test_config.ch2_settings.warmup_duration
-        )
         ch2_metrics = self.metrics.ch2_metrics(
-            duration=measure_time,
             logfile=log_file or self.test_config.ch2_settings.workload,
             tclients=self.test_config.ch2_settings.tclients,
         )
@@ -2174,11 +2170,7 @@ class CH3Test(CH2Test):
         return self.fts_nodes[0]
 
     def _report_kpi(self):
-        measure_time = (
-            self.test_config.ch3_settings.duration - self.test_config.ch3_settings.warmup_duration
-        )
         ch3_metrics = self.metrics.ch3_metrics(
-            duration=measure_time,
             logfile=self.test_config.ch3_settings.workload,
             tclients=self.test_config.ch3_settings.tclients,
         )

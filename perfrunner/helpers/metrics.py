@@ -1763,7 +1763,7 @@ class MetricHelper:
             # by all tclients (so wall-clock time spent is total_no_txn_time_us / tclients)
             metrics.total_no_txn_time_us = float(elements[2])
             metrics.no_txn_success_count = int("".join(filter(str.isdigit, elements[-1])))
-        elif line.strip().startswith("TOTAL"):
+        elif line.strip().startswith("TOTAL") and tclients > 0:
             # TOTAL time is the sum of microsecs spent executing txns by all tclients,
             # hence we divide by tclients to get average wall-clock time spent per client
             metrics.txn_workload_duration_secs = float(line.split()[2]) / 1e6 / tclients
@@ -1782,21 +1782,18 @@ class MetricHelper:
             elif "FTS QUERIES PER HOUR" in line:
                 metrics.fts_qph = float(line.split()[-1])
 
-    def _chX_metrics(
-        self, metrics: CHXMetrics, duration: float, logfile: str, tclients: int
-    ) -> CHXMetrics:
+    def _chX_metrics(self, metrics: CHXMetrics, logfile: str, tclients: int) -> CHXMetrics:
         filename = logfile + ".log"
-        metrics.txn_workload_duration_secs = duration
         with open(filename) as fh:
             for line in fh.readlines():
                 self._chX_process_line(line, metrics, tclients)
         return metrics
 
-    def ch2_metrics(self, duration: float, logfile: str, tclients: int) -> CH2Metrics:
-        return self._chX_metrics(CH2Metrics(), duration, logfile, tclients)
+    def ch2_metrics(self, logfile: str, tclients: int) -> CH2Metrics:
+        return self._chX_metrics(CH2Metrics(), logfile, tclients)
 
-    def ch3_metrics(self, duration: float, logfile: str, tclients: int) -> CH3Metrics:
-        return self._chX_metrics(CH3Metrics(), duration, logfile, tclients)
+    def ch3_metrics(self, logfile: str, tclients: int) -> CH3Metrics:
+        return self._chX_metrics(CH3Metrics(), logfile, tclients)
 
     def custom_metric(
         self, value: float, title_template: str, metric_id_suffix: str, chirality: int = 1

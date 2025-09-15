@@ -13,8 +13,9 @@ import validators
 from fabric.api import cd, run
 
 from logger import logger
-from perfrunner.helpers.config_files import CAOConfigFile, CAOCouchbaseClusterFile, CAOWorkerFile
+from perfrunner.helpers.config_files import CAOCouchbaseClusterFile, CAOWorkerFile
 from perfrunner.helpers.local import (
+    cao_generate_config,
     check_if_remote_branch_exists,
     clone_git_repo,
     create_x509_certificates,
@@ -169,6 +170,7 @@ class OperatorInstaller:
         self.auth_path = "cloud/operator/auth_secret.yaml"
         self.rmq_operator_path = "cloud/broker/rabbitmq/0.48/cluster-operator.yaml"
         self.rmq_cluster_path = "cloud/broker/rabbitmq/0.48/rabbitmq.yaml"
+        self.config_dir = "cloud/operator/configs/"
 
     def _get_image_tag_for(self, component: str, version_string: str) -> tuple[str, str]:
         if not version_string:
@@ -296,13 +298,11 @@ class OperatorInstaller:
         self.remote.create_from_file(self.crd_path)
 
     def create_config(self):
-        logger.info("creating config")
-        config_file = None
-        with CAOConfigFile(self.operator_release, self.operator_tag, self.controller_tag) as config:
-            config.setup_config()
-            config_file = config.dest_file
-
-        self.remote.create_from_file(config_file)
+        logger.info("creating operator configs")
+        cao_generate_config("admission", self.controller_tag, self.config_dir)
+        cao_generate_config("operator", self.operator_tag, self.config_dir)
+        cao_generate_config("backup", dest_dir=self.config_dir)
+        self.remote.create_from_file(self.config_dir)
 
     def create_auth(self):
         logger.info("creating auth")
@@ -363,15 +363,7 @@ class OperatorInstaller:
             f"{CAOCouchbaseClusterFile.CLUSTER_DEST_DIR}/{cluster_name}.yaml"
             for cluster_name in self.cluster_spec.clusters_modified_names
         ]
-        files_for_deletion.extend(
-            [
-                self.auth_path,
-                CAOConfigFile(
-                    self.operator_release, self.operator_tag, self.controller_tag
-                ).dest_file,
-                self.crd_path,
-            ]
-        )
+        files_for_deletion.extend([self.auth_path, self.config_dir, self.crd_path])
         self.remote.delete_from_files(files_for_deletion)
 
     def delete_operator_secrets(self):

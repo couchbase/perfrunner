@@ -151,38 +151,6 @@ class CAOFiles(ConfigFile):
         self.dest_file = f"cloud/operator/{dest_name}.yaml"
 
 
-class CAOConfigFile(CAOFiles):
-    """CAO config file for deploying the operator and admission controller.
-
-    It configures:
-    - CAO and admission controller deployment (pods and services)
-    - CAO and admission controller service account
-    - Role and role bindings
-    """
-
-    def __init__(self, version: str, operator_tag: str, controller_tag: str):
-        super().__init__("config_template", version)
-        self.operator_tag = operator_tag
-        self.controller_tag = controller_tag
-
-    def setup_config(self):
-        self._inject_config_tag()
-        self._inject_version_annotations()
-
-    def _inject_config_tag(self):
-        for config in self.all_configs:
-            if config["kind"] != "Deployment":
-                continue
-            if config["metadata"]["name"] == "couchbase-operator":
-                config["spec"]["template"]["spec"]["containers"][0]["image"] = self.operator_tag
-            else:
-                config["spec"]["template"]["spec"]["containers"][0]["image"] = self.controller_tag
-
-    def _inject_version_annotations(self):
-        for config in self.all_configs:
-            config["metadata"]["annotations"]["config.couchbase.com/version"] = self.version
-
-
 class CAOCouchbaseClusterFile(CAOFiles):
     """Couchbase cluster configuration."""
 

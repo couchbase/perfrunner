@@ -1799,6 +1799,20 @@ def collect_cbopinfo_logs(kubeconfig: str):
     with settings(warn_only=True), shell_env(KUBECONFIG=kubeconfig):
         local("couchbase-operator/bin/cao collect-logs --collectinfo --collectinfo-collect=all")
 
+def cao_generate_config(
+    command: str, operator_image_tag: Optional[str] = None, dest_dir: str = "."
+):
+    # Command can be either: admission, operator, backup
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
+
+    with settings(warn_only=True):
+        cmd = f"couchbase-operator/bin/cao generate {command} "
+        if operator_image_tag:
+            # Operator image details section is not available for the backup command
+            cmd += f"--image {operator_image_tag} --image-pull-secret regcred "
+
+        local(f"{cmd} > {dest_dir}/{command}.yaml")
 
 def run_aibench(options: str, api_key: str, gateway_endpoint: str):
     with lcd("../ai_bench"):

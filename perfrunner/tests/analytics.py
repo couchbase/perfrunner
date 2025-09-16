@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 import numpy as np
 import requests
+import yaml
 from celery import group
 from requests_toolbelt.adapters import socket_options
 
@@ -876,7 +877,7 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
         copy_to_settings = self.test_config.columnar_copy_to_settings
 
         with open(copy_to_settings.object_store_query_file, "r") as f:
-            query_configs = json.load(f)
+            query_configs = yaml.safe_load(f)
 
         obj_store_name = self.cluster_spec.backup.split("://")[1]
 
@@ -959,7 +960,7 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromObjectStoreTest):
     @with_stats
     def access(self):
         with open(self.test_config.columnar_copy_to_settings.kv_query_file, "r") as f:
-            queries = json.load(f)
+            queries = yaml.safe_load(f)
 
         query_template = f"COPY {{}} TO {{}} AT `{self.analytics_link}` KEY {{}}"
 

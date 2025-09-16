@@ -32,6 +32,6 @@ object_store_import_datasets = customer_5schemas_no_empty_arrays:customer, stock
 object_store_file_formats = json, parquet
 max_objects_per_files = 10000
 object_store_compressions = none
-object_store_query_file = tests/cloud/analytics/workload/ch2pp_copy_to_s3_parquet_queries.json
+object_store_query_file = tests/cloud/analytics/workload/ch2pp_copy_to_s3_parquet_queries.yaml
 parquet_schema_inference = true
 parquet_max_schemas = 5

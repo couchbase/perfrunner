@@ -1,13 +1,15 @@
+from logger import logger
 from perfdaily import DailyTest
-from perfrunner.tests.analytics import BigFunQueryTest as _BigFunQueryTest
-from perfrunner.tests.analytics import BigFunSyncTest as _BigFunSyncTest
+from perfrunner.tests.analytics import (
+    BigFunInitialSyncAndQueryTest as _BigFunInitialSyncAndQueryTest,
+)
 
 
-class BigFunQueryTest(DailyTest, _BigFunQueryTest):
+class BigFunInitialSyncAndQueryTest(DailyTest, _BigFunInitialSyncAndQueryTest):
+    def report_sync_kpi(self, sync_time: float):
+        logger.info(f"Initial sync time (s): {sync_time:.2f}")
 
-    pass
+        if not self.test_config.stats_settings.enabled:
+            return
 
-
-class BigFunSyncTest(DailyTest, _BigFunSyncTest):
-
-    pass
+        self.reporter.post(*self.metrics.avg_ingestion_rate(self.num_items, sync_time))

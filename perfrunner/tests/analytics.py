@@ -409,17 +409,20 @@ class AnalyticsTest(PerfTest):
 
         self.rest.create_analytics_link(**kwargs)
 
-    def sync(self):
+    def sync(self) -> float:
         self.disconnect_link()
         self.create_datasets_at_link()
         self.create_analytics_indexes()
         self.connect_link()
+
+        t0 = time.time()
         bucket_replica = self.test_config.bucket.replica_number
         sql_suite = self.test_config.access_settings.sql_suite
         for bucket in self.test_config.buckets:
             self.num_items += self.monitor.monitor_data_synced(
                 self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
             )
+        return time.time() - t0
 
     def connect_link(self):
         logger.info(f"Connecting Link {self.analytics_link}")
@@ -546,59 +549,16 @@ class BigFunTest(AnalyticsTest):
         super().__init__(*args, **kwargs)
         self.QUERIES = self.analytics_settings.queries
 
-    def re_sync(self):
+    def re_sync(self) -> float:
         self.connect_link()
+        t0 = time.time()
         bucket_replica = self.test_config.bucket.replica_number
         sql_suite = self.test_config.access_settings.sql_suite
         for bucket in self.test_config.buckets:
             self.monitor.monitor_data_synced(
                 self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
             )
-
-
-class BigFunSyncTest(BigFunTest):
-
-    def _report_kpi(self, sync_time: int):
-        self.reporter.post(
-            *self.metrics.avg_ingestion_rate(self.num_items, sync_time)
-        )
-
-    @with_stats
-    @timeit
-    def sync(self):
-        super().sync()
-
-    def run(self):
-        super().restore_data()
-        self.wait_for_persistence()
-
-        if self.analytics_link != "Local":
-            self.rest.create_analytics_link(
-                self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
-            )
-
-        sync_time = self.sync()
-
-        self.report_kpi(sync_time)
-
-
-class BigFunIncrSyncTest(BigFunSyncTest):
-    def _report_kpi(self, sync_time: int):
-        self.reporter.post(
-            *self.metrics.avg_ingestion_rate(self.num_items, sync_time, "incremental")
-        )
-
-    @with_stats
-    @timeit
-    def re_sync(self):
-        super().re_sync()
-
-    def sync(self) -> float:
-        super().sync()
-        self.disconnect_link()
-        super().restore_data()
-        self.wait_for_persistence()
-        return self.re_sync()
+        return time.time() - t0
 
 
 class BigFunDropDatasetTest(BigFunTest):
@@ -631,7 +591,10 @@ class BigFunDropDatasetTest(BigFunTest):
         self.report_kpi(num_items, drop_time)
 
 
-class BigFunQueryTest(BigFunTest):
+class BigFunInitialSyncAndQueryTest(BigFunTest):
+    @with_stats
+    def sync(self) -> float:
+        return super().sync()
 
     def warmup(self, nodes: list = []) -> list[QueryLatencyPair]:
         if len(nodes) == 0:
@@ -667,6 +630,16 @@ class BigFunQueryTest(BigFunTest):
         )
         return [(query, latency) for query, latency in results]
 
+    def report_sync_kpi(self, sync_time: float):
+        logger.info(f"Initial sync time (s): {sync_time:.2f}")
+
+        if not self.test_config.stats_settings.enabled:
+            return
+
+        rate, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
+        metric_info |= {"category": "sync", "sub_category": "Initial"}
+        self.reporter.post(rate, snapshots, metric_info)
+
     def _report_kpi(self, results: list[QueryLatencyPair]):
         for query, latency in results:
             self.reporter.post(
@@ -678,7 +651,8 @@ class BigFunQueryTest(BigFunTest):
         super().restore_data()
         self.wait_for_persistence()
 
-        self.sync()
+        sync_time = self.sync()
+        self.report_sync_kpi(sync_time)
 
         logger.info('Running warmup phase')
         self.warmup()
@@ -686,10 +660,37 @@ class BigFunQueryTest(BigFunTest):
         logger.info('Running access phase')
         results = self.access()
 
-        self.report_kpi(results)
+        if results:
+            self.report_kpi(results)
 
 
-class BigFunQueryExternalTest(BigFunQueryTest):
+class BigFunIncrSyncTest(BigFunInitialSyncAndQueryTest):
+    @with_stats
+    def re_sync(self) -> float:
+        return super().re_sync()
+
+    def _report_kpi(self, sync_time: float, sync_type: str):
+        self.reporter.post(*self.metrics.avg_ingestion_rate(self.num_items, sync_time, sync_type))
+
+    def run(self):
+        self.restore_data()
+        self.wait_for_persistence()
+
+        initial_sync_time = self.sync()
+        logger.info(f"Initial sync time (s): {initial_sync_time:.2f}")
+        rate, _, _ = self.metrics.avg_ingestion_rate(self.num_items, initial_sync_time)
+        logger.info(f"Initial sync rate (items/sec): {rate:.2f}")
+
+        self.disconnect_link()
+        self.restore_data()
+        self.wait_for_persistence()
+
+        incremental_sync_time = self.re_sync()
+        logger.info(f"Incremental sync time (s): {incremental_sync_time:.2f}")
+        self.report_kpi(incremental_sync_time, "incremental")
+
+
+class BigFunQueryExternalTest(BigFunInitialSyncAndQueryTest):
     @with_stats
     def access(self, nodes: list = [], *args, **kwargs) -> list[QueryLatencyPair]:
         if len(nodes) == 0:
@@ -990,7 +991,7 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromObjectStoreTest):
         self.access()
 
 
-class BigFunQueryFailoverTest(BigFunQueryTest):
+class BigFunQueryFailoverTest(BigFunInitialSyncAndQueryTest):
 
     def failover(self):
         logger.info("Starting node failover")
@@ -1582,13 +1583,15 @@ class CH2RemoteLinkTest(CH2Test):
             self.monitor.monitor_warmup(self.memcached, self.data_node, bucket)
         self.monitor.monitor_analytics_node_active(self.analytics_node)
 
-    def report_sync_kpi(self, sync_time: int):
-        logger.info(f"Sync time (s): {sync_time}")
+    def report_sync_kpi(self, sync_time: float):
+        logger.info(f"Initial sync time (s): {sync_time:.2f}")
 
-        if self.test_config.stats_settings.enabled:
-            v, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
-            metric_info["category"] = "sync"
-            self.reporter.post(v, snapshots, metric_info)
+        if not self.test_config.stats_settings.enabled:
+            return
+
+        v, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
+        metric_info["category"] = "sync"
+        self.reporter.post(v, snapshots, metric_info)
 
     @with_stats
     def sync(self) -> float:
@@ -2035,7 +2038,7 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
 
         return data_ingest_time
 
-    def _report_kpi(self, sync_time: int):
+    def _report_kpi(self, sync_time: float):
         self.reporter.post(
             *self.metrics.avg_ingestion_rate(self.num_items, sync_time)
         )

@@ -1,6 +1,5 @@
 {
     "Analytics": [
-        {"cluster": "triton_analytics.spec", "test_config": "analytics/bigfun_20M_sync_4n.test"},
         {"cluster": "triton_analytics.spec", "test_config": "analytics/bigfun_20M_queries_4n.test"}
     ],
     "Eventing": [

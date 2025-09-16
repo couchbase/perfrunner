@@ -1,9 +1,9 @@
 [test_case]
-test = perfdaily.analytics.BigFunQueryTest
+test = perfdaily.analytics.BigFunInitialSyncAndQueryTest
 use_workers = 0
 
 [showfast]
-title = 4 nodes, BigFUN 20M users (320M docs), SSD
+title = 4 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD
 component = Analytics
 category = latency
 sub_category = With Index

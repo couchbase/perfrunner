@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunQueryTest
+test = perfrunner.tests.analytics.BigFunInitialSyncAndQueryTest
 
 [showfast]
-title = 2 nodes, BigFUN 20M users (320M docs), AWS/Capella
+title = 2 nodes, BigFUN 20M users (320M docs), 3 indexes, AWS/Capella
 component = cloud
 category = analytics
 sub_category = AWS
@@ -20,10 +20,10 @@ ui_http = disabled
 enable_n2n_encryption = all
 
 [analytics]
-dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
 num_io_devices = 8
 queries = perfrunner/workloads/bigfun/queries_with_index.json
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
 
 [bucket]
 eviction_policy = fullEviction

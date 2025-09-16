@@ -1,9 +1,9 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunQueryTest
+test = perfrunner.tests.analytics.BigFunInitialSyncAndQueryTest
 use_workers = 0
 
 [showfast]
-title = 2 nodes, BigFUN 20M users (320M docs), SSD
+title = 2 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD
 component = analytics
 category = latency
 sub_category = With Index
@@ -19,10 +19,10 @@ initial_nodes = 4
 num_buckets = 1
 
 [analytics]
-dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
 num_io_devices = 4
 queries = perfrunner/workloads/bigfun/queries_with_index.json
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
 
 [bucket]
 eviction_policy = fullEviction

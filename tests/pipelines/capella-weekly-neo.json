@@ -1,6 +1,5 @@
 {
     "AWS_Analytics": [
-        {"job": "CapellaAWSWeekly2", "cluster": "capella_aws_6s_1c_c5_2xlarge_m5_2xlarge.spec", "test_config": "cloud/analytics/capella_bigfun_20M_sync_3n_1s_99c.test", "groups": "P0"},
         {"job": "CapellaAWSWeekly2", "cluster": "capella_aws_6s_1c_c5_2xlarge_m5_2xlarge.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"}
     ],
     "AWS_FTS": [
@@ -108,7 +107,6 @@
         {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_7s_1c_3kv_n2_standard_8_2index_2n1ql_n2_custom_8_16384.spec", "test_config": "cloud/n1ql/capella_n1ql_thr_Q17_20M_gsi_plasma_false.test.test", "groups": "P1"}
     ],
     "GCP_Analytics": [
-        {"job": "CapellaGCPWeekly2", "cluster": "capella_gcp_6s_1c_n2custom8_n2Standard8.spec", "test_config": "cloud/analytics/capella_bigfun_20M_sync_3n_1s_99c.test", "groups": "P0"},
         {"job": "CapellaGCPWeekly2", "cluster": "capella_gcp_6s_1c_n2custom8_n2Standard8.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"}
     ],
     "GCP_Rebalance": [
@@ -180,7 +178,6 @@
         {"job": "CapellaAzureWeekly", "cluster": "capella_azure_4s_1c_standard_f8s_v2_kv.spec", "test_config": "cloud/rebalance/capella_reb_out_150M.test", "groups": "P0"}
     ],
     "Azure_Analytics": [
-        {"job": "CapellaAzureWeekly2", "cluster": "capella_azure_6s_1c_standard_f8s_v2_standard_d8s_v5.spec", "test_config": "cloud/analytics/capella_bigfun_20M_sync_3n_1s_99c.test", "groups": "P0"},
         {"job": "CapellaAzureWeekly2", "cluster": "capella_azure_6s_1c_standard_f8s_v2_standard_d8s_v5.spec", "test_config": "cloud/analytics/capella_bigfun_20M_queries_3n_1s_99c.test", "groups": "P0"}
     ],
     "Azure_FTS": [

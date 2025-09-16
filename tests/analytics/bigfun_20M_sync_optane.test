@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunSyncTest
+test = perfrunner.tests.analytics.BigFunInitialSyncAndQueryTest
 use_workers = 0
 
 [stats]

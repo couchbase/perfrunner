@@ -1,11 +1,7 @@
 {
     "Analytics": [
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_1n.test", "groups": "P1"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_2n.test", "groups": "P1"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n.test", "groups": "P1"},
         {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_sync_1n_1io.test", "groups": "P1"},
-        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_sync_2n_1io.test", "groups": "P1"},
-        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_sync_4n_1io.test", "groups": "P1"},
 
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_2n.test", "groups": "P1"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n.test", "groups": "P1"},

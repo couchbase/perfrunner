@@ -89,10 +89,14 @@ def bigfun(
     query_method: QueryMethod = QueryMethod.PYTHON_CBAS,
     request_params: dict = {},
 ) -> Iterator:
-    logger.info('Running BigFun queries')
+    logger.info("Running BigFun queries")
 
-    if not num_requests > 0:
-        logger.info('No BigFun queries to run')
+    if num_requests <= 0:
+        logger.info(f"{num_requests=}, no BigFun queries will be run.")
+        return
+
+    if concurrency <= 0:
+        logger.info(f"{concurrency=}, no BigFun queries will be run.")
         return
 
     for query in new_queries(query_set):

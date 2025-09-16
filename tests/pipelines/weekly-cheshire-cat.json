@@ -422,17 +422,14 @@
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_rebalance_20M_fdb.test"}
     ],
     "Analytics": [
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_3c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_1s_3c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions_1s_3c.test", "groups": "P0"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_99c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_99c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_1s_99c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out_1s_99c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions_1s_99c.test", "groups": "P0"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_999c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_999c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out_1s_999c.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_3c_incr.test", "groups": "P0"},

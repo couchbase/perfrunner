@@ -263,7 +263,6 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_mixed_20M_1000s_1000c_tls.test", "groups": "P0"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_100threads_durability_none_1s_1c_tls.test", "groups": "P0"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_100threads_durability_majority_1s_1c_tls.test", "groups": "P0"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_100threads_durability_majority_persist_active_1s_1c_tls.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_100threads_durability_persist_majority_1s_1c_tls.test", "groups": "P0"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r0_p0_1s_1c_tls.test", "groups": "P1"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/latency/kv_latency_observe_100threads_r1_p0_1s_1c_tls.test", "groups": "P1"},

@@ -1,12 +1,15 @@
 import glob
 import json
+import os
 from collections import defaultdict, namedtuple
 from multiprocessing import Value
+from pathlib import Path
 from unittest import TestCase
 
 import pkg_resources
 import snappy
 
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
@@ -666,6 +669,50 @@ class BigFunTest(TestCase):
 
 
 class PipelineTest(TestCase):
+    def test_existence_of_test_configs(self):
+        """Check if all test configs in the pipelines are present in the tests directory."""
+        all_missing_test_configs = {}
+        filenames_to_paths = {}
+
+        for root, _, files in os.walk("tests"):
+            for file in files:
+                if not file.endswith(".test"):
+                    continue
+
+                if file not in filenames_to_paths:
+                    filenames_to_paths[file] = []
+                filenames_to_paths[file].append(root)
+
+        for fn in glob.glob("tests/pipelines/*.json"):
+            with open(fn, "r") as f:
+                test_cases = json.load(f)
+
+            for stage, stage_tests in test_cases.items():
+                test_configs = [test.get("test_config", test.get("test")) for test in stage_tests]
+                missing_stage_test_configs = []
+
+                for test_config in test_configs:
+                    parent_path = str(Path(test_config).parent)
+                    name = Path(test_config).name
+
+                    if (paths := filenames_to_paths.get(name, [])) and parent_path == ".":
+                        continue
+                    elif any(root.endswith(parent_path) for root in paths):
+                        continue
+                    else:
+                        missing_stage_test_configs.append(test_config)
+
+                if missing_stage_test_configs:
+                    if fn not in all_missing_test_configs:
+                        all_missing_test_configs[fn] = {}
+                    all_missing_test_configs[fn][stage] = missing_stage_test_configs
+
+        self.assertDictEqual(
+            all_missing_test_configs,
+            {},
+            "\nTest configs from the following pipeline files are missing: \n"
+            + pretty_dict(all_missing_test_configs),
+        )
 
     def test_stages(self):
         stages = {'Analytics', 'Eventing', 'FTS', 'Tools', 'Views',

@@ -138,7 +138,7 @@
           "sg_cluster_map": "hebe_4node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "2.1/hebe_channel_noxa",
-          "test": "noxa_syncgateway_noxa_write_4node.test"},
+          "test": "noxa/syncgateway_noxa_write_4node.test"},
 
         {"job": "syncgteway-hebe-new",
           "sg_cluster_map": "hebe_1node",

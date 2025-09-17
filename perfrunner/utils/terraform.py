@@ -22,6 +22,7 @@ from perfrunner.helpers.config_files import (
     record_time,
 )
 from perfrunner.helpers.misc import (
+    maybe_atoi,
     my_public_ip,
     pretty_dict,
     run_local_shell_command,
@@ -2084,12 +2085,19 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
 
     def destroy_model_services(self):
         logger.info("Destroying model services...")
-        # We destroy an llm first before an embedding model, if it exists
         models = self.infra_spec.infrastructure_model_services
+        # We destroy an llm first before an embedding model, if it exists
         for model_kind in ["text-generation", "embedding-generation"]:
-            model_id = models.get(model_kind, {}).get("model_id")
+            model_config = models.get(model_kind, {})
+            model_id = model_config.get("model_id")
             if not model_id:
                 continue
+
+            if not maybe_atoi(model_config.get("can_delete", "true")):
+                # Allow using shared models which we should not delete in our automation
+                logger.info(f"Skipping destroying {model_kind} model, id: {model_id}")
+                continue
+
             try:
                 logger.info(f"Destroying {model_kind} model, id: {model_id}")
                 with record_time("model_deletion", model_kind):

@@ -1213,6 +1213,15 @@ class KubernetesClusterManager:
         # When managing a kubernetes cluster, always use the RemoteKubernetes class
         # even when running in mixed mode
         self.remote = RemoteKubernetes(cluster_spec)
+        try:
+            # The K8S manager can exist before any of the server nodes are created. In such cases,
+            # getting the server info will fail.
+            ServerInfoManager(
+                self.cluster_spec,
+                RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption)),
+            ).get_server_info()
+        except Exception:
+            logger.warning("Failed to get server info. The cluster is not ready yet.")
 
     def configure_cluster(self):
         logger.info('Preparing cluster configuration file')

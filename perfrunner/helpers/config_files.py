@@ -483,6 +483,7 @@ class CAOCouchbaseBucketFile(CAOFiles):
                 "evictionPolicy": bucket_settings.eviction_policy,
                 "compressionMode": bucket_settings.compression_mode or "off",
                 "conflictResolution": bucket_settings.conflict_resolution_type or "seqno",
+                "storageBackend": bucket_settings.backend_storage,
             }
         )
 

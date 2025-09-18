@@ -2264,20 +2264,21 @@ class MetricHelper:
         reported_metrics = []
         tracked_metrics = {
             "requests_per_second": "Throughput (requests/sec)",
-            "p50_latency": "50th percentile latency (ms)",
-            "p99_latency": "99th percentile latency (ms)",
-            "ttft_avg": "Time to first token (ms)",
+            "p50_latency": "50th percentile latency (sec)",
+            "p99_latency": "99th percentile latency (sec)",
+            "ttft_avg": "Time to first token (sec)",
         }
         metadata = metrics.pop("metadata", {})
         endpoint = metadata.get("endpoint", "")
         model_name = metadata.get("model_name", "")
-        sub_title = f"({model_name} - {endpoint})"
+        concurrency = int(metadata.get("concurrency", ""))
+        sub_title = f"({model_name} - {endpoint}), {concurrency} concurrent requests"
 
         for name, proper_name in tracked_metrics.items():
             value = float(metrics.get(name, 0))
             if value == 0:
                 continue
-            metric_id = f"{self.test_config.name}_{name}_{endpoint}"
+            metric_id = f"{self.test_config.name}_{name}_{endpoint}_{concurrency}"
             title = f"{proper_name}, {self._title} {sub_title}"
             metric_info = self._metric_info(metric_id, title, order_by=name)
             reported_metrics.append((round(value, 2), self._snapshots, metric_info))

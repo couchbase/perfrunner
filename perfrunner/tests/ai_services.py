@@ -421,15 +421,18 @@ class AIGatewayTest(PerfTest):
     def run_aibench(self):
         for endpoint in self.MODEL_KIND_ENDPOINTS[self.aibench_settings.model_kind]:
             self.aibench_settings.endpoint = endpoint
-            phase = self.generic_phase(
-                phase_name="ai_bench",
-                default_settings=self.aibench_settings,
-                default_mixed_settings=None,
-                task=aibench_task,
-            )
-            self.worker_manager.run_fg_phases(phase)
+            for concurrency in self.aibench_settings.concurrencies:
+                logger.info(f"Running AI Bench with {concurrency} workers on {endpoint} endpoint")
+                self.aibench_settings.workers = concurrency
+                phase = self.generic_phase(
+                    phase_name="ai_bench",
+                    default_settings=self.aibench_settings,
+                    default_mixed_settings=None,
+                    task=aibench_task,
+                )
+                self.worker_manager.run_fg_phases(phase)
 
-            sleep(120)  # Sleep to allow for rate limits to reset
+                sleep(120)  # Sleep to allow for rate limits to reset
 
     def collect_results(self) -> dict:
         if not self.worker_manager.is_remote:
@@ -463,9 +466,9 @@ class AIGatewayTest(PerfTest):
             logger.info(f"Collected {filename}: {pretty_dict(results)}")
 
             if results.pop("errors"):
-                # A workload is considered failed if it has any errors and will not be reported
-                logger.error(f"Workload {filename} failed")
-                continue
+                # A workload has failed requests, log the error but report the calculated results
+                logger.error(f"Workload {filename} contains errors")
+
             for metric in self.metrics.aibench_metrics(results):
                 self.reporter.post(*metric)
 

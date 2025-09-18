@@ -3715,6 +3715,7 @@ class AIBenchSettings(PhaseSettings):
 
     REPO = "https://github.com/couchbaselabs/ai_bench.git"
     BRANCH = "main"
+    DEFAULT_CONCURRENCIES = "4,32,50"
 
     def __init__(self, options: dict):
         super().__init__(options)
@@ -3733,6 +3734,8 @@ class AIBenchSettings(PhaseSettings):
         self.ignore_eos = maybe_atoi(options.get("ignore_eos", "false"))
         self.encoding_format = options.get("encoding_format", "base64")
 
+        concurrencies = options.get("concurrencies", self.DEFAULT_CONCURRENCIES)
+        self.concurrencies = [int(c) for c in concurrencies.split(",")]
         # Tool configuration
         self.handler = options.get("handler", "openai")
 

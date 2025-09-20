@@ -1851,3 +1851,20 @@ class Monitor:
                 dcp_mutation = stat.get("event_processing_stats", {}).get("dcp_mutation", 0)
                 logger.info(f"{dcp_mutation=}, {backlog=}")
             time.sleep(self.MONITORING_DELAY * 12)
+
+    def wait_for_ai_gateway_models_health(self, model_status_func: Callable[[], dict]):
+        logger.info("Waiting for AI Gateway models to be healthy")
+        retries = 0
+        models_status = []
+        while True:
+            models_status = model_status_func()
+            if all(model_status.get("status") == "healthy" for model_status in models_status):
+                break
+            retries += 1
+            if retries >= self.MAX_RETRY:
+                raise Exception(
+                    f"AI Gateway models are not healthy after {retries} retries: {models_status}"
+                )
+            time.sleep(self.POLLING_INTERVAL)
+
+        logger.info(f"AI Gateway models are healthy: {misc.pretty_dict(models_status)}")

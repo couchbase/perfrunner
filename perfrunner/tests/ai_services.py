@@ -47,8 +47,8 @@ class AIWorkflow:
                 "capellaHosted": {
                     "id": model_id,
                     "modelName": self.hosted_model.get("model_name"),
-                    "apiKeyId": ControlPlaneManager.get_model_api_key_id(model_id),
-                    "apiKeyToken": ControlPlaneManager.get_model_api_key(model_id),
+                    "apiKeyId": ControlPlaneManager.get_model_api_key_id(),
+                    "apiKeyToken": ControlPlaneManager.get_model_api_key(),
                     "privateEndpointEnabled": False,
                 }
             }
@@ -363,7 +363,7 @@ class AIGatewayTest(PerfTest):
         )
         self.gateway_endpoint = model.get("model_endpoint")
         self.aibench_settings.model_name = model.get("model_name")
-        self.api_key = ControlPlaneManager.get_model_api_key(model.get("model_id"))
+        self.api_key = ControlPlaneManager.get_model_api_key()
         first_bucket = self.test_config.buckets[0] if self.test_config.buckets else ""
         self.target_iterator = [
             AIGatewayTargetSettings(
@@ -391,6 +391,14 @@ class AIGatewayTest(PerfTest):
         resp_data.pop("models", [])  # Remove models from the response due to large size
         logger.info(f"AI Gateway info: {pretty_dict(resp_data)}")
         return resp_data
+
+    def get_ai_gateway_models_status(self) -> dict:
+        resp_data = self.rest.get(
+            url=f"{self.gateway_endpoint}/v1/models",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            auth=None,  # Ensures it is not overridden with basic auth
+        ).json()
+        return resp_data.get("data", [])
 
     @property
     def build_tag(self):
@@ -474,6 +482,7 @@ class AIGatewayTest(PerfTest):
 
 
     def run(self):
+        self.monitor.wait_for_ai_gateway_models_health(self.get_ai_gateway_models_status)
         self.download_aibench()
         self.build_aibench()
 
@@ -513,8 +522,8 @@ class AIFunctionsTest(N1QLTest):
                     f"{provider}Model": {
                         "modelName": self.model_name,
                         "modelID": model_id,
-                        "apiKeyID": ControlPlaneManager.get_model_api_key_id(model_id),
-                        "apiKeyToken": ControlPlaneManager.get_model_api_key(model_id),
+                        "apiKeyID": ControlPlaneManager.get_model_api_key_id(),
+                        "apiKeyToken": ControlPlaneManager.get_model_api_key(),
                         "privateNetworking": False,
                         "region": self.cluster_spec.cloud_region,
                         "aiGatewayURL": self.llm_model.get("model_endpoint"),

@@ -2267,6 +2267,7 @@ class MetricHelper:
             "p50_latency": "50th percentile latency (sec)",
             "p99_latency": "99th percentile latency (sec)",
             "ttft_avg": "Time to first token (sec)",
+            "tokens_per_second": "Tokens per second (tokens/sec)",
         }
         metadata = metrics.pop("metadata", {})
         endpoint = metadata.get("endpoint", "")

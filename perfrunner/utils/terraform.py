@@ -732,8 +732,8 @@ class ControlPlaneManager:
             os.remove(CAPELLA_CREDS_FILE)
 
     @staticmethod
-    def save_model_api_key(model_id: str, model_api_key_id: str, model_api_key: str):
-        """Save the model API key in the temporary credentials file."""
+    def save_model_api_key(model_api_key_id: str, model_api_key: str):
+        """Save the models API key in the temporary credentials file."""
         existing_creds = {}
         try:
             with open(CAPELLA_CREDS_FILE, "r") as f:
@@ -742,34 +742,30 @@ class ControlPlaneManager:
             pass
 
         model_keys = existing_creds.get("model_api_keys", {})
-        model_keys.update(
-            {model_id: {"model_api_key_id": model_api_key_id, "model_api_key": model_api_key}}
-        )
+        model_keys.update({"model_api_key_id": model_api_key_id, "model_api_key": model_api_key})
         existing_creds.update({"model_api_keys": model_keys})
         with open(CAPELLA_CREDS_FILE, "w") as f:
             json.dump(existing_creds, f)
 
     @staticmethod
-    def get_model_api_key(model_id: str) -> str:
-        """Get the model API key from the temporary credentials file."""
+    def get_model_api_key() -> str:
+        """Get the models API key from the temporary credentials file."""
         if not os.path.isfile(CAPELLA_CREDS_FILE):
             return ""
 
         with open(CAPELLA_CREDS_FILE, "r") as f:
             existing_creds = json.load(f)
-        return existing_creds.get("model_api_keys", {}).get(model_id, {}).get("model_api_key", "")
+        return existing_creds.get("model_api_keys", {}).get("model_api_key", "")
 
     @staticmethod
-    def get_model_api_key_id(model_id: str) -> str:
-        """Get the model API key ID from the temporary credentials file."""
+    def get_model_api_key_id() -> str:
+        """Get the models API key ID from the temporary credentials file."""
         if not os.path.isfile(CAPELLA_CREDS_FILE):
             return ""
 
         with open(CAPELLA_CREDS_FILE, "r") as f:
             existing_creds = json.load(f)
-        return (
-            existing_creds.get("model_api_keys", {}).get(model_id, {}).get("model_api_key_id", "")
-        )
+        return existing_creds.get("model_api_keys", {}).get("model_api_key_id", "")
 
 
 class CapellaProvisionedDeployer(CloudVMDeployer):
@@ -2032,7 +2028,7 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
             deployed_models.append(model_id)
 
         if deployed_models:
-            self.create_model_api_key(deployed_models)
+            self.create_model_api_key()
         else:
             # We didnt deploy any models, so we log the model catalog data for debugging purposes
             logger.info(f"Model catalog data: {pretty_dict(catalog_data)}")
@@ -2144,24 +2140,27 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
         resp = self.provisioned_api.get_model_catalog()
         return resp.json() or []
 
-    def create_model_api_key(self, model_ids: list[str]):
+    def create_model_api_key(self):
         """Get an API key for a list of model ids."""
         payload = {
             "name": f"model_api_key-{self.uuid}",
             "description": "",
-            "expiryDuration": 60 * 60 * 24,  # 1 day
+            "expiryDuration": 60 * 60 * 24,  # 1 day in seconds
             "accessPolicy": {
                 "allowedIPs": self._get_allowed_ips(),
             },
+            "region": self.region,
         }
         logger.info(f"Creating models API keys with payload: {pretty_dict(payload)}")
-        for model_id in model_ids:
-            resp = self.provisioned_api.create_model_api_key(self.tenant_id, model_id, payload)
-            api_key_data = resp.json()
-            logger.info(f"Model API key created: {api_key_data}")
-            ControlPlaneManager.save_model_api_key(
-                model_id, api_key_data.get("keyId", ""), api_key_data.get("apiKey", "")
-            )
+
+        # The API key created will have access to all models in the specified region
+        resp = self.provisioned_api.create_model_api_key(self.tenant_id, payload)
+        api_key_data = resp.json()
+        logger.info(f"Model API key created: {api_key_data}")
+        ControlPlaneManager.save_model_api_key(
+            api_key_data.get("keyId", ""), api_key_data.get("apiKey", "")
+        )
+
 
 # CLI args.
 def get_args():

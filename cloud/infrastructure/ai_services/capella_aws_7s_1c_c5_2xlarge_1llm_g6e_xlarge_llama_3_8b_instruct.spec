@@ -51,7 +51,7 @@ data = var/cb/data
 source = default_capella
 
 [text-generation]
-model_name = meta/llama-3.1-8b-instruct
+model_name = meta/llama3-8b-instruct
 instance_type = g6e.xlarge
 instance_capacity = 1
 

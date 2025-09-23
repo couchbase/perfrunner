@@ -1,0 +1,55 @@
+[test_case]
+test = perfrunner.tests.ai_services.QueryThroughputWithAIFunctionsTest
+
+[showfast]
+title = Classification, 1M x 1KB, Update, 7 nodes, s=1 c=1, AI functions (OpenAI GPT-4.1)
+component = aiservices
+category = functions
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 7
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[index]
+fields = email
+indexes_per_collection = 1
+
+[load]
+items = 1000000
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+ssl_mode = capella
+
+[access]
+items = 1000000
+workers = 0
+n1ql_queries = classification
+n1ql_workers = 120
+time = 1200
+ssl_mode = capella
+n1ql_op = update
+
+[n1ql-classification]
+statement = UPDATE `bucket-1` USE KEYS $1 SET email_status = default:ai_classification({"text": email, "labels": ["valid", "invalid"]})[0].response;
+args = ["{key}"]
+
+[ai_services]
+provider = openai
+functions_names = ai_classification
+model_name = gpt-4.1

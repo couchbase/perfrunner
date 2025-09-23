@@ -24,7 +24,7 @@ volume_size = 100
 iops = 3000
 
 [text-generation]
-model_name = meta/llama3-70b-instruct
+model_name = meta/llama3.3-70b-instruct
 instance_type = p5.48xlarge
 instance_capacity = 1
 

@@ -1870,3 +1870,28 @@ class Monitor:
             time.sleep(self.POLLING_INTERVAL)
 
         logger.info(f"AI Gateway models are healthy: {misc.pretty_dict(models_status)}")
+
+    def wait_for_ai_functions_healthy(self, host: str, deployed_functions: list[str]):
+        logger.info(f"Waiting for AI functions to be healthy: {deployed_functions}")
+        retries = 0
+        while deployed_functions:
+            try:
+                functions = self.rest.list_ai_functions(host)
+                healthy_functions = [
+                    f.get("data", {}).get("name")
+                    for f in functions
+                    if f.get("data", {}).get("functionStatus") == "healthy"
+                ]
+                if len(healthy_functions) == len(deployed_functions):
+                    logger.info(f"All AI functions are healthy: {healthy_functions}")
+                    return
+
+                pending_functions = list(set(deployed_functions) - set(healthy_functions))
+                if retries % 60 == 0:
+                    logger.info(f"AI functions not healthy yet: {pending_functions}")
+            except Exception as e:
+                logger.error(f"Error while checking AI functions health status: {e}")
+            retries += 1
+            if retries >= self.MAX_RETRY:
+                raise Exception(f"AI functions are not healthy after {retries} retries.")
+            time.sleep(self.MONITORING_DELAY)

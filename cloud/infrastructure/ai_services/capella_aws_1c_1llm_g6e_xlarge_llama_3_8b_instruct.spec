@@ -24,11 +24,11 @@ volume_size = 100
 iops = 3000
 
 [text-generation]
-model_name = meta/llama-3.2-3b-instruct
-instance_type = g6.xlarge
+model_name = meta/llama3-8b-instruct
+instance_type = g6e.xlarge
 instance_capacity = 1
 
 [parameters]
 cpu = 4vCPU
-memory = 16GB
-gpu = 1, NVIDIA L4, 24GB
+memory = 32GB
+gpu = 1, NVIDIA L40S, 48GB

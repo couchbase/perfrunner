@@ -1,0 +1,15 @@
+[test_case]
+test = perfrunner.tests.ai_services.AIGatewayTest
+
+[showfast]
+title = AI Gateway LLM model serving, random text, 2000/200 type tasks
+component = aiservices
+category = models
+sub_category = {provider}
+
+[ai_bench]
+model_kind = text-generation
+time = 0
+ops = 1000
+dataset = datasets/templates/long_form_input
+max_tokens = 200

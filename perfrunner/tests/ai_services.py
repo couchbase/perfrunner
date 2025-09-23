@@ -563,16 +563,23 @@ class AIFunctionsTest(N1QLTest):
         )
         logger.info(f"Created openAI integration: {self.openai_integration_id}")
 
+    @timeit
     def deploy_ai_functions(self):
         uuid = self.cluster_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
         self.create_openai_integration(uuid)
         payload = self._create_ai_functions_payload()
         logger.info(f"Deploying AI functions with payload: {pretty_dict(payload)}")
         self.rest.create_ai_functions(self.master_node, payload)
-        # Cant deteministically monitor deployment due to AV-108636, so wait for 30 seconds
-        sleep(30)
+        self.monitor.wait_for_ai_functions_healthy(
+            self.master_node, self.ai_services_settings.functions_names
+        )
 
     def run(self):
+        functions_deployment_time = self.deploy_ai_functions()
+        logger.info(f"AI Functions deployment time: {functions_deployment_time} seconds")
+        # Workaround for AV-110058
+        self.rest.refresh_cluster_allowlist(self.master_node)
+
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
@@ -580,10 +587,6 @@ class AIFunctionsTest(N1QLTest):
         self.create_indexes()
         self.wait_for_indexing()
         self.store_plans()
-
-        self.deploy_ai_functions()
-        # Workaround for AV-110058
-        self.rest.refresh_cluster_allowlist(self.master_node)
 
         self.access_bg()
         self.access()

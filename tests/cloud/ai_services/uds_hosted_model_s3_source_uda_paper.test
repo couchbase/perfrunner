@@ -3,7 +3,7 @@ test = perfrunner.tests.ai_services.WorkflowIngestionAndLatencyTest
 use_workers = 0
 
 [showfast]
-title = Ingestion and embedding generation using hosted model, timed workflow, DocLayNet
+title = S3 (UDA/paper - 1128 PDFs),Ingestion and embedding generation using hosted model
 component = aiservices
 category = uds
 sub_category = {provider}
@@ -23,12 +23,14 @@ eviction_policy = fullEviction
 backend_storage = magma
 
 [access]
-time = 1800
+time = 0
 ssl_mode = capella
 
 [ai_services]
 workflow_type = unstructured
 model_dimensions = 1024
+s3_bucket = ai-uda-qa-pdfs
+s3_path = paper_docs
 
 [jts]
 index_partitions = 1

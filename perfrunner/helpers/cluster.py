@@ -1089,6 +1089,13 @@ class CapellaClusterManager(ClusterManagerBase):
         if not self.test_config.cluster.eventing_metadata_bucket_mem_quota:
             return
 
+        # For UDS, we want to reserve the memory required for the eventing metadata bucket
+        # but not create it. This is because the name for the metadata bucket could change and
+        # result in workflows failing.
+        if self.test_config.cluster.skip_metadata_bucket_creation:
+            logger.info("Skipping creation of eventing metadata bucket")
+            return
+
         for master in self.cluster_spec.masters:
             self.rest.create_bucket(
                 host=master,

@@ -64,7 +64,6 @@ class AIWorkflow:
 
     def get_workflow_payload(
         self,
-        index_name: str,
         bucket: str,
         scope: str = "_default",
         collection: str = "_default",
@@ -77,7 +76,7 @@ class AIWorkflow:
                 "scope": scope,
                 "collection": collection,
             },
-            "vectorIndexName": index_name,
+            "createIndexes": self.ai_services_settings.create_index,
             "embeddingFieldMappings": {
                 "emb": {"sourceFields": self.ai_services_settings.schema_fields}
             },
@@ -91,6 +90,8 @@ class AIWorkflow:
                         "chunkSize": self.ai_services_settings.chunk_size,
                     },
                     "dataSource": {"id": self.s3_integration_id},
+                    "pageNumbers": self.ai_services_settings.pages,
+                    "exclusions": self.ai_services_settings.exclusions,
                 }
             )
             # Unstructured workflows should not set embeddingFieldMappings
@@ -136,9 +137,7 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
     @timeit
     def deploy_workflow(self):
         try:
-            payload = self.workflow.get_workflow_payload(
-                self.fts_index_name, self.test_config.buckets[0]
-            )
+            payload = self.workflow.get_workflow_payload(self.test_config.buckets[0])
             self.workflow_id = self.rest.create_workflow(self.master_node, payload)
             # Store the workflow id in the cluster spec so it can be destroyed later
             self.cluster_spec.config.set("controlplane", "workflow_id", self.workflow_id)
@@ -160,17 +159,22 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
         # 2. Run until all the UDS workflow runs finish
 
         access_settings = self.test_config.access_settings
-        if access_settings.time > 0:
-            logger.info(f"Running workflow for {access_settings.time} seconds")
-            sleep(access_settings.time)
-        else:
-            logger.info("Running workflow. Waiting for workflow to complete")
-            self.monitor.wait_for_workflow_status(
-                host=self.eventing_nodes[0],
-                workflow_id=self.workflow_id,
-                status="completed",
-                max_retries=1200,
-            )
+        try:
+            if access_settings.time > 0:
+                logger.info(f"Running workflow for {access_settings.time} seconds")
+                sleep(access_settings.time)
+            else:
+                logger.info("Running workflow. Waiting for workflow to complete")
+                self.monitor.wait_for_workflow_status(
+                    host=self.eventing_nodes[0],
+                    workflow_id=self.workflow_id,
+                    status="completed",
+                    max_retries=1200,
+                )
+        except Exception as e:
+            # When doing E2E, an AutoVec workflow can fail although ingestion was successful.
+            # We can still process the UDS workflow results in this case.
+            logger.error(f"Error while waiting for workflow completion: {e}")
 
     def create_integrations(self, cluster_uuid: str):
         """

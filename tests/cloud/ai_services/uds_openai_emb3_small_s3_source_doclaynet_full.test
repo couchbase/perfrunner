@@ -3,20 +3,20 @@ test = perfrunner.tests.ai_services.WorkflowIngestionAndLatencyTest
 use_workers = 0
 
 [showfast]
-title = Ingestion and embedding generation using OpenAI model for full dataset, DocLayNet
-component = aicloud
-category = lat
+title = S3 (DocLayNet/Full dataset), OpenAI (text-embedding-3-small)
+component = aiservices
+category = uds
 sub_category = {provider}
 
 [stats]
 server_processes = eventing-produc
 
 [cluster]
-initial_nodes = 5
+initial_nodes = 7
 num_buckets = 1
 enable_n2n_encryption = all
-eventing_metadata_bucket_name = vulcan_workflows
-eventing_metadata_bucket_mem_quota = 1024
+skip_metadata_bucket_creation = true
+eventing_metadata_bucket_mem_quota = 1536
 
 [bucket]
 eviction_policy = fullEviction
@@ -30,6 +30,7 @@ ssl_mode = capella
 workflow_type = unstructured
 model_source = external
 model_name = text-embedding-3-small
+chunk_size = 2000
 
 [jts]
 index_partitions = 1

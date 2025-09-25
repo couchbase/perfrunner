@@ -994,6 +994,11 @@ class ClusterSettings:
         self.eventing_metadata_bucket_name = options.get(
             "eventing_metadata_bucket_name", self.EVENTING_METADATA_BUCKET_NAME
         )
+        # When true, allows reserving the memory required for the eventing metadata bucket
+        # without creating it.
+        self.skip_metadata_bucket_creation = maybe_atoi(
+            options.get("skip_metadata_bucket_creation", "false")
+        )
         self.eventing_buckets = int(options.get('eventing_buckets',
                                                 self.EVENTING_BUCKETS))
         self.num_vbuckets = int(options.get('num_vbuckets', self.NUM_VBUCKETS))
@@ -3745,8 +3750,9 @@ class AIServicesSettings:
         self.chunk_size = int(options.get("chunk_size", 512))  # current min: 256, max: 8192
         # Options: RECURSIVE_SPLITTER | SEMANTIC_SPLITTER
         self.chunking_strategy = options.get("chunking_strategy", "RECURSIVE_SPLITTER").upper()
-        self.pages = options.get("pages", "").split(",")
-        self.exclusions = options.get("exclusions", "").split(",")
+        pages_str = options.get("pages", "")
+        self.pages = [int(p) for p in pages_str.split(",") if p.strip() != ""]
+        self.exclusions = [e for e in options.get("exclusions", "").split(",") if e.strip() != ""]
 
         # Integrations settings
         self.s3_bucket = options.get("s3_bucket", "ai-doclaynet-dataset")

@@ -815,19 +815,7 @@
           "sg_cluster_map": "hebe_4node",
           "cb_cluster_map": "hebe_4nodes_colocated.spec",
           "sg_config": "3.1/hebe_channel_xattr_1db_1s_25c",
-          "test": "syncgateway_write_4node_no_roundtripwrite_replicator2_1s_25c_8vCPU.test"},
-
-      {"job": "sgw-cloud",
-        "sg_cluster_map": "cloud/infrastructure/cloud.ini",
-        "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
-        "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions_1s_2c.config",
-        "test": "tests/syncgateway/e2e/syncgateway_e2e_pull_100cbl_4sgw_1kb_8M_1s_2c_8vCPU.test"},
-
-      {"job": "sgw-cloud",
-        "sg_cluster_map": "cloud/infrastructure/cloud.ini",
-        "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
-        "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions_1s_2c.config",
-        "test": "tests/syncgateway/e2e/syncgateway_e2e_push_100cbl_4sgw_1kb_8M_1s_2c_8vCPU.test"}
+          "test": "syncgateway_write_4node_no_roundtripwrite_replicator2_1s_25c_8vCPU.test"}
     ],
     "EventingSGW": [
       {"job": "hebe-eventing-sgw-dev",
@@ -967,32 +955,20 @@
           "sg_cluster_map": "hebe_1node",
           "cb_cluster_map": "hebe_1node_colocated.spec",
           "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
-          "test": "syncgateway_sync_1node_200kchannels_100perchancache_initialload.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_1node_colocated.spec",
-          "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
-          "test": "syncgateway_sync_1node_400kchannels_100perchancache_initialload.test"},
-
-        {"job": "syncgteway-hebe-new",
-          "sg_cluster_map": "hebe_1node",
-          "cb_cluster_map": "hebe_1node_colocated.spec",
-          "sg_config": "3.0/hebe_channel_channelcache_2M_xattr",
           "test": "syncgateway_sync_1node_600kchannels_100perchancache_initialload.test"}
     ],
     "ImportOnDemand": [
         {"job": "hebe_sg_import",
           "test_type": "throughput",
           "cluster": "hebe_import_5node_n1ql.spec",
-          "load_config": "",
+          "load_config": "syncgateway_import_load_10M.test",
           "test_config": "syncgateway_import_throughput_10M.test",
           "sg_config": "3.0/hebe_channel_xattr_import.config"},
 
         {"job": "hebe_sg_import",
           "test_type": "throughput",
           "cluster": "hebe_import_5node_n1ql.spec",
-          "load_config": "",
+          "load_config": "syncgateway_import_load_10M.test",
           "test_config": "syncgateway_import_throughput_10M_8vCPU.test",
           "sg_config": "3.0/hebe_channel_xattr_import.config"},
 

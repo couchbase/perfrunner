@@ -655,6 +655,10 @@ class BigFunInitialSyncAndQueryTest(BigFunTest):
         sync_time = self.sync()
         self.report_sync_kpi(sync_time)
 
+        if (workers := self.test_config.access_settings.workers) < 1:
+            logger.info(f"Number of analytics query workers = {workers}. Skipping query phases.")
+            return
+
         logger.info('Running warmup phase')
         self.warmup()
 
@@ -663,6 +667,8 @@ class BigFunInitialSyncAndQueryTest(BigFunTest):
 
         if results:
             self.report_kpi(results)
+        else:
+            logger.warning("Query phase finished executing but returned no results.")
 
 
 class BigFunIncrSyncTest(BigFunInitialSyncAndQueryTest):

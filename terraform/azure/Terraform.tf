@@ -586,15 +586,6 @@ resource "azurerm_virtual_machine" "perf-cluster-vm" {
     os_type              = "Linux"
   }
 
-  storage_data_disk {
-    name            = azurerm_managed_disk.perf-cluster-data-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-cluster-data-disk[each.key].id
-    create_option   = "Attach"
-    lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-cluster-data-disk[each.key].disk_size_gb
-    caching         = "ReadWrite"
-  }
-
   delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
 
@@ -603,6 +594,16 @@ resource "azurerm_virtual_machine" "perf-cluster-vm" {
     node_group = each.value.node_group
     deployment = var.global_tag != "" ? var.global_tag : null
   }
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "perf-cluster-data-disk-attachment" {
+  for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
+
+  managed_disk_id    = azurerm_managed_disk.perf-cluster-data-disk[each.key].id
+  virtual_machine_id = azurerm_virtual_machine.perf-cluster-vm[each.key].id
+  lun                = 1
+  create_option      = "Attach"
+  caching            = each.value.volume_size < 4095 ? "ReadWrite" : "None"
 }
 
 # Create client VM(s).
@@ -628,15 +629,6 @@ resource "azurerm_virtual_machine" "perf-client-vm" {
     os_type              = "Linux"
   }
 
-  storage_data_disk {
-    name            = azurerm_managed_disk.perf-client-data-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-client-data-disk[each.key].id
-    create_option   = "Attach"
-    lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-client-data-disk[each.key].disk_size_gb
-    caching         = "ReadWrite"
-  }
-
   delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
 
@@ -645,6 +637,16 @@ resource "azurerm_virtual_machine" "perf-client-vm" {
     node_group = each.value.node_group
     deployment = var.global_tag != "" ? var.global_tag : null
   }
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "perf-client-data-disk-attachment" {
+  for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
+
+  managed_disk_id    = azurerm_managed_disk.perf-client-data-disk[each.key].id
+  virtual_machine_id = azurerm_virtual_machine.perf-client-vm[each.key].id
+  lun                = 1
+  create_option      = "Attach"
+  caching            = each.value.volume_size < 4095 ? "ReadWrite" : "None"
 }
 
 # Create utility VM(s).
@@ -691,15 +693,6 @@ resource "azurerm_virtual_machine" "perf-syncgateway-vm" {
     os_type              = "Linux"
   }
 
-  storage_data_disk {
-    name            = azurerm_managed_disk.perf-syncgateway-data-disk[each.key].name
-    managed_disk_id = azurerm_managed_disk.perf-syncgateway-data-disk[each.key].id
-    create_option   = "Attach"
-    lun             = 1
-    disk_size_gb    = azurerm_managed_disk.perf-syncgateway-data-disk[each.key].disk_size_gb
-    caching         = "ReadWrite"
-  }
-
   delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
 
@@ -708,6 +701,16 @@ resource "azurerm_virtual_machine" "perf-syncgateway-vm" {
     node_group = each.value.node_group
     deployment = var.global_tag != "" ? var.global_tag : null
   }
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "perf-syncgateway-data-disk-attachment" {
+  for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
+
+  managed_disk_id    = azurerm_managed_disk.perf-syncgateway-data-disk[each.key].id
+  virtual_machine_id = azurerm_virtual_machine.perf-syncgateway-vm[each.key].id
+  lun                = 1
+  create_option      = "Attach"
+  caching            = each.value.volume_size < 4095 ? "ReadWrite" : "None"
 }
 
 resource "azurerm_storage_account" "perf-storage-acc" {

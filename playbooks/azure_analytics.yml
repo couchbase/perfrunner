@@ -12,12 +12,15 @@
   - name: gather facts
     setup:
 
-  - name: find disk to set up
-    shell: lsblk -o NAME,TYPE,FSTYPE -dsnp | awk '$2 == "disk" && $3 == "" {print $1}' | head -n 1
+  - name: find disk to set up, assuming there is one unpartitioned and unformatted disk ready
+    shell: lsblk -o NAME,TYPE,FSTYPE -dsnp | awk '/^\/dev\// && $2 == "disk" && $3 == "" {print $1}' | head -n 1
     register: get_data_disk
 
   - set_fact:
       data_disk: "{{ get_data_disk.stdout }}"
+
+  - debug:
+      var: data_disk
 
   - name: re-creating filesystem
     filesystem:

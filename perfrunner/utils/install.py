@@ -5,7 +5,9 @@ from argparse import ArgumentParser, Namespace
 from collections import namedtuple
 from functools import cached_property
 from multiprocessing import Process, set_start_method
+from pathlib import Path
 from typing import Iterator, Optional
+from urllib.parse import urlparse
 
 import paramiko
 import requests
@@ -22,7 +24,7 @@ from perfrunner.helpers.local import (
     extract_any,
     run_custom_cmd,
 )
-from perfrunner.helpers.misc import create_build_tuple, maybe_atoi, pretty_dict, url_exist
+from perfrunner.helpers.misc import create_build_tuple, pretty_dict, url_exist
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.context import master_client
 from perfrunner.settings import CBProfile, ClusterSpec, TestConfig
@@ -34,9 +36,8 @@ except RuntimeError:
 
 LATESTBUILDS_BASE_URL = "http://latestbuilds.service.couchbase.com/builds"
 
-SERVER_INTERNAL_LOCATIONS = tuple(
-    f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-server/{codename}/{{build}}/"
-    for codename in (
+SERVER_CODENAMES = {
+    "couchbase-server": (
         "totoro",
         "morpheus",
         "cypher",
@@ -52,6 +53,11 @@ SERVER_INTERNAL_LOCATIONS = tuple(
         "watson",
         "master",
     )
+}
+SERVER_INTERNAL_LOCATIONS = tuple(
+    f"{LATESTBUILDS_BASE_URL}/latestbuilds/{product}/{codename}/{{build}}/"
+    for product, codenames in SERVER_CODENAMES.items()
+    for codename in codenames
 )
 
 SERVER_RELEASE_LOCATIONS = (
@@ -59,36 +65,38 @@ SERVER_RELEASE_LOCATIONS = (
     f"{LATESTBUILDS_BASE_URL}/releases/{{release}}/ce/",
 )
 
+COLUMNAR_CODENAMES = {
+    "enterprise-analytics": ("lumina", "phoenix"),
+    "couchbase-columnar": ("doric", "ionic", "goldfish", "1.0.0"),
+}
 COLUMNAR_LOCATIONS = (
     *(
-        f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-columnar/{codename}/{{build}}/"
-        for codename in (
-            "ionic",
-            "goldfish",
-            "1.0.0",
-        )
+        f"{LATESTBUILDS_BASE_URL}/latestbuilds/{product}/{codename}/{{build}}/"
+        for product, codenames in COLUMNAR_CODENAMES.items()
+        for codename in codenames
     ),
-    f"{LATESTBUILDS_BASE_URL}/latestbuilds/capella-analytics/1.0.0/{{build}}/",
 )
 
 PKG_PATTERNS = {
-    'rpm': (
-        'couchbase-{product}-{edition}-{release}-{build}-linux.{arch}.rpm',
-        'couchbase-{product}-{edition}-{release}-{build}-{os_name}{os_version}.{arch}.rpm',
-        'couchbase-{product}-{edition}-{release}-linux.{arch}.rpm',
-        'couchbase-{product}-{edition}-{release}-{os_name}{os_version}.{arch}.rpm',
+    "rpm": (
+        "{product}-{edition}-{release}-{build}-linux.{arch}.rpm",
+        "{product}-{edition}-{release}-{build}-{os_name}{os_version}.{arch}.rpm",
+        "{product}-{edition}-{release}-linux.{arch}.rpm",
+        "{product}-{edition}-{release}-{os_name}{os_version}.{arch}.rpm",
+        "{product}-{release}-{build}-linux.{arch}.rpm",
     ),
-    'deb': (
-        'couchbase-{product}-{edition}_{release}-{build}-linux_{arch}.deb',
-        'couchbase-{product}-{edition}_{release}-{build}-{os_name}{os_version}_{arch}.deb',
-        'couchbase-{product}-{edition}_{release}-linux_{arch}.deb',
-        'couchbase-{product}-{edition}_{release}-{os_name}{os_version}_{arch}.deb',
+    "deb": (
+        "{product}-{edition}_{release}-{build}-linux_{arch}.deb",
+        "{product}-{edition}_{release}-{build}-{os_name}{os_version}_{arch}.deb",
+        "{product}-{edition}_{release}-linux_{arch}.deb",
+        "{product}-{edition}_{release}-{os_name}{os_version}_{arch}.deb",
+        "{product}_{release}-{build}-linux_{arch}.deb",
     ),
-    'exe': (
-        'couchbase-server-{edition}_{release}-{build}-windows_amd64.msi',
-        'couchbase-server-{edition}_{release}-{build}-windows_amd64.exe',
-        'couchbase-server-{edition}_{release}-windows_amd64.exe',
-        'couchbase-server-{edition}_{release}-windows_amd64.msi',
+    "exe": (
+        "{product}-{edition}_{release}-{build}-windows_amd64.msi",
+        "{product}-{edition}_{release}-{build}-windows_amd64.exe",
+        "{product}-{edition}_{release}-windows_amd64.exe",
+        "{product}-{edition}_{release}-windows_amd64.msi",
     ),
 }
 
@@ -529,13 +537,23 @@ class CouchbaseInstaller:
         if self.url.endswith('.rpm'):
             debuginfo_str = '-debuginfo'
         elif self.url.endswith('.deb'):
-            debuginfo_str = "-dbg" if self.build_tuple < (8, 0, 0) else "-dbgsym"
+            if self.build_tuple >= (8, 0, 0) or self.package_name.startswith(
+                "enterprise-analytics"
+            ):
+                debuginfo_str = "-dbgsym"
+            else:
+                debuginfo_str = "-dbg"
 
-        return re.sub(
-            rf'couchbase-(server|columnar)-{self.options.edition}',
-            rf'couchbase-\1-{self.options.edition}{debuginfo_str}',
-            self.url
-        )
+        product_name = "-".join(self.package_name.split("-")[:2])
+        return re.sub(rf"({product_name}-{self.options.edition})", rf"\1{debuginfo_str}", self.url)
+
+    @property
+    def package_name(self) -> str:
+        return Path(urlparse(self.url).path).name
+
+    @property
+    def package_is_columnar(self) -> bool:
+        return any(self.package_name.startswith(product) for product in COLUMNAR_CODENAMES)
 
     @property
     def release(self) -> str:
@@ -553,54 +571,67 @@ class CouchbaseInstaller:
 
         return create_build_tuple(self.options.couchbase_version)
 
-    def find_package(self, edition: str, package: Optional[str] = None,
-                     os_name: Optional[str] = None, os_version: Optional[str] = None,
-                     arch: Optional[str] = None) -> Optional[str]:
-        package = package or self.remote.package  # package type based on server OS
+    def find_package(
+        self,
+        edition: str,
+        package_type: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        arch: Optional[str] = None,
+    ) -> Optional[str]:
+        package_type = package_type or self.remote.package_type  # package type based on server OS
         os_name = os_name or self.remote.distro
         os_version = os_version or self.remote.distro_version
         arch = arch or self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
 
-        for url in self.url_iterator(edition, package, os_name, os_version, arch):
+        for url in self.url_iterator(edition, package_type, os_name, os_version, arch):
             if url_exist(url):
                 return url
 
         logger.interrupt(
-            'Package URL not found for following criteria:\n' +
-            pretty_dict({
-                'edition': edition,
-                'release': self.release,
-                'build': self.build,
-                'os_name': os_name,
-                'os_version': os_version,
-                'arch': arch,
-                'package': package
-            }, sort_keys=False)
+            "Package URL not found for following criteria:\n"
+            + pretty_dict(
+                {
+                    "edition": edition,
+                    "release": self.release,
+                    "build": self.build,
+                    "os_name": os_name,
+                    "os_version": os_version,
+                    "arch": arch,
+                    "package_type": package_type,
+                },
+                sort_keys=False,
+            )
         )
 
-    def url_iterator(self, edition: str, package: Optional[str] = None,
-                     os_name: Optional[str] = None, os_version: Optional[str] = None,
-                     arch: Optional[str] = None) -> Iterator[str]:
+    def url_iterator(
+        self,
+        edition: str,
+        package_type: str,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        arch: Optional[str] = None,
+    ) -> Iterator[str]:
         arch_strings = ['x86_64', 'amd64']
         if arch == 'arm':
-            arch_strings = [ARM_ARCHS[package]]
+            arch_strings = [ARM_ARCHS[package_type]]
 
-        products = ['server']
+        products = list(SERVER_CODENAMES)
         if self.build is None:
             locations = SERVER_RELEASE_LOCATIONS
             logger.info("No build specified; searching only release packages...")
         elif self.cluster_spec.columnar_infrastructure:
-            products.insert(0, 'columnar')
+            products = list(COLUMNAR_CODENAMES) + products
             locations = COLUMNAR_LOCATIONS + SERVER_INTERNAL_LOCATIONS
             logger.info(
-                "Cluster spec specifies Columnar infrastructure; including couchbase-columnar "
+                "Cluster spec specifies Columnar infrastructure; including columnar "
                 "packages in search..."
             )
         else:
             locations = SERVER_INTERNAL_LOCATIONS
 
         for loc_pattern, product, pkg_pattern, arch_str in itertools.product(
-            locations, products, PKG_PATTERNS[package], arch_strings
+            locations, products, PKG_PATTERNS[package_type], arch_strings
         ):
             url = loc_pattern + pkg_pattern
             yield url.format(
@@ -618,14 +649,14 @@ class CouchbaseInstaller:
         try:
             url = local_copy_url or self.url
             logger.info(f'Saving a local copy of {url}')
-            download_file(url, f'couchbase.{self.remote.package}')
+            download_file(url, f"couchbase.{self.remote.package_type}")
 
         except (Exception, BaseException):
             logger.info("Saving local copy for ubuntu failed, package may not present")
 
     def download_remote(self):
         """Download and save a copy of the specified package on a remote client."""
-        if self.remote.package == 'deb':
+        if self.remote.package_type == "deb":
             logger.info(f'Saving a remote copy of {self.url}')
             self.wget(url=self.url)
         else:
@@ -664,8 +695,12 @@ class CouchbaseInstaller:
         if set_profile := self.test_config.cluster.profile:
             # If a test specifies a profile, use that regardless of the install flags
             profile = CBProfile(set_profile)
-        elif self.options.columnar_profile or self.cluster_spec.columnar_infrastructure:
+        elif self.options.cluster_profile:
+            profile = CBProfile(self.options.cluster_profile)
+        elif self.cluster_spec.columnar_infrastructure:
             profile = CBProfile.COLUMNAR
+            if self.package_is_columnar and self.build_tuple >= (1, 2, 0, 1154):
+                profile = CBProfile.ANALYTICS
 
         self.remote.set_cb_profile(profile)
 
@@ -701,7 +736,6 @@ class CloudInstaller(CouchbaseInstaller):
         user, password = self.cluster_spec.ssh_credentials
 
         self.remote.upload_iss_files(self.release)
-        package_name = f'couchbase.{self.remote.package}'
 
         if self.options.remote_copy:
             for url in (self.options.local_copy_url, self.options.couchbase_version):
@@ -714,7 +748,7 @@ class CloudInstaller(CouchbaseInstaller):
             else:
                 client_package_url = self.find_package(
                     edition=self.options.edition,
-                    package="deb",
+                    package_type="deb",
                     os_name="ubuntu",
                     os_version="20.04",
                     arch="x86_64",
@@ -722,12 +756,13 @@ class CloudInstaller(CouchbaseInstaller):
 
             logger.info(f"Saving a local copy of {client_package_url} to upload to remote clients.")
 
-            download_file(client_package_url, package_name)
+            client_package_name = f"couchbase.{client_package_url.rsplit('.', 1)[-1]}"
+            download_file(client_package_url, client_package_name)
 
             uploads = []
             for client in self.cluster_spec.workers:
-                logger.info(f'uploading client package {package_name} to {client}')
-                args = (client, user, password, package_name)
+                logger.info(f"uploading client package {client_package_name} to {client}")
+                args = (client, user, password, client_package_name)
 
                 worker_process = Process(target=upload_couchbase, daemon=True, args=args)
                 worker_process.start()
@@ -736,16 +771,17 @@ class CloudInstaller(CouchbaseInstaller):
             for process in uploads:
                 process.join()
 
-        download_file(self.url, package_name)
+        server_package_name = f"couchbase.{self.url.rsplit('.', 1)[-1]}"
+        download_file(self.url, server_package_name)
 
         if not self.cluster_spec.capella_infrastructure:
-            logger.info(f'Uploading {package_name} to servers')
+            logger.info(f"Uploading {server_package_name} to servers")
             uploads = []
             hosts = self.cluster_spec.servers
 
             for host in hosts:
-                logger.info(f'Uploading {package_name} to {host}')
-                args = (host, user, password, package_name)
+                logger.info(f"Uploading {server_package_name} to {host}")
+                args = (host, user, password, server_package_name)
 
                 worker_process = Process(target=upload_couchbase, args=args)
                 worker_process.daemon = True
@@ -755,7 +791,7 @@ class CloudInstaller(CouchbaseInstaller):
             for process in uploads:
                 process.join()
 
-            self.remote.install_uploaded_couchbase(package_name)
+            self.remote.install_uploaded_couchbase(server_package_name)
             self.remote.start_server()
 
 
@@ -770,10 +806,9 @@ class ClientUploader(CouchbaseInstaller):
                     return url
                 logger.interrupt(f'Invalid URL: {url}')
 
-        return self.find_package(edition=self.options.edition,
-                                 package='deb',
-                                 os_name='ubuntu',
-                                 os_version='20.04')
+        return self.find_package(
+            edition=self.options.edition, package_type="deb", os_name="ubuntu", os_version="20.04"
+        )
 
     def upload(self, package_name: str):
         logger.info(f'Using this URL: {self.url}')
@@ -854,10 +889,16 @@ class CBLInstaller:
 def get_args():
     parser = ArgumentParser()
 
-    parser.add_argument('-v', '--version', '--url', '-cv', '--couchbase-version',
-                        required=True,
-                        dest='couchbase_version',
-                        help='the build version or the HTTP URL to a package')
+    parser.add_argument(
+        "-v",
+        "--version",
+        "--url",
+        "-cv",
+        "--couchbase-version",
+        required=True,
+        dest="couchbase_version",
+        help="the build version or the HTTP URL to a package",
+    )
     parser.add_argument(
         "-t",
         "--test",
@@ -865,53 +906,65 @@ def get_args():
         default=None,
         help="path to a test configuration file",
     )
-    parser.add_argument('-c', '--cluster',
-                        required=True,
-                        help='the path to a cluster specification file')
-    parser.add_argument('--cluster-name', dest='cluster_name',
-                        help='if there are multiple clusters in the cluster spec, this lets you '
-                             'name just one of them to set up (default: all clusters)')
-    parser.add_argument('-e', '--edition',
-                        choices=['enterprise', 'community'],
-                        default='enterprise',
-                        help='the cluster edition')
-    parser.add_argument('--verbose',
-                        action='store_true',
-                        help='enable verbose logging')
-    parser.add_argument('--local-copy',
-                        action='store_true',
-                        help='save a local copy of a package')
-    parser.add_argument('--remote-copy',
-                        action='store_true',
-                        help='save a remote copy of a package')
-    parser.add_argument('--local-copy-url',
-                        default=None,
-                        help='The local copy url of the build')
-    parser.add_argument('-ov', '--operator-version',
-                        dest='operator_version',
-                        help='the build version for the couchbase operator')
-    parser.add_argument('--exporter-version',
-                        dest='exporter_version',
-                        default=None,
-                        help='the build version for the couchbase prometheus exporter')
-    parser.add_argument('--cng-version',
-                        dest='cng_version',
-                        default=None,
-                        help='the build version for the couchbase CNG')
-    parser.add_argument('-obv', '--operator-backup-version',
-                        dest='operator_backup_version',
-                        help='the build version for the couchbase operator')
-    parser.add_argument('--kafka-version',
-                        default='2.8.2',
-                        help='the Kafka version to install on Kafka nodes')
-    parser.add_argument('-u', '--uninstall',
-                        action='store_true',
-                        help='uninstall the installed build')
-    parser.add_argument('--columnar-profile',
-                        type=maybe_atoi,
-                        default=False,
-                        help='use to convert the cb-server profile to \
-                        columnar on non-capella machines')
+    parser.add_argument(
+        "-c", "--cluster", required=True, help="the path to a cluster specification file"
+    )
+    parser.add_argument(
+        "--cluster-name",
+        dest="cluster_name",
+        help="if there are multiple clusters in the cluster spec, this lets you "
+        "name just one of them to set up (default: all clusters)",
+    )
+    parser.add_argument(
+        "-e",
+        "--edition",
+        choices=["enterprise", "community"],
+        default="enterprise",
+        help="the cluster edition",
+    )
+    parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
+    parser.add_argument("--local-copy", action="store_true", help="save a local copy of a package")
+    parser.add_argument(
+        "--remote-copy", action="store_true", help="save a remote copy of a package"
+    )
+    parser.add_argument("--local-copy-url", default=None, help="The local copy url of the build")
+    parser.add_argument(
+        "-ov",
+        "--operator-version",
+        dest="operator_version",
+        help="the build version for the couchbase operator",
+    )
+    parser.add_argument(
+        "--exporter-version",
+        dest="exporter_version",
+        default=None,
+        help="the build version for the couchbase prometheus exporter",
+    )
+    parser.add_argument(
+        "--cng-version",
+        dest="cng_version",
+        default=None,
+        help="the build version for the couchbase CNG",
+    )
+    parser.add_argument(
+        "-obv",
+        "--operator-backup-version",
+        dest="operator_backup_version",
+        help="the build version for the couchbase operator",
+    )
+    parser.add_argument(
+        "--kafka-version", default="2.8.2", help="the Kafka version to install on Kafka nodes"
+    )
+    parser.add_argument(
+        "-u", "--uninstall", action="store_true", help="uninstall the installed build"
+    )
+    parser.add_argument(
+        "--cluster-profile",
+        required=False,
+        choices=[p.value for p in CBProfile],
+        default=None,
+        help="ns_server profile to set for the cluster",
+    )
     parser.add_argument(
         "--cbl-url", dest="cbl_url", default=None, help="the HTTP URL to a cbl package"
     )
@@ -921,9 +974,7 @@ def get_args():
         default=None,
         help="the HTTP URL to a cbl support libraries package",
     )
-    parser.add_argument('override',
-                        nargs='*',
-                        help='custom cluster settings')
+    parser.add_argument("override", nargs="*", help="custom cluster settings")
     return parser.parse_args()
 
 

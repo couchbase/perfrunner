@@ -6,6 +6,7 @@ import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from dataclasses import dataclass
 from enum import Enum
+from functools import cached_property
 from itertools import chain, combinations, permutations
 from typing import Any, Iterable, Iterator, Optional, Tuple
 from uuid import uuid4
@@ -26,10 +27,16 @@ SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
 REPO = 'https://github.com/couchbase/perfrunner'
 CAPELLA_PUBLIC_API_URL_TEMPLATE = "https://cloudapi.{}.nonprod-project-avengers.com"
 
+class CBProduct(Enum):
+    COUCHBASE_SERVER = "couchbase-server"
+    ENTERPRISE_ANALYTICS = "enterprise-analytics"
+
+
 class CBProfile(Enum):
     DEFAULT = "default"
     PROVISIONED = "provisioned"
     COLUMNAR = "columnar"
+    ANALYTICS = "analytics"
 
 
 @decorator
@@ -291,6 +298,30 @@ class ClusterSpec(Config):
         for section in self.config.sections():
             infra_config[section] = {p: v for p, v in self.config.items(section)}
         return infra_config
+
+    @cached_property
+    def products_by_server(self) -> dict[str, CBProduct]:
+        if not self.config.has_section("clusters"):
+            return {}
+
+        properties = {}
+        clusters = self.config.items("clusters")
+
+        def cluster_product(i: int) -> CBProduct:
+            if self.capella_infrastructure or not self.columnar_infrastructure:
+                return CBProduct.COUCHBASE_SERVER
+
+            if len(clusters) == 1:
+                return CBProduct.ENTERPRISE_ANALYTICS
+
+            return list(CBProduct)[min(i, 1)]
+
+        for i, (_, nodes) in enumerate(clusters):
+            product = cluster_product(i)
+            for node in nodes.split():
+                properties[node.split(":")[0]] = product
+
+        return properties
 
     @property
     def clusters(self) -> Iterator:

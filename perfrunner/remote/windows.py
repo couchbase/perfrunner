@@ -29,7 +29,7 @@ class RemoteWindows(Remote):
 
     def __init__(self, cluster_spec: ClusterSpec):
         super().__init__(cluster_spec)
-        self.package = 'exe'
+        self.package_type = "exe"
         self.distro, self.distro_version = None, None
 
     @staticmethod

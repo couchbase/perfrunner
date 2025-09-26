@@ -28,14 +28,12 @@ from perfrunner.remote.context import (
     servers_by_role,
     syncgateway_servers,
 )
-from perfrunner.settings import CH2, CBProfile, CH2ConnectionSettings, ClusterSpec
+from perfrunner.settings import CH2, CBProduct, CBProfile, CH2ConnectionSettings, ClusterSpec
 
 
 class RemoteLinux(Remote):
 
     PLATFORM = 'linux'
-
-    CB_DIR = '/opt/couchbase'
 
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'indexer',
                  'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
@@ -43,17 +41,30 @@ class RemoteLinux(Remote):
 
     PROCESS_PATTERNS = ('cbas', )
 
-    LINUX_PERF_PROFILES_PATH = '/opt/couchbase/var/lib/couchbase/logs/'
-
     LINUX_PERF_DELAY = 30
+
+    CB_DIRS = {
+        CBProduct.COUCHBASE_SERVER: "/opt/couchbase",
+        CBProduct.ENTERPRISE_ANALYTICS: "/opt/enterprise-analytics",
+    }
 
     def __init__(self, cluster_spec: ClusterSpec):
         super().__init__(cluster_spec)
         if not (cluster_spec.capella_infrastructure or cluster_spec.external_client):
             self.distro, self.distro_version = self.detect_distro()
 
+    def get_install_dir(self) -> str:
+        return self.CB_DIRS[self.get_product()]
+
+    def get_product(self, host: Optional[str] = None) -> CBProduct:
+        host = host or env.host_string
+        return self.cluster_spec.products_by_server[host]
+
+    def get_linux_perf_profile_path(self) -> str:
+        return f"{self.get_install_dir()}/var/lib/couchbase/logs/"
+
     @property
-    def package(self):
+    def package_type(self):
         if self.distro.upper() in ('UBUNTU', 'DEBIAN'):
             return 'deb'
         else:
@@ -291,7 +302,7 @@ class RemoteLinux(Remote):
 
         try:
             r = run(
-                f"{self.CB_DIR}/bin/cbcollect_info {' '.join(filter(None, params))}",
+                f"{self.get_install_dir()}/bin/cbcollect_info {' '.join(filter(None, params))}",
                 warn_only=True,
                 timeout=timeout,
             )
@@ -318,8 +329,10 @@ class RemoteLinux(Remote):
     @all_servers
     def clean_data(self):
         for path in self.cluster_spec.paths:
-            run('rm -fr {}/*'.format(path))
-        run('rm -fr {}'.format(self.CB_DIR))
+            run(f"rm -fr {path}/*")
+
+        for cb_dir in self.CB_DIRS.values():
+            run(f"rm -fr {cb_dir}")
 
     @all_servers
     def kill_processes(self):
@@ -356,25 +369,28 @@ class RemoteLinux(Remote):
 
     @all_servers
     def uninstall_couchbase(self):
-        logger.info("Uninstalling Couchbase Server")
-        if self.package == "deb":
-            run("yes | apt-get remove couchbase-server", quiet=True)
-            run("yes | apt-get remove couchbase-server-dbg", quiet=True)
-            run("yes | apt-get remove couchbase-server-dbgsym", quiet=True)  # Morpheus and above
-            run("yes | apt-get remove couchbase-server-community", quiet=True)
-            run("yes | apt-get remove couchbase-server-analytics", quiet=True)
-        else:
-            run('yes | yum remove couchbase-server', quiet=True)
-            run('yes | yum remove couchbase-server-debuginfo', quiet=True)
-            run('yes | yum remove couchbase-server-community', quiet=True)
-            run('yes | yum remove couchbase-server-analytics', quiet=True)
+        logger.info("Uninstalling Couchbase")
+        packages = [
+            "couchbase-server",
+            "couchbase-columnar",
+            "couchbase-server-community",
+            "couchbase-server-analytics",
+            "couchbase-server-dbg",  # Before Morpheus (deb only)
+            "couchbase-server-dbgsym",  # Morpheus and above (deb only)
+            "couchbase-server-debuginfo",  # rpm only
+            "enterprise-analytics",
+            "enterprise-analytics-dbgsym",
+        ]
+        cli_tool = "apt-get" if self.package_type == "deb" else "yum"
+        for package in packages:
+            run(f"yes | {cli_tool} remove {package}", quiet=True)
 
     def upload_iss_files(self, release: str):
         pass
 
     def _install_couchbase(self, filename: str):
-        logger.info('Installing Couchbase Server')
-        if self.package == 'deb':
+        logger.info("Installing Couchbase")
+        if self.package_type == "deb":
             run(f"DEBIAN_FRONTEND=noninteractive apt install -y /tmp/{filename}")
         else:
             run(f'yes | yum localinstall -y /tmp/{filename}')
@@ -391,8 +407,8 @@ class RemoteLinux(Remote):
 
     @all_servers
     def restart(self):
-        logger.info('Restarting server')
-        run('systemctl restart couchbase-server', pty=False)
+        logger.info("Restarting server")
+        run(f"systemctl restart {self.get_product().value}", pty=False)
 
     @syncgateway_servers
     def restart_syncgateway(self):
@@ -401,10 +417,13 @@ class RemoteLinux(Remote):
 
     @all_servers
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
-        logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))
-        run('systemctl set-environment COUCHBASE_NUM_VBUCKETS={}'
-            .format(num_vbuckets))
-        run('systemctl restart couchbase-server', pty=False)
+        if self.get_product() is not CBProduct.COUCHBASE_SERVER:
+            logger.warning("Changing number of vbuckets is only supported for Couchbase Server")
+            return
+
+        logger.info(f"Changing number of vbuckets to {num_vbuckets}")
+        run(f"systemctl set-environment COUCHBASE_NUM_VBUCKETS={num_vbuckets}")
+        run("systemctl restart couchbase-server", pty=False)
 
     @all_servers
     def reset_num_vbuckets(self):
@@ -419,13 +438,15 @@ class RemoteLinux(Remote):
 
     @all_servers
     def stop_server(self):
-        logger.info('Stopping Couchbase Server')
-        run('systemctl stop couchbase-server', pty=False)
+        product = self.get_product().value
+        logger.info(f"Stopping {product}")
+        run(f"systemctl stop {product}", pty=False)
 
     @all_servers
     def start_server(self):
-        logger.info('Starting Couchbase Server')
-        run('systemctl start couchbase-server', pty=False)
+        product = self.get_product().value
+        logger.info(f"Starting {product}")
+        run(f"systemctl start {product}", pty=False)
 
     def detect_if(self):
         stdout = run("ip route list | grep default")
@@ -481,9 +502,11 @@ class RemoteLinux(Remote):
 
     @all_servers
     def tune_log_rotation(self):
-        logger.info('Tune log rotation so that it happens less frequently')
-        run('sed -i "s/num_files, [0-9]*/num_files, 50/" '
-            '/opt/couchbase/etc/couchbase/static_config')
+        logger.info("Tune log rotation so that it happens less frequently")
+        run(
+            "sed -i 's/num_files, [0-9]*/num_files, 50/' "
+            f"{self.get_install_dir()}/etc/couchbase/static_config"
+        )
 
     @master_server
     def purge_restore_progress(self, archive: str, repo: str):
@@ -494,17 +517,19 @@ class RemoteLinux(Remote):
         run(cmd)
 
     @master_server
-    def restore_data(self, archive_path: str, repo_path: str, map_data: str = None):
-        cmd = "/opt/couchbase/bin/cbbackupmgr restore " \
-              "--archive {} --repo {} --threads 24 " \
-              "--cluster http://localhost:8091 " \
-              "--username Administrator --password password " \
-              "--disable-ft-indexes --disable-gsi-indexes".format(archive_path, repo_path)
+    def restore_data(self, archive_path: str, repo_path: str, map_data: Optional[str] = None):
+        cmd = (
+            f"{self.get_install_dir()}/bin/cbbackupmgr restore "
+            f"--archive {archive_path} --repo {repo_path} --threads 24 "
+            "--cluster http://localhost:8091 "
+            "--username Administrator --password password "
+            "--disable-ft-indexes --disable-gsi-indexes"
+        )
 
         if map_data:
-            cmd += " --map-data {}".format(map_data)
+            cmd += f" --map-data {map_data}"
 
-        logger.info("Running: {}".format(cmd))
+        logger.info(f"Running: {cmd}")
         run(cmd)
 
     @master_server
@@ -522,45 +547,41 @@ class RemoteLinux(Remote):
 
     @master_server
     def load_tpcds_data_json(self, import_file: str, bucket: str):
-        cmd = \
-            "/opt/couchbase/bin/cbimport json " \
-            "--dataset file://{} --threads 24 " \
-            "--cluster http://localhost:8091 " \
-            "--bucket {} " \
-            "--username Administrator --password password " \
-            "--generate-key '#MONO_INCR#' --format lines".format(
-                import_file,
-                bucket,
-            )
+        cmd = (
+            f"{self.get_install_dir()}/bin/cbimport json "
+            f"--dataset file://{import_file} --threads 24 "
+            f"--cluster http://localhost:8091 "
+            f"--bucket {bucket} "
+            f"--username Administrator --password password "
+            "--generate-key '#MONO_INCR#' --format lines"
+        )
 
-        logger.info("Running: {}".format(cmd))
+        logger.info(f"Running: {cmd}")
         run(cmd)
 
     @master_server
-    def load_tpcds_data_json_collection(self,
-                                        import_file: str,
-                                        bucket: str,
-                                        scope: str,
-                                        collection: str,
-                                        docs_per_collection: int = 0):
-        cmd = \
-            "/opt/couchbase/bin/cbimport json " \
-            "--dataset file://{} --threads 24 " \
-            "--cluster http://localhost:8091 " \
-            "--bucket {} " \
-            "--scope-collection-exp {}.{} " \
-            "--username Administrator --password password " \
-            "--generate-key '#MONO_INCR#' --format lines".format(
-                import_file,
-                bucket,
-                scope,
-                collection
-            )
+    def load_tpcds_data_json_collection(
+        self,
+        import_file: str,
+        bucket: str,
+        scope: str,
+        collection: str,
+        docs_per_collection: int = 0,
+    ):
+        cmd = (
+            f"{self.get_install_dir()}/bin/cbimport json "
+            f"--dataset file://{import_file} --threads 24 "
+            f"--cluster http://localhost:8091 "
+            f"--bucket {bucket} "
+            f"--scope-collection-exp {scope}.{collection} "
+            f"--username Administrator --password password "
+            "--generate-key '#MONO_INCR#' --format lines"
+        )
 
         if docs_per_collection > 0:
-            cmd += " --limit-docs {}".format(docs_per_collection)
+            cmd += f" --limit-docs {docs_per_collection}"
 
-        logger.info("Running: {}".format(cmd))
+        logger.info(f"Running: {cmd}")
         run(cmd)
 
     @all_servers
@@ -573,7 +594,8 @@ class RemoteLinux(Remote):
     def detect_auto_failover(self, host):
         with settings(host_string=host):
             r = run(
-                f'grep "Starting failing over" {self.CB_DIR}/var/lib/couchbase/logs/info.log',
+                "grep 'Starting failing over' "
+                f"{self.get_install_dir()}/var/lib/couchbase/logs/info.log",
                 warn_only=True,
             )
             if not r.return_code:
@@ -582,7 +604,7 @@ class RemoteLinux(Remote):
     def detect_hard_failover_start(self, host):
         with settings(host_string=host):
             r = run(
-                f'grep "Starting failing" {self.CB_DIR}/var/lib/couchbase/logs/info.log',
+                f'grep "Starting failing" {self.get_install_dir()}/var/lib/couchbase/logs/info.log',
                 warn_only=True,
             )
             if not r.return_code:
@@ -591,7 +613,8 @@ class RemoteLinux(Remote):
     def detect_graceful_failover_start(self, host):
         with settings(host_string=host):
             r = run(
-                f'grep "Starting vbucket moves" {self.CB_DIR}/var/lib/couchbase/logs/info.log',
+                "grep 'Starting vbucket moves' "
+                f"{self.get_install_dir()}/var/lib/couchbase/logs/info.log",
                 warn_only=True,
             )
             if not r.return_code:
@@ -600,7 +623,8 @@ class RemoteLinux(Remote):
     def detect_failover_end(self, host):
         with settings(host_string=host):
             r = run(
-                f'grep "Failed over .*: ok" {self.CB_DIR}/var/lib/couchbase/logs/info.log',
+                "grep 'Failed over .*: ok' "
+                f"{self.get_install_dir()}/var/lib/couchbase/logs/info.log",
                 warn_only=True,
             )
             if not r.return_code:
@@ -709,7 +733,7 @@ class RemoteLinux(Remote):
     @master_server
     def get_manifest(self):
         logger.info('Getting manifest from host node')
-        get("{}/manifest.xml".format(self.CB_DIR), local_path="./")
+        get(f"{self.get_install_dir()}/manifest.xml", local_path="./")
 
     @all_servers
     def clear_wtmp(self):
@@ -718,17 +742,20 @@ class RemoteLinux(Remote):
     @all_servers
     def enable_ipv6(self):
         logger.info('Enabling IPv6')
-        run('sed -i "s/{ipv6, false}/{ipv6, true}/" '
-            '/opt/couchbase/etc/couchbase/static_config')
+        run(
+            'sed -i "s/{ipv6, false}/{ipv6, true}/" '
+            f"{self.get_install_dir()}/etc/couchbase/static_config"
+        )
 
     @all_servers
     def update_ip_family_cli(self):
-        logger.info('Updating IP family')
-        cmd = \
-            "/opt/couchbase/bin/couchbase-cli ip-family "\
-            "-c http://localhost:8091 -u Administrator "\
+        logger.info("Updating IP family")
+        cmd = (
+            f"{self.get_install_dir()}/bin/couchbase-cli ip-family "
+            "-c http://localhost:8091 -u Administrator "
             "-p password --set --ipv6"
-        logger.info("Running: {}".format(cmd))
+        )
+        logger.info(f"Running: {cmd}")
         run(cmd)
 
     @all_servers
@@ -743,9 +770,10 @@ class RemoteLinux(Remote):
     @all_servers
     def setup_x509(self):
         logger.info('Setting up x.509 certificates')
-        put("certificates/inbox", "/opt/couchbase/var/lib/couchbase/")
-        run('chmod a+x /opt/couchbase/var/lib/couchbase/inbox/chain.pem')
-        run('chmod a+x /opt/couchbase/var/lib/couchbase/inbox/pkey.key')
+        install_dir = self.get_install_dir()
+        put("certificates/inbox", f"{install_dir}/var/lib/couchbase/")
+        run(f"chmod a+x {install_dir}/var/lib/couchbase/inbox/chain.pem")
+        run(f"chmod a+x {install_dir}/var/lib/couchbase/inbox/pkey.key")
 
     @master_server
     def allow_non_local_ca_upload(self):
@@ -852,35 +880,41 @@ class RemoteLinux(Remote):
         return result
 
     def set_auto_failover(self, host: str, enable: bool, timeout: int = 5):
-        logger.info('Setting auto failover: {} on {}'.format(enable, host))
-        cmd = "/opt/couchbase/bin/couchbase-cli setting-autofailover"
-        details = "--cluster {}:8091 -u Administrator -p password".format(host)
+        logger.info(f"Setting auto failover: {enable} on {host}")
+        cmd = f"{self.get_install_dir()}/bin/couchbase-cli setting-autofailover"
+        details = f"--cluster {host}:8091 -u Administrator -p password"
         if enable:
             logger.info("Enabling auto failover")
-            run("{} --enable-auto-failover 1 --auto-failover-timeout {} {}"
-                .format(cmd, timeout, details))
+            run(f"{cmd} --enable-auto-failover 1 --auto-failover-timeout {timeout} {details}")
         else:
             logger.info("Disabling auto failover")
-            run("{} --enable-auto-failover 0 {}".format(cmd, details))
+            run(f"{cmd} --enable-auto-failover 0 {details}")
 
     @master_server
     def enable_n2n_encryption(self, host: str, level: str = None):
-        logger.info('Enabling node to node encryption on {}'.format(host))
+        logger.info(f"Enabling node to node encryption on {host}")
         self.set_auto_failover(host, False)
-        run("/opt/couchbase/bin/couchbase-cli node-to-node-encryption --enable "
-            "--cluster {}:8091 -u Administrator -p password".format(host))
+        run(
+            f"{self.get_install_dir()}/bin/couchbase-cli node-to-node-encryption --enable "
+            f"--cluster {host}:8091 -u Administrator -p password"
+        )
         self.set_encryption_level(host, level)
 
     def set_encryption_level(self, host: str, level: str = "control"):
-        logger.info('Setting node to node encryption level: {} on {}'.format(level, host))
-        run("/opt/couchbase/bin/couchbase-cli setting-security --cluster-encryption-level {} --set"
-            " --cluster {}:8091 -u Administrator -p password".format(level, host))
+        logger.info(f"Setting node to node encryption level: {level} on {host}")
+        run(
+            f"{self.get_install_dir()}/bin/couchbase-cli setting-security "
+            f"--cluster-encryption-level {level} --set --cluster {host}:8091 "
+            "-u Administrator -p password"
+        )
 
     @master_server
     def ui_http_off(self, host: str):
-        logger.info('Disabling UI over http.')
-        run("/opt/couchbase/bin/couchbase-cli setting-security --set --disable-http-ui 1 --cluster "
-            "{}:8091 -u Administrator -p password".format(host))
+        logger.info("Disabling UI over http.")
+        run(
+            f"{self.get_install_dir()}/bin/couchbase-cli setting-security "
+            f"--set --disable-http-ui 1 --cluster {host}:8091 -u Administrator -p password"
+        )
 
     @all_servers
     def set_cb_profile(self, profile: CBProfile):
@@ -1210,7 +1244,7 @@ class RemoteLinux(Remote):
     @all_servers
     def generate_linux_perf_script(self):
         files = []
-        with cd(self.LINUX_PERF_PROFILES_PATH):
+        with cd(self.get_linux_perf_profile_path()):
             files = run('for i in *_perf.data; do echo $i; done').replace('\r', '').split('\n')
             # On some shells the pattern is returned if nothing is found
             if files and files[0] == '*_perf.data':
@@ -1237,7 +1271,7 @@ class RemoteLinux(Remote):
 
         zip_cmd = 'zip -q {0}.zip {0}.txt'.format(filename)
         try:
-            with settings(warn_only=True), cd(self.LINUX_PERF_PROFILES_PATH):
+            with settings(warn_only=True), cd(self.get_linux_perf_profile_path()):
                 run(perf_cmd, timeout=600, pty=False)
                 run(zip_cmd, pty=False)
         except Exception as e:
@@ -1247,7 +1281,7 @@ class RemoteLinux(Remote):
     def get_linuxperf_files(self):
 
         logger.info('Collecting linux perf files from server nodes')
-        with cd(self.LINUX_PERF_PROFILES_PATH):
+        with cd(self.get_linux_perf_profile_path()):
             r = run('stat *.zip', quiet=True, warn_only=True)
             if not r.return_code:
                 get('*.zip', local_path='.')
@@ -1391,7 +1425,7 @@ class RemoteLinux(Remote):
         cmd = 'chmod +x blackholePuller-linux-x64'
         run(cmd)
 
-    @servers_by_role(roles=['index'])
+    @servers_by_role(roles=["index"])
     def set_indexer_systemd_mem_limits(self):
         """Set systemd memory limit for index service equal to total node memory on each node."""
         logger.info(
@@ -1416,6 +1450,14 @@ class RemoteLinux(Remote):
         if not (hosts := self.cluster_spec.servers_by_role(service)) or not limits:
             return
 
+        cb_product = self.get_product(hosts[0])
+        if cb_product is CBProduct.ENTERPRISE_ANALYTICS and service not in ["kv", "cbas"]:
+            logger.warning(
+                f"Setting systemd resource limits for {service} "
+                "is not supported for Enterprise Analytics"
+            )
+            return
+
         logger.info(
             f"Setting systemd resource limits on nodes running {service} service: "
             f"{pretty_dict(limits)}"
@@ -1424,7 +1466,7 @@ class RemoteLinux(Remote):
 
         def task():
             logger.info(f"Setting systemd resource limits on {env.host_string}")
-            conf_dir = "/etc/systemd/system/couchbase-server.service.d"
+            conf_dir = f"/etc/systemd/system/{self.get_product().value}.service.d"
             run(f"mkdir -p {conf_dir}")
             with cd(conf_dir):
                 run(f"echo -e '[Service]\n{conf_string}' > {service}.conf")
@@ -1435,20 +1477,22 @@ class RemoteLinux(Remote):
     @all_servers
     def reset_systemd_service_conf(self):
         logger.info(f"Remove custom systemd service configuration on {env.host_string}")
-        run("rm -rf /etc/systemd/system/couchbase-server.service.d")
+        for product in self.CB_DIRS:
+            run(f"rm -rf /etc/systemd/system/{product.value}.service.d")
         run("systemctl daemon-reload")
 
     @all_servers
     def enable_resource_management_with_cgroup(self):
-        run("mkdir -p /etc/systemd/system/couchbase-server.service.d")
-        with cd("/etc/systemd/system/couchbase-server.service.d"):
+        product = self.get_product().value
+        run(f"mkdir -p /etc/systemd/system/{product}.service.d")
+        with cd(f"/etc/systemd/system/{product}.service.d"):
             # This is the content we want to store, keeping it here for now and if it grows,
             # it can be moved in a static file
             content = (
                 "[Service]\n"
                 "Delegate=yes\n"
-                "ExecStartPre=/opt/couchbase/bin/create-provisioned-cgroups.sh"
-                " '/sys/fs/cgroup/system.slice/couchbase-server.service/'\n"
+                f"ExecStartPre={self.get_install_dir()}/bin/create-provisioned-cgroups.sh"
+                f" '/sys/fs/cgroup/system.slice/{product}.service/'\n"
                 "DelegateSubgroup=babysitter"
             )
             run(f"echo -e '{content}' > override.conf")
@@ -1745,7 +1789,8 @@ class RemoteLinux(Remote):
 
     @all_servers
     def generate_minidump_backtrace(self):
-        response = run(f"ls {self.CB_DIR}/var/lib/couchbase/crash/*.dmp", quiet=True)
+        install_dir = self.get_install_dir()
+        response = run(f"ls {install_dir}/var/lib/couchbase/crash/*.dmp", quiet=True)
         if response.return_code:
             return  # This node doesnot contain any crash minidumps
 
@@ -1760,22 +1805,23 @@ class RemoteLinux(Remote):
             core_file = crash_file.replace(".dmp", ".core")
             backtrace_file = crash_file.replace(".dmp", ".txt")
             # Generate the native core file
-            run(f"{self.CB_DIR}/bin/minidump-2-core {crash_file} > {core_file}")
+            run(f"{install_dir}/bin/minidump-2-core {crash_file} > {core_file}")
             # Produce the full backtrace using gdb and store it in a file
             run(
                 f"gdb -batch -iex 'set auto-load safe-path /' -iex 'set pagination off' "
-                f"-ex 'backtrace full' -ex 'quit' {self.CB_DIR}/bin/memcached -c {core_file} "
+                f"-ex 'backtrace full' -ex 'quit' {install_dir}/bin/memcached -c {core_file} "
                 f"| sed '/^\\[New LWP/d' > {backtrace_file}"
             )
         # Now zip all the backtraces files into a single file
-        backtraces_zip = f"{self.CB_DIR}/var/lib/couchbase/crash/backtraces_{env.host_string}.zip"
-        run(f"zip -q {backtraces_zip} {self.CB_DIR}/var/lib/couchbase/crash/*.txt")
+        backtraces_zip = (
+            f"{install_dir}/var/lib/couchbase/crash/backtraces_{env.host_string}.zip"
+        )
+        run(f"zip -q {backtraces_zip} {install_dir}/var/lib/couchbase/crash/*.txt")
         get(backtraces_zip, local_path=".")
 
     def _is_debug_package_installed(self) -> bool:
         """Return true if the debug package is installed."""
         # This assumes we are on a Debian based system.
-        return_code = run(
-            "dpkg -l | grep -E 'couchbase-server-dbg|couchbase-server-dbgsym'", quiet=True
-        ).return_code
+        pattern = f"({'|'.join(product.value for product in self.CB_DIRS)})-dbg(sym)?"
+        return_code = run(f"dpkg -l | grep -E '{pattern}'", quiet=True).return_code
         return return_code == 0

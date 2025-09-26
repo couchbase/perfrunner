@@ -118,7 +118,7 @@ class CloudVMDeployer:
         "aws": {
             "clusters": {
                 "x86_64": "perf-server-x86-ubuntu20-2023-07",
-                "arm": "perf-server-arm-us-east",
+                "arm": "perf-server-arm-ubuntu20-2025-05",
                 "al2": "perf-server-al_x86-2022-03-us-east",
             },
             "clients": "perf-client-x86-ubuntu20-2023-06-v3",
@@ -138,6 +138,7 @@ class CloudVMDeployer:
         "azure": {
             "clusters": {
                 "x86_64": "perf-server-x86-ubuntu20-image-def",
+                "arm": "perf-server-arm-ubuntu24-image-def",
             },
             "clients": "perf-client-x86-ubuntu20-image-def",
             "utilities": "perf-broker-image-def",

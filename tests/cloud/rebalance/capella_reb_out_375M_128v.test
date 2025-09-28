@@ -49,3 +49,4 @@ ssl_mode = capella
 nodes_after = 3
 start_after = 300
 stop_after = 300
+rebalance_timeout = 7200

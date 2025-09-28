@@ -30,8 +30,8 @@ class Monitor:
     POLLING_INTERVAL_SGW_LOGSTREAMING = 5
     POLLING_INTERVAL_SGW_RESYNC = 60  # 1m delay is ok since this takes hours to complete
 
-    REBALANCE_TIMEOUT = 600
-    REBALANCE_JOB_TIMEOUT = 3600
+    DEFAULT_REBALANCE_TIMEOUT = 600
+    DEFAULT_REBALANCE_JOB_TIMEOUT = 3600
     TIMEOUT = 3600 * 12
 
     DISK_QUEUES = (
@@ -70,7 +70,9 @@ class Monitor:
 
         self.awr_bucket = awr_bucket
         self.awr_scope = awr_scope
-        self.rebalance_timeout = rebalance_timeout or self.REBALANCE_TIMEOUT
+        self.rebalance_timeout = rebalance_timeout or self.DEFAULT_REBALANCE_TIMEOUT
+        if cluster_spec.capella_infrastructure:
+            self.rebalance_timeout = rebalance_timeout or self.DEFAULT_REBALANCE_JOB_TIMEOUT
 
     def wait_for_rebalance_to_begin(self, host):
         logger.info('Waiting for rebalance to start')
@@ -1773,7 +1775,7 @@ class Monitor:
             logger.info(f"Snapshot restore progress: {progress} %")
 
             if progress == last_progress:
-                if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
+                if time.time() - last_progress_time > self.rebalance_timeout:
                     logger.interrupt("Snapshot restore hung")
             else:
                 last_progress = progress
@@ -1800,13 +1802,13 @@ class Monitor:
             logger.info(f"Rebalance progress: {progress} %")
 
             if progress == last_progress:
-                if time.time() - last_progress_time > self.REBALANCE_JOB_TIMEOUT:
+                if time.time() - last_progress_time > self.rebalance_timeout:
                     logger.interrupt("Rebalance hung")
             else:
                 last_progress = progress
                 last_progress_time = time.time()
 
-        self.wait_for_cluster_balanced(host, timeout_secs=self.REBALANCE_JOB_TIMEOUT)
+        self.wait_for_cluster_balanced(host, timeout_secs=self.rebalance_timeout)
 
         logger.info("Rebalance completed")
 

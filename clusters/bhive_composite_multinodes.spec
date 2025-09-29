@@ -7,7 +7,7 @@ bhive_composite =
     172.23.100.81:index,n1ql
     172.23.100.83:index,n1ql
     172.23.100.84:index,n1ql
-    172.23.100.82:index,n1ql
+    172.23.100.82:index
 
 [clients]
 hosts =

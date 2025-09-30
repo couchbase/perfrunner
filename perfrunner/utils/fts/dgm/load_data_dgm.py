@@ -136,7 +136,7 @@ A = Numeric('xaa','xbb', '172.23.99.211', 'bucket-1')
 A.start_load()
 A.create_document()
 
-A = Docgen('xaa','xab','172.23.99.39','bucket-1')
+A = Docgen('xaa','xab','172.23.99.49','bucket-1')
 A.start_load()
 
 A = Datefacet()

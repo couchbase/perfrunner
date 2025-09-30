@@ -1,7 +1,7 @@
 [clusters]
 fts =
     172.23.99.211:kv,index,n1ql,fts
-    172.23.99.39:kv,index,n1ql,fts
+    172.23.99.49:kv,index,n1ql,fts
     172.23.99.40:kv,index,n1ql,fts
 
 [clients]

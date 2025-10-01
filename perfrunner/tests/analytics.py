@@ -638,7 +638,7 @@ class BigFunInitialSyncAndQueryTest(BigFunTest):
             return
 
         rate, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
-        metric_info |= {"category": "sync", "sub_category": "Initial"}
+        metric_info |= {"category": "sync", "subCategory": "Initial"}
         self.reporter.post(rate, snapshots, metric_info)
 
     def _report_kpi(self, results: list[QueryLatencyPair]):

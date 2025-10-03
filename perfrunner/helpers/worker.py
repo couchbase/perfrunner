@@ -30,7 +30,7 @@ from perfrunner.workloads.blackholepuller import (
     blackholepuller_runtest,
     newdocpusher_runtest,
 )
-from perfrunner.workloads.dcp import java_dcp_client
+from perfrunner.workloads.dcp import java_dcp_client, run_dcpdrain
 from perfrunner.workloads.jts import jts_run, jts_warmup
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
@@ -180,6 +180,18 @@ def tpcds_remaining_data_load_task(*args):
 def java_dcp_client_task(*args):
     java_dcp_client(*args)
 
+@celery.task
+def dcpdrain_task(workload_settings, target, timer=None, instance: int = 0):
+    """
+    Celery wrapper for run_dcpdrain.
+
+    WorkloadPhase will call task.si(workload_settings, target, timer, instance).
+    `workload_settings` and `target` are objects (PhaseSettings/TargetSettings).
+    Celery in this repo is already configured to handle these task arguments
+    (same as other workload tasks).
+    """
+    # Call implementation in workloads/dcp.py and return its result.
+    return run_dcpdrain(workload_settings, target, timer, instance)
 
 @celery.task
 def run_conflictsim_task(*args):
@@ -705,3 +717,4 @@ class LocalWorkerManager(RemoteWorkerManager):
                 )
                 self.fg_async_results.append(async_result)
                 time.sleep(15)
+

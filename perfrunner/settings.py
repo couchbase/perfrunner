@@ -3133,6 +3133,47 @@ class JavaDCPSettings:
         return str(self.__dict__)
 
 
+class DCPDrainSettings(PhaseSettings):
+    """
+    Phase-style settings holder for [dcpdrain].
+
+    Inherits PhaseSettings so it integrates with PerfTest.generic_phase.
+    Recognized keys (INI): binary_path, clients, num_connections,
+    buffer_size, acknowledge_ratio, extra_args, name, stream.
+    """
+
+    def __init__(self, options: dict):
+        # PhaseSettings often expects strings from config - call super to initialize common fields
+        super().__init__(options)  # let PhaseSettings pick up standard fields (time, workers, etc.)
+
+        # binary path
+        self.binary_path = options.get('binary_path')
+
+        # underlying dcpdrain flags
+        self.num_connections = int(options.get('num_connections', 128))
+
+        self.buffer_size = int(options.get('buffer_size', 0))
+        try:
+            self.acknowledge_ratio = float(options.get('acknowledge_ratio', 0.5))
+        except Exception:
+            self.acknowledge_ratio = 0.5
+
+        # TLS flags
+        # Accept common boolean strings
+        v = options.get("use_tls")
+        self.use_tls = bool(maybe_atoi(v)) if v is not None else False
+
+
+        # Optional explicit tls triple: "cert.pem,key.pem,ca.pem"
+        self.tls_opts = options.get("tls_opts", None)
+
+        self.extra_args = options.get('extra_args', '')
+        self.name = options.get('name', None)
+        self.stream = options.get('stream', 'all')  # default to 'all' so metrics pick it up
+        # TODO: consider using an Enum for stream names
+        # (e.g., DCPStream.DCP, DCPStream.DCPDRAIN, DCPStream.ALL)
+
+
 class MagmaBenchmarkSettings:
 
     NUM_KVSTORES = 1
@@ -4259,6 +4300,16 @@ class TestConfig(Config):
     def java_dcp_settings(self) -> JavaDCPSettings:
         options = self._get_options_as_dict('java_dcp')
         return JavaDCPSettings(options)
+
+    @property
+    def dcpdrain_settings(self) -> DCPDrainSettings:
+        """
+        Return a DCPDrainSettings instance.
+
+        Constructed from the [dcpdrain] section of the .test file.
+        """
+        options = self._get_options_as_dict('dcpdrain')
+        return DCPDrainSettings(options)
 
     @property
     def client_settings(self) -> ClientSettings:

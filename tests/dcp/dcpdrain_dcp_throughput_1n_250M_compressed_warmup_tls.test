@@ -1,0 +1,41 @@
+[test_case]
+test = perfrunner.tests.dcp.DCPDrainThroughputTest
+
+[showfast]
+title = DCP Throughput, 1 node, 250M x 1KB, dcpdrain client, compression enabled, post warmup, TLS
+component = kv
+category = dcp
+
+[stats]
+client_processes = dcpdrain
+
+[cluster]
+mem_quota = 112640
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+name = testbucket
+replica_number = 0
+eviction_policy = fullEviction
+
+[load]
+items = 250000000
+size = 1024
+workers = 40
+key_fmtr = hex
+doc_gen = large
+
+[dcpdrain]
+binary_path = /root/bin/dcpdrain/bin/dcpdrain
+workers = 1
+num_connections = 128
+buffer_size = 0
+acknowledge_ratio = 0.5
+use_tls = true
+extra_args =
+name = perfrunner_dcpdrain
+stream = dcpdrain
+
+[dcp]
+invoke_warm_up = 1

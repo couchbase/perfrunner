@@ -1,7 +1,7 @@
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.profiler import with_profiles
-from perfrunner.helpers.worker import java_dcp_client_task
+from perfrunner.helpers.worker import dcpdrain_task, java_dcp_client_task
 from perfrunner.tests import PerfTest
 
 
@@ -118,3 +118,44 @@ class JavaDCPCollectionThroughputTest(DCPThroughputTest):
         self.report_kpi(time_elapsed,
                         int(self.test_config.java_dcp_settings.clients),
                         self.test_config.java_dcp_settings.stream)
+
+
+class DCPDrainThroughputTest(DCPThroughputTest):
+    """Run dcpdrain on server nodes using perfrunner phase machinery."""
+
+    @with_stats
+    @timeit
+    @with_profiles
+    def access(self, *args, **kwargs):
+        settings = self.test_config.dcpdrain_settings
+        settings.rest_creds = self.cluster_spec.rest_credentials
+        # create a generic phase that will schedule tasks using the worker manager
+        phase = self.generic_phase(
+            phase_name="dcpdrain",
+            default_settings=settings,
+            default_mixed_settings=None,
+            task=dcpdrain_task,
+        )
+        # worker_manager will handle scheduling/collection according to
+        # PhaseSettings
+        self.worker_manager.run_fg_phases(phase)
+
+    def run(self):
+        dcpdrain_settings = self.test_config.dcpdrain_settings
+        if not dcpdrain_settings.binary_path:
+            raise RuntimeError('Missing binary_path in dcpdrain')
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
+
+        if self.test_config.dcp_settings.invoke_warm_up:
+            self.warmup()
+
+        # run access phase which will schedule dcpdrain tasks
+        time_elapsed = self.access()
+
+        # report KPI
+        clients = dcpdrain_settings.workers
+        stream = dcpdrain_settings.stream
+        self.report_kpi(time_elapsed, clients, stream)

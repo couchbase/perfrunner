@@ -36,6 +36,10 @@
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20.test", "groups": "P0"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_20res_80_20_no_access.test", "groups": "P1"}
     ],
+    "KV-Athena": [
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/dcpdrain_dcp_throughput_1n_250M_compressed_warmup.test", "groups": "P0"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/dcpdrain_dcp_throughput_1n_250M_compressed_warmup_tls.test", "groups": "P0"}
+    ],
     "Magma1": [
         {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_1B_1indexer_compressed_plasma.test", "groups": "P0"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_scan1B_1indexer_compressed_plasma_10kops.test", "groups": "P0"},

@@ -412,8 +412,8 @@ class AnalyticsTest(PerfTest):
 
     def sync(self) -> float:
         self.disconnect_link()
-        self.create_datasets_at_link()
-        self.create_analytics_indexes()
+        self.create_datasets_at_link(verbose=len(self.datasets) <= 10)
+        self.create_analytics_indexes(verbose=len(self.indexes) <= 10)
         self.connect_link()
 
         t0 = time.time()
@@ -651,6 +651,11 @@ class BigFunInitialSyncAndQueryTest(BigFunTest):
         random.seed(8095)
         super().restore_data()
         self.wait_for_persistence()
+
+        if self.analytics_link != "Local":
+            self.rest.create_analytics_link(
+                self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+            )
 
         sync_time = self.sync()
         self.report_sync_kpi(sync_time)
@@ -1412,21 +1417,6 @@ class CH2Test(AnalyticsTest):
             res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
             logger.info(f"Result: {res}")
             time.sleep(5)
-
-    def sync(self) -> float:
-        self.disconnect_link()
-        self.create_datasets_at_link(verbose=True)
-        self.create_analytics_indexes(verbose=True)
-        self.connect_link()
-
-        t0 = time.time()
-        bucket_replica = self.test_config.bucket.replica_number
-        sql_suite = self.test_config.access_settings.sql_suite
-        for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(
-                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
-            )
-        return time.time() - t0
 
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         query_port = QUERY_PORT

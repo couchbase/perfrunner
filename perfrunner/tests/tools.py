@@ -1020,14 +1020,7 @@ class CapellaSnapshotBackupWithSGWTest(SGRead, CapellaSnapshotBackupRestoreTest)
         self.app_service_deployment_time = self._wait_for_appservice_ready()
         self.cluster_spec.update_spec_file()
         logger.info(f"AppService deployment time: {self.app_service_deployment_time:.2f}s")
-
-        client_ips = self.cluster_spec.clients
-        if self.cluster_spec.capella_backend == "aws":
-            client_ips = [
-                dns.split(".")[0].removeprefix("ec2-").replace("-", ".") for dns in client_ips
-            ]
-
-        self.rest.sgw_add_allowed_ip(client_ips)
+        self.rest.sgw_add_allowed_ip(self.cluster_spec.client_ips)
 
     def _report_kpi(self):
         CapellaSnapshotBackupRestoreTest._report_kpi(self)

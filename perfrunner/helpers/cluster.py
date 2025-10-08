@@ -1073,12 +1073,7 @@ class CapellaClusterManager(ClusterManagerBase):
 
     def capella_allow_client_ips(self):
         if self.cluster_spec.infrastructure_settings.get("peering_connection", None) is None:
-            client_ips = self.cluster_spec.clients
-            if self.cluster_spec.capella_backend == "aws":
-                client_ips = [
-                    dns.split(".")[0].removeprefix("ec2-").replace("-", ".") for dns in client_ips
-                ]
-            self.rest.add_allowed_ips_all_clusters(client_ips)
+            self.rest.add_allowed_ips_all_clusters(self.cluster_spec.client_ips)
 
     def open_capella_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
         if self.cluster_spec.capella_infrastructure:

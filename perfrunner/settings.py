@@ -351,6 +351,15 @@ class ClusterSpec(Config):
         return clients
 
     @property
+    def client_ips(self) -> list[str]:
+        """Return client IPs."""
+        if self.capella_backend == "aws":
+            return [
+                dns.split(".")[0].removeprefix("ec2-").replace("-", ".") for dns in self.clients
+            ]
+        return self.clients
+
+    @property
     def utility_profile(self) -> str:
         return self.infrastructure_utilities.get("profile", "default").strip().lower()
 

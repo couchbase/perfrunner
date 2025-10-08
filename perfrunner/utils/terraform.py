@@ -1354,13 +1354,7 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
 
         # Add allowed IPs
         logger.info("Whitelisting IPs")
-        client_ips = self.infra_spec.clients
-        if self.csp == "aws":
-            client_ips = [
-                dns.split(".")[0].removeprefix("ec2-").replace("-", ".") for dns in client_ips
-            ]
-        logger.info(f"The client list is: {client_ips}")
-        for client_ip in client_ips:
+        for client_ip in self.infra_spec.client_ips:
             self.provisioned_api.add_allowed_ip_sgw(
                 self.tenant_id, self.project_id, sgw_cluster_id, self.cluster_id, client_ip
             )
@@ -1756,19 +1750,8 @@ class CapellaColumnarDeployer(CloudVMDeployer):
         self.update_allowlists()
 
     def update_allowlists(self):
-        logger.info('Updating allowlists for Columnar clusters')
-        myip = my_public_ip()
-
-        client_ips = (
-            [
-                dns.split(".")[0].removeprefix("ec2-").replace("-", ".")
-                for dns in self.infra_spec.clients
-            ]
-            if self.csp == "aws"
-            else self.infra_spec.clients
-        )
-
-        all_ips = [myip] + client_ips
+        logger.info("Updating allowlists for Columnar clusters")
+        all_ips = [my_public_ip(), *self.infra_spec.client_ips]
         logger.info(f'Allowing IPs: {pretty_dict(all_ips)}')
 
         for instance_id in self.instance_ids:
@@ -2142,12 +2125,16 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
 
     def create_model_api_key(self):
         """Get an API key for a list of model ids."""
+        allowed_ips = self._get_allowed_ips()
+        for client_ip in self.infra_spec.client_ips:
+            allowed_ips.append(f"{client_ip}/32")
+
         payload = {
             "name": f"model_api_key-{self.uuid}",
             "description": "",
             "expiryDuration": 60 * 60 * 24,  # 1 day in seconds
             "accessPolicy": {
-                "allowedIPs": self._get_allowed_ips(),
+                "allowedIPs": allowed_ips,
             },
             "region": self.region,
         }

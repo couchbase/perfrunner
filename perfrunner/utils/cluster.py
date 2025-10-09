@@ -108,8 +108,8 @@ def main():
     if cm.cluster_spec.columnar_infrastructure:
         if cm.cluster_spec.infrastructure_kafka_clusters:
             cm.set_kafka_links_settings()
-        cm.set_columnar_cloud_storage()
-        cm.add_columnar_cloud_storage_creds()
+        cm.add_columnar_blob_storage_creds()
+        cm.set_columnar_blob_storage()
         cm.set_columnar_storage_partitions()
 
     cm.disable_wan()

@@ -1499,15 +1499,24 @@ class RemoteLinux(Remote):
         run("systemctl daemon-reload")
 
     @master_server
-    def configure_columnar_cloud_storage(
-        self, bucket_name: str = "cb-perf-columnar", scheme: str = "s3", region: str = "us-east-1"
+    def configure_columnar_blob_storage(
+        self, bucket_name: str, scheme: str, region: str, endpoint: Optional[str]
     ):
         logger.info(
-            "Configuring Columnar cloud storage bucket. "
-            f"Bucket name: {bucket_name}, region: {region}, scheme: {scheme}"
+            "Configuring Columnar blob storage bucket. "
+            f"Bucket name: {bucket_name}, region: {region}, scheme: {scheme}, endpoint: {endpoint}"
         )
+
+        if not (bucket_name and scheme and region):
+            logger.interrupt("Bucket name, scheme, and region must all be provided.")
+
+        force_path_style = "true"
+        if not endpoint:
+            endpoint = ""
+            force_path_style = "false"
+
         command = (
-            "curl --max-time 3 --retry 3 --retry-connrefused "
+            "curl --max-time 3 --retry 3 --retry-connrefused -i "
             "--request POST "
             "--url http://localhost:8091/settings/analytics "
             "--header 'Content-Type: application/x-www-form-urlencoded' "
@@ -1515,27 +1524,32 @@ class RemoteLinux(Remote):
             "--data blobStoragePrefix= "
             f"--data blobStorageBucket={bucket_name} "
             f"--data blobStorageScheme={scheme} "
+            f"--data blobStorageEndpoint='{endpoint}' "
+            f"--data blobStorageForcePathStyle={force_path_style} "
             f"--data blobStorageAnonymousAuth=false"
         )
-        run(command)
+        output = run(command, warn_only=True)
+        http_code = output.stdout.splitlines()[0].split()[1]
+        if output.return_code != 0 or not http_code.startswith("2"):
+            logger.interrupt(
+                f"Failed to configure columnar blob storage.\n"
+                f"Stdout: {output.stdout}\n"
+                f"Stderr: {output.stderr}"
+            )
 
     @all_servers
-    def store_analytics_aws_creds(self, access_key_id: str, secret_access_key: str):
-        access_key_url = \
-            "http://localhost:8091/_metakv/cbas/debug/settings/blob_storage_access_key_id"
-        secret_access_key_url = \
-            "http://localhost:8091/_metakv/cbas/debug/settings/blob_storage_secret_access_key"
+    def store_analytics_blob_storage_creds(self, access_key_id: str, secret_access_key: str):
+        base_url = "http://localhost:8091/_metakv/cbas/debug/settings"
 
-        logger.info('Add AWS access key')
-        command = ("curl --max-time 3 --retry 3 --retry-connrefused -v "
-                   "-X PUT {} --data-urlencode value={}"
-                   .format(access_key_url, access_key_id))
-        run(command)
-
-        logger.info('Add AWS secret access key')
-        command = ("curl -v -X PUT {} --data-urlencode value={}"
-                   .format(secret_access_key_url, secret_access_key))
-        run(command)
+        for setting, value in [
+            ("blob_storage_access_key_id", access_key_id),
+            ("blob_storage_secret_access_key", secret_access_key),
+        ]:
+            logger.info(f"Setting {setting}")
+            run(
+                "curl --max-time 3 --retry 3 --retry-connrefused -v "
+                f"-X PUT {base_url}/{setting} --data-urlencode value={value}"
+            )
 
     @all_servers
     def set_columnar_storage_partitions(self, num_partitions: int):

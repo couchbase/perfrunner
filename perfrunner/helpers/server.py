@@ -94,12 +94,13 @@ class ServerInfoManager:
             .replace("-enterprise", "")
             .replace("-community", "")
             .replace("-columnar", "")
+            .replace("-analytics", "")
         )
         return ServerInfo(
             build=version,
             raw_version=raw_version,
             build_tuple=create_build_tuple(version),
-            is_columnar="columnar" in raw_version,
+            is_columnar="columnar" in raw_version or "enterprise-analytics" in raw_version,
             master_node=master_node,
             is_community="community" in raw_version,
         )

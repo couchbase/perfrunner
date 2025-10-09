@@ -2780,7 +2780,7 @@ class AnalyticsSettings:
     INDEX_CONF_FILE = ""
     DROP_DATASET = ""
     ANALYTICS_LINK = "Local"
-    EXTERNAL_DATASET_TYPE = "s3"
+    EXTERNAL_DATASET_TYPE = "s3"  # alt: gcs, azblob
     EXTERNAL_DATASET_REGION = "us-east-1"
     EXTERNAL_BUCKET = None
     EXTERNAL_FILE_INCLUDE = None
@@ -2980,6 +2980,12 @@ class ColumnarSettings:
             for dataset in options.get("object_store_import_datasets", "").replace(",", " ").split()
             if (s := dataset.split(":"))
         ]
+
+        # Enterprise Analytics settings
+        self.blob_storage_endpoint = options.get("blob_storage_endpoint")
+        self.blob_storage_bucket = options.get("blob_storage_bucket")
+        self.blob_storage_scheme = options.get("blob_storage_scheme")
+        self.blob_storage_region = options.get("blob_storage_region")
 
 
 class AuditSettings:

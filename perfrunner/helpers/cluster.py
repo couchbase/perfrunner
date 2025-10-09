@@ -267,14 +267,18 @@ class DefaultClusterManager(ClusterManagerBase):
     def set_mem_quotas(self):
         for master in self.cluster_spec.masters:
             self.rest.set_kv_mem_quota(master, self.test_config.cluster.mem_quota)
+            if self.test_config.cluster.analytics_mem_quota:
+                self.rest.set_analytics_mem_quota(
+                    master, self.test_config.cluster.analytics_mem_quota
+                )
+
+            if ServerInfoManager().get_server_info_by_master_node(master).is_columnar:
+                continue
+
             self.rest.set_index_mem_quota(master, self.test_config.cluster.index_mem_quota)
             if self.test_config.cluster.fts_index_mem_quota:
                 self.rest.set_fts_index_mem_quota(
                     master, self.test_config.cluster.fts_index_mem_quota
-                )
-            if self.test_config.cluster.analytics_mem_quota:
-                self.rest.set_analytics_mem_quota(
-                    master, self.test_config.cluster.analytics_mem_quota
                 )
             if self.test_config.cluster.eventing_mem_quota:
                 self.rest.set_eventing_mem_quota(
@@ -815,22 +819,51 @@ class DefaultClusterManager(ClusterManagerBase):
             self.remote.set_indexer_systemd_mem_limits()
             self._restart_clusters()
 
-    def set_columnar_cloud_storage(self):
-        scheme, bucket_name = self.cluster_spec.backup.split("://")
-        region = self.cluster_spec.cloud_region
-        self.remote.configure_columnar_cloud_storage(bucket_name, scheme, region)
+    def set_columnar_blob_storage(self):
+        endpoint = self.test_config.columnar_settings.blob_storage_endpoint
+        scheme = self.test_config.columnar_settings.blob_storage_scheme
+        bucket_name = self.test_config.columnar_settings.blob_storage_bucket
+        region = self.test_config.columnar_settings.blob_storage_region
 
-    def add_columnar_cloud_storage_creds(self):
-        if self.cluster_spec.cloud_provider == "aws":
+        if self.cluster_spec.cloud_provider:
+            if self.cluster_spec.backup:
+                protocol, _bucket_name = self.cluster_spec.backup.split("://")
+                _scheme = protocol if protocol != "az" else "azblob"
+
+            scheme = scheme or _scheme
+            bucket_name = bucket_name or _bucket_name
+            region = self.cluster_spec.cloud_region or region
+            if scheme == "azblob":
+                storage_acc_name = self.cluster_spec.infrastructure_section("storage")[
+                    "storage_acc"
+                ]
+                endpoint = endpoint or f"https://{storage_acc_name}.blob.core.windows.net"
+
+        self.remote.configure_columnar_blob_storage(bucket_name, scheme, region, endpoint)
+
+    def add_columnar_blob_storage_creds(self):
+        csp = self.cluster_spec.cloud_provider
+        scheme = self.test_config.columnar_settings.blob_storage_scheme
+
+        if csp == "aws" or scheme == "s3":
             access_key_id, secret_access_key = local.get_aws_credential(
-                self.test_config.backup_settings.aws_credential_path, False
+                self.test_config.analytics_settings.aws_credential_path,
+                False,
             )
-            self.remote.store_analytics_aws_creds(access_key_id, secret_access_key)
-        elif self.cluster_spec.cloud_provider == "gcp":
+            self.remote.store_analytics_blob_storage_creds(access_key_id, secret_access_key)
+        elif csp == "gcp" or scheme == "gcs":
             run_local_shell_command(
                 f"gcloud storage buckets add-iam-policy-binding {self.cluster_spec.backup} "
                 "--member=allUsers --role=roles/storage.objectAdmin"
             )
+        elif csp == "azure" or scheme == "azblob":
+            storage_acc_name = self.cluster_spec.infrastructure_section("storage")["storage_acc"]
+            stdout, _, _ = run_local_shell_command(
+                f"az storage account keys list --account-name {storage_acc_name} "
+                "--query '[0].value' --output tsv"
+            )
+            storage_acc_key = stdout.strip()
+            self.remote.store_analytics_blob_storage_creds(storage_acc_name, storage_acc_key)
 
     def set_columnar_storage_partitions(self):
         storage_partitions = self.test_config.analytics_settings.columnar_storage_partitions

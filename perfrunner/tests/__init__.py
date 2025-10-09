@@ -291,9 +291,10 @@ class PerfTest:
         self.remote.export_data(num_collections, collection_prefix, scope_prefix,
                                 scope, name_of_backup)
 
-    def restore_local(self):
+    def restore_local(self, extract_archive: bool = True):
         logger.info('Restoring data')
-        local.extract_cb_any(filename='couchbase')
+        if extract_archive:
+            local.extract_cb_any(filename="couchbase")
         local.purge_restore_progress(
             self.cluster_spec,
             archive=self.test_config.restore_settings.backup_storage,

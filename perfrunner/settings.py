@@ -575,6 +575,12 @@ class ClusterSpec(Config):
                 has_service.append(host)
         return has_service
 
+    def get_cluster_idx_by_node(self, node: str) -> int:
+        for i, (_, servers) in enumerate(self.clusters):
+            if node in servers:
+                return i
+        raise ValueError(f"Node {node} not found in any cluster.")
+
     @property
     def roles(self) -> dict[str, str]:
         server_roles = {}
@@ -2793,14 +2799,16 @@ class AnalyticsSettings:
     INDEX_CONF_FILE = ""
     DROP_DATASET = ""
     ANALYTICS_LINK = "Local"
-    EXTERNAL_DATASET_TYPE = "s3"  # alt: gcs, azblob
+    EXTERNAL_DATASET_TYPE = "s3"  # alt: gcs, azureblob
     EXTERNAL_DATASET_REGION = "us-east-1"
     EXTERNAL_BUCKET = None
     EXTERNAL_FILE_INCLUDE = None
     AWS_CREDENTIAL_PATH = None
+    AZURE_STORAGE_ACCOUNT = "cbperfstorage"
     STORAGE_FORMAT = ""
     USE_CBO = "false"
     INGEST_DURING_LOAD = "false"
+    RESYNC = "true"
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.pop('num_io_devices',
@@ -2827,6 +2835,9 @@ class AnalyticsSettings:
         self.external_file_include = options.pop("external_file_include",
                                                  self.EXTERNAL_FILE_INCLUDE)
         self.aws_credential_path = options.pop('aws_credential_path', self.AWS_CREDENTIAL_PATH)
+        self.azure_storage_account = options.pop(
+            "azure_storage_account", self.AZURE_STORAGE_ACCOUNT
+        )
         self.storage_format = options.pop('storage_format', self.STORAGE_FORMAT)
 
         self.columnar_storage_partitions = int(options.pop("columnar_storage_partitions", 0))
@@ -2836,6 +2847,9 @@ class AnalyticsSettings:
             options.pop("ingest_during_load", self.INGEST_DURING_LOAD)
         )
         self._bigfun_request_params_undecoded = options.pop("bigfun_request_params", "{}")
+
+        # Only applicable to incremental ingestion tests
+        self.resync = maybe_atoi(options.pop("resync", self.RESYNC))
 
         # Remaining settings are for analytics config REST API
         self.config_settings = {k: maybe_atoi(v) for k, v in options.items()}

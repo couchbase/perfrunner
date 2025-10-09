@@ -37,4 +37,4 @@ object_store_import_datasets = customer, stock, orders_orderline
 object_store_file_formats = json, csv
 max_objects_per_files = 10000, 100000, 1000000
 object_store_compressions = none
-object_store_query_file = tests/cloud/analytics/workload/ch2ppf_copy_to_s3_csv_queries.yaml
+object_store_query_file = tests/cloud/analytics/workload/ch2ppf_copy_to_blob_store_csv_queries.yaml

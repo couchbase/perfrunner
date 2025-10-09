@@ -260,6 +260,14 @@ def set_azure_capella_subscription(capella_env: str) -> int:
     return set_azure_subscription(sub, 'capella')
 
 
+def get_azure_storage_account_key(storage_acc: str) -> str:
+    stdout, _, _ = run_local_shell_command(
+        f"az storage account keys list --account-name {storage_acc} "
+        "--query '[0].value' --output tsv"
+    )
+    return stdout.strip()
+
+
 def get_python_sdk_installation(version: str) -> str:
     """Convert specified version into a format that can be installed by pip.
 
@@ -334,7 +342,9 @@ def lookup_address(address: Union[bytes, str], port: Union[bytes, str, int] = No
     return [entry[-1][0] for entry in entries]
 
 
-def get_cloud_storage_bucket_stats(bucket_uri: str, aws_profile: str = "") -> tuple[int, int]:
+def get_cloud_storage_bucket_stats(
+    bucket_uri: str, aws_profile: str = "", az_storage_acc: str = ""
+) -> tuple[int, int]:
     """Return (number of objects, total size in bytes) for a cloud storage bucket.
 
     Returns (-1, -1) on failure to get stats.
@@ -349,15 +359,25 @@ def get_cloud_storage_bucket_stats(bucket_uri: str, aws_profile: str = "") -> tu
         )
         if stdout:
             objects, size = tuple(int(line.split()[-1]) for line in stdout.splitlines()[:2])
-    elif scheme == "gs":
-        stdout, _, rc = run_local_shell_command(
-            f"gcloud storage du {bucket_uri} | "
-            "awk 'BEGIN {{c=0;s=0}} !/\\/$/ {{c+=1;s+=$1}} END {{print c, s}}'"
-        )
+    else:
+        if scheme == "gs":
+            command = (
+                f"gcloud storage du {bucket_uri} "
+                "| awk 'BEGIN {c=0;s=0} !/\\/$/ {c++;s+=$1} END {print c, s}'"
+            )
+        elif scheme in ("azblob", "az"):
+            container = bucket_uri.split("/")[-1]
+            command = (
+                f'az storage blob list --num-results "*" --account-name {az_storage_acc} '
+                f"--container-name {container} --query '[].properties.contentLength' --output tsv "
+                "| awk 'BEGIN {c=0;s=0} {c++;s+=$1} END {print c, s}'"
+            )
+
+        stdout, _, rc = run_local_shell_command(command)
         if rc == 0:
             objects, size = tuple(int(n) for n in stdout.split()[:2])
 
-    if objects > 0:
+    if objects >= 0:
         logger.info(
             f"Stats for {bucket_uri}: {objects} objects, {size} bytes ({human_format(size, 2)}B)"
         )

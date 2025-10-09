@@ -1,6 +1,7 @@
 from cbagent.collectors.collector import Collector
+from cbagent.settings import CbAgentSettings
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.helpers.server import ServerInfoManager
+from perfrunner.tests import PerfTest
 
 
 class AnalyticsStats(Collector):
@@ -20,14 +21,12 @@ class AnalyticsStats(Collector):
         "cbas_gc_time_milliseconds_total": "gc_time"
     }
 
-    def __init__(self, settings, test):
+    def __init__(self, settings: CbAgentSettings, test: PerfTest):
         super().__init__(settings)
 
         self.rest = RestHelper(test.cluster_spec, self.n2n_enabled)
-        self.server_info = ServerInfoManager().get_server_info_by_master_node(self.master_node)
         self.servers = self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
         self.build_version_number = self.server_info.build_tuple
-        self.is_columnar = self.server_info.is_columnar
 
     def update_metadata(self):
         self.mc.add_cluster()

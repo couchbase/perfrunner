@@ -32,4 +32,4 @@ aws_credential_path = /root/.ssh/
 object_store_file_formats = json
 max_objects_per_files = 1000, 10000, 100000, 1000000
 object_store_compressions = none
-object_store_query_file = tests/cloud/analytics/workload/bigfun_copy_to_s3_queries.yaml
+object_store_query_file = tests/cloud/analytics/workload/bigfun_copy_to_blob_store_queries.yaml

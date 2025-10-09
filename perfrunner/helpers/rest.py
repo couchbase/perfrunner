@@ -1127,6 +1127,9 @@ class DefaultRestHelper(RestBase):
         s3_access_key_id: Optional[str] = None,
         s3_secret_access_key: Optional[str] = None,
         gcs_json_creds: Optional[dict] = None,
+        az_account_name: Optional[str] = None,
+        az_account_key: Optional[str] = None,
+        az_endpoint: Optional[str] = None,
     ):
         logger.info(f"Creating analytics {link_type} link '{link_name}' in dataverse '{dataverse}'")
 
@@ -1169,6 +1172,12 @@ class DefaultRestHelper(RestBase):
         elif link_type == "gcs":
             params |= {
                 "jsonCredentials": json.dumps(gcs_json_creds),
+            }
+        elif link_type == "azureblob":
+            params |= {
+                "accountName": az_account_name,
+                "accountKey": az_account_key,
+                "endpoint": az_endpoint,
             }
 
         resp = self.post(url=url, data=params)

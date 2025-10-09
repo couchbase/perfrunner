@@ -1,0 +1,17 @@
+[cluster]
+mem_quota = 25600
+index_mem_quota = 12800
+initial_nodes = 4
+num_buckets = 1
+bucket_name = bench
+
+[bucket]
+backend_storage = magma
+eviction_policy = fullEviction
+replica_index = 1
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[collection]
+config = collections/1bucket_1scope_11collections_analytics_ch2pp.json

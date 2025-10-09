@@ -1,0 +1,11 @@
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+backend_storage = magma
+eviction_policy = fullEviction
+
+[collection]
+config = collections/1bucket_1scope_99collections_analytics.json

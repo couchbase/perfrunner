@@ -16,6 +16,7 @@ from perfrunner.helpers.config_files import (
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import (
     SGPortRange,
+    get_azure_storage_account_key,
     maybe_atoi,
     pretty_dict,
     run_aws_cli_command,
@@ -858,11 +859,7 @@ class DefaultClusterManager(ClusterManagerBase):
             )
         elif csp == "azure" or scheme == "azblob":
             storage_acc_name = self.cluster_spec.infrastructure_section("storage")["storage_acc"]
-            stdout, _, _ = run_local_shell_command(
-                f"az storage account keys list --account-name {storage_acc_name} "
-                "--query '[0].value' --output tsv"
-            )
-            storage_acc_key = stdout.strip()
+            storage_acc_key = get_azure_storage_account_key(storage_acc_name)
             self.remote.store_analytics_blob_storage_creds(storage_acc_name, storage_acc_key)
 
     def set_columnar_storage_partitions(self):

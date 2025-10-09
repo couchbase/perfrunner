@@ -19,6 +19,7 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import (
+    get_azure_storage_account_key,
     get_cloud_storage_bucket_stats,
     pretty_dict,
     remove_nulls,
@@ -197,6 +198,7 @@ class AnalyticsTest(PerfTest):
         self.dataset_config = []
         self.index_config = []
         self.rest_session = None
+        self.have_already_restored_data = False
 
         if self.dataset_conf_file:
             with open(self.dataset_conf_file, "r") as f:
@@ -205,6 +207,12 @@ class AnalyticsTest(PerfTest):
         if self.index_conf_file:
             with open(self.index_conf_file, "r") as f:
                 self.index_config = json.load(f)
+
+        analytics_node_version = (
+            ServerInfoManager().get_server_info_by_master_node(self.analytics_node).build
+        )
+        if analytics_node_version != self.reporter.build:
+            self.reporter.build = f"{analytics_node_version} : {self.reporter.build}"
 
     def __exit__(self, *args):
         if (
@@ -396,18 +404,24 @@ class AnalyticsTest(PerfTest):
         }
 
         if external_dataset_type == "s3":
-            external_dataset_region = self.analytics_settings.external_dataset_region
             access_key_id, secret_access_key = local.get_aws_credential(
                 self.analytics_settings.aws_credential_path
             )
             kwargs |= {
-                "s3_region": external_dataset_region,
+                "s3_region": self.analytics_settings.external_dataset_region,
                 "s3_access_key_id": access_key_id,
                 "s3_secret_access_key": secret_access_key,
             }
         elif external_dataset_type == "gcs":
             with open(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"), "r") as f:
                 kwargs["gcs_json_creds"] = json.load(f)
+        elif external_dataset_type == "azureblob":
+            storage_acc_name = self.analytics_settings.azure_storage_account
+            kwargs |= {
+                "az_account_name": storage_acc_name,
+                "az_account_key": get_azure_storage_account_key(storage_acc_name),
+                "az_endpoint": f"https://{storage_acc_name}.blob.core.windows.net",
+            }
         else:
             logger.interrupt(
                 "Could not create external link. "
@@ -428,12 +442,12 @@ class AnalyticsTest(PerfTest):
     def connect_link(self):
         logger.info(f"Connecting Link {self.analytics_link}")
         statement = f"CONNECT LINK {self.analytics_link}"
-        self.rest.exec_analytics_statement(self.analytics_node, statement)
+        self.exec_analytics_statement(self.analytics_node, statement)
 
     def disconnect_link(self):
         logger.info(f"Disconnecting Link {self.analytics_link}")
         statement = f"DISCONNECT LINK {self.analytics_link}"
-        self.rest.exec_analytics_statement(self.analytics_node, statement)
+        self.exec_analytics_statement(self.analytics_node, statement)
 
     @timeit
     def wait_for_data_ingestion(self):
@@ -445,14 +459,15 @@ class AnalyticsTest(PerfTest):
             )
 
     def _restore_remote(self):
-        self.remote.extract_cb_any(
-            filename="couchbase", worker_home=self.worker_manager.WORKER_HOME
-        )
+        if not self.have_already_restored_data:
+            self.remote.extract_cb_any(
+                filename="couchbase", worker_home=self.worker_manager.WORKER_HOME
+            )
         self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         archive = self.test_config.restore_settings.backup_storage
 
-        if archive.startswith("s3://"):
+        if archive.startswith("s3://") and not self.have_already_restored_data:
             credential = local.read_aws_credential(
                 self.test_config.backup_settings.aws_credential_path
             )
@@ -485,10 +500,12 @@ class AnalyticsTest(PerfTest):
         )
 
     def restore_data(self):
-        if self.cluster_spec.cloud_infrastructure:
+        if (wm := getattr(self, "worker_manager", None)) and wm.is_remote:
             self._restore_remote()
         else:
-            self.restore_local()
+            self.restore_local(extract_archive=not self.have_already_restored_data)
+
+        self.have_already_restored_data = True
 
     def copy_data_from_object_store(self, datasets: list[DatasetDef] = []) -> tuple[int, float]:
         """Ingest data from cloud object store using COPY FROM.
@@ -537,7 +554,12 @@ class AnalyticsTest(PerfTest):
             return
 
         blob_storage_scheme = analytics_settings.get("blobStorageScheme")
-        get_cloud_storage_bucket_stats(f"{blob_storage_scheme}://{bucket_name}")
+        get_cloud_storage_bucket_stats(
+            f"{blob_storage_scheme}://{bucket_name}",
+            az_storage_acc=self.cluster_spec.infrastructure_section("storage").get(
+                "storage_acc", ""
+            ),
+        )
 
     def get_dataset_items(self, dataset: str) -> int:
         statement = f"SELECT COUNT(*) from {sqlpp_escape(dataset)};"
@@ -571,6 +593,13 @@ class BigFunTest(AnalyticsTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.QUERIES = self.analytics_settings.queries
+
+    def sync(self) -> float:
+        if self.analytics_link != "Local":
+            self.rest.create_analytics_link(
+                self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+            )
+        return super().sync()
 
 
 class BigFunDropDatasetTest(BigFunTest):
@@ -653,11 +682,6 @@ class BigFunInitialSyncAndQueryTest(BigFunTest):
         super().restore_data()
         self.wait_for_persistence()
 
-        if self.analytics_link != "Local":
-            self.rest.create_analytics_link(
-                self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
-            )
-
         sync_time = self.sync()
         self.report_sync_kpi(sync_time)
 
@@ -693,8 +717,10 @@ class BigFunIncrSyncTest(BigFunInitialSyncAndQueryTest):
 
         initial_sync_time = self.sync()
         logger.info(f"Initial sync time (s): {initial_sync_time:.2f}")
-        rate, _, _ = self.metrics.avg_ingestion_rate(self.num_items, initial_sync_time)
-        logger.info(f"Initial sync rate (items/sec): {rate:.2f}")
+        self.report_kpi(initial_sync_time, "initial")
+
+        if not self.test_config.analytics_settings.resync:
+            return
 
         self.disconnect_link()
         self.restore_data()
@@ -737,6 +763,12 @@ class BigFunQueryExternalTest(BigFunInitialSyncAndQueryTest):
 
 class ColumnarCopyFromObjectStoreTest(BigFunQueryExternalTest):
     COLLECTORS = {'ns_server': False, 'active_tasks': False, 'analytics': True}
+
+    @property
+    def datasets(self) -> list[DatasetDef]:
+        if import_datasets := self.test_config.columnar_settings.object_store_import_datasets:
+            return [DatasetDef(target, source) for source, target in import_datasets]
+        return super().datasets
 
     @with_stats
     def copy_data_from_object_store(self, datasets: list[DatasetDef] = []) -> tuple[int, float]:
@@ -911,7 +943,10 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
     @with_stats
     def access(self) -> dict[str, list[float]]:
         obj_store_uri = self.cluster_spec.backup
-        objects, size = get_cloud_storage_bucket_stats(obj_store_uri, aws_profile="default")
+        az_storage_acc = self.cluster_spec.infrastructure_section("storage").get("storage_acc", "")
+        objects, size = get_cloud_storage_bucket_stats(
+            obj_store_uri, aws_profile="default", az_storage_acc=az_storage_acc
+        )
         query_times = defaultdict(list)
 
         for i in range(self.test_config.columnar_copy_to_settings.query_loops):
@@ -933,7 +968,7 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
                 logger.info(f"client-side query response time (s): {latency}")
 
                 new_objects, new_size = get_cloud_storage_bucket_stats(
-                    obj_store_uri, aws_profile="default"
+                    obj_store_uri, aws_profile="default", az_storage_acc=az_storage_acc
                 )
                 if not (new_objects > objects and new_size > size):
                     logger.warning(
@@ -950,12 +985,7 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
         self.create_external_link()
         self.create_standalone_datasets(verbose=True)
 
-        datasets_to_import = [
-            DatasetDef(target, source)
-            for source, target in self.test_config.columnar_settings.object_store_import_datasets
-        ] or self.datasets
-
-        copy_from_items, copy_from_time = self.copy_data_from_object_store(datasets_to_import)
+        copy_from_items, copy_from_time = self.copy_data_from_object_store()
         logger.info(f"Total items ingested using COPY FROM: {copy_from_items}")
         logger.info(f"Total data ingestion time using COPY FROM (s): {copy_from_time:.2f}")
 
@@ -1058,7 +1088,11 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
     ALL_HOSTNAMES = True
 
     def rebalance_cbas(self):
-        self.rebalance(services='cbas')
+        services = "cbas"
+        cluster_idx = self.cluster_spec.get_cluster_idx_by_node(self.analytics_node)
+        if ServerInfoManager().get_server_info(cluster_idx).is_columnar:
+            services = "kv,cbas"
+        self.rebalance(services=services)
 
     def _report_kpi(self):
         self.reporter.post(
@@ -1734,9 +1768,6 @@ class CH2CapellaColumnarRemoteLinkTest(CH2Test):
         (self.data_cluster_user, self.data_cluster_pwd), (self.columnar_user, self.columnar_pwd) = (
             self.cluster_spec.capella_admin_credentials
         )
-        # Get server build from the last cluster in the spec
-        server_info = ServerInfoManager().get_server_info(-1)
-        self.reporter.build = f"{server_info.build} : {self.reporter.build}"
 
     @with_stats
     def restore_data(self):

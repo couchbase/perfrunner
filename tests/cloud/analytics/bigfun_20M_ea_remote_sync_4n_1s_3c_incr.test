@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.BigFunIncrSyncTest
 
 [showfast]
-title = 4 nodes, BigFUN 20M users (320M docs), no indexes, s=1 c=3, Remote Link, Enterprise Analytics
+title = 4 nodes, BigFUN 20M users (320M docs), 3 indexes, s=1 c=3, Remote Link, Enterprise Analytics
 component = analyticscloud
 category = sync
 sub_category = {provider}
@@ -25,6 +25,7 @@ config = collections/1bucket_1scope_3collections_analytics.json
 [analytics]
 num_io_devices = 1
 dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets.json
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
 analytics_link = RemoteLink
 
 [backup]

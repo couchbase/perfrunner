@@ -1516,7 +1516,7 @@ class RemoteLinux(Remote):
             force_path_style = "false"
 
         command = (
-            "curl --max-time 3 --retry 3 --retry-connrefused -i "
+            "curl --max-time 3 --retry 10 --retry-connrefused -i "
             "--request POST "
             "--url http://localhost:8091/settings/analytics "
             "--header 'Content-Type: application/x-www-form-urlencoded' "
@@ -1547,7 +1547,7 @@ class RemoteLinux(Remote):
         ]:
             logger.info(f"Setting {setting}")
             run(
-                "curl --max-time 3 --retry 3 --retry-connrefused -v "
+                "curl --max-time 3 --retry 10 --retry-connrefused -i "
                 f"-X PUT {base_url}/{setting} --data-urlencode value={value}"
             )
 

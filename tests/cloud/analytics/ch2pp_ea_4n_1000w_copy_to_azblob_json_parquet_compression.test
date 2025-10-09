@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2CapellaColumnarCopyToObjectStoreTest
+test = perfrunner.tests.analytics.ColumnarCopyToObjectStoreTest
 
 [showfast]
-title = Copy To S3, CH2++0 1000W, 4A, c=11 (standalone collections)
+title = Copy To Azblob, CH2++0 1000W, 4A, c=11 (standalone collections)
 component = analyticscloud
 category = latency
 sub_category = {provider}
@@ -11,16 +11,17 @@ sub_category = {provider}
 server_processes = java
 
 [cluster]
+mem_quota = 100
+analytics_mem_quota = 25600
 initial_nodes = 4
-enable_n2n_encryption = all
 
 [analytics]
-external_dataset_type = s3
-external_dataset_region = us-east-1
+external_dataset_type = azureblob
+external_dataset_region = eastus
 external_bucket = analytics-ch2pp0-1000w-gz
 external_file_format = json
 external_file_include = gz
-aws_credential_path = /root/.ssh/
+azure_storage_account = cbperfstorage
 
 [ch2]
 schema = ch2pp
@@ -31,5 +32,5 @@ object_store_import_datasets = customer_no_empty_arrays:customer, stock, orders
 [columnar_copy_to]
 object_store_file_formats = json, parquet
 max_objects_per_files = 10000
-object_store_compressions = none
+object_store_compressions = gzip, snappy
 object_store_query_file = tests/cloud/analytics/workload/ch2pp_copy_to_blob_store_parquet_queries.yaml

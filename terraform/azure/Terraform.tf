@@ -720,7 +720,7 @@ resource "azurerm_storage_account" "perf-storage-acc" {
   location                 = "East US"
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  access_tier              = "Cool"
+  access_tier              = "Hot"
   tags = {
     deployment = var.global_tag != "" ? var.global_tag : null
   }

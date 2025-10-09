@@ -62,3 +62,9 @@ class CbAgentSettings:
 
         if self.remote:
             self.remote_worker_home = test.worker_manager.WORKER_HOME
+
+        # These are set after initialisation by CbAgent
+        self.cluster = None
+        self.master_node = None
+        self.dest_master_node = None
+        self.partitions = {}

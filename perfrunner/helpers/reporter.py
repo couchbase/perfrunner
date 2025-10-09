@@ -53,6 +53,8 @@ class ShowFastReporter(Reporter):
                 metric["provider"] = "columnar"
             else:
                 metric['provider'] = self.cluster_spec.cloud_provider.lower()
+        elif self.cluster_spec.cloud_infrastructure:
+            sub_category = sub_category.format(provider=self.cluster_spec.cloud_provider.upper())
 
         metric.update({
             'cluster': cluster,

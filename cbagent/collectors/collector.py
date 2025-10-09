@@ -1,22 +1,23 @@
 import socket
 import sys
 import time
-from functools import cached_property
 from threading import Thread
 from typing import Optional, Union
 
 import requests
 
 from cbagent.metadata_client import MetadataClient
+from cbagent.settings import CbAgentSettings
 from cbagent.stores import PerfStore
 from logger import logger
+from perfrunner.helpers.server import ServerInfoManager
 
 
 class Collector:
 
     COLLECTOR = None
 
-    def __init__(self, settings):
+    def __init__(self, settings: CbAgentSettings):
         self.session = requests.Session()
         self.cloud = settings.cloud
         self.cloud_enabled = self.cloud['enabled']
@@ -25,6 +26,8 @@ class Collector:
         self.interval = settings.interval
         self.cluster = settings.cluster
         self.master_node = settings.master_node
+        self.server_info = ServerInfoManager().get_server_info_by_master_node(self.master_node)
+        self.is_columnar = self.server_info.is_columnar
         self.auth = (settings.rest_username, settings.rest_password)
         self.buckets = settings.buckets
         self.indexes = settings.indexes
@@ -136,13 +139,8 @@ class Collector:
                 return False
         return True
 
-    @cached_property
-    def cluster_is_columnar(self) -> bool:
-        version = self.get_http("/pools").get("implementationVersion")
-        return "columnar" in version
-
     def get_buckets(self, with_stats=False):
-        if self.cluster_is_columnar:
+        if self.is_columnar:
             # Columnar clusters don't have KV buckets so don't try to get them.
             return
 

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2RemoteLinkTest
+test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
 title = CH2 1000W, 4A, c=11 (remote collections), analytics-only workload, No CBO, Hand-Optimized Queries, 8 aclients
@@ -23,7 +23,7 @@ obj_region = us-east-1
 aws_credential_path = /root/.ssh
 
 [restore]
-backup_storage = gs://analytics-ch2-1000w
+backup_storage = s3://analytics-ch2-1000w
 backup_repo = ch2
 threads = 12
 map_data = bench.ch2=bench.ch2

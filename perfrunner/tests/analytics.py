@@ -186,6 +186,7 @@ class IndexDef:
 class AnalyticsTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
 
         self.num_items = 0
         self.analytics_settings = self.test_config.analytics_settings
@@ -226,11 +227,16 @@ class AnalyticsTest(PerfTest):
 
     @property
     def analytics_node(self) -> str:
-        # If we have several clusters, we assume the second cluster to be the analytics cluster
-        if len(masters := list(self.cluster_spec.masters)) > 1:
-            return masters[1]
-
         return self.analytics_nodes[0]
+
+    @property
+    def analytics_nodes(self) -> list[str]:
+        # If we have several clusters, we assume the second cluster to be the analytics cluster
+        analytics_master = self.master_node
+        if len(masters := list(self.cluster_spec.masters)) > 1:
+            analytics_master = masters[1]
+
+        return self.rest.get_active_nodes_by_role(analytics_master, "cbas")
 
     @property
     def datasets(self) -> list[DatasetDef]:
@@ -410,20 +416,14 @@ class AnalyticsTest(PerfTest):
 
         self.rest.create_analytics_link(**kwargs)
 
-    def sync(self) -> float:
+    def sync(self, create_indexes: bool = True) -> float:
         self.disconnect_link()
         self.create_datasets_at_link(verbose=len(self.datasets) <= 10)
-        self.create_analytics_indexes(verbose=len(self.indexes) <= 10)
+        if create_indexes:
+            self.create_analytics_indexes(verbose=len(self.indexes) <= 10)
         self.connect_link()
 
-        t0 = time.time()
-        bucket_replica = self.test_config.bucket.replica_number
-        sql_suite = self.test_config.access_settings.sql_suite
-        for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(
-                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
-            )
-        return time.time() - t0
+        return self.wait_for_data_ingestion()
 
     def connect_link(self):
         logger.info(f"Connecting Link {self.analytics_link}")
@@ -434,6 +434,15 @@ class AnalyticsTest(PerfTest):
         logger.info(f"Disconnecting Link {self.analytics_link}")
         statement = f"DISCONNECT LINK {self.analytics_link}"
         self.rest.exec_analytics_statement(self.analytics_node, statement)
+
+    @timeit
+    def wait_for_data_ingestion(self):
+        bucket_replica = self.test_config.bucket.replica_number
+        sql_suite = self.test_config.access_settings.sql_suite
+        for bucket in self.test_config.buckets:
+            self.num_items += self.monitor.monitor_data_synced(
+                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
+            )
 
     def _restore_remote(self):
         self.remote.extract_cb_any(
@@ -542,6 +551,19 @@ class AnalyticsTest(PerfTest):
         self.monitor.monitor_cbas_pending_ops(self.analytics_nodes)
         logger.info(f"Time spent waiting to finish pending ops (s): {time.time() - t0:.2f}")
 
+    def report_sync_kpi(self, sync_time: float):
+        logger.info(f"Initial sync time (s): {sync_time:.2f}")
+
+        if not self.test_config.stats_settings.enabled:
+            return
+
+        rate, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
+        metric_info["category"] = "sync"
+        if self.test_config.showfast.component != "analyticscloud":
+            metric_info["subCategory"] = "Initial"
+
+        self.reporter.post(rate, snapshots, metric_info)
+
 
 class BigFunTest(AnalyticsTest):
     COLLECTORS = {"analytics": True}
@@ -549,17 +571,6 @@ class BigFunTest(AnalyticsTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.QUERIES = self.analytics_settings.queries
-
-    def re_sync(self) -> float:
-        self.connect_link()
-        t0 = time.time()
-        bucket_replica = self.test_config.bucket.replica_number
-        sql_suite = self.test_config.access_settings.sql_suite
-        for bucket in self.test_config.buckets:
-            self.monitor.monitor_data_synced(
-                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
-            )
-        return time.time() - t0
 
 
 class BigFunDropDatasetTest(BigFunTest):
@@ -631,16 +642,6 @@ class BigFunInitialSyncAndQueryTest(BigFunTest):
         )
         return [(query, latency) for query, latency in results]
 
-    def report_sync_kpi(self, sync_time: float):
-        logger.info(f"Initial sync time (s): {sync_time:.2f}")
-
-        if not self.test_config.stats_settings.enabled:
-            return
-
-        rate, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
-        metric_info |= {"category": "sync", "subCategory": "Initial"}
-        self.reporter.post(rate, snapshots, metric_info)
-
     def _report_kpi(self, results: list[QueryLatencyPair]):
         for query, latency in results:
             self.reporter.post(
@@ -679,7 +680,9 @@ class BigFunInitialSyncAndQueryTest(BigFunTest):
 class BigFunIncrSyncTest(BigFunInitialSyncAndQueryTest):
     @with_stats
     def re_sync(self) -> float:
-        return super().re_sync()
+        self.num_items = 0  # reset num_items so we don't double-count ingested items
+        self.connect_link()
+        return self.wait_for_data_ingestion()
 
     def _report_kpi(self, sync_time: float, sync_type: str):
         self.reporter.post(*self.metrics.avg_ingestion_rate(self.num_items, sync_time, sync_type))
@@ -1202,17 +1205,6 @@ class TPCDSTest(AnalyticsTest):
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=tpcds_initial_data_load_task)
 
-    def sync(self):
-        self.disconnect_link()
-        self.create_datasets_at_link()
-        self.connect_link()
-        bucket_replica = self.test_config.bucket.replica_number
-        sql_suite = self.test_config.access_settings.sql_suite
-        for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(
-                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
-            )
-
     def run(self):
         self.download_tpcds_couchbase_loader()
         self.load()
@@ -1284,7 +1276,7 @@ class TPCDSQueryTest(TPCDSTest):
     def run(self):
         super().run()
 
-        self.sync()
+        self.sync(create_indexes=False)
 
         count_results_no_index, count_results_with_index, results_no_index, \
             results_with_index = self.access()
@@ -1511,9 +1503,9 @@ class CH2Test(AnalyticsTest):
         self.remote.stop_server()
         self.remote.drop_caches()
         self.remote.start_server()
-        for master in self.cluster_spec.masters:
-            for bucket in self.test_config.buckets:
-                self.monitor.monitor_warmup(self.memcached, master, bucket)
+        for bucket in self.test_config.buckets:
+            self.monitor.monitor_warmup(self.memcached, self.data_node, bucket)
+        self.monitor.monitor_analytics_node_active(self.analytics_node)
 
     def init_ch2_repo(self):
         if self.worker_manager.is_remote:
@@ -1530,78 +1522,54 @@ class CH2Test(AnalyticsTest):
                 cherrypick=self.test_config.ch2_settings.cherrypick,
             )
 
+    @with_stats
+    def sync(self) -> float:
+        return super().sync()
+
+    def create_remote_link(self):
+        self.rest.create_analytics_link(
+            self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+        )
+
     def run(self):
         self.init_ch2_repo()
+
+        if self.analytics_link != "Local":
+            self.create_remote_link()
+
+        self.disconnect_link()
+
+        if ingest_during_load := self.test_config.analytics_settings.ingest_during_load:
+            self.create_datasets_at_link()
+            self.create_analytics_indexes()
+            self.connect_link()
 
         if self.test_config.ch2_settings.use_backup:
             self.restore_data()
         else:
             self.load_ch2()
 
-        self.wait_for_persistence()
-        self.restart()
-        self.sync()
-        if (
-            self.test_config.ch2_settings.create_gsi_index
-            and not self.cluster_spec.columnar_infrastructure
-        ):
+        if not ingest_during_load:
+            self.wait_for_persistence()
+            self.restart()
+            sync_time = self.sync()
+            self.report_sync_kpi(sync_time)
+        else:
+            self.wait_for_data_ingestion()
+
+        if self.test_config.ch2_settings.create_gsi_index:
             self.create_gsi_indexes()
 
         if self.test_config.analytics_settings.use_cbo:
             self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
 
         self.run_ch2()
-        if self.test_config.ch2_settings.workload != 'ch2_analytics':
-            self.report_kpi()
+        self.report_kpi()
 
 
-class CH2RemoteLinkTest(CH2Test):
+class CH2ColumnarSimulatedPauseResumeTest(CH2Test):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
-
-    @property
-    def data_nodes(self) -> list[str]:
-        return self.rest.get_active_nodes_by_role(self.data_node, 'kv')
-
-    @property
-    def query_nodes(self) -> list[str]:
-        return self.rest.get_active_nodes_by_role(self.data_node, 'n1ql')
-
-    @property
-    def analytics_nodes(self) -> list[str]:
-        return self.rest.get_active_nodes_by_role(self.analytics_node, 'cbas')
-
-    def restart(self):
-        self.remote.stop_server()
-        self.remote.drop_caches()
-        self.remote.start_server()
-        for bucket in self.test_config.buckets:
-            self.monitor.monitor_warmup(self.memcached, self.data_node, bucket)
-        self.monitor.monitor_analytics_node_active(self.analytics_node)
-
-    def report_sync_kpi(self, sync_time: float):
-        logger.info(f"Initial sync time (s): {sync_time:.2f}")
-
-        if not self.test_config.stats_settings.enabled:
-            return
-
-        v, snapshots, metric_info = self.metrics.avg_ingestion_rate(self.num_items, sync_time)
-        metric_info["category"] = "sync"
-        self.reporter.post(v, snapshots, metric_info)
-
-    @with_stats
-    def sync(self) -> float:
-        self.rest.create_analytics_link(
-            self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
-        )
-        sync_time = super().sync()
-        self.report_sync_kpi(sync_time)
-
-
-class CH2ColumnarSimulatedPauseResumeTest(CH2RemoteLinkTest):
-    def __init__(self, *args, **kwargs):
-        CH2Test.__init__(self, *args, **kwargs)
+        super().__init__(self, *args, **kwargs)
         self.cluster_spec.set_inactive_clusters_by_idx([2])
         self.target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
 
@@ -1748,7 +1716,7 @@ class CH2CapellaColumnarCopyToObjectStoreTest(
     pass
 
 
-class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
+class CH2CapellaColumnarRemoteLinkTest(CH2Test):
     COLLECTORS = {
         "iostat": False,
         "memory": False,
@@ -1774,10 +1742,6 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
     def restore_data(self):
         super().restore_data()
 
-    @with_stats
-    def sync(self) -> float:
-        return CH2Test.sync(self)
-
     def _create_ch2_conn_settings(self) -> CH2ConnectionSettings:
         query_port = QUERY_PORT_SSL
         query_urls = [f"{node}:{query_port}" for node in self.query_nodes]
@@ -1794,9 +1758,7 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
             use_tls=True,
         )
 
-    def run(self):
-        self.init_ch2_repo()
-
+    def create_remote_link(self):
         instance_id = self.rest.instance_ids[0]
         self.rest.create_capella_remote_link(
             instance_id, self.analytics_link, self.cluster_spec.capella_cluster_ids[0]
@@ -1804,39 +1766,9 @@ class CH2CapellaColumnarRemoteLinkTest(CH2RemoteLinkTest):
         self.monitor.wait_for_columnar_remote_link_ready(
             instance_id, self.analytics_link, timeout_secs=1200
         )
-        self.disconnect_link()
 
-        if self.test_config.analytics_settings.ingest_during_load:
-            self.create_datasets_at_link()
-            self.create_analytics_indexes()
-            self.connect_link()
-
-        if self.test_config.ch2_settings.use_backup:
-            self.restore_data()
-        else:
-            self.load_ch2()
-
-        if not self.test_config.analytics_settings.ingest_during_load:
-            # Only wait for the KV cluster
-            self.wait_for_persistence()
-            sync_time = self.sync()
-            self.report_sync_kpi(sync_time)
-        else:
-            bucket_replica = self.test_config.bucket.replica_number
-            sql_suite = self.test_config.access_settings.sql_suite
-            for bucket in self.test_config.buckets:
-                self.num_items += self.monitor.monitor_data_synced(
-                    self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
-                )
-
-        if self.test_config.ch2_settings.create_gsi_index:
-            self.create_gsi_indexes()
-
-        if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
-
-        self.run_ch2()
-        self.report_kpi()
+    def restart(self):
+        pass
 
 
 class CapellaColumnarManualOnOffTest(PerfTest):
@@ -2221,12 +2153,7 @@ class CH2CapellaColumnarRemoteLinkTruncateTest(
             sync_time = self.sync()
             self.report_sync_kpi(sync_time)
         else:
-            bucket_replica = self.test_config.bucket.replica_number
-            sql_suite = self.test_config.access_settings.sql_suite
-            for bucket in self.test_config.buckets:
-                self.num_items += self.monitor.monitor_data_synced(
-                    self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
-                )
+            self.wait_for_data_ingestion()
 
         self.timings = {
             op: {d.name: [] for d in self.datasets} for op in ["ingest", "truncate", "recreate"]
@@ -2476,12 +2403,7 @@ class ScanTest(AnalyticsTest):
         self.disconnect_link()
         self.create_and_analyze_datasets()
         self.connect_link()
-        bucket_replica = self.test_config.bucket.replica_number
-        sql_suite = self.test_config.access_settings.sql_suite
-        for bucket in self.test_config.buckets:
-            self.num_items += self.monitor.monitor_data_synced(
-                self.data_node, bucket, bucket_replica, self.analytics_node, sql_suite
-            )
+        self.wait_for_data_ingestion()
 
     def run(self):
         self.restore_local()

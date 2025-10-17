@@ -37,10 +37,11 @@ LATESTBUILDS_BASE_URL = "http://latestbuilds.service.couchbase.com/builds"
 SERVER_INTERNAL_LOCATIONS = tuple(
     f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-server/{codename}/{{build}}/"
     for codename in (
+        "totoro",
+        "morpheus",
         "cypher",
         "trinity",
         "neo",
-        "morpheus",
         "elixir",
         "magma-preview",
         "cheshire-cat",

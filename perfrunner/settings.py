@@ -130,6 +130,13 @@ class ClusterSpec(Config):
         return 'infrastructure' in self.config.sections()
 
     @property
+    def csp(self) -> str:
+        """Cloud Service Provider."""
+        if self.cloud_infrastructure:
+            return self.capella_backend or self.cloud_provider
+        return ""
+
+    @property
     def cloud_provider(self) -> str:
         return self.config.get('infrastructure', 'provider', fallback='')
 
@@ -737,15 +744,11 @@ class ClusterSpec(Config):
     def parameters(self) -> dict:
         from perfrunner.helpers.config_files import ClusterMetadataFile
 
-        csp = ""
-        if self.cloud_infrastructure:
-            csp = self.capella_backend or self.cloud_provider
-
         overrides = self._get_options_as_dict("parameters")
         cluster_name = self.config.get(
             "metadata", "cluster", fallback=ClusterMetadataFile.DEFAULT_KEY_GROUP
         )
-        with ClusterMetadataFile(csp) as metadata_file:
+        with ClusterMetadataFile(self.csp) as metadata_file:
             return metadata_file.get_parameters(cluster_name, overrides)
 
     @property
@@ -2578,7 +2581,6 @@ class CbbackupmgrSettings:
     ENCRYPTED = False
     PASSPHRASE = "couchbase"
     INCLUDE_DATA = None
-    CLOUD = None
 
     def __init__(self, options: dict):
         self.threads = options.get("threads", self.THREADS)
@@ -2593,7 +2595,6 @@ class CbbackupmgrSettings:
             for kv in options.get("env_vars", "").replace(" ", "").split(",")
             if kv
         )
-        self.cloud = self.CLOUD
 
 
 class BackupSettings(CbbackupmgrSettings):
@@ -2619,14 +2620,6 @@ class BackupSettings(CbbackupmgrSettings):
         self.aws_credential_path = options.get("aws_credential_path", self.AWS_CREDENTIAL_PATH)
         self.backup_directory = options.get("backup_directory", self.BACKUP_DIRECTORY)
 
-        if self.backup_directory:
-            if self.backup_directory.startswith("s3://"):
-                self.cloud = "aws"
-            elif self.backup_directory.startswith("gs://"):
-                self.cloud = "gcp"
-            elif self.backup_directory.startswith("az://"):
-                self.cloud = "azure"
-
 
 class RestoreSettings(CbbackupmgrSettings):
     DOCS_PER_COLLECTION = 0
@@ -2645,16 +2638,8 @@ class RestoreSettings(CbbackupmgrSettings):
         self.backup_repo = options.get("backup_repo", self.BACKUP_REPO)
         self.import_file = options.get("import_file", self.IMPORT_FILE)
         self.map_data = options.get("map_data", self.MAP_DATA)
-        self.modify_storage_dir_name = bool(options.get("modify_storage_dir_name", 0))
+        self.use_csp_specific_archive = bool(options.get("use_csp_specific_archive", 0))
         self.filter_keys = options.get("filter_keys", None)
-
-        if self.backup_storage:
-            if self.backup_storage.startswith("s3://"):
-                self.cloud = "aws"
-            elif self.backup_storage.startswith("gs://"):
-                self.cloud = "gcp"
-            elif self.backup_storage.startswith("az://"):
-                self.cloud = "azure"
 
     def __str__(self) -> str:
         return str(self.__dict__)

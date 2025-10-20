@@ -60,7 +60,7 @@ aws_credential_path = /root/.ssh
 
 [restore]
 backup_storage = s3://fts-vector-openai-5m-1536dim
-modify_storage_dir_name = True
+use_csp_specific_archive = True
 backup_repo = fts_openai_large_5m_1536_dims
 threads = 20
 use_tls = 1

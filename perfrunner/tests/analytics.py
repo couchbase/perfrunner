@@ -475,11 +475,8 @@ class AnalyticsTest(PerfTest):
 
         self.remote.client_drop_caches()
 
-        if self.test_config.restore_settings.modify_storage_dir_name:
-            suffix_repo = "aws"
-            if self.cluster_spec.capella_infrastructure:
-                suffix_repo = self.cluster_spec.capella_backend
-            archive += f"/{suffix_repo}"
+        if self.test_config.restore_settings.use_csp_specific_archive:
+            archive += f"/{self.cluster_spec.csp.lower()}"
 
         self.remote.restore(
             cluster_spec=self.cluster_spec,

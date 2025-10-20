@@ -156,12 +156,7 @@ class CloudVMDeployer:
         self.infra_spec = infra_spec
         self.options = options
         self.os_arch = self.infra_spec.infrastructure_settings.get("os_arch", "x86_64")
-
-        self.csp = (
-            self.infra_spec.capella_backend.lower()
-            if (csp := self.infra_spec.cloud_provider.lower()) == "capella"
-            else csp
-        )
+        self.csp = self.infra_spec.csp
 
         self.uuid = self.infra_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
         self.infra_spec.config.set("infrastructure", "uuid", self.uuid)

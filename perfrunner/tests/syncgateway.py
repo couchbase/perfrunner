@@ -2726,11 +2726,8 @@ class EndToEndMultiCBLTest(EndToEndTest):
                         "{0}._default._default={0}.scope-1.collection-1"\
                         .format(target.bucket)
         archive = self.test_config.restore_settings.backup_storage
-        if self.test_config.restore_settings.modify_storage_dir_name:
-            suffix_repo = "aws"
-            if self.capella_infra:
-                suffix_repo = self.cluster_spec.capella_backend
-            archive = archive + "/" + suffix_repo
+        if self.test_config.restore_settings.use_csp_specific_archive:
+            archive += f"/{self.cluster_spec.csp.lower()}"
 
         self.remote.restore(
             cluster_spec=self.cluster_spec,

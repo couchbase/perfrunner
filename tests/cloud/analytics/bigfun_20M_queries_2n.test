@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunInitialSyncAndQueryTest
+test = perfrunner.tests.analytics.BigFunTest
 
 [showfast]
 title = 2 nodes, BigFUN 20M users (320M docs), 3 indexes, AWS/Capella
@@ -22,7 +22,7 @@ enable_n2n_encryption = all
 [analytics]
 num_io_devices = 8
 queries = perfrunner/workloads/bigfun/queries_with_index.yaml
-dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.yaml
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets_remote.yaml
 index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 
 [bucket]

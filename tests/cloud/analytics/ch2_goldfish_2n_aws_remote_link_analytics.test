@@ -18,6 +18,7 @@ num_buckets = 1
 bucket_name = bench
 
 [analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_remote.yaml
 couchbase_link_name = RemoteLink
 
 [backup]

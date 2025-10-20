@@ -1,0 +1,13 @@
+family: bigfun
+datasets:
+  - &base
+    name: GleambookUsers-1
+    type: standalone
+    primary_key_field_names: [key]
+    primary_key_field_types: [string]
+
+  - <<: *base
+    name: GleambookMessages-1
+
+  - <<: *base
+    name: ChirpMessages-1

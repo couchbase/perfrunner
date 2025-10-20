@@ -1,0 +1,37 @@
+family: ch2
+datasets:
+  - &base
+    name: customer
+    type: standalone
+    primary_key_field_names: [key]
+    primary_key_field_types: [string]
+
+  - <<: *base
+    name: district
+
+  - <<: *base
+    name: history
+
+  - <<: *base
+    name: item
+
+  - <<: *base
+    name: neworder
+
+  - <<: *base
+    name: orders
+
+  - <<: *base
+    name: stock
+
+  - <<: *base
+    name: warehouse
+
+  - <<: *base
+    name: supplier
+
+  - <<: *base
+    name: nation
+
+  - <<: *base
+    name: region

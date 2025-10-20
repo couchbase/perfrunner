@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunIncrSyncTest
+test = perfrunner.tests.analytics.IncrementalSyncTest
 
 [showfast]
 title = 4 nodes, BigFUN 20M users (320M docs), 3 indexes, s=1 c=3, Remote Link, Enterprise Analytics
@@ -24,7 +24,7 @@ config = collections/1bucket_1scope_3collections_analytics.json
 
 [analytics]
 num_io_devices = 1
-dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets.yaml
+dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets_remote.yaml
 index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 couchbase_link_name = RemoteLink
 

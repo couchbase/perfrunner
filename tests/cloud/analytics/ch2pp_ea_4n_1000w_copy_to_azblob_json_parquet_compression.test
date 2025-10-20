@@ -15,6 +15,9 @@ mem_quota = 100
 analytics_mem_quota = 25600
 initial_nodes = 4
 
+[analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_simple_pk.yaml
+
 [analytics_external_data]
 link_type = azureblob
 region = eastus

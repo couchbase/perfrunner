@@ -14,6 +14,9 @@ server_processes = java
 [cluster]
 enable_n2n_encryption = all
 
+[analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_simple_pk.yaml
+
 [analytics_external_data]
 link_type = azureblob
 region = eastus

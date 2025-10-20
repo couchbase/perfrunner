@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunInitialSyncAndQueryTest
+test = perfrunner.tests.analytics.BigFunTest
 use_workers = 0
 
 [showfast]
@@ -24,7 +24,7 @@ config = collections/1bucket_1scope_3collections_analytics.json
 [analytics]
 num_io_devices = 4
 queries = perfrunner/workloads/bigfun/queries_without_index_window_functions.yaml
-dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets.yaml
+dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets_remote.yaml
 
 [bucket]
 eviction_policy = fullEviction

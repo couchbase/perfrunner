@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2CapellaColumnarRemoteLinkTest
+test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
 title = CH2 5000W, 4A, c=11 (remote collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Heterogeneous Indexes
@@ -36,6 +36,7 @@ threads = 8
 map_data = bench.ch2=bench.ch2
 
 [analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_remote.yaml
 couchbase_link_name = RemoteLink
 use_cbo = true
 cbo_sample_size = high

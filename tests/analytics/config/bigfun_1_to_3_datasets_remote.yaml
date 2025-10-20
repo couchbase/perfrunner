@@ -1,0 +1,18 @@
+family: bigfun
+datasets:
+  - &base
+    name: GleambookUsers-1
+    type: remote
+    source:
+      bucket: bucket-1
+      scope: _default
+      collection: _default
+    where: "`id` IS NOT UNKNOWN"
+
+  - <<: *base
+    name: GleambookMessages-1
+    where: "`message_id` IS NOT UNKNOWN"
+
+  - <<: *base
+    name: ChirpMessages-1
+    where: "`chirpid` IS NOT UNKNOWN"

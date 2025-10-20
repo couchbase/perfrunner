@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2CapellaColumnarTransformOnIngestTest
+test = perfrunner.tests.analytics.TransformOnIngestTest
 
 [showfast]
 title = CH2++0 1000W, 4A, remote collections, transform on ingestion
@@ -36,6 +36,7 @@ map_data = bench.ch2pp=bench.ch2pp
 include_data = bench.ch2pp.customer,bench.ch2pp.orders
 
 [analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_remote.yaml
 couchbase_link_name = RemoteLink
 
 [columnar]

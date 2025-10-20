@@ -16,6 +16,7 @@ initial_nodes = 6
 num_buckets = 1
 
 [analytics]
+dataset_conf_file = tests/analytics/config/tpcds_1_to_24_datasets_remote.yaml
 num_io_devices = 6
 
 [bucket]

@@ -33,9 +33,9 @@ class AnalyticsConnectorTest(CH2Test):
             self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     def sync(self):
-        self.disconnect_link()
+        self.disconnect_link(self.couchbase_link_name)
         self.create_analytics_collections()
-        self.connect_link()
+        self.connect_link(self.couchbase_link_name)
         bucket_replica = self.test_config.bucket.replica_number
         for bucket in self.test_config.buckets:
             self.monitor.monitor_data_synced(

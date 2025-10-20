@@ -1,8 +1,11 @@
-- name: GleambookUsers-1
-  source: GleambookUsers-1
+family: bigfun
+datasets:
+  - &base
+    name: GleambookUsers-1
+    type: external
 
-- name: GleambookMessages-1
-  source: GleambookMessages-1
+  - <<: *base
+    name: GleambookMessages-1
 
-- name: ChirpMessages-1
-  source: ChirpMessages-1
+  - <<: *base
+    name: ChirpMessages-1

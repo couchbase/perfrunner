@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.BigFunInitialSyncAndQueryTest
+test = perfrunner.tests.analytics.BigFunTest
 use_workers = 0
 
 [showfast]
@@ -19,7 +19,7 @@ initial_nodes = 2
 num_buckets = 1
 
 [analytics]
-dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.yaml
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets_remote.yaml
 num_io_devices = 4
 couchbase_link_name = RemoteLink
 index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml

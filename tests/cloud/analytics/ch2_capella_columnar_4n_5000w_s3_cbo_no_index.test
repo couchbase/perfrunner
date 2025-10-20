@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTest
+test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
 title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, CBO (high sample size), Unoptimized Queries
@@ -15,9 +15,10 @@ server_processes = java
 enable_n2n_encryption = all
 
 [analytics]
-aws_credential_path = /root/.ssh/
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_simple_pk.yaml
 use_cbo = true
 cbo_sample_size = high
+aws_credential_path = /root/.ssh/
 
 [analytics_external_data]
 link_type = s3

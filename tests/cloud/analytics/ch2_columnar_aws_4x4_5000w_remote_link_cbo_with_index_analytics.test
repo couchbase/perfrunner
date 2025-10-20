@@ -29,6 +29,7 @@ threads = 8
 map_data = bench.ch2=bench.ch2
 
 [analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_remote.yaml
 couchbase_link_name = RemoteLink
 use_cbo = true
 cbo_sample_size = high

@@ -1,0 +1,102 @@
+family: tpcds
+datasets:
+  - &base
+    name: call_center
+    type: remote
+    source:
+      bucket: bucket-1
+      scope: _default
+      collection: _default
+    where: "table_name = 'call_center'"
+
+  - <<: *base
+    name: catalog_page
+    where: "table_name = 'catalog_page'"
+
+  - <<: *base
+    name: catalog_returns
+    where: "table_name = 'catalog_returns'"
+
+  - <<: *base
+    name: catalog_sales
+    where: "table_name = 'catalog_sales'"
+
+  - <<: *base
+    name: customer
+    where: "table_name = 'customer'"
+
+  - <<: *base
+    name: customer_address
+    where: "table_name = 'customer_address'"
+
+  - <<: *base
+    name: customer_demographics
+    where: "table_name = 'customer_demographics'"
+
+  - <<: *base
+    name: date_dim
+    where: "table_name = 'date_dim'"
+
+  - <<: *base
+    name: household_demographics
+    where: "table_name = 'household_demographics'"
+
+  - <<: *base
+    name: income_band
+    where: "table_name = 'income_band'"
+
+  - <<: *base
+    name: inventory
+    where: "table_name = 'inventory'"
+
+  - <<: *base
+    name: item
+    where: "table_name = 'item'"
+
+  - <<: *base
+    name: promotion
+    where: "table_name = 'promotion'"
+
+  - <<: *base
+    name: reason
+    where: "table_name = 'reason'"
+
+  - <<: *base
+    name: ship_mode
+    where: "table_name = 'ship_mode'"
+
+  - <<: *base
+    name: store
+    where: "table_name = 'store'"
+
+  - <<: *base
+    name: store_returns
+    where: "table_name = 'store_returns'"
+
+  - <<: *base
+    name: store_sales
+    where: "table_name = 'store_sales'"
+
+  - <<: *base
+    name: time_dim
+    where: "table_name = 'time_dim'"
+
+  - <<: *base
+    name: warehouse
+    where: "table_name = 'warehouse'"
+
+  - <<: *base
+    name: web_page
+    where: "table_name = 'web_page'"
+
+  - <<: *base
+    name: web_returns
+    where: "table_name = 'web_returns'"
+
+  - <<: *base
+    name: web_sales
+    where: "table_name = 'web_sales'"
+
+  - <<: *base
+    name: web_site
+    where: "table_name = 'web_site'"

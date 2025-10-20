@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTest
+test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
 title = CH2 1000W, 2A, c=11 (standalone collections), analytics-only workload, No CBO, Hand-Optimized Queries
@@ -18,6 +18,8 @@ num_buckets = 1
 bucket_name = bench
 
 [analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_simple_pk.yaml
+
 [analytics_external_data]
 link_type = gcs
 obj_store_name = analytics-ch2-1000w-gz

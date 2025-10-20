@@ -3086,7 +3086,7 @@ class ColumnarKafkaLinksSettings:
     MAX_TASKS_PER_WORKER = 1
 
     # Source settings
-    LINK_SOURCE = 'MYSQLDB'  # MONGODB | DYNAMODB | MYSQLDB
+    LINK_SOURCE = "MONGODB"
 
     # Test settings
     INGESTION_TIMEOUT_MINS = 360

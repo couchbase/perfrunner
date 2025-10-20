@@ -1,0 +1,19 @@
+family: bigfun
+datasets:
+  - &base
+    name: GleambookUsers-{repeat}
+    type: remote
+    source:
+      bucket: bucket-1
+      scope: _default
+      collection: _default
+    where: "`type` = \"GleambookUsers\" AND meta().id LIKE \"%-{repeat}\""
+    repeat: 333
+
+  - <<: *base
+    name: GleambookMessages-{repeat}
+    where: "`type` = \"GleambookMessages\" AND meta().id LIKE \"%-{repeat}\""
+
+  - <<: *base
+    name: ChirpMessages-{repeat}
+    where: "`type` = \"ChirpMessages\" AND meta().id LIKE \"%-{repeat}\""

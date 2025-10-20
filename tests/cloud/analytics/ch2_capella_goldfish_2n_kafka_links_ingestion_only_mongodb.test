@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2ColumnarKafkaLinksIngestionTest
+test = perfrunner.tests.analytics.InitialIngestOnlyTest
 
 [showfast]
 title = Kafka Links Ingestion rate (avg. items/sec), CH2 1000 warehouses, c=11, 2 Analytics nodes, Capella Columnar, AWS
@@ -13,6 +13,9 @@ server_processes = java
 [cluster]
 initial_nodes = 2
 enable_n2n_encryption = all
+
+[analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_kafka.yaml
 
 [columnar_kafka_links]
 link_source = MONGODB

@@ -1,0 +1,21 @@
+family: bigfun
+datasets:
+  - &base
+    name: GleambookUsers-1
+    type: remote
+    source: &source
+      bucket: bucket-1
+      scope: scope-1
+      collection: GleambookUsers-1
+
+  - <<: *base
+    name: GleambookMessages-1
+    source:
+      <<: *source
+      collection: GleambookMessages-1
+
+  - <<: *base
+    name: ChirpMessages-1
+    source:
+      <<: *source
+      collection: ChirpMessages-1

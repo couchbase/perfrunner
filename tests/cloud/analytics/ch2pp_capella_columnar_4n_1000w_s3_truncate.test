@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTruncateTest
+test = perfrunner.tests.analytics.StandaloneDatasetTruncateTest
 
 [showfast]
 title = TRUNCATE, CH2++0 1000W, 4A, c=11 (standalone collections)
@@ -15,6 +15,7 @@ initial_nodes = 4
 enable_n2n_encryption = all
 
 [analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_simple_pk.yaml
 aws_credential_path = /root/.ssh/
 
 [analytics_external_data]

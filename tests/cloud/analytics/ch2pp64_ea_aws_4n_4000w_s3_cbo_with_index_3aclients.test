@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTest
+
+[showfast]
+title = CH2++64 4000W, 4A, c=11 (standalone collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Indexes, 3 aclients
+component = analyticscloud
+category = ch2
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 100
+analytics_mem_quota = 25600
+initial_nodes = 4
+num_buckets = 1
+bucket_name = bench
+
+[analytics]
+external_dataset_type = s3
+external_dataset_region = us-east-1
+external_bucket = analytics-ch2pp64-4000w-gz
+external_file_format = json
+external_file_include = gz
+use_cbo = true
+cbo_sample_size = high
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
+
+[ch2]
+schema = ch2pp
+warehouses = 4000
+aclients = 3
+tclients = 0
+load_tclients = 48
+iterations = 2
+warmup_iterations = 1
+duration = 0
+warmup_duration = 0
+workload = ch2_analytics
+create_gsi_index = false
+unoptimized_queries = true

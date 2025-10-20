@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
-title = CH2++64 4000W, 4A, c=11 (remote collections), mixed workload, 64 tclients, CBO (high sample size), Unoptimized Queries
+title = CH2++64 4000W, 4A, c=11 (remote collections), mixed workload, 64 tclients, CBO (high sample size), Unoptimized Queries, Analytics Indexes
 component = analyticscloud
 category = ch2
 sub_category = {provider}
@@ -25,6 +25,7 @@ config = collections/1bucket_1scope_11collections_analytics_ch2pp.json
 
 [analytics]
 num_io_devices = 1
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
 analytics_link = RemoteLink
 use_cbo = true
 cbo_sample_size = high

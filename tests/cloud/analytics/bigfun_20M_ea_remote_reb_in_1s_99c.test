@@ -30,10 +30,12 @@ analytics_link = RemoteLink
 
 [backup]
 obj_staging_dir = /stage
-obj_access_key_id = cbperfstorage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
 
 [restore]
-backup_storage = az://analytics-bigfun20m-99collections
+backup_storage = s3://analytics-bigfun20m-99collections
+use_csp_specific_archive = True
 backup_repo = default
 threads = 8
 map_data = bucket-1.scope-1=bucket-1.scope-1

@@ -53,7 +53,14 @@ output "network" {
 
 output "cloud_storage" {
   value = {
-    storage_bucket = length(aws_s3_bucket.perf-storage-bucket) != 0 ? "s3://${one(aws_s3_bucket.perf-storage-bucket).id}" : null
+    storage_bucket = (
+      length(aws_s3_bucket.perf-storage-bucket) != 0 ?
+      "s3://${one(aws_s3_bucket.perf-storage-bucket).id}" : null
+    )
+    columnar_storage_backend = (
+      length(aws_s3_bucket.perf-columnar-storage-backend) != 0 ?
+      "s3://${one(aws_s3_bucket.perf-columnar-storage-backend).id}" : null
+    )
   }
 }
 

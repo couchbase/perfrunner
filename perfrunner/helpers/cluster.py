@@ -829,18 +829,18 @@ class DefaultClusterManager(ClusterManagerBase):
         region = self.test_config.columnar_settings.blob_storage_region
 
         if self.cluster_spec.cloud_provider:
-            if self.cluster_spec.backup:
-                protocol, _bucket_name = self.cluster_spec.backup.split("://")
+            if backend := self.cluster_spec.columnar_storage_backend:
+                protocol, _bucket_name = backend.split("://")
                 _scheme = protocol if protocol != "az" else "azblob"
 
             scheme = scheme or _scheme
             bucket_name = bucket_name or _bucket_name
             region = self.cluster_spec.cloud_region or region
             if scheme == "azblob":
-                storage_acc_name = self.cluster_spec.infrastructure_section("storage")[
-                    "storage_acc"
-                ]
-                endpoint = endpoint or f"https://{storage_acc_name}.blob.core.windows.net"
+                endpoint = (
+                    endpoint
+                    or f"https://{self.cluster_spec.azure_storage_account}.blob.core.windows.net"
+                )
 
         self.remote.configure_columnar_blob_storage(bucket_name, scheme, region, endpoint)
 
@@ -856,11 +856,12 @@ class DefaultClusterManager(ClusterManagerBase):
             self.remote.store_analytics_blob_storage_creds(access_key_id, secret_access_key)
         elif csp == "gcp" or scheme == "gcs":
             run_local_shell_command(
-                f"gcloud storage buckets add-iam-policy-binding {self.cluster_spec.backup} "
+                "gcloud storage buckets add-iam-policy-binding "
+                f"{self.cluster_spec.columnar_storage_backend} "
                 "--member=allUsers --role=roles/storage.objectAdmin"
             )
         elif csp == "azure" or scheme == "azblob":
-            storage_acc_name = self.cluster_spec.infrastructure_section("storage")["storage_acc"]
+            storage_acc_name = self.cluster_spec.azure_storage_account
             storage_acc_key = get_azure_storage_account_key(storage_acc_name)
             self.remote.store_analytics_blob_storage_creds(storage_acc_name, storage_acc_key)
 

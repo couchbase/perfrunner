@@ -46,6 +46,13 @@ output "network" {
 
 output "cloud_storage" {
   value = {
-    storage_bucket = length(google_storage_bucket.perf-storage-bucket) != 0 ? one(google_storage_bucket.perf-storage-bucket).url : null
+    storage_bucket = (
+      length(google_storage_bucket.perf-storage-bucket) != 0 ?
+      one(google_storage_bucket.perf-storage-bucket).url : null
+    )
+    columnar_storage_backend = (
+      length(google_storage_bucket.perf-columnar-storage-backend) != 0 ?
+      one(google_storage_bucket.perf-columnar-storage-backend).url : null
+    )
   }
 }

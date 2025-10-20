@@ -79,6 +79,10 @@ variable "cloud_storage" {
   type = bool
 }
 
+variable "deploy_columnar_storage_backend" {
+  type = bool
+}
+
 variable "global_tag" {
   type = string
 }
@@ -682,6 +686,15 @@ resource "aws_volume_attachment" "kafka_ebs_volume_attachment" {
 resource "aws_s3_bucket" "perf-storage-bucket" {
   count         = var.cloud_storage ? 1 : 0
   bucket        = "perftest-bucket-${substr(uuid(), 0, 6)}"
+  force_destroy = true
+  tags = {
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+resource "aws_s3_bucket" "perf-columnar-storage-backend" {
+  count         = var.deploy_columnar_storage_backend ? 1 : 0
+  bucket        = "perftest-columnar-storage-backend-${substr(uuid(), 0, 6)}"
   force_destroy = true
   tags = {
     deployment = var.global_tag != "" ? var.global_tag : null

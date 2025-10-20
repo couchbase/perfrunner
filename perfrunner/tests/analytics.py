@@ -394,12 +394,14 @@ class AnalyticsTest(PerfTest):
             verbose=verbose,
         )
 
-    def create_external_link(self):
+    def create_external_link(
+        self, link_name: str = "external_link", azure_storage_account: Optional[str] = None
+    ):
         external_dataset_type = self.analytics_settings.external_dataset_type
 
         kwargs = {
             "analytics_node": self.analytics_node,
-            "link_name": "external_link",
+            "link_name": link_name,
             "link_type": external_dataset_type,
         }
 
@@ -416,7 +418,9 @@ class AnalyticsTest(PerfTest):
             with open(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"), "r") as f:
                 kwargs["gcs_json_creds"] = json.load(f)
         elif external_dataset_type == "azureblob":
-            storage_acc_name = self.analytics_settings.azure_storage_account
+            storage_acc_name = (
+                azure_storage_account or self.analytics_settings.external_azure_storage_account
+            )
             kwargs |= {
                 "az_account_name": storage_acc_name,
                 "az_account_key": get_azure_storage_account_key(storage_acc_name),
@@ -553,9 +557,7 @@ class AnalyticsTest(PerfTest):
         blob_storage_scheme = analytics_settings.get("blobStorageScheme")
         get_cloud_storage_bucket_stats(
             f"{blob_storage_scheme}://{bucket_name}",
-            az_storage_acc=self.cluster_spec.infrastructure_section("storage").get(
-                "storage_acc", ""
-            ),
+            az_storage_acc=self.cluster_spec.azure_storage_account,
         )
 
     def get_dataset_items(self, dataset: str) -> int:
@@ -838,6 +840,8 @@ class CopyToParameters:
             self.row_group_size = None
             self.page_size = None
             self.max_schemas = None
+            if self.compression in ("snappy", "zstd"):
+                self.compression = None
 
     def to_dict(self) -> dict:
         return remove_nulls(
@@ -873,10 +877,15 @@ class CopyToParameters:
 
 class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
     def gen_query_statement(
-        self, query_config: dict, obj_store_name: str, params: CopyToParameters, repeat: int = 0
+        self,
+        query_config: dict,
+        obj_store_name: str,
+        params: CopyToParameters,
+        repeat: int = 0,
+        link_name: str = "external_link",
     ) -> str:
         query_template = (
-            f"COPY {{}} TO `{obj_store_name}` AT `external_link` PATH ({{}}) {{}} {{}} {{}}"
+            f"COPY {{}} TO `{obj_store_name}` AT `{link_name}` PATH ({{}}) {{}} {{}} {{}}"
         )
 
         query_id = query_config["id"]
@@ -932,7 +941,7 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
             for conf in query_configs:
                 query_id = f"{params.gen_output_path_prefix()}/{conf['id']}"
                 query_statements[query_id] = self.gen_query_statement(
-                    conf, obj_store_name, params, repeat
+                    conf, obj_store_name, params, repeat, link_name=self.copy_to_link_name
                 )
 
         return query_statements
@@ -940,7 +949,7 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
     @with_stats
     def access(self) -> dict[str, list[float]]:
         obj_store_uri = self.cluster_spec.backup
-        az_storage_acc = self.cluster_spec.infrastructure_section("storage").get("storage_acc", "")
+        az_storage_acc = self.cluster_spec.azure_storage_account
         objects, size = get_cloud_storage_bucket_stats(
             obj_store_uri, aws_profile="default", az_storage_acc=az_storage_acc
         )
@@ -979,7 +988,18 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
     def run(self):
         random.seed(8095)
 
-        self.create_external_link()
+        csp = self.cluster_spec.capella_backend or self.cluster_spec.cloud_provider
+        self.copy_from_link_name = "external_link"
+        self.copy_to_link_name = (
+            "external_copy_to_link" if csp == "azure" else self.copy_from_link_name
+        )
+
+        self.create_external_link(link_name=self.copy_from_link_name)
+        if csp == "azure":
+            self.create_external_link(
+                link_name=self.copy_to_link_name,
+                azure_storage_account=self.cluster_spec.azure_storage_account,
+            )
         self.create_standalone_datasets(verbose=True)
 
         copy_from_items, copy_from_time = self.copy_data_from_object_store()

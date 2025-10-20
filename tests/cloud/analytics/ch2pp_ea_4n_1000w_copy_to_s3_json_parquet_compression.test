@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.ColumnarCopyToObjectStoreTest
 
 [showfast]
-title = Copy To Azblob, CH2++0 1000W, 4A, c=11 (standalone collections)
+title = Copy To S3, CH2++0 1000W, 4A, c=11 (standalone collections)
 component = analyticscloud
 category = latency
 sub_category = {provider}
@@ -16,12 +16,11 @@ analytics_mem_quota = 25600
 initial_nodes = 4
 
 [analytics]
-external_dataset_type = azureblob
-external_dataset_region = eastus
+external_dataset_type = s3
+external_dataset_region = us-east-1
 external_bucket = analytics-ch2pp0-1000w-gz
 external_file_format = json
 external_file_include = gz
-external_azure_storage_account = cbperfstorage
 
 [ch2]
 schema = ch2pp

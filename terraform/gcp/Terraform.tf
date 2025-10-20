@@ -65,6 +65,10 @@ variable "cloud_storage" {
   type = bool
 }
 
+variable "deploy_columnar_storage_backend" {
+  type = bool
+}
+
 variable "global_tag" {
   type = string
 }
@@ -369,6 +373,17 @@ resource "google_compute_disk" "syncgateway-disk" {
 resource "google_storage_bucket" "perf-storage-bucket" {
   count                       = var.cloud_storage ? 1 : 0
   name                        = "perftest-bucket-${var.uuid}"
+  location                    = upper(var.cloud_region)
+  uniform_bucket_level_access = true
+  force_destroy               = true
+  labels = {
+    deployment = var.global_tag != "" ? var.global_tag : null
+  }
+}
+
+resource "google_storage_bucket" "perf-columnar-storage-backend" {
+  count                       = var.deploy_columnar_storage_backend ? 1 : 0
+  name                        = "perftest-columnar-storage-backend-${var.uuid}"
   location                    = upper(var.cloud_region)
   uniform_bucket_level_access = true
   force_destroy               = true

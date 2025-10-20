@@ -23,7 +23,7 @@ external_dataset_region = eastus
 external_bucket = analytics-ch2pp64-4000w-gz
 external_file_format = json
 external_file_include = gz
-azure_storage_account = cbperfstorage
+external_azure_storage_account = cbperfstorage
 use_cbo = true
 cbo_sample_size = high
 

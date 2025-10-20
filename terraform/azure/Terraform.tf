@@ -59,6 +59,10 @@ variable "cloud_storage" {
   type = bool
 }
 
+variable "deploy_columnar_storage_backend" {
+  type = bool
+}
+
 variable "global_tag" {
   type = string
 }
@@ -714,7 +718,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "perf-syncgateway-data-d
 }
 
 resource "azurerm_storage_account" "perf-storage-acc" {
-  count                    = var.cloud_storage ? 1 : 0
+  count                    = (var.cloud_storage || var.deploy_columnar_storage_backend) ? 1 : 0
   name                     = "perfstorageacc${var.uuid}"
   resource_group_name      = "perf-resources-eastus"
   location                 = "East US"
@@ -728,7 +732,14 @@ resource "azurerm_storage_account" "perf-storage-acc" {
 
 resource "azurerm_storage_container" "perf-storage-container" {
   count                 = var.cloud_storage ? 1 : 0
-  name                  = "content${var.uuid}"
+  name                  = "test-container-${var.uuid}"
+  storage_account_name  = element(azurerm_storage_account.perf-storage-acc.*.name, count.index)
+  container_access_type = "private"
+}
+
+resource "azurerm_storage_container" "perf-columnar-storage-backend" {
+  count                 = var.deploy_columnar_storage_backend ? 1 : 0
+  name                  = "columnar-container-${var.uuid}"
   storage_account_name  = element(azurerm_storage_account.perf-storage-acc.*.name, count.index)
   container_access_type = "private"
 }

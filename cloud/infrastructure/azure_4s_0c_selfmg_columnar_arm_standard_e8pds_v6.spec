@@ -3,7 +3,6 @@ provider = azure
 type = azurerm
 os_arch = arm
 service = columnar
-cloud_storage = 1
 
 [clusters]
 goldfish =

@@ -2,7 +2,6 @@
 provider = gcp
 type = gce
 service = columnar
-cloud_storage = 1
 
 [clusters]
 datasource =

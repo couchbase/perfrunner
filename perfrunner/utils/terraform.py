@@ -175,6 +175,9 @@ class CloudVMDeployer:
         self.cloud_storage = bool(
             int(self.infra_spec.infrastructure_settings.get('cloud_storage', 0))
         )
+        self.selfmanaged_columnar = (
+            self.infra_spec.columnar_infrastructure and not self.infra_spec.capella_infrastructure
+        )
 
         zone = self.options.zone or GCP_DEFAULT_ZONE
         if self.csp == "gcp":
@@ -357,6 +360,7 @@ class CloudVMDeployer:
             "syncgateway_nodes": tfvar_nodes["syncgateways"],
             "kafka_nodes": tfvar_nodes["kafka_brokers"],
             "cloud_storage": self.cloud_storage,
+            "deploy_columnar_storage_backend": self.selfmanaged_columnar,
             "global_tag": global_tag,
             "uuid": self.uuid,
             "managed_id": self._get_managed_id(),
@@ -485,15 +489,22 @@ class CloudVMDeployer:
                         self.infra_spec.config.add_section(section)
                     self.infra_spec.config.set(section, cluster, "\n" + "\n".join(subnet_ids))
 
-        if self.cloud_storage:
-            cloud_storage_info = output['cloud_storage']['value']
-            bucket_url = cloud_storage_info['storage_bucket']
+        if self.cloud_storage or self.selfmanaged_columnar:
+            cloud_storage_info = output["cloud_storage"]["value"]
             if (section := "storage") not in self.infra_spec.config.sections():
                 self.infra_spec.config.add_section(section)
-            self.infra_spec.config.set(section, "backup", bucket_url)
+
+            if bucket_url := cloud_storage_info.get("storage_bucket"):
+                self.infra_spec.config.set(section, "backup", bucket_url)
+
+            if columnar_storage_backend := cloud_storage_info.get("columnar_storage_backend"):
+                self.infra_spec.config.set(
+                    section, "columnar_storage_backend", columnar_storage_backend
+                )
+
             if self.csp == "azure":
                 storage_acc = cloud_storage_info['storage_account']
-                self.infra_spec.config.set(section, "storage_acc", storage_acc)
+                self.infra_spec.config.set(section, "azure_storage_account", storage_acc)
 
         self.infra_spec.update_spec_file()
 

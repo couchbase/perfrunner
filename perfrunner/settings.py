@@ -709,6 +709,14 @@ class ClusterSpec(Config):
     def backup(self) -> Optional[str]:
         return self.config.get('storage', 'backup', fallback=None)
 
+    @property
+    def azure_storage_account(self) -> Optional[str]:
+        return self.config.get("storage", "azure_storage_account", fallback=None)
+
+    @property
+    def columnar_storage_backend(self) -> Optional[str]:
+        return self.config.get("storage", "columnar_storage_backend", fallback=None)
+
     def _get_secret(self, key: str) -> str:
         from perfrunner.helpers.config_files import SecretsFile
 
@@ -2789,7 +2797,7 @@ class AnalyticsSettings:
     EXTERNAL_BUCKET = None
     EXTERNAL_FILE_INCLUDE = None
     AWS_CREDENTIAL_PATH = None
-    AZURE_STORAGE_ACCOUNT = "cbperfstorage"
+    EXTERNAL_AZURE_STORAGE_ACCOUNT = "cbperfstorage"
     STORAGE_FORMAT = ""
     USE_CBO = "false"
     INGEST_DURING_LOAD = "false"
@@ -2820,8 +2828,8 @@ class AnalyticsSettings:
         self.external_file_include = options.pop("external_file_include",
                                                  self.EXTERNAL_FILE_INCLUDE)
         self.aws_credential_path = options.pop('aws_credential_path', self.AWS_CREDENTIAL_PATH)
-        self.azure_storage_account = options.pop(
-            "azure_storage_account", self.AZURE_STORAGE_ACCOUNT
+        self.external_azure_storage_account = options.pop(
+            "external_azure_storage_account", self.EXTERNAL_AZURE_STORAGE_ACCOUNT
         )
         self.storage_format = options.pop('storage_format', self.STORAGE_FORMAT)
 
@@ -2938,21 +2946,42 @@ class ColumnarCopyToSettings:
         ) or [None]
         self.object_store_query_file = options.get("object_store_query_file")
         self.kv_query_file = options.get("kv_query_file")
+        self.pairwise_param_combinations = maybe_atoi(
+            options.get("pairwise_param_combinations", "false")
+        )
+
+        self.all_param_combinations  # run for validation
 
     @property
     def all_param_combinations(self) -> list[tuple[Any, ...]]:
-        """Return all combinations of COPY TO statement "WITH" clause parameters."""
-        return list(
-            itertools.product(
-                self.object_store_file_formats,
-                self.max_objects_per_files,
-                self.object_store_compressions,
-                self.gzip_compression_levels,
-                self.parquet_row_group_sizes,
-                self.parquet_page_sizes,
-                self.parquet_max_schemas,
+        """Return combinations of COPY TO statement "WITH" clause parameters.
+
+        Default is to use cartesian product of all parameters, unless
+        `self.pairwise_param_combinations` is True in which case parameters are combined pairwise.
+        """
+        all_param_lists = [
+            self.object_store_file_formats,
+            self.max_objects_per_files,
+            self.object_store_compressions,
+            self.gzip_compression_levels,
+            self.parquet_row_group_sizes,
+            self.parquet_page_sizes,
+            self.parquet_max_schemas,
+        ]
+
+        if not self.pairwise_param_combinations:
+            return list(itertools.product(*all_param_lists))
+
+        param_list_lengths = set(len(p) for p in all_param_lists)
+        num_lengths = len(param_list_lengths)
+        max_len = max(param_list_lengths)
+        if num_lengths > 2 or (num_lengths == 2 and 1 not in param_list_lengths):
+            raise ValueError(
+                f"Expected all parameter lists to contain either 1 or {max_len} elements. "
+                f"Got parameter lists with lengths: {param_list_lengths}."
             )
-        )
+
+        return list(zip(*map(lambda ps: ps * max_len if len(ps) == 1 else ps, all_param_lists)))
 
 
 class ColumnarSettings:

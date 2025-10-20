@@ -3,7 +3,6 @@ provider = gcp
 type = gce
 os_arch = arm
 service = columnar
-cloud_storage = 1
 
 [clusters]
 goldfish =

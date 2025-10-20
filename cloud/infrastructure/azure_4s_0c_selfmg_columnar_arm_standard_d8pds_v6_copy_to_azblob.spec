@@ -3,6 +3,7 @@ provider = azure
 type = azurerm
 os_arch = arm
 service = columnar
+cloud_storage = 1
 
 [clusters]
 goldfish =
@@ -19,7 +20,7 @@ node_groups = azurerm_node_group_1
 storage_class = Premium_LRS
 
 [azurerm_node_group_1]
-instance_type = Standard_D16pds_v6
+instance_type = Standard_D8pds_v6
 instance_capacity = 4
 
 [storage]
@@ -28,6 +29,6 @@ analytics = /data/analytics
 
 [parameters]
 OS = Ubuntu 24
-CPU = Standard_D16pds_v6 (16 vCPU)
-Memory = 64GB
+CPU = Standard_D8pds_v6 (8 vCPU)
+Memory = 32GB
 Disk = Local NVMe SSD 440GB

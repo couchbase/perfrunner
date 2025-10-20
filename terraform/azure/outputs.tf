@@ -39,15 +39,25 @@ output "syncgateway_instance_ips" {
 
 output "network" {
   value = {
-    vpc_id =      azurerm_virtual_network.perf-vn.id
+    vpc_id      = azurerm_virtual_network.perf-vn.id
     subnet_cidr = one(azurerm_subnet.perf-sn.address_prefixes)
   }
 }
 
 output "cloud_storage" {
   value = {
-    storage_account = length(azurerm_storage_account.perf-storage-acc) != 0 ? one(azurerm_storage_account.perf-storage-acc).name : null
-    storage_bucket  = length(azurerm_storage_container.perf-storage-container) != 0 ? "az://${azurerm_storage_container.perf-storage-container[0].name}" : null
+    storage_account = (
+      length(azurerm_storage_account.perf-storage-acc) != 0 ?
+      one(azurerm_storage_account.perf-storage-acc).name : null
+    )
+    storage_bucket = (
+      length(azurerm_storage_container.perf-storage-container) != 0 ?
+      "az://${azurerm_storage_container.perf-storage-container[0].name}" : null
+    )
+    columnar_storage_backend = (
+      length(azurerm_storage_container.perf-columnar-storage-backend) != 0 ?
+      "az://${azurerm_storage_container.perf-columnar-storage-backend[0].name}" : null
+    )
   }
   sensitive = true
 }

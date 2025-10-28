@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.cloud.ControlPlaneAPITest
+
+[showfast]
+title = CLUSTER STATS RANGE Endpoint
+component = cpapicloud
+category = latency
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+show_cp_version = true
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+backend_storage = magma
+
+[load]
+items = 100
+size = 1024
+workers = 1
+ssl_mode = capella
+
+[access]
+capella_endpoint = CLUSTER_STATS_RANGE:{}/v2/databases/{cluster_id}/proxy/pools/default/stats/range/

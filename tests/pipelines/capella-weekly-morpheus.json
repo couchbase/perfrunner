@@ -20,6 +20,9 @@
     "AWS_Tools": [],
     "AWS_SGW": [],
     "AWS_Infrastructure": [],
+    "AWS_CP_API": [
+      {"job": "CapellaAWSWeekly", "cluster": "capella_aws_3s_1c_c5_2xlarge.spec", "test_config": "cloud/cp_api_all_endpoints.test", "groups": "P0"}
+    ],
     "GCP_Analytics": [],
     "GCP_KV": [
       {"job": "CapellaGCPWeekly", "cluster": "capella_gcp_3s_1c_n2custom8_500GB.spec", "test_config": "cloud/kv/capella_ycsb_workloada_3nodes_375m_128v.test", "groups": "P0"},

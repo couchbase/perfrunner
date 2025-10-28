@@ -1603,6 +1603,8 @@ class PhaseSettings:
 
     PER_COLLECTION_LATENCY = False
 
+    CAPELLA_ENDPOINT = ''
+
     CONFLICT_RATIO = 0
 
     def __init__(self, options: dict):
@@ -1842,6 +1844,12 @@ class PhaseSettings:
                                                     self.ANALYTICS_WARMUP_OPS))
         self.analytics_warmup_workers = int(options.get('analytics_warmup_workers',
                                                         self.ANALYTICS_WARMUP_WORKERS))
+
+        capella_endpoint = options.get('capella_endpoint', self.CAPELLA_ENDPOINT)
+        if capella_endpoint:
+            self.capella_endpoints = capella_endpoint.strip().split()
+        else:
+            self.capella_endpoints = []
 
         # collection map placeholder
         self.collections = self.COLLECTION_MAP

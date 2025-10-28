@@ -729,6 +729,22 @@ class MetricHelper:
             return round(query_latency, 1)
         return int(query_latency)
 
+    def api_latency(self, endpoint, values, percentile: Number, cluster_idx: int = 0) -> Metric:
+        metric_id = f"{endpoint}_api_{percentile:g}th"
+        metric_id = metric_id.replace(".", "")
+
+        title_prefix = f"{percentile:g}th percentile api latency (ms)"
+
+        if len(self.test.cbmonitor_clusters) > 1:
+            metric_id = f"{metric_id}_cluster{cluster_idx + 1}"
+            title_prefix = f"{title_prefix} (cluster {cluster_idx + 1})"
+
+        title = f"{title_prefix}, {endpoint} Endpoint"
+        metric_info = self._metric_info(metric_id, title, order_by=self.query_id, chirality=-1)
+        latencies = round(np.percentile(values, percentile) * 1000, 1)
+
+        return latencies, self._snapshots, metric_info
+
     def secondary_scan_latency(self, percentile: Number, title: str = None) -> Metric:
         metric_id = "{}_{:g}th".format(self.test_config.name, percentile)
         if title is None:

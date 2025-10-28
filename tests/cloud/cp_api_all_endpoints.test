@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.cloud.ControlPlaneAPITest
+
+[showfast]
+title = CP-API All Endpoints
+component = cpapicloud
+category = latency
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+show_cp_version = true
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+backend_storage = magma
+
+[load]
+items = 100
+size = 1024
+workers = 1
+ssl_mode = capella
+
+[access]
+capella_endpoint = 
+    BACKENDS:{}/v2/organizations/{org_id}/backends?perPage=100&page=1
+    CLUSTERS_INFO:{}/v2/organizations/{org_id}/projects/{project_id}/clusters/{cluster_id}
+    DEPLOYMENT_OPTIONS:{}/v2/organizations/{org_id}/clusters/deployment-options?provider=aws&region=us-east-1
+    GET_BUCKETS:{}/v2/databases/{cluster_id}/proxy/pools/default/buckets
+    JOBS_BY_CLUSTER:{}/v2/organizations/{org_id}/projects/{project_id}/clusters/{cluster_id}/jobs
+    LIST_BUCKETS_BY_CLUSTER:{}/v2/organizations/{org_id}/projects/{project_id}/clusters/{cluster_id}/buckets
+    LIST_CLUSTERS:{}/v2/organizations/{org_id}/clusters?perPage=100&page=1&sortBy=name&sortDirection=desc
+    LIST_USERS_BY_NAME:{}/v2/organizations/{org_id}/users?page=1&perPage=25&sortBy=name&sortDirection=asc
+    TRIAL:{}/v2/organizations/{org_id}/trial

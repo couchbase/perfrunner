@@ -327,7 +327,7 @@ class MagmaBenchmarkTest(PerfTest):
 
 
 class KVTest(PerfTest):
-    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True,
+    COLLECTORS = {'disk': True, 'latency': True, 'net': True, 'kvstore': True,
                   'vmstat': True, 'cbstats_memory': True, 'cbstats_all': True}
     CB_STATS_PORT = 11209
 
@@ -1299,7 +1299,7 @@ class JavaDCPThroughputDGMTest(KVTest):
 
 class RebalanceKVDGMTest(RebalanceKVTest, StabilityBootstrap):
 
-    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True,
+    COLLECTORS = {'disk': True, 'latency': True, 'net': True, 'kvstore': True,
                   'vmstat': True, 'cbstats_memory': True, 'cbstats_all': True}
 
     def __init__(self, *args):
@@ -1465,7 +1465,7 @@ class BackupTestDGM(BackupTest, StabilityBootstrap):
 
 class LoadBackupDGMTest(StabilityBootstrap):
 
-    COLLECTORS = {'disk': True, 'latency': False, 'net': False, 'kvstore': True, 'vmstat': True}
+    COLLECTORS = {'disk': True, 'latency': False, 'net': True, 'kvstore': True, 'vmstat': True}
 
     @with_stats
     def load(self):

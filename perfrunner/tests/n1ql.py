@@ -1583,11 +1583,15 @@ class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
                                         f"{include_clause}")
 
                         with_clause_dict = base_with_clause.copy()
+                        description = str(gsi_settings.vector_description or
+                                          details['description']).strip()
+                        if not (description.startswith("'") and description.endswith("'")):
+                            description = f"'{description}'"
+
                         with_clause_dict.update({
                             'num_replica': int(gsi_settings.num_index_replica or \
                                                details['num_replica']),
-                            'description': str(gsi_settings.vector_description or \
-                                               details['description'])
+                            'description': description
                         })
 
                         if details.get('num_partition'):

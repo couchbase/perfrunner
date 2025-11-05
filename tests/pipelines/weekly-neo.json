@@ -4,7 +4,14 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica_failover.test", "groups": "P0"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c_1replica.test", "groups": "P0"},
-        {"job": "oceanus", "cluster": "oceanus_benchmark.spec",     "test_config": "volume/ch2_mixed_2n_array_index.test", "groups": "P0"}
+        {"job": "oceanus", "cluster": "oceanus_benchmark.spec",     "test_config": "volume/ch2_mixed_2n_array_index.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus_n1ql_cbas.spec", "test_config": "sql_join_order_4n.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus_n1ql_cbas.spec", "test_config": "sql_all_plans_4n.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus_n1ql_cbas.spec", "test_config": "sql_TPCH_4n.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus_n1ql_cbas.spec", "test_config": "sql_SUITES31_4n.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus_n1ql_cbas.spec", "test_config": "sql_RSTHJ_4n.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus_n1ql_cbas.spec", "test_config": "sql_RSHJNL_4n.test", "groups": "P0"},
+        {"job": "oceanus", "cluster": "oceanus_n1ql_cbas.spec", "test_config": "sql_15joins_4n.test", "groups": "P0"}
     ],
     "N1QL-PYTPCC": [
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_1node_pytpcc_16core_100warehouse_40clients_replica1_dur_maj_scancons_requestplus_magma.test", "groups": "P1"},

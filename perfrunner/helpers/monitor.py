@@ -1,8 +1,9 @@
 import time
-from typing import Callable, Optional
+from typing import Callable, Literal, Optional
 
 from logger import logger
 from perfrunner.helpers import misc
+from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.rest import RestType
 from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.remote import Remote
@@ -504,23 +505,71 @@ class Monitor:
                 break
         logger.info('Task {} successfully completed'.format(task_type))
 
-    def monitor_warmup(self, memcached, host, bucket):
-        logger.info('Monitoring warmup status: {}@{}'.format(bucket, host))
+    def _monitor_warmup(
+        self,
+        memcached: MemcachedHelper,
+        host: str,
+        bucket: str,
+        warmup_type: Literal["primary", "secondary"],
+        warmup_state_stat: str,
+        warmup_time_stat: str,
+    ) -> float:
+        logger.info(f"Monitoring warmup ({warmup_type}) status: {bucket}@{host}")
 
         memcached_port = self.rest.get_memcached_port(host)
 
-        while True:
-            stats = memcached.get_stats(host, memcached_port, bucket, 'warmup')
-            if 'ep_warmup_state' in stats:
-                state = stats['ep_warmup_state']
-                if state == 'done':
-                    return float(stats.get('ep_warmup_time', 0))
-                else:
-                    logger.info('Warmpup status: {}'.format(state))
-                    time.sleep(self.POLLING_INTERVAL)
+        timeout_secs = 3600
+        polling_interval_secs = 15
+        t0 = time.time()
+        while (time_elapsed := time.time() - t0) < timeout_secs:
+            stats = memcached.get_stats(host, memcached_port, bucket, "warmup")
+
+            if (state := stats.get(warmup_state_stat)) is not None:
+                logger.info(f"Warmup ({warmup_type}) state: {state}")
+                if state == "done":
+                    return float(stats.get(warmup_time_stat, 0))
             else:
-                logger.info('No warmup stats are available, continue polling')
-                time.sleep(self.POLLING_INTERVAL)
+                logger.info(f"Warmup stat '{warmup_state_stat}' is unavailable, continue polling")
+
+            time.sleep(polling_interval_secs)
+
+        if time_elapsed >= timeout_secs:
+            logger.interrupt(f"Warmup ({warmup_type}) timed out after {timeout_secs} seconds")
+
+    def monitor_warmup(
+        self,
+        memcached: MemcachedHelper,
+        host: str,
+        bucket: str,
+        warmup_type: Literal["all", "primary", "secondary"] = "all",
+    ) -> float:
+        """Monitor bucket warmup and return the warmup time in microseconds (us)."""
+        primary_warmup_time_us = 0
+        secondary_warmup_time_us = 0
+
+        if warmup_type in ("all", "primary"):
+            primary_warmup_time_us = self._monitor_warmup(
+                memcached, host, bucket, "primary", "ep_warmup_state", "ep_warmup_time"
+            )
+            logger.info(
+                f"Time to warm data during primary warmup (s): {primary_warmup_time_us / 1e6:.2f}"
+            )
+
+        if self.build_version_number >= (8, 0, 0) and warmup_type in ("all", "secondary"):
+            secondary_warmup_time_us = self._monitor_warmup(
+                memcached,
+                host,
+                bucket,
+                "secondary",
+                "ep_secondary_warmup_state",
+                "ep_secondary_warmup_time",
+            )
+            logger.info(
+                "Time to warm data during secondary warmup (s): "
+                f"{secondary_warmup_time_us / 1e6:.2f}"
+            )
+
+        return primary_warmup_time_us + secondary_warmup_time_us
 
     def monitor_compression(self, memcached, host, bucket):
         logger.info('Monitoring active compression status')

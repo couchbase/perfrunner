@@ -1,29 +1,25 @@
 {
-    "bootstrap": 
-    {
-        "server_tls_skip_verify": true, 
-        "use_tls_server": false, 
-        "server": "couchbase://172.23.96.189", 
-        "username": "bucket-1", 
+    "bootstrap": {
+        "server_tls_skip_verify": true,
+        "use_tls_server": false,
+        "server": "couchbase://172.23.96.189",
+        "username": "bucket-1",
         "password": "password"
-    }, 
-    "api": 
-    {
-        "admin_interface_authentication": false, 
-        "metrics_interface_authentication": false, 
-        "admin_interface": "0.0.0.0:4985", 
-        "https": 
-        {
-            "tls_cert_path": "/opt/certfiles/cert.pem", 
-            "tls_key_path": "/opt/certfiles/privkey.pem", 
+    },
+    "api": {
+        "admin_interface_authentication": false,
+        "metrics_interface_authentication": false,
+        "admin_interface": "0.0.0.0:4985",
+        "metrics_interface": "0.0.0.0:4986",
+        "https": {
+            "tls_cert_path": "/opt/certfiles/cert.pem",
+            "tls_key_path": "/opt/certfiles/privkey.pem",
             "tls_minimum_version": "tlsv1.2"
         }
-    }, 
-    "logging": 
-    {
-        "log_file_path": "/var/tmp/sglogs", 
-        "console": 
-        {
+    },
+    "logging": {
+        "log_file_path": "/var/tmp/sglogs",
+        "console": {
             "log_level": "debug"
         }
     }

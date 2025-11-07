@@ -25,6 +25,10 @@ class XdcrTest(PerfTest):
         self.xdcr_settings = self.test_config.xdcr_settings
         self.load_target_iterator = TargetIterator(self.cluster_spec, self.test_config)
 
+        if self.use_prometheus:
+            # Explicitly register xdcr as part of this test
+            self.collector_agent.add_service(services=["xdcr"])
+
     def load(self, *args):
         super().load(*args, target_iterator=self.load_target_iterator)
 

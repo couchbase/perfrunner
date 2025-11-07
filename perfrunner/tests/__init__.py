@@ -19,6 +19,8 @@ from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.helpers.worker import WorkerManager, WorkloadPhase, spring_task
+from perfrunner.metrics import PrometheusMetricsHelper
+from perfrunner.metrics.prometheus_agent import PrometheusAgent
 from perfrunner.settings import (
     ClusterSpec,
     PhaseSettings,
@@ -68,11 +70,20 @@ class PerfTest:
             test_config.cluster.query_awr_scope,
             test_config.rebalance_settings.rebalance_timeout
         )
-        self.metrics = MetricHelper(self)
-        self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
 
+        # Identify if we are using Prometheus metrics or CbAgent metrics
+        self.stats_settings = self.test_config.stats_settings
+        self.use_prometheus = (
+            self.stats_settings.use_prometheus_metrics
+            and self.stats_settings.metrics_system_host
+            and self.stats_settings.enabled
+        )
+        # Initialise metrics collector agent and reporting
         self.cbmonitor_snapshots = []
         self.cbmonitor_clusters = []
+        self.collector_agent = None
+        self.init_metrics_and_collector_agent()
+        self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
 
         if self.test_config.test_case.use_workers:
             self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
@@ -93,6 +104,30 @@ class PerfTest:
             # If app telemetry is enabled, we also collect app telemetry metrics
             self.COLLECTORS["app_telemetry"] = True
 
+    def init_metrics_and_collector_agent(self):
+        if not self.use_prometheus:
+            self.metrics = MetricHelper(self)
+            return
+
+        # This will give us a snapshot ID, which we will use to manage the snapshot.
+        logger.info("Using Prometheus to collect metrics")
+        self.collector_agent = PrometheusAgent(self.cluster_spec, self.stats_settings, self.rest)
+        self.cbmonitor_snapshots.append(self.collector_agent.snapshot_id)
+        self.cbmonitor_clusters.append(
+            self.cluster_spec.name
+        )  # We dont use this when using Prometheus, just here for compatibility with the old store
+
+        self.metrics = PrometheusMetricsHelper(self)
+
+    def _cleanup_collector_agent(self):
+        if not self.use_prometheus:
+            return
+
+        if self.collector_agent:
+            self.collector_agent.stop_background_worker()
+            self.collector_agent.delete_snapshot()
+            self.collector_agent = None
+
     def __enter__(self):
         return self
 
@@ -101,6 +136,8 @@ class PerfTest:
             logger.info(f"{exc_type=}")
             logger.info(f"{exc_val=}")
             logger.info(f"traceback: {''.join(traceback.format_tb(exc_tb))}")
+
+        self._cleanup_collector_agent()
 
         failure = self.debug()
 

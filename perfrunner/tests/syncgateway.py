@@ -100,6 +100,10 @@ class SGPerfTest(PerfTest):
         if self.test_config.sgw_audit_settings.enabled:
             self.enable_audit_logging()
 
+        if self.use_prometheus:
+            # Explicitly register syncggateway as part of this test
+            self.collector_agent.add_service(services=["syncgateway", "sgw"])
+
     def enable_log_streaming(self, collector: str):
 
         if not self.capella_infra:

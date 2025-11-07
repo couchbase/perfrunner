@@ -131,6 +131,14 @@ class RestBase:
     def delete(self, **kwargs) -> requests.Response:
         return self._delete(**kwargs)
 
+    def _patch(self, **kwargs) -> requests.Response:
+        kwargs.setdefault("auth", self._set_auth(**kwargs))
+        return requests.patch(verify=False, **kwargs)
+
+    @retry
+    def patch(self, **kwargs) -> requests.Response:
+        return self._patch(**kwargs)
+
     @retry
     def cblite_post(self, **kwargs) -> requests.Response:
         return requests.post(**kwargs)

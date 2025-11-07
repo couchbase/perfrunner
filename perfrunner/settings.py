@@ -1113,6 +1113,9 @@ class StatsSettings:
             options.get('traced_processes', '').split()
         self.secondary_statsfile = options.get('secondary_statsfile',
                                                self.SECONDARY_STATSFILE)
+        self.use_prometheus_metrics = maybe_atoi(options.get("use_prometheus_metrics", "false"))
+        # During transition period, allow supplyig this as override
+        self.metrics_system_host = options.get("metrics_system_host")
 
         # Not used by all test classes, but can be used to decide whether to report KPIs for all
         # clusters or just the first (the default)

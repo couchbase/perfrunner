@@ -9,7 +9,8 @@
     "api": {
         "admin_interface_authentication": false,
         "metrics_interface_authentication": false,
-        "admin_interface": "0.0.0.0:4985"
+        "admin_interface": "0.0.0.0:4985",
+        "metrics_interface": "0.0.0.0:4986"
     },
     "logging": {
         "log_file_path": "/var/tmp/sglogs",

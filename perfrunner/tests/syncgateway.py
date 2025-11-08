@@ -9,24 +9,15 @@ from multiprocessing import Pool
 from time import sleep, time
 from typing import Callable, Iterable
 
-from decorator import decorator
-
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.config_files import TimeTrackingFile
-from perfrunner.helpers.memcached import MemcachedHelper
-from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import parse_prometheus_stat, pretty_dict, target_hash
-from perfrunner.helpers.monitor import Monitor
-from perfrunner.helpers.profiler import ProfilerHelper, with_profiles
-from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.reporter import ShowFastReporter
-from perfrunner.helpers.rest import SGW_ADMIN_PORT, SGW_PUBLIC_PORT, RestHelper
-from perfrunner.helpers.server import ServerInfoManager
+from perfrunner.helpers.rest import SGW_ADMIN_PORT, SGW_PUBLIC_PORT
 from perfrunner.helpers.worker import (
-    WorkerManager,
     WorkloadPhase,
     pillowfight_data_load_task,
     syncgateway_bh_puller_task,
@@ -57,17 +48,6 @@ from perfrunner.tests import PerfTest
 from perfrunner.tests.eventing import FunctionsTimeTest
 
 
-@decorator
-def with_timer(cblite_replicate, *args, **kwargs):
-    test = args[0]
-
-    t0 = time.time()
-
-    cblite_replicate(*args, **kwargs)
-
-    test.replicate_time = time.time() - t0  # Delta Sync time in seconds
-
-
 class SGPerfTest(PerfTest):
     COLLECTORS = {
         "disk": False,
@@ -81,37 +61,17 @@ class SGPerfTest(PerfTest):
     CBLITE_LOG_DIR = "cblite_logs"
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
-        self.cluster_spec = cluster_spec
-        self.test_config = test_config
-        self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
-        self.capella_infra = self.cluster_spec.capella_infrastructure
-        self.cloud_infra = self.cluster_spec.cloud_infrastructure
-        self.memcached = MemcachedHelper(cluster_spec, test_config)
-        self.remote = RemoteHelper(cluster_spec, verbose)
-        self.rest = RestHelper(cluster_spec, bool(test_config.cluster.enable_n2n_encryption))
-        self.cluster = ClusterManager(cluster_spec, test_config)
-        self.server_info = ServerInfoManager().get_server_info()
-        self.master_node = self.server_info.master_node
+        super().__init__(cluster_spec, test_config, verbose)
+
+        # SyncGateway specific setup
         self.sgw_master_node = next(cluster_spec.sgw_masters)
-        self.metrics = MetricHelper(self)
         if self.capella_infra:
             self.build = f"{self.rest.get_sgversion(self.sgw_master_node)}:{self.server_info.build}"
         else:
             self.build = self.rest.get_sgversion(self.sgw_master_node)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build, sgw=True)
-        if self.test_config.test_case.use_workers:
-            self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
         self.settings = self.test_config.access_settings
         self.settings.syncgateway_settings = self.test_config.syncgateway_settings
-        self.profiler = ProfilerHelper(cluster_spec, test_config)
-        self.target_iterator = TargetIterator(cluster_spec, test_config)
-        self.monitor = Monitor(
-            cluster_spec,
-            self.rest,
-            self.remote,
-            test_config.cluster.query_awr_bucket,
-            test_config.cluster.query_awr_scope,
-        )
         self.sg_settings = self.test_config.syncgateway_settings
         self.collections = self.test_config.collection.collection_map
         if self.test_config.collection.collection_map:
@@ -462,6 +422,7 @@ class SGPerfTest(PerfTest):
         self.report_kpi()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        # Cleanup cblite resources
         if self.settings.syncgateway_settings.cbl_per_worker:
             self.remote.kill_cblite()
         if self.settings.syncgateway_settings.collect_cbl_logs:
@@ -471,17 +432,10 @@ class SGPerfTest(PerfTest):
         if self.settings.syncgateway_settings.troublemaker:
             self.remote.kill_troublemaker()
 
-        if self.test_config.test_case.use_workers:
-            self.worker_manager.download_celery_logs()
-            self.worker_manager.terminate()
+        # Call the parent class __exit__ method to handle generic teardown
+        super().__exit__(exc_type, exc_val, exc_tb)
 
-        if self.test_config.cluster.online_cores:
-            self.remote.enable_cpu()
-
-        if self.test_config.cluster.kernel_mem_limit:
-            self.remote.reset_memory_settings()
-            self.monitor.wait_for_servers()
-
+        # Handle Syncgateway specific cleanup
         too_many_warnings = self.check_num_warnings()
 
         if self.dynamic_infra:

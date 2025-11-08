@@ -46,13 +46,6 @@ class MagmaBenchmarkTest(PerfTest):
         super().__init__(*args)
         self.stats_file = "stats.json"
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.tear_down()
-
-        if isinstance(exc_type, KeyboardInterrupt):
-            logger.warn('The test was interrupted')
-            return True
-
     def create_command(self, settings):
 
         cmd = "/opt/couchbase/bin/priv/magma_bench {DATA_DIR}/{ENGINE} " \

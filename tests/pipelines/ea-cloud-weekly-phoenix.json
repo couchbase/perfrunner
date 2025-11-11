@@ -1,0 +1,146 @@
+{
+    "AWS_1": [
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly",
+            "cluster": "ec2_4x4s_1c_selfmg_columnar_arm_m7gd_2xlarge_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_sync_4n_1s_3c_incr.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_3c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly",
+            "cluster": "ec2_4x4s_1c_selfmg_columnar_arm_m7gd_2xlarge_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_sync_4n_no_index_1s_3c_incr.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_3c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly",
+            "cluster": "ec2_4s_0c_selfmg_columnar_arm_m7gd_2xlarge.spec",
+            "analytics_test_config": "cloud/analytics/ch2pp64_ea_aws_4n_4000w_s3_cbo_with_index.test",
+            "groups": "P0"
+        }
+    ],
+    "AWS_2": [
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly2",
+            "cluster": "ec2_4x4s_1c_selfmg_columnar_arm_m7gd_2xlarge_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_sync_4n_1s_99c_incr.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_99c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly2",
+            "cluster": "ec2_4x4s_1c_selfmg_columnar_arm_m7gd_2xlarge_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_sync_4n_no_index_1s_99c_incr.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_99c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly2",
+            "cluster": "ec2_4x4s_1c_selfmg_columnar_arm_m7gd_2xlarge_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_reb_in_1s_99c.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_99c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly2",
+            "cluster": "ec2_4x4s_1c_selfmg_columnar_arm_m7gd_2xlarge_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_reb_out_1s_99c.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_99c.test",
+            "groups": "P0"
+        }
+    ],
+    "AWS_3": [
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly3",
+            "cluster": "ec2_4s_0c_selfmg_columnar_arm_m7gd_2xlarge.spec",
+            "analytics_test_config": "cloud/analytics/ch2pp64_ea_aws_4n_4000w_s3_cbo_with_index_3aclients.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly3",
+            "cluster": "ec2_4s_0c_selfmg_columnar_arm_m7gd_2xlarge.spec",
+            "analytics_test_config": "cloud/analytics/ch2pp64_ea_aws_4n_4000w_s3_cbo_no_index.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsCloudWeekly3",
+            "cluster": "ec2_4s_0c_selfmg_columnar_arm_m7gd_2xlarge.spec",
+            "analytics_test_config": "cloud/analytics/ch2pp64_ea_aws_4n_4000w_s3_no_cbo_no_index.test",
+            "groups": "P0"
+        }
+    ],
+    "AZURE_1": [
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly",
+            "cluster": "azure_4x4s_1c_selfmg_columnar_arm_standard_d8pds_v6_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_sync_4n_1s_3c_incr.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_3c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly",
+            "cluster": "azure_4x4s_1c_selfmg_columnar_arm_standard_d8pds_v6_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_sync_4n_no_index_1s_3c_incr.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_3c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly",
+            "cluster": "azure_4s_0c_selfmg_columnar_arm_standard_d8pds_v6.spec",
+            "analytics_test_config": "cloud/analytics/ch2pp64_ea_azure_4n_4000w_azblob_cbo_with_index.test",
+            "groups": "P0"
+        }
+    ],
+    "AZURE_2": [
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly2",
+            "cluster": "azure_4x4s_1c_selfmg_columnar_arm_standard_d8pds_v6_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_sync_4n_1s_99c_incr.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_99c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly2",
+            "cluster": "azure_4x4s_1c_selfmg_columnar_arm_standard_d8pds_v6_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_sync_4n_no_index_1s_99c_incr.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_99c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly2",
+            "cluster": "azure_4x4s_1c_selfmg_columnar_arm_standard_d8pds_v6_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_reb_in_1s_99c.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_99c.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly2",
+            "cluster": "azure_4x4s_1c_selfmg_columnar_arm_standard_d8pds_v6_kv.spec",
+            "analytics_test_config": "cloud/analytics/bigfun_20M_ea_remote_reb_out_1s_99c.test",
+            "kv_test_config": "cloud/analytics/bigfun_20M_ea_remote_4n_kv_config_1s_99c.test",
+            "groups": "P0"
+        }
+    ],
+    "AZURE_3": [
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly3",
+            "cluster": "azure_4s_0c_selfmg_columnar_arm_standard_d8pds_v6.spec",
+            "analytics_test_config": "cloud/analytics/ch2pp64_ea_azure_4n_4000w_azblob_cbo_with_index_3aclients.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly3",
+            "cluster": "azure_4s_0c_selfmg_columnar_arm_standard_d8pds_v6.spec",
+            "analytics_test_config": "cloud/analytics/ch2pp64_ea_azure_4n_4000w_azblob_cbo_no_index.test",
+            "groups": "P0"
+        },
+        {
+            "job": "EnterpriseAnalyticsAzureWeekly3",
+            "cluster": "azure_4s_0c_selfmg_columnar_arm_standard_d8pds_v6.spec",
+            "analytics_test_config": "cloud/analytics/ch2pp64_ea_azure_4n_4000w_azblob_no_cbo_no_index.test",
+            "groups": "P0"
+        }
+    ]
+}

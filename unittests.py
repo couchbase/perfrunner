@@ -674,6 +674,8 @@ class PipelineTest(TestCase):
         all_missing_test_configs = {}
         filenames_to_paths = {}
 
+        test_config_keys = ["test_config", "test", "analytics_test_config", "kv_test_config"]
+
         for root, _, files in os.walk("tests"):
             for file in files:
                 if not file.endswith(".test"):
@@ -688,7 +690,11 @@ class PipelineTest(TestCase):
                 test_cases = json.load(f)
 
             for stage, stage_tests in test_cases.items():
-                test_configs = [test.get("test_config", test.get("test")) for test in stage_tests]
+                test_configs = [
+                    t
+                    for test in stage_tests
+                    for t in [test[k] for k in test_config_keys if k in test]
+                ]
                 missing_stage_test_configs = []
 
                 for test_config in test_configs:

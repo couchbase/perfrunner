@@ -2404,7 +2404,7 @@ class ScanTest(AnalyticsTest):
         for script in ["cr_datasets", "cr_indexesRSTUV", "analyze"]:
             script_file = f'{self.base_path.replace("file://", "")}{script}.sql'
             local.cbq(
-                analytics_node=self.analytics_node,
+                node=self.analytics_node,
                 cluster_spec=self.cluster_spec,
                 script=script_file
             )
@@ -2422,7 +2422,7 @@ class ScanTest(AnalyticsTest):
         path = f"/data2/backup/analytics/SQL/{sql_suite}.sql"
         logger.info("Executing {}.sql...".format(sql_suite))
         local.cbq(
-            analytics_node=self.analytics_node,
+            node=self.analytics_node,
             cluster_spec=self.cluster_spec,
             script=path
         )

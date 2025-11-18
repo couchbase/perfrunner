@@ -389,9 +389,29 @@ def get_cloud_storage_bucket_stats(
 
 def my_public_ip() -> str:
     """Get the public IP address of the current machine."""
-    resp = requests.get("https://api.ipify.org")
-    resp.raise_for_status()
-    return resp.content.decode()
+    urls = [
+        "checkip.amazonaws.com",
+        "api.ipify.org",
+        "ifconfig.me/ip",
+    ]
+    retries = 3
+    delay = 5
+    for i in range(retries):
+        for url in urls:
+            try:
+                resp = requests.get(f"https://{url}", timeout=10)
+                resp.raise_for_status()
+                ip = resp.content.decode().strip()
+                assert ipaddress.ip_address(ip)
+                return ip
+            except Exception as e:
+                logger.warning(f"Failed to get public IP address from {url}: {e}")
+                continue
+
+        if i < retries - 1:
+            time.sleep(delay**retries)
+
+    logger.interrupt(f"Failed to get public IP address from {urls} after {retries} retries")
 
 
 def creds_tuple(creds: str) -> tuple[str, str]:

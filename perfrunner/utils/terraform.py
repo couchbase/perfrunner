@@ -2228,12 +2228,11 @@ def destroy():
         deployer = AppServicesDeployer(infra_spec, args)
     elif infra_spec.columnar_infrastructure:
         if prov_cluster := infra_spec.prov_cluster_in_columnar_test:
-            infra_spec.set_inactive_clusters_by_name([prov_cluster])
-            CapellaColumnarDeployer(infra_spec, args).destroy()
             infra_spec.set_active_clusters_by_name([prov_cluster])
-            deployer = CapellaProvisionedDeployer(infra_spec, args)
-        else:
-            deployer = CapellaColumnarDeployer(infra_spec, args)
+            CapellaProvisionedDeployer(infra_spec, args).destroy()
+            infra_spec.set_inactive_clusters_by_name([prov_cluster])
+            args.capella_only = True
+        deployer = CapellaColumnarDeployer(infra_spec, args)
     elif infra_spec.has_model_services_infrastructure:
         deployer = CapellaModelServicesDeployer(infra_spec, args)
     else:

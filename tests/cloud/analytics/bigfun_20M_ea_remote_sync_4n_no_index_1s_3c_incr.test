@@ -34,6 +34,7 @@ aws_credential_path = /root/.ssh
 
 [restore]
 backup_storage = s3://analytics-bigfun20m-3collections
+use_csp_specific_archive = True
 backup_repo = default
 map_data = bucket-1.scope-1=bucket-1.scope-1
 threads = 8

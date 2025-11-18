@@ -2,7 +2,7 @@
 test = perfrunner.tests.ai_services.QueryThroughputWithAIFunctionsTest
 
 [showfast]
-title = Classification, 1M x 1KB, Update, 7 nodes, s=1 c=1, AI functions (OpenAI GPT-4.1)
+title = Classification, 1M x 1KB, Update, 7 nodes, s=1 c=1, AI functions
 component = aiservices
 category = functions
 sub_category = {provider}

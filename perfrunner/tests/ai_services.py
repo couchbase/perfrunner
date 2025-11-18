@@ -2,7 +2,7 @@ import json
 import os
 from glob import glob
 from time import sleep
-from typing import Optional
+from typing import Callable, Optional
 from uuid import uuid4
 
 from logger import logger
@@ -10,6 +10,7 @@ from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.rest import RestType
 from perfrunner.helpers.worker import aibench_task
 from perfrunner.settings import (
     AIGatewayTargetSettings,
@@ -18,7 +19,6 @@ from perfrunner.settings import (
     TestConfig,
 )
 from perfrunner.tests import PerfTest
-from perfrunner.tests.fts import FTSTest
 from perfrunner.tests.n1ql import N1QLTest
 from perfrunner.utils.terraform import ControlPlaneManager
 
@@ -100,39 +100,89 @@ class AIWorkflow:
         return payload
 
 
-class WorkflowIngestionAndLatencyTest(FTSTest):
+class HostedModelInfo:
+    """Manage information about hosted models and AI Gateway."""
+
+    def __init__(self, models: dict, rest: RestType, monitor_func: Callable[[], dict]):
+        self.rest = rest
+        self.models = models
+        self.embedding_model = self.models.get("embedding-generation", {})
+        self.llm_model = self.models.get("text-generation", {})
+
+        self.ai_gateway_version = None
+        self.model_endpoint = None
+        self.api_key = None
+        # If any of the model kind is available, the endpoint will be the same for both
+        if self.embedding_model:
+            self.model_endpoint = self.embedding_model.get("model_endpoint")
+        if self.llm_model:
+            self.model_endpoint = self.llm_model.get("model_endpoint")
+
+        if not self.model_endpoint:
+            return
+
+        self.api_key = ControlPlaneManager.get_model_api_key()
+        resp_data = self.rest.get(
+            url=f"{self.model_endpoint}/v1/info",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            auth=None,  # Ensures it is not overridden with basic auth
+        ).json()
+        resp_data.pop("models", [])  # Remove models from the response due to large size
+        logger.info(f"AI Gateway info: {pretty_dict(resp_data)}")
+        self.ai_gateway_version = resp_data.get("version")
+
+        self._wait_for_ai_gateway_models_health(monitor_func)
+
+    def _get_ai_gateway_models_status(self) -> dict:
+        resp_data = self.rest.get(
+            url=f"{self.model_endpoint}/v1/models",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            auth=None,  # Ensures it is not overridden with basic auth
+        ).json()
+        return resp_data.get("data", [])
+
+    def _wait_for_ai_gateway_models_health(self, monitor_func: Callable[[], dict]):
+        if not self.model_endpoint:
+            return
+
+        monitor_func(self._get_ai_gateway_models_status)
+
+
+class AIServicesTest(PerfTest):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
+        super().__init__(cluster_spec, test_config, verbose)
+        self.ai_services_settings = self.test_config.ai_services_settings
+        # Initialise models information
+        self.hosted_model_info = HostedModelInfo(
+            self.cluster_spec.infrastructure_model_services,
+            self.rest,
+            self.monitor.wait_for_ai_gateway_models_health,
+        )
+        # Include Capella and AI-Gateway versions when present
+        cp_version = self.rest.get_cp_version()
+        build_str = f"{self.hosted_model_info.ai_gateway_version}:{cp_version}"
+        if self.build != "0.0.0":
+            build_str = f"{build_str}:{self.build}"
+        self.reporter.build = build_str
+
+    def get_provider_api_key(self) -> str:
+        return os.getenv("PROVIDER_KEY", "")
+
+
+class WorkflowIngestionAndLatencyTest(AIServicesTest):
     COLLECTORS = {
         "eventing_stats": True,
         "ns_server_system": True,
-        "fts_stats": True,
         "ai_workflow_stats": True,
     }
 
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
-        self.ai_services_settings = self.test_config.ai_services_settings
-        self.hosted_model = self._get_embedding_model()
         self.functions = {}
         self.runtimes = {}
-        # Default index name to use for the workflow
-        self.fts_index_name = self.jts_access.couchbase_index_name
         self.s3_integration_id = ""
         self.openai_integration_id = ""
         self.workflow_id = None
-
-    def _get_api_key(self):
-        return os.getenv("PROVIDER_KEY", "")
-
-    def _get_embedding_model(self) -> dict:
-        """
-        Retrieve the embedding model from the infrastructure model services.
-
-        Returns:
-            dict: The embedding model details if available, otherwise None.
-        """
-        # Embedding model, when present, can be interated with the workflow
-        models = self.cluster_spec.infrastructure_model_services
-        return models.get("embedding-generation", {})
 
     @timeit
     def deploy_workflow(self):
@@ -209,7 +259,7 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
 
         self.openai_integration_id = self.rest.create_openai_integration(
             name=f"perfopenai{cluster_uuid}",
-            access_key=self._get_api_key(),
+            access_key=self.get_provider_api_key(),
         )
         logger.info(f"Created openAI integration: {self.openai_integration_id}")
 
@@ -218,7 +268,7 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
         self.create_integrations(cluster_uuid)
         self.workflow = AIWorkflow(
             self.ai_services_settings,
-            self.hosted_model,
+            self.hosted_model_info.embedding_model,
             cluster_uuid,
             self.s3_integration_id,
             self.openai_integration_id,
@@ -236,16 +286,6 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
         if len(eventing_functions) > 0:
             logger.info(f"Eventing functions: {pretty_dict(eventing_functions)}")
 
-    def create_indexes_for_workflow(self):
-        if not self.ai_services_settings.create_index:
-            return
-        self.create_fts_index_definitions()
-        self.create_fts_indexes()
-        self.wait_for_index_persistence()
-        # If the FTS index was created by the test, the name will have changed.
-        # Get the new name from the map
-        self.fts_index_name = list(self.fts_index_map.keys())[0]
-
     @with_stats
     def run_workflow(self):
         self.prepare_and_deploy_workflow()
@@ -253,8 +293,6 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
         self.runtimes["workflow_time"] = workflow_time
 
     def run(self):
-        self.create_indexes_for_workflow()
-
         self.run_workflow()
 
         latencies = self.get_eventing_latencies()
@@ -276,8 +314,8 @@ class WorkflowIngestionAndLatencyTest(FTSTest):
             return
 
         model_name = self.ai_services_settings.model_name
-        if self.hosted_model:
-            model_name = self.hosted_model.get("model_name")
+        if self.hosted_model_info.embedding_model:
+            model_name = self.hosted_model_info.embedding_model.get("model_name")
 
         if success_files := uds_metadata.get("numSuccessfulFiles", 0):
             self.reporter.post(
@@ -349,7 +387,7 @@ class AutoVecWorkflowTest(WorkflowIngestionAndLatencyTest):
         super().run()
 
 
-class AIGatewayTest(PerfTest):
+class AIGatewayTest(AIServicesTest):
     # Depending on the model
     MODEL_KIND_ENDPOINTS = {
         "embedding-generation": ["embeddings"],
@@ -362,47 +400,18 @@ class AIGatewayTest(PerfTest):
         self.aibench_settings.tag = self.build_tag
         self.username, self.password = self.cluster_spec.rest_credentials
 
-        model = self.cluster_spec.infrastructure_model_services.get(
+        self.aibench_settings.model_name = self.hosted_model_info.models.get(
             self.aibench_settings.model_kind
-        )
-        self.gateway_endpoint = model.get("model_endpoint")
-        self.aibench_settings.model_name = model.get("model_name")
-        self.api_key = ControlPlaneManager.get_model_api_key()
+        ).get("model_name")
         first_bucket = self.test_config.buckets[0] if self.test_config.buckets else ""
         self.target_iterator = [
             AIGatewayTargetSettings(
                 host="",
                 bucket=first_bucket,
-                endpoint=self.gateway_endpoint,
-                api_key=self.api_key,
+                endpoint=self.hosted_model_info.model_endpoint,
+                api_key=self.hosted_model_info.api_key,
             )
         ]
-
-        self.gateway_version = self.get_ai_gateway_info().get("version")
-        cp_version = self.rest.get_cp_version()
-        build_str = f"{self.gateway_version}:{cp_version}"
-        if self.build != "0.0.0":
-            build_str = f"{self.build}:{build_str}"
-        self.reporter.build = build_str
-
-    def get_ai_gateway_info(self) -> dict:
-        """Get the AI Gateway information."""
-        resp_data = self.rest.get(
-            url=f"{self.gateway_endpoint}/v1/info",
-            headers={"Authorization": f"Bearer {self.api_key}"},
-            auth=None,  # Ensures it is not overridden with basic auth
-        ).json()
-        resp_data.pop("models", [])  # Remove models from the response due to large size
-        logger.info(f"AI Gateway info: {pretty_dict(resp_data)}")
-        return resp_data
-
-    def get_ai_gateway_models_status(self) -> dict:
-        resp_data = self.rest.get(
-            url=f"{self.gateway_endpoint}/v1/models",
-            headers={"Authorization": f"Bearer {self.api_key}"},
-            auth=None,  # Ensures it is not overridden with basic auth
-        ).json()
-        return resp_data.get("data", [])
 
     @property
     def build_tag(self):
@@ -484,9 +493,7 @@ class AIGatewayTest(PerfTest):
             for metric in self.metrics.aibench_metrics(results):
                 self.reporter.post(*metric)
 
-
     def run(self):
-        self.monitor.wait_for_ai_gateway_models_health(self.get_ai_gateway_models_status)
         self.download_aibench()
         self.build_aibench()
 
@@ -494,24 +501,14 @@ class AIGatewayTest(PerfTest):
         self.report_kpi()
 
 
-class AIFunctionsTest(N1QLTest):
+class AIFunctionsTest(AIServicesTest, N1QLTest):
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
         super().__init__(cluster_spec, test_config, verbose)
-        self.ai_services_settings = self.test_config.ai_services_settings
-        self.llm_model = self._get_llm_model()
         self.model_name = self.ai_services_settings.model_name
-        if self.llm_model:
-            self.model_name = self.llm_model.get("model_name")
-
-    def _get_llm_model(self) -> dict:
-        """
-        Retrieve the LLM model from the infrastructure model services.
-
-        Returns:
-            dict: The LLM model details if available.
-        """
-        models = self.cluster_spec.infrastructure_model_services
-        return models.get("text-generation", {})
+        self.model_id = ""
+        if self.hosted_model_info.llm_model:
+            self.model_name = self.hosted_model_info.llm_model.get("model_name")
+            self.model_id = self.hosted_model_info.llm_model.get("model_id")
 
     def _create_ai_functions_payload(self) -> dict:
         provider = self.ai_services_settings.model_provider.lower()
@@ -520,17 +517,16 @@ class AIFunctionsTest(N1QLTest):
             "modelSource": provider,
         }
         if provider == "capella":
-            model_id = self.llm_model.get("model_id")
             payload.update(
                 {
                     f"{provider}Model": {
                         "modelName": self.model_name,
-                        "modelID": model_id,
+                        "modelID": self.model_id,
                         "apiKeyID": ControlPlaneManager.get_model_api_key_id(),
                         "apiKeyToken": ControlPlaneManager.get_model_api_key(),
                         "privateNetworking": False,
                         "region": self.cluster_spec.cloud_region,
-                        "aiGatewayURL": self.llm_model.get("model_endpoint"),
+                        "aiGatewayURL": self.hosted_model_info.model_endpoint,
                     },
                 }
             )
@@ -559,7 +555,7 @@ class AIFunctionsTest(N1QLTest):
 
         self.openai_integration_id = self.rest.create_openai_integration(
             name=f"perfopenai{cluster_uuid}",
-            access_key=os.getenv("PROVIDER_KEY", ""),
+            access_key=self.get_provider_api_key(),
         )
         logger.info(f"Created openAI integration: {self.openai_integration_id}")
 
@@ -595,7 +591,12 @@ class AIFunctionsTest(N1QLTest):
 
 class QueryThroughputWithAIFunctionsTest(AIFunctionsTest):
     def _report_kpi(self):
-        self.reporter.post(*self.metrics.avg_n1ql_throughput(self.master_node))
+        model_name_title = f"({self.model_name})"
+        self.reporter.post(
+            *self.metrics.avg_n1ql_throughput(
+                self.master_node, custom_title_postfix=model_name_title
+            )
+        )
 
 
 class QueryLatencyWithAIFunctionsTest(AIFunctionsTest):
@@ -604,4 +605,7 @@ class QueryLatencyWithAIFunctionsTest(AIFunctionsTest):
         self.COLLECTORS["n1ql_latency"] = True
 
     def _report_kpi(self):
-        self.reporter.post(*self.metrics.query_latency(percentile=90))
+        model_name_title = f"({self.model_name})"
+        self.reporter.post(
+            *self.metrics.query_latency(percentile=90, custom_title_postfix=model_name_title)
+        )

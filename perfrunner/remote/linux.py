@@ -28,7 +28,7 @@ from perfrunner.remote.context import (
     servers_by_role,
     syncgateway_servers,
 )
-from perfrunner.settings import CH2, CBProduct, CBProfile, CH2ConnectionSettings, ClusterSpec
+from perfrunner.settings import CH2, CBProduct, CH2ConnectionSettings, ClusterSpec
 
 
 class RemoteLinux(Remote):
@@ -416,19 +416,16 @@ class RemoteLinux(Remote):
         run("systemctl restart sync_gateway", pty=False)
 
     @all_servers
-    def restart_with_alternative_num_vbuckets(self, num_vbuckets):
+    def set_systemd_environment(self, env_vars: dict):
         if self.get_product() is not CBProduct.COUCHBASE_SERVER:
-            logger.warning("Changing number of vbuckets is only supported for Couchbase Server")
+            env_vars.pop("COUCHBASE_NUM_VBUCKETS", None)
+
+        if not env_vars:
             return
 
-        logger.info(f"Changing number of vbuckets to {num_vbuckets}")
-        run(f"systemctl set-environment COUCHBASE_NUM_VBUCKETS={num_vbuckets}")
-        run("systemctl restart couchbase-server", pty=False)
-
-    @all_servers
-    def reset_num_vbuckets(self):
-        logger.info('Resetting number of vbuckets')
-        run('systemctl unset-environment COUCHBASE_NUM_VBUCKETS')
+        logger.info(f"Setting systemd env vars on {env.host_string}: {pretty_dict(env_vars)}")
+        env_var_strings = [f"{k}={v}" for k, v in env_vars.items()]
+        run(f"systemctl set-environment {' '.join(env_var_strings)}")
 
     @master_server
     def enable_nonlocal_diag_eval(self):
@@ -915,11 +912,6 @@ class RemoteLinux(Remote):
             f"{self.get_install_dir()}/bin/couchbase-cli setting-security "
             f"--set --disable-http-ui 1 --cluster {host}:8091 -u Administrator -p password"
         )
-
-    @all_servers
-    def set_cb_profile(self, profile: CBProfile):
-        logger.info(f'Setting ns_server profile to "{profile.value}"')
-        run(f'systemctl set-environment CB_FORCE_PROFILE={profile.value}')
 
     @master_server
     def run_magma_benchmark(self, cmd: str, stats_file: str):

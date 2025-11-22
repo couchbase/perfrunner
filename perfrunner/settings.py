@@ -3870,6 +3870,15 @@ class TestConfig(Config):
         return ClusterSettings(options)
 
     @property
+    def systemd_env_vars(self) -> dict:
+        options = self._get_options_as_dict("systemd_env_var")
+
+        if num_vbuckets := self.cluster.num_vbuckets:
+            options["COUCHBASE_NUM_VBUCKETS"] = num_vbuckets
+
+        return options
+
+    @property
     def systemd_limits(self) -> SystemdLimitsSettings:
         """Specify systemd service resource limits for Couchbase Server.
 

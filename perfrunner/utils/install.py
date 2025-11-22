@@ -702,7 +702,7 @@ class CouchbaseInstaller:
             if self.package_is_columnar and self.build_tuple >= (1, 2, 0, 1154):
                 profile = CBProfile.ANALYTICS
 
-        self.remote.set_cb_profile(profile)
+        self.remote.set_systemd_environment({"CB_FORCE_PROFILE": profile.value})
 
     def set_ns_server_managed_cgroup(self):
         if self.test_config.cluster.cgroup_managed:

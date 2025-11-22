@@ -482,10 +482,12 @@ class DefaultClusterManager(ClusterManagerBase):
         if self.test_config.cluster.ui_http == 'disabled':
             self.remote.ui_http_off(self.cluster_spec.servers[0])
 
-    def restart_with_alternative_num_vbuckets(self):
-        num_vbuckets = self.test_config.cluster.num_vbuckets
-        if num_vbuckets is not None:
-            self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
+    def inject_env_vars_and_restart(self):
+        if not (env_vars := self.test_config.systemd_env_vars):
+            return
+
+        self.remote.set_systemd_environment(env_vars)
+        self.remote.restart()
 
     def restart_with_alternative_bucket_options(self):
         """Apply custom buckets settings.

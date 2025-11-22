@@ -118,7 +118,7 @@ def main():
     cm.throttle_cpu()
     cm.enable_ipv6()
     cm.tune_logging()
-    cm.restart_with_alternative_num_vbuckets()
+    cm.inject_env_vars_and_restart()
     cm.flush_iptables()
 
     cm.set_systemd_resource_limits()

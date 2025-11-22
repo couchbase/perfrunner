@@ -313,9 +313,7 @@ class RemoteWindows(Remote):
     def enable_resource_management_with_cgroup(self):
         pass
 
-    def set_cb_profile(self, *args):
-        logger.info('Perfrunner cannot set ns_server profile on Windows. '
-                    'Default profile will be used.')
+    def set_systemd_environment(self, *args):
         pass
 
     def generate_minidump_backtrace(self, host: str):

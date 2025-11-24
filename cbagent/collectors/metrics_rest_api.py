@@ -352,3 +352,63 @@ class MetricsRestApiAppTelemetry(MetricsRestApiBase):
     def sample(self):
         for node, stats in self.get_stats().items():
             self.add_stats(stats, node=self.get_external_hostnames(node))
+
+class MetricsRestApiDeks(MetricsRestApiBase):
+
+    COLLECTOR = "metrics_rest_api_deks"
+
+    METRICS = [
+        "cm_encr_at_rest_deks_in_use",
+        "cm_encr_at_rest_drop_deks_events_total",
+        "cm_encr_at_rest_generate_dek_failures_total",
+        "cm_encr_at_rest_generate_dek_total",
+    ]
+
+    METRIC_TYPE_PREFIX = "bucketDek_"
+
+    def __init__(self, settings: CbAgentSettings):
+        super().__init__(settings)
+        self.stats_data = [
+            {
+                "metric": [
+                    {"label": "name", "value": metric},
+                    {"label": "type", "value": f"{self.METRIC_TYPE_PREFIX}.*", "operator": "=~"},
+                ],
+                "step": 1,
+                "start": -1,
+            }
+            for metric in self.METRICS
+        ]
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+
+        for node in self.nodes:
+            self.mc.add_server(node)
+
+        for bucket in self.get_buckets():
+            self.mc.add_bucket(bucket)
+
+    def get_stats(self) -> dict:
+        samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
+        metrics = {}
+        for data in samples:
+            for metric in data["data"]:
+                node = metric["metric"]["nodes"][0].split(":")[0]
+                metric_name = metric["metric"]["name"]
+                bucket = metric["metric"]["type"].removeprefix(self.METRIC_TYPE_PREFIX)
+                value = float(metric["values"][-1][-1])
+
+                if node not in metrics:
+                    metrics[node] = {}
+                if bucket not in metrics[node]:
+                    metrics[node][bucket] = {}
+                metrics[node][bucket][metric_name] = value
+
+        return metrics
+
+    def sample(self):
+        current_stats = self.get_stats()
+        for node, per_bucket_stats in current_stats.items():
+            for bucket, stats in per_bucket_stats.items():
+                self.add_stats(stats, node=self.get_external_hostnames(node), bucket=bucket)

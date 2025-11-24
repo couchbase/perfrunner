@@ -352,3 +352,51 @@ class MetricsRestApiAppTelemetry(MetricsRestApiBase):
     def sample(self):
         for node, stats in self.get_stats().items():
             self.add_stats(stats, node=self.get_external_hostnames(node))
+
+class MetricsRestApiDeks(MetricsRestApiBase):
+
+    COLLECTOR = "metrics_rest_api_deks"
+
+    METRICS = [
+        "cm_key_manager_deks_in_use",
+        "cm_key_manager_drop_deks_total",
+        "cm_key_manager_generate_key_total",
+        "cm_key_manager_retire_key_total"
+    ]
+
+    def __init__(self, settings: CbAgentSettings):
+        super().__init__(settings)
+        self.stats_data = [
+            {
+                "metric": [
+                    {"label": "name", "value": metric}
+                ],
+                "step": 1,
+                "start": -1
+            }
+            for metric in self.METRICS
+        ]
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+        for node in self.nodes:
+            self.mc.add_server(node)
+
+    def get_stats(self) -> dict:
+        samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
+        metrics = {}
+        for data in samples:
+            for metric in data['data']:
+                node = metric['metric']['nodes'][0].split(':')[0]
+                metric_name = metric['metric']['name']
+                value = float(metric['values'][-1][-1])
+                if node not in metrics:
+                    metrics[node] = {metric_name: value}
+                else:
+                    metrics[node][metric_name] = value
+        return metrics
+
+    def sample(self):
+        current_stats = self.get_stats()
+        for node, stats in current_stats.items():
+            self.add_stats(stats, node=self.internal_to_external_hostnames[node])

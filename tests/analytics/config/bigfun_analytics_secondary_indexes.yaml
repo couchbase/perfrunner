@@ -1,0 +1,14 @@
+- name: usrSinceIdx-{repeat}
+  dataset: GleambookUsers-{repeat}
+  elements:
+    - "user_since: STRING"
+
+- name: gbmSndTimeIdx-{repeat}
+  dataset: GleambookMessages-{repeat}
+  elements:
+    - "send_time: STRING"
+
+- name: cmSndTimeIdx-{repeat}
+  dataset: ChirpMessages-{repeat}
+  elements:
+    - "send_time: STRING"

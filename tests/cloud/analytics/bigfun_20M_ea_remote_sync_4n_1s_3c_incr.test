@@ -24,8 +24,8 @@ config = collections/1bucket_1scope_3collections_analytics.json
 
 [analytics]
 num_io_devices = 1
-dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets.json
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
+dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets.yaml
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 analytics_link = RemoteLink
 
 [backup]

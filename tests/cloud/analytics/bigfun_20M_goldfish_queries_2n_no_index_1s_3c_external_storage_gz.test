@@ -26,7 +26,7 @@ aws_credential_path = /root/.ssh
 
 [analytics]
 queries = perfrunner/workloads/bigfun/queries_without_index_external.json
-dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets_external.json
+dataset_conf_file = tests/analytics/config/bigfun_3_to_3_datasets_external.yaml
 external_dataset_type = s3
 external_dataset_region = us-east-1
 external_bucket = analytics-bigfun20m-gz

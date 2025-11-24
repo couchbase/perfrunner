@@ -22,9 +22,9 @@ num_buckets = 1
 eviction_policy = fullEviction
 
 [analytics]
-dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.yaml
 num_io_devices = 1
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 
 [restore]
 backup_storage = /backups

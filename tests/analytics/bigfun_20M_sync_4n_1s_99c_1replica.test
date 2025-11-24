@@ -23,8 +23,8 @@ config = collections/1bucket_1scope_99collections_analytics.json
 
 [analytics]
 num_io_devices = 4
-dataset_conf_file = tests/analytics/config/bigfun_99_to_99_datasets.json
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
+dataset_conf_file = tests/analytics/config/bigfun_99_to_99_datasets.yaml
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 replica_analytics = 1
 
 [bucket]

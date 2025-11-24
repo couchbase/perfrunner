@@ -209,11 +209,11 @@ class AnalyticsTest(PerfTest):
 
         if self.dataset_conf_file:
             with open(self.dataset_conf_file, "r") as f:
-                self.dataset_config = json.load(f)
+                self.dataset_config = yaml.safe_load(f)
 
         if self.index_conf_file:
             with open(self.index_conf_file, "r") as f:
-                self.index_config = json.load(f)
+                self.index_config = yaml.safe_load(f)
 
         analytics_node_version = (
             ServerInfoManager().get_server_info_by_master_node(self.analytics_cluster_master).build

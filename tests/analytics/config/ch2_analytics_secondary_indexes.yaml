@@ -1,0 +1,21 @@
+- name: customer_c_balance
+  dataset: customer
+  elements:
+    - "c_balance: DOUBLE"
+
+- name: orders_entry_d
+  dataset: orders
+  elements:
+    - "o_entry_d: STRING"
+
+- name: orderline_i_id
+  dataset: orders
+  elements:
+    - "UNNEST o_orderline SELECT ol_i_id: BIGINT"
+  unknown_modifier: EXCLUDE
+
+- name: orderline_delivery_d
+  dataset: orders
+  elements:
+    - "UNNEST o_orderline SELECT ol_delivery_d: STRING"
+  unknown_modifier: EXCLUDE

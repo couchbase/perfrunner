@@ -22,9 +22,9 @@ config = collections/1bucket_1scope_99collections_analytics.json
 
 [analytics]
 num_io_devices = 4
-dataset_conf_file = tests/analytics/config/bigfun_99_to_99_datasets.json
+dataset_conf_file = tests/analytics/config/bigfun_99_to_99_datasets.yaml
 drop_dataset = ChirpMessages-1
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 
 [bucket]
 eviction_policy = fullEviction

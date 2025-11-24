@@ -20,8 +20,8 @@ num_buckets = 1
 
 [analytics]
 num_io_devices = 4
-dataset_conf_file = tests/analytics/config/bigfun_1_to_99_datasets.json
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
+dataset_conf_file = tests/analytics/config/bigfun_1_to_99_datasets.yaml
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 
 [bucket]
 eviction_policy = fullEviction

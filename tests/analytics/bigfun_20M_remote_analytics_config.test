@@ -19,10 +19,10 @@ initial_nodes = 4
 num_buckets = 1
 
 [analytics]
-dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.yaml
 num_io_devices = 4
 analytics_link = RemoteLink
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 
 [bucket]
 eviction_policy = fullEviction

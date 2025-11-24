@@ -25,7 +25,7 @@ config = collections/1bucket_1scope_11collections_analytics_ch2pp.json
 
 [analytics]
 num_io_devices = 1
-index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml
 analytics_link = RemoteLink
 use_cbo = true
 cbo_sample_size = high

@@ -23,7 +23,7 @@ external_dataset_region = us-east-1
 external_bucket = analytics-ch2pp64-4000w-gz
 external_file_format = json
 external_file_include = gz
-index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml
 
 [ch2]
 schema = ch2pp

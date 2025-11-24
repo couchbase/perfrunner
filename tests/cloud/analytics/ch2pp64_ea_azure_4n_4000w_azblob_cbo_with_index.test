@@ -26,7 +26,7 @@ external_file_include = gz
 external_azure_storage_account = cbperfstorage
 use_cbo = true
 cbo_sample_size = high
-index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml
 
 [ch2]
 schema = ch2pp

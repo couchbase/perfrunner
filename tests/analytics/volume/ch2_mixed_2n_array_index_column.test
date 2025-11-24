@@ -23,7 +23,7 @@ config = collections/1bucket_1scope_11collections_analytics_ch2.json
 [analytics]
 num_io_devices = 4
 storage_format = column
-index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml
 
 [bucket]
 eviction_policy = fullEviction

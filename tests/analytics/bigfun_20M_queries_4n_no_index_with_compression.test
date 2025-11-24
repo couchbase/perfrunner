@@ -19,7 +19,7 @@ initial_nodes = 6
 num_buckets = 1
 
 [analytics]
-dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.json
+dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.yaml
 num_io_devices = 4
 storageCompressionBlock = snappy
 

@@ -1,0 +1,13 @@
+- &base
+  name: GleambookUsers-{repeat}
+  source: "`{bucket}`"
+  where: "`type` = \"GleambookUsers\" AND meta().id LIKE \"%-{repeat}\""
+  repeat: 333
+
+- <<: *base
+  name: GleambookMessages-{repeat}
+  where: "`type` = \"GleambookMessages\" AND meta().id LIKE \"%-{repeat}\""
+
+- <<: *base
+  name: ChirpMessages-{repeat}
+  where: "`type` = \"ChirpMessages\" AND meta().id LIKE \"%-{repeat}\""

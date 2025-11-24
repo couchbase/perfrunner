@@ -1,0 +1,12 @@
+- &base
+  name: GleambookUsers-{repeat}
+  source: "`{bucket}`.`scope-1`.`GleambookUsers-{repeat}`"
+  repeat: 33
+
+- <<: *base
+  name: GleambookMessages-{repeat}
+  source: "`{bucket}`.`scope-1`.`GleambookMessages-{repeat}`"
+
+- <<: *base
+  name: ChirpMessages-{repeat}
+  source: "`{bucket}`.`scope-1`.`ChirpMessages-{repeat}`"

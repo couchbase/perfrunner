@@ -24,8 +24,8 @@ config = collections/1bucket_1scope_999collections_analytics.json
 [analytics]
 num_io_devices = 4
 queries = perfrunner/workloads/bigfun/queries_with_index_1s_999c.json
-dataset_conf_file = tests/analytics/config/bigfun_999_to_999_datasets.json
-index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.json
+dataset_conf_file = tests/analytics/config/bigfun_999_to_999_datasets.yaml
+index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 
 [bucket]
 eviction_policy = fullEviction

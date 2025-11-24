@@ -32,7 +32,7 @@ map_data = bench.ch2=bench.ch2
 analytics_link = RemoteLink
 use_cbo = true
 cbo_sample_size = high
-index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.json
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml
 
 [ch2]
 warehouses = 5000

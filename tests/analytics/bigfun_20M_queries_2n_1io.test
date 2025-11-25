@@ -20,7 +20,7 @@ num_buckets = 1
 
 [analytics]
 num_io_devices = 1
-queries = perfrunner/workloads/bigfun/queries_with_index.json
+queries = perfrunner/workloads/bigfun/queries_with_index.yaml
 dataset_conf_file = tests/analytics/config/bigfun_1_to_3_datasets.yaml
 index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 

@@ -1,0 +1,72 @@
+- &cs_base
+  id: CS01
+  matches: [0]
+
+- <<: *cs_base
+  id: CS02
+
+- <<: *cs_base
+  id: CS03
+
+- <<: *cs_base
+  id: CS04
+
+- <<: *cs_base
+  id: CS05
+
+- <<: *cs_base
+  id: CS06
+
+- <<: *cs_base
+  id: CS07
+
+- <<: *cs_base
+  id: CS08
+
+- <<: *cs_base
+  id: CS09
+
+- <<: *cs_base
+  id: CS10
+
+- <<: *cs_base
+  id: CS11
+
+- <<: *cs_base
+  id: CS12
+
+- <<: *cs_base
+  id: CS13
+
+- <<: *cs_base
+  id: CS14
+
+- <<: *cs_base
+  id: CS15
+
+- <<: *cs_base
+  id: CS16
+
+- <<: *cs_base
+  id: CS17
+
+- <<: *cs_base
+  id: CS18
+
+- <<: *cs_base
+  id: CS19
+
+- <<: *cs_base
+  id: CS20
+
+- <<: *cs_base
+  id: CS21
+
+- <<: *cs_base
+  id: CS22
+
+- <<: *cs_base
+  id: CS23
+
+- <<: *cs_base
+  id: CS24

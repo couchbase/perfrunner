@@ -1,0 +1,16 @@
+- &wf_base
+  id: WF01
+  matches: [0]
+  set: 1
+
+- <<: *wf_base
+  id: WF02
+
+- <<: *wf_base
+  id: WF03
+
+- <<: *wf_base
+  id: WF04
+
+- <<: *wf_base
+  id: WF05

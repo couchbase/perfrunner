@@ -1,5 +1,6 @@
-import json
 from typing import Iterator
+
+import yaml
 
 MIN_DATE = "2000-01-01T00:00:00"
 MAX_DATE = "2014-08-29T23:59:59"
@@ -133,7 +134,7 @@ class Query:
 
 def new_queries(query_set: str) -> Iterator[Query]:
     with open(query_set) as fh:
-        queries = json.load(fh)
+        queries = yaml.safe_load(fh)
 
     for query in queries:
         yield Query(query['id'])

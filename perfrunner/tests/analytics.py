@@ -1280,9 +1280,8 @@ class TPCDSTest(AnalyticsTest):
 
 
 class TPCDSQueryTest(TPCDSTest):
-
-    COUNT_QUERIES = 'perfrunner/workloads/tpcdsfun/count_queries.json'
-    QUERIES = 'perfrunner/workloads/tpcdsfun/queries.json'
+    COUNT_QUERIES = "perfrunner/workloads/tpcdsfun/count_queries.yaml"
+    QUERIES = "perfrunner/workloads/tpcdsfun/queries.yaml"
 
     @with_stats
     def access(self, *args, **kwargs) -> tuple[list[QueryLatencyPair], list[QueryLatencyPair],

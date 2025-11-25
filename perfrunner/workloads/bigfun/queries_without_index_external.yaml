@@ -1,0 +1,18 @@
+- &bf_1e4_ext
+  id: BF03
+  matches: [1.e+4]
+  set: 1
+
+- <<: *bf_1e4_ext
+  id: BF08
+
+- &bf_0_ext
+  id: BF10
+  matches: [0]
+  set: 1
+
+- <<: *bf_0_ext
+  id: BF11
+
+- <<: *bf_1e4_ext
+  id: BF16

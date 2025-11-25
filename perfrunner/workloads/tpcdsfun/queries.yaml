@@ -1,0 +1,9 @@
+- &tp_base
+  id: TP01
+  matches: [0]
+
+- <<: *tp_base
+  id: TP02
+
+- <<: *tp_base
+  id: TP03

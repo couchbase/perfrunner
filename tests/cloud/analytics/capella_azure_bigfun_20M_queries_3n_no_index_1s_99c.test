@@ -27,7 +27,7 @@ config = collections/1bucket_1scope_99collections_analytics.json
 
 [analytics]
 dataset_conf_file = tests/analytics/config/bigfun_99_to_99_datasets.yaml
-queries = perfrunner/workloads/bigfun/queries_without_index_1s_99c.json
+queries = perfrunner/workloads/bigfun/queries_without_index_1s_99c.yaml
 
 [backup]
 obj_staging_dir = /stage

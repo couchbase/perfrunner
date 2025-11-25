@@ -23,7 +23,7 @@ config = collections/1bucket_1scope_99collections_analytics.json
 
 [analytics]
 num_io_devices = 4
-queries = perfrunner/workloads/bigfun/queries_with_index_1s_99c.json
+queries = perfrunner/workloads/bigfun/queries_with_index_1s_99c.yaml
 dataset_conf_file = tests/analytics/config/bigfun_99_to_99_datasets.yaml
 index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 

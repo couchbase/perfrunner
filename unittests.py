@@ -660,7 +660,7 @@ class QueryTest(TestCase):
 class BigFunTest(TestCase):
 
     def test_unique_statements(self):
-        queries = 'perfrunner/workloads/bigfun/queries_with_index.json'
+        queries = "perfrunner/workloads/bigfun/queries_with_index.yaml"
         for query in new_queries(queries):
             statements = set()
             for i in range(10):

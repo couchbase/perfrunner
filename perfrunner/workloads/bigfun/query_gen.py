@@ -1,9 +1,9 @@
-import json
 import random
 from datetime import datetime
 from typing import Iterator, List
 
 import dateutil.parser as parser
+import yaml
 
 from perfrunner.helpers.misc import human_format
 
@@ -237,7 +237,7 @@ class Query:
 
 def new_queries(query_set: str) -> Iterator[Query]:
     with open(query_set) as fh:
-        queries = json.load(fh)
+        queries = yaml.safe_load(fh)
 
     for query in queries:
         for num_matches in query['matches']:

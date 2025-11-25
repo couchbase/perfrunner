@@ -1,0 +1,10 @@
+- &bf_base
+  id: BF03
+  matches: [1.e+2, 1.e+4]
+  set: 333
+
+- <<: *bf_base
+  id: BF08
+
+- <<: *bf_base
+  id: BF14

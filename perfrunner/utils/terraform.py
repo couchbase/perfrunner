@@ -1001,19 +1001,20 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                 "package": "enterprise",
             }
 
-            logger.info(pretty_dict(config))
+            logger.info(f"Deploying Operational cluster with config: {pretty_dict(config)}")
 
+            override_conf = {}
             if (server := self.options.capella_cb_version) and (ami := self.options.capella_ami):
-                config['overRide'] = {
-                    'token': os.getenv('CBC_OVERRIDE_TOKEN'),
-                    'server': server,
-                    'image': ami
-                }
-                config.pop('server')
-                logger.info('Deploying cluster with custom AMI: {}'
-                            .format(ami))
+                override_conf |= {"server": server, "image": ami}
+            if agent_hash := self.options.capella_agent_hash:
+                override_conf["agent"] = {"hash": agent_hash}
             if release_id := self.options.release_id:
-                config['overRide'].update({'releaseId': release_id})
+                override_conf["releaseId"] = release_id
+
+            if override_conf:
+                logger.info(f"Adding overrides to deployment config: {pretty_dict(override_conf)}")
+                config["overRide"] = override_conf | {"token": os.getenv("CBC_OVERRIDE_TOKEN")}
+                config.pop("server")
 
             resp = self.provisioned_api.create_cluster_customAMI(self.tenant_id, config)
             raise_for_status(resp)
@@ -1805,14 +1806,15 @@ class CapellaColumnarDeployer(CloudVMDeployer):
 
             logger.info(f"Deploying Columnar instance with config: {pretty_dict(config)}")
 
+            override_conf = {}
             if ami := self.options.columnar_ami:
-                logger.info(f"Overriding Columnar AMI: {ami}")
-                config |= {
-                    "overRide": {
-                        "image": ami,
-                        "token": os.getenv("CBC_OVERRIDE_TOKEN"),
-                    }
-                }
+                override_conf["image"] = ami
+            if agent_hash := self.options.capella_agent_hash:
+                override_conf["agent"] = {"hash": agent_hash}
+
+            if override_conf:
+                logger.info(f"Adding overrides to deployment config: {pretty_dict(override_conf)}")
+                config["overRide"] = override_conf | {"token": os.getenv("CBC_OVERRIDE_TOKEN")}
 
             resp = self.columnar_api.create_columnar_instance(
                 self.tenant_id, self.project_id, config
@@ -2184,6 +2186,7 @@ def get_args():
         "--capella-sgw-ami", help="custom AMI to use for App Services Capella Deployment"
     )
     parser.add_argument("--columnar-ami", help="custom AMI to use for Columnar deployment")
+    parser.add_argument("--capella-agent-hash", help="agent hash to use for Capella deployment")
     parser.add_argument("--release-id", help="release id for managing releases")
     parser.add_argument(
         "--vpc-peering", action="store_true", help="enable VPC peering for Capella deployment"

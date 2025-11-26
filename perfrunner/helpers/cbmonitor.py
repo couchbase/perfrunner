@@ -30,7 +30,6 @@ from cbagent.collectors import (
     KVStoreStats,
     Memory,
     MetricsRestApiDeduplication,
-    MetricsRestApiDeks,
     MetricsRestApiProcesses,
     MetricsRestApiThroughputCollection,
     N1QLStats,
@@ -197,8 +196,6 @@ class CbAgent:
             self.add_collector(AnalyticsStats, self.test)
         if kv_dedup:
             self.add_collector(MetricsRestApiDeduplication)
-        if self.test.test_config.bucket.encryption_at_rest:
-            self.add_collector(MetricsRestApiDeks)
 
         # Always collect ns-server managed processes utilisation metrics
         self.add_collector(MetricsRestApiProcesses)

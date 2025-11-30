@@ -209,7 +209,7 @@ class AnalyticsTest(PerfTest):
                 self.index_config = json.load(f)
 
         analytics_node_version = (
-            ServerInfoManager().get_server_info_by_master_node(self.analytics_node).build
+            ServerInfoManager().get_server_info_by_master_node(self.analytics_cluster_master).build
         )
         if analytics_node_version != self.reporter.build:
             self.reporter.build = f"{analytics_node_version} : {self.reporter.build}"
@@ -234,17 +234,20 @@ class AnalyticsTest(PerfTest):
         return next(self.cluster_spec.masters)
 
     @property
-    def analytics_node(self) -> str:
-        return self.analytics_nodes[0]
+    def analytics_cluster_master(self) -> str:
+        # If we have several clusters, we assume the second cluster to be the analytics cluster
+        if len(masters := list(self.cluster_spec.masters)) > 1:
+            return masters[1]
+
+        return self.master_node
 
     @property
     def analytics_nodes(self) -> list[str]:
-        # If we have several clusters, we assume the second cluster to be the analytics cluster
-        analytics_master = self.master_node
-        if len(masters := list(self.cluster_spec.masters)) > 1:
-            analytics_master = masters[1]
+        return self.rest.get_active_nodes_by_role(self.analytics_cluster_master, "cbas")
 
-        return self.rest.get_active_nodes_by_role(analytics_master, "cbas")
+    @property
+    def analytics_node(self) -> str:
+        return self.analytics_nodes[0]
 
     @property
     def datasets(self) -> list[DatasetDef]:

@@ -3855,6 +3855,11 @@ class AIServicesSettings:
         # AI functions names
         self.functions_names = options.get("functions_names", "").split(",")
 
+        # WER & F1 calculation settings
+        # If enabled WER will be calculated along with F1 score
+        self.do_e2e_evaluation = maybe_atoi(options.get("do_e2e_eval", "false"))
+        self.gt_file_path = options.get("gt_file_path", "ai-uda-qa/bench_paper_tab_qa.json")
+
         # Will be fixed as part of CBPS-1490
         self.aws_credential_path = options.get("aws_credential_path", "/root/.ssh")
 

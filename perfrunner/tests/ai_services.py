@@ -183,6 +183,8 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
         self.s3_integration_id = ""
         self.openai_integration_id = ""
         self.workflow_id = None
+        self.wer_results = None
+        self.f1_results = None
 
     @timeit
     def deploy_workflow(self):
@@ -299,6 +301,11 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
         logger.info(f"{latencies=}")
         logger.info(f"{self.runtimes=}")
 
+        # Calculate WER scores
+        if self.ai_services_settings.do_e2e_evaluation:
+            sleep(120)  # Sleep to allow for rate limits to reset
+            self.calculate_wer_and_f1_scores()
+
         self.report_kpi()
 
     def _report_kpi(self):
@@ -310,12 +317,33 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
         workflow_time = self.runtimes.get("workflow_time", 0)
         logger.info(f"UDS metadata: {uds_metadata}")
         logger.info(f"Autovec metadata: {autovec_metadata}")
-        if not workflow_time:
-            return
 
         model_name = self.ai_services_settings.model_name
         if self.hosted_model_info.embedding_model:
             model_name = self.hosted_model_info.embedding_model.get("model_name")
+
+        if self.wer_results:
+            avg_wer = float(self.wer_results.get("avg_wer", 1.0))
+            self.reporter.post(
+                *self.metrics.custom_metric(
+                    round(avg_wer, 2),
+                    f"Average WER, {{}} ({model_name})",
+                    "avg_wer",
+                )
+            )
+
+        if self.f1_results:
+            avg_f1 = float(self.f1_results.get("avg_f1", 1.0))
+            self.reporter.post(
+                *self.metrics.custom_metric(
+                    round(avg_f1, 2),
+                    f"Average F1 score, {{}} {model_name}",
+                    "avg_f1",
+                )
+            )
+
+        if not workflow_time:
+            return
 
         if success_files := uds_metadata.get("numSuccessfulFiles", 0):
             self.reporter.post(
@@ -350,6 +378,39 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
                 percentile=percentile, latency_stats=latency_stats
             )[0]
         return latencies
+
+    def calculate_wer_and_f1_scores(self):
+        try:
+            # Initialise SimpleRAG
+            from perfrunner.utils.ai.rag import SimpleRAG
+
+            llm_model_name = None
+            embedding_model_name = self.hosted_model_info.embedding_model.get("model_name")
+            if self.hosted_model_info.llm_model:
+                llm_model_name = self.hosted_model_info.llm_model.get("model_name")
+
+            simple_rag = SimpleRAG(
+                model_endpoint=self.hosted_model_info.model_endpoint,
+                master_node=self.master_node,
+                api_key=self.hosted_model_info.api_key,
+                embedding_model_name=embedding_model_name,
+                llm_model_name=llm_model_name,
+                credentials=self.cluster_spec.rest_credentials,
+                bucket_name=self.test_config.buckets[0],
+                gt_file_path=self.ai_services_settings.gt_file_path,
+            )
+
+            # Run WER calculation
+            self.wer_results = simple_rag.run_wer_calculation()
+            logger.info(f"WER calculation results: {pretty_dict(self.wer_results)}")
+
+            # To calculate F1 score we need both LLM and embedding model to be available
+            if self.hosted_model_info.llm_model and self.hosted_model_info.embedding_model:
+                self.f1_results = simple_rag.run_f1_calculation()
+                logger.info(f"F1 calculation results: {pretty_dict(self.f1_results)}")
+
+        except Exception as e:
+            logger.error(f"Error during E2E evaluation: {e}")
 
     def process_latency_stats(self):
         ret_val = {}

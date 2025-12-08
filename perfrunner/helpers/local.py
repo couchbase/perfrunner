@@ -1073,6 +1073,34 @@ def clone_git_repo(
             local(cherrypick)
 
 
+def download_raw_github_file(
+    file_path: str,
+    owner: str = "couchbaselabs",
+    repo: str = "perf-datasets",
+    branch: str = "main",
+    output_file: Optional[str] = None,
+    ignore_if_exists: bool = True,
+) -> str:
+    dest_file = output_file if output_file else file_path.split("/")[-1]
+    if os.path.exists(dest_file):
+        if ignore_if_exists:
+            logger.info(f"File {dest_file} already exists...skipping download...")
+            return dest_file
+        logger.info(f"File {dest_file} already exists. will overwrite...")
+        os.remove(dest_file)
+
+    github_token = os.getenv("GITHUB_ACCESS_TOKEN")
+    auth_header = ""
+    if github_token:
+        # If Github token is provided, use it to authenticate the request.
+        auth_header = f"--header 'Authorization: token {github_token}'"
+
+    url = f"https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/{branch}/{file_path}"
+    run_local_shell_command(f"wget {auth_header} -O {dest_file} {url}", quiet=True)
+
+    return dest_file
+
+
 def check_if_remote_branch_exists(repo: str, branch: str) -> bool:
     """Return true if a specified branch exists in the specified repo."""
     logger.info(f"Checking if branch {branch} exists on {repo}")

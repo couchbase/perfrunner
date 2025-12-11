@@ -357,6 +357,10 @@ def purge_restore_progress(cluster_spec: ClusterSpec, archive: str = '',
     cmd = 'rm -rf {}/.restore'.format(repo_dir)
     logger.info('Running: {}'.format(cmd))
     local(cmd)
+    logger.info('Deleting logs directory from {}'.format(repo_dir))
+    cmd = 'rm -rf {}/logs'.format(repo_dir)
+    logger.info('Running: {}'.format(cmd))
+    local(cmd)
 
 
 def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):

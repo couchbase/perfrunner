@@ -512,6 +512,10 @@ class RemoteLinux(Remote):
         cmd = 'rm -rf {}/.restore'.format(repo_dir)
         logger.info('Running: {}'.format(cmd))
         run(cmd)
+        logger.info('Deleting logs directory from {}'.format(repo_dir))
+        cmd = 'rm -rf {}/logs'.format(repo_dir)
+        logger.info('Running: {}'.format(cmd))
+        run(cmd)
 
     @master_server
     def restore_data(self, archive_path: str, repo_path: str, map_data: Optional[str] = None):

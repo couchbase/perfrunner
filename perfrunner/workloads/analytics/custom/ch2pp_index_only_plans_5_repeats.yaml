@@ -1,0 +1,228 @@
+- &S1
+  name: S1_no_index
+  statement: SELECT c.c_w_id FROM customer c WHERE c.c_discount > $N
+  named_args:
+    - &N
+      name: $N
+      values: [0.1, 0.495]
+
+- <<: *S1
+  name: S1_no_index_2
+
+- <<: *S1
+  name: S1_no_index_3
+
+- <<: *S1
+  name: S1_no_index_4
+
+- <<: *S1
+  name: S1_no_index_5
+
+- &S2
+  name: S2_no_index
+  statement: SELECT c.c_w_id, c.c_d_id, c.c_id, c.c_name.c_last, c.c_name.c_first
+              FROM customer c WHERE c.c_discount > $N
+  named_args:
+    - *N
+
+- <<: *S2
+  name: S2_no_index_2
+
+- <<: *S2
+  name: S2_no_index_3
+
+- <<: *S2
+  name: S2_no_index_4
+
+- <<: *S2
+  name: S2_no_index_5
+
+- &S3
+  name: S3_no_index
+  statement: "SELECT c.c_w_id,
+                    c.c_d_id,
+                    c.c_id,
+                    c.c_name.c_last,
+                    c.c_name.c_first,
+                    c.c_credit,
+                    c.c_credit_lim,
+                    c.c_balance,
+                    c.c_payment_cnt
+              FROM customer c WHERE c.c_discount > $N"
+  named_args:
+    - *N
+
+- <<: *S3
+  name: S3_no_index_2
+
+- <<: *S3
+  name: S3_no_index_3
+
+- <<: *S3
+  name: S3_no_index_4
+
+- <<: *S3
+  name: S3_no_index_5
+
+- &M1
+  name: M1_no_index
+  statement: SELECT COUNT(*) FROM customer c WHERE c.c_discount > $N
+  named_args:
+    - *N
+
+- <<: *M1
+  name: M1_no_index_2
+
+- <<: *M1
+  name: M1_no_index_3
+
+- <<: *M1
+  name: M1_no_index_4
+
+- <<: *M1
+  name: M1_no_index_5
+
+- &M2
+  name: M2_no_index
+  statement: SELECT SUM(c.c_balance) FROM customer c WHERE c.c_discount > $N
+  named_args:
+    - *N
+
+- <<: *M2
+  name: M2_no_index_2
+
+- <<: *M2
+  name: M2_no_index_3
+
+- <<: *M2
+  name: M2_no_index_4
+
+- <<: *M2
+  name: M2_no_index_5
+
+- &M3
+  name: M3_no_index
+  statement: SELECT SUM(c.c_balance), MAX(c.c_credit_lim), AVG(c.c_payment_cnt)
+              FROM customer c WHERE c.c_discount > $N
+  named_args:
+    - *N
+
+- <<: *M3
+  name: M3_no_index_2
+
+- <<: *M3
+  name: M3_no_index_3
+
+- <<: *M3
+  name: M3_no_index_4
+
+- <<: *M3
+  name: M3_no_index_5
+
+- &M4
+  name: M4_no_index
+  statement: SELECT c.c_w_id, COUNT(*) FROM customer c WHERE c.c_discount > $N GROUP BY c.c_w_id
+  named_args:
+    - *N
+
+- <<: *M4
+  name: M4_no_index_2
+
+- <<: *M4
+  name: M4_no_index_3
+
+- <<: *M4
+  name: M4_no_index_4
+
+- <<: *M4
+  name: M4_no_index_5
+
+- &M5
+  name: M5_no_index
+  statement: SELECT c.c_credit, SUM(c.c_balance) FROM customer c
+              WHERE c.c_discount > $N GROUP BY c.c_credit
+  named_args:
+    - *N
+
+- <<: *M5
+  name: M5_no_index_2
+
+- <<: *M5
+  name: M5_no_index_3
+
+- <<: *M5
+  name: M5_no_index_4
+
+- <<: *M5
+  name: M5_no_index_5
+
+- &M6
+  name: M6_no_index
+  statement: SELECT c.c_id, o.o_ol_cnt FROM customer c, orders o
+              WHERE c.c_w_id = o.o_w_id
+                AND c.c_d_id = o.o_d_id
+                AND c.c_id = o.o_c_id
+                AND o.o_entry_d > $K
+  named_args:
+    - &K
+      name: $K
+      values: ['"2015-04-27 00:00:00"', '"2020-07-09 00:00:00"']
+
+- <<: *M6
+  name: M6_no_index_2
+
+- <<: *M6
+  name: M6_no_index_3
+
+- <<: *M6
+  name: M6_no_index_4
+
+- <<: *M6
+  name: M6_no_index_5
+
+- &M7
+  name: M7_no_index
+  statement: SELECT c.c_id, SUM(o.o_ol_cnt) FROM customer c, orders o
+              WHERE c.c_w_id = o.o_w_id
+                AND c.c_d_id = o.o_d_id
+                AND c.c_id = o.o_c_id
+                AND c.c_discount > $N
+              GROUP BY c.c_id
+  named_args:
+    - *N
+
+- <<: *M7
+  name: M7_no_index_2
+
+- <<: *M7
+  name: M7_no_index_3
+
+- <<: *M7
+  name: M7_no_index_4
+
+- <<: *M7
+  name: M7_no_index_5
+
+- &M8
+  name: M8_no_index
+  statement: SELECT c.c_id, o.o_ol_cnt FROM customer c, orders o
+              WHERE c.c_w_id = o.o_w_id
+                AND c.c_d_id = o.o_d_id
+                AND c.c_id = o.o_c_id
+                AND c.c_discount > $N
+                AND o.o_entry_d > $K
+  named_args:
+    - *N
+    - *K
+
+- <<: *M8
+  name: M8_no_index_2
+
+- <<: *M8
+  name: M8_no_index_3
+
+- <<: *M8
+  name: M8_no_index_4
+
+- <<: *M8
+  name: M8_no_index_5

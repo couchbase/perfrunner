@@ -25,7 +25,7 @@ from logger import logger
 from perfrunner.helpers.local_stats import consolidate_jts_log, parse_spring_latency_file
 from perfrunner.helpers.misc import sort_bucket_key
 from perfrunner.settings import CBMONITOR_HOST, ClusterSpec, TestConfig
-from perfrunner.workloads.bigfun.query_gen import Query
+from perfrunner.workloads.analytics.bigfun.query_gen import Query
 
 if TYPE_CHECKING:
     from perfrunner.tests import PerfTest

@@ -31,6 +31,10 @@ from perfrunner.settings import (
 )
 from perfrunner.workloads import spring_workload
 from perfrunner.workloads.ai_bench import run_aibench_task
+from perfrunner.workloads.analytics.custom.driver import (
+    CustomAnalyticsQuery,
+    run_custom_analytics_query_task,
+)
 from perfrunner.workloads.blackholepuller import (
     blackholepuller_runtest,
     newdocpusher_runtest,
@@ -383,6 +387,19 @@ def aibench_task(*args):
 @store_pid
 def ch2_load(conn_settings: CH2ConnectionSettings, task_settings: CH2, driver: str, log_file: str):
     local.ch2_load_task(conn_settings, task_settings, driver, log_file)
+
+
+@celery.task
+def custom_analytics_query_task(
+    api_url: str,
+    api_auth: tuple[str, str],
+    queries: list[CustomAnalyticsQuery],
+    log_file_path: str,
+    request_params: Optional[dict] = None,
+):
+    return run_custom_analytics_query_task(
+        api_url, api_auth, queries, log_file_path, request_params
+    )
 
 
 class WorkloadPhase:

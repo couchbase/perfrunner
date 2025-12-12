@@ -2,6 +2,7 @@ import contextlib
 import glob
 import importlib.metadata
 import json
+import math
 import os
 import subprocess
 import sys
@@ -19,10 +20,10 @@ import psutil
 import snappy
 
 from perfrunner.helpers import shell
-from perfrunner.helpers.misc import parse_go_duration_ms, pretty_dict
+from perfrunner.helpers.misc import parse_duration_to_secs, pretty_dict
 from perfrunner.remote import api, executor
 from perfrunner.settings import ClusterSpec, TestConfig
-from perfrunner.workloads.bigfun.query_gen import new_queries
+from perfrunner.workloads.analytics.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
 from spring import docgen
 
@@ -176,18 +177,22 @@ class SettingsTest(TestCase):
 
 class MiscTest(TestCase):
 
-    def test_parse_go_duration_ms(self):
-        self.assertAlmostEqual(parse_go_duration_ms('1.5s'), 1500.0)
-        self.assertAlmostEqual(parse_go_duration_ms('1m30s'), 90000.0)
-        self.assertAlmostEqual(parse_go_duration_ms('1m40.0s'), 100000.0)
-        self.assertAlmostEqual(parse_go_duration_ms('2h3m4.005s'), 7384005.0)
-        self.assertAlmostEqual(parse_go_duration_ms('500µs'), 0.5)
-        self.assertAlmostEqual(parse_go_duration_ms('500us'), 0.5)
-        self.assertAlmostEqual(parse_go_duration_ms(3.0), 3.0)
-        self.assertAlmostEqual(parse_go_duration_ms(3), 3.0)
-        self.assertEqual(parse_go_duration_ms(None), 0.0)
-        self.assertEqual(parse_go_duration_ms('garbage'), 0.0)
-        self.assertEqual(parse_go_duration_ms(''), 0.0)
+    def test_parse_duration_to_secs(self):
+        self.assertAlmostEqual(parse_duration_to_secs('1.5s'), 1.5)
+        self.assertAlmostEqual(parse_duration_to_secs('1m30s'), 90.0)
+        self.assertAlmostEqual(parse_duration_to_secs('1m40.0s'), 100.0)
+        self.assertAlmostEqual(parse_duration_to_secs('2h3m4.005s'), 7384.005)
+        self.assertAlmostEqual(parse_duration_to_secs('500ms'), 0.5)
+        self.assertAlmostEqual(parse_duration_to_secs('500µs'), 5e-4)
+        self.assertAlmostEqual(parse_duration_to_secs('500μs'), 5e-4)
+        self.assertAlmostEqual(parse_duration_to_secs('500us'), 5e-4)
+        self.assertAlmostEqual(parse_duration_to_secs('500ns'), 5e-7)
+        # A bare number is read as seconds, and surrounding whitespace is tolerated
+        self.assertAlmostEqual(parse_duration_to_secs('3'), 3.0)
+        self.assertAlmostEqual(parse_duration_to_secs(' 1m 30s '), 90.0)
+        # Anything not fully consumed is NaN, never silently read as seconds
+        for bad in ('', '   ', 'garbage', '1.5d', '1.5s trailing', 'leading 1.5s', '-1.5s'):
+            self.assertTrue(math.isnan(parse_duration_to_secs(bad)), f'expected NaN for {bad!r}')
 
 
 class WorkloadTest(TestCase):
@@ -699,7 +704,7 @@ class QueryTest(TestCase):
 class BigFunTest(TestCase):
 
     def test_unique_statements(self):
-        queries = "perfrunner/workloads/bigfun/queries_with_index.yaml"
+        queries = "perfrunner/workloads/analytics/bigfun/queries_with_index.yaml"
         for query in new_queries(queries):
             statements = set()
             for i in range(10):

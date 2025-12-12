@@ -21,7 +21,7 @@ from perfrunner.helpers.local import (
 from perfrunner.helpers.misc import (
     SGPortRange,
     create_build_tuple,
-    parse_go_duration_ms,
+    parse_duration_to_secs,
     pretty_dict,
 )
 from perfrunner.helpers.profiler import with_profiles
@@ -2881,7 +2881,11 @@ class SecondaryIndexingScanReportTest(SecondaryIndexingScanLatencyTest):
         # measure the same thing. #indexStats.srvr_avg_* is only present when feature+timings
         # are both active, so mixing sources would make the delta meaningless.
         metrics = response.get('metrics') or {}
-        return parse_go_duration_ms(metrics.get('executionTime'))
+        # NaN rather than 0 for a missing executionTime, so the `> 0` filter in
+        # run_scan_report_workload drops the sample instead of deflating the KPI.
+        if not (execution_time := metrics.get('executionTime')):
+            return float('nan')
+        return parse_duration_to_secs(execution_time) * 1000
 
     def _collect_indexstats_blocks(self, node, blocks=None):
         """Return every #indexStats block found anywhere in the response tree."""

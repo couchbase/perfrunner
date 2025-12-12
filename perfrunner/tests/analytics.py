@@ -44,7 +44,12 @@ from perfrunner.helpers.rest import (
     QUERY_PORT_SSL,
 )
 from perfrunner.helpers.server import ServerInfoManager
-from perfrunner.helpers.worker import ch2_load, tpcds_initial_data_load_task
+from perfrunner.helpers.worker import (
+    ch2_load,
+    custom_analytics_query_task,
+    tpcds_initial_data_load_task,
+)
+from perfrunner.remote.api import cd, get, run, settings
 from perfrunner.settings import (
     CH2,
     AnalyticsCBOSampleSize,
@@ -61,9 +66,10 @@ from perfrunner.tests.rebalance import (
     RebalanceTest,
 )
 from perfrunner.tests.xdcr import SrcTargetIterator
-from perfrunner.workloads.bigfun.driver import bigfun
-from perfrunner.workloads.bigfun.query_gen import Query
-from perfrunner.workloads.tpcdsfun.driver import tpcds
+from perfrunner.workloads.analytics.bigfun.driver import bigfun
+from perfrunner.workloads.analytics.bigfun.query_gen import Query
+from perfrunner.workloads.analytics.custom.driver import CustomAnalyticsQuery
+from perfrunner.workloads.analytics.tpcdsfun.driver import tpcds
 
 QueryLatencyPair = tuple[Query, int]
 
@@ -1477,6 +1483,117 @@ class AnalyticsTest(PerfTest):
         return coll_counts
 
 
+class CustomQueryTest(AnalyticsTest):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.log_file_path = "custom_queries.log"
+        if not (custom_query_conf_file := self.analytics_settings.custom_query_conf_file):
+            raise ValueError("custom_query_conf_file must be set in the [analytics] test section")
+
+        with open(custom_query_conf_file, "r") as f:
+            self.custom_query_configs = yaml.safe_load(f)
+
+    def get_query_list_from_configs(self) -> list[CustomAnalyticsQuery]:
+        queries = []
+
+        for query_conf in self.custom_query_configs:
+            statement = " ".join(
+                (
+                    query_conf.get("prefix", ""),
+                    query_conf["statement"],
+                    query_conf.get("suffix", ""),
+                )
+            ).strip()
+
+            if set_clause := query_conf.get("set"):
+                statement = f"SET {set_clause}; {statement}"
+
+            named_arg_combinations = [{}]
+            if named_args_conf := query_conf.get("named_args"):
+                arg_names = [arg["name"] for arg in named_args_conf]
+                arg_values = [arg["values"] for arg in named_args_conf]
+                named_arg_combinations = [
+                    dict(zip(arg_names, values)) for values in itertools.product(*arg_values)
+                ]
+
+            for named_args in named_arg_combinations:
+                queries.append(
+                    CustomAnalyticsQuery(
+                        statement,
+                        named_args,
+                        query_conf.get("name"),
+                    )
+                )
+
+        return queries
+
+    def _download_query_log(self, host: str):
+        if not self.worker_manager.is_remote:
+            return
+
+        # warn_only so a missing log or a failed transfer doesn't abort the run: this is called
+        # from a finally block, where aborting would mask the error we're collecting logs for.
+        with settings(host_string=host, warn_only=True):
+            with cd(self.worker_manager.WORKER_HOME), cd("perfrunner"):
+                if run(f"stat {self.log_file_path}", quiet=True).return_code:
+                    logger.warning(f"Query log file {self.log_file_path} not found on host {host}")
+                    return
+
+                get(self.log_file_path, local_path=f"./{self.log_file_path}")
+
+    @with_stats
+    def access(self) -> dict:
+        queries = self.get_query_list_from_configs()
+        worker = self.cluster_spec.workers[0]
+        api_url = self.rest._get_api_url(
+            host=self.analytics_node,
+            path="analytics/service",
+            plain_port=ANALYTICS_PORT,
+            ssl_port=ANALYTICS_PORT_SSL,
+        )
+        api_auth = self.rest._set_auth(url=api_url)
+
+        logger.info(
+            f"Running {len(queries)} queries against {self.analytics_node} from worker {worker}..."
+        )
+        async_result = custom_analytics_query_task.apply_async(
+            args=(
+                api_url,
+                api_auth,
+                queries,
+                self.log_file_path,
+                self.analytics_settings.custom_request_params,
+            ),
+            queue=worker,
+        )
+
+        try:
+            results = async_result.get()
+        finally:
+            self._download_query_log(worker)
+
+        return results
+
+    def run(self):
+        self.initial_load_and_sync()
+        if self.test_config.analytics_settings.use_cbo:
+            self.analyze_datasets(
+                self.test_config.analytics_settings.cbo_sample_size,
+                self.test_config.analytics_settings.cbo_sample_seed,
+                verbose=True,
+            )
+        results = self.access()
+        logger.info(f"Query timings: {pretty_dict(results['timings'])}")
+
+        # A query set interleaves DDL with the queries it sets up, so a single failure invalidates
+        # every timing measured after it. Fail loudly rather than reporting unusable numbers.
+        if failures := results["failures"]:
+            raise RuntimeError(
+                f"{len(failures)} custom queries failed, so the timings above are not "
+                f"trustworthy. See {self.log_file_path} for details. Failed: {failures}"
+            )
+
+
 class DropDatasetTest(AnalyticsTest):
     def _report_kpi(self, num_items, time_elapsed):
         self.reporter.post(*self.metrics.avg_drop_rate(num_items, time_elapsed))
@@ -1912,8 +2029,8 @@ class ConnectTest(AnalyticsTest):
 
 
 class TPCDSQueryTest(AnalyticsTest):
-    COUNT_QUERIES = "perfrunner/workloads/tpcdsfun/count_queries.yaml"
-    QUERIES = "perfrunner/workloads/tpcdsfun/queries.yaml"
+    COUNT_QUERIES = "perfrunner/workloads/analytics/tpcdsfun/count_queries.yaml"
+    QUERIES = "perfrunner/workloads/analytics/tpcdsfun/queries.yaml"
 
     @property
     def indexes(self) -> list[IndexDef]:

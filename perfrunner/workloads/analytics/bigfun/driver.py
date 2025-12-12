@@ -8,7 +8,7 @@ import numpy
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.rest import RestType
-from perfrunner.workloads.bigfun.query_gen import Query, new_queries
+from perfrunner.workloads.analytics.bigfun.query_gen import Query, new_queries
 
 
 def store_metrics(query: Query, response_json: dict):
@@ -21,7 +21,8 @@ def store_metrics(query: Query, response_json: dict):
                     "statement": query.statement,
                     "metrics": response_json.get("metrics", {}),
                     "plans": response_json.get("plans", {}),
-                    "errors": response_json.get("errors", {}),
+                    "errors": response_json.get("errors", []),
+                    "warnings": response_json.get("warnings", []),
                 }
             )
         )

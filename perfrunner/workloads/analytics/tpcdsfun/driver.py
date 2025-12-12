@@ -8,7 +8,7 @@ import numpy
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.workloads.tpcdsfun.query_gen import Query, new_queries
+from perfrunner.workloads.analytics.tpcdsfun.query_gen import Query, new_queries
 
 
 def store_metrics(statement: str, metrics: dict):

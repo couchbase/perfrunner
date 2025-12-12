@@ -149,9 +149,18 @@ def read_json(filename: str) -> dict:
         return json.load(fh)
 
 
+def try_json_decode(value: str) -> dict:
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        logger.warning(f"Failed to decode JSON from value: {value}")
+        return {}
+
+
 def read_yaml(filename: str) -> dict:
     with open(filename) as fh:
         return yaml.safe_load(fh)
+
 
 def sort_bucket_key(bucket: str, bucket_size: int = 1000, bucket_count: int = 100) -> float:
     if bucket.startswith('>'):
@@ -168,6 +177,7 @@ def sort_bucket_key(bucket: str, bucket_size: int = 1000, bucket_count: int = 10
             return float("inf")
         return start_us
     return 0
+
 
 def maybe_atoi(a: str, t=int) -> Union[int, float, str, bool]:
     if a.lower() == 'false':
@@ -190,38 +200,44 @@ def human_format(number: float, p: int = 0) -> str:
     return f'{number:.{p}f}{["", "K", "M", "G", "T", "P"][magnitude]}'
 
 
-_GO_DURATION_RE = re.compile(r'(\d+(?:\.\d+)?)(ns|µs|us|ms|s|m|h)')
-
-_GO_DURATION_UNIT_MS = {
-    'ns': 1e-6,
-    'us': 1e-3,
-    'µs': 1e-3,
-    'ms': 1.0,
-    's': 1000.0,
-    'm': 60_000.0,
-    'h': 3_600_000.0,
+DURATION_UNITS_TO_SECS = {
+    "h": 3600.0,
+    "m": 60.0,
+    "s": 1.0,
+    "ms": 1e-3,
+    "us": 1e-6,
+    "μs": 1e-6,
+    "µs": 1e-6,
+    "ns": 1e-9,
 }
 
 
-def parse_go_duration_ms(value) -> float:
-    """Parse a Go time.Duration string to milliseconds.
+def parse_duration_to_secs(duration: str) -> float:
+    """Convert a duration string to seconds, e.g. '250ms' -> 0.25, '1m20.5s' -> 80.5.
 
-    Handles both single-unit ("1.234ms", "2.5s") and compound
-    ("1m40.5s", "2h3m4.005s") forms produced by Duration.String().
+    A bare number is read as seconds. Compound durations are summed. NaN is returned unless the
+    whole string is consumed, so an unrecognised unit is never silently read as seconds.
     """
-    if value is None:
-        return 0.0
-    if isinstance(value, (int, float)):
-        return float(value)
-    s = str(value).strip()
-    matches = _GO_DURATION_RE.findall(s)
-    if matches:
-        return sum(float(amount) * _GO_DURATION_UNIT_MS[unit] for amount, unit in matches)
-    try:
-        return float(s)
-    except ValueError:
-        logger.warning(f"parse_go_duration_ms: unrecognized duration {s!r}, returning 0.0")
-        return 0.0
+    if not (duration := duration.strip()):
+        logger.error("Cannot parse duration from an empty string")
+        return float("nan")
+
+    total_secs, pos = 0.0, 0
+    for m in re.finditer(r"(\d+(?:\.\d+)?)\s*([a-zA-Zμµ]*)\s*", duration):
+        if m.start() != pos:
+            break  # Non-numeric junk between components: bail out and report below
+        unit = (m.group(2) or "s").lower()
+        if (multiplier := DURATION_UNITS_TO_SECS.get(unit)) is None:
+            logger.error(f"Unknown duration unit '{unit}' in duration: {duration}")
+            return float("nan")
+        total_secs += float(m.group(1)) * multiplier
+        pos = m.end()
+
+    if pos != len(duration):
+        logger.error(f"Failed to parse duration: {duration}")
+        return float("nan")
+
+    return total_secs
 
 
 def copy_template(source, dest):

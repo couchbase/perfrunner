@@ -20,6 +20,7 @@ from perfrunner.helpers.misc import (
     maybe_atoi,
     run_aws_cli_command,
     target_hash,
+    try_json_decode,
 )
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
@@ -3095,20 +3096,23 @@ class AnalyticsSettings:
             options.pop("ingest_during_load", self.INGEST_DURING_LOAD)
         )
         self._bigfun_request_params_undecoded = options.pop("bigfun_request_params", "{}")
+        self._custom_request_params_undecoded = options.pop("custom_request_params", "{}")
 
         # Only applicable to incremental ingestion tests
         self.resync = maybe_atoi(options.pop("resync", self.RESYNC))
+
+        self.custom_query_conf_file = options.pop("custom_query_conf_file", "")
 
         # Remaining settings are for analytics config REST API
         self.config_settings = {k: maybe_atoi(v) for k, v in options.items()}
 
     @property
     def bigfun_request_params(self) -> dict:
-        try:
-            return json.loads(self._bigfun_request_params_undecoded)
-        except json.JSONDecodeError:
-            logger.warning("Failed to decode JSON from bigfun_request_params option")
-            return {}
+        return try_json_decode(self._bigfun_request_params_undecoded)
+
+    @property
+    def custom_request_params(self) -> dict:
+        return try_json_decode(self._custom_request_params_undecoded)
 
 
 class AnalyticsExternalDataSettings:

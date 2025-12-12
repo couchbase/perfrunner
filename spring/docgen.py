@@ -14,7 +14,7 @@ from spookyhash import _spookyhash
 
 from fastdocgen import build_achievements
 from perfrunner.settings import PhaseSettings as WorkloadSettings
-from perfrunner.workloads.bigfun import query_gen
+from perfrunner.workloads.analytics.bigfun import query_gen
 from spring.dictionary import (
     CATEGORIES,
     COUNTIES,

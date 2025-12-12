@@ -1,0 +1,57 @@
+family: ch2
+datasets:
+  - &base
+    name: customer
+    type: standalone
+    primary_key_field_names: [c_w_id, c_d_id, c_id]
+    primary_key_field_types: [int, int, int]
+
+  - <<: *base
+    name: district
+    primary_key_field_names: [d_w_id, d_id]
+    primary_key_field_types: [int, int]
+
+  - <<: *base
+    name: history
+    primary_key_field_names: [h_c_id, h_c_d_id, h_c_w_id, h_w_id, h_d_id, h_date, h_amount, h_data]
+    primary_key_field_types: [int, int, int, int, int, string, double, string]
+
+  - <<: *base
+    name: item
+    primary_key_field_names: [i_id]
+    primary_key_field_types: [int]
+
+  - <<: *base
+    name: neworder
+    primary_key_field_names: [no_w_id, no_d_id, no_o_id]
+    primary_key_field_types: [int, int, int]
+
+  - <<: *base
+    name: orders
+    primary_key_field_names: [o_w_id, o_d_id, o_id]
+    primary_key_field_types: [int, int, int]
+
+  - <<: *base
+    name: stock
+    primary_key_field_names: [s_w_id, s_i_id]
+    primary_key_field_types: [int, int]
+
+  - <<: *base
+    name: warehouse
+    primary_key_field_names: [w_id]
+    primary_key_field_types: [int]
+
+  - <<: *base
+    name: supplier
+    primary_key_field_names: [s_suppkey]
+    primary_key_field_types: [int]
+
+  - <<: *base
+    name: nation
+    primary_key_field_names: [n_nationkey]
+    primary_key_field_types: [int]
+
+  - <<: *base
+    name: region
+    primary_key_field_names: [r_regionkey]
+    primary_key_field_types: [int]

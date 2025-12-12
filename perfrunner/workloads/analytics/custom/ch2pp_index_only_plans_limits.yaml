@@ -1,0 +1,564 @@
+- &S1_warmup
+  statement: SELECT c.c_w_id FROM customer c WHERE c.c_discount > $N
+  suffix: &limit LIMIT 1000
+  named_args:
+    - &N
+      name: $N
+      values: [0.1, 0.495]
+
+- <<: *S1_warmup
+
+- &S2_warmup
+  statement: SELECT c.c_w_id, c.c_d_id, c.c_id, c.c_name.c_last, c.c_name.c_first
+              FROM customer c WHERE c.c_discount > $N
+  suffix: *limit
+  named_args:
+    - *N
+
+- <<: *S2_warmup
+
+- &S3_warmup
+  statement: "SELECT c.c_w_id,
+                    c.c_d_id,
+                    c.c_id,
+                    c.c_name.c_last,
+                    c.c_name.c_first,
+                    c.c_credit,
+                    c.c_credit_lim,
+                    c.c_balance,
+                    c.c_payment_cnt
+              FROM customer c WHERE c.c_discount > $N"
+  suffix: *limit
+  named_args:
+    - *N
+
+- <<: *S3_warmup
+
+- &M1_warmup
+  statement: SELECT COUNT(*) FROM customer c WHERE c.c_discount > $N
+  named_args:
+    - *N
+
+- <<: *M1_warmup
+
+- &M2_warmup
+  statement: SELECT SUM(c.c_balance) FROM customer c WHERE c.c_discount > $N
+  named_args:
+    - *N
+
+- <<: *M2_warmup
+
+- &M3_warmup
+  statement: SELECT SUM(c.c_balance), MAX(c.c_credit_lim), AVG(c.c_payment_cnt)
+              FROM customer c WHERE c.c_discount > $N
+  named_args:
+    - *N
+
+- <<: *M3_warmup
+
+- &M4_warmup
+  statement: SELECT c.c_w_id, COUNT(*) FROM customer c WHERE c.c_discount > $N GROUP BY c.c_w_id
+  named_args:
+    - *N
+
+- <<: *M4_warmup
+
+- &M5_warmup
+  statement: SELECT c.c_credit, SUM(c.c_balance) FROM customer c
+              WHERE c.c_discount > $N GROUP BY c.c_credit
+  named_args:
+    - *N
+
+- <<: *M5_warmup
+
+- &M6_warmup
+  statement: SELECT c.c_id, o.o_ol_cnt FROM customer c, orders o
+              WHERE c.c_w_id = o.o_w_id
+                AND c.c_d_id = o.o_d_id
+                AND c.c_id = o.o_c_id
+                AND o.o_entry_d > $K
+  suffix: *limit
+  named_args:
+    - &K
+      name: $K
+      values: ['"2015-04-27 00:00:00"', '"2020-07-09 00:00:00"']
+
+- <<: *M6_warmup
+
+- &M7_warmup
+  statement: SELECT c.c_id, SUM(o.o_ol_cnt) FROM customer c, orders o
+              WHERE c.c_w_id = o.o_w_id
+                AND c.c_d_id = o.o_d_id
+                AND c.c_id = o.o_c_id
+                AND c.c_discount > $N
+              GROUP BY c.c_id
+  named_args:
+    - *N
+
+- <<: *M7_warmup
+
+- &M8_warmup
+  statement: SELECT c.c_id, o.o_ol_cnt FROM customer c, orders o
+              WHERE c.c_w_id = o.o_w_id
+                AND c.c_d_id = o.o_d_id
+                AND c.c_id = o.o_c_id
+                AND c.c_discount > $N
+                AND o.o_entry_d > $K
+  suffix: *limit
+  named_args:
+    - *N
+    - *K
+
+- <<: *M8_warmup
+
+- &S1
+  <<: *S1_warmup
+  name: S1_no_index
+
+- &S2
+  <<: *S2_warmup
+  name: S2_no_index
+
+- &S3
+  <<: *S3_warmup
+  name: S3_no_index
+
+- &M1
+  <<: *M1_warmup
+  name: M1_no_index
+
+- &M2
+  <<: *M2_warmup
+  name: M2_no_index
+
+- &M3
+  <<: *M3_warmup
+  name: M3_no_index
+
+- &M4
+  <<: *M4_warmup
+  name: M4_no_index
+
+- &M5
+  <<: *M5_warmup
+  name: M5_no_index
+
+- &M6
+  <<: *M6_warmup
+  name: M6_no_index
+
+- &M7
+  <<: *M7_warmup
+  name: M7_no_index
+
+- &M8
+  <<: *M8_warmup
+  name: M8_no_index
+
+- statement: &Idx1_create CREATE INDEX customer_discount ON customer(c_discount)
+
+- <<: *S1
+  name: S1_Idx1_trad
+  set: &no_covering_idx '`compiler.index.covering` "false"'
+
+- <<: *S1
+  name: S1_Idx1_covering
+
+- <<: *M1
+  name: M1_Idx1_trad
+  set: *no_covering_idx
+
+- <<: *M1
+  name: M1_Idx1_covering
+
+- <<: *M4
+  name: M4_Idx1_trad
+  set: *no_covering_idx
+
+- <<: *M4
+  name: M4_Idx1_covering
+
+- <<: *M7
+  name: M7_Idx1_trad
+  set: *no_covering_idx
+
+- <<: *M7
+  name: M7_Idx1_covering
+
+- <<: *M8
+  name: M8_Idx1_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx1_covering
+
+- statement: &Idx1_drop DROP INDEX customer.customer_discount
+
+- statement: &Idx2_create CREATE INDEX customer_discount_last_first
+              ON customer(c_discount, c_name.c_last, c_name.c_first)
+
+- <<: *S1
+  name: S1_Idx2_trad
+  set: *no_covering_idx
+
+- <<: *S1
+  name: S1_Idx2_covering
+
+- <<: *S2
+  name: S2_Idx2_trad
+  set: *no_covering_idx
+
+- <<: *S2
+  name: S2_Idx2_covering
+
+- <<: *M1
+  name: M1_Idx2_trad
+  set: *no_covering_idx
+
+- <<: *M1
+  name: M1_Idx2_covering
+
+- <<: *M4
+  name: M4_Idx2_trad
+  set: *no_covering_idx
+
+- <<: *M4
+  name: M4_Idx2_covering
+
+- <<: *M7
+  name: M7_Idx2_trad
+  set: *no_covering_idx
+
+- <<: *M7
+  name: M7_Idx2_covering
+
+- <<: *M8
+  name: M8_Idx2_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx2_covering
+
+- statement: &Idx2_drop DROP INDEX customer.customer_discount_last_first
+
+- statement: &Idx3_create CREATE INDEX customer_discount_last_first_credit_credit_lim_balance_payment_cnt
+              ON customer(
+                c_discount,
+                c_name.c_last,
+                c_name.c_first,
+                c_credit,
+                c_credit_lim,
+                c_balance,
+                c_payment_cnt
+              )
+
+- <<: *S1
+  name: S1_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *S1
+  name: S1_Idx3_covering
+
+- <<: *S2
+  name: S2_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *S2
+  name: S2_Idx3_covering
+
+- <<: *S3
+  name: S3_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *S3
+  name: S3_Idx3_covering
+
+- <<: *M1
+  name: M1_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *M1
+  name: M1_Idx3_covering
+
+- <<: *M2
+  name: M2_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *M2
+  name: M2_Idx3_covering
+
+- <<: *M3
+  name: M3_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *M3
+  name: M3_Idx3_covering
+
+- <<: *M4
+  name: M4_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *M4
+  name: M4_Idx3_covering
+
+- <<: *M5
+  name: M5_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *M5
+  name: M5_Idx3_covering
+
+- <<: *M7
+  name: M7_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *M7
+  name: M7_Idx3_covering
+
+- <<: *M8
+  name: M8_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx3_covering
+
+- statement: &Idx3_drop DROP INDEX customer.customer_discount_last_first_credit_credit_lim_balance_payment_cnt
+
+- statement: &Idx4_create CREATE INDEX customer_discount_balance ON customer(c_discount, c_balance)
+
+- <<: *S1
+  name: S1_Idx4_trad
+  set: *no_covering_idx
+
+- <<: *S1
+  name: S1_Idx4_covering
+
+- <<: *M1
+  name: M1_Idx4_trad
+  set: *no_covering_idx
+
+- <<: *M1
+  name: M1_Idx4_covering
+
+- <<: *M2
+  name: M2_Idx4_trad
+  set: *no_covering_idx
+
+- <<: *M2
+  name: M2_Idx4_covering
+
+- <<: *M4
+  name: M4_Idx4_trad
+  set: *no_covering_idx
+
+- <<: *M4
+  name: M4_Idx4_covering
+
+- <<: *M7
+  name: M7_Idx4_trad
+  set: *no_covering_idx
+
+- <<: *M7
+  name: M7_Idx4_covering
+
+- <<: *M8
+  name: M8_Idx4_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx4_covering
+
+- statement: &Idx4_drop DROP INDEX customer.customer_discount_balance
+
+- statement: &Idx5_create CREATE INDEX customer_discount_balance_credit_lim_payment_cnt
+              ON customer(c_discount, c_balance, c_credit_lim, c_payment_cnt)
+
+- <<: *S1
+  name: S1_Idx5_trad
+  set: *no_covering_idx
+
+- <<: *S1
+  name: S1_Idx5_covering
+
+- <<: *M1
+  name: M1_Idx5_trad
+  set: *no_covering_idx
+
+- <<: *M1
+  name: M1_Idx5_covering
+
+- <<: *M2
+  name: M2_Idx5_trad
+  set: *no_covering_idx
+
+- <<: *M2
+  name: M2_Idx5_covering
+
+- <<: *M3
+  name: M3_Idx5_trad
+  set: *no_covering_idx
+
+- <<: *M3
+  name: M3_Idx5_covering
+
+- <<: *M4
+  name: M4_Idx5_trad
+  set: *no_covering_idx
+
+- <<: *M4
+  name: M4_Idx5_covering
+
+- <<: *M7
+  name: M7_Idx5_trad
+  set: *no_covering_idx
+
+- <<: *M7
+  name: M7_Idx5_covering
+
+- <<: *M8
+  name: M8_Idx5_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx5_covering
+
+- statement: &Idx5_drop DROP INDEX customer.customer_discount_balance_credit_lim_payment_cnt
+
+- statement: &Idx6_create CREATE INDEX customer_discount_credit_balance
+              ON customer(c_discount, c_credit, c_balance)
+
+- <<: *S1
+  name: S1_Idx6_trad
+  set: *no_covering_idx
+
+- <<: *S1
+  name: S1_Idx6_covering
+
+- <<: *M1
+  name: M1_Idx6_trad
+  set: *no_covering_idx
+
+- <<: *M1
+  name: M1_Idx6_covering
+
+- <<: *M2
+  name: M2_Idx6_trad
+  set: *no_covering_idx
+
+- <<: *M2
+  name: M2_Idx6_covering
+
+- <<: *M4
+  name: M4_Idx6_trad
+  set: *no_covering_idx
+
+- <<: *M4
+  name: M4_Idx6_covering
+
+- <<: *M5
+  name: M5_Idx6_trad
+  set: *no_covering_idx
+
+- <<: *M5
+  name: M5_Idx6_covering
+
+- <<: *M7
+  name: M7_Idx6_trad
+  set: *no_covering_idx
+
+- <<: *M7
+  name: M7_Idx6_covering
+
+- <<: *M8
+  name: M8_Idx6_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx6_covering
+
+- statement: &Idx6_drop DROP INDEX customer.customer_discount_credit_balance
+
+- statement: &Idx7_create CREATE INDEX orders_entry_d_c_id_ol_cnt
+              ON orders(o_entry_d, o_c_id, o_ol_cnt)
+
+- <<: *M6
+  name: M6_Idx7_trad
+  set: *no_covering_idx
+
+- <<: *M6
+  name: M6_Idx7_covering
+
+- <<: *M8
+  name: M8_Idx7_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx7_covering
+
+- statement: *Idx1_create
+
+- <<: *M8
+  name: M8_Idx7_Idx1_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx7_Idx1_covering
+
+- statement: *Idx1_drop
+
+- statement: *Idx2_create
+
+- <<: *M8
+  name: M8_Idx7_Idx2_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx7_Idx2_covering
+
+- statement: *Idx2_drop
+
+- statement: *Idx3_create
+
+- <<: *M8
+  name: M8_Idx7_Idx3_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx7_Idx3_covering
+
+- statement: *Idx3_drop
+
+- statement: *Idx4_create
+
+- <<: *M8
+  name: M8_Idx7_Idx4_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx7_Idx4_covering
+
+- statement: *Idx4_drop
+
+- statement: *Idx5_create
+
+- <<: *M8
+  name: M8_Idx7_Idx5_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx7_Idx5_covering
+
+- statement: *Idx5_drop
+
+- statement: *Idx6_create
+
+- <<: *M8
+  name: M8_Idx7_Idx6_trad
+  set: *no_covering_idx
+
+- <<: *M8
+  name: M8_Idx7_Idx6_covering
+
+- statement: *Idx6_drop
+
+- statement: &Idx7_drop DROP INDEX orders.orders_entry_d_c_id_ol_cnt

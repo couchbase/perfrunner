@@ -1,0 +1,47 @@
+[test_case]
+test = perfrunner.tests.rebalance.RecoveryTest
+
+[showfast]
+title = Delta recovery after hard failover (min), 3 -> 4, 1 bucket x 100M x 2KB, 10K ops/sec, s=1 c=10000
+component = reb
+category = recovery
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 10
+
+[collection]
+scopes_per_bucket = 1
+collections_per_scope = 10000
+
+[load]
+items = 100000000
+size = 2048
+workers = 40
+
+[hot_load]
+items = 100000000
+workers = 40
+working_set = 5
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 10000
+items = 100000000
+workers = 24
+working_set = 5
+working_set_access = 98
+
+[rebalance]
+failed_nodes = 1
+failover = hard
+delta_recovery = 1
+delay_before_failover = 1200
+start_after = 1200

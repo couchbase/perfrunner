@@ -1,0 +1,45 @@
+[test_case]
+test = perfrunner.tests.kv.CompactionTest
+
+[showfast]
+title = Full compaction time (min), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate, s=1 c=10000
+component = kv
+category = compact
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+
+[collection]
+scopes_per_bucket = 1
+collections_per_scope = 10000
+
+[load]
+items = 1000000000
+size = 1024
+workers = 80
+key_fmtr = hex
+doc_gen = large
+
+[hot_load]
+items = 1000000000
+workers = 100
+working_set = 5
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+items = 1000000000
+working_set = 5
+working_set_access = 95
+workers = 36
+throughput = 15000

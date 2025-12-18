@@ -199,30 +199,43 @@ def remove_nulls(d: Union[dict, Any]) -> Union[dict, Any]:
 
 
 def run_local_shell_command(
-    command: str,
+    command: Union[str, list[str]],
+    *,
     success_msg: str = "",
     err_msg: str = "",
     quiet: bool = False,
-    env: dict[str, str] = {},
     raise_error: bool = False,
-) -> tuple[str, str, int]:
+    **popen_kwargs: dict,
+) -> tuple[Optional[str], Optional[str], int]:
     """Run a shell command locally using `subprocess` and print stdout + stderr on failure.
 
     Args
     ----
-    command: shell command to run
+    command: shell command to run (as a string or list of args)
     success_msg: message to print on success
     err_msg: message to print on failure (in addition to command stdout and stderr)
     quiet: if True, don't print stdout and stderr on failure
-    env: environment variables to set (adding to the current environment)
     raise_error: if True, raise exception if the command fails
+    **popen_kwargs: additional kwargs to pass to `subprocess.run`
 
     Returns
     -------
     command stdout, stderr, return code
 
     """
-    process = subprocess.run(command, shell=True, capture_output=True, env=os.environ | env)
+    popen_kwargs |= {
+        "shell": isinstance(command, str),
+        "env": os.environ | popen_kwargs.get("env", {}),
+    }
+    if capture_output := (not popen_kwargs.get("stdout") and not popen_kwargs.get("stderr")):
+        popen_kwargs["capture_output"] = True
+
+    process = subprocess.run(command, **popen_kwargs)
+
+    stdout, stderr = None, None
+    if capture_output:
+        stdout, stderr = process.stdout.decode(), process.stderr.decode()
+
     if (returncode := process.returncode) == 0:
         if success_msg:
             logger.info(success_msg)
@@ -230,12 +243,12 @@ def run_local_shell_command(
         if err_msg:
             logger.error(err_msg)
         logger.error(f"Command failed with return code {returncode}: {process.args}")
-        logger.error(f"Command stdout: {process.stdout.decode()}")
-        logger.error(f"Command stderr: {process.stderr.decode()}")
+        logger.error(f"Captured stdout: {stdout}")
+        logger.error(f"Captured stderr: {stderr}")
         if raise_error:
             raise Exception(f"Command failed with return code {returncode}: {process.args}")
 
-    return process.stdout.decode(), process.stderr.decode(), returncode
+    return stdout, stderr, returncode
 
 
 def set_azure_subscription(sub_name: str, alias: str) -> int:

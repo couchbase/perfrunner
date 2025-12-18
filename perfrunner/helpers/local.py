@@ -1,4 +1,5 @@
 import os
+import shlex
 import shutil
 import socket
 import time
@@ -8,6 +9,7 @@ from glob import glob
 from pathlib import Path
 from sys import platform
 from typing import List, Optional, Tuple
+from uuid import uuid4
 
 import paramiko
 from fabric.api import hide, lcd, local, quiet, settings, shell_env, warn_only
@@ -543,107 +545,105 @@ def cbimport(
     run_local_shell_command(cmd, raise_error=True)
 
 
-def run_cbc_pillowfight(host: str,
-                        bucket: str,
-                        password: str,
-                        username: str,
-                        num_items: int,
-                        num_threads: int,
-                        num_cycles: int,
-                        size: int,
-                        batch_size: int,
-                        writes: int,
-                        persist_to: int,
-                        replicate_to: int,
-                        connstr_params: dict,
-                        durability: int,
-                        doc_gen: str = 'binary',
-                        ssl_mode: str = 'none',
-                        populate: bool = False,
-                        time: int = 0,
-                        collections: dict = None,
-                        custom_pillowfight: bool = False):
-
-    cmd = 'cbc-pillowfight ' \
-        '--password {password} ' \
-        '--batch-size {batch_size} ' \
-        '--num-items {num_items} ' \
-        '--num-threads {num_threads} ' \
-        '--min-size {size} ' \
-        '--max-size {size} ' \
-        '--persist-to {persist_to} ' \
-        '--replicate-to {replicate_to} '
-
+def run_cbc_pillowfight(
+    host: str,
+    bucket: str,
+    password: str,
+    username: str,
+    num_items: int,
+    num_threads: int,
+    num_cycles: int,
+    size: int,
+    batch_size: int,
+    writes: int,
+    persist_to: int,
+    replicate_to: int,
+    connstr_params: dict,
+    durability: int,
+    doc_gen: str = "binary",
+    ssl_mode: str = "none",
+    populate: bool = False,
+    time: int = 0,
+    collections: Optional[dict] = None,
+    custom_pillowfight: bool = False,
+):
+    executable = "cbc-pillowfight"
     if custom_pillowfight:
-        cmd = '/tmp/libcouchbase_custom/libcouchbase/build/bin/'+cmd
+        executable = f"/tmp/libcouchbase_custom/libcouchbase/build/bin/{executable}"
+
+    cmd_args = [
+        executable,
+        "--password",
+        password,
+        "--batch-size",
+        batch_size,
+        "--num-items",
+        num_items,
+        "--num-threads",
+        num_threads,
+        "--min-size",
+        size,
+        "--max-size",
+        size,
+        "--persist-to",
+        persist_to,
+        "--replicate-to",
+        replicate_to,
+    ]
 
     if collections:
-        target_scope_collections = collections[bucket]
-        for scope in target_scope_collections.keys():
-            for collection in target_scope_collections[scope].keys():
-                if populate:
-                    if target_scope_collections[scope][collection]['load'] == 1:
-                        cmd += "--collection " + scope+"."+collection + " "
-                else:
-                    if target_scope_collections[scope][collection]['access'] == 1:
-                        cmd += "--collection " + scope+"."+collection + " "
+        for scope, collections in collections[bucket].items():
+            for collection, options in collections.items():
+                if populate and options["load"] == 1:
+                    cmd_args += ["--collection", f"{scope}.{collection}"]
+                elif not populate and options["access"] == 1:
+                    cmd_args += ["--collection", f"{scope}.{collection}"]
 
-    if doc_gen == 'json':
-        cmd += '--json '
-    elif doc_gen == 'json_snappy':
-        cmd += '--json --compress --compress '
+    if doc_gen == "json":
+        cmd_args += ["--json"]
+    elif doc_gen == "json_snappy":
+        cmd_args += ["--json", "--compress", "--compress"]
 
+    params = urllib.parse.urlencode(connstr_params)
     if ssl_mode in ["data", "n2n", "capella"]:
-        cmd += '--spec "couchbases://{host}/{bucket}?ssl=no_verify&{params}" -u {username} '
+        cmd_args += [
+            "--spec",
+            f"couchbases://{host}/{bucket}?ssl=no_verify&{params}",
+            "-u",
+            username,
+        ]
     else:
-        cmd += '--spec "couchbase://{host}/{bucket}?{params}" '
+        cmd_args += ["--spec", f"couchbase://{host}/{bucket}?{params}"]
 
     if populate:
-        cmd += '--populate-only '
+        cmd_args += ["--populate-only"]
     else:
-        cmd += \
-            '--set-pct {writes} ' \
-            '--num-cycles {num_cycles} ' \
-            '--no-population '
+        cmd_args += ["--set-pct", writes, "--num-cycles", num_cycles, "--no-population"]
 
-    durability_options = {
-        0: 'none',
-        1: 'majority',
-        2: 'majority_and_persist_to_active',
-        3: 'persist_to_majority'}
 
     if durability:
-        cmd += '--durability {durability} '
-
-    cmd += ' > /dev/null 2>&1'
+        durability_options = {
+            1: "majority",
+            2: "majority_and_persist_to_active",
+            3: "persist_to_majority",
+        }
+        cmd_args += ["--durability", durability_options[durability]]
 
     if time > 0:
         # We hit temporary failures when using SIGINT (Ctrl+C) to exit pillowfight gracefully.
         # So we revert to handling timeout manually.
+        cmd_args = ["timeout", time] + cmd_args
 
-        # On timeout(exit code is 124), we return 0 to indicate success.
-        cmd = f"timeout {time} {cmd} || ( [[ $? -eq 124 ]] && exit 0 )"
+    cmd_args = list(map(str, cmd_args))
+    logger.info(f"Running: {shlex.join(cmd_args)}")
+    _, stderr, return_code = run_local_shell_command(cmd_args, quiet=True)
 
-    params = urllib.parse.urlencode(connstr_params)
+    if return_code != 0:
+        if time > 0 and return_code == 124:
+            # When using `timeout` command, exit code 124 is returned on timeout.
+            return
 
-    cmd = cmd.format(host=host,
-                     bucket=bucket,
-                     password=password,
-                     username=username,
-                     params=params,
-                     num_items=num_items,
-                     num_threads=num_threads,
-                     num_cycles=num_cycles,
-                     size=size,
-                     batch_size=batch_size,
-                     persist_to=persist_to,
-                     replicate_to=replicate_to,
-                     writes=writes,
-                     durability=durability_options[durability]
-                     if durability else None)
-
-    logger.info('Running: {}'.format(cmd))
-    local(cmd, shell='/bin/bash')
+        logger.interrupt(f"Pillowfight failed with exit code {return_code}. stderr:\n{stderr}")
 
 
 def run_dcptest(host: str, username: str, password: str, bucket: str,
@@ -688,216 +688,192 @@ def build_ycsb(ycsb_client: str):
         local(cmd)
 
 
-def run_ycsb(host: str,
-             bucket: str,
-             password: str,
-             action: str,
-             ycsb_client: str,
-             workload: str,
-             items: int,
-             workers: int,
-             target: int,
-             epoll: str,
-             boost: int,
-             persist_to: int,
-             replicate_to: int,
-             num_atrs: int,
-             documentsintransaction: int,
-             transactionreadproportion: str,
-             transactionupdateproportion: str,
-             transactioninsertproportion: str,
-             requestdistribution: str,
-             ssl_keystore_file: str = '',
-             ssl_keystore_password: str = '',
-             ssl_mode: str = 'none',
-             certificate_file: str = '',
-             soe_params: dict = None,
-             ops: int = None,
-             execution_time: int = None,
-             cbcollect: int = 0,
-             timeseries: int = 0,
-             transactionsenabled: int = 0,
-             instance: int = 0,
-             fieldlength: int = 1024,
-             fieldcount: int = 10,
-             durability: int = None,
-             kv_endpoints: int = 1,
-             enable_mutation_token: str = None,
-             retry_strategy: str = 'default',
-             retry_lower: int = 1,
-             retry_upper: int = 500,
-             retry_factor: int = 2,
-             range_scan_sampling: bool = None,
-             ordered: bool = None,
-             prefix_scan: bool = None,
-             ycsb_jvm_args: str = None,
-             collections_map: dict = None,
-             out_of_order: int = 0,
-             phase_params: dict = None,
-             insert_test_params: dict = None,
-             cloud: bool = None):
-
-    cmd = 'bin/ycsb {action} {ycsb_client} ' \
-          '-P {workload} ' \
-          '-p writeallfields=true ' \
-          '-threads {workers} ' \
-          '-p target={target} ' \
-          '-p fieldlength={fieldlength} ' \
-          '-p fieldcount={fieldcount} ' \
-          '-p requestdistribution={requestdistribution} ' \
-          '-p couchbase.host={host} ' \
-          '-p couchbase.bucket={bucket} ' \
-          '-p couchbase.upsert=true ' \
-          '-p couchbase.epoll={epoll} ' \
-          '-p couchbase.boost={boost} ' \
-          '-p couchbase.kvEndpoints={kv_endpoints} ' \
-          '-p couchbase.sslMode={ssl_mode} ' \
-          '-p couchbase.certKeystoreFile=../{ssl_keystore_file} ' \
-          '-p couchbase.certKeystorePassword={ssl_keystore_password} ' \
-          '-p couchbase.certificateFile=../{certificate_file} ' \
-          '-p couchbase.password={password} ' \
-          '-p exportfile=ycsb_{action}_{instance}_{bucket}.log ' \
-          '-p couchbase.retryStrategy={retry_strategy} ' \
-          '-p couchbase.retryLower={retry_lower} ' \
-          '-p couchbase.retryUpper={retry_upper} ' \
-          '-p couchbase.retryFactor={retry_factor} ' \
-          '-p couchbase.rangeScanSampling={range_scan_sampling} ' \
-          '-p couchbase.prefixScan={prefix_scan} ' \
-          '-p couchbase.ordered={ordered} '
-
-    cmd = 'pyenv local 2.7.18 && ' + cmd
+def run_ycsb(
+    host: str,
+    bucket: str,
+    password: str,
+    action: str,
+    ycsb_client: str,
+    workload: str,
+    items: int,
+    workers: int,
+    target: int,
+    epoll: str,
+    boost: int,
+    persist_to: int,
+    replicate_to: int,
+    num_atrs: int,
+    documentsintransaction: int,
+    transactionreadproportion: str,
+    transactionupdateproportion: str,
+    transactioninsertproportion: str,
+    requestdistribution: str,
+    ssl_keystore_file: str = "",
+    ssl_keystore_password: str = "",
+    ssl_mode: str = "none",
+    certificate_file: str = "",
+    soe_params: Optional[dict] = None,
+    ops: Optional[int] = None,
+    execution_time: Optional[int] = None,
+    timeseries: int = 0,
+    transactionsenabled: int = 0,
+    instance: int = 0,
+    fieldlength: int = 1024,
+    fieldcount: int = 10,
+    durability: Optional[int] = None,
+    kv_endpoints: int = 1,
+    enable_mutation_token: Optional[str] = None,
+    retry_strategy: str = "default",
+    retry_lower: int = 1,
+    retry_upper: int = 500,
+    retry_factor: int = 2,
+    range_scan_sampling: Optional[bool] = None,
+    ordered: Optional[bool] = None,
+    prefix_scan: Optional[bool] = None,
+    ycsb_jvm_args: Optional[str] = None,
+    collections_map: Optional[dict] = None,
+    out_of_order: int = 0,
+    phase_params: Optional[dict] = None,
+    insert_test_params: Optional[dict] = None,
+):
+    parameters = [
+        "writeallfields=true",
+        f"target={target}",
+        f"fieldlength={fieldlength}",
+        f"fieldcount={fieldcount}",
+        f"requestdistribution={requestdistribution}",
+        f"couchbase.host={host}",
+        f"couchbase.bucket={bucket}",
+        "couchbase.upsert=true",
+        f"couchbase.epoll={epoll}",
+        f"couchbase.boost={boost}",
+        f"couchbase.kvEndpoints={kv_endpoints}",
+        f"couchbase.sslMode={ssl_mode}",
+        f"couchbase.certKeystoreFile=../{ssl_keystore_file}",
+        f"couchbase.certKeystorePassword={ssl_keystore_password}",
+        f"couchbase.certificateFile=../{certificate_file}",
+        f"couchbase.password={password}",
+        f"exportfile=ycsb_{action}_{instance}_{bucket}.log",
+        f"couchbase.retryStrategy={retry_strategy}",
+        f"couchbase.retryLower={retry_lower}",
+        f"couchbase.retryUpper={retry_upper}",
+        f"couchbase.retryFactor={retry_factor}",
+        f"couchbase.rangeScanSampling={range_scan_sampling}",
+        f"couchbase.prefixScan={prefix_scan}",
+        f"couchbase.ordered={ordered}",
+    ]
 
     if durability is None:
-        cmd += '-p couchbase.persistTo={persist_to} '
-        cmd += '-p couchbase.replicateTo={replicate_to} '
+        parameters += [f"couchbase.persistTo={persist_to}", f"couchbase.replicateTo={replicate_to}"]
     else:
-        cmd += '-p couchbase.durability={durability} '
+        parameters += [f"couchbase.durability={durability}"]
 
     if enable_mutation_token is not None:
-        cmd += '-p couchbase.enableMutationToken={enable_mutation_token} '
+        parameters += [f"couchbase.enableMutationToken={enable_mutation_token}"]
 
     if ops is not None:
-        cmd += ' -p operationcount={ops} '
+        parameters += [f"operationcount={ops}"]
     if execution_time is not None:
-        cmd += ' -p maxexecutiontime={execution_time} '
+        parameters += [f"maxexecutiontime={execution_time}"]
     if timeseries:
-        cmd += '-p measurementtype=timeseries '
+        parameters += ["measurementtype=timeseries"]
 
     if transactionsenabled:
-        cmd += ' -p couchbase.transactionsEnabled=true '
-        cmd += ' -p couchbase.atrs={num_atrs} '
-        cmd += ' -p documentsintransaction={documentsintransaction} '
-        cmd += ' -p transactionreadproportion={transactionreadproportion} '
-        cmd += ' -p transactionupdateproportion={transactionupdateproportion} '
-        cmd += ' -p transactioninsertproportion={transactioninsertproportion} '
+        parameters += [
+            "couchbase.transactionsEnabled=true",
+            f"couchbase.atrs={num_atrs}",
+            f"documentsintransaction={documentsintransaction}",
+            f"transactionreadproportion={transactionreadproportion}",
+            f"transactionupdateproportion={transactionupdateproportion}",
+            f"transactioninsertproportion={transactioninsertproportion}",
+        ]
 
     if ycsb_jvm_args is not None:
-        cmd += ' -jvm-args=\'{ycsb_jvm_args}\' '
-
-    cmd = cmd.format(host=host,
-                     bucket=bucket,
-                     action=action,
-                     ycsb_client=ycsb_client,
-                     workload=workload,
-                     items=items,
-                     ops=ops,
-                     workers=workers,
-                     target=target,
-                     execution_time=execution_time,
-                     epoll=epoll,
-                     documentsintransaction=documentsintransaction,
-                     transactionreadproportion=transactionreadproportion,
-                     transactionupdateproportion=transactionupdateproportion,
-                     transactioninsertproportion=transactioninsertproportion,
-                     requestdistribution=requestdistribution,
-                     boost=boost,
-                     persist_to=persist_to,
-                     replicate_to=replicate_to,
-                     num_atrs=num_atrs,
-                     instance=instance,
-                     ssl_mode=ssl_mode, password=password,
-                     ssl_keystore_file=ssl_keystore_file,
-                     ssl_keystore_password=ssl_keystore_password,
-                     certificate_file=certificate_file,
-                     fieldlength=fieldlength,
-                     fieldcount=fieldcount,
-                     durability=durability,
-                     kv_endpoints=kv_endpoints,
-                     enable_mutation_token=enable_mutation_token,
-                     retry_strategy=retry_strategy,
-                     retry_lower=retry_lower,
-                     retry_upper=retry_upper,
-                     retry_factor=retry_factor,
-                     range_scan_sampling=range_scan_sampling,
-                     prefix_scan=prefix_scan,
-                     ordered=ordered,
-                     ycsb_jvm_args=ycsb_jvm_args)
+        parameters += [f"jvm-args='{ycsb_jvm_args}'"]
 
     if soe_params is None:
         if phase_params:
-            cmd += ' -p totalrecordcount={totalrecordcount} '.format(totalrecordcount=items)
-            cmd += ' -p recordcount={items} '.format(
-                items=phase_params['inserts_per_workerinstance'])
-            cmd += ' -p insertstart={insertstart} '.format(insertstart=phase_params['insertstart'])
+            parameters += [
+                f"totalrecordcount={items}",
+                f"recordcount={phase_params['inserts_per_workerinstance']}",
+                f"insertstart={phase_params['insertstart']}",
+            ]
         elif insert_test_params:
-            cmd += ' -p recordcount={items} '.format(items=insert_test_params['recordcount'])
-            cmd += ' -p insertstart={insertstart} '.format(
-                insertstart=insert_test_params['insertstart'])
+            parameters += [
+                f"recordcount={insert_test_params['recordcount']}",
+                f"insertstart={insert_test_params['insertstart']}",
+            ]
         else:
-            cmd += ' -p recordcount={items} '.format(items=items)
+            parameters += [f"recordcount={items}"]
     else:
-        cmd += ' -p totalrecordcount={totalrecordcount} '.format(totalrecordcount=items)
-        cmd += ' -p recordcount={items} '.format(items=soe_params['recorded_load_cache_size'])
-        cmd += ' -p insertstart={insertstart} '.format(insertstart=soe_params['insertstart'])
+        parameters += [
+            f"totalrecordcount={items}",
+            f"recordcount={soe_params['recorded_load_cache_size']}",
+            f"insertstart={soe_params['insertstart']}",
+        ]
 
     if out_of_order:
-        cmd += ' -p couchbase.outOfOrderExecution=true '
+        parameters += ["couchbase.outOfOrderExecution=true"]
 
     if collections_map:
-        target_scope_collections = collections_map[bucket]
         target_scopes = set()
         target_collections = set()
 
-        for scope in target_scope_collections.keys():
-            for collection in target_scope_collections[scope].keys():
-                if target_scope_collections[scope][collection]['load'] == 1 \
-                        and target_scope_collections[scope][collection]['access'] == 1:
+        for scope, collections in collections_map[bucket].items():
+            for collection, options in collections.items():
+                if options["load"] == 1 and options["access"] == 1:
                     target_scopes.add(scope)
                     target_collections.add(collection)
 
-        records_per_collection = items // len(target_collections)
-        cmd += ' -p recordspercollection={recordspercollection} '\
-            .format(recordspercollection=records_per_collection)
-        cmd += ' -p collectioncount={num_of_collections} '\
-            .format(num_of_collections=len(target_collections))
-        cmd += ' -p scopecount={num_of_scopes} '\
-            .format(num_of_scopes=len(target_scopes))
+        parameters += [
+            f"recordspercollection={items // len(target_collections)}",
+            f"collectioncount={len(target_collections)}",
+            f"scopecount={len(target_scopes)}",
+            f"collectionsparam={','.join(target_collections)}",
+            f"scopesparam={','.join(target_scopes)}",
+        ]
 
-        collection_string = ''
+    cwd = "YCSB"
+    stdout, _, _ = run_local_shell_command("getconf PAGE_SIZE")
+    max_arg_strlen = int(stdout.strip()) * 32
+    if too_long_params := [arg for arg in parameters if len(arg) > max_arg_strlen]:
+        parameters = [arg for arg in parameters if arg not in too_long_params]
+        logger.info(f"Some parameters are too long to provide via CLI: {too_long_params}")
+        custom_workload = f"{workload}_custom_{uuid4().hex[:6]}"
+        logger.info(
+            f"Copying {workload} file to {custom_workload} and inserting long parameters there."
+        )
+        inject_params_into_ycsb_workload_file(
+            f"{cwd}/{workload}", f"{cwd}/{custom_workload}", too_long_params
+        )
+        workload = custom_workload
 
-        for coll in list(target_collections):
-            collection_string += coll + ","
+    cmd_args = ["bin/ycsb", action, ycsb_client, "-threads", workers, "-P", workload] + [
+        arg for param in parameters for arg in ["-p", param]
+    ]
+    cmd_args = list(map(str, cmd_args))
 
-        collections_param = collection_string[:-1]
+    logger.info(f"Running: {shlex.join(cmd_args)}")
+    run_local_shell_command("pyenv local 2.7.18", quiet=True, cwd=cwd)
+    with open(f"{cwd}/ycsb_{action}_{instance}_{bucket}_stderr.log", "w") as stderr_file:
+        run_local_shell_command(cmd_args, quiet=True, cwd=cwd, stderr=stderr_file)
 
-        cmd += ' -p collectionsparam={collectionsparam} '.format(collectionsparam=collections_param)
 
-        scope_string = ''
+def inject_params_into_ycsb_workload_file(
+    source_filename: str, target_filename: str, params: list[str]
+):
+    with open(source_filename, "r") as f:
+        lines = f.readlines()
+        for i, line in enumerate(lines):
+            for param in params:
+                if line.startswith(param.split("=", 1)[0]):
+                    lines[i] = param + "\n"
+                    params.remove(param)
+                    break
+        lines.extend(param + "\n" for param in params)
 
-        for scope in list(target_scopes):
-            scope_string += scope + ","
-
-        scopes_param = scope_string[:-1]
-
-        cmd += ' -p scopesparam={scopesparam} '.format(scopesparam=scopes_param)
-
-    cmd += ' 2>ycsb_{action}_{instance}_{bucket}_stderr.log '.format(action=action,
-                                                                     instance=instance,
-                                                                     bucket=bucket)
-
-    logger.info('Running: {}'.format(cmd))
-    with lcd('YCSB'):
-        local(cmd)
+    with open(target_filename, "w") as f:
+        f.writelines(lines)
 
 
 def run_tpcds_loader(host: str,

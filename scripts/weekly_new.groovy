@@ -294,6 +294,12 @@ pipeline {
                         buildComponent('XDCR-C2', testCases)
                     }
                 }
+                stage('XDCRCNG') {
+                    when { expression { return params.XDCR } }
+                    steps {
+                        buildComponent('XDCRCNG', testCases)
+                    }
+                }
                 stage('XDCR-Windows') {
                     when { expression { return params.XDCR_Windows } }
                     steps {

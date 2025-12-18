@@ -878,14 +878,33 @@ class DefaultClusterManager(ClusterManagerBase):
             self.remote.enable_ipv6()
 
     def set_x509_certificates(self):
-        if self.test_config.access_settings.ssl_mode == "auth":
-            local.create_x509_certificates(self.cluster_spec.servers)
+        if (
+            self.test_config.access_settings.ssl_mode == "auth"
+            or self.cluster_spec.stellar_gateways
+        ):
+            server_list = list(self.cluster_spec.servers)
+            if self.cluster_spec.stellar_gateways:
+                # The gateways present this certificate themselves, and goxdcr may reach
+                # them through HAProxy, so every such host needs a SAN entry too.
+                extra_hosts = list(self.cluster_spec.stellar_gateways)
+                if self.test_config.xdcr_settings.cng_haproxy:
+                    extra_hosts += self.cluster_spec.stellar_gateway_haproxy_hosts
+                server_list += [host for host in extra_hosts if host not in server_list]
+            logger.info(f"X509 certificate setup for: {server_list}")
+            local.create_x509_certificates(server_list)
             self.remote.allow_non_local_ca_upload()
             self.remote.setup_x509()
-            self.rest.upload_cluster_certificate(self.cluster_spec.servers[0])
-            for i in range(self.initial_nodes[0]):
-                self.rest.reload_cluster_certificate(self.cluster_spec.servers[i])
-                self.rest.enable_certificate_auth(self.cluster_spec.servers[i])
+
+            # Every cluster keeps its own certificate, so the CA has to be uploaded to, and
+            # the certificate reloaded on, each of them separately.
+            offset = 0
+            for num_nodes in self.initial_nodes:
+                nodes = self.cluster_spec.servers[offset:offset + num_nodes]
+                self.rest.upload_cluster_certificate(nodes[0])
+                for node in nodes:
+                    self.rest.reload_cluster_certificate(node)
+                    self.rest.enable_certificate_auth(node)
+                offset += num_nodes
 
     def set_cipher_suite(self):
         if self.test_config.access_settings.cipher_list:

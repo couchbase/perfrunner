@@ -34,6 +34,7 @@ from perfrunner.remote.context import (
     all_clients,
     all_kafka_nodes,
     all_servers,
+    all_stellar_gateways,
     cbl_clients,
     kafka_brokers,
     kafka_zookeepers,
@@ -515,6 +516,71 @@ class RemoteLinux(Remote):
         for ip in _filter:
             run('tc filter add dev {} protocol ip prio 1 u32 '
                 'match ip dst {} flowid 1:11'.format(_if, ip))
+
+    def start_haproxy(self, node, config):
+        with settings(host_string=node):
+            if run('command -v haproxy', quiet=True, warn_only=True).failed:
+                logger.info(f'HAProxy not found on {node}, installing')
+                with settings(warn_only=False):
+                    if run('command -v apt-get', quiet=True, warn_only=True).succeeded:
+                        logger.info('Installing HAProxy with apt-get')
+                        run('DEBIAN_FRONTEND=noninteractive apt-get update -qq')
+                        run('DEBIAN_FRONTEND=noninteractive apt-get install -y -qq haproxy')
+                    elif run('command -v dnf', quiet=True, warn_only=True).succeeded:
+                        logger.info('Installing HAProxy with dnf')
+                        run('dnf install -y -q haproxy')
+                    else:
+                        logger.info('Installing HAProxy with yum')
+                        run('yum install -y -q haproxy')
+            run('rm -f /tmp/haproxy_cng.cfg /tmp/haproxy.log', quiet=True)
+            run(f'echo "{config}" > /tmp/haproxy_cng.cfg')
+            logger.info("Starting HAProxy")
+            cmd = "haproxy -f /tmp/haproxy_cng.cfg &>/tmp/haproxy.log &"
+            run(cmd, pty=False)
+
+    @all_clients
+    def stop_haproxy(self):
+        # A bidirectional test runs one instance per client machine, so every client has to
+        # be cleaned up. quiet: also called before startup, when nothing is running yet.
+        logger.info("Stopping HAProxy")
+        run("killall -9 haproxy", quiet=True)
+        logger.info("HAProxy successfully stopped")
+
+    def start_stellar_gateway(self, node, server_master, cert, key):
+        with settings(host_string=node):
+            run('rm -f /tmp/cng_cert.pem /tmp/cng_key.key', quiet=True)
+            run(f'echo "{cert}" > /tmp/cng_cert.pem')
+            run(f'echo "{key}" > /tmp/cng_key.key')
+            logger.info(run('/tmp/stellar-gateway --version 2>&1', pty=False))
+            logger.info(f'Starting Stellar Gateway on {node}')
+            cmd = "nohup /tmp/stellar-gateway --cert /tmp/cng_cert.pem --key /tmp/cng_key.key "\
+                  f"--cb-host {server_master} &>/tmp/stellar_gateway.log &"
+            run(cmd, pty=False)
+
+    @all_stellar_gateways
+    def download_stellar_gateway(self, url: str):
+        self.wget(url, outdir='/tmp')
+        filename = Path(urlparse(url).path).name
+        logger.info(f'Renaming Stellar Gateway from /tmp/{filename}')
+        run(f'mv /tmp/{filename} /tmp/stellar-gateway')
+        run('chmod +x /tmp/stellar-gateway')
+
+    @all_stellar_gateways
+    def stop_stellar_gateway(self):
+        logger.info('Stopping Stellar Gateway')
+        # Ask nicely first so the gateway can flush its log, then insist.
+        run("killall -TERM stellar-gateway", quiet=True)
+        run(
+            "for _ in $(seq 1 30); do "
+            "pgrep -x stellar-gateway >/dev/null || exit 0; sleep 1; "
+            "done; killall -9 stellar-gateway 2>/dev/null; exit 0",
+            quiet=True,
+        )
+
+    @all_stellar_gateways
+    def remove_stellar_gateway(self):
+        logger.info('Removing Stellar Gateway binary')
+        run('rm -f /tmp/stellar-gateway')
 
     @all_servers
     def detect_core_dumps(self):
@@ -1569,6 +1635,16 @@ class RemoteLinux(Remote):
         with cd(f"{perfrunner_dir}/{task_settings.executable_dir}/"):
             logger.info(f"Running: {cmd}")
             run(cmd)
+
+    @all_stellar_gateways
+    def get_cng_logs(self):
+        host = env.host_string
+        logger.info(f'Collecting CNG logs from stellar gateway node {host}')
+        with cd('/tmp'):
+            if run('stat stellar_gateway.log', quiet=True, warn_only=True).succeeded:
+                # Every gateway writes to the same remote path, so the local copy has to
+                # be namespaced by host or the nodes overwrite each other's log.
+                get('stellar_gateway.log', local_path=f'stellar_gateway_{host}.log')
 
     @master_server
     def compress_sg_logs(self):

@@ -27,6 +27,15 @@ def master_server(task: Callable, *args, **kwargs):
 
 
 @decorator
+def all_stellar_gateways(task: Callable, *args, **kwargs):
+    """Execute the decorated function on all remote Stellar Gateway nodes."""
+    self = args[0]
+
+    hosts = self.cluster_spec.stellar_gateways
+    return execute(parallel(task), *args, hosts=hosts, **kwargs)
+
+
+@decorator
 def syncgateway_master_server(task: Callable, *args, **kwargs):
     """Execute the decorated function on master node."""
     self = args[0]

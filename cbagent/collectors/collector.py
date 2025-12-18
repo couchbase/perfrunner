@@ -217,6 +217,7 @@ class CouchbaseCollector(Collector):
         # already exist (empty => a clear RuntimeError instead of AttributeError).
         self.nodes = []
         self.nodes = list(self.get_nodes())
+        self.stellar_gateways = settings.stellar_gateways
         self.ssh_username = getattr(settings, "ssh_username", None)
         self.ssh_password = getattr(settings, "ssh_password", None)
         self.remote_workers = settings.remote

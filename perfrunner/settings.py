@@ -353,6 +353,13 @@ class ClusterSpec(Config):
             yield cluster_name, hosts
 
     @property
+    def stellar_gateway_clusters(self) -> Iterator:
+        if self.config.has_section('stellar_gateways'):
+            for cluster_name, servers in self.config.items('stellar_gateways'):
+                hosts = [s.split(':')[0] for s in servers.split()]
+                yield cluster_name, hosts
+
+    @property
     def cbl_clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('cblites'):
             hosts = [s.split(':')[0] for s in servers.split()]
@@ -424,6 +431,27 @@ class ClusterSpec(Config):
                 for server in cluster_servers:
                     servers.append(server)
         return servers
+
+    @property
+    def stellar_gateways_by_cluster(self) -> list[list[str]]:
+        gateways = dict(self.stellar_gateway_clusters)
+        return [gateways.get(cluster_name, []) for cluster_name, _ in self.clusters]
+
+    @property
+    def stellar_gateways(self) -> list[str]:
+        return [gateway
+                for cluster_gateways in self.stellar_gateways_by_cluster
+                for gateway in cluster_gateways]
+
+    @property
+    def stellar_gateway_haproxy_hosts(self) -> list[str]:
+        """Client machines available to host an HAProxy instance in front of the gateways.
+
+        One per fronted cluster. Tests assign them in the order the clusters are fronted,
+        so a unidirectional test only ever uses the first one.
+        """
+        num_fronted = sum(1 for gateways in self.stellar_gateways_by_cluster if gateways)
+        return self.workers[:num_fronted]
 
     @property
     def kafka_servers(self) -> list[str]:
@@ -1105,6 +1133,7 @@ class StatsSettings:
                         'indexer',
                         'memcached',
                         'sync_gateway']
+    STELLAR_PROCESSES = []
     TRACED_PROCESSES = []
 
     SECONDARY_STATSFILE = '/root/statsfile'
@@ -1124,6 +1153,8 @@ class StatsSettings:
             options.get('client_processes', '').split()
         self.server_processes = self.SERVER_PROCESSES + \
             options.get('server_processes', '').split()
+        self.stellar_processes = self.STELLAR_PROCESSES + \
+            options.get('stellar_processes', '').split()
         self.traced_processes = self.TRACED_PROCESSES + \
             options.get('traced_processes', '').split()
         self.secondary_statsfile = options.get('secondary_statsfile',
@@ -2375,6 +2406,8 @@ class XDCRSettings:
     CONN_LIMIT = 10
     QUEUE_LEN = 500
 
+    CNG_HAPROXY = 0
+
     def __init__(self, options: dict):
         self.demand_encryption = options.get('demand_encryption')
         self.filter_expression = options.get('filter_expression')
@@ -2399,6 +2432,10 @@ class XDCRSettings:
         self.conn_type = options.get('conn_type', self.CONN_TYPE)
         self.conn_limit = int(options.get('conn_limit', self.CONN_LIMIT))
         self.queue_len = int(options.get('queue_len', self.QUEUE_LEN))
+
+        # Put an HAProxy instance in front of each cluster's Cloud Native Gateways, so that
+        # goxdcr spreads its connections over all of them instead of only the first one.
+        self.cng_haproxy = int(options.get('cng_haproxy', self.CNG_HAPROXY))
 
         # Capella-specific settings
         self.xdcr_link_directions = options.get('xdcr_link_directions',

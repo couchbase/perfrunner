@@ -1,10 +1,14 @@
 import base64
+import os
+import socket
+import time
 from multiprocessing import Pool
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import target_hash
+from perfrunner.helpers.misc import SSLCertificate, target_hash
 from perfrunner.helpers.profiler import with_profiles
+from perfrunner.helpers.rest import CNG_DATA_PORT
 from perfrunner.helpers.worker import run_conflictsim_task, ycsb_data_load_task, ycsb_task
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
@@ -663,6 +667,194 @@ class UniDirXdcrInitTest(XdcrInitTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.load_target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+
+
+class XdcrCngTest(XdcrInitTest):
+
+    # How long to wait for the gateways to start accepting connections
+    CNG_STARTUP_TIMEOUT = 360
+    CNG_POLL_INTERVAL = 5
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.cluster_spec.stellar_gateways:
+            logger.interrupt('CNG tests need a [stellar_gateways] section whose keys match '
+                             'the [clusters] keys of the cluster spec')
+
+    def cng_clusters(self) -> list[int]:
+        """Indexes of the clusters that are fronted by gateways."""
+        raise NotImplementedError
+
+    @property
+    def use_haproxy(self) -> bool:
+        return bool(self.xdcr_settings.cng_haproxy)
+
+    def haproxy_host(self, cluster_index: int) -> str:
+        position = self.cng_clusters().index(cluster_index)
+        return self.cluster_spec.stellar_gateway_haproxy_hosts[position]
+
+    def gateway_endpoint(self, cluster_index: int) -> str:
+        """Address goxdcr replicates to in order to reach `cluster_index`."""
+        gateways = self.cluster_spec.stellar_gateways_by_cluster[cluster_index]
+        if self.use_haproxy:
+            return self.haproxy_host(cluster_index)
+        if len(gateways) > 1:
+            logger.warning(f'{len(gateways)} gateways front cluster {cluster_index + 1} but '
+                           f'cng_haproxy is off, so only {gateways[0]} will see any traffic')
+        return gateways[0]
+
+    def cluster_nodes(self, cluster_index: int) -> list[str]:
+        initial_nodes = self.cluster.initial_nodes
+        offset = sum(initial_nodes[:cluster_index])
+        return self.cluster_spec.servers[offset:offset + initial_nodes[cluster_index]]
+
+    def read_inbox_file(self, filename: str) -> str:
+        with open(os.path.join(SSLCertificate.INBOX, filename)) as f:
+            return f.read()
+
+    @property
+    def node_certificate(self) -> str:
+       return self.read_inbox_file('chain.pem')
+
+    @property
+    def node_key(self) -> str:
+        return self.read_inbox_file('pkey.key')
+
+    def root_certificate(self, host: str) -> str:
+        return self.rest.get_certificate(host).split('\n\n')[0]
+
+    def generate_haproxy_config(self, gateways: list[str]) -> str:
+        config_lines = [
+            'defaults',
+            '    mode tcp',
+            '    timeout connect 10s',
+            '    timeout client 5m',
+            '    timeout server 5m',
+            '',
+            'frontend cng_frontend',
+            f'    bind *:{CNG_DATA_PORT}',
+            '    default_backend cng_backend',
+            '',
+            'backend cng_backend',
+            '    balance roundrobin',
+        ]
+        config_lines += [f'    server cng{i} {gateway}:{CNG_DATA_PORT} check'
+                         for i, gateway in enumerate(gateways)]
+
+        config = '\n'.join(config_lines)
+        logger.info(f'Generated HAProxy config:\n{config}')
+        return config
+
+    def start_cng(self):
+        cert, key = self.node_certificate, self.node_key
+
+        for cluster_index in self.cng_clusters():
+            gateways = self.cluster_spec.stellar_gateways_by_cluster[cluster_index]
+            nodes = self.cluster_nodes(cluster_index)
+            # Spread the gateways round-robin over the nodes of the cluster they front.
+            for count, gateway in enumerate(gateways):
+                self.remote.start_stellar_gateway(gateway, nodes[count % len(nodes)], cert, key)
+
+            if self.use_haproxy:
+                self.remote.start_haproxy(self.haproxy_host(cluster_index),
+                                          self.generate_haproxy_config(gateways))
+
+    def stop_cng(self):
+        if self.use_haproxy:
+            self.remote.stop_haproxy()
+        self.remote.stop_stellar_gateway()
+
+    def wait_for_cng(self):
+        """Block until every endpoint goxdcr will use accepts TCP connections."""
+        endpoints = []
+        for cluster_index in self.cng_clusters():
+            endpoints += self.cluster_spec.stellar_gateways_by_cluster[cluster_index]
+            if self.use_haproxy:
+                endpoints.append(self.haproxy_host(cluster_index))
+
+        deadline = time.monotonic() + self.CNG_STARTUP_TIMEOUT
+        for host in endpoints:
+            while True:
+                try:
+                    with socket.create_connection((host, CNG_DATA_PORT), timeout=5):
+                        break
+                except OSError as e:
+                    if time.monotonic() >= deadline:
+                        logger.interrupt(f'{host}:{CNG_DATA_PORT} still unreachable after '
+                                         f'{self.CNG_STARTUP_TIMEOUT}s: {e}')
+                    time.sleep(self.CNG_POLL_INTERVAL)
+            logger.info(f'CNG endpoint {host}:{CNG_DATA_PORT} is up')
+
+    def prepare_data(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket(wait=True)
+
+    def run_cng_workload(self):
+        self.stop_cng()
+        self.start_cng()
+        self.wait_for_cng()
+
+        try:
+            self.prepare_data()
+
+            time_elapsed = self.init_xdcr()
+            self.report_kpi(time_elapsed)
+        finally:
+            self.stop_cng()
+
+    def run(self):
+        self.run_cng_workload()
+
+
+class UniDirXdcrInitCngTest(XdcrCngTest, UniDirXdcrInitTest):
+
+    """Unidirectional initial XDCR through gateways fronting the destination cluster."""
+
+    def cng_clusters(self) -> list[int]:
+        return [1]
+
+    def add_remote_cluster(self):
+        m1, m2 = self.cluster_spec.masters
+
+        # Authenticate with username/password only: with secureType=full ns_server rejects
+        # a payload carrying both credentials and a client certificate.
+        self.rest.add_remote_cluster(local_host=m1,
+                                     remote_host=f'couchbase2://{self.gateway_endpoint(1)}',
+                                     name=self.CLUSTER_NAME,
+                                     secure_type=self.xdcr_settings.secure_type,
+                                     certificate=self.root_certificate(m2))
+
+
+class BiDirXdcrInitCngTest(XdcrCngTest, BiDirXdcrInitTest):
+
+    """Bidirectional initial XDCR, with both clusters fronted by their own gateways."""
+
+    def cng_clusters(self) -> list[int]:
+        return [0, 1]
+
+    def prepare_data(self):
+        # BiDirXdcrInitTest.load() already waits for persistence and verifies the item counts
+        # of both the source and the destination bucket, and the bidirectional tests do not
+        # compact before replicating. Mirrors BiDirXdcrInitTest.run().
+        self.load()
+
+    def add_remote_clusters(self):
+        m1, m2 = self.cluster_spec.masters
+        secure_type = self.xdcr_settings.secure_type
+
+        # See UniDirXdcrInitCngTest.add_remote_cluster: username/password only.
+        self.rest.add_remote_cluster(local_host=m1,
+                                     remote_host=f'couchbase2://{self.gateway_endpoint(1)}',
+                                     name=self.cluster_name1,
+                                     secure_type=secure_type,
+                                     certificate=self.root_certificate(m2))
+        self.rest.add_remote_cluster(local_host=m2,
+                                     remote_host=f'couchbase2://{self.gateway_endpoint(0)}',
+                                     name=self.cluster_name2,
+                                     secure_type=secure_type,
+                                     certificate=self.root_certificate(m1))
 
 
 class UniDirXdcrInitRestoreTest(RestoreTest, UniDirXdcrInitTest):

@@ -20,11 +20,15 @@ class PSStats(RemoteStats):
 
         self.top_interval = min(max(1, self.interval - 1), self.MAX_TOP_INTERVAL)
 
-    @parallel_task(server_side=True)
+    @parallel_task(server_side=True, stellar_gateway=False)
     def get_server_samples(self, process):
         return self.get_samples(process)
 
-    @parallel_task(server_side=False)
+    @parallel_task(server_side=False, stellar_gateway=True)
+    def get_stellar_samples(self, process):
+        return self.get_samples(process)
+
+    @parallel_task(server_side=False, stellar_gateway=False)
     def get_client_samples(self, process):
         return self.get_samples(process)
 

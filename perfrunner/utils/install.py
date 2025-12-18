@@ -79,6 +79,12 @@ COLUMNAR_LOCATIONS = (
     ),
 )
 
+STELLAR_GATEWAY_LOCATION = (
+    f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-cloud-native-gateway/{{release}}/{{build}}/"
+)
+
+STELLAR_GATEWAY_PACKAGE = "cloud-native-gateway-amd64_{release}-{build}"
+
 PKG_PATTERNS = {
     "rpm": (
         "{product}-{edition}-{release}-{build}-linux.{arch}.rpm",
@@ -889,6 +895,40 @@ class CBLInstaller:
         )
 
 
+class StellarGatewayInstaller:
+    def __init__(self, cluster_spec: ClusterSpec, options: Namespace):
+        self.remote = RemoteHelper(cluster_spec, options.verbose)
+        self.options = options
+        self.cluster_spec = cluster_spec
+
+    @cached_property
+    def url(self) -> str:
+        version = self.options.stellar_gateway_version
+
+        if validators.url(version):
+            if url_exist(version):
+                return version
+            logger.interrupt(f'Invalid URL: {version}')
+
+        release, _, build = version.partition('-')
+        if not build:
+            logger.interrupt(f'Expected a release-build version (e.g. 1.0.0-1234), got: {version}')
+
+        url = (STELLAR_GATEWAY_LOCATION + STELLAR_GATEWAY_PACKAGE).format(release=release,
+                                                                         build=build)
+        if not url_exist(url):
+            logger.interrupt(f'Package not found: {url}')
+
+        return url
+
+    def install(self):
+        self.remote.remove_stellar_gateway()
+
+        logger.info(f'Package URL: {self.url}')
+
+        self.remote.download_stellar_gateway(self.url)
+
+
 def get_args():
     parser = ArgumentParser()
 
@@ -898,7 +938,7 @@ def get_args():
         "--url",
         "-cv",
         "--couchbase-version",
-        required=True,
+        required=False,
         dest="couchbase_version",
         help="the build version or the HTTP URL to a package",
     )
@@ -977,12 +1017,39 @@ def get_args():
         default=None,
         help="the HTTP URL to a cbl support libraries package",
     )
+    parser.add_argument(
+        "--stellar-gateway-version",
+        dest="stellar_gateway_version",
+        default=None,
+        help="the build version for a stellar gateway package",
+    )
     parser.add_argument("override", nargs="*", help="custom cluster settings")
     return parser.parse_args()
 
 
+def validate_args(args: Namespace):
+    """Check that exactly one product was requested.
+
+    `--couchbase-version` can't simply be `required=True` any more, because a Stellar
+    Gateway install doesn't need it, so the "one of these is mandatory" rule that argparse
+    used to enforce is enforced here instead.
+    """
+    products = {
+        "--couchbase-version": args.couchbase_version,
+        "--stellar-gateway-version": args.stellar_gateway_version,
+    }
+    requested = [flag for flag, version in products.items() if version]
+
+    if not requested:
+        logger.interrupt(f'One of {", ".join(products)} is required')
+    if len(requested) > 1:
+        logger.interrupt(f'{" and ".join(requested)} are mutually exclusive: '
+                         'install one product at a time')
+
+
 def main():
     args = get_args()
+    validate_args(args)
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(fname=args.cluster, override=args.override)
@@ -1015,6 +1082,8 @@ def main():
             installer.uninstall()
         else:
             installer.install()
+    elif args.stellar_gateway_version:
+        StellarGatewayInstaller(cluster_spec, args).install()
     else:
         installer = CouchbaseInstaller(cluster_spec, test_config, args)
         installer.install()

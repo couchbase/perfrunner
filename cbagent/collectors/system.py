@@ -21,7 +21,7 @@ class System(CouchbaseCollector):
 
     def update_metadata(self):
         self.mc.add_cluster()
-        for node in self.nodes + self.workers:
+        for node in self.nodes + self.workers + self.stellar_gateways:
             self.mc.add_server(node)
 
     def add_stats(self, node, stats):
@@ -88,7 +88,8 @@ class PS(System):
                                workers=self.workers,
                                user=self.ssh_username,
                                password=self.ssh_password,
-                               interval=self.interval)
+                               interval=self.interval,
+                               stellar_gateways=self.stellar_gateways)
 
     def sample(self):
         for process in self.settings.server_processes:
@@ -97,6 +98,10 @@ class PS(System):
 
         for process in self.settings.client_processes:
             for node, stats in self.sampler.get_client_samples(process).items():
+                self.add_stats(node, stats)
+
+        for process in self.settings.stellar_processes:
+            for node, stats in self.sampler.get_stellar_samples(process).items():
                 self.add_stats(node, stats)
 
 

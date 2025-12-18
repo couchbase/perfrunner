@@ -192,6 +192,9 @@ class PerfTest:
             if self.worker_manager.is_remote:
                 self.remote.get_pprof_files(self.worker_manager.WORKER_HOME)
 
+        if self.cluster_spec.stellar_gateways:
+            self.remote.get_cng_logs()
+
         if self.test_config.cluster.online_cores:
             self.remote.enable_cpu()
 

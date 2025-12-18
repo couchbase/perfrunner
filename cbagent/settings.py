@@ -29,8 +29,10 @@ class CbAgentSettings:
         self.secondary_statsfile = test.test_config.stats_settings.secondary_statsfile
         self.client_processes = test.test_config.stats_settings.client_processes
         self.server_processes = test.test_config.stats_settings.server_processes
+        self.stellar_processes = test.test_config.stats_settings.stellar_processes
         self.traced_processes = test.test_config.stats_settings.traced_processes
         self.workers = test.cluster_spec.workers
+        self.stellar_gateways = test.cluster_spec.stellar_gateways
         self.cloud = {"enabled": False}
         self.capella_infra = test.capella_infra
 

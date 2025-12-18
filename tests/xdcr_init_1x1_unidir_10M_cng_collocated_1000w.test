@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrInitCngTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 10M x 1KB, CNG collocated (1000 workers, 2 conns, 4 GOMAXPROCS)
+component = xdcr
+category = init_single
+orderby = aa
+
+[stats]
+server_processes = goxdcr
+stellar_processes = stellar-gateway
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 1 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+cngWorkerCount = 1000
+cngConnCount = 2
+goMaxProcs = 4
+
+[xdcr]
+secure_type = full
+
+[load]
+items = 10000000
+size = 1024
+workers = 80
+doc_gen = large

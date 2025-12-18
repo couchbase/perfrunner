@@ -46,6 +46,9 @@ SGW_APPSERVICE_METRICS_PORT = 4988
 ELASTICSEARCH_REST_PORT = 9200
 ELASTICSEARCH_REST_PORT_SSL = 19200
 
+# CNG Ports
+CNG_DATA_PORT = 18098
+
 
 @decorator
 def retry(method: Callable, *args, **kwargs):

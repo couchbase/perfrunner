@@ -1195,11 +1195,6 @@ class BigFunConnectTest(BigFunTest):
         super().restore_data()
         self.wait_for_persistence()
 
-        if self.analytics_link != "Local":
-            self.rest.create_analytics_link(
-                self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
-            )
-
         self.sync()
 
         avg_connect_time, avg_disconnect_time = \

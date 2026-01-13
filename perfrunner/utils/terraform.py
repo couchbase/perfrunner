@@ -1006,7 +1006,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             override_conf = {}
             if (server := self.options.capella_cb_version) and (ami := self.options.capella_ami):
                 override_conf |= {"server": server, "image": ami}
-            if agent_hash := self.options.capella_agent_hash:
+            if agent_hash := self.options.capella_operational_agent_hash:
                 override_conf["agent"] = {"hash": agent_hash}
             if release_id := self.options.release_id:
                 override_conf["releaseId"] = release_id
@@ -1809,7 +1809,7 @@ class CapellaColumnarDeployer(CloudVMDeployer):
             override_conf = {}
             if ami := self.options.columnar_ami:
                 override_conf["image"] = ami
-            if agent_hash := self.options.capella_agent_hash:
+            if agent_hash := self.options.capella_analytics_agent_hash:
                 override_conf["agent"] = {"hash": agent_hash}
 
             if override_conf:
@@ -2186,7 +2186,14 @@ def get_args():
         "--capella-sgw-ami", help="custom AMI to use for App Services Capella Deployment"
     )
     parser.add_argument("--columnar-ami", help="custom AMI to use for Columnar deployment")
-    parser.add_argument("--capella-agent-hash", help="agent hash to use for Capella deployment")
+    parser.add_argument(
+        "--capella-operational-agent-hash",
+        help="agent hash to use for Capella Operational cluster deployment",
+    )
+    parser.add_argument(
+        "--capella-analytics-agent-hash",
+        help="agent hash to use for Capella Analytics cluster deployment",
+    )
     parser.add_argument("--release-id", help="release id for managing releases")
     parser.add_argument(
         "--vpc-peering", action="store_true", help="enable VPC peering for Capella deployment"

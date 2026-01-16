@@ -41,6 +41,7 @@ from spring.docgen import (
     GroupedDocumentById,
     GSIMultiIndexDocument,
     HashJoinDocument,
+    HierarchicalFTSDocument,
     HighCompressibleDocument,
     HotKey,
     HundredIndexDocument,
@@ -423,6 +424,9 @@ class Worker:
                                                          ws.size_variation_max)
         elif self.ws.doc_gen == 'vector_embedding':
             self.docs = VectorEmbeddingDocument(self.ws.vector_query_map)
+
+        elif self.ws.doc_gen == 'hierarchical_fts_doc':
+            self.docs = HierarchicalFTSDocument(ws.size)
 
     def init_db(self):
         workload_client = CBGen

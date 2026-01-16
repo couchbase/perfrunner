@@ -1,0 +1,47 @@
+[test_case]
+test = perfrunner.tests.fts.FTSLatencyLoadTest
+
+[showfast]
+title = Hierarchical Nested Query, 10K KV w/sec, 1M docs, 3 node, FTS
+component = jts
+category = 1M
+sub_category = Latency
+orderby = q0b00000010
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[load]
+items = 1000000
+workers = 10
+doc_gen = hierarchical_fts_doc
+fts_data_spread_workers = 100
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[jts]
+jts_instances = 1
+logging_method = bucket_wise
+jts_repo_branch = multi_query_support
+test_duration = 600
+test_total_docs = 1000000
+test_query_workers = 1
+test_kv_workers = 60
+test_kv_throughput_goal = 10000
+test_driver = couchbase
+test_stats_limit = 1000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_data_file = ../tests/fts/data/benchmark/hierarchical_queries.txt
+test_worker_type = validatedLatency
+couchbase_index_name = perf_fts_index
+couchbase_index_configfile = tests/fts/index/fts_hierarchical.json
+test_mutation_field = company.name
+test_query_type = nested_conjuncts
+test_query_limit = 10
+test_query_field = company.name
+report_percentiles = 80,95,99

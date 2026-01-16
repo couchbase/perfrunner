@@ -25,6 +25,14 @@
     "Rebalance-Demeter": [
         {"job": "demeter_rebalance", "cluster": "demeter_4node_kv_index_n1ql_colocated_empty.spec", "test_config": "rebalance/dynamic_service_rebalance_index_query_multiple.test", "groups": "P0"}
     ],
+    "FTS": [
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_index_3node_1M_hierarchical.test", "groups": "P0"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_hierarchical.test", "groups": "P0"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_hierarchical.test", "groups": "P0"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_index_3node_1M_flat.test", "groups": "P0"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_flat.test", "groups": "P0"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_flat.test", "groups": "P0"}
+    ],
     "FTS-Rebalance": [
         {"job": "atlas_rebalance", "cluster": "atlas_1kv_2fts_empty.spec", "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_swap_1s_1000c_dynamic_services.test", "groups": "P0"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_swap_1s_1000c_dynamic_services_remove.test", "groups": "P0"}

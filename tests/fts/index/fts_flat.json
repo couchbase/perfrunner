@@ -1,0 +1,241 @@
+{
+  "name": "perf_fts_index-0",
+  "type": "fulltext-index",
+  "params": {
+    "doc_config": {
+      "docid_prefix_delim": "",
+      "docid_regexp": "",
+      "mode": "scope.collection.type_field",
+      "type_field": "type"
+    },
+    "mapping": {
+      "default_analyzer": "standard",
+      "default_datetime_parser": "dateTimeOptional",
+      "default_field": "_all",
+      "default_mapping": {
+        "dynamic": false,
+        "enabled": true,
+        "properties": {
+          "company": {
+            "dynamic": false,
+            "enabled": true,
+            "properties": {
+              "departments": {
+                "dynamic": false,
+                "enabled": true,
+                "nested": false,
+                "properties": {
+                  "employees": {
+                    "dynamic": false,
+                    "enabled": true,
+                    "nested": false,
+                    "properties": {
+                      "name": {
+                        "enabled": true,
+                        "dynamic": false,
+                        "fields": [
+                          {
+                            "analyzer": "keyword",
+                            "docvalues": true,
+                            "include_in_all": true,
+                            "include_term_vectors": true,
+                            "index": true,
+                            "name": "name",
+                            "store": true,
+                            "type": "text"
+                          }
+                        ]
+                      },
+                      "role": {
+                        "enabled": true,
+                        "dynamic": false,
+                        "fields": [
+                          {
+                            "analyzer": "keyword",
+                            "docvalues": true,
+                            "include_in_all": true,
+                            "include_term_vectors": true,
+                            "index": true,
+                            "name": "role",
+                            "store": true,
+                            "type": "text"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "projects": {
+                    "dynamic": false,
+                    "enabled": true,
+                    "nested": false,
+                    "properties": {
+                      "status": {
+                        "enabled": true,
+                        "dynamic": false,
+                        "fields": [
+                          {
+                            "analyzer": "keyword",
+                            "docvalues": true,
+                            "include_in_all": true,
+                            "include_term_vectors": true,
+                            "index": true,
+                            "name": "status",
+                            "store": true,
+                            "type": "text"
+                          }
+                        ]
+                      },
+                      "title": {
+                        "enabled": true,
+                        "dynamic": false,
+                        "fields": [
+                          {
+                            "analyzer": "keyword",
+                            "docvalues": true,
+                            "include_in_all": true,
+                            "include_term_vectors": true,
+                            "index": true,
+                            "name": "title",
+                            "store": true,
+                            "type": "text"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "budget": {
+                    "enabled": true,
+                    "dynamic": false,
+                    "fields": [
+                      {
+                        "docvalues": true,
+                        "include_in_all": true,
+                        "index": true,
+                        "name": "budget",
+                        "store": true,
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "name": {
+                    "enabled": true,
+                    "dynamic": false,
+                    "fields": [
+                      {
+                        "analyzer": "keyword",
+                        "docvalues": true,
+                        "include_in_all": true,
+                        "include_term_vectors": true,
+                        "index": true,
+                        "name": "name",
+                        "store": true,
+                        "type": "text"
+                      }
+                    ]
+                  }
+                }
+              },
+              "locations": {
+                "dynamic": false,
+                "enabled": true,
+                "nested": false,
+                "properties": {
+                  "city": {
+                    "enabled": true,
+                    "dynamic": false,
+                    "fields": [
+                      {
+                        "analyzer": "keyword",
+                        "docvalues": true,
+                        "include_in_all": true,
+                        "include_term_vectors": true,
+                        "index": true,
+                        "name": "city",
+                        "store": true,
+                        "type": "text"
+                      }
+                    ]
+                  },
+                  "country": {
+                    "enabled": true,
+                    "dynamic": false,
+                    "fields": [
+                      {
+                        "analyzer": "keyword",
+                        "docvalues": true,
+                        "include_in_all": true,
+                        "include_term_vectors": true,
+                        "index": true,
+                        "name": "country",
+                        "store": true,
+                        "type": "text"
+                      }
+                    ]
+                  }
+                }
+              },
+              "id": {
+                "enabled": true,
+                "dynamic": false,
+                "fields": [
+                  {
+                    "analyzer": "keyword",
+                    "docvalues": true,
+                    "include_term_vectors": true,
+                    "index": true,
+                    "name": "id",
+                    "store": true,
+                    "type": "text"
+                  }
+                ]
+              },
+              "name": {
+                "enabled": true,
+                "dynamic": false,
+                "fields": [
+                  {
+                    "analyzer": "keyword",
+                    "docvalues": true,
+                    "include_term_vectors": true,
+                    "index": true,
+                    "name": "name",
+                    "store": true,
+                    "type": "text"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "store": {
+      "indexType": "scorch",
+      "scorchMergePlanOptions": {
+        "floorSegmentFileSize": 20971520
+      },
+      "scorchPersisterOptions": {
+        "maxSizeInMemoryMergePerWorker": 20971520,
+        "numPersisterWorkers": 4
+      },
+      "segmentVersion": 16
+    }
+  },
+  "sourceType": "gocbcore",
+  "sourceName": "bucket-1",
+  "sourceParams": {
+    "scopeParams": {
+      "collections": [
+        {
+          "name": "collection-1"
+        }
+      ],
+      "name": "scope-1"
+    }
+  },
+  "planParams": {
+    "maxPartitionsPerPIndex": 512,
+    "indexPartitions": 3,
+    "numReplicas": 0
+  }
+}

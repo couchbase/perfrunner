@@ -2063,7 +2063,7 @@ class JTSAccessSettings(PhaseSettings):
 
     def __init__(self, options: dict):
         super().__init__(options)
-        self.jts_repo = self.JTS_REPO
+        self.jts_repo = options.get("jts_repo", self.JTS_REPO)
         self.jts_home_dir = self.JTS_HOME_DIR
         self.jts_run_cmd = self.JTS_RUN_CMD
         self.jts_logs_dir = self.JTS_LOGS_DIR

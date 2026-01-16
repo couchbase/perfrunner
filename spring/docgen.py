@@ -2552,6 +2552,7 @@ class FixedTextAndVectorDocument:
         doc["scalar"] = scalar
         return doc
 
+
 class VectorEmbeddingDocument:
     def __init__(self, vector_query_map) -> None:
         embeddings = []
@@ -2567,3 +2568,91 @@ class VectorEmbeddingDocument:
             "choice" : self.choices[random.randint(0, len(self.choices) - 1)]
         }
         return doc
+
+
+class HierarchicalFTSDocument(Document):
+    """
+    Generates hierarchical nested documents for FTS hierarchical search tests.
+
+    Matches the expected FTS index mapping exactly.
+    """
+
+    EMPLOYEE_NAMES = ["Eve", "Frank", "Ivan", "Alice", "Bob"]
+    EMPLOYEE_ROLES = ["Manager", "Engineer", "Lead"]
+    PROJECT_TITLES = ["Project_Alpha", "Project_Beta", "Project_Gamma"]
+    PROJECT_STATUS = ["completed", "ongoing", "planned"]
+    DEPARTMENT_NAMES = ["Engineering", "Sales", "HR"]
+    COUNTRIES = ["USA", "UK", "Canada", "Greece"]
+    CITIES = {
+        "USA": ["Athens", "New_York"],
+        "UK": ["London"],
+        "Canada": ["Toronto"],
+        "Greece": ["Athens"],
+    }
+
+    def __init__(
+        self,
+        avg_size: int,
+        avg_departments: int = 2,
+        avg_employees: int = 3,
+        avg_projects: int = 2,
+        avg_locations: int = 2,
+    ):
+        super().__init__(avg_size)
+        self.avg_departments = avg_departments
+        self.avg_employees = avg_employees
+        self.avg_projects = avg_projects
+        self.avg_locations = avg_locations
+
+    def _n(self, avg) -> int:
+        return max(1, int(np.random.normal(avg, 1)))
+
+    def build_employee(self) -> dict:
+        return {
+            "name": random.choice(self.EMPLOYEE_NAMES),
+            "role": random.choice(self.EMPLOYEE_ROLES),
+        }
+
+    def build_project(self) -> dict:
+        return {
+            "title": random.choice(self.PROJECT_TITLES),
+            "status": random.choice(self.PROJECT_STATUS),
+        }
+
+    def build_department(self) -> dict:
+        return {
+            "name": random.choice(self.DEPARTMENT_NAMES),
+            "budget": random.randint(100_000, 5_000_000),
+            "employees": [
+                self.build_employee()
+                for _ in range(self._n(self.avg_employees))
+            ],
+            "projects": [
+                self.build_project()
+                for _ in range(self._n(self.avg_projects))
+            ],
+        }
+
+    def build_location(self) -> dict:
+        country = random.choice(self.COUNTRIES)
+        return {
+            "country": country,
+            "city": random.choice(self.CITIES[country]),
+        }
+
+    def next(self, key: Key) -> dict:
+        return {
+            "type": "company",
+            "company": {
+                "id": key.string,
+                "name": f"Company-{key.number}",
+                "locations": [
+                    self.build_location()
+                    for _ in range(self._n(self.avg_locations))
+                ],
+                "departments": [
+                    self.build_department()
+                    for _ in range(self._n(self.avg_departments))
+                ],
+            },
+        }

@@ -3695,6 +3695,7 @@ class SyncgatewaySettings:
         self.nodes = int(options.get('nodes', self.NODES))
         self.starchannel = options.get('starchannel', self.STAR)
         self.grant_access = options.get('grant_access', self.GRANT_ACCESS)
+        self.warmup_cache = maybe_atoi(options.get('warmup_cache', "false"))
         self.channels_per_grant = options.get('channels_per_grant', self.CHANNELS_PER_GRANT)
         self.grant_access_in_scan = options.get('grant_access_in_scan', self.GRANT_ACCESS_IN_SCAN)
         self.build_label = options.get('build_label', '')

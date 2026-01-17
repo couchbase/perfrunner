@@ -34,6 +34,7 @@ from perfrunner.helpers.worker import (
     syncgateway_task_load_users,
     syncgateway_task_run_test,
     syncgateway_task_start_memcached,
+    syncgateway_task_warmup_cache,
     ycsb_data_load_task,
     ycsb_task,
 )
@@ -310,6 +311,18 @@ class SGPerfTest(PerfTest):
             )
 
     @with_stats
+    def warmup_cache(self):
+        if self.test_config.syncgateway_settings.warmup_cache:
+            self.run_sg_phase(
+                phase="warmup cache",
+                task=syncgateway_task_warmup_cache,
+                settings=self.settings,
+                target_iterator=None,
+                timer=self.settings.time,
+                distribute=self.use_distributed_load,
+            )
+
+    @with_stats
     def load_docs(self):
         self.run_sg_phase(
             phase="load docs",
@@ -418,8 +431,9 @@ class SGPerfTest(PerfTest):
         self.download_ycsb()
         self.start_memcached()
         self.load_users()
-        self.load_docs()
         self.init_users()
+        self.warmup_cache()
+        self.load_docs()
         self.grant_access()
         self.get_index_status()
         self.run_test()
@@ -1795,8 +1809,9 @@ class SGReplicateMultiClusterPull(SGPerfTest):
         self.download_ycsb()
         self.start_memcached()
         self.load_users()
-        self.load_docs()
         self.init_users()
+        self.warmup_cache()
+        self.load_docs()
         self.grant_access()
         self.download_blockholepuller_tool()
         self.run_bp_test()
@@ -3032,6 +3047,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
         self.start_memcached()
         self.load_users()
         self.init_users()
+        self.warmup_cache()
         self.grant_access()
         self.start_multi_cblitedb_continuous()
         logger.info("CBLites are started")

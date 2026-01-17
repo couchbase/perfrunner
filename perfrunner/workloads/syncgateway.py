@@ -88,6 +88,25 @@ GRANT_ACCESS_CMD = " run {ycsb_command} -s -P {workload} " \
                    "-p syncgateway.usecapella={use_capella} " \
                    "-p syncgateway.grantaccesstoall={grant_access}"
 
+WARMUP_CACHE_CMD = " run {ycsb_command} -s -P {workload} " \
+                   "-p recordcount={total_docs} " \
+                   "-p syncgateway.db={db} " \
+                   "-p operationcount=1000 " \
+                   "-p maxexecutiontime=36000 " \
+                   "-threads 1 " \
+                   "-p syncgateway.host={hosts} " \
+                   "-p syncgateway.auth={auth} " \
+                   "-p memcached.host={memcached_host} " \
+                   "-p syncgateway.totalusers={total_users} " \
+                   "-p syncgateway.runmode=changesonly " \
+                   "-p syncgateway.sequencestart={sequence_start} " \
+                   "-p syncgateway.warmupchannelcache={warmup_cache} " \
+                   "-p insertstart={insertstart} " \
+                   "-p readproportion=1 " \
+                   "-p syncgateway.feedmode=normal " \
+                   "-p syncgateway.usecapella={use_capella} " \
+                   "-p exportfile={exportfile} "
+
 RUN_TEST_CMD = " run {ycsb_command} -s -P {workload} " \
                "-p recordcount={total_docs} " \
                "-p syncgateway.db={db} " \
@@ -638,6 +657,47 @@ def syncgateway_grant_access(workload_settings: PhaseSettings,
                                      use_capella="true"
                                                  if cluster.capella_infrastructure else "false",
                                      channels_per_grant=sgs.channels_per_grant)
+
+    if workload_settings.collections:
+        params = add_collections(params, workload_settings, target)
+
+    if cluster.capella_infrastructure:
+        params = add_capella_password(params)
+
+    params = add_translated_ports(
+        params,
+        workload_settings.public_port,
+        workload_settings.admin_port,
+        workload_settings.memcached_port,
+    )
+    path = get_instance_home(workload_settings, worker_id)
+    run_cmd(path, BINARY_NAME, params, log_file_name)
+
+def syncgateway_warmup_cache(workload_settings: PhaseSettings,
+                             target: TargetSettings,
+                             timer: int,
+                             worker_id: int,
+                             cluster: ClusterSpec):
+
+    sgs = workload_settings.syncgateway_settings
+    bucket = target.bucket
+    db = f'db-{bucket.split("-")[1]}'
+    log_file_name = f'{sgs.log_title}_warmupcache_{worker_id}_{db}.log'
+    res_file_name = f'{sgs.log_title}_warmupcache_{worker_id}_{db}.result'
+    params = WARMUP_CACHE_CMD.format(ycsb_command=sgs.ycsb_command,
+                                     workload=sgs.workload,
+                                     db=db,
+                                     hosts=get_hosts(cluster, workload_settings),
+                                     total_docs=sgs.documents,
+                                     memcached_host=get_memcached_host(cluster, workload_settings),
+                                     auth=sgs.auth,
+                                     total_users=sgs.users,
+                                     insertstart=get_offset(workload_settings, worker_id),
+                                     sequence_start=int(sgs.users) + int(sgs.documents) + 1,
+                                     exportfile=res_file_name,
+                                     warmup_cache="true" if sgs.warmup_cache else "false",
+                                     use_capella="true"
+                                                 if cluster.capella_infrastructure else "false")
 
     if workload_settings.collections:
         params = add_collections(params, workload_settings, target)

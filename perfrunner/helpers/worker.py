@@ -52,6 +52,7 @@ from perfrunner.workloads.syncgateway import (
     syncgateway_load_users,
     syncgateway_run_test,
     syncgateway_start_memcached,
+    syncgateway_warmup_cache,
 )
 from perfrunner.workloads.tpcds import (
     tpcds_initial_data_load,
@@ -210,6 +211,11 @@ def syncgateway_task_init_users(*args):
 @celery.task
 def syncgateway_task_grant_access(*args):
     syncgateway_grant_access(*args)
+
+
+@celery.task
+def syncgateway_task_warmup_cache(*args):
+    syncgateway_warmup_cache(*args)
 
 
 @celery.task

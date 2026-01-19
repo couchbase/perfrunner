@@ -36,10 +36,26 @@ class PerfStore:
         async with self.async_session.post(url=url, json=data) as response:
             return await response.json()
 
-    def get_values(self, db: str, metric) -> List[float]:
-        url = '{}/{}/{}'.format(self.base_url, db, metric)
+    def get_timeseries(self, db: str, metric: str) -> list[list[int, float]]:
+        url = f"{self.base_url}/{db}/{metric}"
         data = self.session.get(url).json()
-        return [d[1] for d in data]
+        return data
+
+    def get_values(self, db: str, metric) -> list[float]:
+        return [v for _, v in self.get_timeseries(db, metric)]
+
+    def bulk_get_timeseries(self, dbs: list[str], metric: str) -> list[list[list[int, float]]]:
+        return [self.get_timeseries(db, metric) for db in dbs]
+
+    def bulk_get_timeseries_merged(self, dbs: list[str], metric: str) -> list[list[int, float]]:
+        return sorted(
+            [
+                ts_value
+                for timeseries in self.bulk_get_timeseries(dbs, metric)
+                for ts_value in timeseries
+            ],
+            key=lambda x: x[0],
+        )
 
     def get_summary(self, db: str, metric: str) -> Dict[str, float]:
         url = '{}/{}/{}/summary'.format(self.base_url, db, metric)

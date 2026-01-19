@@ -85,6 +85,17 @@ class CH3Metrics(CH2Metrics):
 CHXMetrics = TypeVar("CHXMetrics", CH2Metrics, CH3Metrics)
 
 
+@dataclass(frozen=True)
+class TimeseriesWindow:
+    start_ts: float
+    end_ts: float
+    label: str
+
+    def apply(self, timeseries: np.ndarray) -> np.ndarray:
+        timestamps = timeseries[:, 0]
+        return timeseries[(timestamps >= self.start_ts) & (timestamps < self.end_ts)]
+
+
 class MetricHelper:
 
     def __init__(self, test: PerfTest):
@@ -812,76 +823,110 @@ class MetricHelper:
 
         return time_taken, self._snapshots, metric_info
 
-    def kv_latency(self,
-                   operation: str,
-                   percentiles: Iterable[Number] = [99.9],
-                   collector: str = 'spring_latency',
-                   cluster_idx: int = 0) -> List[Metric]:
+    def kv_latency(
+        self,
+        operation: str,
+        percentiles: Iterable[Number] = [99.9],
+        collector: str = "spring_latency",
+        cluster_idx: int = 0,
+        windows: list[TimeseriesWindow] = [],
+    ) -> list[Metric]:
+        windows = windows or [TimeseriesWindow(start_ts=-1, end_ts=float("inf"), label="")]
         metrics = []
 
-        # The [''] represents the default case of not having any stat groups
-        stat_groups = self.test_config.collection.collection_stat_groups or ['']
+        stat_groups = self.test_config.collection.collection_stat_groups or [""]
 
         for stat_group in stat_groups:
-            latencies = self._kv_latency(operation, percentiles, collector, stat_group, cluster_idx)
-            for percentile, latency in zip(percentiles, latencies):
-                metric_id = '{}_{}{}_{:g}th'.format(
-                    self.test_config.name,
-                    operation,
-                    '_' + stat_group if stat_group != '' else '',
-                    percentile
-                )
-                metric_id = metric_id.replace('.', '')
+            window_latencies = self._kv_latency(
+                operation, percentiles, collector, stat_group, cluster_idx, windows
+            )
+            for window, latencies in zip(windows, window_latencies):
+                for percentile, latency in zip(percentiles, latencies):
+                    metric_id_parts = [
+                        self.test_config.name,
+                        operation,
+                        stat_group if stat_group != "" else None,
+                        f"{percentile:g}th",
+                        window.label if window.label != "" else None,
+                    ]
+                    title_prefix_parts = [
+                        f"{percentile:g}th percentile",
+                        operation.upper(),
+                        f"({stat_group})" if stat_group != "" else None,
+                        f"({window.label})" if window.label != "" else None,
+                    ]
 
-                title_prefix = '{:g}th percentile {}{}'.format(
-                    percentile,
-                    operation.upper(),
-                    ' (' + stat_group + ')' if stat_group != '' else ''
-                )
+                    if len(self.test.cbmonitor_clusters) > 1:
+                        metric_id_parts.append(f"cluster{cluster_idx + 1}")
+                        title_prefix_parts.append(f"(cluster {cluster_idx + 1})")
 
-                if len(self.test.cbmonitor_clusters) > 1:
-                    metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
-                    title_prefix = '{} (cluster {})'.format(title_prefix, cluster_idx + 1)
+                    metric_id = "_".join(filter(None, metric_id_parts)).replace(".", "")
+                    title_prefix = " ".join(filter(None, title_prefix_parts))
 
-                title = '{} {}'.format(title_prefix, self._title)
-
-                metric_info = self._metric_info(metric_id, title, chirality=-1,
-                                                stat_group=stat_group)
-                metric_info.update({'percentile': percentile, 'operation': operation})
-
-                metrics.append((latency, self._snapshots, metric_info))
+                    metric_info = self._metric_info(
+                        metric_id,
+                        title=f"{title_prefix} {self._title}",
+                        chirality=-1,
+                        stat_group=stat_group,
+                    )
+                    metric_info.update({"percentile": percentile, "operation": operation})
+                    if window.label:
+                        metric_info["window"] = window.label
+                    metrics.append((latency, self._snapshots, metric_info))
 
         return metrics
 
-    def _kv_latency(self,
-                    operation: str,
-                    percentiles: Iterable[Number],
-                    collector: str,
-                    stat_group: str = '',
-                    cluster_idx: int = 0) -> list[float]:
-        timings = []
-        metric = 'latency_{}'.format(operation)
+    def _kv_latency(
+        self,
+        operation: str,
+        percentiles: Iterable[Number],
+        collector: str,
+        stat_group: str = "",
+        cluster_idx: int = 0,
+        windows: list[TimeseriesWindow] = [],
+    ) -> list[list[float]]:
+        metric = f"latency_{operation}"
+        dbs = []
         for bucket in self.test_config.buckets:
-            bucket_group = '{}{}'.format(bucket, '_' + stat_group if stat_group != '' else '')
-
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[cluster_idx],
-                                         collector=collector,
-                                         bucket=bucket_group)
-
+            bucket_group = f"{bucket}{' ' + stat_group if stat_group != '' else ''}"
+            db = self.store.build_dbname(
+                cluster=self.test.cbmonitor_clusters[cluster_idx],
+                collector=collector,
+                bucket=bucket_group,
+            )
             if self.store.exists(db, metric):
-                timings += self.store.get_values(db, metric=metric)
+                dbs.append(db)
 
+        timings = self.store.bulk_get_timeseries_merged(dbs, metric)
         if not timings:
-            logger.warn('No latency data found for operation = {}, collector = {}, stat_group = {}'
-                        .format(operation, collector, stat_group))
+            logger.warning(f"No latency data found for {operation=}, {collector=}, {stat_group=}")
             return []
 
-        latencies = [
-            round(latency) if (latency := np.percentile(timings, p)) > 100 else round(latency, 2)
-            for p in percentiles
-        ]
+        timings = np.array(timings)
+        percentile_latencies = []
+        for w in windows:
+            w_timings = w.apply(timings)
+            if len(w_timings) == 0:
+                logger.error(f"No latency data found for timeseries window: {w}")
+                continue
 
-        return latencies
+            min_ts, max_ts = np.min(w_timings[:, 0]), np.max(w_timings[:, 0])
+            if w.label:
+                logger.info(
+                    f"Fetched data for timeseries window: label={w.label}, samples={len(w_timings)}"
+                    f", {min_ts=}, {max_ts=}, window_duration_secs={(max_ts - min_ts) / 1000:.2f}"
+                )
+
+            percentile_latencies.append(
+                [
+                    round(latency)
+                    if (latency := np.percentile(w_timings[:, 1], p)) > 100
+                    else round(latency, 2)
+                    for p in percentiles
+                ]
+            )
+
+        return percentile_latencies
 
     def observe_latency(self, percentile: Number) -> Metric:
         metric_id = '{}_{:g}th'.format(self.test_config.name, percentile)

@@ -5,6 +5,7 @@ import dateutil.parser
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import build_sdk_benchmark
+from perfrunner.helpers.metrics import TimeseriesWindow
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import (
@@ -99,8 +100,15 @@ class RebalanceTest(PerfTest):
                 else:
                     self.rest.add_node(master, node, services=services)
 
-            self.rest.rebalance(master, known_nodes, ejected_nodes)
-            self.monitor_progress(master)
+            if (ejected_nodes and not new_nodes) and self.rebalance_settings.reb_out_one_by_one:
+                # This simulates how the Capella control plane scales in a cluster.
+                for node in ejected_nodes:
+                    self.rest.rebalance(master, known_nodes, [node])
+                    self.monitor_progress(master)
+                    known_nodes.remove(node)
+            else:
+                self.rest.rebalance(master, known_nodes, ejected_nodes)
+                self.monitor_progress(master)
 
     def pre_rebalance(self):
         """Execute additional steps before rebalance."""
@@ -170,9 +178,39 @@ class RebalanceKVTest(RebalanceTest):
 
     COLLECTORS = {'latency': True}
 
+    def pre_rebalance(self):
+        super().pre_rebalance()
+        self.pre_rebalance_end = int(time.time() * 1000)
+
     def post_rebalance(self):
+        self.post_rebalance_start = int(time.time() * 1000)
         super().post_rebalance()
         self.worker_manager.abort_all_tasks()
+
+    def _report_kpi(self, *args, **kwargs):
+        super()._report_kpi(*args, **kwargs)
+
+        if not (reporting_windows := self.test_config.rebalance_settings.latency_reporting_windows):
+            return
+
+        latency_windows = [
+            TimeseriesWindow(start_ts=-1, end_ts=self.pre_rebalance_end, label="pre"),
+            TimeseriesWindow(
+                start_ts=self.pre_rebalance_end, end_ts=self.post_rebalance_start, label="during"
+            ),
+            TimeseriesWindow(start_ts=self.post_rebalance_start, end_ts=float("inf"), label="post"),
+        ]
+        logger.info(f"Latency windows: {latency_windows}")
+
+        percentiles = self.test_config.access_settings.latency_percentiles
+        for operation in ("get", "set", "durable_set"):
+            for value, snapshots, metric_info in self.metrics.kv_latency(
+                operation=operation, percentiles=percentiles, windows=latency_windows
+            ):
+                if metric_info.get("window", "").lower() in reporting_windows:
+                    self.reporter.post(value, snapshots, metric_info)
+                else:
+                    logger.info(f"{metric_info['title']}: {value}")
 
     def run(self):
         self.load()
@@ -190,11 +228,6 @@ class RebalanceKVTest(RebalanceTest):
 
 
 class CapellaRebalanceKVTest(RebalanceKVTest, CapellaRebalanceTest):
-
-    def post_rebalance(self):
-        super().post_rebalance()
-        self.worker_manager.abort_all_tasks()
-
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -218,38 +251,6 @@ class RebalanceKVCompactionTest(RebalanceKVTest):
         self.reset_kv_stats()
 
         self.access_bg()
-        self.rebalance()
-
-        if self.is_balanced():
-            self.report_kpi()
-
-
-class RebalanceDurabilityTest(RebalanceTest):
-
-    ALL_HOSTNAMES = True
-
-    COLLECTORS = {'latency': True}
-
-    @with_stats
-    @with_profiles
-    def rebalance(self, services=None):
-        self.access_bg()
-        self.pre_rebalance()
-        self.rebalance_time = self._rebalance(services)
-        self.post_rebalance()
-        self.worker_manager.abort_all_tasks()
-
-    def _report_kpi(self, *args):
-        for operation in ('set', 'durable_set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=[50.0, 99.9]):
-                self.reporter.post(*metric)
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-        self.hot_load()
-        self.reset_kv_stats()
         self.rebalance()
 
         if self.is_balanced():

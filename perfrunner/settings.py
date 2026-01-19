@@ -1410,6 +1410,12 @@ class RebalanceSettings:
         self.services = options.get('services', 'kv')
         self.rebalance_config = options.get('rebalance_config', None)
         self.rebalance_timeout = int(options.get('rebalance_timeout', 0))
+        self.reb_out_one_by_one = maybe_atoi(options.get("reb_out_one_by_one", "false"))
+        self.latency_reporting_windows = [
+            # options: pre, during, post
+            s.lower()
+            for s in options.get("latency_reporting_windows", "").replace(",", " ").split()
+        ]
 
         # The reblance settings for FTS
         self.ftspartitions = options.get('ftspartitions', self.FTS_PARTITIONS)

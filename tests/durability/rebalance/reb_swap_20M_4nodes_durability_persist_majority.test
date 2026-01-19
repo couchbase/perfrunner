@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.rebalance.RebalanceDurabilityTest
+test = perfrunner.tests.rebalance.RebalanceKVCompactionTest
 
 [showfast]
 title = Latency during Rebalance-swap, 4 -> 4, 20M x 512B, Unlimited Ops (0/100 R/W), Durability Persist Majority
@@ -30,8 +30,10 @@ deletes = 0
 items = 20000000
 workers = 128
 durability = 3
+latency_percentiles = 50.0,99.9
 
 [rebalance]
 nodes_after = 4
 swap = 1
 start_after = 180
+latency_reporting_windows = during

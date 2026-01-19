@@ -1,0 +1,22 @@
+[clusters]
+hercules =
+    172.23.100.121:kv,index
+    172.23.100.122:kv,index
+    172.23.100.123:kv,index
+    172.23.100.124:kv,n1ql
+    172.23.100.125:kv,n1ql
+    172.23.100.126:kv,n1ql
+
+[clients]
+hosts =
+    172.23.100.129
+    172.23.100.130
+    172.23.100.131
+    172.23.100.132
+    172.23.100.133
+
+[storage]
+data = /data
+
+[metadata]
+cluster = hercules

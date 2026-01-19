@@ -1,0 +1,47 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBLatencyCPUTest
+
+[showfast]
+title = Latency(ms), Workload A, 6 nodes, 1 bucket x 20M x 1KB, 8 vCPU, 32 GB memory, 60K ops/sec
+component = kv
+category = ycsb
+sub_category = ycsb3
+orderby = a91
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 6
+num_buckets = 1
+online_cores = 4
+kernel_mem_limit = 32G
+kernel_mem_limit_services = kv
+
+[bucket]
+replica_number = 2
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+workers = 160
+
+[access]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+target = 10000
+ops = 0
+time = 600
+boost = 12
+workers = 10
+timeseries = 1
+workload_instances = 6
+kv_endpoints = 16
+
+[ycsb]
+latency_percentiles = 99
+average_latency = 1
+branch = couchbase3
+
+[stats]
+client_processes = java

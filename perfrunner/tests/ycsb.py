@@ -182,6 +182,38 @@ class YCSBLatencyTest(YCSBTest):
                     )
 
 
+class YCSBLatencyCPUTest(YCSBTest):
+
+    COLLECTORS = {'disk': True, 'net': True}
+
+    def _report_kpi(self):
+        self.collect_export_files()
+
+        for percentile in self.test_config.ycsb_settings.latency_percentiles:
+            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
+            for key, value in latency_dic.items():
+                if str(percentile) in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    self.reporter.post(
+                        *self.metrics.ycsb_latency(key, latency_dic[key])
+                    )
+
+        if self.test_config.ycsb_settings.average_latency == 1:
+            latency_dic = self.metrics.ycsb_get_latency(
+                percentile=99)
+
+            for key, value in latency_dic.items():
+                if "Average" in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    self.reporter.post(
+                        *self.metrics.ycsb_latency(key, latency_dic[key])
+                    )
+
+        self.reporter.post(*self.metrics.cpu_utilization())
+
+
 class YCSBLatencyWithWarmupTest(YCSBLatencyTest):
 
     def warmup_access_phase(self):
@@ -361,6 +393,11 @@ class YCSBN1QLWarmupTest(YCSBN1QLTest):
 
 
 class YCSBN1QLLatencyTest(YCSBN1QLTest, YCSBLatencyTest):
+
+    pass
+
+
+class YCSBN1QLLatencyCPUTest(YCSBN1QLTest, YCSBLatencyCPUTest):
 
     pass
 

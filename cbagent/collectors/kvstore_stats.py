@@ -160,14 +160,13 @@ class KVStoreStats(Collector):
 
     def __init__(self, settings, test):
         super().__init__(settings)
-        extract_cb_any(filename='couchbase')
+        extract_cb_any(filename="couchbase")
         self.collect_per_server_stats = test.collect_per_server_stats
-        self.cluster_spec = test.cluster_spec
 
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
         try:
-            uname, pwd = self.cluster_spec.rest_credentials
+            uname, pwd = self.auth
             stdout, returncode = run_cbstats("kvstore", server, self.CB_STATS_PORT, uname, pwd,
                                              bucket)
             if returncode != 0:
@@ -210,7 +209,7 @@ class KVStoreStats(Collector):
         return node_stats
 
     def _get_num_shards(self, bucket: str, server: str):
-        uname, pwd = self.cluster_spec.rest_credentials
+        uname, pwd = self.auth
         stdout, returncode = run_cbstats("workload", server, self.CB_STATS_PORT, uname, pwd, bucket)
         if returncode != 0:
             logger.warning("KVStoreStats failed to get workload stats from server: {}"

@@ -724,19 +724,19 @@ class ClusterSpec(Config):
         with SecretsFile() as s:
             return s.get_metadata(key_group, key)
 
-    @property
+    @cached_property
     def rest_credentials(self) -> tuple[str, str]:
         return creds_tuple(self._get_secret("rest"))
 
-    @property
+    @cached_property
     def ssh_credentials(self) -> tuple[str, str]:
         return creds_tuple(self._get_secret("ssh"))
 
-    @property
+    @cached_property
     def client_credentials(self) -> tuple[str, str]:
         return creds_tuple(self._get_secret("client"))
 
-    @property
+    @cached_property
     def aws_key_name(self) -> str:
         return self._get_secret("aws_key_name")
 

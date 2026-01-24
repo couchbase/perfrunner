@@ -12,15 +12,14 @@ class CBStatsMemory(Collector):
         "ep_mem_used_primary"
     )
 
-    def __init__(self, settings, test):
+    def __init__(self, settings):
         super().__init__(settings)
-        extract_cb_any(filename='couchbase')
-        self.cluster_spec = test.cluster_spec
+        extract_cb_any(filename="couchbase")
 
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
         try:
-            uname, pwd = self.cluster_spec.rest_credentials
+            uname, pwd = self.auth
             stdout, returncode = run_cbstats("memory", server, self.CB_STATS_PORT, uname, pwd,
                                              bucket)
             if returncode != 0:
@@ -87,15 +86,14 @@ class CBStatsAll(Collector):
         "ep_magma_data_blocks_space_reduction_estimate_pct"
     )
 
-    def __init__(self, settings, test):
+    def __init__(self, settings):
         super().__init__(settings)
-        extract_cb_any(filename='couchbase')
-        self.cluster_spec = test.cluster_spec
+        extract_cb_any(filename="couchbase")
 
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
         try:
-            uname, pwd = self.cluster_spec.rest_credentials
+            uname, pwd = self.auth
             stdout, returncode = run_cbstats("all", server, self.CB_STATS_PORT, uname, pwd, bucket)
             if returncode != 0:
                 logger.warning("CBStatsAll failed to get stats from server: {}".format(server))

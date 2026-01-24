@@ -187,9 +187,9 @@ class CbAgent:
                 if kvstore:
                     self.add_collector(KVStoreStats, self.test)
                 if cbstats_memory:
-                    self.add_collector(CBStatsMemory, self.test)
+                    self.add_collector(CBStatsMemory)
                 if cbstats_all:
-                    self.add_collector(CBStatsAll, self.test)
+                    self.add_collector(CBStatsAll)
                 if not self.test.cloud_infra:
                     if disk:
                         self.add_io_collector(Disk)

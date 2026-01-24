@@ -55,6 +55,13 @@ class FileType(Enum):
     JSON = 2
 
 
+# Module-level cache for metadata files to avoid repeated file opens
+# Metadata files (SecretsFile, ClusterMetadataFile) don't change during a test run
+# Key: (file_path, mtime), Value: (config, all_configs)
+_metadata_cache = {}
+_MAX_CACHE_SIZE = 100  # Limit cache size to prevent memory issues
+
+
 class ConfigFile:
     """Base helper class for interacting with YAML, JSON and INI files.
 
@@ -691,12 +698,46 @@ class ClusterAnsibleInventoryFile(ConfigFile):
 
 
 class MetadataFile(ConfigFile):
-    """JSON file for storing test metadata."""
+    """JSON file for storing test metadata.
+
+    Metadata files are read-only during test execution and don't change,
+    so we cache them to avoid repeated file opens.
+    """
 
     DEFAULT_KEY_GROUP = "default"
 
     def __init__(self, file_path: str, file_type: FileType = FileType.JSON):
         super().__init__(file_path, file_type)
+
+    def load_config(self):
+        """Load config with caching - only reload if file has changed.
+
+        This caches the loaded configuration based on file path and modification time.
+        """
+        # Get file modification time if file exists
+        if Path(self.source_file).is_file():
+            try:
+                mtime = os.path.getmtime(self.source_file)
+            except OSError:
+                mtime = 0
+        else:
+            mtime = 0
+
+        cache_key = (self.source_file, mtime)
+
+        # Check cache
+        if cache_key in _metadata_cache:
+            self.config, self.all_configs = _metadata_cache[cache_key]
+            return
+
+        # If we get here, the cache was missed, so we load the config from the file.
+        super().load_config()
+
+        # Update cache
+        if len(_metadata_cache) >= _MAX_CACHE_SIZE:
+            # Simple approach to limit cache size
+            _metadata_cache.clear()
+        _metadata_cache[cache_key] = (self.config, self.all_configs)
 
     def get_metadata(self, key_group: str, key: str) -> str:
         """Get metadata with a specific key from a key group.
@@ -716,6 +757,10 @@ class MetadataFile(ConfigFile):
             key_group, {}
         )
         return combined_group.get(key, "")
+
+    def write(self):
+        # Ensures we dont write back to the metadata file
+        pass
 
 
 class SecretsFile(MetadataFile):
@@ -753,7 +798,3 @@ class ClusterMetadataFile(MetadataFile):
                 capkey = key.upper()
             cluster_params[capkey] = value
         return cluster_params
-
-    def write(self):
-        # Ensures we dont write back to the metadata file
-        pass

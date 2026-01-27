@@ -23,4 +23,4 @@ componentEventsChanLength = 10000
 items = 100000000
 size = 1024
 workers = 80
-doc_gen = large 
+doc_gen = large

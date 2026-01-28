@@ -60,7 +60,6 @@
     },
     "store": {
       "indexType": "scorch",
-      "segmentVersion": 16,
       "spatialPlugin": "s2"
     }
   },

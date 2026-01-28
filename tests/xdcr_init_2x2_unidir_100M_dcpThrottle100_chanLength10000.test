@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrInitTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 2 -> 2 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, dcpFlowControlThrottle=100, componentEventsChanLength=10000
+component = xdcr
+category = init_multi
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 2 2
+num_buckets = 1
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+dcpFlowControlThrottle = 100
+componentEventsChanLength = 10000
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = large 

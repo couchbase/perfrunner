@@ -1598,6 +1598,10 @@ class PhaseSettings:
     RANGE_SCAN_SAMPLING = "false"
     PREFIX_SCAN = "false"
     ORDERED = "true"
+    MEASUREMENT_TYPE = "hdrhistogram"
+    HISTOGRAM_BUCKETS = 100
+    HISTOGRAM_BUCKET_SIZE = 1000 # in microseconds, default is 1ms
+    VERBOSE_HISTOGRAM = "true"
 
     TRANSACTIONSENABLED = 0
 
@@ -1809,6 +1813,12 @@ class PhaseSettings:
         self.range_scan_sampling = options.get('range_scan_sampling', self.RANGE_SCAN_SAMPLING)
         self.prefix_scan = options.get('prefix_scan', self.PREFIX_SCAN)
         self.ordered = options.get('ordered', self.ORDERED)
+        self.measurement_type = options.get('measurement_type', self.MEASUREMENT_TYPE)
+        self.histogram_buckets = int(options.get('histogram_buckets', self.HISTOGRAM_BUCKETS))
+        self.histogram_bucket_size = int(options.get('histogram_bucket_size',
+                                                     self.HISTOGRAM_BUCKET_SIZE))
+        self.verbose_histogram = maybe_atoi(options.get('verbose_histogram',
+                                                        self.VERBOSE_HISTOGRAM))
 
         # trasnsaction settings
         self.transactionsenabled = int(options.get('transactionsenabled',

@@ -147,6 +147,21 @@ def read_json(filename: str) -> dict:
     with open(filename) as fh:
         return json.load(fh)
 
+def sort_bucket_key(bucket: str, bucket_size: int = 1000, bucket_count: int = 100) -> float:
+    if bucket.startswith('>'):
+        return float("inf")
+    if '-' in bucket:
+        start = bucket.split('-')[0]
+        if bucket.endswith('ms'):
+            start_us = int(start) * 1000  # convert ms -> us for unified comparison
+        elif bucket.endswith('us'):
+            start_us = int(start)
+        else:
+            return 0
+        if start_us > bucket_count * bucket_size:
+            return float("inf")
+        return start_us
+    return 0
 
 def maybe_atoi(a: str, t=int) -> Union[int, float, str, bool]:
     if a.lower() == 'false':

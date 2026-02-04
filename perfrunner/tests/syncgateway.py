@@ -231,6 +231,29 @@ class SGPerfTest(PerfTest):
                                                   self.test_config.syncgateway_settings,
                                                   self.LOCAL_DIR)
 
+    def log_latency_histogram(self, operation: str, description: str):
+        if self.test_config.access_settings.verbose_histogram and \
+                self.test_config.access_settings.measurement_type in ("histogram", "hdrhistogram"):
+            self.metrics.aggregate_and_print_histogram(
+                f"{self.LOCAL_DIR}/*runtest*.result",
+                measurement_type=self.test_config.access_settings.measurement_type
+            )
+            latency_results = self.metrics.get_latency_histogram(
+                f"{self.LOCAL_DIR}/aggregated_histogram.log", operation
+            )
+            for _, percentile, latency in latency_results:
+                if percentile == "avg":
+                    logger.info(f"Average latency for {description} is: {latency} ms")
+                else:
+                    logger.info(
+                        f"Latency for {description} at {percentile} percentile is: {latency} ms"
+                    )
+        else:
+            for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
+                with open(f, 'r') as fout:
+                    logger.info(f)
+                    logger.info(fout.read())
+
     def collect_cblite_logs(self):
         if self.worker_manager.is_remote:
             if os.path.exists(self.CBLITE_LOG_DIR):
@@ -551,10 +574,7 @@ class SGLoad(SGPerfTest):
 class SGRead(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[READ]", "GET doc by id")
 
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), GET doc by id")
@@ -571,10 +591,7 @@ class SGRead(SGPerfTest):
 class SGReadLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[READ]", "GET doc by id")
 
         self.reporter.post(
             *self.metrics.sg_latency('[READ], 95thPercentileLatency(us)',
@@ -585,10 +602,7 @@ class SGReadLatency(SGPerfTest):
 class SGAuthThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[AUTH]", "POST auth")
 
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), POST auth")
@@ -605,10 +619,7 @@ class SGAuthThroughput(SGPerfTest):
 class SGAuthLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[AUTH]", "POST auth")
 
         self.reporter.post(
             *self.metrics.sg_latency('[SCAN], 95thPercentileLatency(us)',
@@ -619,10 +630,7 @@ class SGAuthLatency(SGPerfTest):
 class SGSync(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[SYNC]", "POST sync")
 
         self.reporter.post(
             *self.metrics.sg_throughput('Throughput (req/sec), GET docs via _changes')
@@ -644,10 +652,7 @@ class SGSync(SGPerfTest):
 class SGSyncQueryThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[QUERY]", "POST query")
 
         self.reporter.post(
             *self.metrics.sg_throughput('Throughput (req/sec), GET docs via _changes')
@@ -664,10 +669,7 @@ class SGSyncQueryThroughput(SGPerfTest):
 class SGSyncQueryLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[QUERY]", "POST query")
 
         self.reporter.post(
             *self.metrics.sg_latency('[READ], 95thPercentileLatency(us)',
@@ -678,10 +680,7 @@ class SGSyncQueryLatency(SGPerfTest):
 class SGWrite(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[WRITE]", "POST write")
 
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), POST doc")
@@ -698,10 +697,7 @@ class SGWrite(SGPerfTest):
 class SGWriteLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[WRITE]", "POST write")
 
         self.reporter.post(
             self.metrics.sg_latency('[INSERT], 95thPercentileLatency(us)',
@@ -830,10 +826,7 @@ class SGEventingTest(SGPerfTest, FunctionsTimeTest):
 class SGMixQueryThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[QUERY]", "POST query")
 
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec)")
@@ -1173,10 +1166,7 @@ class SGSyncByUserWithAuth(SGSync):
 
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
+        self.log_latency_histogram("[QUERY]", "POST query")
 
         self.reporter.post(
             *self.metrics.sg_throughput('Throughput (req/sec), SYNC docs via _changes')

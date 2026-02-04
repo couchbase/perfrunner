@@ -72,32 +72,65 @@ class YCSBTest(PerfTest):
 
         self.report_kpi()
 
+    def aggregate_ycsb_histogram(self):
+        if self.test_config.access_settings.verbose_histogram and \
+                self.test_config.access_settings.measurement_type in ("histogram", "hdrhistogram"):
+            self.metrics.aggregate_and_print_histogram(
+                "YCSB/ycsb_run_*.log",
+                measurement_type=self.test_config.access_settings.measurement_type
+            )
 
-class YCSBThroughputTest(YCSBTest):
+    def post_ycsb_latencies(self, metric_fn, operation: str = "access"):
+        if self.test_config.access_settings.verbose_histogram and \
+                self.test_config.access_settings.measurement_type in ("histogram", "hdrhistogram"):
+            for op, label, latency_ms in self.metrics.get_latency_histogram(
+                "YCSB/aggregated_histogram.log",
+                latency_percentiles=self.test_config.ycsb_settings.latency_percentiles
+            ):
+                if label != "avg":
+                    self.reporter.post(*metric_fn(f"{label} {op}", latency_ms))
+                elif label == "avg" and self.test_config.ycsb_settings.average_latency == 1:
+                    self.reporter.post(*metric_fn(f"Average {op}", latency_ms))
+        else:
+            for percentile in self.test_config.ycsb_settings.latency_percentiles:
+                latency_dic = self.metrics.ycsb_get_latency(
+                    percentile=percentile, operation=operation
+                )
+                for key, value in latency_dic.items():
+                    if str(percentile) in key \
+                            and "CLEANUP" not in key \
+                            and "FAILED" not in key:
+                        self.reporter.post(*metric_fn(key, latency_dic[key]))
 
-    COLLECTORS = {'disk': True, 'net': True}
+            if self.test_config.ycsb_settings.average_latency == 1:
+                latency_dic = self.metrics.ycsb_get_latency(
+                    percentile=99, operation=operation
+                )
+                for key, value in latency_dic.items():
+                    if "Average" in key \
+                            and "CLEANUP" not in key \
+                            and "FAILED" not in key:
+                        self.reporter.post(*metric_fn(key, latency_dic[key]))
 
-    def _report_kpi(self):
-        self.collect_export_files()
-
-        self.reporter.post(
-            *self.metrics.ycsb_throughput()
-        )
-
-
-class YCSBDurabilityThroughputTest(YCSBTest):
-
-    COLLECTORS = {'disk': True, 'net': True}
-
-    def log_latency_percentiles(self, type: str, percentiles):
-        for percentile in percentiles:
-            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
-            for key, value in latency_dic.items():
-                if str(percentile) in key \
-                        and type in key \
-                        and "CLEANUP" not in key \
-                        and "FAILED" not in key:
-                    logger.info("{}: {}".format(key, latency_dic[key]))
+    def log_latency_percentiles(self, operation: str, percentiles):
+        if self.test_config.access_settings.verbose_histogram and \
+                self.test_config.access_settings.measurement_type in ("histogram", "hdrhistogram"):
+            latencies = self.metrics.get_latency_histogram(
+                "YCSB/aggregated_histogram.log",
+                latency_percentiles=percentiles
+            )
+            for op, label, latency_ms in latencies:
+                if op == operation.upper() and label != "avg":
+                    logger.info(f"{operation} {label}: {latency_ms}")
+        else:
+            for percentile in percentiles:
+                latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
+                for key, value in latency_dic.items():
+                    if str(percentile) in key \
+                            and type in key \
+                            and "CLEANUP" not in key \
+                            and "FAILED" not in key:
+                        logger.info("{}: {}".format(key, latency_dic[key]))
 
     def log_percentiles(self):
         logger.info("------------------")
@@ -108,9 +141,26 @@ class YCSBDurabilityThroughputTest(YCSBTest):
         self.log_latency_percentiles("UPDATE", [95, 96, 97, 98, 99])
         logger.info("------------------")
 
+
+class YCSBThroughputTest(YCSBTest):
+
+    COLLECTORS = {'disk': True, 'net': True}
+
     def _report_kpi(self):
         self.collect_export_files()
+        self.aggregate_ycsb_histogram()
+        self.reporter.post(
+            *self.metrics.ycsb_throughput()
+        )
 
+
+class YCSBDurabilityThroughputTest(YCSBTest):
+
+    COLLECTORS = {'disk': True, 'net': True}
+
+    def _report_kpi(self):
+        self.collect_export_files()
+        self.aggregate_ycsb_histogram()
         self.log_percentiles()
 
         for key, value in self.metrics.ycsb_get_max_latency().items():
@@ -128,15 +178,7 @@ class YCSBDurabilityThroughputTest(YCSBTest):
             *self.metrics.ycsb_durability_throughput()
         )
 
-        for percentile in self.test_config.ycsb_settings.latency_percentiles:
-            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
-            for key, value in latency_dic.items():
-                if str(percentile) in key \
-                        and "CLEANUP" not in key \
-                        and "FAILED" not in key:
-                    self.reporter.post(
-                        *self.metrics.ycsb_slo_latency(key, latency_dic[key])
-                    )
+        self.post_ycsb_latencies(self.metrics.ycsb_slo_latency)
 
 
 class UniDirXdcrInitYCSBTest(YCSBTest, XdcrInitTest):
@@ -158,28 +200,8 @@ class YCSBLatencyTest(YCSBTest):
 
     def _report_kpi(self):
         self.collect_export_files()
-
-        for percentile in self.test_config.ycsb_settings.latency_percentiles:
-            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
-            for key, value in latency_dic.items():
-                if str(percentile) in key \
-                        and "CLEANUP" not in key \
-                        and "FAILED" not in key:
-                    self.reporter.post(
-                        *self.metrics.ycsb_latency(key, latency_dic[key])
-                    )
-
-        if self.test_config.ycsb_settings.average_latency == 1:
-            latency_dic = self.metrics.ycsb_get_latency(
-                percentile=99)
-
-            for key, value in latency_dic.items():
-                if "Average" in key \
-                        and "CLEANUP" not in key \
-                        and "FAILED" not in key:
-                    self.reporter.post(
-                        *self.metrics.ycsb_latency(key, latency_dic[key])
-                    )
+        self.aggregate_ycsb_histogram()
+        self.post_ycsb_latencies(self.metrics.ycsb_latency)
 
 
 class YCSBLatencyCPUTest(YCSBTest):
@@ -188,29 +210,8 @@ class YCSBLatencyCPUTest(YCSBTest):
 
     def _report_kpi(self):
         self.collect_export_files()
-
-        for percentile in self.test_config.ycsb_settings.latency_percentiles:
-            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
-            for key, value in latency_dic.items():
-                if str(percentile) in key \
-                        and "CLEANUP" not in key \
-                        and "FAILED" not in key:
-                    self.reporter.post(
-                        *self.metrics.ycsb_latency(key, latency_dic[key])
-                    )
-
-        if self.test_config.ycsb_settings.average_latency == 1:
-            latency_dic = self.metrics.ycsb_get_latency(
-                percentile=99)
-
-            for key, value in latency_dic.items():
-                if "Average" in key \
-                        and "CLEANUP" not in key \
-                        and "FAILED" not in key:
-                    self.reporter.post(
-                        *self.metrics.ycsb_latency(key, latency_dic[key])
-                    )
-
+        self.aggregate_ycsb_histogram()
+        self.post_ycsb_latencies(self.metrics.ycsb_latency)
         self.reporter.post(*self.metrics.cpu_utilization())
 
 

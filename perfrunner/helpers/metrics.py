@@ -11,6 +11,7 @@ import numpy as np
 
 from cbagent.stores import PerfStore
 from logger import logger
+from perfrunner.helpers.misc import sort_bucket_key
 from perfrunner.settings import CBMONITOR_HOST, ClusterSpec, TestConfig
 from perfrunner.workloads.bigfun.query_gen import Query
 
@@ -1572,6 +1573,219 @@ class MetricHelper:
                          ) -> Metric:
         latency_dic = self._parse_ycsb_latency(percentile, operation)
         return latency_dic
+
+    def get_latency_histogram(self, aggregated_histogram_file: str,
+                              operation: str = None,
+                              latency_percentiles: list[float] = [25, 50, 75, 90, 95, 99]
+                              ) -> list[tuple[str, str, float]]:
+        # Parse HDR histogram lines: [OPERATION-HISTOGRAM], latency_us, count
+        # File is pre-sorted by latency_us ascending.
+        per_op: dict[str, dict[int, int]] = {}
+        with open(aggregated_histogram_file) as f:
+            for line in f:
+                parts = line.strip().split(', ')
+                if operation is not None:
+                    op_name = operation.strip('[]')
+                else:
+                    op_key = parts[0].strip('[]')
+                    if (
+                        "CLEANUP" in op_key
+                        or not op_key.endswith("-HISTOGRAM")
+                        or "FAILED" in op_key
+                    ):
+                        continue
+                    op_name = op_key.removesuffix('-HISTOGRAM')
+                latency_us, count = int(parts[1]), int(float(parts[2]))
+                if op_name not in per_op:
+                    per_op[op_name] = {}
+                per_op[op_name][latency_us] = per_op[op_name].get(latency_us, 0) + count
+
+        result = []
+        for op, counts in per_op.items():
+            if not counts:
+                logger.warning(f"No histogram data found for operation {op}")
+                continue
+
+            latencies: list[tuple[int, int]] = sorted(counts.items())
+            total_count = sum(count for _, count in latencies)
+
+            sorted_percentiles = sorted(latency_percentiles)
+            thresholds = [total_count * p / 100 for p in sorted_percentiles]
+            percentile_latencies = {p: latencies[-1][0] for p in sorted_percentiles}
+            cumulative = 0
+            target_idx = 0
+            for lat_us, count in latencies:
+                cumulative += count
+                while target_idx < len(thresholds) and cumulative >= thresholds[target_idx]:
+                    percentile_latencies[sorted_percentiles[target_idx]] = lat_us
+                    target_idx += 1
+                if target_idx == len(thresholds):
+                    break
+
+            for percentile in latency_percentiles:
+                latency_ms = round(percentile_latencies[percentile] / 1000, 3)
+                result.append((op, f"{percentile:g}th Percentile", latency_ms))
+
+            avg_latency_us = round(sum(lat * cnt for lat, cnt in latencies) / total_count)
+            avg_latency_ms = round(avg_latency_us / 1000, 3)
+            result.append((op, "avg", avg_latency_ms))
+
+        return result
+
+
+    def aggregate_and_print_histogram(self, *YCSB_files: str,
+                                      measurement_type: str = "histogram",
+                                      output_file: str = "YCSB/aggregated_histogram.log",
+                                      verbose_file: str = "YCSB/verbose_histogram.log"):
+        data = {}
+        all_files = []
+        for pattern in YCSB_files:
+            all_files.extend(glob.glob(pattern))
+
+        label = "HDR histogram" if measurement_type == "hdrhistogram" else "histogram"
+        logger.info(f"Aggregating {label} data from {len(all_files)} files")
+
+        for filename in all_files:
+            with open(filename) as f:
+                for line in f:
+                    parts = line.strip().split(', ')
+                    if len(parts) != 3:
+                        continue
+                    op = parts[0].strip('[]')
+
+                    if measurement_type == "hdrhistogram" and '-HISTOGRAM' in op:
+                        while op.endswith('-HISTOGRAM'):
+                            op = op[:-len('-HISTOGRAM')]
+                            key, count = int(parts[1]), int(float(parts[2]))
+                    else:
+                        bucket, count_str = parts[1], parts[2]
+                        if not (
+                            (bucket.endswith("ms") or bucket.endswith("us")
+                             or bucket == ">10000ms")
+                            and "GC" not in op and op != "OVERALL"
+                        ):
+                            continue
+                        key = bucket
+                        count = int(float(count_str))
+
+                    if op not in data:
+                        data[op] = {}
+                    data[op][key] = data[op].get(key, 0) + count
+
+        # Write aggregated data to file
+        with open(output_file, 'w') as f:
+            for op in data:
+                if measurement_type == "hdrhistogram":
+                    for key in sorted(data[op]):
+                        f.write(f"[{op}-HISTOGRAM], {key}, {data[op][key]}\n")
+                else:
+                    collapsed = self._collapse_overflow_buckets(data[op])
+                    for key in sorted(
+                        collapsed,
+                        key=lambda b: sort_bucket_key(
+                            b, bucket_size=self.test_config.access_settings.histogram_bucket_size,
+                            bucket_count=self.test_config.access_settings.histogram_buckets
+                        ),
+                    ):
+                        f.write(f"[{op}], {key}, {collapsed[key]}\n")
+        logger.info(f"Aggregated {label} written to {output_file}")
+
+        # Print verbose histogram to console and write to verbose_file
+        logger.info("=" * 80)
+        logger.info(f"YCSB VERBOSE {label.upper()} DATA")
+        logger.info("=" * 80)
+
+        for op, buckets in data.items():
+            self._log_histogram(
+                op, buckets, verbose_file, is_hdr=measurement_type == "hdrhistogram"
+            )
+
+        logger.info("=" * 80)
+        logger.info(f"Verbose {label} written to {verbose_file}")
+
+    @staticmethod
+    def _bucket_hdr_data(buckets: dict[int, int], bucket_size: int = 1000, bucket_count: int = 100):
+        bucketed = {}
+        threshold_us = bucket_size * bucket_count
+        for latency_us, count in buckets.items():
+            if latency_us >= threshold_us:
+                if bucket_size >= 1000:
+                    label = f">{bucket_size * bucket_count // 1000}ms"
+                else:
+                    label = f">{bucket_size * bucket_count}us"
+            else:
+                bucket_start = (latency_us // bucket_size) * bucket_size
+                bucket_end = bucket_start + bucket_size
+                if bucket_size >= 1000:
+                    label = f"{bucket_start // 1000}-{bucket_end // 1000}ms"
+                else:
+                    label = f"{bucket_start}-{bucket_end}us"
+
+            bucketed[label] = bucketed.get(label, 0) + count
+        return bucketed
+
+    def _collapse_overflow_buckets(self, buckets: dict,) -> dict:
+        bucket_size = self.test_config.access_settings.histogram_bucket_size
+        bucket_count = self.test_config.access_settings.histogram_buckets
+        if bucket_size >= 1000:
+            threshold = f">{bucket_size * bucket_count // 1000}ms"
+        else:
+            threshold = f">{bucket_size * bucket_count}us"
+        result = {}
+        overflow_count = 0
+        for bucket, count in buckets.items():
+            if (sort_bucket_key(bucket, bucket_size, bucket_count) == float('inf')):
+                overflow_count += count
+            else:
+                result[bucket] = count
+        if overflow_count:
+            result[threshold] = overflow_count
+        return result
+
+    def _log_histogram(
+        self,
+        operation: str,
+        buckets: dict,
+        verbose_file: str = "YCSB/verbose_histogram.log",
+        is_hdr: bool = False,
+    ):
+        if is_hdr:
+            buckets = self._bucket_hdr_data(
+                buckets, bucket_size=self.test_config.access_settings.histogram_bucket_size,
+                bucket_count=self.test_config.access_settings.histogram_buckets
+            )
+
+        total = sum(buckets.values())
+        if total == 0:
+            return
+
+        lines = [
+            f"{operation} LATENCY HISTOGRAM:",
+            "-" * 40,
+            f"Total operations: {total}",
+        ]
+        cumulative = 0
+        collapsed_buckets = self._collapse_overflow_buckets(buckets)
+        for bucket in sorted(
+            collapsed_buckets,
+            key=lambda b: sort_bucket_key(
+                b, bucket_size=self.test_config.access_settings.histogram_bucket_size,
+                bucket_count=self.test_config.access_settings.histogram_buckets
+            ),
+        ):
+            count = collapsed_buckets[bucket]
+            if count > 0:
+                cumulative += count
+                pct = (count / total) * 100
+                cum_pct = (cumulative / total) * 100
+                lines.append(
+                    f"{bucket:>15}: {count:>8} ({pct:>5.1f}%) - Cumulative: {cum_pct:>5.1f}%"
+                )
+
+        for line in lines:
+            logger.info(line)
+        with open(verbose_file, 'w') as vf:
+            vf.write("\n".join(lines) + "\n")
 
     def indexing_time(self, indexing_time: float) -> Metric:
         return self.elapsed_time(indexing_time)

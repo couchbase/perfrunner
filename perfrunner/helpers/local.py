@@ -791,6 +791,10 @@ def run_ycsb(
     out_of_order: int = 0,
     phase_params: Optional[dict] = None,
     insert_test_params: Optional[dict] = None,
+    measurement_type: Optional[str] = None,
+    histogram_buckets: Optional[int] = None,
+    histogram_bucket_size: Optional[int] = None,
+    verbose_histogram: Optional[str] = None,
 ):
     parameters = [
         "writeallfields=true",
@@ -870,6 +874,18 @@ def run_ycsb(
 
     if out_of_order:
         parameters += ["couchbase.outOfOrderExecution=true"]
+
+    if measurement_type:
+        parameters += [f"measurementtype={measurement_type}"]
+
+    if histogram_buckets:
+        parameters += [f"histogram.buckets={histogram_buckets}"]
+
+    if histogram_bucket_size:
+        parameters += [f"histogram.bucket.size={histogram_bucket_size}"]
+
+    if verbose_histogram:
+        parameters += [f"measurement.histogram.verbose={'true' if verbose_histogram else 'false'}"]
 
     if collections_map:
         target_scopes = set()

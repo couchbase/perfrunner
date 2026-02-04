@@ -37,6 +37,10 @@ time = 1200
 workers = 10
 workload_instances = 10
 kv_endpoints = 1024
+measurement_type = histogram
+histogram_buckets = 1000
+histogram_bucket_size = 1000
+verbose_histogram = true
 
 [ycsb]
 branch = couchbase3-range-scan

@@ -474,18 +474,29 @@ def add_collections(cmd, workload_settings: PhaseSettings, target: TargetSetting
     return cmd
 
 
-def add_capella_password(cmd):
+def add_capella_password(cmd: str) -> str:
     cmd += ' -p syncgateway.password=Password123! '
     cmd += ' -p syncgateway.adminname=admin1 '
     cmd += ' -p syncgateway.adminpassword=Password123! '
     return cmd
 
+def add_histogram_params(cmd: str, workload_settings: PhaseSettings) -> str:
+    cmd += " -p measurement.histogram.verbose=true"
+    if workload_settings.measurement_type:
+        cmd += f" -p measurementtype={workload_settings.measurement_type}"
+
+    if workload_settings.histogram_buckets:
+        cmd += f" -p histogram.buckets={workload_settings.histogram_buckets}"
+
+    if workload_settings.histogram_bucket_size:
+        cmd += f" -p histogram.bucket.size={workload_settings.histogram_bucket_size}"
+
+    return cmd
 
 def add_translated_ports(cmd: str, public_port: str, admin_port: str, memcached_port: str) -> str:
     cmd += f" -p syncgateway.port.public={public_port} -p syncgateway.port.admin={admin_port} "
     cmd += f" -p memcached.port={memcached_port} "
     return cmd
-
 
 def syncgateway_start_memcached(workload_settings: PhaseSettings,
                                 target: TargetSettings,
@@ -771,6 +782,11 @@ def syncgateway_run_test(workload_settings: PhaseSettings,
         workload_settings.admin_port,
         workload_settings.memcached_port,
     )
+
+    if workload_settings.verbose_histogram:
+        params = add_histogram_params(params, workload_settings)
+
+
     path = get_instance_home(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 

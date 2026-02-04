@@ -143,4 +143,8 @@ def ycsb_workload(workload_settings: PhaseSettings,
         collections_map=workload_settings.collections,
         out_of_order=workload_settings.ycsb_out_of_order,
         insert_test_params=insert_test_params,
+        measurement_type=workload_settings.measurement_type,
+        histogram_buckets=workload_settings.histogram_buckets,
+        histogram_bucket_size=workload_settings.histogram_bucket_size,
+        verbose_histogram=workload_settings.verbose_histogram,
     )

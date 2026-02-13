@@ -21,12 +21,7 @@ from perfrunner.helpers.config_files import (
     TimeTrackingFile,
     record_time,
 )
-from perfrunner.helpers.misc import (
-    maybe_atoi,
-    my_public_ip,
-    pretty_dict,
-    run_local_shell_command,
-)
+from perfrunner.helpers.misc import maybe_atoi, my_public_ip, pretty_dict, run_local_shell_command
 from perfrunner.settings import ClusterSpec, TestConfig
 
 CAPELLA_CREDS_FILE = '.capella_creds'
@@ -1369,11 +1364,9 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
 
         # Allow my IP
         logger.info("Whitelisting own IP on sgw backend")
-        self.provisioned_api.allow_my_ip_sgw(
-            self.tenant_id,
-            self.project_id,
-            self.cluster_id,
-            sgw_cluster_id,
+        my_ip = my_public_ip()
+        self.provisioned_api.add_allowed_ip_sgw(
+            self.tenant_id, self.project_id, sgw_cluster_id, self.cluster_id, my_ip
         )
 
     def deploy_app_endpoints(self, sgw_cluster_id: str):

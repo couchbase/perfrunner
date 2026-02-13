@@ -14,13 +14,10 @@ from decorator import decorator
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import pretty_dict, run_local_shell_command
+from perfrunner.helpers.misc import my_public_ip, pretty_dict, run_local_shell_command
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec
-from perfrunner.utils.terraform import (
-    SERVICES_CAPELLA_TO_PERFRUNNER,
-    ControlPlaneManager,
-)
+from perfrunner.utils.terraform import SERVICES_CAPELLA_TO_PERFRUNNER, ControlPlaneManager
 
 MAX_RETRY = 20
 RETRY_DELAY = 10
@@ -2192,18 +2189,13 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         return resp
 
     def allow_my_ip_all_clusters(self):
+        my_ip = my_public_ip()
         for cluster_id in self.cluster_ids:
-            self.allow_my_ip(cluster_id)
+            self.add_allowed_ips(cluster_id, [my_ip])
 
     def add_allowed_ips_all_clusters(self, ips: list[str]):
         for cluster_id in self.cluster_ids:
             self.add_allowed_ips(cluster_id, ips)
-
-    @retry
-    def allow_my_ip(self, cluster_id):
-        logger.info('Whitelisting own IP on cluster {}'.format(cluster_id))
-        resp = self.dedicated_client.allow_my_ip(self.tenant_id, self.project_id, cluster_id)
-        return resp
 
     @retry
     def add_allowed_ips(self, cluster_id, ips: list[str]):
@@ -2536,10 +2528,8 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_add_allowed_ip(self, ips: list[str], include_mine: bool = True):
         sgw_cluster_id = self.cluster_spec.infrastructure_settings["app_services_cluster"]
         if include_mine:
-            resp = self.dedicated_client.allow_my_ip_sgw(
-                self.tenant_id, self.project_id, self.cluster_ids[0], sgw_cluster_id
-            )
-            resp.raise_for_status()
+            my_ip = my_public_ip()
+            ips.append(my_ip)
         logger.info(f"Adding to allowed IPs: {ips}")
         for ip in ips:
             self.dedicated_client.add_allowed_ip_sgw(

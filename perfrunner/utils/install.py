@@ -185,12 +185,14 @@ class OperatorInstaller:
         if not version_string:
             return None, None
 
-        if "-" in version_string:
+        if "ghcr.io" in version_string:
+            image_tag = version_string
+        elif "-" in version_string:
             image_tag = f"{self.registry_base}{component}:{version_string}"
         else:
             image_tag = f"couchbase/{component}:{version_string}"
 
-        release = version_string.split("-")[0]
+        release = version_string.split("/")[-1].split("-")[0]
         return release, image_tag
 
     def install(self):

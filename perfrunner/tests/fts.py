@@ -10,7 +10,7 @@ from typing import Any
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import pretty_dict, read_json, run_aws_cli_command
+from perfrunner.helpers.misc import pretty_dict, read_json, read_yaml, run_aws_cli_command
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import WorkloadPhase, jts_run_task, jts_warmup_task, spring_task
 from perfrunner.settings import TargetIterator
@@ -34,9 +34,28 @@ class JTSTest(PerfTest):
         self.jts_access.fts_raw_query_map = None
         if self.jts_access.raw_query_map_file:
             self.jts_access.fts_raw_query_map = read_json(self.jts_access.raw_query_map_file)
+            self._inject_fusion_params()
+
         if not self.cluster_spec.capella_infrastructure:
-            self.rest.fts_set_node_level_parameters(self.jts_access.collections_limit_per_index,
-                                                    self.fts_nodes[0])
+            self.rest.fts_set_node_level_parameters(
+                self.jts_access.collections_limit_per_index, self.fts_nodes[0]
+            )
+
+    def _inject_fusion_params(self):
+        """Inject hybrid search fusion parameters into the raw query map."""
+        raw_map = self.jts_access.fts_raw_query_map
+        if raw_map is None or not self.jts_access.fusion_type:
+            return
+        raw_map["search_score_mode"] = self.jts_access.fusion_type
+        if self.jts_access.rank_window_size:
+            raw_map["rank_window_size"] = int(self.jts_access.rank_window_size)
+        if self.jts_access.fusion_type == "rrf":
+            raw_map["rrf_ranking_constant"] = int(self.jts_access.rrf_constant)
+        if self.jts_access.fusion_weight_fts or self.jts_access.fusion_weight_knn:
+            raw_map["score_weights"] = {
+                "fts": float(self.jts_access.fusion_weight_fts or "1.0"),
+                "knn": float(self.jts_access.fusion_weight_knn or "1.0"),
+            }
 
     def download_jts(self):
         if self.worker_manager.is_remote:
@@ -85,6 +104,19 @@ class JTSTest(PerfTest):
                 self.jts_access.jts_home_dir,
                 local_dir
             )
+
+    def clear_jts_logs(self):
+        """Remove JTS logs from the workers so the next run is measured in isolation.
+
+        Used by multi-variant tests that run several phases against a single data load.
+        """
+        if self.worker_manager.is_remote:
+            self.remote.clear_jts_logs(
+                self.worker_manager.WORKER_HOME,
+                self.jts_access.jts_home_dir,
+            )
+        else:
+            local.clear_jts_logs(self.jts_access.jts_home_dir)
 
     def custom_target_iterator(self, num_buckets):
         bucket_list = ['bucket-{}'.format(i + 1) for i in range(num_buckets)]
@@ -903,6 +935,119 @@ class FTSVectorSearchModifiedDataTest(FTSLatencyTest):
         self.warmup()
         self.run_test()
         self.report_kpi()
+
+
+class FTSFusionMultiVariantTest(FTSTest):
+    """Run a sequence of hybrid-search query variants against a single data load.
+
+    Reports a distinct metric per variant.
+    The expensive setup (restore + dataset modify) happens once. The FTS index is
+    (re)built only when a variant changes ``index_partitions``; query-only variants
+    therefore reuse one index. JTS logs are cleared between variants and each
+    ``run_test`` opens a fresh stats window (unique cbmonitor cluster id), so the
+    variants' results never bleed into one another.
+
+    The variant list is a JSON file (``fusion_variants_file``) of the form::
+
+        {"variants": [
+            {"metric_suffix": "rrf_ws50",
+             "title": "Hybrid Search RRF, 50 window size, ...",
+             "params": {"fusion_type": "rrf", "rank_window_size": "50", ...}},
+            ...
+        ]}
+
+    Each key in ``params`` is set directly on the jts access settings.
+    """
+
+    COLLECTORS = {'jts_stats': True, 'fts_stats': True}
+
+    # jts access attributes a variant may override; reset to the base value
+    # before each variant so settings never leak from one variant to the next.
+    VARIANT_KEYS = (
+        "test_query_type", "test_query_field", "test_query_field2", "raw_query_map_file",
+        "fusion_type", "rrf_constant", "rank_window_size", "fusion_weight_fts",
+        "fusion_weight_knn", "fusion_fault_source", "index_partitions",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._variant_base = {key: getattr(self.jts_access, key, None)
+                              for key in self.VARIANT_KEYS}
+        # Base local directory the collector reads JTS logs from; each variant
+        # gets its own subdirectory so collected logs can never be mixed.
+        self._base_logs_dir = self.jts_access.jts_logs_dir
+
+    def _apply_variant(self, variant: dict):
+        # Reset managed keys to their base values, then apply this variant.
+        for key, value in self._variant_base.items():
+            setattr(self.jts_access, key, value)
+        for key, value in variant.get("params", {}).items():
+            setattr(self.jts_access, key, value)
+        # Rebuild the raw query map (+ fusion injection) for this variant.
+        if self.jts_access.raw_query_map_file:
+            self.jts_access.fts_raw_query_map = read_json(self.jts_access.raw_query_map_file)
+            self._inject_fusion_params()
+        else:
+            self.jts_access.fts_raw_query_map = None
+
+    def _build_index(self):
+        if self.fts_index_defs:
+            self.delete_indexes()
+        self.fts_index_defs = dict()
+        self.fts_index_map = dict()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        size_final = int(self.calculate_index_size() / (1024 ** 2))
+        logger.info(f"The index size is {size_final} MiB")
+        self.wait_for_index_persistence()
+
+    def _variant_title(self, variant: dict) -> str:
+        return f"{variant['title_prefix']}, {self.test_config.showfast.title}"
+
+    def run(self):
+        self.cleanup_and_restore()
+        self.access()
+        self.download_jts()
+        variants = read_yaml(self.jts_access.fusion_variants_file)["variants"]
+        current_partitions = "__unbuilt__"
+        for variant in variants:
+            suffix = variant.get("metric_suffix")
+            logger.info(f"Running fusion variant: {suffix}")
+            self._apply_variant(variant)
+            if self.jts_access.index_partitions != current_partitions:
+                self._build_index()
+                current_partitions = self.jts_access.index_partitions
+            # Isolate this variant's collected logs in their own directory.
+            self.jts_access.jts_logs_dir = f"{self._base_logs_dir}_{suffix}"
+            self.clear_jts_logs()
+            self.cbmonitor_snapshots = []
+            self.warmup()
+            self.run_test()
+            self.report_kpi(variant)
+
+
+class FTSFusionMultiVariantLatencyTest(FTSFusionMultiVariantTest):
+    def _report_kpi(self, variant: dict):
+        for percentile in self.test_config.jts_access_settings.report_percentiles:
+            self.reporter.post(
+                *self.metrics.jts_latency(
+                    percentile=int(percentile),
+                    name_suffix=variant["metric_suffix"],
+                    title_override=self._variant_title(variant),
+                    order_by=variant.get("orderby"),
+                )
+            )
+
+
+class FTSFusionMultiVariantThroughputTest(FTSFusionMultiVariantTest):
+    def _report_kpi(self, variant: dict):
+        self.reporter.post(
+            *self.metrics.jts_throughput(
+                name_suffix=variant["metric_suffix"],
+                title_override=self._variant_title(variant),
+                order_by=variant.get("orderby"),
+            )
+        )
 
 
 class FTSLatencyTestWithIndexStats(FTSLatencyTest):

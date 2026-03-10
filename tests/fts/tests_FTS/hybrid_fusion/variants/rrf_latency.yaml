@@ -1,0 +1,87 @@
+# Hybrid RRF latency variants: 3 baselines + RRF default + window/k sweeps + partial-source.
+# Each variant only sets what differs from the test's [jts] defaults; the runner resets the
+# managed keys before applying, so query-only variants all reuse the single built index.
+templates:
+  rrf: &rrf
+    test_query_type: fusion
+    test_query_field: emb
+    test_query_field2: text
+    raw_query_map_file: tests/fts/data/vector/raw_hybrid_fusion_query.json
+    fusion_type: rrf
+    rank_window_size: "200"
+    rrf_constant: "60"
+
+variants:
+  - metric_suffix: baseline_bm25
+    title_prefix: Baseline BM25 lexical-only
+    orderby: q0b00000001
+    params:
+      test_query_type: term
+      test_query_field: text
+      test_query_field2: null
+      raw_query_map_file: null
+      fusion_type: null
+  - metric_suffix: baseline_vector
+    title_prefix: Baseline vector-only kNN
+    orderby: q0b00000002
+    params:
+      test_query_type: vector
+      test_query_field: emb
+      test_query_field2: null
+      raw_query_map_file: tests/fts/data/vector/raw_vector_match_none_query.json
+      fusion_type: null
+  - metric_suffix: baseline_nofusion
+    title_prefix: Baseline hybrid no-fusion (kNN+text)
+    orderby: q0b00000003
+    params:
+      test_query_type: text_vector
+      test_query_field: emb
+      test_query_field2: text
+      raw_query_map_file: tests/fts/data/vector/raw_vector_match_none_query.json
+      fusion_type: null
+  - metric_suffix: rrf
+    title_prefix: Hybrid Search RRF, 200 window size, k=60
+    orderby: q0b00000010
+    params: *rrf
+  - metric_suffix: rrf_ws50
+    title_prefix: Hybrid Search RRF, 50 window size, k=60
+    orderby: q0b00000011
+    params:
+      <<: *rrf
+      rank_window_size: "50"
+  - metric_suffix: rrf_ws100
+    title_prefix: Hybrid Search RRF, 100 window size, k=60
+    orderby: q0b00000012
+    params:
+      <<: *rrf
+      rank_window_size: "100"
+  - metric_suffix: rrf_ws500
+    title_prefix: Hybrid Search RRF, 500 window size, k=60
+    orderby: q0b00000013
+    params:
+      <<: *rrf
+      rank_window_size: "500"
+  - metric_suffix: rrf_ws1000
+    title_prefix: Hybrid Search RRF, 1000 window size, k=60
+    orderby: q0b00000014
+    params:
+      <<: *rrf
+      rank_window_size: "1000"
+  - metric_suffix: rrf_k10
+    title_prefix: Hybrid Search RRF, 200 window size, k=10
+    orderby: q0b00000015
+    params:
+      <<: *rrf
+      rrf_constant: "10"
+  - metric_suffix: rrf_k120
+    title_prefix: Hybrid Search RRF, 200 window size, k=120
+    orderby: q0b00000016
+    params:
+      <<: *rrf
+      rrf_constant: "120"
+  - metric_suffix: rrf_vector_fault
+    title_prefix: Hybrid Search RRF, 200 window size, k=60, vector source fault (partial-source)
+    orderby: q0b00000017
+    params:
+      <<: *rrf
+      fusion_fault_source: vector

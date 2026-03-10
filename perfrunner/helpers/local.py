@@ -1167,6 +1167,16 @@ def run_custom_cmd(path: str, binary: str, params: str):
         local(cmd)
 
 
+def clear_jts_logs(jts_home: str):
+    """Remove previously generated JTS logs.
+
+    Ensure subsequent runs are measured in isolation.
+    """
+    logs_dir = f"{jts_home}/logs"
+    if os.path.exists(logs_dir):
+        local(f"rm -rf {logs_dir}/*")
+
+
 def get_jts_logs(jts_home: str, local_dir: str):
     logger.info("Collecting remote JTS logs")
     source_dir = "{}/logs".format(jts_home)

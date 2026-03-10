@@ -2311,6 +2311,19 @@ class JTSAccessSettings(PhaseSettings):
         self.collections_per_index = options.get("collections_per_index", '1000')
         self.collections_limit_per_index["collectionsLimitPerIndex"] = self.collections_per_index
 
+        # Hybrid search score fusion parameters (RRF, RSF, DBSF)
+        self.fusion_type = options.get("fusion_type", None)
+        self.rrf_constant = options.get("rrf_constant", "60")
+        self.rank_window_size = options.get("rank_window_size", "100")
+        self.fusion_weight_fts = options.get("fusion_weight_fts", "1.0")
+        self.fusion_weight_knn = options.get("fusion_weight_knn", "1.0")
+        # Optional fault injection: force a single source (e.g. "vector") to time
+        # out so we can measure graceful partial-source fusion behavior.
+        self.fusion_fault_source = options.get("fusion_fault_source", None)
+        # Optional path to a JSON file describing a sequence of query variants to
+        # run against a single data load + index (see FTSFusionMultiVariant*Test).
+        self.fusion_variants_file = options.get("fusion_variants_file", None)
+
     def __str__(self) -> str:
         return str(self.__dict__)
 

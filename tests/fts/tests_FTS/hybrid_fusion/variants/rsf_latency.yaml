@@ -1,0 +1,39 @@
+# Hybrid RSF latency variants: RSF default + window sweep.
+templates:
+  rsf: &rsf
+    test_query_type: fusion
+    test_query_field: emb
+    test_query_field2: text
+    raw_query_map_file: tests/fts/data/vector/raw_hybrid_fusion_query.json
+    fusion_type: rsf
+    rank_window_size: "200"
+
+variants:
+  - metric_suffix: rsf
+    title_prefix: Hybrid Search RSF, 200 window size
+    orderby: q0b00000020
+    params: *rsf
+  - metric_suffix: rsf_ws50
+    title_prefix: Hybrid Search RSF, 50 window size
+    orderby: q0b00000021
+    params:
+      <<: *rsf
+      rank_window_size: "50"
+  - metric_suffix: rsf_ws100
+    title_prefix: Hybrid Search RSF, 100 window size
+    orderby: q0b00000022
+    params:
+      <<: *rsf
+      rank_window_size: "100"
+  - metric_suffix: rsf_ws500
+    title_prefix: Hybrid Search RSF, 500 window size
+    orderby: q0b00000023
+    params:
+      <<: *rsf
+      rank_window_size: "500"
+  - metric_suffix: rsf_ws1000
+    title_prefix: Hybrid Search RSF, 1000 window size
+    orderby: q0b00000024
+    params:
+      <<: *rsf
+      rank_window_size: "1000"

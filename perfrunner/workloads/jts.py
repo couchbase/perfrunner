@@ -100,6 +100,17 @@ def _execute_jts(
         test_flex=settings.test_flex,
         test_flex_query_type=settings.test_flex_query_type,
     )
+    # Hybrid score-fusion flags are only meaningful for fusion tests
+    if settings.fusion_type:
+        params += (
+            f" -fusion_score_mode {settings.fusion_type}"
+            f" -fusion_rank_window_size {settings.rank_window_size}"
+            f" -fusion_score_weight_fts {settings.fusion_weight_fts}"
+            f" -fusion_score_weight_knn {settings.fusion_weight_knn}"
+            f" -fusion_rrf_ranking_constant {settings.rrf_constant}"
+        )
+    if settings.fusion_fault_source:
+        params += f" -fusion_fault_source {settings.fusion_fault_source}"
     if settings.collections_enabled:
         params += (
             f" -test_collections_enabled {settings.collections_enabled}"

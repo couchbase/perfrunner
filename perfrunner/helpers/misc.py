@@ -15,6 +15,7 @@ from uuid import uuid4
 
 import requests
 import validators
+import yaml
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, generate_private_key
 from cryptography.x509 import (
@@ -146,6 +147,11 @@ def retry(catch: tuple = (), iterations: int = 5, wait: int = 10):
 def read_json(filename: str) -> dict:
     with open(filename) as fh:
         return json.load(fh)
+
+
+def read_yaml(filename: str) -> dict:
+    with open(filename) as fh:
+        return yaml.safe_load(fh)
 
 def sort_bucket_key(bucket: str, bucket_size: int = 1000, bucket_count: int = 100) -> float:
     if bucket.startswith('>'):

@@ -297,11 +297,18 @@ class MetricHelper:
         metric_info['subCategory'] = "Index"
         return index_size_mb, self._snapshots, metric_info
 
-    def jts_throughput(self) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, "jts_throughput")
+    def jts_throughput(
+        self,
+        name_suffix: str = "",
+        title_override: Optional[str] = None,
+        order_by: Optional[str] = None,
+    ) -> Metric:
+        metric_id = f'{self.test_config.name}_jts_throughput'
+        if name_suffix:
+            metric_id = f'{self.test_config.name}_{name_suffix}_jts_throughput'
         metric_id = metric_id.replace('.', '')
-        title = "Average Throughput (q/sec), {}".format(self._title)
-        metric_info = self._metric_info(metric_id, title, chirality=1)
+        title = f"Average Throughput (q/sec), {title_override or self._title}"
+        metric_info = self._metric_info(metric_id, title, order_by=order_by, chirality=1)
         timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
         thr = round(np.average(timings), 2)
         thr = round(thr/(int(self.test_config.jts_access_settings.aggregation_buffer_ms)/1000))
@@ -309,16 +316,25 @@ class MetricHelper:
             thr = round(thr)
         return thr, self._snapshots, metric_info
 
-    def jts_latency(self, percentile=50) -> Metric:
+    def jts_latency(
+        self,
+        percentile: int = 50,
+        name_suffix: str = "",
+        title_override: Optional[str] = None,
+        order_by: Optional[str] = None,
+    ) -> Metric:
         prefix = "Average latency (ms)"
         if percentile != 50:
-            prefix = "{}th percentile latency (ms)".format(percentile)
-        metric_id = '{}_{}_{}th'.format(self.test_config.name, "jts_latency", percentile)
+            prefix = f"{percentile}th percentile latency (ms)"
+        metric_id = f'{self.test_config.name}_jts_latency_{percentile}th'
+        if name_suffix:
+            metric_id = f'{self.test_config.name}_{name_suffix}_jts_latency_{percentile}th'
         metric_id = metric_id.replace('.', '')
-        title = "{}, {}".format(prefix, self._title)
-        metric_info = self._metric_info(metric_id, title, chirality=-1)
-        timings = self._jts_metric(collector="jts_stats", metric="jts_latency",
-                                   percentile=percentile)
+        title = f"{prefix}, {title_override or self._title}"
+        metric_info = self._metric_info(metric_id, title, order_by=order_by, chirality=-1)
+        timings = self._jts_metric(
+            collector="jts_stats", metric="jts_latency", percentile=percentile
+        )
         lat = round(np.percentile(timings, percentile), 2)
         if lat > 100:
             lat = round(lat)

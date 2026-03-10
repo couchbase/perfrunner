@@ -174,6 +174,15 @@ class Remote:
             run('mvn install')
 
     @all_clients
+    def clear_jts_logs(self, worker_home: str, jts_home: str):
+        """Remove previously collected JTS logs on the workers for run isolation."""
+        with cd(worker_home), cd('perfrunner'), cd(jts_home):
+            before = run("ls logs 2>/dev/null | wc -l", quiet=True)
+            run("rm -rf logs", quiet=True)
+            run("mkdir -p logs", quiet=True)
+            logger.info(f"Cleared JTS logs on worker (had {str(before).strip()} entries)")
+
+    @all_clients
     def get_jts_logs(self, worker_home: str, jts_home: str, local_dir: str):
         logger.info("Collecting remote JTS logs")
         jts_logs_dir = "{}/logs".format(jts_home)

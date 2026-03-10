@@ -1,0 +1,12 @@
+# Hybrid RSF throughput variant (default window).
+variants:
+  - metric_suffix: rsf
+    title_prefix: Hybrid Search RSF, 200 window size
+    orderby: q0b00000120
+    params:
+      test_query_type: fusion
+      test_query_field: emb
+      test_query_field2: text
+      raw_query_map_file: tests/fts/data/vector/raw_hybrid_fusion_query.json
+      fusion_type: rsf
+      rank_window_size: "200"

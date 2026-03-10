@@ -1,0 +1,31 @@
+# RRF partition sweep: same query, rebuilt index at 6/12/24 pindex to measure merge overhead.
+# 1 pindex is omitted: a single shard over 10M x 768-dim vectors saturates FTS (search timeouts).
+templates:
+  rrf: &rrf
+    test_query_type: fusion
+    test_query_field: emb
+    test_query_field2: text
+    raw_query_map_file: tests/fts/data/vector/raw_hybrid_fusion_query.json
+    fusion_type: rrf
+    rank_window_size: "200"
+    rrf_constant: "60"
+
+variants:
+  - metric_suffix: rrf_parts6
+    title_prefix: Hybrid Search RRF, 6 pindex, 200 window size, k=60
+    orderby: q0b00000041
+    params:
+      <<: *rrf
+      index_partitions: "6"
+  - metric_suffix: rrf_parts12
+    title_prefix: Hybrid Search RRF, 12 pindex, 200 window size, k=60
+    orderby: q0b00000042
+    params:
+      <<: *rrf
+      index_partitions: "12"
+  - metric_suffix: rrf_parts24
+    title_prefix: Hybrid Search RRF, 24 pindex, 200 window size, k=60
+    orderby: q0b00000043
+    params:
+      <<: *rrf
+      index_partitions: "24"

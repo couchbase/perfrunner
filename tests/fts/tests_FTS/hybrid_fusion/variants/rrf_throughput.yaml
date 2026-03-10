@@ -1,0 +1,49 @@
+# Hybrid RRF throughput variants: 3 baselines + RRF default + one larger window.
+templates:
+  rrf: &rrf
+    test_query_type: fusion
+    test_query_field: emb
+    test_query_field2: text
+    raw_query_map_file: tests/fts/data/vector/raw_hybrid_fusion_query.json
+    fusion_type: rrf
+    rank_window_size: "200"
+    rrf_constant: "60"
+
+variants:
+  - metric_suffix: baseline_bm25
+    title_prefix: Baseline BM25 lexical-only
+    orderby: q0b00000001
+    params:
+      test_query_type: term
+      test_query_field: text
+      test_query_field2: null
+      raw_query_map_file: null
+      fusion_type: null
+  - metric_suffix: baseline_vector
+    title_prefix: Baseline vector-only kNN
+    orderby: q0b00000002
+    params:
+      test_query_type: vector
+      test_query_field: emb
+      test_query_field2: null
+      raw_query_map_file: tests/fts/data/vector/raw_vector_match_none_query.json
+      fusion_type: null
+  - metric_suffix: baseline_nofusion
+    title_prefix: Baseline hybrid no-fusion (kNN+text)
+    orderby: q0b00000003
+    params:
+      test_query_type: text_vector
+      test_query_field: emb
+      test_query_field2: text
+      raw_query_map_file: tests/fts/data/vector/raw_vector_match_none_query.json
+      fusion_type: null
+  - metric_suffix: rrf
+    title_prefix: Hybrid Search RRF, 200 window size, k=60
+    orderby: q0b00000110
+    params: *rrf
+  - metric_suffix: rrf_ws500
+    title_prefix: Hybrid Search RRF, 500 window size, k=60
+    orderby: q0b00000113
+    params:
+      <<: *rrf
+      rank_window_size: "500"

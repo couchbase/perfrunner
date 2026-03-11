@@ -84,7 +84,16 @@ class BackupRestoreTest(PerfTest):
                                snapshots=snapshots)
 
     def collectlogs(self):
-        local.cbbackupmgr_collectlogs(cluster_spec=self.cluster_spec)
+        passphrase = self.test_config.backup_settings.passphrase
+
+        if (self.server_info.build_tuple >= (8, 1, 0, 1691)
+                and self.test_config.backup_settings.encrypted):
+            encrypted = True
+        else:
+            encrypted = False
+
+        local.cbbackupmgr_collectlogs(cluster_spec=self.cluster_spec, encrypted=encrypted,
+                                      passphrase=passphrase)
 
     def get_tool_versions(self):
         local.cbbackupmgr_version()
@@ -621,13 +630,21 @@ class CloudBackupRestoreTest(BackupRestoreTest):
         )
 
     def collectlogs(self):
+        if (self.server_info.build_tuple >= (8, 1, 0, 1691)
+                and self.test_config.backup_settings.encrypted):
+            encrypted = True
+        else:
+            encrypted = False
+
         staging_dir = './stage'
         os.mkdir(staging_dir)
         local.cbbackupmgr_collectlogs(
             cluster_spec=self.cluster_spec,
             obj_staging_dir=staging_dir,
             obj_region=self.test_config.backup_settings.obj_region,
-            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id
+            obj_access_key_id=self.test_config.backup_settings.obj_access_key_id,
+            encrypted = encrypted,
+            passphrase=self.test_config.backup_settings.passphrase
         )
 
     def setup_run(self):

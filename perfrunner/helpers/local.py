@@ -256,7 +256,8 @@ def cbbackupmgr_backup(
 
 
 def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
-                            obj_staging_dir: str = None, obj_access_key_id: str = None):
+                            obj_staging_dir: str = None, obj_access_key_id: str = None,
+                            encrypted: bool = False, passphrase: str = "couchbase"):
     logger.info('Running cbbackumgr cbcollect-logs on localhost ')
 
     flags = [
@@ -264,7 +265,8 @@ def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
         '--output-dir .',
         '--obj-region {}'.format(obj_region) if obj_region else None,
         '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-        '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None
+        '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
+        '--passphrase {}'.format(passphrase) if encrypted else None,
     ]
 
     cmd = './opt/couchbase/bin/cbbackupmgr collect-logs {}'.format(

@@ -87,6 +87,7 @@ class SyncGatewayStats(Collector):
         "syncgateway__per_db__db__delta_sync__delta_pull_replication_count",
         "syncgateway__per_db__db__delta_sync__delta_cache_hit",
         "syncgateway__per_db__db__delta_sync__delta_cache_miss",
+        "syncgateway__per_db__db__delta_sync__delta_cache_num_items",
         "syncgateway__per_db__db__delta_sync__delta_push_doc_count",
 
         "syncgateway__per_db__db__shared_bucket_import__import_count",

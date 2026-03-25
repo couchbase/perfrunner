@@ -34,9 +34,11 @@ replica_number = 0
 [secondary]
 indexer.settings.storage_mode = plasma
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = 64
 num_reader_threads = 32
+
+[bucket_extras]
 max_num_shards = 64
 
 [py_tpcc]

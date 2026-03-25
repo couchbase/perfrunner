@@ -18,7 +18,7 @@ enable_cpu_cores = false
 eviction_policy = fullEviction
 replica_number = 0
 
-[bucket_extras]
+[memcached_global]
 num_reader_threads = 64
 num_writer_threads = 16
 

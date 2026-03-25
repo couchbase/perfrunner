@@ -62,6 +62,6 @@ nodes_after = 5
 start_after = 180
 swap = 2
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized

@@ -48,6 +48,6 @@ nodes_after = 9
 swap = 1
 start_after = 1800
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized

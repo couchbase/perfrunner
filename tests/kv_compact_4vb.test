@@ -15,7 +15,7 @@ num_vbuckets = 4
 eviction_policy = fullEviction
 replica_number = 0
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 
 [load]

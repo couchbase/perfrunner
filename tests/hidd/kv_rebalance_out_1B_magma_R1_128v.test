@@ -20,7 +20,7 @@ eviction_policy = fullEviction
 backend_storage = magma
 failover_min = 120
 
-[bucket_extras]
+[memcached_global]
 num_reader_threads = disk_io_optimized
 num_writer_threads = disk_io_optimized
 

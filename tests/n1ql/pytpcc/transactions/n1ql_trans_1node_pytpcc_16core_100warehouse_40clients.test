@@ -34,7 +34,7 @@ replica_number = 0
 [secondary]
 indexer.settings.storage_mode = plasma
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized
 

@@ -147,6 +147,7 @@ def main():
     cm.enable_audit()
     cm.set_magma_min_quota()
 
+    cm.set_memcached_global_settings()
     if need_buckets := (
         not cm.cluster_spec.columnar_infrastructure and cm.test_config.cluster.num_buckets
     ):

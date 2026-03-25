@@ -58,7 +58,7 @@ obj_staging_dir = /stage
 obj_region = us-east-1
 aws_credential_path = /root/.ssh
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized
 

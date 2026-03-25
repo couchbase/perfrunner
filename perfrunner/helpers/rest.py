@@ -1401,13 +1401,16 @@ class DefaultRestHelper(RestBase):
         except KeyError:
             return global_tls_min_version
 
-    def set_num_threads(self, node: str, thread_type: str, thread: int):
-        logger.info(f"Setting {thread_type} to {thread}")
+    def get_memcached_global_settings(self, node: str) -> dict:
+        logger.info(f"Getting memcached global settings from {node}")
         api = self._get_api_url(host=node, path="pools/default/settings/memcached/global")
-        data = {
-            thread_type: thread
-        }
-        self.post(url=api, data=data)
+        resp = self.get(url=api)
+        return resp.json()
+
+    def set_memcached_global_settings(self, node: str, settings: dict):
+        logger.info(f"Setting memcached global settings on {node}: {pretty_dict(settings)}")
+        api = self._get_api_url(host=node, path="pools/default/settings/memcached/global")
+        self.post(url=api, data=settings)
 
     def get_supported_ciphers(self, node: str, service: str) -> list[str]:
         logger.info(f"Getting the supported ciphers for the {service} service")

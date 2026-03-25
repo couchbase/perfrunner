@@ -36,9 +36,11 @@ statements =
    BUILD INDEX ON default:default.tpcc.WAREHOUSE(WH_ID);
 
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = 64
 num_reader_threads = 32
+
+[bucket_extras]
 max_num_shards = 64
 
 [py_tpcc]

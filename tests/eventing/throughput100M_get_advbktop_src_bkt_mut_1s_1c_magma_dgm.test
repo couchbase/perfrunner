@@ -53,6 +53,6 @@ workers = 100
 throughput = 100000
 time = 1200
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized

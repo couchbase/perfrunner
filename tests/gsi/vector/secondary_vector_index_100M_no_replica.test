@@ -59,6 +59,6 @@ workers = 50
 throughput = 2000
 modify_doc_loader = mutate_vector
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized

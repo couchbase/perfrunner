@@ -1,5 +1,4 @@
 import random
-import re
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Iterable, List, Optional
@@ -524,6 +523,15 @@ class DefaultClusterManager(ClusterManagerBase):
         self.remote.set_systemd_environment(env_vars)
         self.remote.restart()
 
+    def set_memcached_global_settings(self):
+        if not (mc_global_settings := self.test_config.memcached_global_settings):
+            return
+
+        for master in self.cluster_spec.masters:
+            self.rest.set_memcached_global_settings(master, mc_global_settings)
+            settings = self.rest.get_memcached_global_settings(master)
+            logger.info(f"Read memcached global settings from {master}: {pretty_dict(settings)}")
+
     def restart_with_alternative_bucket_options(self):
         """Apply custom buckets settings.
 
@@ -536,12 +544,9 @@ class DefaultClusterManager(ClusterManagerBase):
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
               '[{{extra_config_string, "{}"}}]).'
 
-        params = ''
-        for option, value in self.test_config.bucket_extras.items():
-            if re.search("^num_.*_threads$", option):
-                self.rest.set_num_threads(self.master_node, option, value)
-            else:
-                params = params + option+"="+value+";"
+        params = "".join(
+            f"{option}={value};" for option, value in self.test_config.bucket_extras.items()
+        )
 
         if params:
             for master in self.cluster_spec.masters:

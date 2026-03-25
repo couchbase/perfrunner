@@ -17,7 +17,7 @@ replica_number = 2
 backend_storage = magma
 eviction_policy = fullEviction
 
-[bucket_extras]
+[memcached_global]
 num_reader_threads = 64
 num_writer_threads = 64
 

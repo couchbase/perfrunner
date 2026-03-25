@@ -29,7 +29,7 @@ eviction_policy = fullEviction
 backend_storage = magma
 replica_index = 1
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized
 

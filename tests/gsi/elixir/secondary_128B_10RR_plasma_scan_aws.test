@@ -48,6 +48,6 @@ workers = 50
 item_size = 100
 doc_gen = single_field_large_doc
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized

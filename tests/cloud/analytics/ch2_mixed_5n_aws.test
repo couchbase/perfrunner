@@ -35,9 +35,11 @@ failover_min = 10
 [compaction]
 db_percentage = 100
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = 64
 num_reader_threads = 32
+
+[bucket_extras]
 max_num_shards = 64
 
 [secondary]

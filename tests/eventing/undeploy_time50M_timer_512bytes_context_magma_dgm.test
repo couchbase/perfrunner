@@ -43,6 +43,6 @@ timer_fuzz = 2500
 
 
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized

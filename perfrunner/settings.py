@@ -4097,14 +4097,16 @@ class TestConfig(Config):
         return DiagEvalSettings(options)
 
     @property
+    def memcached_global_settings(self) -> dict:
+        mc_global = self._get_options_as_dict("memcached_global")
+        access = AccessSettings(self._get_options_as_dict("access"))
+        if access.durability_set and "num_writer_threads" not in mc_global:
+            mc_global["num_writer_threads"] = "disk_io_optimized"
+        return mc_global
+
+    @property
     def bucket_extras(self) -> dict:
-        bucket_extras = self._get_options_as_dict('bucket_extras')
-        options = self._get_options_as_dict('access')
-        access = AccessSettings(options)
-        if access.durability_set:
-            if "num_writer_threads" not in bucket_extras:
-                bucket_extras["num_writer_threads"] = "disk_io_optimized"
-        return bucket_extras
+        return self._get_options_as_dict("bucket_extras")
 
     @property
     def buckets(self) -> list[str]:

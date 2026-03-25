@@ -21,7 +21,7 @@ backend_storage = magma
 eviction_policy = fullEviction
 encryption_at_rest = true
 
-[bucket_extras]
+[memcached_global]
 num_reader_threads = 64
 num_writer_threads = 64
 

@@ -14,9 +14,8 @@ num_buckets = 1
 [bucket]
 eviction_policy = fullEviction
 
-[bucket_extras]
+[memcached_global]
 num_writer_threads = disk_io_optimized
-
 [load]
 items = 1000000000
 size = 1024

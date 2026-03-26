@@ -267,7 +267,7 @@ class FTSTest(JTSTest):
             })
             # if collection map exists , the index is on collections
             if collection_map and len(collection_map[bucket_name].keys()) > 1:
-                scope_names = list(collection_map[bucket_name].keys())[1:]
+                scope_names = [k for k in collection_map[bucket_name].keys() if k != "_default"]
                 if "types" in list(bucket_index_def["params"]["mapping"].keys()):
                     # to get the custom mapping
                     temp = bucket_index_def["params"]["mapping"]["types"]

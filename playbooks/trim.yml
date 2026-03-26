@@ -26,11 +26,18 @@
       opts: "{{ opts }}"
       force: yes
 
+  - name: get the uuid of the data device
+    shell: "blkid -s UUID -o value {{ data_dir_device }}"
+    register: get_data_dir_device_uuid
+
+  - set_fact:
+      data_dir_device_uuid: "{{ get_data_dir_device_uuid.stdout }}"
+
   - name: mounting data parition
     mount:
       name: "{{ data_dir }}"
       state: mounted
-      src: "{{ data_dir_device }}"
+      src: "UUID={{ data_dir_device_uuid }}"
       fstype: "{{ fstype | default('ext4') }}"
 
   - name: discarding unused blocks

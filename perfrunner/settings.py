@@ -2681,6 +2681,10 @@ class GSISettings:
         self.fusion_type = options.get("fusion_type", "unionall")
         self.fusion_scorer = options.get("fusion_scorer", "rrf")
         self.query_map_s3_path = options.get("query_map_s3_path", None)
+        # Build the _system._query primary index before the vector indexes, so CBO
+        # doesn't auto-create it mid-query and evict bhive graph pages.
+        self.pre_create_system_query_index = maybe_atoi(
+            options.get("pre_create_system_query_index", "false"))
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -2737,6 +2741,7 @@ class IndexSettings:
         self.top_k_results = options.get('top_k_results', 10)
         self.statements = self.create_index_statements()
         self.vector_query_path = options.get("vector_query_path", None)
+        self.vector_query_map = None
         if self.vector_query_path:
             with open(self.vector_query_path,'r') as f:
                 self.vector_query_map = f.readlines()

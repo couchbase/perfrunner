@@ -1,0 +1,13 @@
+{
+    "msmarco": {
+        "_default": {
+            "_default": {
+                "sparse-idx": {
+                    "field": "sparse SPARSE VECTOR",
+                    "description": "'IVF'",
+                    "num_replica": 0
+                }
+            }
+        }
+    }
+}

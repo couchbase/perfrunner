@@ -715,6 +715,8 @@ class PerfTest:
     def log_task_settings(self, phases: Iterable[WorkloadPhase]):
         def phase_settings_encoder(obj):
             settings_dict = copy.deepcopy(obj.__dict__)
+            settings_dict.pop("vector_query_map", None)  # exclude vector_query_map from log dump
+            settings_dict.pop("sparse_query_map", None)  # same for the sparse query map
             if isinstance(obj, PhaseSettings) and obj.collections:
                 # Replace a collection map with `CollectionSettings` definition
                 settings_dict.update({"collections": self.test_config.collection.get_definition()})

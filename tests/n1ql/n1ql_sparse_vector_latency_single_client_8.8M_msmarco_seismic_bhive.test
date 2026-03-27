@@ -1,0 +1,93 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlHybridSearchTest
+
+[showfast]
+title = Sparse Vector Search, 1 bucket, SEISMIC MS MARCO 8.8M docs SPLADE, no replica, single client
+component = n1ql
+category = vector
+sub_category = Sparse
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 117760
+online_cores = 16
+kernel_mem_limit = 128G
+kernel_mem_limit_services = kv
+initial_nodes = 4
+num_buckets = 1
+bucket_name = msmarco
+
+[bucket]
+replica_number = 0
+backend_storage = magma
+autofailover_enabled = false
+
+[load]
+items = 8841823
+size = 1024
+workers = 80
+doc_gen = sparse_vector_embedding
+
+[collection]
+config = collections/1bucket_msmarco_default.json
+
+[access]
+items = 8841823
+workers = 0
+time = 500
+n1ql_op = read
+doc_gen = sparse_vector_embedding
+latency_percentiles = 80,95
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 1
+workload_instances = 1
+
+[restore]
+backup_storage = s3://msmarco-sparse-seismic-8.8m
+backup_repo = msmarco_sparse_seismic
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+ground_truth_file_name = msmarco_seismic/qrels_ground_truth_seismic.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+top_k_results = 100
+fields = composite
+
+[secondary]
+#  index def only resolves bucket/scope/collection; the sparse index DDL is generated.
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_sparse_vector_index_default_msmarco.json
+indexer.settings.storage_mode = plasma
+vector_index_type = bhive
+vector_scan_probes = 20
+vector_topn_scan = 100
+retrieval_mode = sparse
+pre_create_system_query_index = true
+query_map_s3_path = s3://hybrid-dense-msmarco/queries/
+sparse_vector_field = sparse
+sparse_index_name = sparse-idx
+sparse_description = IVF30
+sparsejl_dim = 4096
+sparse_query_literal_format = raw
+sparse_topn_scan = 100
+#  Tuned BHIVE knobs (CBPS-1792).
+indexer.bhive.vanama.efSearch = 85
+indexer.bhive.quotaSplitPercent = 95
+indexer.bhive.invertedIndex.maxPerDim = 256
+sparse_query_path = tests/n1ql/hybrid/data/msmarco_queries_splade_seismic.txt
+
+[n1ql-q01]
+statement = SELECT META().id FROM `msmarco` ORDER BY SPARSE_VECTOR_DISTANCE(sparse, $1, NPROBES, TOPNSCAN) LIMIT top_k_results
+args = [{sparse}]
+total_batches = 1000
+
+[profiling]
+services = index
+profiles = cpu,heap
+interval = 100
+num_profiles = 3

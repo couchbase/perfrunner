@@ -2744,8 +2744,22 @@ class N1qlHybridSearchTest(N1qlVectorLatencyThroughputPreparedStatementTest):
             self.fts_nodes[0], created_name,
             int(self.test_config.access_settings.items))
 
+    def create_system_query_index(self) -> None:
+        """Pre-create the _system._query primary index so CBO doesn't build it mid-query.
+
+        With useCBO=true the first query triggers an on-the-fly build of
+        ix_system_query, which competes with the bhive graph for memory and causes
+        page evictions and latency spikes.
+        """
+        statement = (f"CREATE PRIMARY INDEX IF NOT EXISTS ON "
+                     f"`{self.bsc[0]}`.`_system`.`_query`")
+        logger.info(f"Pre-creating system query index: {statement}")
+        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
     def run(self) -> None:
         self.cloud_restore()
+        if self.gsi.pre_create_system_query_index:
+            self.create_system_query_index()
         statements = self.create_statements()
         # Skip index creation when there's nothing to build (bm25 is FTS-only,
         # returns []). create_indexes([]) would fall back to the dense index.
@@ -2761,6 +2775,24 @@ class N1qlHybridSearchTest(N1qlVectorLatencyThroughputPreparedStatementTest):
         initial_throughput = self.metrics._avg_n1ql_throughput(self.master_node)
         self.access()                                # @with_stats inherited
         self.report_kpi(ir, initial_throughput)
+
+
+class N1qlHybridSearchIndexBuildTest(N1qlHybridSearchTest):
+    """Index build time for the retrieval mode's GSI indexes (no query workload)."""
+
+    def run(self) -> None:
+        self.cloud_restore()
+        start_time = time.time()
+        statements = self.create_statements()
+        if statements:
+            self.create_indexes(statements=statements)
+            self.wait_for_indexing(statements=statements)
+        build_time = time.time() - start_time
+        logger.info(f"[{self.gsi.retrieval_mode}] index build time: {build_time:.2f}s")
+        self.reporter.post(
+            *self.metrics.get_indexing_meta(value=build_time, index_type="Initial",
+                                            update_category=False)
+        )
 
 
 class CapellaSnapshotBackupWithN1QLTest(CapellaSnapshotBackupRestoreTest, N1QLTest):

@@ -1,5 +1,6 @@
 import os
 import signal
+import socket
 import sys
 import time
 from itertools import cycle
@@ -381,8 +382,8 @@ class RemoteWorkerManager:
             broker_url=self.broker_url,
             broker_connection_timeout=1500,
             broker_connection_max_retries=100,
+            broker_transport_options={"socket_settings": {socket.TCP_USER_TIMEOUT: 0}},
         )
-
         self.workers = cycle(self.cluster_spec.workers)
         self.terminate()
         self.start()
@@ -598,10 +599,6 @@ class RemoteWorkerManager:
 
 
 class LocalWorkerManager(RemoteWorkerManager):
-
-    BROKER_DB = LOCAL_BROKER_DB
-    RESULTS_DB = LOCAL_RESULTS_DB
-
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
@@ -621,14 +618,13 @@ class LocalWorkerManager(RemoteWorkerManager):
         return False
 
     def tune_sqlite(self):
-        for db in self.BROKER_DB, self.RESULTS_DB:
-            engine = create_engine('sqlite:///{}'.format(db))
-            engine.execute('PRAGMA synchronous=OFF;')
+        for db in LOCAL_BROKER_DB, LOCAL_RESULTS_DB:
+            engine = create_engine(f"sqlite:///{db}")
+            engine.execute("PRAGMA synchronous=OFF;")
 
     def wait_until_workers_are_ready(self):
-        engine = create_engine('sqlite:///{}'.format(self.BROKER_DB))
-        query = 'SELECT COUNT(*) FROM kombu_queue WHERE name = "{}"'\
-            .format(self.next_worker())
+        engine = create_engine(f"sqlite:///{LOCAL_BROKER_DB}")
+        query = f'SELECT COUNT(*) FROM kombu_queue WHERE name = "{self.next_worker()}"'
 
         while True:
             if 'kombu_queue' not in engine.table_names():

@@ -12,7 +12,6 @@ from kombu.serialization import registry
 from sqlalchemy import create_engine
 
 from logger import logger
-from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers import local
 from perfrunner.helpers.config_files import CAOWorkerFile
 from perfrunner.helpers.remote import RemoteHelper
@@ -67,6 +66,37 @@ try:
 except Exception as ex:
     print(ex)
 
+
+COMMON_CELERY_CONFIG = dict(
+    task_serializer="pickle",
+    result_serializer="pickle",
+    accept_content=["pickle", "json", "application/json", "application/data", "application/text"],
+    task_protocol=2,
+)
+
+LOCAL_BROKER_DB = "perfrunner.db"
+LOCAL_RESULTS_DB = "results.db"
+
+LOCAL_CELERY_CONFIG = dict(
+    **COMMON_CELERY_CONFIG,
+    broker_url=f"sqla+sqlite:///{LOCAL_BROKER_DB}",
+    result_backend="database",
+    database_url=f"sqlite:///{LOCAL_RESULTS_DB}",
+)
+
+REMOTE_CELERY_CONFIG = dict(
+    **COMMON_CELERY_CONFIG,
+    broker_pool_limit=None,
+    worker_hijack_root_logger=False,
+    result_backend="rpc://",
+    result_persistent=False,
+    result_exchange="perf_results",
+    broker_connection_retry=True,
+)
+
+ON_PREM_BROKER_URL = "amqp://couchbase:couchbase@172.23.96.202:5672/broker"
+
+
 celery = Celery('workers')
 
 try:
@@ -77,59 +107,20 @@ try:
 except Exception as ex:
     print(ex)
 
-if 'env/bin/perfrunner' in sys.argv:
-    if '--remote' in sys.argv:
-        # -C flag is a hack to distinguish local and remote workers!
-        celery.config_from_object(celeryremote)
-    else:
-        celery.config_from_object(celerylocal)
-elif 'env/bin/nosetests' in sys.argv:
-    pass
-else:
-    worker_type = os.getenv('WORKER_TYPE')
-    broker_url = os.getenv('BROKER_URL')
-    if worker_type == 'local':
+if "env/bin/perfrunner" not in sys.argv and "env/bin/nostests" not in sys.argv:
+    # configure workers that are started using `env/bin/celery worker`
+    worker_type = os.getenv("WORKER_TYPE")
+    if worker_type == "local":
+        celery.conf.update(LOCAL_CELERY_CONFIG)
+    elif worker_type == "remote":
         celery.conf.update(
-            broker_url='sqla+sqlite:///perfrunner.db',
-            result_backend='database',
-            database_url='sqlite:///results.db',
-            task_serializer='pickle',
-            result_serializer='pickle',
-            accept_content={'pickle',
-                            'json',
-                            'application/json',
-                            'application/data',
-                            'application/text'},
-            task_protocol=2)
-    elif worker_type == 'remote':
-        celery.conf.update(
-            broker_url=broker_url,
-            broker_pool_limit=None,
-            worker_hijack_root_logger=False,
-            result_backend="rpc://",
-            result_persistent=False,
-            result_exchange="perf_results",
-            accept_content=['pickle',
-                            'json',
-                            'application/json',
-                            'application/data',
-                            'application/text'],
-            result_serializer='pickle',
-            task_serializer='pickle',
-            task_protocol=2,
+            REMOTE_CELERY_CONFIG,
+            broker_url=os.getenv("BROKER_URL"),
             broker_connection_timeout=30,
-            broker_connection_retry=True,
-            broker_connection_max_retries=10)
+            broker_connection_max_retries=10,
+        )
     else:
-        raise Exception('invalid worker type: {}'.format(worker_type))
-
-try:
-    registry.enable('json')
-    registry.enable('application/json')
-    registry.enable('application/data')
-    registry.enable('application/text')
-except Exception as ex:
-    print(ex)
+        raise Exception(f"Invalid worker type: {worker_type}")
 
 
 @celery.task
@@ -365,10 +356,11 @@ class RemoteWorkerManager:
                  verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.broker_url = 'amqp://couchbase:couchbase@172.23.96.202:5672/broker'
         self.remote = RemoteHelper(
             cluster_spec, verbose, external_client=self.cluster_spec.external_client
         )
+
+        self.broker_url = ON_PREM_BROKER_URL
         if self.cluster_spec.cloud_infrastructure:
             if (
                 self.cluster_spec.kubernetes_infrastructure
@@ -380,27 +372,17 @@ class RemoteWorkerManager:
                     worker_config.update_worker_spec()
                     self.worker_path = worker_config.dest_file
             else:
-                self.broker_url = "amqp://couchbase:couchbase@{}:5672/broker".format(
-                    self.cluster_spec.utilities[0]
+                self.broker_url = (
+                    f"amqp://couchbase:couchbase@{self.cluster_spec.utilities[0]}:5672/broker"
                 )
+
         celery.conf.update(
+            REMOTE_CELERY_CONFIG,
             broker_url=self.broker_url,
-            broker_pool_limit=None,
-            worker_hijack_root_logger=False,
-            result_backend="rpc://",
-            result_persistent=False,
-            result_exchange="perf_results",
-            accept_content=['pickle',
-                            'json',
-                            'application/json',
-                            'application/data',
-                            'application/text'],
-            result_serializer='pickle',
-            task_serializer='pickle',
-            task_protocol=2,
             broker_connection_timeout=1500,
-            broker_connection_retry=True,
-            broker_connection_max_retries=100)
+            broker_connection_max_retries=100,
+        )
+
         self.workers = cycle(self.cluster_spec.workers)
         self.terminate()
         self.start()
@@ -617,12 +599,15 @@ class RemoteWorkerManager:
 
 class LocalWorkerManager(RemoteWorkerManager):
 
-    BROKER_DB = 'perfrunner.db'
-    RESULTS_DB = 'results.db'
+    BROKER_DB = LOCAL_BROKER_DB
+    RESULTS_DB = LOCAL_RESULTS_DB
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+
+        celery.conf.update(LOCAL_CELERY_CONFIG)
+
         self.workers = cycle(['localhost'])
         self.terminate()
         self.tune_sqlite()
@@ -723,4 +708,3 @@ class LocalWorkerManager(RemoteWorkerManager):
                 )
                 self.fg_async_results.append(async_result)
                 time.sleep(15)
-

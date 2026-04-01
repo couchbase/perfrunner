@@ -18,6 +18,7 @@ from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from logger import logger
 from perfrunner.helpers.misc import (
     SSLCertificate,
+    get_max_arg_strlen,
     pretty_dict,
     run_local_shell_command,
 )
@@ -836,8 +837,7 @@ def run_ycsb(
         ]
 
     cwd = "YCSB"
-    stdout, _, _ = run_local_shell_command("getconf PAGE_SIZE")
-    max_arg_strlen = int(stdout.strip()) * 32
+    max_arg_strlen = get_max_arg_strlen()
     if too_long_params := [arg for arg in parameters if len(arg) > max_arg_strlen]:
         parameters = [arg for arg in parameters if arg not in too_long_params]
         logger.info(f"Some parameters are too long to provide via CLI: {too_long_params}")

@@ -251,6 +251,11 @@ def run_local_shell_command(
     return stdout, stderr, returncode
 
 
+def get_max_arg_strlen() -> int:
+    stdout, _, _ = run_local_shell_command("getconf PAGE_SIZE")
+    return int(stdout.strip()) * 32
+
+
 def set_azure_subscription(sub_name: str, alias: str) -> int:
     _, _, err = run_local_shell_command(
         command='az account set --subscription "{}"'.format(sub_name),

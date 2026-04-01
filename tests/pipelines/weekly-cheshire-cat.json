@@ -52,7 +52,8 @@
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_insert_heavy_power.test", "groups": "P0"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_mixed_power.test", "groups": "P0"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_mixed_uniform.test", "groups": "P0"},
-        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_throughput_250M_insert_only_uniform.test", "groups": "P0"}
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_throughput_250M_insert_only_uniform.test", "groups": "P0"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_compaction_1B_magma_C1.test", "groups": "P0"}
     ],
     "MagmaNVME": [
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/java_dcp_throughput_1n_100M_compressed_magma.test", "groups": "P0"},

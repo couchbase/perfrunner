@@ -35,6 +35,9 @@ class JTSTest(PerfTest):
         self.jts_access.fts_raw_query_map = None
         if self.jts_access.raw_query_map_file:
             self.jts_access.fts_raw_query_map = read_json(self.jts_access.raw_query_map_file)
+        if not self.cluster_spec.capella_infrastructure:
+            self.rest.fts_set_node_level_parameters(self.jts_access.collections_limit_per_index,
+                                                    self.fts_nodes[0])
 
     def download_jts(self):
         if self.worker_manager.is_remote:

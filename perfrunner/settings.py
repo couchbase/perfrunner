@@ -2154,6 +2154,9 @@ class JTSAccessSettings(PhaseSettings):
         self.max_segment_size = options.get("max_segment_size", None)
         self.vector_index_optimized_for = options.get("vector_index_optimized_for", None)
         self.skip_indexing_collection = options.get("skip_indexing_collection", None)
+        self.collections_limit_per_index = {}
+        self.collections_per_index = options.get("collections_per_index", '1000')
+        self.collections_limit_per_index["collectionsLimitPerIndex"] = self.collections_per_index
 
     def __str__(self) -> str:
         return str(self.__dict__)

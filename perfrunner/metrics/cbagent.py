@@ -51,7 +51,11 @@ from cbagent.collectors import (
     XdcrStats,
 )
 from cbagent.collectors.ai_services import WorkflowMetadataStats
-from cbagent.collectors.metrics_rest_api import MetricsRestApiAppTelemetry, MetricsRestApiDeks
+from cbagent.collectors.metrics_rest_api import (
+    MetricsRestApiAppTelemetry,
+    MetricsRestApiContinuousBackup,
+    MetricsRestApiDeks,
+)
 from cbagent.metadata_client import MetadataClient
 from cbagent.settings import CbAgentSettings
 from cbagent.stores import PerfStore
@@ -131,6 +135,7 @@ class CbAgent:
         regulator_stats=False,
         utilisation_stats=False,
         app_telemetry=False,
+        contbk_stats=False,
         ai_workflow_stats=False,
     ):
         self.collectors = []
@@ -168,6 +173,8 @@ class CbAgent:
         self.add_collector(MetricsRestApiProcesses)
         if app_telemetry:
             self.add_collector(MetricsRestApiAppTelemetry)
+        if contbk_stats:
+            self.add_collector(MetricsRestApiContinuousBackup)
 
         if self.test.dynamic_infra:
             return

@@ -1977,6 +1977,31 @@ class DefaultRestHelper(RestBase):
         resp = self.post(url=url, json=settings)
         resp.raise_for_status()
 
+    def configure_continuous_backup(self, host: str, bucket: str, enable: str,
+                                    backup_location: str, backup_interval: str):
+
+        logger.info(f"Set continuous_backup to {enable}")
+
+        data = {
+            "continuousBackupEnabled": enable,
+            "continuousBackupLocation": backup_location,
+            "continuousBackupInterval": backup_interval,
+            "name": bucket,
+        }
+
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
+        self.post(url=url, data=data)
+
+    def get_vbuckets_watched_stat(self, host: str, bucket: str) -> int:
+        api = (f"pools/default/stats/range/contbk_vbuckets_watched?"
+               f"nodesAggregation=sum&bucket={bucket}")
+        url = self._get_api_url(host=host, path=api)
+        resp = self.get(url=url).json()
+        if data := resp["data"]:
+            return int(data[0]["values"][-1][1])
+
+        return 0
+
     def start_log_collection(self, host: str, nodes: list[str] = [], upload_host: str = ""):
         """Start log collection for the specified nodes, or all nodes if none are specified."""
         data = {
@@ -2080,11 +2105,6 @@ class CapellaRestBase(DefaultRestHelper):
     @property
     def _cbc_token(self):
         return os.getenv('CBC_TOKEN_FOR_INTERNAL_SUPPORT')
-
-    @retry
-    def get_cluster_tasks(self, cluster_id: str):
-        resp = self.dedicated_client.get_cluster_tasks(cluster_id)
-        return resp
 
     def get_cp_version(self) -> str:
         api = f"{self.dedicated_client.internal_url}/status"

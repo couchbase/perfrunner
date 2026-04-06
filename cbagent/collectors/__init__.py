@@ -21,6 +21,7 @@ from cbagent.collectors.metrics_rest_api import (
     MetricsRestApiThroughputCollection,
     MetricsRestApiAppTelemetry,
     MetricsRestApiDeks,
+    MetricsRestApiContinuousBackup,
 )
 from cbagent.collectors.n1ql_stats import N1QLStats
 from cbagent.collectors.ns_server import (

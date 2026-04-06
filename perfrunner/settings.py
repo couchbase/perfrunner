@@ -2640,6 +2640,9 @@ class BackupSettings(CbbackupmgrSettings):
     OBJ_ACCESS_KEY_ID = None
     AWS_CREDENTIAL_PATH = None
     BACKUP_DIRECTORY = None
+    CONTINUOUS_BACKUP_LOCATION = None
+    CONTINUOUS_BACKUP_TEMPDIR = None
+    CONTINUOUS_BACKUP_INTERVAL = None
 
     def __init__(self, options: dict):
         super().__init__(options)
@@ -2652,6 +2655,12 @@ class BackupSettings(CbbackupmgrSettings):
         self.obj_access_key_id = options.get("obj_access_key_id", self.OBJ_ACCESS_KEY_ID)
         self.aws_credential_path = options.get("aws_credential_path", self.AWS_CREDENTIAL_PATH)
         self.backup_directory = options.get("backup_directory", self.BACKUP_DIRECTORY)
+        self.continuous_backup_location = options.get("continuous_backup_location",
+                                                      self.CONTINUOUS_BACKUP_LOCATION)
+        self.continuous_backup_tempdir = options.get("continuous_backup_tempdir",
+                                                     self.CONTINUOUS_BACKUP_TEMPDIR)
+        self.continuous_backup_interval = options.get("continuous_backup_interval",
+                                                      self.CONTINUOUS_BACKUP_INTERVAL)
 
 
 class RestoreSettings(CbbackupmgrSettings):
@@ -2678,11 +2687,12 @@ class RestoreSettings(CbbackupmgrSettings):
         return str(self.__dict__)
 
 
-class ImportSettings:
+class ImportSettings(BackupSettings):
     IMPORT_FILE = ""
     DOCS_PER_COLLECTION = 0
 
     def __init__(self, options):
+        super().__init__(options)
         self.docs_per_collections = int(
             options.get("docs_per_collection", self.DOCS_PER_COLLECTION)
         )

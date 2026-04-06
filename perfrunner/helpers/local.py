@@ -43,7 +43,6 @@ def extract_cb_any(filename: str):
     else:
         extract_cb("{}.rpm".format(filename))
 
-
 def extract_any(filename: str, to_path: str = None, remove_after: bool = True):
     """Extract the given file and store the content to the specified path.
 
@@ -193,13 +192,48 @@ def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec,
     with lcd('./opt/couchbase/bin'):
         local(cmd)
 
+def run_couchbase_tool_command(tool: str, args: str, success_msg: str = '',
+                              err_msg: str = ''):
+    """Run a Couchbase CLI tool command with fallback from relative to absolute path.
 
-def cbbackupmgr_version():
-    cmd = './opt/couchbase/bin/cbbackupmgr --version'
-    logger.info('Running: {}'.format(cmd))
-    result = local(cmd, capture=True)
-    logger.info(result)
+    Tries ./opt/couchbase/bin/<tool> first (locally extracted tools),
+    falls back to /opt/couchbase/bin/<tool> if relative path fails with
+    return code 127.
 
+    Args:
+        tool: The tool name (e.g., 'cbbackupmgr', 'cbimport', 'cbexport')
+        args: Arguments to pass to the tool
+        success_msg: Message to print on success
+        err_msg: Message to print on failure
+
+    Returns:
+        stdout, stderr, returncode tuple
+    """
+    rel_path = f'./opt/couchbase/bin/{tool}'
+    abs_path = f'/opt/couchbase/bin/{tool}'
+
+    # Check if tool exists at relative path first
+    if os.path.exists(rel_path):
+        cmd = f"{rel_path} {args}"
+    elif os.path.exists(abs_path):
+        # Fallback to absolute path (system-installed tools)
+        cmd = f"{abs_path} {args}"
+    else:
+        # Tool not found at either location
+        logger.warning(f"Tool {tool} not found at {rel_path} or {abs_path}")
+        return "", f"{tool}: command not found", 127
+
+    logger.info(f"Running: {cmd}")
+    return run_local_shell_command(cmd, success_msg=success_msg, err_msg=err_msg)
+
+
+def cb_tool_version(tool: str):
+    try:
+        stdout, stderr, returncode = run_couchbase_tool_command(tool, '--version')
+        if returncode == 0:
+            logger.info(stdout.strip())
+    except (Exception, SystemExit) as e:
+        logger.warning(f'Failed to get {tool} version: {e}')
 
 def cbbackupmgr_backup(
     master_node: str,
@@ -315,14 +349,21 @@ def cbbackupmgr_merge(
     run_local_shell_command(cmd, raise_error=True)
 
 
-def calc_backup_size(cluster_spec: ClusterSpec,
-                     rounded: bool = True) -> float:
-    backup_size = local('du -sb0 {}'.format(cluster_spec.backup), capture=True)
+def calc_backup_size(backup_dir: str, rounded: bool = True) -> float:
+    """Calculate the size of a backup directory.
+
+    Args:
+        backup_dir: Path to the backup directory
+        rounded: If True, return size rounded to 2 decimal places
+
+    Returns:
+        Size in GB
+    """
+    backup_size = local(f'du -sb0 {backup_dir}', capture=True)
     backup_size = backup_size.split()[0]
     backup_size = float(backup_size) / 2 ** 30  # B -> GB
 
     return round(backup_size, 2) if rounded else backup_size
-
 
 def restore(
     master_node: str,
@@ -335,6 +376,7 @@ def restore(
     passphrase: str = "couchbase",
     disable_hlv: bool = False,
     env_vars: dict[str, str] = {},
+    force_update: bool = True
 ):
     purge_restore_progress(cluster_spec)
 
@@ -350,6 +392,7 @@ def restore(
             encrypted=encrypted,
             passphrase=passphrase,
             disable_hlv=disable_hlv,
+            force_update=force_update,
             env_vars=env_vars,
         )
 
@@ -394,11 +437,12 @@ def cbbackupmgr_restore(
     disable_hlv: bool = False,
     disable_analytics: bool = False,
     env_vars: dict[str, str] = {},
+    force_update: bool = True,
 ):
     flags = filter(
         None,
         [
-            "--force-updates",
+            "--force-updates" if force_update else None,
             f"--archive {archive or cluster_spec.backup}",
             f"--repo {repo}",
             f"--include-data {include_data}" if include_data else None,
@@ -415,10 +459,33 @@ def cbbackupmgr_restore(
         ],
     )
 
-    cmd = f"./opt/couchbase/bin/cbbackupmgr restore {' '.join(flags)}"
+    cmd = f"./opt/couchbase/bin/cbbackupmgr restore {' '.join(filter(None, flags))}"
 
-    logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
-    run_local_shell_command(cmd, env=env_vars, raise_error=True)
+    logger.info(f"Running: {cmd}")
+    run_local_shell_command(cmd)
+
+def cbcontbk_restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
+                     include_data: str, location: str, tmp_dir: str, target_time: str,
+                     archive: str = '', repo: str = 'default',
+                     map_data: Optional[str] = None, use_tls: bool = False):
+    flags = [f"--archive {archive or cluster_spec.backup}",
+             f"--repo {repo}",
+             f"--include-data {include_data}" if include_data else None,
+             f"--threads {threads}",
+             f"--cluster http{'s' if use_tls else ''}://{master_node}",
+             "--cacert root.pem" if use_tls else None,
+             f"--username {cluster_spec.rest_credentials[0]}",
+             f"--password {cluster_spec.rest_credentials[1]}",
+             f"--map-data {map_data}" if map_data else None,
+             f"--target {target_time}",
+             f"--location {location}",
+             f"--tmp-dir {tmp_dir}"]
+
+    cmd = f"./opt/couchbase/bin/cbcontbk restore {' '.join(filter(None, flags))}"
+
+    logger.info(f"Running: {cmd}")
+    run_local_shell_command(cmd, raise_error=True)
+
 
 
 def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: list[str], threads: int):
@@ -447,13 +514,6 @@ def cbbackupmgr_list(cluster_spec: ClusterSpec, snapshots: list[str], bucket: Op
 
     logger.info(f"Running: {cmd}")
     run_local_shell_command(cmd, raise_error=True)
-
-
-def cbexport_version():
-    cmd = './opt/couchbase/bin/cbexport --version'
-    logger.info('Running: {}'.format(cmd))
-    result = local(cmd, capture=True)
-    logger.info(result)
 
 
 def cbexport(
@@ -493,13 +553,6 @@ def cbexport(
 
     logger.info(f"Running: {cmd}")
     run_local_shell_command(cmd, raise_error=True)
-
-
-def cbimport_version():
-    cmd = './opt/couchbase/bin/cbimport --version'
-    logger.info('Running: {}'.format(cmd))
-    result = local(cmd, capture=True)
-    logger.info(result)
 
 
 def cbimport(

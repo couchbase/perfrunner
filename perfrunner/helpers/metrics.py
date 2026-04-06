@@ -1116,16 +1116,33 @@ class MetricHelper:
                        storage: str = None) -> Metric:
 
         tool_and_storage = tool + '-' + storage if storage else tool
-        metric_id = '{}_{}_thr_{}'.format(self.test_config.name,
-                                          tool_and_storage,
-                                          edition)
-        title = '{} {} throughput (Avg. MB/sec), {}'.format(
-            edition, tool, self._title)
+        metric_id = f'{self.test_config.name}_{tool_and_storage}_thr_{edition}'
+        title = f'{edition} {tool} throughput (Avg. MB/sec), {self._title}'
         metric_info = self._metric_info(metric_id, title, chirality=1)
 
-        data_size = self.test_config.load_settings.items * \
-            self.test_config.load_settings.size / 2 ** 20  # MB
+        access_items = self.test_config.access_settings.ops * (
+            self.test_config.access_settings.creates / 100
+        )
 
+        data_size = (self.test_config.load_settings.items + access_items) * (
+            self.test_config.load_settings.size / 2**20
+        )  # MB
+
+        avg_throughput = round(data_size / time_elapsed)
+
+        return avg_throughput, self._snapshots, metric_info
+
+    def contbk_restore_throughput(
+        self, time_elapsed: float, edition: str, tool: str, storage: str = None
+    ) -> Metric:
+        tool_and_storage = tool + "-" + storage if storage else tool
+        metric_id = f"{self.test_config.name}_{tool_and_storage}_thr_{edition}"
+        title = f"{edition} {tool} restore throughput (Avg. MB/sec), {self._title}"
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+
+        data_size = (
+            self.test_config.access_settings.ops * self.test_config.load_settings.size / 2**20
+        )
         avg_throughput = round(data_size / time_elapsed)
 
         return avg_throughput, self._snapshots, metric_info

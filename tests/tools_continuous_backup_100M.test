@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.tools.ContinuousBackupTest
+
+[showfast]
+title = 4 nodes, 1 bucket x 100M x 1KB, 100%% Create, 2 min interval, s=1, c=1
+component = tools
+category = continuous_backup
+
+[stats]
+client_processes = cbcontbk
+server_processes = cbcontbk
+
+[cluster]
+mem_quota = 52428
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+backend_storage = magma
+eviction_policy = fullEviction
+history_seconds = 3600
+
+[collection]
+config = collections/1bucket_1scope_1collection_history.json
+
+[compaction]
+bucket_compaction = false
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+
+[access]
+creates = 100
+reads = 0
+updates = 0
+deletes = 0
+items = 100000000
+ops = 100000000
+workers = 100
+time = 86400
+
+[backup]
+threads = 16
+storage_type = rift
+continuous_backup_location = /nfsdata/conbackup
+continuous_backup_tempdir = /tmp/cbcontbk
+continuous_backup_interval = 2

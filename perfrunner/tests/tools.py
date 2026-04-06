@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime, timezone
 from typing import Optional
 
 from logger import logger
@@ -59,7 +60,7 @@ class BackupRestoreTest(PerfTest):
         snapshots = local.get_backup_snapshots(self.cluster_spec)
         local.compact(self.cluster_spec, snapshots, threads, self.is_community)
 
-    def restore(self, master_node: Optional[str] = None):
+    def restore(self, master_node: Optional[str] = None, force_update: bool = True):
         local.drop_caches()
         server_info = ServerInfoManager().get_server_info_by_master_node(
             master_node or self.master_node
@@ -76,6 +77,7 @@ class BackupRestoreTest(PerfTest):
             passphrase=self.test_config.backup_settings.passphrase,
             disable_hlv=True if self.test_config.xdcr_settings.mobile else False,
             env_vars=self.test_config.restore_settings.env_vars,
+            force_update=force_update
         )
 
     def backup_list(self):
@@ -96,9 +98,9 @@ class BackupRestoreTest(PerfTest):
                                       passphrase=passphrase)
 
     def get_tool_versions(self):
-        local.cbbackupmgr_version()
-        local.cbimport_version()
-        local.cbexport_version()
+        local.cb_tool_version('cbbackupmgr')
+        local.cb_tool_version('cbimport')
+        local.cb_tool_version('cbexport')
 
     def run(self):
         self.extract_tools()
@@ -124,13 +126,12 @@ class BackupTest(BackupRestoreTest):
     def backup(self, mode=None):
         super().backup(mode)
 
-    def _report_kpi(self, time_elapsed):
-        backup_size = local.calc_backup_size(self.cluster_spec)
-
+    def _report_kpi(self, time_elapsed, backup_dir=None, tool='backup'):
+        backup_dir = backup_dir or self.cluster_spec.backup
+        backup_size = local.calc_backup_size(backup_dir)
         backing_store = self.test_config.backup_settings.storage_type
         sink_type = self.test_config.backup_settings.sink_type
 
-        tool = 'backup'
         storage = None
         if backing_store:
             storage = backing_store
@@ -186,7 +187,7 @@ class BackupXATTRTest(BackupTest):
 
 class BackupSizeTest(BackupTest):
     def _report_kpi(self, *args):
-        backup_size = local.calc_backup_size(self.cluster_spec)
+        backup_size = local.calc_backup_size(self.cluster_spec.backup)
 
         backing_store = self.test_config.backup_settings.storage_type
 
@@ -238,10 +239,10 @@ class BackupTestWithCompact(BackupRestoreTest):
             self.backup()
             self.wait_for_persistence()
 
-            initial_size = local.calc_backup_size(self.cluster_spec,
+            initial_size = local.calc_backup_size(self.cluster_spec.backup,
                                                   rounded=False)
             compact_time = self.compact()
-            compacted_size = local.calc_backup_size(self.cluster_spec,
+            compacted_size = local.calc_backup_size(self.cluster_spec.backup,
                                                     rounded=False)
             # Size differences can be a little small, so go for more precision here
             size_diff = round(initial_size - compacted_size, 2)
@@ -319,7 +320,7 @@ class BackupIncrementalTest(BackupRestoreTest):
         self.compact_bucket(wait=True)
         self.backup()
 
-        initial_backup_size = local.calc_backup_size(self.cluster_spec, rounded=False)
+        initial_backup_size = local.calc_backup_size(self.cluster_spec.backup, rounded=False)
 
         self.access()
         self.wait_for_persistence()
@@ -339,7 +340,7 @@ class BackupIncrementalTest(BackupRestoreTest):
 
         try:
             inc_backup_time = self.backup_with_stats(mode=True)
-            total_backup_size = local.calc_backup_size(self.cluster_spec, rounded=False)
+            total_backup_size = local.calc_backup_size(self.cluster_spec.backup, rounded=False)
             inc_backup_size = round(total_backup_size - initial_backup_size, 2)
         finally:
             self.collectlogs()
@@ -589,6 +590,166 @@ class ImportSampleDataTest(ImportTest):
 
         self.report_kpi(time_elapsed)
 
+class ContinuousBackupTest(BackupRestoreTest):
+    COLLECTORS = {
+        "contbk_stats": True,
+        'disk': True,
+    }
+
+    def configure_continuous_backup(self, enable: bool = True):
+        if enable:
+            local.cleanup(self.test_config.backup_settings.continuous_backup_location)
+            local.cleanup(self.test_config.backup_settings.continuous_backup_tempdir)
+
+            for server in self.cluster_spec.servers:
+                self.remote.change_owner(
+                    server, self.test_config.backup_settings.continuous_backup_location
+                )
+
+        logger.info(f"Configuring continuous backup: enable={enable}")
+        self.rest.configure_continuous_backup(
+            host=self.master_node,
+            bucket=self.test_config.buckets[0],
+            enable=str(enable).lower(),
+            backup_location=self.test_config.backup_settings.continuous_backup_location,
+            backup_interval=self.test_config.backup_settings.continuous_backup_interval,
+        )
+        logger.info(f"Successfully configured continuous backup: enable={enable}")
+
+    def wait_for_continuous_backup(self, timeout: int = 300):  # 5 minute timeout by default
+        num_vbuckets = int(self.test_config.cluster.num_vbuckets)
+        vbuckets_watched = self.rest.get_vbuckets_watched_stat(
+            self.master_node, self.test_config.buckets[0]
+            )
+
+        start_time = time.time()
+        while vbuckets_watched != num_vbuckets:
+            if time.time() - start_time > timeout:
+                raise Exception(
+                    f"Timeout waiting for continuous backup after {timeout}s. "
+                    f"Only {vbuckets_watched}/{num_vbuckets} vbuckets watched."
+                )
+
+            vbuckets_watched = self.rest.get_vbuckets_watched_stat(
+                self.master_node, self.test_config.buckets[0]
+            )
+            logger.info(f"vbuckets watched: {vbuckets_watched}/{num_vbuckets}")
+            time.sleep(5)
+        logger.info(f"vbuckets watched: {vbuckets_watched}")
+
+
+    def wait_for_backup_upload(self, timeout: int = 600, stable_duration: int = 10):
+        """Monitor backup directory until size stabilizes, indicating upload is complete."""
+        # Use cluster spec backup path, not continuous_backup_location from test config
+        backup_location = self.cluster_spec.backup
+        start_time = time.time()
+        last_size = None
+        stable_time = 0
+
+        while True:
+            if time.time() - start_time > timeout:
+                raise Exception(
+                    f"Timeout waiting for backup upload after {timeout}s."
+                )
+
+            try:
+                # Use calc_backup_size which correctly gets size from cluster without @2i suffix
+                current_size = self.remote.calc_backup_size(
+                    cluster_spec=self.cluster_spec, rounded=False
+                )
+
+                logger.info(f"Backup size: {current_size:.4f} GB (from {backup_location})")
+
+                if last_size is not None and current_size == last_size:
+                    stable_time += 5
+                    if stable_time >= stable_duration:
+                        logger.info(
+                            f"Backup upload complete. Final size: {current_size:.4f} GB"
+                        )
+                        break
+                else:
+                    if last_size is not None:
+                        msg = (
+                            f"Backup size changed from {last_size:.4f} GB to "
+                            f"{current_size:.4f} GB, resetting stability counter"
+                        )
+                        logger.info(msg)
+
+                    stable_time = 0
+                    last_size = current_size
+
+                time.sleep(5)
+
+            except Exception as e:
+                logger.warning(f"Error checking backup size: {e}")
+                time.sleep(5)
+
+
+    @timeit
+    def cbcontbk_restore(self, target_time: str, master_node: Optional[str] = None):
+        local.cbcontbk_restore(
+            cluster_spec=self.cluster_spec,
+            master_node=master_node or self.master_node,
+            threads=self.test_config.restore_settings.threads,
+            include_data=self.test_config.backup_settings.include_data,
+            use_tls=self.test_config.restore_settings.use_tls,
+            location=self.test_config.backup_settings.continuous_backup_location,
+            tmp_dir=self.test_config.backup_settings.continuous_backup_tempdir,
+            target_time=target_time,
+        )
+
+    @with_stats
+    def run_with_stats(self) -> float:
+        self.configure_continuous_backup(enable=True)
+        self.wait_for_continuous_backup()
+
+        super().run()
+        self.backup()
+
+        self.access()
+        logger.info("Waiting for continuous backup upload to complete...")
+        self.wait_for_backup_upload()
+        continuous_backup_target_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        logger.info(f"continuous_backup_target_time: {continuous_backup_target_time}")
+        time.sleep(10)
+
+        self.flush_buckets()
+        self.configure_continuous_backup(enable=False)
+        self.restore()
+        time.sleep(10)
+
+        try:
+            time_elapsed = self.cbcontbk_restore(target_time=continuous_backup_target_time)
+
+        finally:
+            self.collectlogs()
+
+        return time_elapsed
+
+    def run(self):
+        self.configure_continuous_backup(enable=True)
+        self.wait_for_continuous_backup()
+        self.cluster.delete_buckets()
+        self.cluster.create_buckets()
+        self.cluster.create_collections()
+        time_elapsed = self.run_with_stats()
+
+        backup_dir_size = local.calc_backup_size(
+            self.test_config.backup_settings.continuous_backup_location
+        )
+
+        self.report_kpi(
+            time_elapsed,
+            backup_dir=backup_dir_size,
+            tool='cbcontbk'
+        )
+
+
+class ContinuousBackupCDCOnlyTest(BackupRestoreTest):
+    @with_stats
+    def run(self):
+        super().run()
+        self.access()
 
 class CloudBackupRestoreTest(BackupRestoreTest):
     COLLECTORS = {'iostat': False}

@@ -412,3 +412,99 @@ class MetricsRestApiDeks(MetricsRestApiBase):
         for node, per_bucket_stats in current_stats.items():
             for bucket, stats in per_bucket_stats.items():
                 self.add_stats(stats, node=self.get_external_hostnames(node), bucket=bucket)
+
+class MetricsRestApiContinuousBackup(MetricsRestApiBase):
+    COLLECTOR = "metrics_rest_api_contbk"
+
+    METRICS = {
+        "contbk_backed_up_parts",
+        "contbk_backed_up_bytes",
+        "contbk_backed_up_part_size_bucket",   # These doesnt translate to cbmonitor historgrams
+        "contbk_backed_up_part_time_bucket",   # Same with this one
+        "contbk_worker_queue_length",
+        "contbk_gaps",
+    }
+
+    def __init__(self, settings: CbAgentSettings):
+        super().__init__(settings)
+        self.stats_data = [
+            {
+                "metric": [{"label": "name", "value": metric}],
+            }
+            for metric in self.METRICS
+        ]
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+
+        for node in self.nodes:
+            self.mc.add_server(node)
+
+        for bucket in self.get_buckets():
+            self.mc.add_bucket(bucket)
+
+    def get_stats(self) -> dict:
+        metrics = {}
+        try:
+            samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
+        except Exception as e:
+            self.logger.error(f"Failed to fetch metrics from REST API: {e}")
+            return metrics
+
+        try:
+            for data in samples:
+                try:
+                    if not isinstance(data, dict) or "data" not in data:
+                        self.logger.warning(f"Unexpected data format in response: {data}")
+                        continue
+
+                    for metric in data["data"]:
+                        try:
+                            if "bucket" not in metric.get("metric", {}):
+                                continue
+
+                            metric_data = metric["metric"]
+                            metric_name = metric_data["name"]
+                            node = metric_data["nodes"][0].split(":")[0]
+                            bucket = metric_data["bucket"]
+                            values = metric.get("values", [])
+
+                            if not values or not values[-1]:
+                                self.logger.warning(
+                                    "Invalid values for metric "
+                                    f"{metric_name} on node {node}, bucket {bucket}"
+                                )
+                                continue
+
+                            try:
+                                value = float(values[-1][-1])
+                            except (ValueError, TypeError) as ve:
+                                self.logger.warning(
+                                    "Could not convert metric value to float "
+                                    f"for {metric_name}: {ve}"
+                                )
+                                continue
+
+                            if node not in metrics:
+                                metrics[node] = {bucket: {metric_name: value}}
+                            elif bucket not in metrics[node]:
+                                metrics[node][bucket] = {metric_name: value}
+                            elif metric_name not in metrics[node][bucket]:
+                                metrics[node][bucket][metric_name] = value
+
+                        except (KeyError, IndexError, TypeError) as e:
+                            self.logger.warning(f"Error processing metric data: {e}")
+                            continue
+                except Exception as e:
+                    self.logger.warning(f"Error processing response data: {e}")
+                    continue
+        except Exception as e:
+            self.logger.error(f"Unexpected error in get_stats: {e}")
+
+        return metrics
+
+    def sample(self):
+        current_stats = self.get_stats()
+        for node, per_bucket_stats in current_stats.items():
+            for bucket, stats in per_bucket_stats.items():
+                self.add_stats(stats, node=self.get_external_hostnames(node), bucket=bucket)

@@ -2457,24 +2457,25 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                 logger.info(str(resp.json()))
 
                 if resp.json()['data']:
-                    if 'elapsedTimeInSeconds' in resp.json()['data'][0]['data']:
-                        if resp.json()['data'][0]['data']['status'] != 'pending':
+                    data = resp.json()['data'][0]['data']
+                    if 'elapsedTimeInSeconds' in data:
+                        if data['status'] != 'pending':
                             logger.info('Backup complete.')
-                            return resp.json()['data'][0]['data']['elapsedTimeInSeconds']
-
+                            return data['elapsedTimeInSeconds'], data['id']
 
     def get_backup_progress(self, host: str):
         cluster_id = self.hostname_to_cluster_id(host)
         resp = self.dedicated_client.get_backups(self.tenant_id, self.project_id, cluster_id)
         if resp is not None:
             if resp.json()['data']:
-                if resp.json()['data'][0]['data']['status'] != 'pending':
-                    elapsed_time = resp.json()['data'][0]['data']['elapsedTimeInSeconds']
+                data = resp.json()['data'][0]['data']
+                if data['status'] != 'pending':
+                    elapsed_time = data['elapsedTimeInSeconds']
                     logger.info(f'Backup complete and it took {elapsed_time} seconds.')
-                    return resp.json()['data'][0]['data']['status'], elapsed_time
+                    return data['status'], elapsed_time
                 else:
                     logger.info('Backup still in progress.')
-                    return resp.json()['data'][0]['data']['status'], 0
+                    return data['status'], 0
         return None, None
 
     def restore(self, host: str, bucket: str):
@@ -2482,6 +2483,16 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         logger.info('Triggering restore.')
         self.dedicated_client.restore_from_backup(self.tenant_id, self.project_id, cluster_id,
                                                   bucket)
+
+    def restore_with_backup_id(
+        self, source_host: str, target_host: str, bucket: str, backup_id: str
+    ):
+        source_cluster_id = self.hostname_to_cluster_id(source_host)
+        target_cluster_id = self.hostname_to_cluster_id(target_host)
+        logger.info(f'Triggering restore with backup id: {backup_id}')
+        self.dedicated_client.restore_from_backup_cross_cluster(
+            self.tenant_id, self.project_id, source_cluster_id, target_cluster_id, bucket, backup_id
+        )
 
     def wait_for_restore_initialize(self, host: str, bucket):
         cluster_id = self.hostname_to_cluster_id(host)

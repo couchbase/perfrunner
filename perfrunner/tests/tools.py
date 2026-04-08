@@ -7,10 +7,10 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.metrics import TimeseriesWindow, calc_percentiles_fn
-from perfrunner.helpers.misc import create_build_tuple, human_format, pretty_dict
+from perfrunner.helpers.misc import create_build_tuple, human_format, pretty_dict, target_hash
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.server import ServerInfoManager
-from perfrunner.settings import LoadSettings, TargetIterator
+from perfrunner.settings import LoadSettings, TargetIterator, TargetSettings
 from perfrunner.tests import PerfTest
 from perfrunner.tests.syncgateway import SGRead
 
@@ -948,9 +948,9 @@ class ProvisionedCapellaBackup(PerfTest):
     @with_stats
     def backup(self):
         self.rest.backup(self.master_node, self.test_config.buckets[0])
-        backup_time = self.rest.wait_for_backup(self.master_node)
+        backup_time, backup_id = self.rest.wait_for_backup(self.master_node)
         logger.info("Backup took: {}s ".format(backup_time))
-        return backup_time
+        return backup_time, backup_id
 
     def _report_kpi(self, time_elapsed):
         edition = 'Capella'
@@ -965,7 +965,7 @@ class ProvisionedCapellaBackup(PerfTest):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
-        time_elapsed = self.backup()
+        time_elapsed, backup_id = self.backup()
         self.report_kpi(time_elapsed)
 
 
@@ -974,18 +974,20 @@ class ProvisionedCapellaRestore(ProvisionedCapellaBackup):
     def flush_buckets(self):
         self.rest.flush_bucket(self.master_node, self.test_config.buckets[0])
 
-    def backup(self):
-        self.rest.backup(self.master_node, self.test_config.buckets[0])
-        self.rest.wait_for_backup(self.master_node)
+    def backup(self, master_node: Optional[str] = None):
+        master_node = master_node or self.master_node
+        self.rest.backup(master_node, self.test_config.buckets[0])
+        backup_time, backup_id = self.rest.wait_for_backup(master_node)
+        return backup_time, backup_id
 
-    def trigger_restore(self):
-        self.rest.restore(self.master_node, self.test_config.buckets[0])
-        self.rest.wait_for_restore_initialize(self.master_node, self.test_config.buckets[0])
+    def trigger_restore(self, master_node):
+        self.rest.restore(master_node, self.test_config.buckets[0])
+        self.rest.wait_for_restore_initialize(master_node, self.test_config.buckets[0])
 
     @with_stats
     @timeit
-    def restore(self):
-        self.rest.wait_for_restore(self.master_node, self.test_config.buckets[0])
+    def restore(self, master_node):
+        self.rest.wait_for_restore(master_node, self.test_config.buckets[0])
 
     def _report_kpi(self, time_elapsed):
         edition = 'Capella'
@@ -1000,10 +1002,65 @@ class ProvisionedCapellaRestore(ProvisionedCapellaBackup):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
-        self.backup()
+        backup_time, backup_id = self.backup(self.master_node)
+        logger.info(f"Backup took: {backup_time}s, Backup ID: {backup_id}")
         self.flush_buckets()
-        self.trigger_restore()
-        time_elapsed = self.restore()
+        self.trigger_restore(self.master_node)
+        time_elapsed = self.restore(self.master_node)
+        logger.info(f"Restore took: {time_elapsed}s ")
+        self.report_kpi(time_elapsed)
+
+
+class SrcTargetIterator(TargetIterator):
+
+    def __iter__(self):
+        username = self.cluster_spec.rest_credentials[0]
+        if self.test_config.client_settings.python_client:
+            if self.test_config.client_settings.python_client.split('.')[0] == "2":
+                password = self.test_config.bucket.password
+            else:
+                password = self.cluster_spec.rest_credentials[1]
+        else:
+            password = self.cluster_spec.rest_credentials[1]
+        prefix = self.prefix
+        src_master = next(self.cluster_spec.masters)
+        for bucket in self.test_config.buckets:
+            if self.prefix is None:
+                prefix = target_hash(src_master, bucket)
+            cloud = {}
+            if self.cluster_spec.dynamic_infrastructure:
+                cloud = {"cluster_svc": self.target_svc}
+            yield TargetSettings(src_master, bucket, username, password, prefix, cloud)
+
+
+class ProvisionedCapellaRestoreCrossCluster(ProvisionedCapellaRestore):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.m1, self.m2 = self.cluster_spec.masters
+        self.load_target_iterator = SrcTargetIterator(self.cluster_spec, self.test_config)
+
+    def load(self, *args):
+        super().load(*args, target_iterator=self.load_target_iterator)
+
+    def trigger_restore(self, source_cluster, target_cluster, backup_id):
+        self.rest.restore_with_backup_id(
+            source_cluster, target_cluster, self.test_config.buckets[0], backup_id
+        )
+        self.rest.wait_for_restore_initialize(target_cluster, self.test_config.buckets[0])
+
+    def check_num_items(self, *args):
+        super().check_num_items(*args, target_iterator=self.load_target_iterator)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        backup_time, backup_id = self.backup(self.m1)
+        logger.info(f"Backup took: {backup_time}s, Backup ID: {backup_id}")
+        self.trigger_restore(self.m1, self.m2, backup_id)
+        time_elapsed = self.restore(self.m2)
+        logger.info(f"Restore took: {time_elapsed}s ")
         self.report_kpi(time_elapsed)
 
 

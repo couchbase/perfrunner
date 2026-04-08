@@ -1,0 +1,29 @@
+[test_case]
+test = perfrunner.tests.tools.ProvisionedCapellaRestoreCrossCluster
+
+[showfast]
+title = Cross Cluster Restore, 3 -> 3 nodes, 1 bucket x 150M x 100KB
+component = toolscloud
+category = restore
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 3 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+backend_storage = magma
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 150000000
+size = 100000
+workers = 80
+ssl_mode = capella

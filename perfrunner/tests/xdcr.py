@@ -258,7 +258,10 @@ class SrcTargetIterator(TargetIterator):
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(src_master, bucket)
-            yield TargetSettings(src_master, bucket, username, password, prefix)
+            cloud = {}
+            if self.cluster_spec.dynamic_infrastructure:
+                cloud = {"cluster_svc": self.target_svc}
+            yield TargetSettings(src_master, bucket, username, password, prefix, cloud)
 
 
 class DestTargetIterator(TargetIterator):

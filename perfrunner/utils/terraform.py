@@ -1199,6 +1199,10 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                 override_conf["agent"] = {"hash": agent_hash}
             if release_id := self.options.release_id:
                 override_conf["releaseId"] = release_id
+            if backup_ami := self.options.capella_backup_ami:
+                override_conf["backupImage"] = backup_ami
+            if backup_agent := self.options.capella_backup_agent_hash:
+                override_conf["backupAgent"] = {"hash": backup_agent}
 
             if override_conf:
                 logger.info(f"Adding overrides to deployment config: {pretty_dict(override_conf)}")
@@ -2387,6 +2391,9 @@ def get_args():
     parser.add_argument("--capella-sgw-version", help="SGW version to use for Capella deployment")
     parser.add_argument("--capella-ami", help="custom AMI to use for Capella deployment")
     parser.add_argument(
+        "--capella-backup-ami", help="custom backup/restore AMI to use for Capella deployment"
+    )
+    parser.add_argument(
         "--capella-sgw-ami", help="custom AMI to use for App Services Capella Deployment"
     )
     parser.add_argument("--columnar-ami", help="custom AMI to use for Columnar deployment")
@@ -2397,6 +2404,10 @@ def get_args():
     parser.add_argument(
         "--capella-analytics-agent-hash",
         help="agent hash to use for Capella Analytics cluster deployment",
+    )
+    parser.add_argument(
+        "--capella-backup-agent-hash",
+        help="backup/restore agent hash to use for Capella deployment",
     )
     parser.add_argument("--release-id", help="release id for managing releases")
     parser.add_argument(

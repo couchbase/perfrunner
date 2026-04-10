@@ -2548,6 +2548,8 @@ class GSISettings:
             self.settings.pop("planner.excludeNode")
 
         self.vector_reranking = maybe_atoi(options.get('vector_reranking', "true"))
+        # True only if .test file explicitly declared vector_reranking.
+        self.vector_reranking_explicit = 'vector_reranking' in options
 
         self.dropkey_polling_interval_secs = int(options.get('dropkey_polling_interval_secs',
                                                              self.DROPKEY_POLLING_INTERVAL_SECS))

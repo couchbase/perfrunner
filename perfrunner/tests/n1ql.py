@@ -2020,11 +2020,14 @@ class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
                     f"{similarity}, {probe}) LIMIT {k}"
                 )
 
-            # Apply index-specific modifications
-            if "bhive" == self.index_type:
-                # Add reranking parameter for bhive index type
-                query_statement = query_statement.replace(") LIMIT",
-                    f", {str(gsi_settings.vector_reranking).lower()}) LIMIT")
+            # Inject reranking param for bhive, or for any non-bhive index
+            # that explicitly set vector_reranking in its .test file (keeps
+            # existing tests that never declare it unchanged).
+            if self.index_type == "bhive" or gsi_settings.vector_reranking_explicit:
+                query_statement = query_statement.replace(
+                    ") LIMIT",
+                    f", {str(gsi_settings.vector_reranking).lower()}) LIMIT",
+                )
             if gsi_settings.partition_by_clause == "brand":
                 # Special case for brand-based partitioning
                 query_statement = query_statement.replace('eligible', 'q')

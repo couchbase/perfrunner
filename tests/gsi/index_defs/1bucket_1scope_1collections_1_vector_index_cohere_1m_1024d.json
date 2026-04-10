@@ -1,0 +1,15 @@
+{
+  "bucket-1": {
+    "_default": {
+      "_default": {
+        "vector-idx": {
+          "field": "emb VECTOR",
+          "dimension": 1024,
+          "description": "'IVF,SQ8'",
+          "similarity": "'L2_SQUARED'",
+          "num_replica": 0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlVectorLatencyThroughputPreparedStatementTest
+
+[showfast]
+title = Query Latency & Recall Baseline (PQ128x8), Cohere 1M 1024d, no replica, BHIVE
+component = n1ql
+category = vector
+sub_category = Plasma
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 117760
+online_cores = 32
+kernel_mem_limit = 128G
+kernel_mem_limit_services = kv,index
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+backend_storage = magma
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[load]
+items = 1000000
+size = 1024
+workers = 80
+key_fmtr = no_hash
+doc_gen = vector_embedding
+
+[access]
+items = 1000000
+workers = 0
+time = 1800
+n1ql_op = read
+doc_gen = vector_embedding
+latency_percentiles = 90,95,99
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+key_fmtr = no_hash
+
+[restore]
+backup_storage = s3://fts-cohere-v3-1m-1024-dims
+backup_repo = fts_cohere_v3_1m_1024_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+vector_query_path = tests/fts/data/vector/testData/cohere_v3_1M_1024dim_queries.txt
+ground_truth_file_name = CohereV3_1M/cohere_v3_1M_groundtruth.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+top_k_results = 10
+
+[secondary]
+indexer.settings.storage_mode = plasma
+vector_scan_probes = 13
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_cohere_1m_1024d_pq.json
+vector_dimension = 1024
+vector_description = IVF,PQ128x8
+vector_similarity = L2_SQUARED
+override_index_def = emb Vector
+vector_def_prefix = emb
+indexer.settings.max_cpu_percent = 3200
+vector_reranking = false
+vector_index_type = bhive
+
+[n1ql-q01]
+statement = SELECT META().id FROM `bucket-1` ORDER BY ANN_DISTANCE(emb, $1, 'SIMILARITY', NPROBES, RERANKING) limit top_k_results
+args = [{emb}]
+total_batches = 1000
+
+[profiling]
+services = index
+profiles = cpu,heap
+interval = 180
+num_profiles = 3

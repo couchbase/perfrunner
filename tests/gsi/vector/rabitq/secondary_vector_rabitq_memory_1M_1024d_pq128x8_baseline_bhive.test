@@ -1,0 +1,62 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialVectorSecondaryIndexTest
+
+[showfast]
+title = Memory Footprint Baseline (PQ128x8), Cohere 1M 1024d, no replica, BHIVE
+sub_category = Plasma
+component = secondary
+category = vector
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 117760
+initial_nodes = 4
+num_buckets = 1
+online_cores = 32
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number = 0
+replica_index = 0
+backend_storage = magma
+eviction_policy = fullEviction
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[load]
+items = 1000000
+size = 1024
+workers = 50
+key_fmtr = no_hash
+doc_gen = vector_embedding
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_cohere_1m_1024d_pq.json
+indexer.settings.storage_mode = plasma
+vector_dimension = 1024
+vector_description = IVF,PQ128x8
+vector_similarity = L2_SQUARED
+run_recovery_test = 0
+indexer.settings.max_cpu_percent = 3200
+vector_index_type = bhive
+
+[restore]
+backup_storage = s3://fts-cohere-v3-1m-1024-dims
+backup_repo = fts_cohere_v3_1m_1024_dims
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+num_reader_threads = disk_io_optimized

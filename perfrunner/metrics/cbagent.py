@@ -191,8 +191,6 @@ class CbAgent:
                     self.add_io_collector(PageCache)
                 if vmstat:
                     self.add_collector(VMSTAT)
-                if kvstore:
-                    self.add_collector(KVStoreStats, self.test)
                 if cbstats_memory:
                     self.add_collector(CBStatsMemory)
                 if cbstats_all:
@@ -205,6 +203,14 @@ class CbAgent:
             else:
                 self.add_collector(TypePerf)
 
+        if kvstore and not (
+            self.test.capella_infra and self.test.server_info.build_tuple < (8, 0, 0, 0)
+        ):
+            self.add_collector(
+                KVStoreStats,
+                bool(self.test.test_config.magma_settings.collect_per_server_stats),
+                self.test.cluster_spec,
+            )
         if durability:
             self.add_durability_collector()
         if index_latency:

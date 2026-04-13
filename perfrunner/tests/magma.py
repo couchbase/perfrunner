@@ -327,7 +327,6 @@ class KVTest(PerfTest):
     def __init__(self, *args):
         super().__init__(*args)
         local.extract_cb_any(filename='couchbase')
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
         self.disk_stats = {}
         self.memcached_stats = {}
         self.disk_ops = {}
@@ -1473,8 +1472,7 @@ class UniDirXdcrInitHiDDTest(UniDirXdcrInitTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-        local.extract_cb_any(filename='couchbase')
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+        local.extract_cb_any(filename="couchbase")
 
     def run(self):
         self.load()
@@ -1495,7 +1493,6 @@ class InitialandIncrementalSecondaryIndexHiDDTest(InitialandIncrementalSecondary
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
 
     def _report_kpi(self, time_elapsed, index_type, unit="min"):
         self.reporter.post(
@@ -1559,7 +1556,6 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
 
     def _report_kpi(self,
                     percentile_latencies,
@@ -1667,10 +1663,11 @@ class N1QLThroughputHiDDTest(N1QLThroughputTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-        local.extract_cb_any(filename='couchbase')
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
-        self.kv_iterator = TargetIterator(self.cluster_spec, self.test_config,
-                                          self.test_config.load_settings.key_prefix)
+        local.extract_cb_any(filename="couchbase")
+
+        self.kv_iterator = TargetIterator(
+            self.cluster_spec, self.test_config, self.test_config.load_settings.key_prefix
+        )
 
     def load(self, *args):
         load_settings = self.test_config.load_settings

@@ -32,6 +32,7 @@ class CbAgentSettings:
         self.traced_processes = test.test_config.stats_settings.traced_processes
         self.workers = test.cluster_spec.workers
         self.cloud = {"enabled": False}
+        self.capella_infra = test.capella_infra
 
         self.remote = False
         if test.test_config.test_case.use_workers:

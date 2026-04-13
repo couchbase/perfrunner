@@ -28,6 +28,7 @@ class Collector:
         self.master_node = settings.master_node
         self.server_info = ServerInfoManager().get_server_info_by_master_node(self.master_node)
         self.is_columnar = self.server_info.is_columnar
+        self.capella_infra = settings.capella_infra
         self.auth = (settings.rest_username, settings.rest_password)
         self.buckets = settings.buckets
         self.indexes = settings.indexes

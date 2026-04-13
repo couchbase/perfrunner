@@ -1280,6 +1280,37 @@ def run_cbstats(command: str, server: str, port: int, username: str, password: s
     return stdout, returncode
 
 
+def run_mcstat(
+    server: str,
+    port: int,
+    command: Optional[str] = None,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    bucket: Optional[str] = None,
+    tls: bool = False,
+    quiet: bool = False,
+) -> tuple[str, str, int]:
+    """Run mcstat against the given server.
+
+    This executes the mcstat binary from the extracted Couchbase tools directory
+    (./opt/couchbase/bin/mcstat) and returns (stdout, stderr, returncode).
+
+    If `bucket` not provided, then run mcstat with the -a flag (iterating over all buckets).
+    """
+    args = [
+        f"-h {server}:{port}",
+        f"-u {username}" if username else "",
+        f"-P '{password}'" if password else "",
+        "--tls --no-peer-verify" if tls else "",
+        f"-b {bucket}" if bucket else "-a",
+        "-j",
+        command if command else "",
+    ]
+    cmd = f"./opt/couchbase/bin/mcstat {' '.join(filter(None, args))}"
+    stdout, stderr, returncode = run_local_shell_command(cmd, quiet=quiet)
+    return stdout, stderr, returncode
+
+
 def read_aws_credential(credential_path: str, delete_file: bool = True) -> str:
     logger.info("Reading AWS credential")
     cmd = f'cat {credential_path}/aws_credential'

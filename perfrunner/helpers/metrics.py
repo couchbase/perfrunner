@@ -1120,9 +1120,12 @@ class MetricHelper:
         title = f'{edition} {tool} throughput (Avg. MB/sec), {self._title}'
         metric_info = self._metric_info(metric_id, title, chirality=1)
 
-        access_items = self.test_config.access_settings.ops * (
-            self.test_config.access_settings.creates / 100
-        )
+        if self.test_config.access_settings.ops != float('inf'):
+            access_items = self.test_config.access_settings.ops * (
+                self.test_config.access_settings.creates / 100
+            )
+        else:
+            access_items = 0
 
         data_size = (self.test_config.load_settings.items + access_items) * (
             self.test_config.load_settings.size / 2**20

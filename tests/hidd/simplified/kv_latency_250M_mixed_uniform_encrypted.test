@@ -1,11 +1,11 @@
 [test_case]
-test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+test = perfrunner.tests.magma.MixedLatencyDGMTest
 
 [showfast]
-title = Throughput, Workload S0.7, 2 nodes, 250M x 1KB, read only, Uniform distribution, 2.4%% Resident Ratio, Magma
+title = Latency(ms), Workload S0.6, 2 nodes, 250M x 1KB, 20K ops/sec (33/34/33 C/R/W), Uniform distribution, 2.4%% Resident Ratio, Magma, Native Encryption
 component = hidd
 category = S0
-orderby = S07
+orderby = S06
 
 [cluster]
 mem_quota = 6144
@@ -19,6 +19,7 @@ enable_cpu_cores = false
 [bucket]
 eviction_policy = fullEviction
 backend_storage = magma
+encryption_at_rest = true
 
 [memcached_global]
 num_reader_threads = 64
@@ -30,7 +31,7 @@ size = 1024
 workers = 100
 key_fmtr = hex
 doc_gen = large
-use_backup = true
+use_backup = false
 key_prefix = 1ee266
 
 [extra_access]
@@ -50,14 +51,13 @@ durability = 0
 async = 0
 
 [access]
-creates = 0
-reads = 100
-updates = 0
+creates = 33
+reads = 34
+updates = 33
 deletes = 0
 items = 250000000
 workers = 128
+throughput = 20000
 time = 600
 requestdistribution = uniform
 
-[backup]
-backup_directory = /data2/2n_250m

@@ -1,24 +1,24 @@
 [test_case]
-test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+test = perfrunner.tests.magma.RebalanceKVDGMTest
 
 [showfast]
-title = Throughput, Workload S0.7, 2 nodes, 250M x 1KB, read only, Uniform distribution, 2.4%% Resident Ratio, Magma
+title = Rebalance-out (min), 3 -> 2, 250M x 1KB, 15K ops/sec (90/10 R/W), Magma, Native Encryption, More Memory
 component = hidd
-category = S0
-orderby = S07
+category = reb
 
 [cluster]
-mem_quota = 6144
-initial_nodes = 2
+mem_quota = 12288
+initial_nodes = 3
 num_buckets = 1
-num_vbuckets = 256
-kernel_mem_limit = 12G
+kernel_mem_limit = 24G
 kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
 backend_storage = magma
+failover_min = 120
+encryption_at_rest = true
 
 [memcached_global]
 num_reader_threads = 64
@@ -27,11 +27,15 @@ num_writer_threads = 64
 [load]
 items = 250000000
 size = 1024
-workers = 100
+workers = 128
 key_fmtr = hex
 doc_gen = large
-use_backup = true
-key_prefix = 1ee266
+key_prefix = dac318
+
+[hot_load]
+items = 250000000
+workers = 128
+working_set = 1
 
 [extra_access]
 run_extra_access = true
@@ -50,14 +54,17 @@ durability = 0
 async = 0
 
 [access]
-creates = 0
-reads = 100
-updates = 0
+creates = 5
+reads = 90
+updates = 5
 deletes = 0
 items = 250000000
 workers = 128
-time = 600
-requestdistribution = uniform
+throughput = 15000
+working_set = 1
+working_set_access = 90
 
-[backup]
-backup_directory = /data2/2n_250m
+[rebalance]
+nodes_after = 2
+start_after = 180
+stop_after = 180

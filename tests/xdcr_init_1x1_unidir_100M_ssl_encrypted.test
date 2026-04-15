@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrInitTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, SSL, Native Encryption
+component = xdcr
+category = init_single
+orderby = ssl
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+encryption_at_rest = true
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+
+[xdcr]
+demand_encryption = yes
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = large

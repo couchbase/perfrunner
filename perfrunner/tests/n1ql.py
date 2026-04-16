@@ -182,6 +182,35 @@ class N1QLTest(PerfTest):
             logger.info(f"Enabling query AWR: {statement}")
             self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 
+    def enable_query_plan_stability(self):
+        if not self.test_config.cluster.query_plan_stability:
+            return
+        else:
+
+            # Need to create an user-level bucket, QUERY_METADATA, which requires minimum 100MB
+            # Increase mem_quota for QUERY_METADATA
+            mem_quota = self.test_config.cluster.mem_quota + 1024
+            for master in self.cluster_spec.masters:
+                self.rest.set_kv_mem_quota(master, mem_quota)
+
+            statement = (f'UPDATE system:settings SET plan_stability.mode = '
+                         f'"{self.test_config.cluster.query_plan_stability}";')
+            logger.info(f"Enabling query plan stability: {statement}")
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            self.print_query_plan_stability_results()
+
+    def print_query_plan_stability_results(self):
+        if not self.test_config.cluster.query_plan_stability:
+            return
+        else:
+            statement = 'SELECT COUNT(1) FROM system:prepareds;'
+            query_result = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            logger.info(f'system:prepareds: {query_result}')
+            statement = ('SELECT COUNT(1) FROM QUERY_METADATA._system._query WHERE '
+                         'meta().id LIKE "ppn::%";')
+            query_result = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+            logger.info(f'QUERY_METADATA._system._query: {query_result}')
+
     @with_stats
     def generate_query_awr_report(self, start_time: str, end_time: str):
         bucket = self.test_config.cluster.query_awr_bucket
@@ -190,9 +219,17 @@ class N1QLTest(PerfTest):
         keyspace = f"{bucket}.{scope}.{collection}"
         self.remote.run_cbqueryreportgen_command(keyspace, start_time, end_time)
 
+    def get_n1ql_request_count_until_now(self) -> int:
+        total_requests = 0
+        for query_node in self.query_nodes:
+            vitals = self.rest.get_query_stats(query_node)
+            total_requests += vitals['requests.count']
+        return total_requests
+
     def run(self):
         self.enable_stats()
         self.enable_query_awr()
+        self.enable_query_plan_stability()
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
@@ -216,14 +253,9 @@ class N1QLTest(PerfTest):
             logger.info("sleep 60 seconds before generating report")
             self.generate_query_awr_report(query_awr_start_time, query_awr_end_time)
 
-        self.report_kpi()
+        self.print_query_plan_stability_results()
 
-    def get_n1ql_request_count_until_now(self) -> int:
-        total_requests = 0
-        for query_node in self.query_nodes:
-            vitals = self.rest.get_query_stats(query_node)
-            total_requests += vitals['requests.count']
-        return total_requests
+        self.report_kpi()
 
 
 class N1QLLatencyTest(N1QLTest):
@@ -1636,6 +1668,7 @@ class PytpccBenchmarkTest(N1QLTest):
 
     def run(self):
 
+        self.enable_query_plan_stability()
         self.download_pytpcc()
 
         self.pytpcc_create_collections()
@@ -1670,6 +1703,7 @@ class PytpccBenchmarkTest(N1QLTest):
                 timeout=self.test_config.pytpcc_settings.txt_cleanup_window)
 
         self.run_tpcc()
+        self.print_query_plan_stability_results()
         self.copy_pytpcc_run_output()
         self._report_kpi()
 

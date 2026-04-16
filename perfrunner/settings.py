@@ -1061,6 +1061,7 @@ class ClusterSettings:
     QUERY_AWR_BUCKET = 'bucket-1'
     QUERY_AWR_SCOPE = 'scope-awr'
     QUERY_AWR_COLLECTION = 'collection-awr'
+    QUERY_PLAN_STABILITY = None
     BUCKET_NAME = 'bucket-1'
     DISABLE_UI_HTTP = None
     SHOW_CP_VERSION = None
@@ -1128,6 +1129,8 @@ class ClusterSettings:
                                            self.QUERY_AWR_SCOPE)
         self.query_awr_collection = options.get('query_awr_collection',
                                                 self.QUERY_AWR_COLLECTION)
+        self.query_plan_stability = options.get('query_plan_stability',
+                                                self.QUERY_PLAN_STABILITY)
         self.ui_http = options.get('ui_http', self.DISABLE_UI_HTTP)
         self.show_cp_version = options.get("show_cp_version", self.SHOW_CP_VERSION)
 

@@ -87,7 +87,7 @@ class PrometheusAgent:
             if self.cluster_spec.sgw_servers:
                 payload["configs"].append(
                     {
-                        "hostnames": list(self.cluster_spec.sgw_masters),
+                        "hostnames": list(self.cluster_spec.sgw_servers),
                         "port": 4986,
                         "scheme": scheme,
                         "type": "static",

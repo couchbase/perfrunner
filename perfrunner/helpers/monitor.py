@@ -2145,6 +2145,50 @@ class Monitor:
             f"state '{target_state}'"
         )
 
+    def monitor_backup_and_rebalance(self, host: str, timeout: int):
+        # Monitor backup and rebalance when they run at the same time
+        backup_complete = False
+        rebalance_complete = False
+        rebalance_started = False
+        last_rebalance_progress = 0
+        start_time = time.time()
+        rebalance_start_time = time.time()
+        logger.info("Monitoring backup and rebalance progress...")
+        while not backup_complete or not rebalance_complete:
+            time.sleep(self.MONITORING_DELAY)
+            if time.time() - start_time > timeout:
+                logger.interrupt("Backup and rebalance monitoring timeout reached")
+                return
+
+            if not backup_complete:
+                status, elapsed_time = self.rest.get_backup_progress(host)
+                if status and status != "pending":
+                    backup_complete = True
+                    logger.info(f"Backup completed in {elapsed_time} seconds")
+
+            if not rebalance_complete:
+                is_running, rebalance_progress = self.rest.get_job_status(host, job_type="scale")
+                logger.info(f"Rebalance status: {'running' if is_running else 'not running'}")
+                if is_running:
+                    if rebalance_progress:
+                        rebalance_started = True
+                        logger.info(f"Rebalance progress: {rebalance_progress} %")
+                        if rebalance_progress == last_rebalance_progress:
+                            if time.time() - rebalance_start_time > self.rebalance_timeout:
+                                logger.interrupt("Rebalance hung, aborting monitoring")
+                                return
+                        else:
+                            last_rebalance_progress = rebalance_progress
+                            rebalance_start_time = time.time()
+                    else:
+                        last_rebalance_progress = rebalance_progress
+                        rebalance_start_time = time.time()
+                else:
+                    is_balanced = self.rest.is_balanced(host)
+                    if is_balanced and rebalance_started:
+                        rebalance_complete = True
+                        logger.info("Rebalance completed and cluster is balanced")
+
     def wait_for_workflow_status(
         self, host: str, workflow_id: str, status: str = "running", max_retries: int = 0
     ) -> Optional[dict]:

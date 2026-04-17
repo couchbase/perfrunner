@@ -8,6 +8,10 @@ from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import ycsb_data_load_task, ycsb_task
 from perfrunner.tests import PerfTest
 from perfrunner.tests.n1ql import N1QLTest
+from perfrunner.tests.rebalance import (
+    CapellaBackupRebalance,
+    CapellaRebalanceTest,
+)
 from perfrunner.tests.xdcr import XdcrInitTest
 
 
@@ -474,3 +478,40 @@ class YCSBN1QLSequentialScanLatencyTest(YCSBN1QLSequentialScanTest, YCSBLatencyT
 class YCSBN1QLSequentialScanThroughputTest(YCSBN1QLSequentialScanTest, YCSBThroughputTest):
 
     pass
+
+
+class CapellaRebalanceYCSBTest(YCSBTest, CapellaRebalanceTest):
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.load()
+        self.wait_for_persistence()
+
+        self.access_bg()
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
+class CapellaRebalanceYCSBBackup(CapellaBackupRebalance, CapellaRebalanceYCSBTest):
+    def _report_kpi(self):
+        self.collect_export_files()
+
+        self.reporter.post(
+            *self.metrics.ycsb_throughput()
+        )
+
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+        self.load()
+        self.wait_for_persistence()
+        self.run_test()
+
+        self.report_kpi()

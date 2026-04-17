@@ -169,7 +169,10 @@ class CapellaRebalanceTest(RebalanceTest):
                 }
 
                 self.rest.update_cluster_configuration(master, new_cluster_config)
-                self.monitor.wait_for_rebalance_to_complete(master)
+                self.wait_for_rebalance_to_complete(master)
+
+    def wait_for_rebalance_to_complete(self, master):
+        self.monitor.wait_for_rebalance_to_complete(master)
 
 
 class RebalanceKVTest(RebalanceTest):
@@ -240,6 +243,29 @@ class CapellaRebalanceKVTest(RebalanceKVTest, CapellaRebalanceTest):
 
         if self.is_balanced():
             self.report_kpi()
+
+
+class CapellaBackupRebalance(CapellaRebalanceTest):
+    def wait_for_rebalance_to_complete(self, master):
+        pass
+
+    def backup(self):
+        self.rest.backup(self.master_node, self.test_config.buckets[0])
+
+    @timeit
+    def _monitor_backup_and_rebalance(self, timeout):
+        self.monitor.monitor_backup_and_rebalance(self.master_node, timeout=timeout)
+
+    @with_stats
+    def run_test(self):
+        self.access_bg()
+        self.backup()
+        self.rebalance()
+
+        timeout = self.test_config.access_settings.time
+        elapsed = self._monitor_backup_and_rebalance(timeout)
+        if (remaining := timeout - elapsed) > 0:
+            time.sleep(remaining)
 
 
 class RebalanceKVCompactionTest(RebalanceKVTest):

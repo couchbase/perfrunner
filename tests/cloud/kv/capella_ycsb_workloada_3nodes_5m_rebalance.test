@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.ycsb.CapellaRebalanceYCSBTest
+
+[showfast]
+title = Rebalance-in (min), 3 -> 4, 1 bucket x 5M x 1KB, 10K ops/sec (90/10 R/W), 10%% cache miss rate
+component = rebcloud
+category = kv
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+workload_path = workloads/workloadb
+ycsb_client = couchbase3
+items = 5000000
+workers = 100
+ssl_mode = capella
+
+[access]
+workload_path = workloads/workloadb
+ycsb_client = couchbase3
+items = 5000000
+ops = 9999999999
+time = 1200
+boost = 12
+workers = 400
+workload_instances = 1
+kv_endpoints = 16
+ssl_mode = capella
+
+[ycsb]
+branch = couchbase3
+
+[stats]
+client_processes = java
+
+[rebalance]
+nodes_after = 4
+start_after = 300

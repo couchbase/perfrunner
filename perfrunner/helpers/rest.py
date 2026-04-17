@@ -2455,6 +2455,21 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                             logger.info('Backup complete.')
                             return resp.json()['data'][0]['data']['elapsedTimeInSeconds']
 
+
+    def get_backup_progress(self, host: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.get_backups(self.tenant_id, self.project_id, cluster_id)
+        if resp is not None:
+            if resp.json()['data']:
+                if resp.json()['data'][0]['data']['status'] != 'pending':
+                    elapsed_time = resp.json()['data'][0]['data']['elapsedTimeInSeconds']
+                    logger.info(f'Backup complete and it took {elapsed_time} seconds.')
+                    return resp.json()['data'][0]['data']['status'], elapsed_time
+                else:
+                    logger.info('Backup still in progress.')
+                    return resp.json()['data'][0]['data']['status'], 0
+        return None, None
+
     def restore(self, host: str, bucket: str):
         cluster_id = self.hostname_to_cluster_id(host)
         logger.info('Triggering restore.')

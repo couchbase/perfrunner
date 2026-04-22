@@ -1601,6 +1601,15 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
+    def mctimings_latency(self, operation: str, latency: float) -> Metric:
+        title = f'{operation} Latency (ms), {self._title}'
+        metric_id = f'{self.test_config.name}_{operation.replace(" ", "_").casefold()}'
+        metric_info = self._metric_info(title=title, metric_id=metric_id, chirality=-1)
+
+        latency = round(latency, 2)
+
+        return latency, self._snapshots, metric_info
+
     def ycsb_throughput(self, operation: str = "access") -> Metric:
         metric_info = self._metric_info(chirality=1)
 
@@ -1746,6 +1755,174 @@ class MetricHelper:
 
         return result
 
+    @staticmethod
+    def parse_mctimings_histogram(raw_output: str) -> dict[str, list[tuple[float, int]]]:
+        # Returns a dict mapping operation name to a list of (upper_bound_us, count) tuples.
+        # Example input line:
+        #    [ 10.00 -  11.00]us (30.0000%)	 303| ########################
+        per_op: dict[str, list[tuple[float, int]]] = {}
+        current_op = None
+
+        for line in raw_output.splitlines():
+            line = line.strip()
+
+            # Detect operation header: 'The following data is collected for "GET"'
+            if line.startswith('The following data is collected for'):
+                match = re.search(r'"([^"]+)"', line)
+                if match:
+                    current_op = match.group(1)
+                    per_op[current_op] = []
+                continue
+
+            # Skip Total lines, legend, blank lines, etc.
+            if not line.startswith('[') or current_op is None:
+                continue
+
+            # Parse histogram row:
+            # [ 13.00 -  14.00]us (65.0000%)	  4592| ###################
+            # [  0.89 -   1.34]ms (99.3750%)	    51|
+            match = re.match(
+                r'\[\s*([\d.]+)\s*-\s*([\d.]+)\](us|ms|s)\s+'
+                r'\(([\d.]+)%\)\s+'
+                r'(\d+)\|',
+                line,
+            )
+            if not match:
+                continue
+
+            upper_bound = float(match.group(2))
+            unit = match.group(3)
+            count = int(match.group(5))
+
+            # Normalize upper_bound to microseconds
+            if unit == 'ms':
+                upper_bound_us = upper_bound * 1000
+            elif unit == 's':
+                upper_bound_us = upper_bound * 1_000_000
+            else:
+                upper_bound_us = upper_bound
+
+            per_op[current_op].append((upper_bound_us, count))
+
+        return per_op
+
+    def get_mctimings_latency_histogram(
+        self,
+        mctimings_data: dict[str, list[tuple[float, int]]],
+        latency_percentiles: list[float] = [25, 50, 75, 90, 95, 99],
+    ) -> list[tuple[str, str, float]]:
+        """Compute percentile latencies from parsed mctimings histogram data.
+
+        Similar to get_latency_histogram but works with mctimings format.
+        Returns list of (operation, label, latency_ms) tuples.
+        """
+        result = []
+        for op, rows in mctimings_data.items():
+            if not rows:
+                logger.warning(f"No mctimings histogram data for operation {op}")
+                continue
+
+            total_count = sum(count for _, count in rows)
+            if total_count == 0:
+                continue
+
+            sorted_percentiles = sorted(latency_percentiles)
+            thresholds = [total_count * p / 100 for p in sorted_percentiles]
+
+            percentile_latencies = {p: rows[-1][0] for p in sorted_percentiles}
+            cumulative = 0
+            target_idx = 0
+            for upper_bound_us, count in rows:
+                cumulative += count
+                while target_idx < len(thresholds) and cumulative >= thresholds[target_idx]:
+                    percentile_latencies[sorted_percentiles[target_idx]] = upper_bound_us
+                    target_idx += 1
+                if target_idx == len(thresholds):
+                    break
+
+            for percentile in latency_percentiles:
+                latency_ms = round(percentile_latencies[percentile] / 1000, 3)
+                result.append((op, f"{percentile:g}th Percentile", latency_ms))
+
+            avg_latency_us = sum(ub * cnt for ub, cnt in rows) / total_count
+            avg_latency_ms = round(avg_latency_us / 1000, 3)
+            result.append((op, "avg", avg_latency_ms))
+
+        return result
+
+    def log_mctimings_histogram(
+        self,
+        mctimings_data: dict[str, list[tuple[float, int]]],
+        bucket_size_us: int = 1000,
+        output_file: str = "YCSB/mctimings_histogram.log",
+    ):
+        """Bucket and log mctimings histogram data, similar to _log_histogram.
+
+        Groups raw mctimings rows into fixed-width buckets based on bucket_size_us
+        (from histogram_bucket_size setting) and prints a summary.
+        """
+        all_lines = []
+
+        for op, rows in mctimings_data.items():
+            if not rows:
+                continue
+
+            total_count = sum(count for _, count in rows)
+            if total_count == 0:
+                continue
+
+            # Bucket the data into fixed-width ranges
+            # Pessimistically assume all observations happened at the high end of this bucket range,
+            # as we'd rather overestimate than underestimate latencies.
+            # Example, with bucket_size_us = 10:
+
+            # [  3.00 - 831.00]us 30640|
+            # becomes
+            # [830.00 - 840.00]us 30640|
+
+            bucketed: dict[str, int] = {}
+            for upper_bound_us, count in rows:
+                if count == 0:
+                    continue
+                bucket_start = int(upper_bound_us / bucket_size_us) * bucket_size_us
+                bucket_end = bucket_start + bucket_size_us
+                if bucket_size_us >= 1000:
+                    label = f"{bucket_start // 1000}-{bucket_end // 1000}ms"
+                else:
+                    label = f"{bucket_start}-{bucket_end}us"
+                bucketed[label] = bucketed.get(label, 0) + count
+
+            lines = [
+                f"mctimings {op} LATENCY HISTOGRAM:",
+                "-" * 40,
+                f"Total operations: {total_count}",
+            ]
+
+            cumulative = 0
+            for bucket_label in sorted(
+                bucketed,
+                key=lambda b: sort_bucket_key(b, bucket_size_us,
+                                              bucket_count=999999),
+            ):
+                count = bucketed[bucket_label]
+                if count > 0:
+                    cumulative += count
+                    pct = (count / total_count) * 100
+                    cum_pct = (cumulative / total_count) * 100
+                    lines.append(
+                        f"{bucket_label:>15}: {count:>8} ({pct:>5.1f}%) "
+                        f"- Cumulative: {cum_pct:>5.1f}%"
+                    )
+
+            for line in lines:
+                logger.info(line)
+            all_lines.extend(lines)
+            all_lines.append("")
+
+        if all_lines:
+            with open(output_file, 'w') as f:
+                f.write("\n".join(all_lines) + "\n")
+            logger.info(f"mctimings histogram written to {output_file}")
 
     def aggregate_and_print_histogram(self, *YCSB_files: str,
                                       measurement_type: str = "histogram",

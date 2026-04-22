@@ -1109,6 +1109,8 @@ class StatsSettings:
 
     REPORT_FOR_ALL_CLUSTERS = 0
 
+    COLLECT_MCTIMINGS = "false"
+
     def __init__(self, options: dict):
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
@@ -1125,6 +1127,9 @@ class StatsSettings:
         self.secondary_statsfile = options.get('secondary_statsfile',
                                                self.SECONDARY_STATSFILE)
         self.use_prometheus_metrics = maybe_atoi(options.get("use_prometheus_metrics", "false"))
+        self.collect_mctimings = maybe_atoi(options.get('collect_mctimings',
+                                                        self.COLLECT_MCTIMINGS))
+
 
         # Not used by all test classes, but can be used to decide whether to report KPIs for all
         # clusters or just the first (the default)
@@ -1846,7 +1851,6 @@ class PhaseSettings:
                                                      self.HISTOGRAM_BUCKET_SIZE))
         self.verbose_histogram = maybe_atoi(options.get('verbose_histogram',
                                                         self.VERBOSE_HISTOGRAM))
-
         # trasnsaction settings
         self.transactionsenabled = int(options.get('transactionsenabled',
                                                    self.TRANSACTIONSENABLED))

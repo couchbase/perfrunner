@@ -28,6 +28,9 @@ from perfrunner.settings import (
     TestConfig,
 )
 
+# Encrypted (TLS) memcached port, used when n2n encryption hides the direct port.
+MEMCACHED_TLS_PORT = 11207
+
 try:
     set_start_method("fork")
 except Exception as ex:
@@ -138,6 +141,9 @@ class PerfTest:
             logger.info(f"{exc_type=}")
             logger.info(f"{exc_val=}")
             logger.info(f"traceback: {''.join(traceback.format_tb(exc_tb))}")
+
+        # Collect and report mctimings latencies if enabled in the test config
+        self.post_mctimings_latencies(self.metrics.mctimings_latency)
 
         self._cleanup_collector_agent()
 
@@ -448,6 +454,71 @@ class PerfTest:
                     port = self.rest.get_memcached_port(server)
                     self.memcached.reset_stats(server, port, bucket)
 
+    def collect_and_log_mctimings(
+        self, operations: Optional[list[str]] = None
+    ) -> dict[str, list[tuple[float, int]]]:
+        logger.info("Collecting mctimings histogram data from KV nodes")
+        mctimings_data = self.collect_mctimings(operations=operations)
+        if not mctimings_data:
+            logger.warning("No mctimings data collected")
+            return {}
+
+        self.metrics.log_mctimings_histogram(
+            mctimings_data,
+            bucket_size_us=self.test_config.access_settings.histogram_bucket_size,
+        )
+        return mctimings_data
+
+    def post_mctimings_latencies(self, metric_fn, operations: Optional[list[str]] = None):
+        if not self.test_config.stats_settings.collect_mctimings:
+            return
+
+        logger.info("Extracting couchbase tools for mctimings")
+        local.extract_cb_any(filename='couchbase')
+        logger.info("Posting mctimings latency metrics")
+        mctimings_data = self.collect_and_log_mctimings(operations=operations)
+        if not mctimings_data:
+            return
+
+        post_average = self.test_config.ycsb_settings.average_latency == 1
+        for op, label, latency_ms in self.metrics.get_mctimings_latency_histogram(
+            mctimings_data,
+            latency_percentiles=self.test_config.ycsb_settings.latency_percentiles,
+        ):
+            if label != "avg":
+                self.reporter.post(*metric_fn(f"mctimings {label} {op}", latency_ms))
+            elif post_average:
+                self.reporter.post(*metric_fn(f"mctimings Average {op}", latency_ms))
+
+    def collect_mctimings(self, operations: Optional[list[str]] = None
+                          ) -> dict[str, list[tuple[float, int]]]:
+        if not operations:
+            operations = ["GET", "SET"]
+        master_node = next(self.cluster_spec.masters)
+        uname, pwd = self.cluster_spec.rest_credentials
+        tls = bool(self.test_config.cluster.enable_n2n_encryption)
+        aggregated: dict[str, dict[float, int]] = {}
+
+        for bucket in self.test_config.buckets:
+            for server in self.rest.get_server_list(master_node, bucket):
+                port = MEMCACHED_TLS_PORT if tls else self.rest.get_memcached_port(server)
+                logger.info(f"Collecting mctimings from {server}:{port} bucket={bucket}")
+                stdout, rc = local.run_mctimings(server, port, uname, pwd,
+                                                 bucket, operations, tls=tls)
+                if rc != 0:
+                    logger.warning(f"mctimings failed on {server}:{port} (rc={rc})")
+                    continue
+
+                parsed = self.metrics.parse_mctimings_histogram(stdout)
+                for op, rows in parsed.items():
+                    bucket_counts = aggregated.setdefault(op, {})
+                    for upper_bound_us, count in rows:
+                        bucket_counts[upper_bound_us] = (
+                            bucket_counts.get(upper_bound_us, 0) + count
+                        )
+
+        return {op: sorted(counts_by_ub.items()) for op, counts_by_ub in aggregated.items()}
+
     def create_indexes(self, query_node: Optional[str] = None):
         logger.info('Creating and building indexes')
         query_node = query_node or self.query_nodes[0]
@@ -741,6 +812,10 @@ class PerfTest:
             mixed_target_iterators=mixed_target_iterators,
             use_timers=True
         )
+        if self.test_config.stats_settings.collect_mctimings:
+            # mctimings histograms are cumulative; reset so the posted latencies
+            # reflect only the access phase, not the preceding load.
+            self.reset_kv_stats()
         self.worker_manager.run_fg_phases(phases)
 
     def access_bg(self,
@@ -762,6 +837,10 @@ class PerfTest:
             mixed_target_iterators=mixed_target_iterators,
             use_timers=True
         )
+        if self.test_config.stats_settings.collect_mctimings:
+            # mctimings histograms are cumulative; reset so the posted latencies
+            # reflect only the access phase, not the preceding load.
+            self.reset_kv_stats()
         self.worker_manager.run_bg_phases(phases)
 
     def report_kpi(self, *args, **kwargs):

@@ -1535,6 +1535,26 @@ def run_mcstat(
     return stdout, stderr, returncode
 
 
+def run_mctimings(server: str, port: int, username: str, password: str,
+                  bucket: str, operations: Optional[list[str]] = None,
+                  tls: bool = False) -> tuple[str, int]:
+    args = [
+        f"-h {server}:{port}",
+        f"-u {username}" if username else "",
+        f"-P '{password}'" if password else "",
+        "--tls --no-peer-verify" if tls else "",
+        f"-b {bucket}" if bucket else "-a",
+        "-v",
+    ]
+    if operations:
+        args.extend(operations)
+    cmd = f"./opt/couchbase/bin/mctimings {' '.join(filter(None, args))}"
+    logger.info(f"Running: {cmd}")
+    stdout, _, returncode = run_local_shell_command(cmd)
+    logger.info(f"mctimings output:\n{stdout}")
+    return stdout, returncode
+
+
 def read_aws_credential(credential_path: str, delete_file: bool = True) -> str:
     logger.info("Reading AWS credential")
     cmd = f'cat {credential_path}/aws_credential'

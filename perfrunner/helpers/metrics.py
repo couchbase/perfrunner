@@ -1541,6 +1541,10 @@ class MetricHelper:
                      ) -> Metric:
         title = '{} {}'.format(io_type, self._title)
         metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_').casefold())
+        # 50.0 -> 50
+        metric_id = metric_id.replace('.0', '')
+        # 99.9 -> 999
+        metric_id = metric_id.replace('.', '')
         metric_info = self._metric_info(title=title, metric_id=metric_id, chirality=-1)
         return latency, self._snapshots, metric_info
 

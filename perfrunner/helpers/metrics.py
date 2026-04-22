@@ -1540,6 +1540,7 @@ class MetricHelper:
                      latency: int,
                      ) -> Metric:
         title = '{} {}'.format(io_type, self._title)
+        title = title.replace('.0', '')
         metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_').casefold())
         # 50.0 -> 50
         metric_id = metric_id.replace('.0', '')

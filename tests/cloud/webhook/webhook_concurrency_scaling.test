@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.webhooks.WebhookDeliveryLatencyTest
+use_workers = 0
+
+[showfast]
+title = Webhook Delivery Latency
+component = webhook
+category = latency
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 3
+num_buckets = 1
+ui_http = disabled
+enable_n2n_encryption = all
+show_cp_version = true
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+backend_storage = magma
+
+[load]
+items = 100
+size = 1024
+workers = 1
+ssl_mode = capella
+
+[access]
+time = 60
+webhook_auth_token = perf-test-token
+webhook_test_plan = tests/cloud/webhook/dp-testplan-80.json
+webhook_samples = 2000
+webhook_concurrency = 600
+webhook_collection_duration = 1000
+webhook_burst_wave_sleep = 4
+webhook_strict_burst = 0
+webhook_burst_parallelism = 70
+webhook_burst_max_attempts = 9
+webhook_burst_retry_base_sleep = 1.5
+webhook_burst_retry_max_sleep = 30
+webhook_burst_retry_jitter = 0.6
+webhook_burst_inter_chunk_sleep = 0.12
+webhook_burst_extra_wait_s = 420
+webhook_success_denominator = requested
+
+[stats]
+interval = 10

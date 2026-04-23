@@ -780,6 +780,19 @@ class MetricHelper:
 
         return latencies, self._snapshots, metric_info
 
+    def webhook_success_rate(self, total: int, successful: int, label: str = "") -> Metric:
+        metric_id = f"webhook_success_rate_{label}" if label else "webhook_success_rate"
+        metric_id = metric_id.replace(".", "")
+
+        rate = round(successful / total * 100, 2) if total > 0 else 0
+
+        title = f"Webhook Success Rate (%), {self._title}"
+        if label:
+            title = f"{title} - {label}"
+
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+        return rate, self._snapshots, metric_info
+
     def secondary_scan_latency(self, percentile: Number, title: str = None) -> Metric:
         metric_id = "{}_{:g}th".format(self.test_config.name, percentile)
         if title is None:

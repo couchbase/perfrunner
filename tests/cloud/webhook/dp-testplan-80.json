@@ -1,0 +1,1286 @@
+[
+  {
+    "metric_name": "kv_vb_perc_mem_resident_ratio",
+    "metric_type": 1,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ],
+      "state": [
+        "active"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger CBLowActiveResidentRatioCritical",
+        "kind": "static",
+        "duration": 65,
+        "baseline": 0.01
+      },
+      {
+        "name": "resolve CBLowActiveResidentRatioCritical",
+        "kind": "static",
+        "duration": 65,
+        "baseline": 0.03
+      },
+      {
+        "name": "trigger CBLowActiveResidentRatioWarning",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0.1
+      },
+      {
+        "name": "resolve CBLowActiveResidentRatioWarning",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 3
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "n1ql_requests",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "generate base metric for n1ql percent alerts",
+        "kind": "static",
+        "duration": 10,
+        "baseline": 100000
+      }
+    ],
+    "continuous": true
+  },
+  {
+    "metric_name": "kv_mem_used_bytes",
+    "metric_type": 1,
+    "plays": [
+      {
+        "name": "trigger KVQuotaUsageHigh",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 90
+      },
+      {
+        "name": "resolve KVQuotaUsageHigh",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 89
+      }
+    ],
+    "continuous": true
+  },
+  {
+    "metric_name": "kv_data_size",
+    "metric_type": 0,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger KVLowDataSizeResidentRatioCritical",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 1000000
+      },
+      {
+        "name": "resolve KVLowDataSizeResidentRatioCritical",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 50
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "n1ql_temp_space_errors",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "trigger QueryHighPercentN1QLTempSpaceErrors",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 2000
+      },
+      {
+        "name": "resolve QueryHighPercentN1QLTempSpaceErrors",
+        "kind": "decr",
+        "duration": 5,
+        "baseline": 999,
+        "delta": 100
+      },
+      {
+        "name": "do not breach threshold",
+        "kind": "incr",
+        "duration": 10,
+        "baseline": 0,
+        "delta": 100
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "n1ql_mem_quota_exceeded_errors",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "trigger QueryHighPercentN1QLMemExceededErrors",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 2000
+      },
+      {
+        "name": "resolve QueryHighPercentN1QLMemExceededErrors",
+        "kind": "decr",
+        "duration": 5,
+        "baseline": 999,
+        "delta": 100
+      },
+      {
+        "name": "do not breach threshold",
+        "kind": "incr",
+        "duration": 10,
+        "baseline": 0,
+        "delta": 100
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "sys_cpu_host_seconds_total_sum_rate",
+    "metric_type": 0,
+    "labels": {
+      "mode": [
+        "irq",
+        "other",
+        "stolen",
+        "sys"
+      ]
+    },
+    "plays": [
+      {
+        "name": "keep non-variable CPU stats at 0 for simulating CPUUsageHighWarning",
+        "kind": "static",
+        "duration": 15,
+        "baseline": 0
+      }
+    ],
+    "continuous": true
+  },
+  {
+    "metric_name": "sys_cpu_host_seconds_total_sum_rate",
+    "metric_type": 0,
+    "labels": {
+      "mode": [
+        "user"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger CPUUsageHighWarning (user)",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 850
+      },
+      {
+        "name": "resolve CPUUsageHighWarning (user)",
+        "kind": "decr",
+        "duration": 5,
+        "baseline": 800,
+        "delta": 10
+      },
+      {
+        "name": "do not breach threshold",
+        "kind": "incr",
+        "duration": 10,
+        "baseline": 0,
+        "delta": 10
+      }
+    ]
+  },
+  {
+    "metric_name": "sys_cpu_host_seconds_total_sum_rate",
+    "metric_type": 0,
+    "labels": {
+      "mode": [
+        "idle"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger CPUUsageHighWarning (idle)",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 150
+      },
+      {
+        "name": "resolve CPUUsageHighWarning (idle)",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 200,
+        "delta": 10
+      },
+      {
+        "name": "do not breach threshold",
+        "kind": "decr",
+        "duration": 10,
+        "baseline": 1000,
+        "delta": 10
+      }
+    ]
+  },
+  {
+    "metric_name": "dp_persistent_disk_size",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "trigger CBHighDiskUsage",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0.8
+      },
+      {
+        "name": "resolve CBHighDiskUsage",
+        "kind": "decr",
+        "duration": 5,
+        "baseline": -0.19999999999999996,
+        "delta": 0.16
+      },
+      {
+        "name": "do not breach threshold",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 0.16
+      }
+    ]
+  },
+  {
+    "metric_name": "kv_ep_oom_errors",
+    "metric_type": 1,
+    "labels": {
+      "bucket": [
+        "bucket"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger CBHardOutOfMemoryErrors",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve CBHardOutOfMemoryErrors",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 2
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "dp_scrape_target_fail",
+    "metric_type": 3,
+    "labels": {
+      "couchbaseService": [
+        "data"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger DataServiceDownV2",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 1
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "up",
+    "metric_type": 3,
+    "labels": {
+      "couchbaseService": [
+        "data"
+      ]
+    },
+    "plays": [
+      {
+        "name": "remove up{couchbaseService=data} metric",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "remove"
+  },
+  {
+    "metric_name": "n1ql_load_factor",
+    "metric_type": 1,
+    "plays": [
+      {
+        "name": "trigger QueryHighN1QLLoadFactorCritical",
+        "kind": "static",
+        "duration": 15,
+        "baseline": 85
+      },
+      {
+        "name": "resolve QueryHighN1QLLoadFactorCritical",
+        "kind": "static",
+        "duration": 15,
+        "baseline": 70
+      }
+    ]
+  },
+  {
+    "metric_name": "disk_iops_average_utilization",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "trigger CBVeryHighDiskIOPSUsage",
+        "kind": "incr",
+        "duration": 30,
+        "baseline": 0,
+        "delta": 180000
+      },
+      {
+        "name": "resolve CBVeryHighDiskIOPSUsage",
+        "kind": "static",
+        "duration": 30,
+        "baseline": 1
+      }
+    ]
+  },
+  {
+    "metric_name": "disk_bytes_total",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "trigger CBVeryHighDiskIOPSUsage",
+        "kind": "incr",
+        "duration": 30,
+        "baseline": 0,
+        "delta": 8053063680000
+      },
+      {
+        "name": "resolve CBVeryHighDiskIOPSUsage",
+        "kind": "static",
+        "duration": 30,
+        "baseline": 1
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "disk_throughput_average_utilization",
+    "metric_type": 3,
+    "plays": [
+      {
+        "name": "trigger CBVeryHighDiskThroughputUsage",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0.96
+      },
+      {
+        "name": "resolve CBVeryHighDiskThroughputUsage",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0.8
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "index_num_diverging_replica_indexes",
+    "metric_type": 1,
+    "plays": [
+      {
+        "name": "trigger NumDivergingReplicaIndexes",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve NumDivergingReplicaIndexes",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "index_memory_quota",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "generate base metric for IndexerCodebookMemoryUsage",
+        "kind": "static",
+        "duration": 10,
+        "baseline": 100
+      }
+    ],
+    "continuous": true
+  },
+  {
+    "metric_name": "index_codebook_mem_usage",
+    "metric_type": 0,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ],
+      "collection": [
+        "collection1"
+      ],
+      "index": [
+        "index1"
+      ],
+      "scope": [
+        "scope1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger IndexerCodebookMemoryUsage",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 50,
+        "delta": 5
+      },
+      {
+        "name": "resolve IndexerCodebookMemoryUsage",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 40
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "index_codebook_train_duration",
+    "metric_type": 0,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ],
+      "collection": [
+        "collection1"
+      ],
+      "index": [
+        "index1"
+      ],
+      "scope": [
+        "scope1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger IndexerCodebookTrainDuration",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 7200000000000,
+        "delta": 100000000000
+      },
+      {
+        "name": "resolve IndexerCodebookTrainDuration",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 7200
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "cm_encr_at_rest_generate_dek_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "type": [
+        "type1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add cm_encr_at_rest_generate_dek_failures_total metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "cm_encr_at_rest_generate_dek_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "type": [
+        "type1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger DataEncryptionDEKGenerationFailures",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve DataEncryptionDEKGenerationFailures",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "cm_encryption_service_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "failure_type": [
+        "failureType1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add cm_encryption_service_failures_total metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "cm_encryption_service_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "failure_type": [
+        "failureType1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger DataEncryptionServiceFailures",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve DataEncryptionServiceFailures",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "cm_encryption_key_rotation_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "key_name": [
+        "keyName1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add cm_encryption_key_rotation_failures_total metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "cm_encryption_key_rotation_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "key_name": [
+        "keyName1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger DataEncryptionKeyRotationFailures",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve DataEncryptionKeyRotationFailures",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "node_memory_usage_percent",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "trigger NodeMemoryUsagePercentCritical",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 96
+      },
+      {
+        "name": "resolve NodeMemoryUsagePercentCritical",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 40
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "dp_observer_unhealthy",
+    "metric_type": 3,
+    "plays": [
+      {
+        "name": "trigger DPObserverUnhealthy",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 1
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "dp_scrape_target_fail",
+    "metric_type": 3,
+    "labels": {
+      "couchbaseService": [
+        "index"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger IndexServiceDownV2",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 1
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "index_memory_used",
+    "metric_type": 0,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ],
+      "collection": [
+        "collection1"
+      ],
+      "index": [
+        "index1"
+      ],
+      "scope": [
+        "scope1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger IndexLowFreeMemoryWarning",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 96
+      },
+      {
+        "name": "resolve IndexLowFreeMemoryWarning",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 40
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "index_memory_rss",
+    "metric_type": 0,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ],
+      "collection": [
+        "collection1"
+      ],
+      "index": [
+        "index1"
+      ],
+      "scope": [
+        "scope1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "adding index_memory_rss metric",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 96
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "index_avg_resident_percent",
+    "metric_type": 0,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ],
+      "collection": [
+        "collection1"
+      ],
+      "index": [
+        "index1"
+      ],
+      "scope": [
+        "scope1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger IndexerLowResidentPercentageWarning",
+        "kind": "static",
+        "duration": 3,
+        "baseline": 8
+      },
+      {
+        "name": "trigger IndexerLowResidentPercentageCritical",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 4
+      },
+      {
+        "name": "resolve IndexerLowResidentPercentage alerts",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 20
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "uds_workflow_number_of_files_in_workflow",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "generate base metric for uds high file failure alert",
+        "kind": "static",
+        "duration": 15,
+        "baseline": 1000
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "uds_workflow_number_of_files_failed_in_workflow",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "trigger VulcanHighFileProcessingFailureWarning",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 10
+      },
+      {
+        "name": "resolve VulcanHighFileProcessingFailureWarning",
+        "kind": "decr",
+        "duration": 5,
+        "baseline": 9,
+        "delta": 2
+      },
+      {
+        "name": "do not breach threshold",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 2
+      }
+    ],
+    "strategy": "append"
+  },
+  {
+    "metric_name": "ai_model_service_gateway_queue_size",
+    "metric_type": 1,
+    "labels": {
+      "model_id": [
+        "gpt-4"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger AIModelServiceGatewayQueueSize",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 12000
+      },
+      {
+        "name": "resolve AIModelServiceGatewayQueueSize",
+        "kind": "decr",
+        "duration": 5,
+        "baseline": 10000,
+        "delta": 2000
+      },
+      {
+        "name": "do not breach threshold",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 2000
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "kv_logical_data_size_bytes",
+    "metric_type": 1,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ],
+      "state": [
+        "active"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger KVLogicalDataSizeRatioWarning",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 150
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "kv_logical_data_size_bytes",
+    "metric_type": 1,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ],
+      "state": [
+        "active"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger KVLogicalDataSizeRatioCritical",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 500
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "kv_ep_max_size",
+    "metric_type": 1,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "set max size for KVLogicalDataSizeRatio alerts \u0026 also trigger KVQuotaUsageHigh",
+        "kind": "static",
+        "duration": 10,
+        "baseline": 100
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "kv_ep_max_size",
+    "metric_type": 1,
+    "labels": {
+      "bucket": [
+        "bucket1"
+      ]
+    },
+    "plays": [
+      {
+        "name": "set max size for KVLogicalDataSizeRatio alerts \u0026 also triggerKVQuotaUsageHigh",
+        "kind": "static",
+        "duration": 10,
+        "baseline": 100
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "sys_cpu_cores_available",
+    "metric_type": 3,
+    "labels": {
+      "category": [
+        "system"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger CPUCoresPerBucketRatioWarning",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0.5
+      },
+      {
+        "name": "resolve CPUCoresPerBucketRatioWarning",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 4
+      },
+      {
+        "name": "trigger CPUCoresPerBucketRatioCritical",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0.3
+      },
+      {
+        "name": "resolve CPUCoresPerBucketRatioCritical",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 8
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "rate_limit_events_total",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "add rate_limit_events_total metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "rate_limit_events_total",
+    "metric_type": 0,
+    "plays": [
+      {
+        "name": "trigger RateLimitEventsTotal",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve RateLimitEventsTotal",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_service_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "type": [
+        "timeout"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add embedding_service_failures_total{type=timeout} metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_service_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "type": [
+        "timeout"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger EmbeddingServiceFailures (timeout)",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve EmbeddingServiceFailures (timeout)",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_service_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "type": [
+        "4xx"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add embedding_service_failures_total{type=4xx} metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_service_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "type": [
+        "4xx"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger EmbeddingServiceFailures (4xx)",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve EmbeddingServiceFailures (4xx)",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_service_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "type": [
+        "5xx"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add embedding_service_failures_total{type=5xx} metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_service_failures_total",
+    "metric_type": 0,
+    "labels": {
+      "type": [
+        "5xx"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger EmbeddingServiceFailures (5xx)",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 1
+      },
+      {
+        "name": "resolve EmbeddingServiceFailures (5xx)",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_writes_total",
+    "metric_type": 0,
+    "labels": {
+      "status": [
+        "success"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add embedding_writes_total{status=success} metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_writes_total",
+    "metric_type": 0,
+    "labels": {
+      "status": [
+        "success"
+      ]
+    },
+    "plays": [
+      {
+        "name": "generate baseline successful writes for EmbeddingWriteFailuresHigh",
+        "kind": "incr",
+        "duration": 10,
+        "baseline": 0,
+        "delta": 1000
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_writes_total",
+    "metric_type": 0,
+    "labels": {
+      "cause": [
+        "timeout"
+      ],
+      "status": [
+        "failure"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add embedding_writes_total{status=failure,cause=timeout} metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_writes_total",
+    "metric_type": 0,
+    "labels": {
+      "cause": [
+        "timeout"
+      ],
+      "status": [
+        "failure"
+      ]
+    },
+    "plays": [
+      {
+        "name": "trigger EmbeddingWriteFailuresHigh (\u003e1% failure rate)",
+        "kind": "incr",
+        "duration": 5,
+        "baseline": 0,
+        "delta": 50
+      },
+      {
+        "name": "resolve EmbeddingWriteFailuresHigh (reduce failure rate)",
+        "kind": "static",
+        "duration": 5,
+        "baseline": 0
+      }
+    ],
+    "strategy": "mutate",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_writes_total",
+    "metric_type": 0,
+    "labels": {
+      "cause": [
+        "too_big"
+      ],
+      "status": [
+        "failure"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add embedding_writes_total{status=failure,cause=too_big} metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  },
+  {
+    "metric_name": "embedding_writes_total",
+    "metric_type": 0,
+    "labels": {
+      "cause": [
+        "other"
+      ],
+      "status": [
+        "failure"
+      ]
+    },
+    "plays": [
+      {
+        "name": "add embedding_writes_total{status=failure,cause=other} metric",
+        "kind": "static",
+        "duration": 2,
+        "baseline": 0
+      }
+    ],
+    "strategy": "append",
+    "continuous": true
+  }
+]

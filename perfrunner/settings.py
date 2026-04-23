@@ -2071,6 +2071,109 @@ class PhaseSettings:
         return common_settings, diff_settings
 
 
+class CapellaWebhookSettings:
+    URL = ''
+    AUTH_TOKEN = ''
+    MOCK_ENDPOINT = ''
+    CONCURRENCY = 1000
+    SAMPLES = 100
+    TEST_PLAN = ''
+    COLLECTION_DURATION = 60
+    APPLY_VERIFY_TIMEOUT = 10.0
+    APPLY_VERIFY_INTERVAL = 0.2
+    APPLY_THREADS = "1,5,10"
+    FORCE_BURST = False
+    BURST_ONLY = True
+    STRICT_BURST = False
+    BURST_WAVE_SLEEP = 0.5
+    BURST_PARALLELISM = 0
+    BURST_MAX_ATTEMPTS = 4
+    BURST_RETRY_BASE_SLEEP = 0.6
+    BURST_RETRY_MAX_SLEEP = 8.0
+    BURST_RETRY_JITTER = 0.2
+    BURST_INTER_CHUNK_SLEEP = 0.03
+    BURST_EXTRA_WAIT_S = 120
+    BURST_MAX_WAIT_S = 1800
+    SUCCESS_DENOMINATOR = "accepted"
+
+    @staticmethod
+    def _to_bool(value: Any, default: bool = False) -> bool:
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+    def __init__(self, options: dict):
+        # Webhook test settings
+        self.url = options.get('webhook_url', self.URL)
+        self.auth_token = options.get('webhook_auth_token', self.AUTH_TOKEN)
+        self.mock_endpoint = options.get('webhook_mock_endpoint',
+                                                 self.MOCK_ENDPOINT)
+        self.concurrency = int(options.get('webhook_concurrency',
+                                                   self.CONCURRENCY))
+        self.samples = int(options.get('webhook_samples', self.SAMPLES))
+        self.test_plan = options.get('webhook_test_plan',
+                                             self.TEST_PLAN)
+        self.collection_duration = int(options.get('webhook_collection_duration',
+                                                           self.COLLECTION_DURATION))
+        self.apply_verify_timeout = float(
+            options.get('webhook_apply_verify_timeout', self.APPLY_VERIFY_TIMEOUT)
+        )
+        self.apply_verify_interval = float(
+            options.get('webhook_apply_verify_interval', self.APPLY_VERIFY_INTERVAL)
+        )
+        raw_threads = options.get("webhook_apply_threads", self.APPLY_THREADS)
+        self.apply_threads = [
+            int(x) for x in raw_threads.replace(" ", "").split(",") if x
+        ]
+        self.force_burst = self._to_bool(
+            options.get("webhook_force_burst", self.FORCE_BURST),
+            self.FORCE_BURST,
+        )
+        self.burst_only = self._to_bool(
+            options.get("webhook_burst_only", self.BURST_ONLY),
+            self.BURST_ONLY,
+        )
+        self.strict_burst = self._to_bool(
+            options.get("webhook_strict_burst", self.STRICT_BURST),
+            self.STRICT_BURST,
+        )
+        self.burst_wave_sleep = float(
+            options.get("webhook_burst_wave_sleep", self.BURST_WAVE_SLEEP)
+        )
+        self.burst_parallelism = int(
+            options.get("webhook_burst_parallelism", self.BURST_PARALLELISM)
+        )
+        self.burst_max_attempts = int(
+            options.get("webhook_burst_max_attempts", self.BURST_MAX_ATTEMPTS)
+        )
+        self.burst_retry_base_sleep = float(
+            options.get("webhook_burst_retry_base_sleep", self.BURST_RETRY_BASE_SLEEP)
+        )
+        self.burst_retry_max_sleep = float(
+            options.get("webhook_burst_retry_max_sleep", self.BURST_RETRY_MAX_SLEEP)
+        )
+        self.burst_retry_jitter = float(
+            options.get("webhook_burst_retry_jitter", self.BURST_RETRY_JITTER)
+        )
+        self.burst_inter_chunk_sleep = float(
+            options.get(
+                "webhook_burst_inter_chunk_sleep",
+                self.BURST_INTER_CHUNK_SLEEP,
+            )
+        )
+        self.burst_extra_wait_s = int(
+            options.get("webhook_burst_extra_wait_s", self.BURST_EXTRA_WAIT_S)
+        )
+        self.burst_max_wait_s = int(
+            options.get("webhook_burst_max_wait_s", self.BURST_MAX_WAIT_S)
+        )
+        self.success_denominator = options.get(
+            "webhook_success_denominator",
+            self.SUCCESS_DENOMINATOR,
+        )
+
 class LoadSettings(PhaseSettings):
 
     CREATES = 100
@@ -4490,6 +4593,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict("telemetry")
         return AppTelemetrySettings(options)
 
+    @property
+    def capella_webhook_settings(self) -> CapellaWebhookSettings:
+        options = self._get_options_as_dict("access")
+        return CapellaWebhookSettings(options)
 
 class TargetSettings:
 

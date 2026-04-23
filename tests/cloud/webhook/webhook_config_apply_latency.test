@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.webhooks.WebhookConfigApplyLatencyTest
+use_workers = 0
+
+[showfast]
+title = Webhook Config Apply Latency
+component = webhook
+category = latency
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 3
+num_buckets = 1
+enable_n2n_encryption = all
+show_cp_version = true
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 100
+size = 1024
+workers = 1
+ssl_mode = capella
+
+[access]
+time = 60
+webhook_samples = 1000
+webhook_auth_token = perf-test-token
+webhook_apply_threads = 3
+webhook_apply_verify_timeout = 25
+webhook_apply_verify_interval = 0.5
+
+[stats]
+interval = 10

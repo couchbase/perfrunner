@@ -816,7 +816,11 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
         # Deploy capella cluster
         with record_time("capella_provisioned_cluster"):
-            self.deploy_cluster()
+            if not self.cluster_ids:
+                self.deploy_cluster()
+            else:
+                logger.info(f"Using existing clusters from spec file: {self.cluster_ids}")
+            self.wait_for_cluster_deploy()
 
         if self.options.disable_autoscaling:
             self.disable_autoscaling()
@@ -836,8 +840,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         # Destroy non-capella resources
         self.terraform_destroy(self.csp)
 
-        # Destroy capella cluster
-        if not self.options.keep_cluster:
+        if self.options.keep_cluster:
+            logger.info("Skipping cluster destruction: cluster explicitly asked to be kept.")
+        else:
             # A provisional cluster can have a workflow attached that needs to be destroyed first
             self.destroy_workflow()
             self.destroy_cluster()
@@ -1022,6 +1027,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             self.infra_spec.config.set("controlplane", "cluster_ids", "\n".join(self.cluster_ids))
             self.infra_spec.update_spec_file()
 
+    def wait_for_cluster_deploy(self):
         timeout_mins = self.capella_timeout
         interval_secs = 30
         pending_clusters = [cluster_id for cluster_id in self.cluster_ids]
@@ -1040,22 +1046,26 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                     .get("status", {})
                     .get("state")
                 )
-                logger.info('Cluster state for {}: {}'.format(cluster_id, status))
+                logger.info(f"Cluster state for {cluster_id}: {status}")
                 if status == "deployment_failed":
-                    logger.error('Deployment failed for cluster {}. DataDog link for debugging: {}'
-                                 .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
+                    logger.error(
+                        f"Deployment failed for cluster {cluster_id}. "
+                        f"DataDog link for debugging: {format_datadog_link(cluster_id=cluster_id)}"
+                    )
                     exit(1)
                 statuses.append(status)
 
             pending_clusters = [
-                pending_clusters[i] for i, status in enumerate(statuses) if status != 'healthy'
+                pending_clusters[i] for i, status in enumerate(statuses) if status != "healthy"
             ]
 
         if pending_clusters:
-            logger.error('Deployment timed out after {} mins'.format(timeout_mins))
+            logger.error(f"Clusters not all healthy after {timeout_mins} mins")
             for cluster_id in pending_clusters:
-                logger.error('DataDog link for debugging (cluster {}): {}'
-                             .format(cluster_id, format_datadog_link(cluster_id=cluster_id)))
+                logger.error(
+                    f"DataDog link for debugging (cluster {cluster_id}): "
+                    + format_datadog_link(cluster_id=cluster_id)
+                )
             exit(1)
 
     def destroy_cluster(self):

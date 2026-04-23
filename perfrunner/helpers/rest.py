@@ -2123,6 +2123,20 @@ class CapellaRestBase(DefaultRestHelper):
         logger.info(f"Checking if cluster is balanced without counters ({host})")
         return self.get(url=self._get_api_url(host=host, path="pools/default")).json()["balanced"]
 
+    def _check_and_negate_duplicate_resource_error(
+        self, resp: requests.Response, error_type: str, warning_message: str
+    ) -> requests.Response:
+        if resp.status_code == 422:
+            try:
+                error_data = resp.json()
+                if error_data.get("errorType") == error_type:
+                    logger.warning(f"{warning_message}, skipping: {error_data.get('message', '')}")
+                    # Set status_code to 200 so @retry decorator doesn't retry
+                    resp.status_code = 200
+            except Exception:
+                pass
+
+        return resp
 
 class CapellaProvisionedRestHelper(CapellaRestBase):
     def hostname_to_cluster_id(self, host: str):
@@ -2145,9 +2159,16 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             logger.info(f"Cluster {cluster_id}, user: {resp.content}")
 
     @retry
-    def create_db_user(self, cluster_id: str, username: str, password: str):
-        resp = self.dedicated_client.create_db_user(self.tenant_id, self.project_id, cluster_id,
-                                                    username, password)
+    def create_db_user(self, cluster_id: str, username: str, password: str) -> requests.Response:
+        resp = self.dedicated_client.create_db_user(
+            self.tenant_id, self.project_id, cluster_id, username, password
+        )
+        resp = self._check_and_negate_duplicate_resource_error(
+            resp,
+            "ErrDataplaneUserNameExists",
+            f"User '{username}' already exists on cluster {cluster_id}",
+        )
+        resp.raise_for_status()
         return resp
 
     def get_bucket_mem_available(self, host: str):
@@ -2208,6 +2229,12 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         resp = self.dedicated_client.create_bucket(
             self.tenant_id, self.project_id, cluster_id, data
         )
+        resp = self._check_and_negate_duplicate_resource_error(
+            resp,
+            "BucketNameExists",
+            f"Bucket '{name}' already exists on cluster {cluster_id}",
+        )
+        resp.raise_for_status()
         return resp
 
     def allow_my_ip_all_clusters(self):
@@ -2220,10 +2247,17 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             self.add_allowed_ips(cluster_id, ips)
 
     @retry
-    def add_allowed_ips(self, cluster_id, ips: list[str]):
-        logger.info('Whitelisting IPs on cluster {}: {}'.format(cluster_id, ips))
+    def add_allowed_ips(self, cluster_id: str, ips: list[str]) -> requests.Response:
+        logger.info(f"Whitelisting IPs on cluster {cluster_id}: {ips}")
         resp = self.dedicated_client.add_allowed_ips(
-            self.tenant_id, self.project_id, cluster_id, ips)
+            self.tenant_id, self.project_id, cluster_id, ips
+        )
+        resp = self._check_and_negate_duplicate_resource_error(
+            resp,
+            "ErrAllowListsCreateDuplicateCIDR",
+            f"One or more IPs already allowlisted on cluster {cluster_id}",
+        )
+        resp.raise_for_status()
         return resp
 
     @retry

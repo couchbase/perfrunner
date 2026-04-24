@@ -25,7 +25,11 @@ from cbagent.collectors import (
     KVLatency,
     KVStoreStats,
     Memory,
+    MetricsRestApiAppTelemetry,
+    MetricsRestApiContinuousBackup,
     MetricsRestApiDeduplication,
+    MetricsRestApiDeks,
+    MetricsRestApiDiskIO,
     MetricsRestApiProcesses,
     MetricsRestApiThroughputCollection,
     N1QLStats,
@@ -51,11 +55,6 @@ from cbagent.collectors import (
     XdcrStats,
 )
 from cbagent.collectors.ai_services import WorkflowMetadataStats
-from cbagent.collectors.metrics_rest_api import (
-    MetricsRestApiAppTelemetry,
-    MetricsRestApiContinuousBackup,
-    MetricsRestApiDeks,
-)
 from cbagent.metadata_client import MetadataClient
 from cbagent.settings import CbAgentSettings
 from cbagent.stores import PerfStore
@@ -132,8 +131,6 @@ class CbAgent:
         vmstat=False,
         xdcr_lag=False,
         xdcr_stats=False,
-        regulator_stats=False,
-        utilisation_stats=False,
         app_telemetry=False,
         contbk_stats=False,
         ai_workflow_stats=False,
@@ -175,6 +172,9 @@ class CbAgent:
             self.add_collector(MetricsRestApiAppTelemetry)
         if contbk_stats:
             self.add_collector(MetricsRestApiContinuousBackup)
+
+        if self.test.capella_infra:
+            self.add_collector(MetricsRestApiDiskIO)
 
         if self.test.dynamic_infra:
             return

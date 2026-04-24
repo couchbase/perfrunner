@@ -353,6 +353,7 @@ class MetricsRestApiAppTelemetry(MetricsRestApiBase):
         for node, stats in self.get_stats().items():
             self.add_stats(stats, node=self.get_external_hostnames(node))
 
+
 class MetricsRestApiDeks(MetricsRestApiBase):
 
     COLLECTOR = "metrics_rest_api_deks"
@@ -412,6 +413,7 @@ class MetricsRestApiDeks(MetricsRestApiBase):
         for node, per_bucket_stats in current_stats.items():
             for bucket, stats in per_bucket_stats.items():
                 self.add_stats(stats, node=self.get_external_hostnames(node), bucket=bucket)
+
 
 class MetricsRestApiContinuousBackup(MetricsRestApiBase):
     COLLECTOR = "metrics_rest_api_contbk"
@@ -508,3 +510,61 @@ class MetricsRestApiContinuousBackup(MetricsRestApiBase):
         for node, per_bucket_stats in current_stats.items():
             for bucket, stats in per_bucket_stats.items():
                 self.add_stats(stats, node=self.get_external_hostnames(node), bucket=bucket)
+
+
+class MetricsRestApiDiskIO(MetricsRestApiBase):
+    """Collect disk metrics via Metrics REST API.
+
+    Collects system-level disk metrics as rates:
+    - sys_disk_write_bytes: Bytes written to disk per second
+    - sys_disk_read_bytes: Bytes read from disk per second
+    - sys_disk_reads: Number of disk read operations per second
+    - sys_disk_writes: Number of disk write operations per second
+    """
+
+    COLLECTOR = "metrics_rest_api_fusion_disk"
+
+    METRICS = (
+        "sys_disk_write_bytes",
+        "sys_disk_read_bytes",
+        "sys_disk_reads",
+        "sys_disk_writes",
+    )
+
+    def __init__(self, settings: CbAgentSettings):
+        super().__init__(settings)
+        self.stats_data = [
+            {
+                "metric": [
+                    {"label": "name", "value": metric},
+                    # filter out any dm- or loop devices, as well as partitions
+                    {"label": "disk", "value": "(^(dm-|loop).*)|(.*p\\d+$)", "operator": "!~"},
+                ],
+                "applyFunctions": ["irate"],
+                "step": 1,
+                "start": -1,
+            }
+            for metric in self.METRICS
+        ]
+
+    def get_stats(self) -> dict:
+        samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)
+        stats = {}
+        for data in samples:
+            for metric in data["data"]:
+                node = metric["metric"]["nodes"][0].split(":")[0]
+                metric_name = metric["metric"]["name"]
+                value = float(metric["values"][-1][-1])
+
+                if node not in stats:
+                    stats[node] = {}
+
+                if metric_name in stats[node]:
+                    stats[node][metric_name] += value
+                else:
+                    stats[node][metric_name] = value
+        return stats
+
+    def sample(self):
+        for node, stats in self.get_stats().items():
+            self.add_stats(stats, node=self.get_external_hostnames(node))

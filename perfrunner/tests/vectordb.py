@@ -14,7 +14,7 @@ from perfrunner.tests import PerfTest
 
 
 class VectorDBBenchTest(PerfTest):
-    COLLECTORS = {"fts_stats": True, "utilisation_stats": True}
+    COLLECTORS = {"fts_stats": True}
 
     def __init__(self, cluster_spec: local.ClusterSpec, test_config: TestConfig, verbose: bool):
         super().__init__(cluster_spec, test_config, verbose)

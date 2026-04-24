@@ -634,7 +634,7 @@ class ReadLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for metric in self.metrics.kv_latency(operation='get', percentiles=percentiles):
+        for metric in self.metrics.percentile_kv_latency(operation="get", percentiles=percentiles):
             self.reporter.post(*metric)
 
 
@@ -642,8 +642,10 @@ class MixedLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for operation in ('get', 'set', 'durable_set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+        for operation in ("get", "set", "durable_set"):
+            for metric in self.metrics.percentile_kv_latency(
+                operation=operation, percentiles=percentiles
+            ):
                 self.reporter.post(*metric)
 
 
@@ -651,8 +653,10 @@ class WriteLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for operation in ('set', 'durable_set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+        for operation in ("set", "durable_set"):
+            for metric in self.metrics.percentile_kv_latency(
+                operation=operation, percentiles=percentiles
+            ):
                 self.reporter.post(*metric)
 
 
@@ -660,8 +664,10 @@ class MixedLatencyCDCTest(CDCTest):
 
     def _report_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for operation in ('get', 'set', 'durable_set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+        for operation in ("get", "set", "durable_set"):
+            for metric in self.metrics.percentile_kv_latency(
+                operation=operation, percentiles=percentiles
+            ):
                 _, _, metric_info = metric
                 metric_info = self.set_latency_metric_order_by(metric_info)
                 self.reporter.post(*metric)
@@ -671,8 +677,10 @@ class WriteLatencyCDCTest(CDCTest):
 
     def _report_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for operation in ('set', 'durable_set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+        for operation in ("set", "durable_set"):
+            for metric in self.metrics.percentile_kv_latency(
+                operation=operation, percentiles=percentiles
+            ):
                 _, _, metric_info = metric
                 metric_info = self.set_latency_metric_order_by(metric_info)
                 self.reporter.post(*metric)
@@ -816,7 +824,7 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
 
     def _report_kpi(self):
         for operation in ('get', 'set', 'durable_set'):
-            for metric in self.metrics.kv_latency(operation=operation):
+            for metric in self.metrics.percentile_kv_latency(operation=operation):
                 self.reporter.post(*metric)
 
     def run(self):
@@ -855,8 +863,10 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
 class EnhancedDurabilityLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        for operation in ('set', 'durable_set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=[50.0, 99.9]):
+        for operation in ("set", "durable_set"):
+            for metric in self.metrics.percentile_kv_latency(
+                operation=operation, percentiles=[50.0, 99.9]
+            ):
                 self.reporter.post(*metric)
 
 
@@ -1318,8 +1328,10 @@ class CombinedLatencyAndRebalanceCDCTest(RebalanceCDCTest):
     def report_latency_kpi(self):
         if self.test_config.stats_settings.enabled:
             percentiles = self.test_config.access_settings.latency_percentiles
-            for operation in ('get', 'set', 'durable_set'):
-                for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+            for operation in ("get", "set", "durable_set"):
+                for metric in self.metrics.percentile_kv_latency(
+                    operation=operation, percentiles=percentiles
+                ):
                     _, _, metric_info = metric
                     metric_info = self.set_latency_metric_order_by(metric_info)
                     metric_info = self.set_latency_metric_title(metric_info)

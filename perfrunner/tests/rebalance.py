@@ -187,24 +187,27 @@ class RebalanceKVTest(RebalanceTest):
         super().post_rebalance()
         self.worker_manager.abort_all_tasks()
 
-    def _report_kpi(self, *args, **kwargs):
-        super()._report_kpi(*args, **kwargs)
-
-        if not (reporting_windows := self.test_config.rebalance_settings.latency_reporting_windows):
-            return
-
-        latency_windows = [
+    def _get_latency_windows(self) -> list[TimeseriesWindow]:
+        return [
             TimeseriesWindow(start_ts=-1, end_ts=self.pre_rebalance_end, label="pre"),
             TimeseriesWindow(
                 start_ts=self.pre_rebalance_end, end_ts=self.post_rebalance_start, label="during"
             ),
             TimeseriesWindow(start_ts=self.post_rebalance_start, end_ts=float("inf"), label="post"),
         ]
+
+    def _report_kpi(self, *args, **kwargs):
+        super()._report_kpi(*args, **kwargs)
+
+        if not (reporting_windows := self.test_config.rebalance_settings.latency_reporting_windows):
+            return
+
+        latency_windows = self._get_latency_windows()
         logger.info(f"Latency windows: {latency_windows}")
 
         percentiles = self.test_config.access_settings.latency_percentiles
         for operation in ("get", "set", "durable_set"):
-            for value, snapshots, metric_info in self.metrics.kv_latency(
+            for value, snapshots, metric_info in self.metrics.percentile_kv_latency(
                 operation=operation, percentiles=percentiles, windows=latency_windows
             ):
                 if metric_info.get("window", "").lower() in reporting_windows:
@@ -702,8 +705,10 @@ class OnlineMigrationDurabilityTest(OnlineMigrationWithRebalanceTest):
     COLLECTORS = {'latency': True}
 
     def _report_kpi(self, *args):
-        for operation in ('set', 'durable_set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=[50.0, 99.9]):
+        for operation in ("set", "durable_set"):
+            for metric in self.metrics.percentile_kv_latency(
+                operation=operation, percentiles=[50.0, 99.9]
+            ):
                 self.reporter.post(*metric)
 
     @with_stats

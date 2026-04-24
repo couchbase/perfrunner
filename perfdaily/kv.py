@@ -34,8 +34,10 @@ class CombinedLatencyAndRebalanceCDCTest(DailyTest, _CombinedLatencyAndRebalance
     def report_latency_kpi(self):
         if self.test_config.stats_settings.enabled:
             percentiles = self.test_config.access_settings.latency_percentiles
-            for operation in ('get', 'set', 'durable_set'):
-                for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+            for operation in ("get", "set", "durable_set"):
+                for metric in self.metrics.percentile_kv_latency(
+                    operation=operation, percentiles=percentiles
+                ):
                     self.reporter.post(*metric)
 
     def _report_kpi(self, *args):

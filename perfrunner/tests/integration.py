@@ -70,8 +70,10 @@ class EndToEndLatencyTest(N1QLThroughputTest):
 
     def report_kv_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for operation in ('get', 'set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+        for operation in ("get", "set"):
+            for metric in self.metrics.percentile_kv_latency(
+                operation=operation, percentiles=percentiles
+            ):
                 self.reporter.post(*metric)
 
     def report_n1ql_kpi(self):
@@ -316,9 +318,10 @@ class EndToEndLatencyWithXDCRTest(EndToEndLatencyTest, CapellaXdcrTest):
     def report_kv_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
         for i, _ in enumerate(self.cluster_spec.masters):
-            for operation in ('get', 'set'):
-                metrics = self.metrics.kv_latency(operation=operation, percentiles=percentiles,
-                                                  cluster_idx=i)
+            for operation in ("get", "set"):
+                metrics = self.metrics.percentile_kv_latency(
+                    operation=operation, percentiles=percentiles, cluster_idx=i
+                )
                 for metric in metrics:
                     self.reporter.post(*metric)
 
@@ -464,8 +467,10 @@ class EndToEndFTSLatencyTest(EndToEndLatencyTest, FTSLatencyLoadTest):
 
     def report_kv_kpi(self):
         percentiles = self.test_config.access_settings.latency_percentiles
-        for operation in ('get', 'set'):
-            for metric in self.metrics.kv_latency(operation=operation, percentiles=percentiles):
+        for operation in ("get", "set"):
+            for metric in self.metrics.percentile_kv_latency(
+                operation=operation, percentiles=percentiles
+            ):
                 self.reporter.post(*metric)
 
     def enable_stats(self):

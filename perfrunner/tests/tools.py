@@ -6,6 +6,7 @@ from typing import Optional
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.metrics import TimeseriesWindow, calc_percentiles_fn
 from perfrunner.helpers.misc import create_build_tuple, human_format, pretty_dict
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.server import ServerInfoManager
@@ -1053,9 +1054,16 @@ class CapellaSnapshotBackupRestoreTest(ProvisionedCapellaRestore):
         latencies = {}
 
         for operation in ("get", "set", "durable_set"):
-            latencies[f"{operation}"] = self.metrics._kv_latency(
-                operation, self.test_config.access_settings.latency_percentiles, "spring_latency"
+            w_latencies = self.metrics._calculate_timeseries_stats(
+                calc_percentiles_fn(self.test_config.access_settings.latency_percentiles),
+                operation,
+                "spring_latency",
+                [TimeseriesWindow()],
             )
+            if not w_latencies:
+                continue
+
+            latencies[operation] = w_latencies[0]
         return latencies
 
     def run(self):

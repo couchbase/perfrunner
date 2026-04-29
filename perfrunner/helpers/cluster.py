@@ -1286,6 +1286,48 @@ class CapellaClusterManager(ClusterManagerBase):
 
         return sg_id
 
+    def set_fusion_state(
+        self,
+        enable_fusion: Optional[bool] = None,
+        timeout_secs: Optional[int] = None,
+        polling_interval_secs: Optional[int] = None,
+    ):
+        """Set Fusion state, falling back to test config setting if state not provided."""
+        enable_fusion = (
+            enable_fusion if enable_fusion is not None else self.test_config.cluster.enable_fusion
+        )
+
+        if self.build_tuple < (8, 1, 0, 0):
+            return
+
+        target_state = {True: "enabled", False: "disabled"}[enable_fusion]
+        logger.info(f"Setting Fusion state to '{target_state}' on Capella clusters")
+
+        pending = []
+        for master in self.cluster_spec.masters:
+            # Check current Fusion status to avoid unnecessary rebalances
+            current_state = self.rest.get_fusion_status(master).get("state")
+            logger.info(f"Current Fusion state for {master}: {current_state}")
+            if current_state == target_state:
+                logger.info(f"Fusion is already {target_state}, skipping operation")
+                continue
+
+            logger.info(f"Setting Fusion state to '{target_state}' for {master}")
+            if enable_fusion:
+                self.rest.enable_fusion(master)
+            else:
+                self.rest.disable_fusion(master)
+
+            pending.append(master)
+
+        for master in pending:
+            self.monitor.wait_for_fusion_state(
+                master, target_state, timeout_secs, polling_interval_secs
+            )
+            self.monitor.wait_for_capella_cluster_state(
+                master, "healthy", timeout_secs, polling_interval_secs
+            )
+
 
 class KubernetesClusterManager:
     def __init__(

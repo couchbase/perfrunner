@@ -82,6 +82,7 @@ def main():
             not cm.cluster_spec.columnar_infrastructure
             or cm.cluster_spec.prov_cluster_in_columnar_test
         ):
+            cm.set_fusion_state()
             with record_time("bucket"):
                 cm.create_buckets()
                 cm.create_eventing_buckets()

@@ -1862,6 +1862,54 @@ class Monitor:
 
         logger.info("Rebalance completed")
 
+    def wait_for_capella_cluster_state(
+        self,
+        host: str,
+        target_state: str,
+        timeout_secs: Optional[int] = None,
+        poll_interval_secs: Optional[int] = None,
+    ):
+        """Wait until a Capella cluster reaches the specified state.
+
+        This method requires a Capella rest helper (provisioned). It will poll
+        the control plane for the cluster state and return when the desired
+        state is reached, or interrupt on timeout/failure states.
+        """
+        timeout_secs = timeout_secs or self.DEFAULT_REBALANCE_JOB_TIMEOUT
+        poll_interval_secs = poll_interval_secs or self.MONITORING_DELAY
+
+        cluster_id = self.rest.hostname_to_cluster_id(host)
+        logger.info(f"Waiting for cluster {cluster_id} to reach state '{target_state}'")
+
+        t0 = time.time()
+        while time.time() - t0 < timeout_secs:
+            state = (
+                self.rest.dedicated_client.get_cluster_internal(
+                    self.rest.tenant_id, self.rest.project_id, cluster_id
+                )
+                .json()
+                .get("data", {})
+                .get("status", {})
+                .get("state")
+            )
+
+            logger.info(f"Cluster state for {cluster_id}: {state}")
+
+            if state == target_state:
+                return
+
+            # Known failure states
+            if state in ["deployment_failed", "failed", "destroyFailed", "deployFailed"]:
+                logger.interrupt(f"Cluster entered failure state: {state}")
+                return
+
+            time.sleep(poll_interval_secs)
+
+        logger.interrupt(
+            f"Timed out after {timeout_secs} seconds waiting for cluster {cluster_id} to reach "
+            f"state '{target_state}'"
+        )
+
     def wait_for_workflow_status(
         self, host: str, workflow_id: str, status: str = "running", max_retries: int = 0
     ) -> Optional[dict]:
@@ -1945,3 +1993,32 @@ class Monitor:
             if retries >= self.MAX_RETRY:
                 raise Exception(f"AI functions are not healthy after {retries} retries.")
             time.sleep(self.MONITORING_DELAY)
+
+    def wait_for_fusion_state(
+        self,
+        host: str,
+        target_state: str,
+        timeout_secs: Optional[int] = None,
+        poll_interval_secs: Optional[int] = None,
+    ):
+        timeout_secs = timeout_secs or self.DEFAULT_REBALANCE_JOB_TIMEOUT
+        poll_interval_secs = poll_interval_secs or self.MONITORING_DELAY
+
+        logger.info(f"Waiting for Fusion state for {host} to be: {target_state}")
+
+        t0 = time.time()
+        while time.time() - t0 < timeout_secs:
+            try:
+                current_state = self.rest.get_fusion_status(host)["state"]
+                logger.info(f"Fusion state: {current_state}")
+                if current_state == target_state:
+                    return
+            except Exception as e:
+                logger.error(f"Failed to get Fusion state for {host}: {e}")
+
+            time.sleep(poll_interval_secs)
+
+        logger.interrupt(
+            f"Timed out after {timeout_secs} seconds waiting for Fusion state for {host} to reach "
+            f"'{target_state}'"
+        )

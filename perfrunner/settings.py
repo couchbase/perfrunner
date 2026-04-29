@@ -984,6 +984,7 @@ class ClusterSettings:
     ENABLE_CPU_CORES = 'true'
     ENABLE_N2N_ENCRYPTION = None
     ENABLE_QUERY_AWR = None
+    ENABLE_FUSION = "false"
     QUERY_AWR_BUCKET = 'bucket-1'
     QUERY_AWR_SCOPE = 'scope-awr'
     QUERY_AWR_COLLECTION = 'collection-awr'
@@ -1046,6 +1047,7 @@ class ClusterSettings:
                                                  self.ENABLE_N2N_ENCRYPTION)
         self.enable_query_awr = options.get('enable_query_awr',
                                             self.ENABLE_QUERY_AWR)
+        self.enable_fusion = maybe_atoi(options.get('enable_fusion', self.ENABLE_FUSION))
         self.query_awr_bucket = options.get('query_awr_bucket',
                                             self.QUERY_AWR_BUCKET)
         self.query_awr_scope = options.get('query_awr_scope',

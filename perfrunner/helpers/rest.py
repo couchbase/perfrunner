@@ -2774,6 +2774,21 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             eventing_logs[function_name] = function_logs.text
         return eventing_logs
 
+    def enable_fusion(self, host: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.enable_fusion(self.tenant_id, self.project_id, cluster_id)
+        resp.raise_for_status()
+
+    def disable_fusion(self, host: str):
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.disable_fusion(self.tenant_id, self.project_id, cluster_id)
+        resp.raise_for_status()
+
+    def get_fusion_status(self, host: str) -> dict:
+        resp = self.get(url=self._get_api_url(host, "fusion/status"))
+        resp.raise_for_status()
+        return resp.json()
+
     def create_ai_functions(self, host: str, payload: dict) -> dict:
         cluster_id = self.hostname_to_cluster_id(host)
         resp = self.dedicated_client.create_ai_functions(

@@ -458,11 +458,19 @@ class FTSTest(JTSTest):
 
     def calculate_index_size(self) -> int:
         size = 0
+        max_retries = 3
+        retry_delay = 2
         for _, index_info in self.fts_index_map.items():
             metric = f"{index_info['bucket']}:{index_info['full_index_name']}:num_bytes_used_disk"
             for host in self.fts_nodes:
-                stats = self.rest.get_fts_stats(host)
-                size += stats[metric]
+                stats = {}
+                for attempt in range(max_retries):
+                    stats = self.rest.get_fts_stats(host)
+                    if metric in stats:
+                        break
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+                size += stats.get(metric, 0)
         return size
 
     @with_stats

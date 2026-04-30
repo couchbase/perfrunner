@@ -133,15 +133,15 @@ class HighBucketDensityTest(RebalanceKVTest,
                 'name': name
             })
 
-            logger.info('Index definition: {}'.format(pretty_dict(definition)))
-            self.rest.create_fts_index(self.fts_master_node,
-                                       index_name, definition)
-            self.monitor.monitor_fts_indexing_queue(self.fts_nodes[0],
-                                                    index_name,
-                                                    int(self.test_config.access_settings.items *
-                                                        0.95))
-            self.monitor.monitor_fts_index_persistence(self.fts_nodes,
-                                                       index_name, bkt)
+            logger.info(f"Index definition: {pretty_dict(definition)}")
+            created_name = self.rest.create_fts_index(self.fts_master_node, index_name, definition)
+            self.monitor.monitor_fts_indexing_queue(
+                self.fts_nodes[0],
+                created_name,
+                int(self.test_config.access_settings.items * 0.95),
+                bkt,
+            )
+            self.monitor.monitor_fts_index_persistence(self.fts_nodes, created_name, bkt)
 
     @timeit
     def custom_rebalance(self, services, initial_nodes, nodes_after, swap):

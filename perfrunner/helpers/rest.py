@@ -917,13 +917,15 @@ class DefaultRestHelper(RestBase):
                                 plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
         self.delete(url=url)
 
-    def create_fts_index(self, host: str, index: str, definition: dict):
-        logger.info('Creating a new FTS index: {}'.format(index))
+    def create_fts_index(self, host: str, index: str, definition: dict) -> str:
+        logger.info(f"Creating a new FTS index: {index}")
         headers = {'Content-Type': 'application/json'}
         data = json.dumps(definition, ensure_ascii=False)
         url = self._get_api_url(host=host, path='api/index/{}'.format(index),
                                 plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
-        self.put(url=url, data=data, headers=headers)
+        response = self.put(url=url, data=data, headers=headers)
+        response.raise_for_status()
+        return response.json().get('name', index)
 
     def get_fts_doc_count(self, host: str, index: str, bucket: str) -> int:
         url = self._get_api_url(host=host, path='api/index/{}/count'.format(index),

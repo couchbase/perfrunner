@@ -12,7 +12,12 @@ class VectorRecallCalculator:
 
     def query_and_calculate_recall_and_accuracy(self, query, indexName,
                                                 groundTruth) -> tuple[float, int]:
-        searchResult = self.rest.fts_search_query(self.settings.fts_master_node, indexName, query)
+        index_info = self.settings.fts_index_map[indexName]
+        searchResult = self.rest.fts_search_query(
+            self.settings.fts_master_node,
+            index_info["full_index_name"],
+            query,
+        )
         k = query["knn"][0]["k"]
         if searchResult["total_hits"] > 0:
             id_arr = [hit["id"] for hit in searchResult["hits"]]

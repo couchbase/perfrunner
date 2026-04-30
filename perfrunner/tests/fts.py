@@ -30,7 +30,6 @@ class JTSTest(PerfTest):
         self.showfast = self.test_config.showfast
         self.fts_index_map = dict()
         self.fts_index_defs = dict()
-        self.fts_index_name_flag = False
         self.jts_access.capella_infrastructure = self.cluster_spec.capella_infrastructure
         self.jts_access.fts_raw_query_map = None
         if self.jts_access.raw_query_map_file:
@@ -100,23 +99,19 @@ class FTSTest(JTSTest):
         self.fts_master_node = self.fts_nodes[0]
 
     def delete_index(self):
+        index_name = self.jts_access.couchbase_index_name
+        if index_info := self.fts_index_map.get(index_name):
+            index_name = index_info.get("full_index_name", index_name)
         self.rest.delete_fts_index(
             self.fts_master_node,
-            self.jts_access.couchbase_index_name
+            index_name,
         )
 
     def delete_indexes(self):
         for index_name in self.fts_index_defs.keys():
-            fts_updated_name = index_name
-            if self.fts_index_name_flag:
-                iname = copy.deepcopy(index_name)
-                fts_updated_name = "{}.{}.{}".format(
-                    self.fts_index_map[index_name]["bucket"],
-                    self.fts_index_map[index_name]["scope"],
-                    iname)
             self.rest.delete_fts_index(
                 self.fts_master_node,
-                fts_updated_name
+                self.fts_index_map[index_name]["full_index_name"],
             )
         time.sleep(2)
 
@@ -190,10 +185,6 @@ class FTSTest(JTSTest):
         cb_version = result["nodes"][0]["version"].split("-")[0]
         cb_build = result["nodes"][0]["version"].split("-")[1]
         logger.info("This is the version {} and build {}".format(cb_version, cb_build))
-        if cb_version == "7.5.0" and int(cb_build) < 3699:
-            self.fts_index_name_flag = True
-        else:
-            self.fts_index_name_flag = False
 
         logger.info("Creating indexing definitions:")
         collection_map = self.test_config.collection.collection_map
@@ -365,7 +356,13 @@ class FTSTest(JTSTest):
 
     def create_fts_index_and_wait(self, index_name, index_def):
         time.sleep(1)
-        self.rest.create_fts_index(self.fts_master_node, index_name, index_def)
+        index_info = self.fts_index_map[index_name]
+        created_name = self.rest.create_fts_index(
+            self.fts_master_node,
+            index_name,
+            index_def,
+        )
+        index_info["full_index_name"] = created_name
         self.wait_for_index(index_name)
 
     def sync_index_create(self, index_def_list):
@@ -397,13 +394,6 @@ class FTSTest(JTSTest):
         for index_name in self.fts_index_defs.keys():
             index_def = self.fts_index_defs[index_name]['index_def']
             logger.info('Index definition: {}'.format(pretty_dict(index_def)))
-            if self.fts_index_name_flag:
-                iname = copy.deepcopy(index_name)
-                fts_updated_name = "{}.{}.{}".format(
-                    self.fts_index_map[index_name]["bucket"],
-                    self.fts_index_map[index_name]["scope"],
-                    iname)
-                self.fts_index_map[index_name]["full_index_name"] = fts_updated_name
             bucket_name = self.fts_index_map[index_name]["bucket"]
             if self.jts_access.index_creation_style == 'async':
                 if thread_dict.get(bucket_name, None) is None:
@@ -425,53 +415,30 @@ class FTSTest(JTSTest):
         return total_time
 
     def wait_for_index(self, index_name):
-        if self.fts_index_name_flag is True:
-            self.monitor.monitor_fts_indexing_queue(
-                self.fts_master_node,
-                self.fts_index_map[index_name]["full_index_name"],
-                self.fts_index_map[index_name]["total_docs"],
-                self.fts_index_map[index_name]["bucket"]
-            )
-
-        if self.fts_index_name_flag is False:
-            self.monitor.monitor_fts_indexing_queue(
-                self.fts_master_node,
-                index_name,
-                self.fts_index_map[index_name]["total_docs"]
-            )
+        index_info = self.fts_index_map[index_name]
+        self.monitor.monitor_fts_indexing_queue(
+            self.fts_master_node,
+            index_info["full_index_name"],
+            index_info["total_docs"],
+            index_info["bucket"],
+        )
 
     def wait_for_index_persistence(self, fts_nodes=None):
         if fts_nodes is None:
             fts_nodes = self.fts_nodes
-        if self.fts_index_name_flag is True:
-            for index_name in self.fts_index_map.keys():
-                if self.server_info.build_tuple < (7, 6, 3, 0):
-                    self.monitor.monitor_fts_index_persistence(
-                        hosts=fts_nodes,
-                        index=self.fts_index_map[index_name]["full_index_name"],
-                        bucket=self.fts_index_map[index_name]["bucket"],
-                    )
-                else:
-                    self.monitor.monitor_fts_index_persistence_and_merges(
-                        hosts=fts_nodes,
-                        index=self.fts_index_map[index_name]["full_index_name"],
-                        bucket=self.fts_index_map[index_name]["bucket"],
-                    )
-
-        if self.fts_index_name_flag is False:
-            for index_name in self.fts_index_map.keys():
-                if self.server_info.build_tuple < (7, 6, 3, 0):
-                    self.monitor.monitor_fts_index_persistence(
-                        hosts=fts_nodes,
-                        index=index_name,
-                        bucket=self.fts_index_map[index_name]["bucket"],
-                    )
-                else:
-                    self.monitor.monitor_fts_index_persistence_and_merges(
-                        hosts=fts_nodes,
-                        index=index_name,
-                        bucket=self.fts_index_map[index_name]["bucket"],
-                    )
+        for _, index_info in self.fts_index_map.items():
+            if self.server_info.build_tuple < (7, 6, 3, 0):
+                self.monitor.monitor_fts_index_persistence(
+                    hosts=fts_nodes,
+                    index=index_info["full_index_name"],
+                    bucket=index_info["bucket"],
+                )
+            else:
+                self.monitor.monitor_fts_index_persistence_and_merges(
+                    hosts=fts_nodes,
+                    index=index_info["full_index_name"],
+                    bucket=index_info["bucket"],
+                )
 
     def add_extra_fts_parameters(self):
         logger.info("Adding extra parameter to the fts nodes")
@@ -491,19 +458,8 @@ class FTSTest(JTSTest):
 
     def calculate_index_size(self) -> int:
         size = 0
-        for index_name, index_info in self.fts_index_map.items():
-            if self.fts_index_name_flag is True:
-                metric = '{}:{}:{}'.format(
-                    index_info['bucket'],
-                    index_info['full_index_name'],
-                    'num_bytes_used_disk'
-                )
-            if self.fts_index_name_flag is False:
-                metric = '{}:{}:{}'.format(
-                    index_info['bucket'],
-                    index_name,
-                    'num_bytes_used_disk'
-                )
+        for _, index_info in self.fts_index_map.items():
+            metric = f"{index_info['bucket']}:{index_info['full_index_name']}:num_bytes_used_disk"
             for host in self.fts_nodes:
                 stats = self.rest.get_fts_stats(host)
                 size += stats[metric]

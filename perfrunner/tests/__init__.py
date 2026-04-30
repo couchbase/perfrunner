@@ -104,6 +104,8 @@ class PerfTest:
             # If app telemetry is enabled, we also collect app telemetry metrics
             self.COLLECTORS["app_telemetry"] = True
 
+        self.fts_index_map = {}  # Workaround to avoid checking at runtime
+
     def init_metrics_and_collector_agent(self):
         if not self.use_prometheus:
             self.metrics = MetricHelper(self)
@@ -514,13 +516,16 @@ class PerfTest:
             definition["params"]["mapping"]["types"] = {new_type_mapping_name: ind_type_mapping}
 
         logger.info('Index definition: {}'.format(pretty_dict(definition)))
-        self.rest.create_fts_index(
-            self.fts_nodes[0],
-            self.test_config.index_settings.couchbase_fts_index_name, definition)
+        index_name = self.test_config.index_settings.couchbase_fts_index_name
+        created_name = self.rest.create_fts_index(self.fts_nodes[0], index_name, definition)
         self.monitor.monitor_fts_indexing_queue(
             self.fts_nodes[0],
-            self.test_config.index_settings.couchbase_fts_index_name,
+            created_name,
             int(self.test_config.access_settings.items))
+
+        if index_info := self.fts_index_map.get(index_name):
+            index_info["full_index_name"] = created_name
+
 
     def create_functions(self):
         logger.info('Creating n1ql functions')

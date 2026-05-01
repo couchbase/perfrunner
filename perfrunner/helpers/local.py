@@ -458,28 +458,39 @@ def cbbackupmgr_restore(
             "--no-progress-bar",
         ],
     )
+    cmd = f"./opt/couchbase/bin/cbbackupmgr restore {' '.join(flags)}"
 
-    cmd = f"./opt/couchbase/bin/cbbackupmgr restore {' '.join(filter(None, flags))}"
+    logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
+    run_local_shell_command(cmd, env=env_vars, raise_error=True)
 
-    logger.info(f"Running: {cmd}")
-    run_local_shell_command(cmd)
 
-def cbcontbk_restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
-                     include_data: str, location: str, tmp_dir: str, target_time: str,
-                     archive: str = '', repo: str = 'default',
-                     map_data: Optional[str] = None, use_tls: bool = False):
-    flags = [f"--archive {archive or cluster_spec.backup}",
-             f"--repo {repo}",
-             f"--include-data {include_data}" if include_data else None,
-             f"--threads {threads}",
-             f"--cluster http{'s' if use_tls else ''}://{master_node}",
-             "--cacert root.pem" if use_tls else None,
-             f"--username {cluster_spec.rest_credentials[0]}",
-             f"--password {cluster_spec.rest_credentials[1]}",
-             f"--map-data {map_data}" if map_data else None,
-             f"--target {target_time}",
-             f"--location {location}",
-             f"--tmp-dir {tmp_dir}"]
+def cbcontbk_restore(
+    master_node: str,
+    cluster_spec: ClusterSpec,
+    threads: int,
+    include_data: str,
+    location: str,
+    tmp_dir: str,
+    target_time: str,
+    archive: str = "",
+    repo: str = "default",
+    map_data: Optional[str] = None,
+    use_tls: bool = False,
+):
+    flags = [
+        f"--archive {archive or cluster_spec.backup}",
+        f"--repo {repo}",
+        f"--include-data {include_data}" if include_data else None,
+        f"--threads {threads}",
+        f"--cluster http{'s' if use_tls else ''}://{master_node}",
+        "--cacert root.pem" if use_tls else None,
+        f"--username {cluster_spec.rest_credentials[0]}",
+        f"--password '{cluster_spec.rest_credentials[1]}'",
+        f"--map-data {map_data}" if map_data else None,
+        f"--target {target_time}",
+        f"--location {location}",
+        f"--tmp-dir {tmp_dir}",
+    ]
 
     cmd = f"./opt/couchbase/bin/cbcontbk restore {' '.join(filter(None, flags))}"
 

@@ -2719,12 +2719,11 @@ class RestoreSettings(CbbackupmgrSettings):
         return str(self.__dict__)
 
 
-class ImportSettings(BackupSettings):
+class ImportSettings:
     IMPORT_FILE = ""
     DOCS_PER_COLLECTION = 0
 
     def __init__(self, options):
-        super().__init__(options)
         self.docs_per_collections = int(
             options.get("docs_per_collection", self.DOCS_PER_COLLECTION)
         )

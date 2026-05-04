@@ -526,6 +526,23 @@ class PerfTest:
         if index_info := self.fts_index_map.get(index_name):
             index_info["full_index_name"] = created_name
 
+        if created_name != index_name:
+            access_options = self.test_config._get_options_as_dict('access')
+            for query_name in access_options.get('n1ql_queries', '').strip().split(','):
+                query_name = query_name.strip()
+                if not query_name:
+                    continue
+                section = 'n1ql-{}'.format(query_name)
+                if not self.test_config.config.has_section(section):
+                    continue
+                statement = self.test_config.config.get(section, 'statement', fallback=None)
+                if statement and index_name in statement:
+                    self.test_config.config.set(section, 'statement',
+                                                statement.replace(index_name, created_name))
+                    logger.info(
+                        f"Updated FTS index name in query [{section}]: "
+                        f"'{index_name}' -> '{created_name}'"
+                    )
 
     def create_functions(self):
         logger.info('Creating n1ql functions')

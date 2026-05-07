@@ -960,6 +960,7 @@ class DefaultClusterManager(ClusterManagerBase):
         scheme = self.test_config.columnar_settings.blob_storage_scheme
         bucket_name = self.test_config.columnar_settings.blob_storage_bucket
         region = self.test_config.columnar_settings.blob_storage_region
+        storage_partitions = self.test_config.columnar_settings.storage_partitions
 
         if self.cluster_spec.cloud_provider:
             if backend := self.cluster_spec.columnar_storage_backend:
@@ -980,7 +981,9 @@ class DefaultClusterManager(ClusterManagerBase):
                     or f"https://{self.cluster_spec.azure_storage_account}.blob.core.windows.net"
                 )
 
-        self.remote.configure_columnar_blob_storage(bucket_name, scheme, region, endpoint)
+        self.remote.configure_columnar_blob_storage(
+            bucket_name, scheme, region, endpoint, storage_partitions
+        )
 
     def add_columnar_blob_storage_creds(self):
         csp = self.cluster_spec.cloud_provider
@@ -1002,21 +1005,6 @@ class DefaultClusterManager(ClusterManagerBase):
             storage_acc_name = self.cluster_spec.azure_storage_account
             storage_acc_key = get_azure_storage_account_key(storage_acc_name)
             self.remote.store_analytics_blob_storage_creds(storage_acc_name, storage_acc_key)
-
-    def set_columnar_storage_partitions(self):
-        storage_partitions = self.test_config.analytics_settings.columnar_storage_partitions
-
-        if ((8, 0, 0, 0) < self.build_tuple < (8, 0, 0, 1547)) and storage_partitions:
-            logger.warning(
-                "Cannot set storage partitions for Columnar. "
-                "Couchbase Server 8.0.0-1547 or later required."
-            )
-            return
-
-        if storage_partitions := self.test_config.analytics_settings.columnar_storage_partitions:
-            self.remote.set_columnar_storage_partitions(storage_partitions)
-        else:
-            logger.info("Keeping default number of storage partitions for Columnar.")
 
     def configure_kafka(self):
         self.remote.configure_kafka_brokers(

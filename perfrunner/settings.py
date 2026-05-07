@@ -3088,7 +3088,6 @@ class AnalyticsSettings:
         self.aws_credential_path = options.pop("aws_credential_path", self.AWS_CREDENTIAL_PATH)
         self.storage_format = options.pop('storage_format', self.STORAGE_FORMAT)
 
-        self.columnar_storage_partitions = int(options.pop("columnar_storage_partitions", 0))
         self.use_cbo = maybe_atoi(options.pop("use_cbo", self.USE_CBO))
         self.cbo_sample_size = AnalyticsCBOSampleSize(options.pop("cbo_sample_size", "").lower())
         self.cbo_sample_seed = int(options.pop("cbo_sample_seed", self.CBO_SAMPLE_SEED))
@@ -3306,6 +3305,7 @@ class ColumnarSettings:
         self.blob_storage_bucket = options.get("blob_storage_bucket")
         self.blob_storage_scheme = options.get("blob_storage_scheme")
         self.blob_storage_region = options.get("blob_storage_region")
+        self.storage_partitions = int(options.get("storage_partitions", 0))
 
 
 class AuditSettings:

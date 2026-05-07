@@ -115,7 +115,6 @@ def main():
             cm.set_kafka_links_settings()
         cm.add_columnar_blob_storage_creds()
         cm.set_columnar_blob_storage()
-        cm.set_columnar_storage_partitions()
 
     if test_config.bucket.encryption_at_rest:
         cm.bypass_encryption_config()

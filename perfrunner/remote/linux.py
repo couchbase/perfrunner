@@ -1766,10 +1766,14 @@ class RemoteLinux(Remote):
         scheme: Literal["s3", "gs", "azblob"],
         region: Optional[str],
         endpoint: Optional[str],
+        storage_partitions: int = 0,
     ):
+        custom_sps = storage_partitions > 0
+
         logger.info(
             "Configuring Columnar blob storage bucket. "
-            f"{bucket_name=}, {region=}, {scheme=}, {endpoint=}"
+            f"{bucket_name=}, {region=}, {scheme=}, {endpoint=}, "
+            f"storage_partitions={storage_partitions if custom_sps else '<default>'}"
         )
 
         if not (bucket_name and scheme):
@@ -1793,6 +1797,9 @@ class RemoteLinux(Remote):
 
         if scheme != "azblob":
             settings.append("blobStorageAnonymousAuth=false")
+
+        if custom_sps:
+            settings.append(f"numStoragePartitions={storage_partitions}")
 
         command = (
             "curl --fail --connect-timeout 5 --max-time 120 --retry 10 --retry-connrefused -i "
@@ -1829,16 +1836,6 @@ class RemoteLinux(Remote):
                 "curl --fail --connect-timeout 5 --max-time 120 --retry 10 --retry-connrefused -i "
                 f"-X PUT {base_url}/{setting} --data-urlencode value={quote(value)}"
             )
-
-    @all_servers
-    def set_columnar_storage_partitions(self, num_partitions: int):
-        logger.info(f"Setting number of Columnar storage partitions to {num_partitions}")
-        command = (
-            "curl -v -X PUT "
-            "http://localhost:8091/_metakv/cbas/debug/settings/storage_partitions_count "
-            f"--data-urlencode value={num_partitions}"
-        )
-        run(command)
 
     @all_kafka_nodes
     def install_kafka(self, version: str):

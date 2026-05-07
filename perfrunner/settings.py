@@ -1547,6 +1547,12 @@ class PhaseSettings:
     N1QL_TIMEOUT = 0
     N1QL_QUERY_WEIGHT = ""
 
+    # AiQG
+    AIQG_HOTELS = 0
+    AIQG_USERS = 0
+    AIQG_BOOKINGS = 0
+    AIQG_REVIEWS = 0
+
     ARRAY_SIZE = 10
     NUM_CATEGORIES = 10 ** 6
     NUM_REPLIES = 100
@@ -1787,6 +1793,12 @@ class PhaseSettings:
                 self.n1ql_query_weight = [int(w) for w in n1ql_query_weight.split(',')]
             else:
                 self.n1ql_query_weight = [1] * len(self.n1ql_queries)
+
+        # AiQG
+        self.aiqg_hotels = int(options.get('aiqg_hotels', self.AIQG_HOTELS))
+        self.aiqg_users = int(options.get('aiqg_users', self.AIQG_USERS))
+        self.aiqg_bookings = int(options.get('aiqg_bookings', self.AIQG_BOOKINGS))
+        self.aiqg_reviews = int(options.get('aiqg_reviews', self.AIQG_REVIEWS))
 
         # 2i settings
         self.item_size = int(options.get('item_size', self.ITEM_SIZE))

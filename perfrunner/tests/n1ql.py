@@ -118,6 +118,10 @@ class N1QLTest(PerfTest):
                         else:
                             raise Exception('No access target for bucket: {}'
                                             .format(bucket))
+                elif "RAW_QUERY" in query_statement:
+                    replace_target = "RAW_QUERY "
+                    query_statement = query_statement.replace(replace_target, "")
+                    query_context = None
                 else:
                     for bucket in self.test_config.buckets:
                         if bucket in query_statement:
@@ -504,6 +508,49 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
 
         if self.is_balanced():
             self.report_kpi(rebalance_time, total_requests)
+
+
+class N1QLAiQGThroughputTest(N1QLThroughputTest):
+
+    def import_data(self):
+        base_path = "file:///workspace/AiQG/"
+        for collection in ["hotel", "user", "booking", "review"]:
+            import_file = f'{base_path}{collection}.json'
+            local.cbimport(
+                master_node=self.master_node,
+                cluster_spec=self.cluster_spec,
+                bucket='bucket-1',
+                data_type='json',
+                data_format='list',
+                import_file=import_file,
+                scope_collection_exp=f'scope-1.{collection}',
+                generate_key=f'%{collection}_id%',
+                threads=16
+            )
+
+    def run(self):
+        local.extract_cb_any(filename='couchbase')
+        self.enable_stats()
+        self.enable_query_awr()
+        self.import_data()
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        query_awr_start_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        self.access()
+        query_awr_end_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+        if self.test_config.cluster.enable_query_awr:
+            time.sleep(60)
+            logger.info("sleep 60 seconds before generating report")
+            self.generate_query_awr_report(query_awr_start_time, query_awr_end_time)
+
+        self.report_kpi()
 
 
 class N1QLJoinTest(N1QLTest):

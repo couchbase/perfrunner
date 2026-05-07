@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLAiQGThroughputTest
+
+[showfast]
+title = AiQG, Q1, Plasma, not_bounded, s=1 c=4 i=6
+component = n1ql
+category = sql
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[collection]
+config = collections/1bucket_1scope_4collections_aiqg.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 20000
+doc_gen = aiqg
+aiqg_hotels = 20000
+aiqg_users = 80000
+aiqg_bookings = 100000
+aiqg_reviews = 40000
+
+[index]
+statements =
+    CREATE INDEX adv_city ON `default`:`bucket-1`.`scope-1`.`hotel`(`city`);
+    CREATE INDEX adv_country_user_id ON `default`:`bucket-1`.`scope-1`.`user`(`user_id`, `country`);
+    CREATE INDEX adv_user_id_booking_id ON `default`:`bucket-1`.`scope-1`.`booking`(`user_id`,`booking_id`);
+    CREATE INDEX adv_user_id_name ON `default`:`bucket-1`.`scope-1`.`user`(`user_id`,`name`);
+    CREATE INDEX adv_user_id_review_id ON `default`:`bucket-1`.`scope-1`.`review`(`user_id`,`review_id`);
+    CREATE INDEX adv_hotel_id_user_id_booking_id ON `default`:`bucket-1`.`scope-1`.`booking`(hotel_id,user_id,booking_id);
+
+[access]
+items = 20000
+doc_gen = aiqg
+aiqg_hotels = 20000
+aiqg_users = 80000
+aiqg_bookings = 100000
+aiqg_reviews = 40000
+time = 600
+n1ql_queries = aiqg
+n1ql_workers = 60
+workload_instances = 2
+
+[n1ql-aiqg]
+statement = RAW_QUERY SELECT h.name, (SELECT COUNT(DISTINCT u.country) FROM `bucket-1`.`scope-1`.`user` u JOIN `bucket-1`.`scope-1`.`booking` b ON b.user_id = u.user_id WHERE b.hotel_id = h.hotel_id) AS unique_countries FROM `bucket-1`.`scope-1`.`hotel` h WHERE h.city = $1;
+scan_consistency = not_bounded
+args = ["{city}"]

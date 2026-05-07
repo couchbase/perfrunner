@@ -89,5 +89,9 @@
     ],
     "N1QL-SQL": [
         {"job": "hebe_sql", "cluster": "hebe.spec", "test_config": "n1ql/n1ql_lat_sql.test", "groups": "P0"}
+    ],
+    "N1QL-Arke": [
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_thr_AiQG_Q1_1s_4c_6i.test", "groups": "P0"},
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_thr_AiQG_Q2_1s_4c_6i.test", "groups": "P0"}
     ]
 }

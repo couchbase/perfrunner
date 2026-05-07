@@ -1,0 +1,28 @@
+{
+    "bucket-1": {
+        "_default": {
+            "_default": {
+                "access": 0,
+                "load": 0
+            }
+        },
+        "scope-1": {
+            "hotel": {
+                "access": 1,
+                "load": 1
+            },
+            "user": {
+                "access": 1,
+                "load": 1
+            },
+            "booking": {
+                "access": 1,
+                "load": 1
+            },
+            "review": {
+                "access": 1,
+                "load": 1
+            }
+        }
+    }
+}

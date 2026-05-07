@@ -2656,3 +2656,22 @@ class HierarchicalFTSDocument(Document):
                 ],
             },
         }
+
+class AiQGDocument:
+
+    def __init__(self, hotels: int, users: int, bookings: int, reviews: int):
+        self.hotels = hotels
+        self.users = users
+        self.bookings = bookings
+        self.reviews = reviews
+        self.fake = Faker()
+
+    def next(self, *args) -> dict:
+
+        return {
+            'city': self.fake.city(),
+            'hotel_id': f"hotel_{str(random.randint(1, self.hotels)).zfill(3)}",
+            'user_id': f"user_{str(random.randint(1, self.users)).zfill(3)}",
+            'booking_id': f"booking_{str(random.randint(1, self.bookings)).zfill(3)}",
+            'review_id': f"review_{str(random.randint(1, self.reviews)).zfill(3)}",
+        }

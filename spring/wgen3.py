@@ -21,6 +21,7 @@ from perfrunner.settings import TargetSettings
 from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
+    AiQGDocument,
     ArrayIndexingCompositeFieldDocument,
     ArrayIndexingCompositeFieldIntersectDocument,
     ArrayIndexingCompositeFieldRangeScanDocument,
@@ -427,6 +428,12 @@ class Worker:
 
         elif self.ws.doc_gen == 'hierarchical_fts_doc':
             self.docs = HierarchicalFTSDocument(ws.size)
+
+        elif self.ws.doc_gen == 'aiqg':
+            self.docs = AiQGDocument(self.ws.aiqg_hotels,
+                                     self.ws.aiqg_users,
+                                     self.ws.aiqg_bookings,
+                                     self.ws.aiqg_reviews)
 
     def init_db(self):
         workload_client = CBGen

@@ -918,6 +918,13 @@ class DefaultRestHelper(RestBase):
         response = self.get(url=url)
         return response.json()
 
+    def get_query_vitals(self, host: str) -> dict:
+        logger.info('Getting query engine vitals')
+        url = self._get_api_url(host=host, path='admin/vitals', plain_port=QUERY_PORT,
+                                ssl_port=QUERY_PORT_SSL)
+        response = self.get(url=url)
+        return response.json()
+
     def delete_fts_index(self, host: str, index: str):
         logger.info('Deleting FTS index: {}'.format(index))
         url = self._get_api_url(host=host, path='api/index/{}'.format(index),

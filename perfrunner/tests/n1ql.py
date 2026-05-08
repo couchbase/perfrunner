@@ -440,6 +440,155 @@ class N1QLThroughputTest(N1QLTest):
         )
 
 
+class N1QLSpillFileTest(N1QLLatencyTest):
+    """Measures query latency when ORDER BY sort overflows to disk (spill files).
+
+    Pre-flight: confirms EXPLAIN plan contains an Order operator (i.e. sort is
+    performed by the Query engine, not pushed down to the index).
+    Post-run: confirms spills.order in /admin/vitals incremented by >=1.
+    Fails loudly on either check.
+    """
+
+    def _get_spill_count(self) -> int:
+        vitals = self.rest.get_query_vitals(self.query_nodes[0])
+        return vitals.get('spills.order', 0)
+
+    def _find_operator(self, node, operator_name: str) -> bool:
+        if isinstance(node, dict):
+            if node.get('#operator') == operator_name:
+                return True
+            return any(self._find_operator(v, operator_name) for v in node.values())
+        if isinstance(node, list):
+            return any(self._find_operator(item, operator_name) for item in node)
+        return False
+
+    def _validate_order_operator_in_plan(self):
+        logger.info('Pre-flight: validating EXPLAIN plan contains Order operator')
+        query = self.test_config.access_settings.n1ql_queries[0]['statement']
+        plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query)
+        if not self._find_operator(plan, 'Order'):
+            raise Exception(
+                'EXPLAIN plan validation FAILED: no "Order" operator found in query plan. '
+                'The sort may be pushed down to the index — '
+                'a non-covering index must be used for spill files to be created. '
+                f'Query: {query}'
+            )
+        logger.info('EXPLAIN plan validated: "Order" operator confirmed in query plan')
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+        self._validate_order_operator_in_plan()
+
+        spills_before = self._get_spill_count()
+        logger.info(f'spills.order before access phase: {spills_before}')
+
+        self.access_bg()
+        self.access()
+
+        spills_after = self._get_spill_count()
+        logger.info(f'spills.order after access phase: {spills_after}')
+
+        delta = spills_after - spills_before
+        if delta < 2:
+            raise Exception(
+                f'Sort spill validation FAILED: spills.order delta = {delta} (expected >= 2). '
+                'Note: spills.order increments by 1 per sort operation that spills, '
+                'not per spill file. With n1ql_workers=1 running sequential queries '
+                'over the 1200s access window, multiple completions should each spill. '
+                'A delta >= 2 confirms spilling is repeatable across executions.'
+            )
+        logger.info(
+            f'Sort spill confirmed: spills.order incremented by {delta} '
+            'across sequential executions'
+        )
+
+        self.report_kpi()
+
+
+class N1QLScanBackfillTest(N1QLThroughputTest):
+    """Measures query throughput under index-scan backfill-to-disk conditions.
+
+    Backfill files are NOT created merely because scan size exceeds scan-cap.
+    The indexer writes scan entries into a per-scan in-memory buffer that the
+    query engine consumes from; backfill files are created only when the buffer
+    fills up AND the indexer still has more entries to produce. Producer-consumer
+    timing matters as much as raw row count.
+    Pre-flight: sanity-checks that the candidate query returns far more rows
+    than scan-cap (necessary, not sufficient).
+    Post-run: confirms query.log contains MULTIPLE "new temp file" entries,
+    so we know backfill was triggered repeatedly, not just once.
+    Fails loudly on either check.
+    """
+
+    BACKFILL_FILES_MIN = 2
+
+    def _count_backfill_log_entries(self) -> int:
+        return self.remote.count_backfill_files_in_log(self.query_nodes[0])
+
+    def _validate_scan_size_for_backfill(self):
+        logger.info('Pre-flight: sanity-checking that scan size far exceeds scan-cap')
+        bucket = self.test_config.buckets[0]
+        scan_cap = self.test_config.n1ql_settings.cbq_settings.get('scan-cap', 512)
+        probe_query = (
+            f'SELECT COUNT(*) AS cnt FROM `{bucket}` WHERE capped_small = 50;'
+        )
+        result = self.rest.exec_n1ql_statement(self.query_nodes[0], probe_query)
+        count = result.get('results', [{}])[0].get('cnt', 0)
+        if count <= scan_cap:
+            raise Exception(
+                f'Pre-flight scan size check FAILED: capped_small=50 returns {count} rows, '
+                f'which does not exceed scan-cap={scan_cap}. This is a necessary (not sufficient) '
+                'condition for backfill — the buffer must fill faster than the query '
+                'engine can drain it. Verify dataset size and field distribution.'
+            )
+        logger.info(
+            f'Pre-flight scan size check passed: {count} rows for capped_small=50 '
+            f'>> scan-cap={scan_cap} (backfill possible if producer outpaces consumer)'
+        )
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+        self._validate_scan_size_for_backfill()
+
+        self.access_bg()
+        self.access()
+
+        backfill_count = self._count_backfill_log_entries()
+        if backfill_count < self.BACKFILL_FILES_MIN:
+            raise Exception(
+                f'Scan backfill validation FAILED: found {backfill_count} '
+                f'"new temp file" entries in query.log '
+                f'(expected >= {self.BACKFILL_FILES_MIN}). Backfill files are '
+                'created only when the in-memory scan buffer fills and the '
+                'indexer still has more entries to write — so a single file '
+                'may indicate a one-off rather than sustained backfill '
+                'behaviour. Pick a query/workload where the producer '
+                'outpaces the consumer more reliably.'
+            )
+        logger.info(
+            f'Scan backfill confirmed: {backfill_count} "new temp file" entries in query.log '
+            f'(>= {self.BACKFILL_FILES_MIN} required)'
+        )
+
+        self.report_kpi()
+
+
 class N1QLThroughputRebalanceTest(N1QLThroughputTest):
 
     def _report_kpi(self, rebalance_time, total_requests):

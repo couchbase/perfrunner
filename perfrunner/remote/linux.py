@@ -592,6 +592,15 @@ class RemoteLinux(Remote):
         put(config, remote_path)
         return run(f"fio --output-format=json {remote_path}")
 
+    def count_backfill_files_in_log(self, host: str) -> int:
+        with settings(host_string=host):
+            result = run(
+                f'grep "new temp file" '
+                f'{self.get_install_dir()}/var/lib/couchbase/logs/query.log | wc -l',
+                quiet=True,
+            )
+            return int(result.strip() or 0)
+
     def _grep_info_log(self, pattern: str) -> str:
         # Search current info.log and any rotated info.log.*.gz, since the
         # event may have been rotated out by the time we look for it.

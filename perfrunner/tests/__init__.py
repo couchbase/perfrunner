@@ -75,7 +75,6 @@ class PerfTest:
         self.stats_settings = self.test_config.stats_settings
         self.use_prometheus = (
             self.stats_settings.use_prometheus_metrics
-            and self.stats_settings.metrics_system_host
             and self.stats_settings.enabled
         )
         # Initialise metrics collector agent and reporting

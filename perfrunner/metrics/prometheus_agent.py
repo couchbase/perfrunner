@@ -4,7 +4,12 @@ from urllib.parse import urlencode
 
 from logger import logger
 from perfrunner.helpers.rest import RestBase
-from perfrunner.settings import ClusterSpec, StatsSettings
+from perfrunner.settings import (
+    CBMONITOR2_HOST,
+    CONFIG_MANAGER_HOST,
+    ClusterSpec,
+    StatsSettings,
+)
 
 
 class PrometheusAgent:
@@ -34,7 +39,8 @@ class PrometheusAgent:
     def __init__(self, cluster_spec: ClusterSpec, stats_settings: StatsSettings, rest: RestBase):
         self.cluster_spec = cluster_spec
         self.stats_settings = stats_settings
-        self.snapshot_base_url = f"http://{stats_settings.metrics_system_host}/cm/api/v1/snapshot"
+        # Snapshot register/patch/delete go to the config-manager.
+        self.snapshot_base_url = f"http://{CONFIG_MANAGER_HOST}/config-manager/api/v1/snapshot"
         self.rest = rest
         self.snapshot_id = None
         self.phase_name = None
@@ -47,12 +53,9 @@ class PrometheusAgent:
         self.start_background_worker()
         self.cm_current_snapshot_url = f"{self.snapshot_base_url}/{self.snapshot_id}"
         self.snapshot_url = (
-            f"http://{stats_settings.metrics_system_host}/a/cbmonitor/cbmonitor"
-            f"?snapshotId={self.snapshot_id}"
+            f"https://{CBMONITOR2_HOST}/a/cbmonitor/snapshots?snapshotId={self.snapshot_id}"
         )
-        self.metrics_store_url = (
-            f"http://{stats_settings.metrics_system_host}/api/v1/snapshots/{self.snapshot_id}"
-        )
+        self.metrics_store_url = f"https://{CBMONITOR2_HOST}/api/v1/snapshots/{self.snapshot_id}"
         logger.info(f"Registered Prometheus snapshot: {self.snapshot_url}")
 
     def __enter__(self):

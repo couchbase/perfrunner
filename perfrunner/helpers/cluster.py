@@ -349,7 +349,24 @@ class DefaultClusterManager(ClusterManagerBase):
         for master in self.cluster_spec.masters:
             self.rest.increase_bucket_limit(master, num_buckets)
 
+    ENCRYPTION_KEY_NAME = "CBSM Secret"
+
     def create_encryption_key(self, host: str) -> str:
+        # Encryption keys are cluster-level objects that persist across bucket
+        # deletes. Tests like CreateBackupandRestoreIndexTest recreate the bucket
+        # mid-run, which would otherwise trip the server's name-uniqueness
+        # constraint on the second call. Reuse the existing key if present.
+        existing = self.rest.find_encryption_key_id_by_name(host, self.ENCRYPTION_KEY_NAME)
+        if existing is not None:
+            logger.info(
+                f"Reusing existing encryption key '{self.ENCRYPTION_KEY_NAME}' (id={existing})"
+            )
+            return existing
+
+        usage = ["bucket-encryption", "config-encryption"]
+        if self.test_config.bucket.other_encryption_at_rest:
+            usage.append("other-encryption")
+
         rot_interval = 60
         data = {
             "autoRotation": True,
@@ -359,7 +376,8 @@ class DefaultClusterManager(ClusterManagerBase):
             ).isoformat(),
         }
         return self.rest.create_encryption_key(
-            host, "CBSM Secret", "cb-server-managed-aes-key-256", data
+            host, self.ENCRYPTION_KEY_NAME, "cb-server-managed-aes-key-256", data,
+            usage=usage,
         )
 
     def create_buckets(self):
@@ -379,7 +397,8 @@ class DefaultClusterManager(ClusterManagerBase):
         for master in self.cluster_spec.masters:
             secret_id = (
                 self.create_encryption_key(master)
-                if self.test_config.bucket.encryption_at_rest
+                if (self.test_config.bucket.encryption_at_rest
+                    or self.test_config.bucket.other_encryption_at_rest)
                 else None
             )
 
@@ -401,7 +420,7 @@ class DefaultClusterManager(ClusterManagerBase):
                     max_ttl=self.test_config.bucket.max_ttl,
                 )
 
-                if secret_id is not None:
+                if self.test_config.bucket.encryption_at_rest and secret_id is not None:
                     self.rest.rest_encrypt_bucket(master, bucket_name, secret_id)
                     self.rest.configure_dek(
                         master,
@@ -410,6 +429,11 @@ class DefaultClusterManager(ClusterManagerBase):
                         self.test_config.bucket.dek_lifetime_secs,
                     )
                     self.rest.set_max_deks(master, bucket_name, self.test_config.bucket.max_deks)
+
+            if self.test_config.bucket.other_encryption_at_rest:
+                self.rest.enable_other_encryption(master, key_id=int(secret_id))
+                self.rest.force_other_encryption(master)
+                self.monitor.wait_for_other_encryption_ready(master)
 
     def create_eventing_buckets(self):
         if not self.test_config.cluster.eventing_bucket_mem_quota:

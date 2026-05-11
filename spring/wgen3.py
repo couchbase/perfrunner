@@ -18,6 +18,7 @@ from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
 from perfrunner.settings import PhaseSettings as WorkloadSettings
 from perfrunner.settings import TargetSettings
+from spring.cbgen_helpers import query_failure_tracker
 from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
@@ -1498,6 +1499,7 @@ class N1QLWorker(Worker):
         else:
             logger.info('Finished: {}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
         finally:
+            query_failure_tracker.log_summary(self.sid)
             self.dump_stats()
 
 

@@ -1,4 +1,5 @@
 import os
+import threading
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -6,6 +7,7 @@ from shlex import quote
 from typing import Any, Dict, List, Literal, Optional, Tuple
 from urllib.parse import urlparse
 
+import paramiko
 from fabric.api import cd, env, execute, get, parallel, put, quiet, run, settings, shell_env
 from fabric.contrib.files import append
 from fabric.exceptions import CommandTimeout, NetworkError
@@ -53,8 +55,8 @@ class RemoteLinux(Remote):
         if not (cluster_spec.capella_infrastructure or cluster_spec.external_client):
             self.distro, self.distro_version = self.detect_distro()
 
-    def get_install_dir(self) -> str:
-        return self.CB_DIRS[self.get_product()]
+    def get_install_dir(self, host: Optional[str] = None) -> str:
+        return self.CB_DIRS[self.get_product(host=host)]
 
     def get_product(self, host: Optional[str] = None) -> CBProduct:
         host = host or env.host_string
@@ -594,12 +596,155 @@ class RemoteLinux(Remote):
 
     def count_backfill_files_in_log(self, host: str) -> int:
         with settings(host_string=host):
+            log_glob = (
+                f'{self.get_install_dir()}/var/lib/couchbase/logs/query.log*'
+            )
             result = run(
-                f'grep "new temp file" '
-                f'{self.get_install_dir()}/var/lib/couchbase/logs/query.log | wc -l',
+                f'zgrep -h "new temp file" {log_glob} 2>/dev/null | wc -l',
                 quiet=True,
+                warn_only=True,
             )
             return int(result.strip() or 0)
+
+    def count_backfill_files_by_encryption_in_log(self, host: str,
+                                                  is_encrypted: bool) -> int:
+        flag = 'isEncrypted:true' if is_encrypted else 'isEncrypted:false'
+        with settings(host_string=host):
+            log_glob = (
+                f'{self.get_install_dir()}/var/lib/couchbase/logs/query.log*'
+            )
+            result = run(
+                f'zgrep -h "new temp file" {log_glob} 2>/dev/null '
+                f'| grep -c "{flag}"',
+                quiet=True,
+                warn_only=True,
+            )
+            return int(result.strip() or 0)
+
+    def get_gsi_throttle_durations_in_log(self, host: str) -> List[str]:
+        """Extract gsi_throttle_duration values from query.log on this host.
+
+        Returns a list of raw value strings (e.g. ['"100ms"', '"1.5s"',
+        '"0s"']); the caller parses + normalises. Spans rotated logs
+        (query.log + query.log.N + query.log.N.gz). Returns an empty
+        list if the field isn't present (older build) or the file is
+        missing — never raises so the caller can treat it as purely
+        observational.
+        """
+        with settings(host_string=host):
+            log_glob = (
+                f'{self.get_install_dir()}/var/lib/couchbase/logs/query.log*'
+            )
+            # -oE = output only the matched substring. Pattern grabs the
+            # field name + its value up to the next comma or close-brace.
+            # Tolerates both string ("100ms") and numeric (123456) value
+            # forms across Couchbase versions.
+            result = run(
+                'zgrep -hoE \'"gsi_throttle_duration":[^,}]+\' '
+                f'{log_glob} 2>/dev/null',
+                quiet=True,
+                warn_only=True,
+            )
+            if not result:
+                return []
+            return [line.strip() for line in result.split('\n') if line.strip()]
+
+    def count_need_to_spill_in_log(self, host: str) -> int:
+        with settings(host_string=host):
+            log_glob = (
+                f'{self.get_install_dir()}/var/lib/couchbase/logs/query.log*'
+            )
+            result = run(
+                f'zgrep -h "need to spill" {log_glob} 2>/dev/null | wc -l',
+                quiet=True,
+                warn_only=True,
+            )
+            return int(result.strip() or 0)
+
+    def start_spill_capture(self, host: str):
+        """Stream ``tail -F query.log | grep 'need to spill'`` via paramiko.
+
+        Opens a foreground SSH session on ``host`` running the pipeline;
+        a daemon thread consumes stdout and increments a match counter as
+        matches arrive. Session state is stashed on the instance so
+        ``stop_spill_capture()`` can close the channel (which SIGHUPs the
+        remote pipeline) and return the total match count.
+        """
+        log_path = f'{self.get_install_dir(host)}/var/lib/couchbase/logs/query.log'
+        cmd = (
+            f"tail -F -n 0 {log_path} 2>/dev/null "
+            f"| grep --line-buffered 'need to spill'"
+        )
+        username, password = self.cluster_spec.ssh_credentials
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=host, username=username, password=password)
+
+        # SSH-level keepalive: prevents the server from dropping the
+        # session if the spill stream goes quiet for a stretch during
+        # the long MERGE probe. Avoids the "Operation timed out / Broken
+        # pipe" disconnect seen in manual long-running SSH sessions.
+        client.get_transport().set_keepalive(30)
+
+        # get_pty=True so a Ctrl-C-style SIGHUP propagates to the whole
+        # pipeline when we close the channel; otherwise tail can survive
+        # as an orphan.
+        stdin, stdout, stderr = client.exec_command(cmd, get_pty=True)
+
+        match_count = [0]
+        stop_event = threading.Event()
+
+        def consume():
+            try:
+                for line in iter(stdout.readline, ''):
+                    if not line:
+                        break
+                    if stop_event.is_set():
+                        break
+                    if 'need to spill' in line:
+                        match_count[0] += 1
+            except Exception as exc:
+                logger.warning(f'Spill capture consumer thread error: {exc}')
+
+        thread = threading.Thread(target=consume, daemon=True)
+        thread.start()
+
+        self._spill_capture_state = {
+            'client': client,
+            'stdin': stdin,
+            'stdout': stdout,
+            'stderr': stderr,
+            'thread': thread,
+            'stop_event': stop_event,
+            'count': match_count,
+            'host': host,
+        }
+        logger.info(f'Spill capture stream opened on {host}')
+
+    def stop_spill_capture(self, host: str) -> int:
+        """Close the SSH channel (kills the remote tail) and return match count."""
+        state = getattr(self, '_spill_capture_state', None)
+        if state is None:
+            logger.warning('stop_spill_capture called without an active stream')
+            return 0
+
+        state['stop_event'].set()
+        try:
+            # Closing the channel sends EOF + signals the remote tail to exit.
+            state['stdout'].channel.close()
+        except Exception:
+            pass
+        try:
+            state['client'].close()
+        except Exception:
+            pass
+        # Give the consumer thread a moment to drain any in-flight lines.
+        state['thread'].join(timeout=3)
+
+        count = state['count'][0]
+        self._spill_capture_state = None
+        return count
 
     def _grep_info_log(self, pattern: str) -> str:
         # Search current info.log and any rotated info.log.*.gz, since the

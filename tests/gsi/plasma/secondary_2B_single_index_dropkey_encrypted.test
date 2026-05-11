@@ -1,0 +1,68 @@
+[test_case]
+test = perfrunner.tests.secondary.DropKeySecondaryIndexTest
+
+[showfast]
+title = DropKey, 1 bucket x 2B x 1KB, single 2i index, 50%% Resident, Plasma, Native Encryption
+component = secondary
+category = dropkey
+sub_category = PlasmaDGM
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 178263
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 227829M
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+encryption_at_rest = true
+# Auto-rotation is intentionally parked beyond the test horizon; the test
+# drives rotation via the force-rotation REST endpoint instead
+# (dropkey_force_rotation=1). Runtime is bounded by
+# dropkey_test_duration_secs plus the load/build phase.
+dek_rotation_interval_secs = 7200
+dek_lifetime_secs = 60
+max_deks = 2
+
+[load]
+items = 2000000000
+size = 1024
+workers = 100
+doc_gen = small_plasma
+key_fmtr = hash
+
+[secondary]
+indexes = myindex:alt_email
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 3600
+indexer.settings.gc_percent = 200
+queryport.client.usePlanner = false
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
+disable_perindex_stats = True
+indexer.settings.build.batch_size = 100
+# 5s polling: 2B with 50% RR is largely in-memory, so the
+# 1 -> 2 -> 1 num_keys cycle on small slices completes fast and
+# needs fine-grained polling to observe.
+dropkey_polling_interval_secs = 5
+# Generous deadline: this single index is very large (2B docs), so the
+# full drop can take a long time even with shard-level parallelism.
+dropkey_test_duration_secs = 21600
+dropkey_force_rotation = 1
+run_recovery_test = 1
+
+[access]
+updates = 100
+ops = 200000000
+items = 2000000000
+throughput = 100000
+workers = 80

@@ -764,6 +764,23 @@ class MetricHelper:
             return round(query_latency, 1)
         return int(query_latency)
 
+    def avg_query_latency(self) -> Metric:
+        metric_id = f'{self.test_config.name}_query_avg'.replace('.', '')
+        title = f'Average query latency (ms), {self._title}'
+        metric_info = self._metric_info(metric_id, title,
+                                        order_by=self.query_id, chirality=-1)
+
+        values = []
+        for bucket in self.test_config.buckets:
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='spring_query_latency',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='latency_query')
+
+        avg_latency = float(np.mean(values))
+        latency = round(avg_latency, 1) if avg_latency < 100 else int(avg_latency)
+        return latency, self._snapshots, metric_info
+
     def api_latency(self, endpoint, values, percentile: Number, cluster_idx: int = 0) -> Metric:
         metric_id = f"{endpoint}_api_{percentile:g}th"
         metric_id = metric_id.replace(".", "")

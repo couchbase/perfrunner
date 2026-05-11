@@ -1,0 +1,68 @@
+# NOTE: The dataset (item count + doc size), scan-cap, and range-scan
+# query shape below were tuned to force the indexer to create backfill
+# (temp) files on this perf cluster's specific hardware profile (CPU
+# cores, memory). Backfill files are only created when the in-memory
+# scan buffer fills AND the indexer still has more entries to write —
+# producer-consumer pacing depends on machine spec, so if this test is
+# ever moved to a different perf cluster the dataset, scan-cap, and/or
+# query MUST be re-tuned against the new machine. Otherwise the
+# workload may silently stop creating backfill files.
+
+[test_case]
+test = perfrunner.tests.n1ql.N1QLScanBackfillTest
+
+[showfast]
+title = Scan Backfill, Range Scan SELECT *, Low scan-cap, Plasma, not_bounded, N1QL
+component = n1ql
+category = scan_backfill
+sub_category = Plasma
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.queryport.backfill_pause_test_duration = 100
+
+[load]
+items = 3000000
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+
+[index]
+statements =
+    CREATE INDEX ix_covered_scan ON `bucket-1`(capped_small, name);
+
+[n1ql]
+scan-cap = 512
+
+[access]
+creates = 0
+reads = 0
+updates = 0
+deletes = 0
+items = 3000000
+workers = 0
+time = 1200
+n1ql_queries = range-scan
+n1ql_workers = 60
+n1ql_timeout = 300
+workload_instances = 2
+
+[n1ql-range-scan]
+statement = SELECT meta().id, capped_small, name FROM `bucket-1` USE INDEX (ix_covered_scan) WHERE capped_small IS NOT MISSING AND length(name) = 0;
+scan_consistency = not_bounded
+args = []
+
+[profiling]
+services = n1ql

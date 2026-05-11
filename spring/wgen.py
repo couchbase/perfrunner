@@ -15,6 +15,7 @@ from twisted.internet import reactor
 from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
 from spring.cbgen import CBAsyncGen, CBGen, SubDocGen
+from spring.cbgen_helpers import query_failure_tracker
 from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
@@ -913,6 +914,7 @@ class N1QLWorker(Worker):
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
         finally:
+            query_failure_tracker.log_summary(self.sid)
             self.dump_stats()
 
 

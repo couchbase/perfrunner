@@ -1,0 +1,607 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "index1-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index1-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-2": {
+                "index2-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index2-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-3": {
+                "index3-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index3-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-4": {
+                "index4-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index4-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-5": {
+                "index5-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index5-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-6": {
+                "index6-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index6-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-7": {
+                "index7-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index7-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-8": {
+                "index8-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index8-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-9": {
+                "index9-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index9-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-10": {
+                "index10-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index10-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-11": {
+                "index11-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index11-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-12": {
+                "index12-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index12-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-13": {
+                "index13-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index13-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-14": {
+                "index14-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index14-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-15": {
+                "index15-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index15-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-16": {
+                "index16-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index16-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-17": {
+                "index17-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index17-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-18": {
+                "index18-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index18-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-19": {
+                "index19-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index19-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-20": {
+                "index20-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index20-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-21": {
+                "index21-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index21-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-22": {
+                "index22-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index22-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-23": {
+                "index23-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index23-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-24": {
+                "index24-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index24-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-25": {
+                "index25-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index25-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-26": {
+                "index26-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index26-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-27": {
+                "index27-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index27-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-28": {
+                "index28-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index28-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-29": {
+                "index29-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index29-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-30": {
+                "index30-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index30-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-31": {
+                "index31-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index31-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-32": {
+                "index32-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index32-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-33": {
+                "index33-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index33-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-34": {
+                "index34-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index34-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-35": {
+                "index35-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index35-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-36": {
+                "index36-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index36-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-37": {
+                "index37-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index37-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-38": {
+                "index38-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index38-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-39": {
+                "index39-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index39-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-40": {
+                "index40-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index40-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-41": {
+                "index41-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index41-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-42": {
+                "index42-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index42-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-43": {
+                "index43-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index43-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-44": {
+                "index44-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index44-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-45": {
+                "index45-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index45-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-46": {
+                "index46-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index46-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-47": {
+                "index47-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index47-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-48": {
+                "index48-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index48-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-49": {
+                "index49-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index49-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            },
+            "collection-50": {
+                "index50-1": {
+                    "field": "name",
+                    "num_partition": 3,
+                    "num_replica": 0
+                },
+                "index50-2": {
+                    "field": "year",
+                    "num_partition": 3,
+                    "num_replica": 2
+                }
+            }
+        }
+    }
+}

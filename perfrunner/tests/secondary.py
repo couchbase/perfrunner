@@ -2684,3 +2684,110 @@ class CloudVectorSecondaryScanWithEqualityFiltersTest(VectorSecondaryScanWithEqu
         self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
         return super().read_scanresults()
 
+
+class DropKeySecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
+
+    """Measure the perf impact of concurrent Plasma DEK drop (key rotation completion).
+
+    Test flow:
+      1. Load + build initial index (requires encryption_at_rest=true on the bucket).
+      2. Start background mutation workload.
+      3. Trigger DEK rotation (forced if dropkey_force_rotation=1, otherwise
+         rely on the short dek_rotation_interval_secs configured on the bucket).
+      4. Poll the indexer storage stats every dropkey_polling_interval_secs
+         and capture per-index num_keys gauge transitions (2 -> 1) -- this is
+         the DEK drop completion event.
+      5. Report the average drop completion duration across all monitored indexes
+         as the headline KPI. Per-index durations are logged for variance review.
+    """
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        if not self.test_config.bucket.encryption_at_rest:
+            raise Exception(
+                "DropKeySecondaryIndexTest requires encryption_at_rest=true on the bucket"
+            )
+        self.polling_interval = self.test_config.gsi_settings.dropkey_polling_interval_secs
+        self.test_duration = self.test_config.gsi_settings.dropkey_test_duration_secs
+        self.force_rotation = bool(self.test_config.gsi_settings.dropkey_force_rotation)
+        self._dropkey_durations = {}
+        self._rotation_start_ts = None
+
+    def _report_kpi(self, time_elapsed, index_type, unit="min"):
+        if index_type == "DropKey":
+            self.reporter.post(
+                *self.metrics.get_indexing_meta(value=time_elapsed,
+                                                index_type="DropKey",
+                                                unit=unit)
+            )
+        else:
+            super()._report_kpi(time_elapsed, index_type, unit=unit)
+
+    def trigger_dek_rotation(self):
+        """Trigger DEK rotation -- forced via REST if configured, else rely on auto-rotation."""
+        self._rotation_start_ts = time.time()
+        if self.force_rotation:
+            for master in self.cluster_spec.masters:
+                self.rest.force_dek_rotation(master, self.bucket)
+            logger.info("Forced DEK rotation issued; waiting for old key drop")
+        else:
+            interval = self.test_config.bucket.dek_interval_secs
+            lifetime = self.test_config.bucket.dek_lifetime_secs
+            logger.info(
+                f"Relying on auto DEK rotation (interval={interval}s, lifetime={lifetime}s)"
+            )
+
+    def run(self):
+        self.load_and_build_initial_index()
+        self.print_index_disk_usage(heap_profile=False)
+
+        # Kick off background mutations so DropKey is measured under load.
+        self.access_bg()
+
+        # Start DEK rotation and measure drop completion.
+        self.trigger_dek_rotation()
+        self._dropkey_durations = self.monitor.monitor_dropkey_completion(
+            host=self.index_nodes[0],
+            rotation_start_ts=self._rotation_start_ts,
+            duration_secs=self.test_duration,
+            polling_interval=self.polling_interval,
+        )
+        durations = list(self._dropkey_durations.values())
+        avg_dropkey_secs = sum(durations) / len(durations)
+
+        self.report_kpi(avg_dropkey_secs, "DropKey", unit="sec")
+        self.print_index_disk_usage(heap_profile=False)
+
+        self.run_recovery_scenario()
+
+
+class ConcurrentDropKeySecondaryIndexTest(DropKeySecondaryIndexTest):
+
+    """DropKey perf test for 100 indexes with concurrent key rotations across shards."""
+
+    def run(self):
+        self.load_and_build_initial_index()
+        self.print_index_disk_usage(heap_profile=False)
+
+        # Background mutations + concurrent scans to exercise read path during rotation.
+        self.access_bg()
+        if self.configfile:
+            self.apply_scanworkload(
+                path_to_tool="./opt/couchbase/bin/cbindexperf",
+                run_in_background=True,
+                is_ssl=self.is_ssl,
+            )
+
+        self.trigger_dek_rotation()
+        self._dropkey_durations = self.monitor.monitor_dropkey_completion(
+            host=self.index_nodes[0],
+            rotation_start_ts=self._rotation_start_ts,
+            duration_secs=self.test_duration,
+            polling_interval=self.polling_interval,
+        )
+        durations = list(self._dropkey_durations.values())
+        avg_dropkey_secs = sum(durations) / len(durations)
+
+        self.report_kpi(avg_dropkey_secs, "DropKey", unit="sec")
+        self.print_index_disk_usage(heap_profile=False)
+

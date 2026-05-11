@@ -445,10 +445,13 @@ class DefaultRestHelper(RestBase):
         logger.info("Enabling encryption config restrictions bypass")
         self.run_diag_eval(host, 'ns_config:set(test_bypass_encr_cfg_restrictions, true).')
 
-    def create_encryption_key(self, host: str, name: str, key_type: str, data: dict) -> str:
+    def create_encryption_key(self, host: str, name: str, key_type: str, data: dict,
+                              usage: Optional[list[str]] = None) -> str:
+        if usage is None:
+            usage = ["bucket-encryption", "config-encryption"]
         payload = {
             "type": key_type,
-            "usage": ["bucket-encryption", "config-encryption"],
+            "usage": usage,
             "data": data,
             "name": name,
         }
@@ -457,6 +460,23 @@ class DefaultRestHelper(RestBase):
         secret_id = self.post(url=url, data=json.dumps(payload)).json()["id"]
         logger.info(f"Created encryption key with ID: {secret_id}")
         return secret_id
+
+    def get_encryption_keys(self, host: str) -> list[dict]:
+        """Return all cluster-level encryption keys (id, name, type, ...)."""
+        url = self._get_api_url(host=host, path="settings/encryptionKeys")
+        return self.get(url=url).json()
+
+    def find_encryption_key_id_by_name(self, host: str, name: str) -> Optional[str]:
+        """Return the id of the encryption key named ``name``, or None if absent."""
+        try:
+            keys = self.get_encryption_keys(host)
+        except Exception as e:
+            logger.warning(f"Failed to list encryption keys on {host}: {e}")
+            return None
+        for key in keys:
+            if key.get("name") == name:
+                return str(key.get("id"))
+        return None
 
     def rest_encrypt_bucket(self, host: str, bucket: str, secret_id: str):
         url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
@@ -496,6 +516,22 @@ class DefaultRestHelper(RestBase):
             f"Setting DEK rotation settings for bucket {bucket} (in seconds): {pretty_dict(data)}"
         )
         self.post(url=url, data=data)
+
+    def force_dek_rotation(self, host: str, bucket: str):
+        """Force an immediate DEK rotation + drop for the bucket.
+
+        Per Couchbase docs, this endpoint creates a new DEK, re-encrypts all
+        data with it, and deletes the old DEK -- giving us the full
+        num_keys: 1 -> 2 -> 1 cycle in a single deterministic call.
+
+        Ref: https://docs.couchbase.com/server/current/rest-api/security/
+             encryption-at-rest/drop-encryption-deks.html
+        """
+        url = self._get_api_url(
+            host=host, path=f"controller/dropEncryptionAtRestDeks/bucket/{bucket}"
+        )
+        logger.info(f"Forcing DEK rotation + drop for bucket {bucket}")
+        return self.post(url=url, data="")
 
     def delete_bucket(self, host: str, name: str):
         logger.info('Deleting new bucket: {}'.format(name))
@@ -924,6 +960,39 @@ class DefaultRestHelper(RestBase):
                                 ssl_port=QUERY_PORT_SSL)
         response = self.get(url=url)
         return response.json()
+
+    def set_query_log_level(self, host: str, level: str):
+        logger.info(f'Setting Query Service log level to {level}')
+        url = self._get_api_url(host=host, path='settings/querySettings')
+        self.post(url=url, data={'queryLogLevel': level})
+
+    def set_query_tmp_space_size(self, host: str, size_mib: int):
+        """Set the Query Service temp-space size (``queryTmpSpaceSize``).
+
+        Lives on the ns_server ``/settings/querySettings`` endpoint;
+        the cbq-engine ``/admin/settings`` endpoint does not expose it.
+        """
+        logger.info(
+            f'Setting Query Service tmp space size to {size_mib} MiB on {host}'
+        )
+        url = self._get_api_url(host=host, path='settings/querySettings')
+        self.post(url=url, data={'queryTmpSpaceSize': size_mib})
+
+    def enable_other_encryption(self, host: str, key_id: int = 0):
+        logger.info('Enabling Other Encryption with encryptionKeyId={}'.format(key_id))
+        url = self._get_api_url(host=host, path='settings/security/encryptionAtRest/other')
+        payload = {'encryptionMethod': 'encryptionKey', 'encryptionKeyId': key_id}
+        self.post(url=url, data=json.dumps(payload),
+                  headers={'Content-Type': 'application/json'})
+
+    def force_other_encryption(self, host: str):
+        logger.info('Forcing Other Encryption of pre-existing data on disk')
+        url = self._get_api_url(host=host, path='controller/forceEncryptionAtRest/other')
+        self.post(url=url, data='')
+
+    def get_encryption_at_rest_config(self, host: str) -> dict:
+        url = self._get_api_url(host=host, path='settings/security/encryptionAtRest/config')
+        return self.get(url=url).json()
 
     def delete_fts_index(self, host: str, index: str):
         logger.info('Deleting FTS index: {}'.format(index))

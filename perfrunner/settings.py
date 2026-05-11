@@ -1228,6 +1228,7 @@ class BucketSettings:
     HISTORY_BYTES = 0
     MAX_TTL = 0
     ENCRYPTION_AT_REST = "false"
+    OTHER_ENCRYPTION_AT_REST = "false"
     DEK_INTERVAL_SECS = 30 * 24 * 60 * 60
     DEK_LIFETIME_SECS = 365 * 24 * 60 * 60
     MAX_DEKS = 50
@@ -1283,6 +1284,9 @@ class BucketSettings:
 
         self.encryption_at_rest = maybe_atoi(
             options.get("encryption_at_rest", self.ENCRYPTION_AT_REST)
+        )
+        self.other_encryption_at_rest = maybe_atoi(
+            options.get("other_encryption_at_rest", self.OTHER_ENCRYPTION_AT_REST)
         )
         self.dek_interval_secs = int(
             options.get("dek_rotation_interval_secs", self.DEK_INTERVAL_SECS)
@@ -2418,6 +2422,9 @@ class GSISettings:
     DISABLE_PERINDEX_STATS = False
     AWS_CREDENTIAL_PATH = None
     DEFAULT_NPROBES = 10
+    DROPKEY_POLLING_INTERVAL_SECS = 60
+    DROPKEY_TEST_DURATION_SECS = 1800
+    DROPKEY_FORCE_ROTATION = 0
 
     def __init__(self, options: dict):
         self.indexes = {}
@@ -2503,6 +2510,13 @@ class GSISettings:
             self.settings.pop("planner.excludeNode")
 
         self.vector_reranking = maybe_atoi(options.get('vector_reranking', "true"))
+
+        self.dropkey_polling_interval_secs = int(options.get('dropkey_polling_interval_secs',
+                                                             self.DROPKEY_POLLING_INTERVAL_SECS))
+        self.dropkey_test_duration_secs = int(options.get('dropkey_test_duration_secs',
+                                                          self.DROPKEY_TEST_DURATION_SECS))
+        self.dropkey_force_rotation = int(options.get('dropkey_force_rotation',
+                                                      self.DROPKEY_FORCE_ROTATION))
 
     def __str__(self) -> str:
         return str(self.__dict__)

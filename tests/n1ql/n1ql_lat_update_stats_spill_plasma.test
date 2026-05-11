@@ -1,0 +1,61 @@
+# NOTE: The dataset (item count + doc size, 10 fields x ~1 KiB) and
+# the UPDATE STATISTICS field list below were tuned to force the query
+# engine to spill per-field histograms to disk on this perf cluster's
+# specific hardware profile (CPU cores, memory). The spill thresholds
+# derive from query engine formulas that depend on machine config, so
+# if this test is ever moved to a different perf cluster the dataset
+# (item count, doc size, sample_size) and/or field list MUST be
+# re-derived against the new machine's spec — otherwise the workload
+# may silently stop triggering spill and the pre-flight DEBUG probe
+# will fail.
+
+[test_case]
+test = perfrunner.tests.n1ql.N1QLLatencyUpdateStatsSpillTest
+
+[showfast]
+title = UPDATE STATISTICS Spill File, 10 fields x ~1 KiB x 60K docs, Plasma, N1QL
+component = n1ql
+category = spill_file
+sub_category = Plasma
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 60000
+size = 10240
+workers = 20
+doc_gen = reverse_lookup
+
+[access]
+creates = 1
+reads = 0
+updates = 0
+deletes = 0
+items = 60000
+spring_batch_size = 1
+workers = 1
+throughput = 1
+time = 3600
+n1ql_queries = update-stats-spill
+n1ql_workers = 5
+n1ql_batch_size = 1
+n1ql_throughput = 1
+n1ql_timeout = 3600
+
+[n1ql-update-stats-spill]
+statement = UPDATE STATISTICS FOR `bucket-1`(name, email, alt_email, city, county, state, full_state, country, `realm`, body) WITH {"sample_size": 60000, "update_statistics_timeout": 3000};
+scan_consistency = not_bounded
+args = []

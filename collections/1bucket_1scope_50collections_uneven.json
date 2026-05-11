@@ -1,0 +1,257 @@
+{
+  "bucket-1": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1,
+        "ratio": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1,
+        "ratio": 2
+      },
+      "collection-3": {
+        "load": 1,
+        "access": 1,
+        "ratio": 3
+      },
+      "collection-4": {
+        "load": 1,
+        "access": 1,
+        "ratio": 4
+      },
+      "collection-5": {
+        "load": 1,
+        "access": 1,
+        "ratio": 5
+      },
+      "collection-6": {
+        "load": 1,
+        "access": 1,
+        "ratio": 6
+      },
+      "collection-7": {
+        "load": 1,
+        "access": 1,
+        "ratio": 7
+      },
+      "collection-8": {
+        "load": 1,
+        "access": 1,
+        "ratio": 8
+      },
+      "collection-9": {
+        "load": 1,
+        "access": 1,
+        "ratio": 9
+      },
+      "collection-10": {
+        "load": 1,
+        "access": 1,
+        "ratio": 10
+      },
+      "collection-11": {
+        "load": 1,
+        "access": 1,
+        "ratio": 11
+      },
+      "collection-12": {
+        "load": 1,
+        "access": 1,
+        "ratio": 12
+      },
+      "collection-13": {
+        "load": 1,
+        "access": 1,
+        "ratio": 13
+      },
+      "collection-14": {
+        "load": 1,
+        "access": 1,
+        "ratio": 14
+      },
+      "collection-15": {
+        "load": 1,
+        "access": 1,
+        "ratio": 15
+      },
+      "collection-16": {
+        "load": 1,
+        "access": 1,
+        "ratio": 16
+      },
+      "collection-17": {
+        "load": 1,
+        "access": 1,
+        "ratio": 17
+      },
+      "collection-18": {
+        "load": 1,
+        "access": 1,
+        "ratio": 18
+      },
+      "collection-19": {
+        "load": 1,
+        "access": 1,
+        "ratio": 19
+      },
+      "collection-20": {
+        "load": 1,
+        "access": 1,
+        "ratio": 20
+      },
+      "collection-21": {
+        "load": 1,
+        "access": 1,
+        "ratio": 21
+      },
+      "collection-22": {
+        "load": 1,
+        "access": 1,
+        "ratio": 22
+      },
+      "collection-23": {
+        "load": 1,
+        "access": 1,
+        "ratio": 23
+      },
+      "collection-24": {
+        "load": 1,
+        "access": 1,
+        "ratio": 24
+      },
+      "collection-25": {
+        "load": 1,
+        "access": 1,
+        "ratio": 25
+      },
+      "collection-26": {
+        "load": 1,
+        "access": 1,
+        "ratio": 26
+      },
+      "collection-27": {
+        "load": 1,
+        "access": 1,
+        "ratio": 27
+      },
+      "collection-28": {
+        "load": 1,
+        "access": 1,
+        "ratio": 28
+      },
+      "collection-29": {
+        "load": 1,
+        "access": 1,
+        "ratio": 29
+      },
+      "collection-30": {
+        "load": 1,
+        "access": 1,
+        "ratio": 30
+      },
+      "collection-31": {
+        "load": 1,
+        "access": 1,
+        "ratio": 31
+      },
+      "collection-32": {
+        "load": 1,
+        "access": 1,
+        "ratio": 32
+      },
+      "collection-33": {
+        "load": 1,
+        "access": 1,
+        "ratio": 33
+      },
+      "collection-34": {
+        "load": 1,
+        "access": 1,
+        "ratio": 34
+      },
+      "collection-35": {
+        "load": 1,
+        "access": 1,
+        "ratio": 35
+      },
+      "collection-36": {
+        "load": 1,
+        "access": 1,
+        "ratio": 36
+      },
+      "collection-37": {
+        "load": 1,
+        "access": 1,
+        "ratio": 37
+      },
+      "collection-38": {
+        "load": 1,
+        "access": 1,
+        "ratio": 38
+      },
+      "collection-39": {
+        "load": 1,
+        "access": 1,
+        "ratio": 39
+      },
+      "collection-40": {
+        "load": 1,
+        "access": 1,
+        "ratio": 40
+      },
+      "collection-41": {
+        "load": 1,
+        "access": 1,
+        "ratio": 41
+      },
+      "collection-42": {
+        "load": 1,
+        "access": 1,
+        "ratio": 42
+      },
+      "collection-43": {
+        "load": 1,
+        "access": 1,
+        "ratio": 43
+      },
+      "collection-44": {
+        "load": 1,
+        "access": 1,
+        "ratio": 44
+      },
+      "collection-45": {
+        "load": 1,
+        "access": 1,
+        "ratio": 45
+      },
+      "collection-46": {
+        "load": 1,
+        "access": 1,
+        "ratio": 46
+      },
+      "collection-47": {
+        "load": 1,
+        "access": 1,
+        "ratio": 47
+      },
+      "collection-48": {
+        "load": 1,
+        "access": 1,
+        "ratio": 48
+      },
+      "collection-49": {
+        "load": 1,
+        "access": 1,
+        "ratio": 49
+      },
+      "collection-50": {
+        "load": 1,
+        "access": 1,
+        "ratio": 50
+      }
+    }
+  }
+}

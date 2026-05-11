@@ -70,14 +70,71 @@ class ErrorTracker:
 error_tracker = ErrorTracker()
 
 
+class QueryFailureTracker:
+    """Passive per-worker counter for N1QL query failures during an access phase.
+
+    Accumulates per-reason counts inside a single worker process. Call
+    log_summary() at worker shutdown to emit a consolidated failure report.
+    Does not affect KPI calculation or reservoir sampling.
+    """
+
+    MAX_MSG_LEN = 120
+    MAX_STMT_LEN = 80
+
+    def __init__(self):
+        self.total = 0
+        self.by_reason: dict = defaultdict(int)
+
+    def track(self, exc: ClientError, statement: str = '') -> None:
+        self.total += 1
+        key = (type(exc).__name__, str(exc)[:self.MAX_MSG_LEN], statement[:self.MAX_STMT_LEN])
+        self.by_reason[key] += 1
+
+    def log_summary(self, worker_id: int) -> None:
+        if not self.total:
+            return
+        lines = ['N1QL query failure summary for query-worker-{}: {} failed call(s)'.format(
+            worker_id, self.total)]
+        for (exc_type, msg, stmt_hint), count in sorted(
+                self.by_reason.items(), key=lambda kv: -kv[1]):
+            hint = ' [stmt: {}]'.format(stmt_hint) if stmt_hint else ''
+            lines.append('  {} x {} — {}{}'.format(count, exc_type, msg, hint))
+        logger.warn('\n'.join(lines))
+
+
+query_failure_tracker = QueryFailureTracker()
+
+
+def _extract_n1ql_statement(decorated_args: tuple) -> str:
+    """Return a short statement hint from n1ql_query decorated call args.
+
+    Handles SDK 2 (N1QLQuery object with .statement attr) and SDK 3/4
+    (plain string). decorated_args[0] is the CBGen instance;
+    decorated_args[1] is the query argument.
+    """
+    if len(decorated_args) < 2:
+        return ''
+    query_arg = decorated_args[1]
+    if isinstance(query_arg, str):
+        return query_arg[:80]
+    stmt = getattr(query_arg, 'statement', None)
+    if stmt:
+        return str(stmt)[:80]
+    return ''
+
+
 @decorator
 def quiet(method: Callable, *args, **kwargs):
     try:
         return method(*args, **kwargs)
     except CouchbaseError as e:
         error_tracker.track(method.__name__, e)
+        if method.__name__ == 'n1ql_query':
+            query_failure_tracker.track(e, _extract_n1ql_statement(args))
     except HTTPError as e:
         error_tracker.track(method.__name__, e)
+        if method.__name__ == 'n1ql_query':
+            query_failure_tracker.track(e, _extract_n1ql_statement(args))
 
 
 @decorator

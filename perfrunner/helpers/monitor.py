@@ -651,6 +651,192 @@ class Monitor:
 
         logger.info('Indexing completed')
 
+    # num_keys value each index converges to after a DEK drop completes.
+    # The 2 -> 1 transition on this gauge is what we time.
+    NUM_KEYS_AFTER_DROP = 1
+
+    @staticmethod
+    def _extract_num_keys(index_stats: dict):
+        """Best-effort extraction of num_keys gauge from a single index entry.
+
+        Plasma reports num_keys at the index Stats level. Fall back to nested
+        MainStore/BackStore in case the schema differs across server builds.
+        Last resort: recursively search any nested dict for a num_keys key.
+        """
+        stats = index_stats.get("Stats", {}) or {}
+        if "num_keys" in stats:
+            return stats["num_keys"]
+        for store_key in ("MainStore", "BackStore"):
+            store = stats.get(store_key, {}) or {}
+            if "num_keys" in store:
+                return store["num_keys"]
+        if "num_keys" in index_stats:
+            return index_stats["num_keys"]
+
+        def _recurse(d):
+            if not isinstance(d, dict):
+                return None
+            if "num_keys" in d:
+                return d["num_keys"]
+            for v in d.values():
+                if isinstance(v, dict):
+                    found = _recurse(v)
+                    if found is not None:
+                        return found
+            return None
+
+        return _recurse(index_stats)
+
+    def monitor_dropkey_completion(
+        self,
+        host: str,
+        rotation_start_ts: float,
+        duration_secs: float,
+        polling_interval: float,
+    ) -> dict:
+        """Poll storage stats and capture per-index DEK drop completion.
+
+        Tracks both the rotation-start event (num_keys: 1 -> 2) and the
+        drop-complete event (num_keys: 2 -> 1) per index. Duration is
+        measured from the observed rotation-start, falling back to
+        ``rotation_start_ts`` if the 1->2 edge was missed (e.g. drop
+        completed faster than one poll interval). Logs raw num_keys
+        values every poll so we can diagnose "didn't fire" vs "fired
+        but invisible" failures.
+
+        Returns a dict of ``{index_name: duration_seconds}`` for every
+        index whose 2 -> 1 transition was observed within
+        ``duration_secs``. Raises if no transitions were observed at all.
+        """
+        deadline = rotation_start_ts + duration_secs
+        durations = {}
+        prev_num_keys = {}
+        rotation_started_ts = {}
+        poll_count = 0
+        first_poll_dump = True
+
+        while time.time() < deadline:
+            try:
+                storage_stats = self.rest.get_index_storage_stats(host).json()
+            except Exception as e:
+                logger.warning(f"DropKey monitor: failed to fetch storage stats: {e}")
+                time.sleep(polling_interval)
+                continue
+
+            now = time.time()
+            poll_count += 1
+            seen_this_poll = {}
+
+            for entry in storage_stats:
+                index_name = entry.get("Index", "")
+                if not index_name or "_system:_query" in index_name:
+                    continue
+                num_keys = self._extract_num_keys(entry)
+                if num_keys is None:
+                    if first_poll_dump:
+                        logger.warning(
+                            f"DropKey monitor: could not locate num_keys for {index_name}; "
+                            f"entry keys = {list(entry.keys())}; "
+                            f"Stats keys = {list(entry.get('Stats', {}).keys())}"
+                        )
+                    continue
+                seen_this_poll[index_name] = num_keys
+                prev = prev_num_keys.get(index_name)
+
+                # 1 -> 2: rotation started (capture exact timestamp)
+                if (
+                    prev is not None
+                    and prev < num_keys
+                    and index_name not in rotation_started_ts
+                ):
+                    rotation_started_ts[index_name] = now
+                    logger.info(
+                        f"DropKey rotation observed for {index_name}: "
+                        f"num_keys {prev} -> {num_keys}"
+                    )
+
+                # 2 -> 1 (or higher -> lower): drop complete
+                if (
+                    prev is not None
+                    and prev > num_keys
+                    and num_keys == self.NUM_KEYS_AFTER_DROP
+                    and index_name not in durations
+                ):
+                    start_ts = rotation_started_ts.get(index_name, rotation_start_ts)
+                    durations[index_name] = now - start_ts
+                    logger.info(
+                        f"DropKey complete for {index_name}: {durations[index_name]:.1f}s "
+                        f"({len(durations)} indexes done)"
+                    )
+
+                prev_num_keys[index_name] = num_keys
+
+            # Periodic diagnostic dump: first poll always, then every 5 polls.
+            if first_poll_dump or poll_count % 5 == 0:
+                sample = dict(list(seen_this_poll.items())[:5])
+                logger.info(
+                    f"DropKey poll #{poll_count}: {len(seen_this_poll)} indexes seen, "
+                    f"sample num_keys = {sample}, "
+                    f"rotations observed = {len(rotation_started_ts)}, "
+                    f"drops complete = {len(durations)}"
+                )
+                first_poll_dump = False
+
+            monitored = [n for n in prev_num_keys if "_system:_query" not in n]
+            if monitored and len(durations) >= len(monitored):
+                logger.info("DropKey completed for all monitored indexes")
+                break
+
+            time.sleep(polling_interval)
+
+        if not durations:
+            raise Exception(
+                f"No DropKey 2->1 transitions observed within {duration_secs}s "
+                f"across {poll_count} polls (interval={polling_interval}s, "
+                f"rotations observed={len(rotation_started_ts)}). "
+                "If rotations observed=0, the trigger didn't fire (check REST 200). "
+                "If rotations observed>0 but no drops, increase duration. "
+                "If neither, num_keys may live at a non-default JSON path; check the "
+                "'could not locate num_keys' warnings above and update _extract_num_keys."
+            )
+
+        values = list(durations.values())
+        avg = sum(values) / len(values)
+        logger.info(
+            f"DropKey durations -- count: {len(values)}, avg: {avg:.1f}s, "
+            f"min: {min(values):.1f}s, max: {max(values):.1f}s"
+        )
+        logger.info(f"Per-index durations: {misc.pretty_dict(durations)}")
+        return durations
+
+    def wait_for_other_encryption_ready(self, host: str, timeout_s: int = 600,
+                                        poll_interval_s: int = 10):
+        """Poll Other Encryption at Rest config until dataStatus=encrypted."""
+        deadline = time.time() + timeout_s
+        cfg = {}
+        first = True
+        while time.time() < deadline:
+            cfg = self.rest.get_encryption_at_rest_config(host)
+            if first:
+                logger.info(f'encryptionAtRest/config response shape: {cfg}')
+                first = False
+            # The endpoint returns dataStatus nested under "info" (observed in
+            # Totoro: cfg['info']['dataStatus']). Fall back to a few other
+            # plausible paths in case the response shape varies by build.
+            info = cfg.get('info') if isinstance(cfg, dict) else None
+            status = (
+                info.get('dataStatus') if isinstance(info, dict) else None
+            ) or cfg.get('dataStatus') if isinstance(cfg, dict) else None
+            logger.info(f'Other Encryption dataStatus: {status}')
+            if status == 'encrypted':
+                logger.info('Other Encryption is fully active')
+                return
+            time.sleep(poll_interval_s)
+        raise Exception(
+            f'Other Encryption did not reach dataStatus=encrypted within '
+            f'{timeout_s}s. Last config: {cfg}'
+        )
+
     def wait_for_all_indexes_dropped(self, index_nodes):
         logger.info('Waiting for all indexes to be dropped')
         indexes_remaining = [1 for _ in index_nodes]

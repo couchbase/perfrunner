@@ -1,4 +1,5 @@
 import datetime
+import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -440,76 +441,82 @@ class N1QLThroughputTest(N1QLTest):
         )
 
 
-class N1QLSpillFileTest(N1QLLatencyTest):
-    """Measures query latency when ORDER BY sort overflows to disk (spill files).
+class _SpillKPIMixin:
+    """Pre-flight spill probe + defensive KPI reporting for spill tests.
 
-    Pre-flight: confirms EXPLAIN plan contains an Order operator (i.e. sort is
-    performed by the Query engine, not pushed down to the index).
-    Post-run: confirms spills.order in /admin/vitals incremented by >=1.
-    Fails loudly on either check.
+    Two safeguards live here:
+
+    1. ``_pre_flight_spill_probe`` — guards against the workload silently
+       no longer triggering spill (Query/GSI code drift, machine spec
+       changes, dataset shifts). Toggles the Query Service to DEBUG level,
+       runs ONE probe of the access-phase statement, greps ``query.log``
+       for ``need to spill`` markers, and restores INFO before the timed
+       measurement window. Fails fast (well before the 20-minute access
+       window elapses) with a clear error if the probe didn't spill.
+
+    2. ``_report_kpi`` — the N1QL worker drops the first query latency
+       (warm-up). With ``n1ql_workers=1`` and slow spill queries, fewer
+       than two completions in the access window leaves the reservoir
+       empty, which causes ``np.percentile([], 90)`` to raise an opaque
+       ``IndexError``. We pre-check the values list and raise a
+       descriptive error instead.
+
+    The probe is hooked in via ``store_plans()`` so the measurement
+    phase runs at INFO with no DEBUG logging overhead.
     """
 
-    def _get_spill_count(self) -> int:
-        vitals = self.rest.get_query_vitals(self.query_nodes[0])
-        return vitals.get('spills.order', 0)
+    SPILL_ENTRIES_MIN = 2
 
-    def _find_operator(self, node, operator_name: str) -> bool:
-        if isinstance(node, dict):
-            if node.get('#operator') == operator_name:
-                return True
-            return any(self._find_operator(v, operator_name) for v in node.values())
-        if isinstance(node, list):
-            return any(self._find_operator(item, operator_name) for item in node)
-        return False
+    # queryTmpSpaceSize default (5120 MiB) is too small for spill tests
+    # on 1 GiB / 3 GiB sort inputs with multiple concurrent workers —
+    # queries silently error out with "temporary directory's space limit
+    # exceeded". Bumping to 30 GiB up-front keeps that failure mode off
+    # the critical path.
+    TMP_SPACE_SIZE_MIB = 30720
 
-    def _validate_order_operator_in_plan(self):
-        logger.info('Pre-flight: validating EXPLAIN plan contains Order operator')
-        query = self.test_config.access_settings.n1ql_queries[0]['statement']
-        plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query)
-        if not self._find_operator(plan, 'Order'):
+    def _pre_flight_spill_probe(self):
+        host = self.query_nodes[0]
+        statement = self.test_config.access_settings.n1ql_queries[0]['statement']
+
+        self.rest.set_query_log_level(host, 'debug')
+        captured = 0
+        try:
+            self.remote.start_spill_capture(host)
+            try:
+                logger.info(
+                    'Pre-flight spill probe: running one query at DEBUG '
+                    'level to verify the workload still triggers spill'
+                )
+                probe_resp = self.rest.exec_n1ql_statement(host, statement)
+                if probe_resp.get('errors'):
+                    logger.warn(
+                        f'Pre-flight spill probe query returned errors: '
+                        f'{probe_resp["errors"]}'
+                    )
+            finally:
+                captured = self.remote.stop_spill_capture(host)
+        finally:
+            self.rest.set_query_log_level(host, 'info')
+
+        if captured < self.SPILL_ENTRIES_MIN:
             raise Exception(
-                'EXPLAIN plan validation FAILED: no "Order" operator found in query plan. '
-                'The sort may be pushed down to the index — '
-                'a non-covering index must be used for spill files to be created. '
-                f'Query: {query}'
-            )
-        logger.info('EXPLAIN plan validated: "Order" operator confirmed in query plan')
-
-    def run(self):
-        self.enable_stats()
-        self.load()
-        self.wait_for_persistence()
-
-        self.create_indexes()
-        self.wait_for_indexing()
-
-        self.store_plans()
-        self._validate_order_operator_in_plan()
-
-        spills_before = self._get_spill_count()
-        logger.info(f'spills.order before access phase: {spills_before}')
-
-        self.access_bg()
-        self.access()
-
-        spills_after = self._get_spill_count()
-        logger.info(f'spills.order after access phase: {spills_after}')
-
-        delta = spills_after - spills_before
-        if delta < 2:
-            raise Exception(
-                f'Sort spill validation FAILED: spills.order delta = {delta} (expected >= 2). '
-                'Note: spills.order increments by 1 per sort operation that spills, '
-                'not per spill file. With n1ql_workers=1 running sequential queries '
-                'over the 1200s access window, multiple completions should each spill. '
-                'A delta >= 2 confirms spilling is repeatable across executions.'
+                f'Pre-flight spill probe FAILED: captured {captured} '
+                f'"need to spill" log entries during the probe '
+                f'(expected >= {self.SPILL_ENTRIES_MIN}). The workload may '
+                'no longer trigger spill — verify dataset size, query '
+                'shape, and Query/GSI build changes since the test was '
+                'authored.'
             )
         logger.info(
-            f'Sort spill confirmed: spills.order incremented by {delta} '
-            'across sequential executions'
+            f'Pre-flight spill probe PASSED: captured {captured} '
+            f'"need to spill" log entries (>= {self.SPILL_ENTRIES_MIN})'
         )
 
-        self.report_kpi()
+    def store_plans(self):
+        super().store_plans()
+        for host in self.query_nodes:
+            self.rest.set_query_tmp_space_size(host, self.TMP_SPACE_SIZE_MIB)
+        self._pre_flight_spill_probe()
 
 
 class N1QLScanBackfillTest(N1QLThroughputTest):
@@ -527,10 +534,161 @@ class N1QLScanBackfillTest(N1QLThroughputTest):
     Fails loudly on either check.
     """
 
+    # Two distinct thresholds, intentionally decoupled:
+    #
+    # PROBE_BACKFILL_FILES_MIN: a fail-fast pre-flight check that the workload
+    #   triggers backfill at all on the current build, before running the full
+    #   access window.
+    #
+    # BACKFILL_FILES_MIN: the access window itself must produce more than one
+    #   backfill file, confirming sustained backfill rather than a one-off.
+    PROBE_BACKFILL_FILES_MIN = 1
     BACKFILL_FILES_MIN = 2
+
+    # Many concurrent covered scans can accumulate a large amount of backfill
+    # scratch if files aren't reclaimed quickly enough; raising the temp-space
+    # size up-front prevents disk-full errors from masking throughput numbers.
+    TMP_SPACE_SIZE_MIB = 30720
 
     def _count_backfill_log_entries(self) -> int:
         return self.remote.count_backfill_files_in_log(self.query_nodes[0])
+
+    def _get_failed_count_total(self) -> int:
+        total = 0
+        for host in self.query_nodes:
+            vitals = self.rest.get_query_vitals(host)
+            total += int(vitals.get('request.failed.count', 0))
+        return total
+
+    def _run_probe_query_for_backfill(self):
+        """Run one access-shape query to verify backfill still triggers.
+
+        Counts "new temp file" log lines around the probe and requires at
+        least PROBE_BACKFILL_FILES_MIN of them. Fails fast (well before
+        the access window) if the workload no longer produces backfill —
+        Query/GSI code drift, scan-cap drift, docgen drift, etc. The
+        post-access window check (BACKFILL_FILES_MIN) enforces the
+        stricter "sustained backfill" requirement.
+        """
+        query_def = self.test_config.access_settings.n1ql_queries[0]
+        statement = query_def['statement']
+        host = self.query_nodes[0]
+        before = self.remote.count_backfill_files_in_log(host)
+        logger.info(
+            'Pre-flight probe: running one query to verify backfill behaviour'
+        )
+        probe_resp = self.rest.exec_n1ql_statement(host, statement)
+        if probe_resp.get('errors'):
+            logger.warn(
+                f'Pre-flight backfill probe query returned errors: '
+                f'{probe_resp["errors"]}'
+            )
+        after = self.remote.count_backfill_files_in_log(host)
+        delta = after - before
+        if delta < self.PROBE_BACKFILL_FILES_MIN:
+            raise Exception(
+                f'Pre-flight backfill probe FAILED: one probe query produced '
+                f'{delta} "new temp file" log lines '
+                f'(expected >= {self.PROBE_BACKFILL_FILES_MIN}). The workload '
+                'may no longer trigger backfill — verify dataset size, '
+                'scan-cap, and producer-consumer pacing have not drifted '
+                'since the test was authored.'
+            )
+        logger.info(
+            f'Pre-flight probe PASSED: probe query produced {delta} '
+            f'"new temp file" log lines (>= {self.PROBE_BACKFILL_FILES_MIN})'
+        )
+
+    # Go time.Duration string units, normalised to milliseconds. Covers
+    # the range GSI emits for throttle durations; m/h included so a
+    # compound value like "1m30s" still parses correctly.
+    _GSI_THROTTLE_UNIT_MS = {
+        'ns': 1e-6, 'us': 1e-3, 'µs': 1e-3,
+        'ms': 1.0, 's': 1000.0, 'm': 60_000.0, 'h': 3_600_000.0,
+    }
+    _GSI_THROTTLE_RE = re.compile(r'(\d+(?:\.\d+)?)(ns|µs|us|ms|s|m|h)')
+
+    def _parse_throttle_ms(self, raw: str) -> float:
+        """Parse one gsi_throttle_duration field value to milliseconds.
+
+        Accepts Go time.Duration string form ("100ms", "1.5s", compound
+        "1m30s") and plain numeric ns value. Returns 0.0 on any
+        unparseable input — must never raise (this is post-test
+        observation, not a pass/fail check).
+        """
+        value = raw.split(':', 1)[-1].strip(' "')
+        matches = self._GSI_THROTTLE_RE.findall(value)
+        if matches:
+            return sum(
+                float(n) * self._GSI_THROTTLE_UNIT_MS[u] for n, u in matches
+            )
+        try:
+            return float(value) / 1e6
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _summarize_gsi_throttle(self):
+        """Post-run summary of GSI throttle durations from query.log.
+
+        Pure observation: never raises, never affects the reported
+        throughput metric. Wrapped in try/except so an SSH glitch or
+        unexpected log format can't fail an otherwise-passing test.
+
+        The GSI Client library on the query node emits gsi_throttle_duration
+        as a periodic ``logstats`` dump in query.log (every ~3 minutes), as
+        a plain integer in nanoseconds, and the value is CUMULATIVE since
+        GSIC start. So we report the delta between the final and first
+        snapshot (== throttle time accumulated during the observed window)
+        plus the absolute final cumulative — averaging across snapshots
+        would be meaningless because each snapshot is a running total, not
+        an independent sample.
+
+        Throttle duration is the GSI indexer's response to the query
+        engine being unable to drain the scan buffer fast enough — i.e.
+        exactly the producer-consumer mismatch this test is designed to
+        exercise. A non-zero delta confirms backfill actually engaged;
+        the magnitude tells you how hard.
+        """
+        try:
+            raw = self.remote.get_gsi_throttle_durations_in_log(
+                self.query_nodes[0]
+            )
+        except Exception as e:
+            logger.warn(f'gsi_throttle_duration summary skipped: {e}')
+            return
+
+        if not raw:
+            logger.info(
+                'gsi_throttle_duration not found in query.log — '
+                'either GSIC did not log any stats dumps during the '
+                'access window or the build does not emit this field. '
+                'Backfill behaviour is still validated via the '
+                '"new temp file" count above.'
+            )
+            return
+
+        values_ms = [self._parse_throttle_ms(r) for r in raw]
+        nonzero = [v for v in values_ms if v > 0]
+
+        if not nonzero:
+            logger.info(
+                f'gsi_throttle_duration: {len(raw)} snapshots found in '
+                'query.log but all parsed to 0 ms — no scans were '
+                'throttled during the observed window.'
+            )
+            return
+
+        final = max(nonzero)
+        first = min(nonzero)
+        delta = final - first
+        logger.info(
+            f'gsi_throttle_duration: {len(raw)} cumulative snapshots in '
+            f'query.log; throttle accumulated during observed window = '
+            f'{delta:.0f} ms ({delta / 1000:.1f} s); final cumulative '
+            f'since GSIC start = {final:.0f} ms '
+            f'({final / 1000:.1f} s). Purely observational — does not '
+            'affect the reported throughput metric.'
+        )
 
     def _validate_scan_size_for_backfill(self):
         logger.info('Pre-flight: sanity-checking that scan size far exceeds scan-cap')
@@ -564,10 +722,31 @@ class N1QLScanBackfillTest(N1QLThroughputTest):
         self.wait_for_indexing()
 
         self.store_plans()
-        self._validate_scan_size_for_backfill()
+        for host in self.query_nodes:
+            self.rest.set_query_tmp_space_size(host, self.TMP_SPACE_SIZE_MIB)
+        self._run_probe_query_for_backfill()
 
-        self.access_bg()
+        failed_before = self._get_failed_count_total()
+        logger.info(
+            f'request.failed.count before access phase: {failed_before}'
+        )
+
         self.access()
+
+        # Observe failed queries via /admin/vitals delta. Purely
+        # informational — failed queries are already excluded from the
+        # throughput reservoir (spring.reservoir.update drops falsy
+        # values), so the reported metric is unaffected. Logging here
+        # just makes the count visible in the log instead of
+        # being silently dropped.
+        failed_after = self._get_failed_count_total()
+        failed_delta = failed_after - failed_before
+        logger.info(
+            f'Failed queries during access phase: {failed_delta} '
+            f'(request.failed.count before={failed_before}, '
+            f'after={failed_after}). These are excluded from the '
+            'reported throughput metric.'
+        )
 
         backfill_count = self._count_backfill_log_entries()
         if backfill_count < self.BACKFILL_FILES_MIN:
@@ -586,7 +765,190 @@ class N1QLScanBackfillTest(N1QLThroughputTest):
             f'(>= {self.BACKFILL_FILES_MIN} required)'
         )
 
+        self._summarize_gsi_throttle()
+
         self.report_kpi()
+
+
+class N1QLLatencySpillFileTest(_SpillKPIMixin, N1QLLatencyTest):
+    """Measures query latency for workloads that trigger sort spill to disk.
+
+    Class name contains "Latency" so enable_stats() turns on the
+    n1ql_latency collector (latency_query metric).
+
+    Access-window counter check: ``spills.order`` from ``/admin/vitals``
+    must increment by >= 2 across the access window, confirming that
+    at least two sequential sort executions each actually spilled to
+    disk. The pre-flight DEBUG probe in ``_SpillKPIMixin`` verifies the
+    configured workload *can* spill before the timed measurement window
+    starts; this counter check proves the access-window queries *did*
+    spill. Together they fail fast if the .test file's query no longer
+    drives sort spill (Query/GSI code drift, docgen drift, machine spec
+    change, etc.) rather than posting misleading metrics.
+    """
+
+    SPILLS_ORDER_DELTA_MIN = 2
+
+    def _get_spills_order_total(self) -> int:
+        total = 0
+        for host in self.query_nodes:
+            vitals = self.rest.get_query_vitals(host)
+            total += int(vitals.get('spills.order', 0))
+        return total
+
+    def _get_failed_count_total(self) -> int:
+        total = 0
+        for host in self.query_nodes:
+            vitals = self.rest.get_query_vitals(host)
+            total += int(vitals.get('request.failed.count', 0))
+        return total
+
+    def access_bg(self, *args, **kwargs):
+        self._spills_order_before = self._get_spills_order_total()
+        logger.info(
+            f'spills.order before access phase: {self._spills_order_before}'
+        )
+        self._failed_count_before = self._get_failed_count_total()
+        logger.info(
+            f'request.failed.count before access phase: '
+            f'{self._failed_count_before}'
+        )
+        super().access_bg(*args, **kwargs)
+
+    def _report_kpi(self):
+        spills_after = self._get_spills_order_total()
+        delta = spills_after - self._spills_order_before
+        if delta < self.SPILLS_ORDER_DELTA_MIN:
+            raise Exception(
+                f'Sort spill validation FAILED: spills.order delta = '
+                f'{delta} (before={self._spills_order_before}, '
+                f'after={spills_after}, '
+                f'expected >= {self.SPILLS_ORDER_DELTA_MIN}). A delta of '
+                f'{delta} means fewer than {self.SPILLS_ORDER_DELTA_MIN} '
+                'sequential sort operations spilled to disk during the '
+                'access window — the query may no longer trigger sort '
+                'spill even though the pre-flight probe passed.'
+            )
+        logger.info(
+            f'Sort spill confirmed: spills.order delta = {delta} '
+            f'(>= {self.SPILLS_ORDER_DELTA_MIN})'
+        )
+        failed_after = self._get_failed_count_total()
+        failed_delta = failed_after - self._failed_count_before
+        logger.info(
+            f'Failed queries during access phase: {failed_delta} '
+            f'(request.failed.count before={self._failed_count_before}, '
+            f'after={failed_after}). These are excluded from the '
+            'reported latency metric.'
+        )
+        # Log avg + p90 directly so both are visible in the Jenkins
+        # console without having to read the cbmonitor snapshot. Reads
+        # from the same spring_query_latency reservoir that the showfast
+        # metric posts use, so the logged numbers match exactly what
+        # gets posted.
+        values = []
+        for bucket in self.test_config.buckets:
+            db = self.metrics.store.build_dbname(
+                cluster=self.cbmonitor_clusters[0],
+                collector='spring_query_latency',
+                bucket=bucket,
+            )
+            values += self.metrics.store.get_values(db, metric='latency_query')
+        if values:
+            avg_ms = float(np.mean(values))
+            p90_ms = float(np.percentile(values, 90))
+            logger.info(
+                f'Avg latency: {avg_ms:.0f} ms ({avg_ms / 1000:.2f} s)'
+            )
+            logger.info(
+                f'P90 latency: {p90_ms:.0f} ms ({p90_ms / 1000:.2f} s)'
+            )
+        super()._report_kpi()
+        # P90 is posted by super()._report_kpi() (N1QLLatencyTest).
+        # Additionally post the average so showfast tracks both numbers
+        # per build — useful for catching regressions where p90 is
+        # stable but the bulk of queries get slower (or vice versa).
+        self.reporter.post(*self.metrics.avg_query_latency())
+
+
+class N1QLLatencyUpdateStatsSpillTest(_SpillKPIMixin, N1QLLatencyTest):
+    """Measures query latency for UPDATE STATISTICS workloads that spill to disk.
+
+    Class name contains "Latency" so the n1ql_latency collector is enabled.
+
+    Access-window counter check (MB-72017, build 8.1.0-2193+):
+    ``spills.update_statistics`` from ``/admin/vitals`` must increment
+    by >= 2 across the access window, confirming that at least two
+    sequential UPDATE STATISTICS executions each actually spilled to
+    disk. Mirrors the ``spills.order`` check on
+    N1QLLatencySpillFileTest. Requires the counter to exist on the
+    build under test — on older builds the metric is absent and this
+    check will fail deterministically (delta = 0).
+    """
+
+    SPILLS_UPDATE_STATISTICS_DELTA_MIN = 2
+
+    def _get_spills_update_statistics_total(self) -> int:
+        total = 0
+        for host in self.query_nodes:
+            vitals = self.rest.get_query_vitals(host)
+            total += int(vitals.get('spills.update_statistics', 0))
+        return total
+
+    def _get_failed_count_total(self) -> int:
+        total = 0
+        for host in self.query_nodes:
+            vitals = self.rest.get_query_vitals(host)
+            total += int(vitals.get('request.failed.count', 0))
+        return total
+
+    def access_bg(self, *args, **kwargs):
+        self._spills_us_before = self._get_spills_update_statistics_total()
+        logger.info(
+            f'spills.update_statistics before access phase: '
+            f'{self._spills_us_before}'
+        )
+        self._failed_count_before = self._get_failed_count_total()
+        logger.info(
+            f'request.failed.count before access phase: '
+            f'{self._failed_count_before}'
+        )
+        super().access_bg(*args, **kwargs)
+
+    def _report_kpi(self):
+        spills_after = self._get_spills_update_statistics_total()
+        delta = spills_after - self._spills_us_before
+        if delta < self.SPILLS_UPDATE_STATISTICS_DELTA_MIN:
+            raise Exception(
+                f'UPDATE STATISTICS spill validation FAILED: '
+                f'spills.update_statistics delta = {delta} '
+                f'(before={self._spills_us_before}, after={spills_after}, '
+                f'expected >= {self.SPILLS_UPDATE_STATISTICS_DELTA_MIN}). '
+                f'Per MB-72017, a delta of {delta} means fewer than '
+                f'{self.SPILLS_UPDATE_STATISTICS_DELTA_MIN} sequential '
+                'UPDATE STATISTICS operations spilled to disk during the '
+                'access window — the query may no longer trigger per-field '
+                'spill even though the pre-flight probe passed. Note: '
+                'spills.update_statistics requires build 8.1.0-2193+.'
+            )
+        logger.info(
+            f'UPDATE STATISTICS spill confirmed: '
+            f'spills.update_statistics delta = {delta} '
+            f'(>= {self.SPILLS_UPDATE_STATISTICS_DELTA_MIN})'
+        )
+        # Observe failed queries via /admin/vitals delta. Purely
+        # informational — failed queries are already excluded from the
+        # latency reservoir (spring.reservoir.update drops falsy
+        # values), so the reported metric is unaffected.
+        failed_after = self._get_failed_count_total()
+        failed_delta = failed_after - self._failed_count_before
+        logger.info(
+            f'Failed queries during access phase: {failed_delta} '
+            f'(request.failed.count before={self._failed_count_before}, '
+            f'after={failed_after}). These are excluded from the '
+            'reported latency metric.'
+        )
+        super()._report_kpi()
 
 
 class N1QLThroughputRebalanceTest(N1QLThroughputTest):

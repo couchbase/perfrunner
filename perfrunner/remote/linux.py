@@ -926,6 +926,17 @@ class RemoteLinux(Remote):
             data = run(f"du -sb {path}/@2i")
             return int(data.split()[0])
 
+    def get_dir_size_mb(self, host: str, *paths: str) -> float:
+        """Return the size in MB of the first of `paths` that exists on `host`, or 0."""
+        candidates = " ".join(f'"{path}"' for path in paths)
+        cmd = (
+            f'for p in {candidates}; do '
+            'if [ -d "$p" ]; then du -sm "$p" | cut -f1; exit 0; fi; done; echo 0'
+        )
+        with settings(host_string=host):
+            output = run(cmd, quiet=True)
+        return float(str(output).split()[-1])
+
     def get_indexer_rss(self, host):
         with settings(host_string=host):
             data = run("ps -eo rss,comm | grep indexer")

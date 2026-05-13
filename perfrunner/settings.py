@@ -2941,9 +2941,17 @@ class CbbackupmgrSettings:
     ENCRYPTED = False
     PASSPHRASE = "couchbase"
     INCLUDE_DATA = None
+    AUTO_SELECT_THREADS = False
+    KM_KEY_URL = None
+    KM_REGION = None
 
     def __init__(self, options: dict):
         self.threads = options.get("threads", self.THREADS)
+        self.auto_select_threads = bool(
+            maybe_atoi(str(options.get("auto_select_threads", self.AUTO_SELECT_THREADS)))
+        )
+        self.km_key_url = options.get("km_key_url", self.KM_KEY_URL)
+        self.km_region = options.get("km_region", self.KM_REGION)
         self.use_tls = int(options.get("use_tls", self.USE_TLS))
         self.show_tls_version = int(options.get("show_tls_version", self.SHOW_TLS_VERSION))
         self.min_tls_version = options.get("min_tls_version", self.MIN_TLS_VERSION)
@@ -3012,6 +3020,49 @@ class RestoreSettings(CbbackupmgrSettings):
 
     def __str__(self) -> str:
         return str(self.__dict__)
+
+
+class PitrRestoreSettings:
+    """Knobs of the point-in-time restore test; the backup tools' own options live in [backup]."""
+
+    WAIT_FOR_COMPACTION_SETTLE = False
+    WAIT_AFTER_SNAPSHOT_RESTORE = False
+    WORKLOAD_DRAIN_WAIT_SECS = 60
+
+    def __init__(self, options: dict):
+        self.wait_for_compaction_settle = bool(
+            maybe_atoi(
+                str(options.get("wait_for_compaction_settle", self.WAIT_FOR_COMPACTION_SETTLE))
+            )
+        )
+        self.wait_after_snapshot_restore = bool(
+            maybe_atoi(
+                str(options.get("wait_after_snapshot_restore", self.WAIT_AFTER_SNAPSHOT_RESTORE))
+            )
+        )
+        self.workload_drain_wait_secs = int(
+            options.get("workload_drain_wait_secs", self.WORKLOAD_DRAIN_WAIT_SECS)
+        )
+
+
+class PitrGuardrailSettings:
+    """Which of the continuous backup features is enabled while the throughput is measured.
+
+    `baseline` enables nothing and `cdc` relies on the bucket's change history, so only `backup`
+    has anything to switch on during the access phase.
+    """
+
+    PHASES = ("baseline", "cdc", "backup")
+    PHASE = "baseline"
+    BACKUP_STABILIZATION_SECS = 60
+
+    def __init__(self, options: dict):
+        self.phase = options.get("phase", self.PHASE).strip().lower()
+        if self.phase not in self.PHASES:
+            raise ValueError(f"[pitr_guardrail] phase must be one of {self.PHASES}: {self.phase}")
+        self.backup_stabilization_secs = int(
+            options.get("backup_stabilization_secs", self.BACKUP_STABILIZATION_SECS)
+        )
 
 
 class ImportSettings:
@@ -4603,6 +4654,16 @@ class TestConfig(Config):
     def n1ql_settings(self) -> N1QLSettings:
         options = self._get_options_as_dict('n1ql')
         return N1QLSettings(options)
+
+    @property
+    def pitr_restore_settings(self) -> PitrRestoreSettings:
+        options = self._get_options_as_dict("pitr_restore")
+        return PitrRestoreSettings(options)
+
+    @property
+    def pitr_guardrail_settings(self) -> PitrGuardrailSettings:
+        options = self._get_options_as_dict("pitr_guardrail")
+        return PitrGuardrailSettings(options)
 
     @property
     def backup_settings(self) -> BackupSettings:

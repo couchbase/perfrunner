@@ -1,5 +1,6 @@
 import copy
 import json
+import os
 import time
 from typing import Callable
 
@@ -24,7 +25,7 @@ from perfrunner.tests.secondary import (
     InitialandIncrementalSecondaryIndexTest,
     SecondaryIndexingScanTest,
 )
-from perfrunner.tests.tools import BackupTest
+from perfrunner.tests.tools import BackupTest, continuous_backup_retention_minutes
 from perfrunner.tests.xdcr import UniDirXdcrInitTest
 from perfrunner.tests.ycsb import YCSBThroughputTest
 
@@ -609,10 +610,51 @@ class CDCTest(StabilityBootstrap):
 
 
 class ThroughputDGMMagmaTest(StabilityBootstrap):
+    def _apply_pitr_phase(self):
+        """Enable continuous backup for the `backup` phase.
+
+        Change history, which the `cdc` phase measures, comes with the bucket's
+        [bucket] history_seconds, so there is nothing more to switch on for it.
+        """
+        guardrail = self.test_config.pitr_guardrail_settings
+        if guardrail.phase != "backup":
+            return
+
+        backup = self.test_config.backup_settings
+        bucket = self.test_config.buckets[0]
+
+        local.cleanup(backup.continuous_backup_location)
+        for server in self.cluster_spec.servers:
+            self.remote.change_owner(server, backup.continuous_backup_location)
+
+        logger.info(f"Enabling continuous backup of {bucket}: {backup.continuous_backup_location}")
+        self.rest.configure_continuous_backup(
+            host=self.master_node,
+            bucket=bucket,
+            enable="true",
+            backup_location=backup.continuous_backup_location,
+            backup_interval=backup.continuous_backup_interval,
+            retention_minutes=continuous_backup_retention_minutes(
+                self.test_config.bucket.history_seconds
+            ),
+        )
+        time.sleep(guardrail.backup_stabilization_secs)
 
     def _report_kpi(self):
         for metric in self.metrics.avg_ops():
             self.reporter.post(*metric)
+
+    def warmup_access_phase(self):
+        super().warmup_access_phase()
+        self._apply_pitr_phase()
+
+    def run(self):
+        location = self.test_config.backup_settings.continuous_backup_location
+        if self.test_config.pitr_guardrail_settings.phase == "backup" and not os.path.ismount(
+            location
+        ):
+            raise RuntimeError(f"{location} is not a mount of the shared backup location")
+        super().run()
 
 
 class ThroughputCDCTest(CDCTest, ThroughputDGMMagmaTest):

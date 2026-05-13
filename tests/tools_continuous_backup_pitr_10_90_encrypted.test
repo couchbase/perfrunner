@@ -1,0 +1,72 @@
+[test_case]
+test = perfrunner.tests.continuous_backup.ContinuousBackupPITRTest
+
+[showfast]
+title = Continuous Backup PITR, 4 nodes x 1 bucket x 104.86M x 1KB, 10/90 R/W, Magma ValueOnly, Encrypted
+component = tools
+category = backup
+orderby = pitr_restore
+
+[cluster]
+mem_quota = 57344
+initial_nodes = 4
+num_buckets = 1
+online_cores = 16
+
+[bucket]
+replica_number = 1
+eviction_policy = valueOnly
+backend_storage = magma
+# KMS encryption: [backup] km_key_url/km_region add --encrypted and --km-* flags to the tools.
+# Needs AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY (and AWS_SESSION_TOKEN for STS) on the job,
+# with access to awskms://alias/pitr-perf-test in us-east-1.
+encryption_at_rest = true
+# Server floor is 900s (>= 2x backup interval); 3600 keeps the earliest mutations in
+# retention until replay starts.
+history_seconds = 3600
+
+[memcached_global]
+num_reader_threads = disk_io_optimized
+num_writer_threads = disk_io_optimized
+
+[compaction]
+db_percentage = 100
+
+[load]
+size = 1024
+items = 104857600
+workers = 128
+doc_gen = basic
+
+[access]
+items = 104857600
+workers = 128
+# cbcontbk setup time lands in the throughput window; 900s keeps it a small share.
+time = 900
+reads = 10
+updates = 90
+throughput = 100000
+# working_set=10: 10% of keys are hot; working_set_access=100: all ops hit them.
+working_set = 10
+working_set_access = 100
+
+[clients]
+libcouchbase = 3.3.12
+
+[backup]
+include_data = bucket-1
+auto_select_threads = 1
+continuous_backup_location = /nfsdata-xfs/conbackup
+continuous_backup_tempdir = /tmp/cbcontbk-restore-tmp
+continuous_backup_interval = 2
+km_key_url = awskms://alias/pitr-perf-test
+km_region = us-east-1
+
+[restore]
+auto_select_threads = 1
+threads = 32
+
+[pitr_restore]
+wait_for_compaction_settle = 1
+wait_after_snapshot_restore = 1
+workload_drain_wait_secs = 150

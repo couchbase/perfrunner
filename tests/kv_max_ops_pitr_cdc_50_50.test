@@ -1,0 +1,51 @@
+[test_case]
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+
+[showfast]
+title = PITR Guardrail CDC Only, Peak Throughput, 50/50 R/W, 4 nodes, 32 vCPU, Magma
+component = kv
+category = max_ops
+sub_category = pitr_guardrail
+orderby = pitr_cdc
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+online_cores = 16
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+history_seconds = 900
+
+[memcached_global]
+num_reader_threads = disk_io_optimized
+num_writer_threads = disk_io_optimized
+
+[load]
+size = 1024
+items = 100000000
+workers = 128
+doc_gen = basic
+use_backup = false
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+items = 100000000
+workers = 128
+time = 900
+requestdistribution = uniform
+
+[pitr_guardrail]
+phase = cdc
+backup_stabilization_secs = 60
+
+[backup]
+continuous_backup_location = /nfsdata-xfs/conbackup
+continuous_backup_tempdir = /tmp/cbcontbk-restore-tmp
+continuous_backup_interval = 2

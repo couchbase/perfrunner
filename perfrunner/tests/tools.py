@@ -1,3 +1,4 @@
+import math
 import os
 import time
 from datetime import datetime, timezone
@@ -13,6 +14,11 @@ from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.settings import LoadSettings, TargetIterator, TargetSettings
 from perfrunner.tests import PerfTest
 from perfrunner.tests.syncgateway import SGRead
+
+
+def continuous_backup_retention_minutes(history_seconds: int) -> int:
+    """Return how long to keep continuous backups: as long as the change history, 1-1440 minutes."""
+    return min(1440, max(1, math.ceil(history_seconds / 60)))
 
 
 class BackupRestoreTest(PerfTest):
@@ -33,7 +39,7 @@ class BackupRestoreTest(PerfTest):
             master_node or self.master_node
         )
         is_community = server_info.is_community
-        local.backup(
+        return local.backup(
             master_node=master_node or self.master_node,
             cluster_spec=self.cluster_spec,
             threads=self.test_config.backup_settings.threads,
@@ -48,6 +54,9 @@ class BackupRestoreTest(PerfTest):
             encrypted=self.test_config.backup_settings.encrypted,
             passphrase=self.test_config.backup_settings.passphrase,
             env_vars=self.test_config.backup_settings.env_vars,
+            auto_select_threads=self.test_config.backup_settings.auto_select_threads,
+            km_key_url=self.test_config.backup_settings.km_key_url,
+            km_region=self.test_config.backup_settings.km_region,
         )
 
     def compact(self):
@@ -67,7 +76,7 @@ class BackupRestoreTest(PerfTest):
             master_node or self.master_node
         )
         is_community = server_info.is_community
-        local.restore(
+        return local.restore(
             cluster_spec=self.cluster_spec,
             master_node=master_node or self.master_node,
             threads=self.test_config.restore_settings.threads,
@@ -78,7 +87,10 @@ class BackupRestoreTest(PerfTest):
             passphrase=self.test_config.backup_settings.passphrase,
             disable_hlv=True if self.test_config.xdcr_settings.mobile else False,
             env_vars=self.test_config.restore_settings.env_vars,
-            force_update=force_update
+            force_update=force_update,
+            auto_select_threads=self.test_config.restore_settings.auto_select_threads,
+            km_key_url=self.test_config.backup_settings.km_key_url,
+            km_region=self.test_config.backup_settings.km_region,
         )
 
     def backup_list(self):
@@ -667,7 +679,7 @@ class ContinuousBackupTest(BackupRestoreTest):
         'disk': True,
     }
 
-    def configure_continuous_backup(self, enable: bool = True):
+    def configure_continuous_backup(self, enable: bool = True, **rest_options):
         if enable:
             local.cleanup(self.test_config.backup_settings.continuous_backup_location)
             local.cleanup(self.test_config.backup_settings.continuous_backup_tempdir)
@@ -684,6 +696,7 @@ class ContinuousBackupTest(BackupRestoreTest):
             enable=str(enable).lower(),
             backup_location=self.test_config.backup_settings.continuous_backup_location,
             backup_interval=self.test_config.backup_settings.continuous_backup_interval,
+            **rest_options,
         )
         logger.info(f"Successfully configured continuous backup: enable={enable}")
 
@@ -756,18 +769,28 @@ class ContinuousBackupTest(BackupRestoreTest):
                 time.sleep(5)
 
 
-    @timeit
-    def cbcontbk_restore(self, target_time: str, master_node: Optional[str] = None):
-        local.cbcontbk_restore(
+    def run_cbcontbk_restore(
+        self, target_time: str, master_node: Optional[str] = None, **kwargs
+    ) -> str:
+        options = {
+            "include_data": self.test_config.backup_settings.include_data,
+            "km_key_url": self.test_config.backup_settings.km_key_url,
+            "km_region": self.test_config.backup_settings.km_region,
+        } | kwargs
+        return local.cbcontbk_restore(
             cluster_spec=self.cluster_spec,
             master_node=master_node or self.master_node,
             threads=self.test_config.restore_settings.threads,
-            include_data=self.test_config.backup_settings.include_data,
             use_tls=self.test_config.restore_settings.use_tls,
             location=self.test_config.backup_settings.continuous_backup_location,
             tmp_dir=self.test_config.backup_settings.continuous_backup_tempdir,
             target_time=target_time,
+            **options,
         )
+
+    @timeit
+    def cbcontbk_restore(self, target_time: str, master_node: Optional[str] = None):
+        self.run_cbcontbk_restore(target_time, master_node)
 
     @with_stats
     def run_with_stats(self) -> float:

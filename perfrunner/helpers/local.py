@@ -186,6 +186,19 @@ def drop_caches():
     local('sync && echo 3 > /proc/sys/vm/drop_caches')
 
 
+def _kms_flags(km_key_url: Optional[str], km_region: Optional[str]) -> list[str]:
+    """Point a backup tool at the AWS KMS key; the AWS credentials come from the environment."""
+    if not km_key_url:
+        return []
+    return [f"--km-key-url '{km_key_url}'", f"--km-region '{km_region}'" if km_region else ""]
+
+
+def _tool_env(cluster_spec: ClusterSpec, env_vars: dict[str, str]) -> dict[str, str]:
+    """Pass the cluster credentials through the environment so they stay off the command line."""
+    username, password = cluster_spec.rest_credentials
+    return {**env_vars, "CB_USERNAME": username, "CB_PASSWORD": password}
+
+
 def backup(
     master_node: str,
     cluster_spec: ClusterSpec,
@@ -201,14 +214,17 @@ def backup(
     encrypted: bool = False,
     passphrase: str = "couchbase",
     env_vars: dict[str, str] = {},
-):
+    auto_select_threads: bool = False,
+    km_key_url: Optional[str] = None,
+    km_region: Optional[str] = None,
+) -> Optional[str]:
     if not mode:
         cleanup(cluster_spec.backup)
 
     if wrapper:
         cbbackupwrapper(master_node, cluster_spec, 16, mode)
     else:
-        cbbackupmgr_backup(
+        return cbbackupmgr_backup(
             master_node,
             cluster_spec,
             threads,
@@ -222,6 +238,9 @@ def backup(
             encrypted,
             passphrase,
             env_vars,
+            auto_select_threads=auto_select_threads,
+            km_key_url=km_key_url,
+            km_region=km_region,
         )
 
 
@@ -314,7 +333,12 @@ def cbbackupmgr_backup(
     encrypted: bool = False,
     passphrase: str = "couchbase",
     env_vars: dict[str, str] = {},
-):
+    auto_select_threads: bool = False,
+    km_key_url: Optional[str] = None,
+    km_region: Optional[str] = None,
+) -> str:
+    kms_flags = _kms_flags(km_key_url, km_region)
+
     if not mode:
         flags = filter(
             None,
@@ -323,6 +347,8 @@ def cbbackupmgr_backup(
                 "--repo default",
                 f"--include-data {include_data}" if include_data else None,
                 f"--encrypted --passphrase {passphrase}" if encrypted else None,
+                "--encrypted" if km_key_url and not encrypted else None,
+                *kms_flags,
             ],
         )
 
@@ -337,14 +363,14 @@ def cbbackupmgr_backup(
             "--repo default",
             f"--cluster http{'s' if use_tls else ''}://{master_node}",
             "--cacert root.pem" if use_tls else None,
-            f"--username {cluster_spec.rest_credentials[0]}",
-            f"--password '{cluster_spec.rest_credentials[1]}'",
-            f"--threads {threads}" if threads else None,
+            "--auto-select-threads" if auto_select_threads else None,
+            f"--threads {threads}" if threads and not auto_select_threads else None,
             f"--storage {storage_type}" if storage_type else None,
             f"--sink {sink_type}" if sink_type else None,
             f"--value-compression {'compressed' if compression else 'unchanged'}",
             f"--shards {shards}" if shards else None,
             f"--passphrase '{passphrase}'" if encrypted else None,
+            *kms_flags,
             "--no-progress-bar",
         ],
     )
@@ -352,7 +378,10 @@ def cbbackupmgr_backup(
     cmd = f"./opt/couchbase/bin/cbbackupmgr backup {' '.join(flags)}"
 
     logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
-    run_local_shell_command(cmd, env=env_vars, raise_error=True)
+    stdout, _, _ = run_local_shell_command(
+        cmd, env=_tool_env(cluster_spec, env_vars), raise_error=True
+    )
+    return stdout
 
 
 def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
@@ -376,11 +405,18 @@ def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
     local(cmd)
 
 
-def get_backup_snapshots(cluster_spec: ClusterSpec) -> list[str]:
+def get_backup_snapshots(
+    cluster_spec: ClusterSpec, km_key_url: Optional[str] = None, km_region: Optional[str] = None
+) -> list[str]:
 
     logger.info('running cbbackupmgr info command ')
 
-    cmd = f"./opt/couchbase/bin/cbbackupmgr info --archive {cluster_spec.backup} --repo default "
+    flags = [
+        f"--archive {cluster_spec.backup}",
+        "--repo default",
+        *_kms_flags(km_key_url, km_region),
+    ]
+    cmd = f"./opt/couchbase/bin/cbbackupmgr info {' '.join(filter(None, flags))} "
 
     logger.info(f"Running: {cmd}")
 
@@ -428,6 +464,24 @@ def calc_backup_size(backup_dir: str, rounded: bool = True) -> float:
 
     return round(backup_size, 2) if rounded else backup_size
 
+def sample_dir_growth(path: str, duration_secs: int, poll_secs: int = 1) -> list[tuple[int, float]]:
+    """Poll the size of a local directory; return (elapsed secs, MB added since the last poll)."""
+
+    def size_mb() -> float:
+        stdout, _, _ = run_local_shell_command(f"du -sm {path}", quiet=True)
+        return float(stdout.split()[0]) if stdout else 0.0
+
+    samples = []
+    started = time.time()
+    previous = size_mb()
+    while time.time() - started < duration_secs:
+        time.sleep(poll_secs)
+        current = size_mb()
+        samples.append((round(time.time() - started), current - previous))
+        previous = current
+    return samples
+
+
 def restore(
     master_node: str,
     cluster_spec: ClusterSpec,
@@ -439,14 +493,17 @@ def restore(
     passphrase: str = "couchbase",
     disable_hlv: bool = False,
     env_vars: dict[str, str] = {},
-    force_update: bool = True
-):
+    force_update: bool = True,
+    auto_select_threads: bool = False,
+    km_key_url: Optional[str] = None,
+    km_region: Optional[str] = None,
+) -> Optional[str]:
     purge_restore_progress(cluster_spec)
 
     if wrapper:
         cbrestorewrapper(master_node, cluster_spec)
     else:
-        cbbackupmgr_restore(
+        return cbbackupmgr_restore(
             master_node,
             cluster_spec,
             threads,
@@ -457,6 +514,9 @@ def restore(
             disable_hlv=disable_hlv,
             force_update=force_update,
             env_vars=env_vars,
+            auto_select_threads=auto_select_threads,
+            km_key_url=km_key_url,
+            km_region=km_region,
         )
 
 
@@ -499,7 +559,10 @@ def cbbackupmgr_restore(
     disable_analytics: bool = False,
     env_vars: dict[str, str] = {},
     force_update: bool = True,
-):
+    auto_select_threads: bool = False,
+    km_key_url: Optional[str] = None,
+    km_region: Optional[str] = None,
+) -> str:
     flags = filter(
         None,
         [
@@ -507,13 +570,12 @@ def cbbackupmgr_restore(
             f"--archive {archive or cluster_spec.backup}",
             f"--repo {repo}",
             f"--include-data {include_data}" if include_data else None,
-            f"--threads {threads}",
+            "--auto-select-threads" if auto_select_threads else f"--threads {threads}",
             f"--cluster http{'s' if use_tls else ''}://{master_node}",
             "--cacert root.pem" if use_tls else None,
-            f"--username {cluster_spec.rest_credentials[0]}",
-            f"--password '{cluster_spec.rest_credentials[1]}'",
             f"--map-data {map_data}" if map_data else None,
             f"--passphrase '{passphrase}'" if encrypted else None,
+            *_kms_flags(km_key_url, km_region),
             "--disable-hlv" if disable_hlv else None,
             "--disable-analytics --disable-cluster-analytics" if disable_analytics else None,
             "--no-progress-bar",
@@ -522,7 +584,10 @@ def cbbackupmgr_restore(
     cmd = f"./opt/couchbase/bin/cbbackupmgr restore {' '.join(flags)}"
 
     logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
-    run_local_shell_command(cmd, env=env_vars, raise_error=True)
+    stdout, _, _ = run_local_shell_command(
+        cmd, env=_tool_env(cluster_spec, env_vars), raise_error=True
+    )
+    return stdout
 
 
 def cbcontbk_restore(
@@ -537,27 +602,65 @@ def cbcontbk_restore(
     repo: str = "default",
     map_data: Optional[str] = None,
     use_tls: bool = False,
-):
-    flags = [
-        f"--archive {archive or cluster_spec.backup}",
-        f"--repo {repo}",
-        f"--include-data {include_data}" if include_data else None,
-        f"--threads {threads}",
-        f"--cluster http{'s' if use_tls else ''}://{master_node}",
-        "--cacert root.pem" if use_tls else None,
-        f"--username {cluster_spec.rest_credentials[0]}",
-        f"--password '{cluster_spec.rest_credentials[1]}'",
-        f"--map-data {map_data}" if map_data else None,
-        f"--target {target_time}",
-        f"--location {location}",
-        f"--tmp-dir {tmp_dir}",
-    ]
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    km_key_url: Optional[str] = None,
+    km_region: Optional[str] = None,
+    force_updates: bool = False,
+) -> str:
+    """Replay the continuous backup up to `target_time` and return the tool's output.
 
-    cmd = f"./opt/couchbase/bin/cbcontbk restore {' '.join(filter(None, flags))}"
+    Giving a base backup `start` selects `restore-continuous`, which replays on top of that
+    snapshot. Without it the plain `restore` subcommand runs.
+    """
+    username, password = cluster_spec.rest_credentials
+    if start:
+        if use_tls:
+            raise RuntimeError("restore-continuous does not support use_tls")
+        subcommand = "restore-continuous"
+        flags = [
+            f"-a {archive or cluster_spec.backup}",
+            f"-r {repo}",
+            f"-l {location}",
+            f"-d {tmp_dir}",
+            f"-c {master_node}",
+            f"-u {username}",
+            f"-p '{password}'",
+            f"-t {threads}",
+            f"-T '{target_time}'",
+            f"--start '{start}'",
+            f"--end '{end or start}'",
+            f"--include-data {include_data}" if include_data else None,
+            f"--map-data {map_data}" if map_data else None,
+            *_kms_flags(km_key_url, km_region),
+            "--force-updates" if force_updates else None,
+        ]
+    else:
+        subcommand = "restore"
+        flags = [
+            f"--archive {archive or cluster_spec.backup}",
+            f"--repo {repo}",
+            f"--include-data {include_data}" if include_data else None,
+            f"--threads {threads}",
+            f"--cluster http{'s' if use_tls else ''}://{master_node}",
+            "--cacert root.pem" if use_tls else None,
+            f"--username {username}",
+            f"--password '{password}'",
+            f"--map-data {map_data}" if map_data else None,
+            f"--target {target_time}",
+            f"--location {location}",
+            f"--tmp-dir {tmp_dir}",
+        ]
 
-    logger.info(f"Running: {cmd}")
-    run_local_shell_command(cmd, raise_error=True)
+    cmd = f"./opt/couchbase/bin/cbcontbk {subcommand} {' '.join(filter(None, flags))}"
 
+    logger.info(f"Running: {cmd.replace(password, '*****')}")
+    # Run quietly: the failure log would otherwise carry the command line, password included
+    stdout, stderr, returncode = run_local_shell_command(cmd, quiet=True)
+    output = f"{stdout}{stderr}"
+    if returncode:
+        raise RuntimeError(f"cbcontbk {subcommand} failed with code {returncode}:\n{output}")
+    return output
 
 
 def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: list[str], threads: int):

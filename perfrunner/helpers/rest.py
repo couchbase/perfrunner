@@ -675,12 +675,16 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=host, path='pools/default/buckets')
         self.post(url=url, data=data)
 
-    def flush_bucket(self, host: str, bucket: str):
+    def flush_bucket(self, host: str, bucket: str, retry: bool = True):
+        """Flush a bucket; retry=False sends doFlush once and raises on an error response."""
         logger.info(f"Flushing bucket: {bucket}")
         url = self._get_api_url(
             host=host, path=f"pools/default/buckets/{bucket}/controller/doFlush"
         )
-        self.post(url=url)
+        if retry:
+            self.post(url=url)
+        else:
+            self._post(url=url).raise_for_status()
 
     def configure_auto_compaction(self, host, settings):
         logger.info(f"Applying auto-compaction settings: {settings}")
@@ -2195,9 +2199,17 @@ class DefaultRestHelper(RestBase):
         resp = self.post(url=url, json=settings)
         resp.raise_for_status()
 
-    def configure_continuous_backup(self, host: str, bucket: str, enable: str,
-                                    backup_location: str, backup_interval: str):
-
+    def configure_continuous_backup(
+        self,
+        host: str,
+        bucket: str,
+        enable: str,
+        backup_location: str,
+        backup_interval: str,
+        km_cred_id: Optional[str] = None,
+        km_key_url: Optional[str] = None,
+        retention_minutes: Optional[int] = None,
+    ):
         logger.info(f"Set continuous_backup to {enable}")
 
         data = {
@@ -2206,6 +2218,12 @@ class DefaultRestHelper(RestBase):
             "continuousBackupInterval": backup_interval,
             "name": bucket,
         }
+        if retention_minutes is not None:
+            data["continuousBackupRetentionPeriod"] = retention_minutes
+        if km_cred_id:
+            data["continuousBackupKmCredId"] = km_cred_id
+        if km_key_url:
+            data["continuousBackupKmKeyUrl"] = km_key_url
 
         url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
         self.post(url=url, data=data)

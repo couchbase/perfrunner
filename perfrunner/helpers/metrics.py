@@ -1503,6 +1503,15 @@ class MetricHelper:
 
         return self._metric(avg_throughput, metric_id=metric_id, title=title, chirality=1)
 
+    def pitr_kpi(self, name: str, title: str, value: float, chirality: int) -> Metric:
+        metric_id = f"{self.test_config.name}_{name}"
+        return self._metric(
+            round(value, 2),
+            metric_id=metric_id,
+            title=f"{title}, {self._title}",
+            chirality=chirality,
+        )
+
     def tool_time(self,
                   time_elapsed: float,
                   edition: str,

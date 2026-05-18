@@ -149,6 +149,8 @@ def _execute_jts(
             params += f" -ivf_nprobe_pct {settings.ivf_nprobe_pct}"
     if settings.test_query_field2:
         params += f" -test_query_field2 {settings.test_query_field2}"
+    if settings.scan_consistency and settings.scan_consistency != "not_bounded":
+        params += f" -test_scan_consistency {settings.scan_consistency}"
     print(params)
     run_custom_cmd(settings.jts_home_dir, settings.jts_run_cmd, params)
 

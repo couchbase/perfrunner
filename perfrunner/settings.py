@@ -2400,6 +2400,7 @@ class JTSAccessSettings(PhaseSettings):
         self.collections_limit_per_index = {}
         self.collections_per_index = options.get("collections_per_index", '1000')
         self.collections_limit_per_index["collectionsLimitPerIndex"] = self.collections_per_index
+        self.scan_consistency = options.get("scan_consistency", "not_bounded")
 
         # Hybrid search score fusion parameters (RRF, RSF, DBSF)
         self.fusion_type = options.get("fusion_type", None)

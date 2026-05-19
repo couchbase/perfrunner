@@ -11,7 +11,7 @@ from cbagent.collectors.eventing_stats import (
 )
 from cbagent.collectors.fts_stats import FTSCollector
 from cbagent.collectors.jts_stats import JTSCollector
-from cbagent.collectors.kvstore_stats import KVStoreStats
+from cbagent.collectors.kvstore_stats import KVStoreStats, McstatHistogramStats
 from cbagent.collectors.latency import KVLatency, Latency, QueryLatency
 from cbagent.collectors.metrics_rest_api import (
     MetricsRestApiDeduplication,

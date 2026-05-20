@@ -869,9 +869,14 @@ class DefaultClusterManager(ClusterManagerBase):
                 protocol, _bucket_name = backend.split("://")
                 _scheme = protocol if protocol != "az" else "azblob"
 
-            scheme = scheme or _scheme
+            scheme = (scheme or _scheme).lower()
             bucket_name = bucket_name or _bucket_name
-            region = self.cluster_spec.cloud_region or region
+
+            if scheme == "s3":
+                region = self.cluster_spec.cloud_region or region
+            else:
+                region = None
+
             if scheme == "azblob":
                 endpoint = (
                     endpoint

@@ -1496,34 +1496,46 @@ class RemoteLinux(Remote):
 
     @master_server
     def configure_columnar_blob_storage(
-        self, bucket_name: str, scheme: str, region: str, endpoint: Optional[str]
+        self,
+        bucket_name: str,
+        scheme: Literal["s3", "gs", "azblob"],
+        region: Optional[str],
+        endpoint: Optional[str],
     ):
         logger.info(
             "Configuring Columnar blob storage bucket. "
-            f"Bucket name: {bucket_name}, region: {region}, scheme: {scheme}, endpoint: {endpoint}"
+            f"{bucket_name=}, {region=}, {scheme=}, {endpoint=}"
         )
 
-        if not (bucket_name and scheme and region):
-            logger.interrupt("Bucket name, scheme, and region must all be provided.")
+        if not (bucket_name and scheme):
+            logger.interrupt("Bucket name and scheme must both be provided.")
 
-        force_path_style = "true"
         if not endpoint:
             endpoint = ""
-            force_path_style = "false"
+
+        settings = [
+            "blobStoragePrefix=",
+            f"blobStorageBucket={bucket_name}",
+            f"blobStorageScheme={scheme}",
+            f"blobStorageEndpoint='{endpoint}'",
+        ]
+
+        if scheme == "s3":
+            settings += [
+                f"blobStorageRegion={region}",
+                f"blobStoragePathStyleAddressing={str(bool(endpoint)).lower()}",
+            ]
+
+        if scheme != "azblob":
+            settings.append("blobStorageAnonymousAuth=false")
 
         command = (
             "curl --max-time 3 --retry 10 --retry-connrefused -i "
             "--request POST "
             "--url http://localhost:8091/settings/analytics "
             "--header 'Content-Type: application/x-www-form-urlencoded' "
-            f"--data blobStorageRegion={region} "
-            "--data blobStoragePrefix= "
-            f"--data blobStorageBucket={bucket_name} "
-            f"--data blobStorageScheme={scheme} "
-            f"--data blobStorageEndpoint='{endpoint}' "
-            f"--data blobStorageForcePathStyle={force_path_style} "
-            f"--data blobStorageAnonymousAuth=false"
-        )
+        ) + " ".join(f"--data {setting}" for setting in settings)
+
         output = run(command, warn_only=True)
         http_code = output.stdout.splitlines()[0].split()[1]
         if output.return_code != 0 or not http_code.startswith("2"):

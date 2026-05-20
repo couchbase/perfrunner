@@ -761,6 +761,13 @@ class ClusterSpec(Config):
         with ClusterMetadataFile(self.csp) as metadata_file:
             return metadata_file.get_parameters(cluster_name, overrides)
 
+    def cbmonitor_snapshot_cluster_name(self, cluster_spec_name: str) -> str:
+        """Build a stable cluster name for cbmonitor snapshot metadata.
+
+        Uses the parsed spec filename stem and the cluster section key.
+        """
+        return f"{self.name}_{cluster_spec_name}"
+
     @property
     def capella_cluster_ids(self) -> list[str]:
         return [

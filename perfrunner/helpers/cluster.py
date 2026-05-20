@@ -262,6 +262,10 @@ class DefaultClusterManager(ClusterManagerBase):
             for server in self.cluster_spec.servers:
                 self.rest.rename(server)
 
+        for cluster_spec_name, servers in self.cluster_spec.clusters:
+            renamed_cluster = self.cluster_spec.cbmonitor_snapshot_cluster_name(cluster_spec_name)
+            self.rest.set_cluster_name(servers[0], renamed_cluster)
+
     def set_auth(self):
         for server in self.cluster_spec.servers:
             self.rest.set_auth(server)

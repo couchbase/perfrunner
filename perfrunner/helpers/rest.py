@@ -182,6 +182,13 @@ class DefaultRestHelper(RestBase):
         data = {"username": self.rest_username, "password": self.rest_password, "port": "SAME"}
         self.post(url=api, data=data)
 
+    def set_cluster_name(self, host: str, cluster_name: str):
+        logger.info(f"Configuring cluster object name on {host}: {cluster_name}")
+
+        api = self._get_api_url(host=host, path="pools/default")
+        data = {"clusterName": cluster_name}
+        self.post(url=api, data=data)
+
     def rename(self, host: str, new_host: str = None):
         new_host = new_host or host
         logger.info(f"Changing server name: {host} -> {new_host}")

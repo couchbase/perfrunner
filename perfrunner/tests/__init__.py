@@ -114,9 +114,10 @@ class PerfTest:
         logger.info("Using Prometheus to collect metrics")
         self.collector_agent = PrometheusAgent(self.cluster_spec, self.stats_settings, self.rest)
         self.cbmonitor_snapshots.append(self.collector_agent.snapshot_id)
-        self.cbmonitor_clusters.append(
-            self.cluster_spec.name
-        )  # We dont use this when using Prometheus, just here for compatibility with the old store
+        for cluster_name, _ in self.cluster_spec.clusters:
+            self.cbmonitor_clusters.append(
+                self.cluster_spec.cbmonitor_snapshot_cluster_name(cluster_name)
+            )
 
         self.metrics = PrometheusMetricsHelper(self)
 

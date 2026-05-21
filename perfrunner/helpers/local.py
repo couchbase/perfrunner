@@ -930,6 +930,146 @@ def run_ycsb(
         run_local_shell_command(cmd_args, quiet=True, cwd=cwd, stderr=stderr_file)
 
 
+def run_mongo_ycsb(
+    hosts: List[str],
+    database: str,
+    action: str,
+    workload: str,
+    items: int,
+    workers: int,
+    target: int,
+    port: int = 27017,
+    instance: int = 0,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    replica_set_name: Optional[str] = None,
+    ycsb_client: str = "mongodb",
+    write_concern: str = "majority",
+    batch_size: int = 1,
+    requestdistribution: str = "zipfian",
+    fieldlength: int = 1024,
+    fieldcount: int = 10,
+    upsert: bool = False,
+    write_all_fields: bool = True,
+    journal_ack: bool = True,
+    read_preference: Optional[str] = None,
+    read_concern: Optional[str] = None,
+    max_pool_size: Optional[int] = None,
+    ops: Optional[int] = None,
+    execution_time: Optional[int] = None,
+    timeseries: int = 0,
+    phase_params: Optional[dict] = None,
+    insert_test_params: Optional[dict] = None,
+    soe_params: Optional[dict] = None,
+    ycsb_jvm_args: Optional[str] = None,
+    measurement_type: Optional[str] = None,
+    histogram_buckets: Optional[int] = None,
+    histogram_bucket_size: Optional[int] = None,
+    verbose_histogram: bool = False,
+    ycsb_status_output: bool = True,
+):
+    seeds = ",".join(f"{h}:{port}" for h in hosts)
+
+    cred = ""
+    if username and password:
+        cred = (
+            f"{urllib.parse.quote(username, safe='')}:"
+            f"{urllib.parse.quote(password, safe='')}@"
+        )
+
+    uri_params = [f"w={write_concern}"]
+    if replica_set_name:
+        uri_params.append(f"replicaSet={replica_set_name}")
+    if not journal_ack:
+        uri_params.append("journal=false")
+    if read_preference:
+        uri_params.append(f"readPreference={read_preference}")
+    if read_concern:
+        uri_params.append(f"readConcernLevel={read_concern}")
+    if max_pool_size:
+        uri_params.append(f"maxPoolSize={max_pool_size}")
+    mongo_url = f"mongodb://{cred}{seeds}/{database}?" + "&".join(uri_params)
+
+    parameters = [
+        f"target={target}",
+        f"fieldlength={fieldlength}",
+        f"fieldcount={fieldcount}",
+        f"requestdistribution={requestdistribution}",
+        f"writeallfields={str(write_all_fields).lower()}",
+        f"mongodb.url={mongo_url}",
+        f"mongodb.database={database}",
+        f"mongodb.batchsize={batch_size}",
+        f"mongodb.writeConcern={write_concern}",
+        f"mongodb.upsert={str(upsert).lower()}",
+        f"exportfile=ycsb_{action}_{instance}_{database}.log",
+    ]
+
+    if ops is not None:
+        parameters += [f"operationcount={ops}"]
+    if execution_time is not None:
+        parameters += [f"maxexecutiontime={execution_time}"]
+    if ycsb_jvm_args is not None:
+        parameters += [f"jvm-args='{ycsb_jvm_args}'"]
+
+    if timeseries:
+        parameters += ["measurementtype=timeseries"]
+    elif measurement_type:
+        parameters += [f"measurementtype={measurement_type}"]
+    if histogram_buckets:
+        parameters += [f"histogram.buckets={histogram_buckets}"]
+    if histogram_bucket_size:
+        parameters += [f"histogram.bucket.size={histogram_bucket_size}"]
+    if verbose_histogram:
+        parameters += ["measurement.histogram.verbose=true"]
+
+    if soe_params:
+        parameters += [
+            f"totalrecordcount={items}",
+            f"recordcount={soe_params['recorded_load_cache_size']}",
+            f"insertstart={soe_params['insertstart']}",
+        ]
+    elif phase_params:
+        parameters += [
+            f"totalrecordcount={items}",
+            f"recordcount={phase_params['inserts_per_workerinstance']}",
+            f"insertstart={phase_params['insertstart']}",
+        ]
+    elif insert_test_params:
+        parameters += [
+            f"recordcount={insert_test_params['recordcount']}",
+            f"insertstart={insert_test_params['insertstart']}",
+        ]
+    else:
+        parameters += [f"recordcount={items}"]
+
+    cwd = "YCSB"
+    max_arg_strlen = get_max_arg_strlen()
+    if too_long_params := [arg for arg in parameters if len(arg) > max_arg_strlen]:
+        parameters = [arg for arg in parameters if arg not in too_long_params]
+        logger.info(f"Some parameters are too long to provide via CLI: {too_long_params}")
+        custom_workload = f"{workload}_custom_{uuid4().hex[:6]}"
+        logger.info(
+            f"Copying {workload} file to {custom_workload} and inserting long parameters there."
+        )
+        inject_params_into_ycsb_workload_file(
+            f"{cwd}/{workload}", f"{cwd}/{custom_workload}", too_long_params
+        )
+        workload = custom_workload
+
+    cmd_args = ["bin/ycsb", action, ycsb_client]
+    if ycsb_status_output:
+        cmd_args.append("-s")
+    cmd_args += ["-threads", workers, "-P", workload] + [
+        arg for param in parameters for arg in ["-p", param]
+    ]
+    cmd_args = list(map(str, cmd_args))
+
+    logger.info(f"Running: {shlex.join(cmd_args)}")
+    run_local_shell_command("pyenv local 2.7.18", quiet=True, cwd=cwd)
+    with open(f"{cwd}/ycsb_{action}_{instance}_{database}_stderr.log", "w") as stderr_file:
+        run_local_shell_command(cmd_args, quiet=True, cwd=cwd, stderr=stderr_file)
+
+
 def inject_params_into_ycsb_workload_file(
     source_filename: str, target_filename: str, params: list[str]
 ):

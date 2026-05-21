@@ -1808,6 +1808,9 @@ class PhaseSettings:
         self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
         self.ycsb_out_of_order = int(options.get('out_of_order', self.YCSB_OUT_OF_ORDER))
         self.insertstart = int(options.get('insertstart', self.YCSB_INSERTSTART))
+        self.upsert = maybe_atoi(options.get("upsert", "false"))
+        self.mongo_batch_size = options.get("mongo_batch_size")
+        self.mongo_durability_level = options.get("mongo_durability_level")
         self.ycsb_split_workload = int(options.get('ycsb_split_workload', self.YCSB_SPLIT_WORKLOAD))
 
         self.range_scan_sampling = options.get('range_scan_sampling', self.RANGE_SCAN_SAMPLING)

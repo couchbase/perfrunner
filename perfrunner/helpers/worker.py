@@ -60,7 +60,12 @@ from perfrunner.workloads.tpcds import (
 )
 from perfrunner.workloads.vectordb_bench import run_vectordb_bench_case
 from perfrunner.workloads.xdcr_conflict_sim import run_conflictsim
-from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
+from perfrunner.workloads.ycsb import (
+    ycsb_data_load,
+    ycsb_mongo_data_load,
+    ycsb_mongo_workload,
+    ycsb_workload,
+)
 
 try:
     set_start_method("fork")
@@ -142,6 +147,16 @@ def pillowfight_task(*args):
 @celery.task
 def ycsb_data_load_task(*args):
     ycsb_data_load(*args)
+
+
+@celery.task
+def ycsb_mongo_data_load_task(*args):
+    ycsb_mongo_data_load(*args)
+
+
+@celery.task
+def ycsb_mongo_workload_task(*args):
+    ycsb_mongo_workload(*args)
 
 
 @celery.task

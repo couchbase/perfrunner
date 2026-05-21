@@ -1,4 +1,4 @@
-from perfrunner.helpers.local import restart_memcached, run_ycsb
+from perfrunner.helpers.local import restart_memcached, run_mongo_ycsb, run_ycsb
 from perfrunner.settings import PhaseSettings, TargetSettings
 
 
@@ -147,4 +147,99 @@ def ycsb_workload(workload_settings: PhaseSettings,
         histogram_buckets=workload_settings.histogram_buckets,
         histogram_bucket_size=workload_settings.histogram_bucket_size,
         verbose_histogram=workload_settings.verbose_histogram,
+    )
+
+def ycsb_mongo_data_load(workload_settings: PhaseSettings,
+                         target: TargetSettings,
+                         timer: int,
+                         instance: int):
+    phase_params = None
+    if workload_settings.phase:
+        phase_params = {
+            'insertstart': instance * workload_settings.inserts_per_workerinstance +
+            workload_settings.insertstart,
+            'inserts_per_workerinstance': workload_settings.inserts_per_workerinstance,
+        }
+
+    host = target.node
+    if target.cloud:
+        host = target.cloud.get("cluster_svc", host)
+
+    run_mongo_ycsb(
+        hosts=[host],
+        database=target.bucket,
+        username=target.username,
+        password=target.password,
+        action="load",
+        ycsb_client=workload_settings.ycsb_client,
+        workload=workload_settings.workload_path,
+        items=int(workload_settings.items),
+        workers=workload_settings.workers,
+        target=int(workload_settings.target),
+        instance=instance,
+        fieldlength=workload_settings.field_length,
+        fieldcount=workload_settings.field_count,
+        upsert=bool(workload_settings.upsert),
+        batch_size=workload_settings.mongo_batch_size or 1,
+        write_concern=workload_settings.mongo_durability_level or "majority",
+        requestdistribution=workload_settings.requestdistribution,
+        ycsb_jvm_args=workload_settings.ycsb_jvm_args,
+        timeseries=workload_settings.timeseries,
+        phase_params=phase_params,
+    )
+
+
+def ycsb_mongo_workload(workload_settings: PhaseSettings,
+                        target: TargetSettings,
+                        timer: int,
+                        instance: int):
+
+    if workload_settings.ycsb_split_workload:
+        split_instance = workload_settings.workload_instances // 2
+
+        if instance < split_instance:
+            workload_settings.workload_path = workload_settings.workload_path.split(",")[0]
+        elif instance >= split_instance:
+            workload_settings.workload_path = workload_settings.workload_path.split(",")[1]
+
+    insert_test_params = None
+    if workload_settings.insert_test_flag:
+        insert_test_params = {
+            'insertstart': int(instance * workload_settings.inserts_per_workerinstance +
+                               workload_settings.items),
+            'recordcount': int((instance+1) * workload_settings.inserts_per_workerinstance +
+                               workload_settings.items),
+        }
+
+    host = target.node
+    if target.cloud:
+        host = target.cloud.get("cluster_svc", host)
+
+    run_mongo_ycsb(
+        hosts=[host],
+        database=target.bucket,
+        username=target.username,
+        password=target.password,
+        action="run",
+        ycsb_client=workload_settings.ycsb_client,
+        workload=workload_settings.workload_path,
+        items=int(workload_settings.items),
+        workers=workload_settings.workers,
+        target=int(workload_settings.target),
+        ops=int(workload_settings.ops),
+        instance=instance,
+        execution_time=workload_settings.time,
+        timeseries=workload_settings.timeseries,
+        fieldlength=workload_settings.field_length,
+        fieldcount=workload_settings.field_count,
+        upsert=bool(workload_settings.upsert),
+        batch_size=workload_settings.mongo_batch_size or 1,
+        write_concern=workload_settings.mongo_durability_level or "majority",
+        requestdistribution=workload_settings.requestdistribution,
+        ycsb_jvm_args=workload_settings.ycsb_jvm_args,
+        insert_test_params=insert_test_params,
+        measurement_type=workload_settings.measurement_type,
+        histogram_buckets=workload_settings.histogram_buckets,
+        histogram_bucket_size=workload_settings.histogram_bucket_size,
+        verbose_histogram=bool(workload_settings.verbose_histogram),
     )

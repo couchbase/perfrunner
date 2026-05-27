@@ -12,15 +12,48 @@
   - name: gather facts
     setup:
 
-  - name: find disk to set up, assuming there is one unpartitioned and unformatted disk ready
+  - name: detect mounted /mnt source (v5 resource disk path)
+    shell: findmnt -n -o SOURCE /mnt || true
+    register: mnt_source
+    changed_when: false
+
+  - name: derive parent disk from /mnt source
+    shell: |
+      if echo "{{ mnt_source.stdout }}" | grep -q '^/dev/'; then
+        pkname=$(lsblk -no PKNAME "{{ mnt_source.stdout }}" 2>/dev/null | head -n 1)
+        if [ -n "$pkname" ]; then
+          echo "/dev/$pkname"
+        else
+          echo "{{ mnt_source.stdout }}"
+        fi
+      fi
+    register: mnt_parent_disk
+    changed_when: false
+
+  - name: find unformatted data disk (v6 local nvme path)
     shell: lsblk -o NAME,TYPE,FSTYPE -dsnp | awk '/^\/dev\// && $2 == "disk" && $3 == "" {print $1}' | head -n 1
-    register: get_data_disk
+    register: fallback_data_disk
+    changed_when: false
 
   - set_fact:
-      data_disk: "{{ get_data_disk.stdout }}"
+      data_disk: "{{ (mnt_parent_disk.stdout | trim) if (mnt_parent_disk.stdout | trim) else (fallback_data_disk.stdout | trim) }}"
 
   - debug:
       var: data_disk
+
+  - name: fail when no data disk is discovered
+    fail:
+      msg: "Unable to discover Azure local data disk for analytics setup."
+    when: data_disk | length == 0
+
+  - name: unmount existing /mnt mount from resource disk
+    mount:
+      name: /mnt
+      state: unmounted
+    when: mnt_source.stdout | trim | length > 0
+
+  - name: wipe any existing signatures and partition table
+    command: "wipefs -a -f {{ data_disk }}"
 
   - name: re-creating filesystem
     filesystem:

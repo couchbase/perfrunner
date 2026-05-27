@@ -19,7 +19,7 @@ node_groups = ec2_node_group_1
 storage_class = gp3
 
 [ec2_node_group_1]
-instance_type = m7gd.2xlarge
+instance_type = r7gd.2xlarge
 instance_capacity = 4
 
 [storage]
@@ -28,6 +28,6 @@ analytics = /data/analytics
 
 [parameters]
 OS = Ubuntu 20.04
-CPU = m7gd.2xlarge (8 vCPU)
-Memory = 32GB
+CPU = r7gd.2xlarge (8 vCPU)
+Memory = 64GB
 Disk = Local NVMe SSD 474GB

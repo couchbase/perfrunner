@@ -1520,15 +1520,21 @@ class RemoteLinux(Remote):
             settings.append("blobStorageAnonymousAuth=false")
 
         command = (
-            "curl --max-time 3 --retry 10 --retry-connrefused -i "
+            "curl --fail --connect-timeout 5 --max-time 120 --retry 10 --retry-connrefused -i "
             "--request POST "
             "--url http://localhost:8091/settings/analytics "
             "--header 'Content-Type: application/x-www-form-urlencoded' "
+            "--write-out '\n%{http_code}' "
         ) + " ".join(f"--data {setting}" for setting in settings)
 
         output = run(command, warn_only=True)
-        http_code = output.stdout.splitlines()[0].split()[1]
-        if output.return_code != 0 or not http_code.startswith("2"):
+
+        success = output.return_code == 0
+        if output_lines := output.stdout.strip().splitlines():
+            http_code = output_lines[-1]
+            success = http_code.startswith("2")
+
+        if not success:
             logger.interrupt(
                 f"Failed to configure columnar blob storage.\n"
                 f"Stdout: {output.stdout}\n"
@@ -1545,8 +1551,8 @@ class RemoteLinux(Remote):
         ]:
             logger.info(f"Setting {setting}")
             run(
-                "curl --max-time 3 --retry 10 --retry-connrefused -i "
-                f"-X PUT {base_url}/{setting} --data-urlencode value={value}"
+                "curl --fail --connect-timeout 5 --max-time 120 --retry 10 --retry-connrefused -i "
+                f"-X PUT {base_url}/{setting} --data-urlencode value={quote(value)}"
             )
 
     @all_servers

@@ -592,44 +592,34 @@ class RemoteLinux(Remote):
         put(config, remote_path)
         return run(f"fio --output-format=json {remote_path}")
 
+    def _grep_info_log(self, pattern: str) -> str:
+        # Search current info.log and any rotated info.log.*.gz, since the
+        # event may have been rotated out by the time we look for it.
+        logdir = f"{self.get_install_dir()}/var/lib/couchbase/logs"
+        r = run(
+            f"zgrep -h {pattern} {logdir}/info.log {logdir}/info.log.*.gz "
+            "2>/dev/null || true",
+            warn_only=True,
+        )
+        out = r.strip()
+        if out:
+            return out.split(',')[1]
+
     def detect_auto_failover(self, host):
         with settings(host_string=host):
-            r = run(
-                "grep 'Starting failing over' "
-                f"{self.get_install_dir()}/var/lib/couchbase/logs/info.log",
-                warn_only=True,
-            )
-            if not r.return_code:
-                return r.strip().split(',')[1]
+            return self._grep_info_log("'Starting failing over'")
 
     def detect_hard_failover_start(self, host):
         with settings(host_string=host):
-            r = run(
-                f'grep "Starting failing" {self.get_install_dir()}/var/lib/couchbase/logs/info.log',
-                warn_only=True,
-            )
-            if not r.return_code:
-                return r.strip().split(',')[1]
+            return self._grep_info_log('"Starting failing"')
 
     def detect_graceful_failover_start(self, host):
         with settings(host_string=host):
-            r = run(
-                "grep 'Starting vbucket moves' "
-                f"{self.get_install_dir()}/var/lib/couchbase/logs/info.log",
-                warn_only=True,
-            )
-            if not r.return_code:
-                return r.strip().split(',')[1]
+            return self._grep_info_log("'Starting vbucket moves'")
 
     def detect_failover_end(self, host):
         with settings(host_string=host):
-            r = run(
-                "grep 'Failed over .*: ok' "
-                f"{self.get_install_dir()}/var/lib/couchbase/logs/info.log",
-                warn_only=True,
-            )
-            if not r.return_code:
-                return r.strip().split(',')[1]
+            return self._grep_info_log("'Failed over .*: ok'")
 
     @property
     def num_vcpu(self):

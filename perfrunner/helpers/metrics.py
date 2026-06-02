@@ -2474,6 +2474,12 @@ class MetricHelper:
         avg_mem = int(avg_mem / (1024 ** 2))
         return avg_mem, self._snapshots, metric_info
 
+    def sg_resync_throughput(self, resync_throughput, title) -> Metric:
+        metric_id = f'{self.test_config.name}_resync_throughput'
+        metric_title = f"{title}{self._title}"
+        metric_info = self._metric_info(metric_id, metric_title)
+        return round(resync_throughput), self._snapshots, metric_info
+
     def sg_bp_throughput(self, title) -> Metric:
         metric_id = '{}_throughput'.format(self.test_config.name)
         metric_title = "{}{}".format(title, self._title)

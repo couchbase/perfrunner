@@ -28,8 +28,8 @@ class Monitor:
     POLLING_INTERVAL_EVENTING = 1
     POLLING_INTERVAL_FRAGMENTATION = 10
     POLLING_INTERVAL_SGW = 1
+    POLLING_INTERVAL_SGW_MIGRATION = 15
     POLLING_INTERVAL_SGW_LOGSTREAMING = 5
-    POLLING_INTERVAL_SGW_RESYNC = 60  # 1m delay is ok since this takes hours to complete
 
     DEFAULT_REBALANCE_TIMEOUT = 600
     DEFAULT_REBALANCE_JOB_TIMEOUT = 3600
@@ -1640,10 +1640,11 @@ class Monitor:
                 )
             time.sleep(self.POLLING_INTERVAL_SGW_LOGSTREAMING)
 
-    def monitor_sgw_resync_status(self, host: str, db: str):
+    def monitor_sgw_resync_status(self, host: str, db: str) -> int:
         """Monitor the status of resync and return when it is completed."""
         logger.info(f"Waiting for resync to complete for {db}")
         failed_retries = 0
+        max_retries = 1800
         while True:
             resync_status = self.rest.sgw_get_resync_status(host, db)
             status = resync_status.get("status")
@@ -1654,14 +1655,62 @@ class Monitor:
                 f"docs changed: {docs_changed}"
             )
             if status == "completed":
-                return
+                return docs_changed
             elif status != "running":
                 failed_retries += 1
 
-            if failed_retries >= self.MAX_RETRY:
+            if failed_retries >= max_retries:
                 raise Exception(f"Resync failed with status: {status}")
 
-            time.sleep(self.POLLING_INTERVAL_SGW_RESYNC)
+            time.sleep(self.POLLING_INTERVAL_SGW)
+
+    def monitor_sg_metadata_migration(self, host: str, db: str,) -> tuple[float, int]:
+        logger.info(f"Monitoring metadata migration for {db}")
+        start_time = 0
+        retries = 0
+        max_retries = 1200
+        migration_started = False
+        while True:
+            retries += 1
+            if retries >= max_retries:
+                timeout = max_retries * self.POLLING_INTERVAL_SGW_MIGRATION
+                raise Exception(
+                    f"Metadata migration did not complete within {timeout}s"
+                )
+            status_body = self.rest.sgw_get_metadata_migration_status(host, db)
+            if status_body is None:
+                time.sleep(self.POLLING_INTERVAL_SGW_MIGRATION)
+                continue
+            status = status_body.get("status")
+            docs_processed = status_body.get("docs_processed", 0)
+            docs_failed = status_body.get("docs_failed", 0)
+            passes = status_body.get("passes", 0)
+            logger.info(
+                f"Metadata migration status: {status}, docs_processed: "
+                f"{docs_processed}, docs_failed: {docs_failed}, passes: {passes}"
+            )
+            if migration_started is False and (
+                docs_processed > 0 or docs_failed > 0 or status == "running"
+            ):
+                logger.info("Metadata migration has started.")
+                start_time = time.time()
+                migration_started = True
+            if migration_started:
+                if status == "completed":
+                    elapsed = time.time() - start_time
+                    return elapsed, int(docs_processed)
+                if status in ("stopped", "error"):
+                    elapsed = time.time() - start_time
+                    logger.error(
+                        f"Metadata migration failed with status '{status}' after {elapsed:.2f}s "
+                        f"with {int(docs_processed)} docs processed: "
+                        f"{status_body.get('last_error')}"
+                    )
+                    raise Exception(
+                        f"Metadata migration ended with status '{status}': "
+                        f"{status_body.get('last_error')}"
+                    )
+            time.sleep(self.POLLING_INTERVAL_SGW_MIGRATION)
 
     def wait_for_snapshot_persistence(self, index_nodes: list[str]):
         """Execute additional steps for shard based rebalance."""

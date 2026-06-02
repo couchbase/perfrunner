@@ -553,8 +553,6 @@ class SGLoad(SGPerfTest):
             )
 
     def run(self):
-        self.remote.remove_sglogs()
-
         self.download_ycsb()
 
         self.start_memcached()
@@ -723,14 +721,54 @@ class SGInsertUsers(SGPerfTest):
             )
 
     def run(self):
-        self.remote.remove_sglogs()
-
         self.download_ycsb()
 
         self.start_memcached()
         self.load_users()
 
         self.report_kpi()
+
+
+class SGMetadataMigration(SGPerfTest):
+    @with_stats
+    @with_profiles
+    def trigger_and_monitor_migration(self) -> tuple[float, int]:
+        config = {"use_system_metadata_collection": True}
+        self.rest.sgw_update_db_config(self.sgw_master_node, "db-1", config)
+        return self.monitor.monitor_sg_metadata_migration(
+            self.sgw_master_node, "db-1"
+        )
+
+    def _report_kpi(self, time_elapsed: float, docs_processed: int):
+        self.collect_execution_logs()
+        logger.info(
+            f"Metadata migration: {docs_processed} docs in {time_elapsed:.1f}s"
+        )
+        self.reporter.post(*self.metrics.elapsed_time(time_elapsed))
+        if docs_processed > 0 and time_elapsed > 0:
+            self.reporter.post(
+                *self.metrics.sgimport_items_per_sec(
+                    time_elapsed=time_elapsed,
+                    items_in_range=docs_processed,
+                    operation="metadata_migration",
+                )
+            )
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(
+                *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
+            )
+
+    def run(self):
+        self.download_ycsb()
+        self.start_memcached()
+        self.load_users()
+
+        time_elapsed, docs_processed = self.trigger_and_monitor_migration()
+
+        self.report_kpi(time_elapsed, docs_processed)
 
 
 class SGEventingTest(SGPerfTest, FunctionsTimeTest):
@@ -3260,7 +3298,7 @@ class ResyncTest(SGImportThroughputTest):
         self.download_ycsb()
         self.build_ycsb(ycsb_client=self.test_config.load_settings.ycsb_client)
         self.load()
-        self.monitor_sg_import_multinode(phase="load", timeout=3600, sleep_delay=30)
+        self.monitor_sg_import_multinode(phase="load", timeout=18000, sleep_delay=30)
 
         self.rest.sgw_update_sync_function(
             self.sgw_master_node, "db-1", self.test_config.syncgateway_settings.resync_new_function
@@ -3279,7 +3317,11 @@ class ResyncTest(SGImportThroughputTest):
     @with_stats
     def resync(self):
         self.rest.sgw_start_resync(self.sgw_master_node, "db-1")
-        self.monitor.monitor_sgw_resync_status(self.sgw_master_node, "db-1")
+        self.docs_changed = self.monitor.monitor_sgw_resync_status(self.sgw_master_node, "db-1")
 
     def _report_kpi(self):
+        resync_throughput = self.docs_changed / self.resync_time if self.resync_time else 0
+        self.reporter.post(
+            *self.metrics.sg_resync_throughput(resync_throughput, "Resync Throughput (docs/sec),")
+        )
         self.reporter.post(*self.metrics.elapsed_time(self.resync_time))

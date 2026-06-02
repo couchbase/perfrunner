@@ -1928,6 +1928,30 @@ class DefaultRestHelper(RestBase):
         resp = self.get(url=api)
         return resp.json()
 
+    def sgw_update_db_config(self, host: str, db: str, config: dict):
+        logger.info(f"Updating db config for {db} on {host}: {config}")
+        api = self._get_api_url(
+            host=host,
+            path=f"{db}/_config",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.post(url=api, json=config)
+        resp.raise_for_status()
+
+    def sgw_get_metadata_migration_status(self, host: str, db: str) -> Optional[dict]:
+        api = self._get_api_url(
+            host=host,
+            path=f"{db}/_metadata_migration",
+            plain_port=SGW_ADMIN_PORT,
+            ssl_port=SGW_ADMIN_PORT,
+        )
+        resp = self.get(url=api)
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        return resp.json()
+
     def get_kv_ops(self, host):
         url = self._get_api_url(host=host, path='pools/default/stats/range/kv_ops?start=-1')
         resp = self.get(url=url)

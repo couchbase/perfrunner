@@ -94,6 +94,7 @@ class PrometheusAgent:
                         "port": 4986,
                         "scheme": scheme,
                         "type": "static",
+                        "product": "syncgateway",
                     }
                 )
             response = self.rest.post(url=self.snapshot_base_url, json=payload)

@@ -633,12 +633,18 @@ class Monitor:
                 return False
         return True
 
-    def estimate_pending_docs(self, host: str) -> int:
-        stats = self.rest.get_gsi_stats(host)
+    def estimate_pending_docs(self, hosts: list[str]) -> int:
+        # Sum per host rather than merging into one dict: partitioned/replicated
+        # indexes report the same stat key (e.g. bucket:index:num_docs_pending) on
+        # every node that hosts a partition, each with that node's own local count.
+        # Merging via dict.update() would let the last-polled node's value silently
+        # overwrite every earlier node's count instead of adding to it.
         pending_docs = 0
-        for metric, value in stats.items():
-            if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
-                pending_docs += value
+        for host in hosts:
+            stats = self.rest.get_gsi_stats(host)
+            for metric, value in stats.items():
+                if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
+                    pending_docs += value
         return pending_docs
 
     def monitor_indexing(self, host):
@@ -646,7 +652,7 @@ class Monitor:
 
         while not self.is_index_ready(host):
             time.sleep(self.POLLING_INTERVAL_INDEXING * 5)
-            pending_docs = self.estimate_pending_docs(host)
+            pending_docs = self.estimate_pending_docs([host])
             logger.info('Pending docs: {:,}'.format(pending_docs))
 
         logger.info('Indexing completed')
@@ -836,6 +842,23 @@ class Monitor:
             f'Other Encryption did not reach dataStatus=encrypted within '
             f'{timeout_s}s. Last config: {cfg}'
         )
+
+    def wait_for_mutation_drain(self, index_nodes: list[str],
+                                max_wait_s: int = 600, settle_s: int = 120):
+        """Poll num_docs_pending+queued until 0; fall back to a fixed settle wait on timeout."""
+        deadline = time.time() + max_wait_s
+        while time.time() < deadline:
+            pending = self.estimate_pending_docs(index_nodes)
+            logger.info(f'mutation drain: {pending} docs pending+queued')
+            if pending == 0:
+                logger.info('mutation drain: indexer caught up — starting scans')
+                return
+            time.sleep(10)
+        logger.warning(
+            f'mutation drain: backlog not clear after {max_wait_s}s; falling back to a '
+            f'{settle_s}s settle wait before scans'
+        )
+        time.sleep(settle_s)
 
     def wait_for_all_indexes_dropped(self, index_nodes):
         logger.info('Waiting for all indexes to be dropped')

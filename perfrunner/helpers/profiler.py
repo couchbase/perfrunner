@@ -1,6 +1,5 @@
 import copy
 import json
-import os
 import threading
 import time
 from typing import Callable
@@ -99,6 +98,11 @@ class GoDebugProfiler (ProfilerBase):
 
     """Go profiler profiles using existing debug ports from each service."""
 
+    # (connect, read) seconds for a single profile fetch. The CPU profile blocks
+    # ~30s while it captures, so the read budget must comfortably exceed that;
+    # anything longer than this is a stall and is skipped rather than hung on.
+    PROFILE_TIMEOUT = (10, 90)
+
     DEBUG_PORTS = {
         'fts':   8094,
         'index': 9102,
@@ -123,39 +127,39 @@ class GoDebugProfiler (ProfilerBase):
         super().__init__(cluster_spec, test_config)
 
     def profile(self, host: str, service: str, profile: str):
-        logger.info('Collecting {} profile on {}'.format(profile, host))
+        logger.info(f'Collecting {profile} profile on {host}')
         if 'syncgateway' in self.test_config.profiling_settings.services:
             if profile == 'sg_cpu':
-                url = 'http://{}:4985/_profile'.format(host)
-                filename = '{}_{}_{}_{}_{}.pprof'.format(host, service, profile,
-                                                         time.strftime("%y%m%d%H%M%S"), uhex()[:6])
+                url = f'http://{host}:4985/_profile'
+                filename = (f'{host}_{service}_{profile}_'
+                           f'{time.strftime("%y%m%d%H%M%S")}_{uhex()[:6]}.pprof')
                 requests.post(url=url, data=json.dumps({"file": filename}))
                 time.sleep(self.test_config.profiling_settings.cpu_interval)
                 requests.post(url=url, data=json.dumps({}))
 
             if profile == 'sg_heap':
-                filename = '{}_{}_{}_{}_{}.pprof'.format(host, service, profile,
-                                                         time.strftime("%y%m%d%H%M%S"), uhex()[:6])
-                url = 'http://{}:4985/_heap'.format(host)
+                filename = (f'{host}_{service}_{profile}_'
+                           f'{time.strftime("%y%m%d%H%M%S")}_{uhex()[:6]}.pprof')
+                url = f'http://{host}:4985/_heap'
                 requests.post(url=url, data=json.dumps({"file": filename}))
 
             if profile == 'goroutine':
-                url = 'http://{}:4985/_debug/pprof/goroutine'.format(host)
+                url = f'http://{host}:4985/_debug/pprof/goroutine'
                 response = requests.get(url=url)
                 self.save(host, service, profile, response.content)
 
             if profile == 'sg_block':
-                url = 'http://{}:4985/_debug/pprof/block'.format(host)
+                url = f'http://{host}:4985/_debug/pprof/block'
                 response = requests.get(url=url)
                 self.save(host, service, profile, response.content)
 
             if profile == 'sg_mutex':
-                url = 'http://{}:4985/_debug/pprof/mutex'.format(host)
+                url = f'http://{host}:4985/_debug/pprof/mutex'
                 response = requests.get(url=url)
                 self.save(host, service, profile, response.content)
 
             if profile == 'sg_fgprof':
-                url = 'http://{}:4985/_debug/fgprof'.format(host)
+                url = f'http://{host}:4985/_debug/fgprof'
                 response = requests.get(url=url)
                 self.save(host, service, profile, response.content)
 
@@ -164,7 +168,7 @@ class GoDebugProfiler (ProfilerBase):
         elif self.cluster_spec.capella_infrastructure:
             endpoint = self.ENDPOINTS[profile]
             port = 10000 + self.DEBUG_PORTS[service]
-            logger.info('Collecting {} profile on {}'.format(profile, host))
+            logger.info(f'Collecting {profile} profile on {host}')
             url = endpoint.format(str(port))
             url = url.replace("http://127.0.0.1", f"https://{host}")
             response = self.rest.get(url=url)
@@ -174,11 +178,31 @@ class GoDebugProfiler (ProfilerBase):
             endpoint = self.ENDPOINTS[profile]
             port = self.DEBUG_PORTS[service]
 
-            logger.info('Collecting {} profile on {}'.format(profile, host))
-            with self.new_tunnel(host, port) as tunnel:
-                url = endpoint.format(tunnel.local_bind_port)
-                response = requests.get(url=url, auth=self.rest.auth)
+            logger.info(f'Collecting {profile} profile on {host}')
+            # Fetch directly over HTTP; SSH tunnel is a fallback only
+            # (SSHTunnelForwarder.stop() can block forever on a half-dead connection).
+            try:
+                url = endpoint.format(port).replace('127.0.0.1', host)
+                response = requests.get(url=url, auth=self.rest.auth,
+                                        timeout=self.PROFILE_TIMEOUT)
                 self.save(host, service, profile, response.content)
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+                try:
+                    with self.new_tunnel(host, port) as tunnel:
+                        url = endpoint.format(tunnel.local_bind_port)
+                        response = requests.get(url=url, auth=self.rest.auth,
+                                                timeout=self.PROFILE_TIMEOUT)
+                        self.save(host, service, profile, response.content)
+                except Exception as e:
+                    logger.warning(
+                        f'Profile collection failed over tunnel ({service} {profile} '
+                        f'on {host}): {e} -- skipping this sample'
+                    )
+            except Exception as e:
+                logger.warning(
+                    f'Profile collection failed/timed out ({service} {profile} '
+                    f'on {host}): {e} -- skipping this sample'
+                )
 
     def new_tunnel(self, host: str, port: int) -> SSHTunnelForwarder:
         return SSHTunnelForwarder(
@@ -190,7 +214,16 @@ class GoDebugProfiler (ProfilerBase):
 
     def copy_profiles(self, host: str):
         logger.info("Copying profile files from SG servers")
-        os.system('sshpass -p couchbase scp root@{}:/home/sync_gateway/*.pprof ./'.format(host))
+        transport = paramiko.Transport((host, 22))
+        transport.connect(username=self.ssh_username, password=self.ssh_password)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        try:
+            for fname in sftp.listdir('/home/sync_gateway/'):
+                if fname.endswith('.pprof'):
+                    sftp.get(f'/home/sync_gateway/{fname}', f'./{fname}')
+        finally:
+            sftp.close()
+            transport.close()
 
     def save(self, host: str, service: str, profile: str, content: bytes):
         fname = '{}_{}_{}_{}_{}.pprof'.format(

@@ -961,6 +961,42 @@ class MetricHelper:
             scan_latency, metric_id=metric_id, title=title, chirality=-1, extra=extra
         )
 
+    def scan_report_latency(self, latencies_ms: list, percentile: Number,
+                            title_suffix: str = "") -> Metric:
+        """Latency percentile for a scan-report N1QL workload.
+
+        latencies_ms is the list of per-query end-to-end latencies in ms,
+        already collected by the test driver.
+        """
+        metric_id = f"{self.test_config.name}_{percentile:g}th"
+        suffix = f" {title_suffix}" if title_suffix else ""
+        title = f"{percentile:g}th percentile scan latency (ms), {self._title}{suffix}"
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        metric_info['category'] = "lat"
+        value = round(float(np.percentile(latencies_ms, percentile)), 2)
+        return value, self._snapshots, metric_info
+
+    def scan_report_index_scan_time(self, scan_times_ms: list,
+                                    title_suffix: str = "") -> Metric:
+        """Median index scan time as reported by the query profile."""
+        metric_id = f"{self.test_config.name}_index_scan_time"
+        suffix = f" {title_suffix}" if title_suffix else ""
+        title = f"Median index scan time (ms), {self._title}{suffix}"
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        metric_info['category'] = "lat"
+        value = round(float(np.median(scan_times_ms)), 2)
+        return value, self._snapshots, metric_info
+
+    def scan_report_throughput(self, ops_per_sec: float,
+                               title_suffix: str = "") -> Metric:
+        """Scans-per-second throughput for saturation-shaped runs."""
+        metric_id = f"{self.test_config.name}_throughput"
+        suffix = f" {title_suffix}" if title_suffix else ""
+        title = f"Scan throughput (scans/sec), {self._title}{suffix}"
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+        metric_info['category'] = "thr"
+        return round(float(ops_per_sec), 2), self._snapshots, metric_info
+
     def analytics_time_taken(self,
                              time_taken: float,
                              sql_suite: str) -> Metric:

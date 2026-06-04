@@ -9,7 +9,7 @@ from unittest import TestCase
 
 import snappy
 
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import parse_go_duration_ms, pretty_dict
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
@@ -149,6 +149,22 @@ class SettingsTest(TestCase):
             test_config.parse(file)
             self.assertEqual(test_config.showfast.category, 'benchmark_kv')
             self.assertEqual(test_config.showfast.sub_category, 'Throughput')
+
+
+class MiscTest(TestCase):
+
+    def test_parse_go_duration_ms(self):
+        self.assertAlmostEqual(parse_go_duration_ms('1.5s'), 1500.0)
+        self.assertAlmostEqual(parse_go_duration_ms('1m30s'), 90000.0)
+        self.assertAlmostEqual(parse_go_duration_ms('1m40.0s'), 100000.0)
+        self.assertAlmostEqual(parse_go_duration_ms('2h3m4.005s'), 7384005.0)
+        self.assertAlmostEqual(parse_go_duration_ms('500µs'), 0.5)
+        self.assertAlmostEqual(parse_go_duration_ms('500us'), 0.5)
+        self.assertAlmostEqual(parse_go_duration_ms(3.0), 3.0)
+        self.assertAlmostEqual(parse_go_duration_ms(3), 3.0)
+        self.assertEqual(parse_go_duration_ms(None), 0.0)
+        self.assertEqual(parse_go_duration_ms('garbage'), 0.0)
+        self.assertEqual(parse_go_duration_ms(''), 0.0)
 
 
 class WorkloadTest(TestCase):

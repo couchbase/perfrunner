@@ -1,0 +1,52 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingScanReportTest
+
+[showfast]
+title = GSI Scan Report | Concise report + query timings | Single node, 16 workers | 10M x 1KB | 1 plasma index
+component = secondary
+category = lat
+sub_category = ScanReport
+
+[stats]
+server_processes = projector,indexer,n1ql
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 45000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number = 0
+replica_index = 0
+
+[load]
+items = 10000000
+size = 1024
+workers = 100
+
+[secondary]
+indexes = myindex:alt_email
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+indexer.settings.generateScanReport = true
+scan_report_query = SELECT meta().id FROM `bucket-1` WHERE alt_email IS NOT NULL LIMIT 100
+scan_report_wait_ms = 0
+scan_report_use_profile_timings = true
+scan_report_workers = 16
+scan_report_iterations = 10000
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+items = 10000000
+workers = 80
+throughput = 100000
+time = 300

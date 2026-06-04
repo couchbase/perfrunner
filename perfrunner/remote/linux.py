@@ -109,7 +109,8 @@ class RemoteLinux(Remote):
         options = options + " -refresh_settings true"
         self.run_cbindex_command(options)
 
-    def create_index(self, index_nodes, bucket, indexes, storage, is_ssl, auth):
+    def create_index(self, index_nodes, bucket, indexes, storage, is_ssl, auth, num_replica=0,
+                     num_partition=0):
         # Remember what bucket:index was created
         bucket_indexes = []
 
@@ -136,6 +137,11 @@ class RemoteLinux(Remote):
             options = options.rstrip(",")
             options = options + " "
 
+            if num_partition > 1:
+                # HASH-partition on the leading field, same as the collection index path.
+                options += "--scheme KEY --partitionKeys \\\\\\`{}\\\\\\` ".format(
+                    fields_list[0])
+
             if where is not None:
                 options = '{options} -where \\\"{where_clause}\\\"'\
                     .format(options=options, where_clause=where)
@@ -147,7 +153,15 @@ class RemoteLinux(Remote):
             options = "{options} -index {index} " \
                 .format(options=options, index=index)
 
-            options = options + '-with {\\\\\\"defer_build\\\\\\":true}'
+            # cbindex parses -with as JSON. Braces must be escaped from bash so
+            # that the comma inside {"defer_build":true,"num_replica":N} doesn't
+            # trigger brace expansion and split the arg in two.
+            with_clause = '\\\\\\"defer_build\\\\\\":true'
+            if num_replica > 0:
+                with_clause += ',\\\\\\"num_replica\\\\\\":' + str(num_replica)
+            if num_partition > 1:
+                with_clause += ',\\\\\\"num_partition\\\\\\":' + str(num_partition)
+            options = options + '-with \\{' + with_clause + '\\}'
 
             bucket_indexes.append("{}:{}".format(bucket, index))
             if is_ssl:
@@ -220,11 +234,13 @@ class RemoteLinux(Remote):
             self.run_cbindex_command(batch_options)
 
     @master_server
-    def build_secondary_index(self, index_nodes, bucket, indexes, storage, is_ssl, auth):
+    def build_secondary_index(self, index_nodes, bucket, indexes, storage, is_ssl, auth,
+                              num_replica=0, num_partition=0):
         logger.info('building secondary indexes')
 
         # Create index but do not build
-        bucket_indexes = self.create_index(index_nodes, bucket, indexes, storage, is_ssl, auth)
+        bucket_indexes = self.create_index(index_nodes, bucket, indexes, storage, is_ssl, auth,
+                                           num_replica=num_replica, num_partition=num_partition)
 
         # build indexes
         self.build_index(index_nodes[0], bucket_indexes, is_ssl, auth)

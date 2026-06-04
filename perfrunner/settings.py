@@ -2507,6 +2507,23 @@ class GSISettings:
         self.num_partition = options.get("num_partition", None)
         self.vector_index_type = options.get("vector_index_type", "composite")
 
+        # Scan-report feature test parameters.
+        # When scan_report_query is set, the test drives load via N1QL instead of cbindexperf
+        # so that per-query knobs (profile, scanreport_wait) can be applied.
+        self.scan_report_query = options.get("scan_report_query", None)
+        self.scan_report_wait_ms = int(options.get("scan_report_wait_ms", 0))
+        self.scan_report_use_profile_timings = maybe_atoi(
+            options.get("scan_report_use_profile_timings", "false")
+        )
+        self.scan_report_workers = int(options.get("scan_report_workers", 1))
+        self.scan_report_iterations = int(options.get("scan_report_iterations", 1000))
+        self.scan_report_join_query = options.get("scan_report_join_query", None)
+        self.scan_report_nested_query = options.get("scan_report_nested_query", None)
+        # Server-side N1QL query timeout (seconds). Heavy joins / nested queries can
+        # otherwise run unbounded and hang the workload; default 60s is a safety belt
+        # that lets the workload make progress even if a query is pathological.
+        self.scan_report_query_timeout_s = int(options.get("scan_report_query_timeout_s", 60))
+
         self.settings = {}
         for option in options:
             if option.startswith(('indexer', 'projector', 'queryport', 'planner')):

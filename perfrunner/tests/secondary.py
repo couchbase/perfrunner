@@ -2,7 +2,9 @@ import copy
 import csv
 import json
 import subprocess
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy
 
@@ -16,7 +18,12 @@ from perfrunner.helpers.local import (
     run_cbindex,
     run_cbindexperf,
 )
-from perfrunner.helpers.misc import SGPortRange, create_build_tuple, pretty_dict
+from perfrunner.helpers.misc import (
+    SGPortRange,
+    create_build_tuple,
+    parse_go_duration_ms,
+    pretty_dict,
+)
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.n1ql import N1qlVectorSearchTest
@@ -308,13 +315,17 @@ class SecondaryIndexTest(PerfTest):
 
             time_elapsed = time.time() - build_start
         else:
+            num_replica = int(self.test_config.gsi_settings.num_index_replica or 0)
+            num_partition = int(self.test_config.gsi_settings.num_partition or 0)
             self.remote.build_secondary_index(
                 self.index_nodes,
                 self.bucket,
                 self.indexes,
                 self.storage,
                 self.is_ssl,
-                self.admin_auth)
+                self.admin_auth,
+                num_replica=num_replica,
+                num_partition=num_partition)
 
             time_elapsed = self.monitor.wait_for_secindex_init_build(
                 self.index_nodes[0],
@@ -2790,4 +2801,478 @@ class ConcurrentDropKeySecondaryIndexTest(DropKeySecondaryIndexTest):
 
         self.report_kpi(avg_dropkey_secs, "DropKey", unit="sec")
         self.print_index_disk_usage(heap_profile=False)
+
+
+class SecondaryIndexingScanReportTest(SecondaryIndexingScanLatencyTest):
+
+    """Measures the overhead of the generateScanReport indexer feature via N1QL scans.
+
+    Uses N1QL (not cbindexperf) so that profile=timings and scanreport_wait can be
+    applied per-query. Each .test file is one scenario/config cell; overhead is the
+    delta between a paired baseline (feature off) and feature run.
+    """
+
+    INDEX_SCAN_KEY = '#indexStats'
+
+    # Aggregate partition-coverage (Check 3 aggregate) samples 1-in-N responses
+    # rather than every response, so the extra recursive parse doesn't add
+    # latency to the timed workload loop.
+    PARTITION_COVERAGE_SAMPLE_EVERY = 50
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        gsi = self.test_config.gsi_settings
+        self.scan_report_query = (
+            gsi.scan_report_join_query
+            or gsi.scan_report_nested_query
+            or gsi.scan_report_query
+        )
+        self.scan_report_wait_ms = gsi.scan_report_wait_ms
+        self.scan_report_use_profile_timings = bool(gsi.scan_report_use_profile_timings)
+        self.scan_report_workers = gsi.scan_report_workers
+        self.scan_report_iterations = gsi.scan_report_iterations
+        self.scan_report_query_timeout_s = gsi.scan_report_query_timeout_s
+        self.latencies_ms = []
+        self.index_scan_times_ms = []
+        self.throughput = 0.0
+        self.errors = 0
+        self._sanity_checked = False
+        self._sanity_check_lock = threading.Lock()
+        self._errors_lock = threading.Lock()
+        self.response_sizes_bytes = []
+        self._response_sizes_lock = threading.Lock()
+        self.partition_instances_seen = set()
+        self._partition_sample_lock = threading.Lock()
+        self._partition_sample_counter = 0
+
+    def configure_query_node_for_report(self):
+        # When profile != "timings", the scan report only lands in
+        # system:completed_requests. Make sure every request lands there.
+        failures = 0
+        for query_node in self.query_nodes:
+            try:
+                self.rest.set_query_settings(
+                    query_node, {"profile": "timings", "completed-threshold": 0}
+                )
+            except Exception as e:
+                failures += 1
+                logger.warning(f"set_query_settings failed on {query_node}: {e}")
+        if failures == len(self.query_nodes):
+            raise Exception("set_query_settings failed on all query nodes")
+
+    def build_query_params(self) -> dict:
+        params = {
+            # Bound server-side execution so a pathological query (e.g. a wide JOIN with
+            # weak selectivity) cannot hang the workload. Slow queries get returned with
+            # a timeout error which `_run_one_query` counts as an error and moves on.
+            'timeout': f"{self.scan_report_query_timeout_s}s",
+        }
+        if self.scan_report_use_profile_timings:
+            params['profile'] = 'timings'
+        if self.scan_report_wait_ms and self.scan_report_wait_ms > 0:
+            # Couchbase parses scanreport_wait as a Go time.Duration string -- it must
+            # carry a unit suffix (ms / s / etc.), the bare integer is rejected with
+            # error 1040. Upper bound enforced by the server is 15 seconds.
+            params['scanreport_wait'] = f"{self.scan_report_wait_ms}ms"
+        return params
+
+    def _extract_index_scan_time_ms(self, response: dict) -> float:
+        # Use metrics.executionTime as the sole KPI source so baseline and feature cells
+        # measure the same thing. #indexStats.srvr_avg_* is only present when feature+timings
+        # are both active, so mixing sources would make the delta meaningless.
+        metrics = response.get('metrics') or {}
+        return parse_go_duration_ms(metrics.get('executionTime'))
+
+    def _collect_indexstats_blocks(self, node, blocks=None):
+        """Return every #indexStats block found anywhere in the response tree."""
+        if blocks is None:
+            blocks = []
+        if isinstance(node, dict):
+            if self.INDEX_SCAN_KEY in node:
+                blocks.append(node[self.INDEX_SCAN_KEY])
+            for v in node.values():
+                self._collect_indexstats_blocks(v, blocks)
+        elif isinstance(node, list):
+            for item in node:
+                self._collect_indexstats_blocks(item, blocks)
+        return blocks
+
+    def _sample_partition_coverage(self, response: dict):
+        # Cheap on every call except the 1-in-N iterations that actually parse the
+        # response, so this doesn't add latency to the timed workload loop.
+        with self._partition_sample_lock:
+            self._partition_sample_counter += 1
+            if self._partition_sample_counter % self.PARTITION_COVERAGE_SAMPLE_EVERY != 0:
+                return
+            for block in self._collect_indexstats_blocks(response):
+                if isinstance(block, dict):
+                    for entry in (block.get('detailed') or []):
+                        if isinstance(entry, dict):
+                            self.partition_instances_seen.update(
+                                (entry.get('detailed') or {}).keys())
+
+    def _run_sanity_checks(self, response: dict):
+        """Sanity checks 1-4 on the first successful response; check 5 deferred to caller."""
+        if not self.scan_report_use_profile_timings:
+            return
+
+        # Check 1 — non-empty #indexStats block in query response
+        blocks = self._collect_indexstats_blocks(response)
+        if not blocks:
+            logger.warning(
+                'SANITY FAIL [Check 1]: No #indexStats block found in response '
+                'with profile=timings. generateScanReport may not have been '
+                'applied, or the indexer build does not support this feature.'
+            )
+            return
+        logger.info(
+            f'SANITY PASS [Check 1]: {len(blocks)} #indexStats block(s) found in query response'
+        )
+
+        # Check 2 — system:completed_requests contains the same block
+        req_id = response.get('requestID')
+        if req_id:
+            try:
+                cr = self.rest.exec_n1ql_statement(
+                    self.query_nodes[0],
+                    f"SELECT * FROM system:completed_requests WHERE requestId = '{req_id}'"
+                )
+                rows = cr.get('results', [])
+                if rows:
+                    if self.INDEX_SCAN_KEY in json.dumps(rows[0]):
+                        logger.info(
+                            'SANITY PASS [Check 2]: system:completed_requests '
+                            'row contains scan report data'
+                        )
+                    else:
+                        logger.warning(
+                            'SANITY WARN [Check 2]: system:completed_requests '
+                            'row found but no scan report data in it'
+                        )
+                else:
+                    logger.warning(
+                        f'SANITY WARN [Check 2]: No row in system:completed_requests '
+                        f'for requestId {req_id} — may have been evicted from the ring buffer'
+                    )
+            except Exception as exc:
+                logger.warning(
+                    f'SANITY WARN [Check 2]: Could not query system:completed_requests: {exc}'
+                )
+
+        # Checks 3 + 4 — per-instance detailed breakdown and non-zero timings.
+        # detailed[*].detailed holds per-instance/partition timings;
+        # only present when scanreport_wait > 0.
+        indexer_nodes = self.cluster_spec.servers_by_role('index')
+        detailed_expected = bool(self.scan_report_wait_ms and self.scan_report_wait_ms > 0)
+        for i, block in enumerate(blocks, 1):
+            if not isinstance(block, dict):
+                continue
+
+            instances = {}
+            for entry in (block.get('detailed') or []):
+                if isinstance(entry, dict):
+                    for inst_key, inst_val in (entry.get('detailed') or {}).items():
+                        instances[inst_key] = inst_val
+
+            # Check 3 — detailed per-instance breakdown present when expected.
+            if detailed_expected:
+                if not instances:
+                    logger.warning(
+                        f'SANITY FAIL [Check 3]: block {i}: scanreport_wait='
+                        f'{self.scan_report_wait_ms}ms but the report has no per-instance '
+                        f'"detailed" breakdown — detailed section missing'
+                    )
+                else:
+                    logger.info(
+                        f'SANITY PASS [Check 3]: block {i}: {len(instances)} per-instance '
+                        f'entrie(s) over {len(indexer_nodes)} indexer node(s) — '
+                        f'{sorted(instances)}'
+                    )
+                    if indexer_nodes and len(instances) < len(indexer_nodes):
+                        logger.warning(
+                            f'SANITY WARN [Check 3]: block {i}: {len(instances)} instance(s) '
+                            f'< {len(indexer_nodes)} index node(s) — scatter/gather may be '
+                            f'incomplete'
+                        )
+            else:
+                logger.info(
+                    f'SANITY INFO [Check 3]: block {i}: concise mode (scanreport_wait=0), '
+                    f'no per-instance breakdown expected'
+                )
+
+            # Check 4 — non-zero server-side timings. Prefer per-instance srvr_ns
+            # (detailed), else fall back to the block-level srvr_avg_ns (concise).
+            timing_sources = {}
+            if instances:
+                for inst_key, inst_val in instances.items():
+                    srvr_ns = inst_val.get('srvr_ns') if isinstance(inst_val, dict) else None
+                    if isinstance(srvr_ns, dict):
+                        timing_sources[inst_key] = srvr_ns
+            else:
+                agg = block.get('srvr_avg_ns') or block.get('srvr_avg_ms')
+                if isinstance(agg, dict):
+                    timing_sources['srvr_avg'] = agg
+
+            if not timing_sources:
+                logger.warning(
+                    f'SANITY WARN [Check 4]: block {i}: no timing fields found to validate'
+                )
+            for key, timings in timing_sources.items():
+                nonzero = sum(
+                    1 for v in timings.values()
+                    if isinstance(v, (int, float)) and v != 0
+                )
+                if nonzero == 0:
+                    logger.warning(
+                        f'SANITY FAIL [Check 4]: block {i} entry {key} has all-zero timing '
+                        f'fields — report may be empty or malformed'
+                    )
+                else:
+                    logger.info(
+                        f'SANITY PASS [Check 4]: block {i} entry {key} — {nonzero} non-zero '
+                        f'timing field(s)'
+                    )
+
+    def _run_one_query(self, query_node: str, query_params: dict):
+        start = time.time()
+        try:
+            response = self.rest.exec_n1ql_statement(
+                query_node, self.scan_report_query, query_params=query_params,
+                # scanreport_wait (and the other per-request knobs) must ride in the
+                # JSON body, otherwise the indexer never emits the detailed report.
+                as_json_body=True,
+            )
+            elapsed_ms = (time.time() - start) * 1000.0
+            if response.get('status') != 'success':
+                with self._errors_lock:
+                    self.errors += 1
+                return None
+            # Check 5 (payload size) — tracked every response for all configs.
+            with self._response_sizes_lock:
+                self.response_sizes_bytes.append(len(json.dumps(response)))
+            # Checks 1-4 run once on the first successful response.
+            with self._sanity_check_lock:
+                if not self._sanity_checked:
+                    self._sanity_checked = True
+                    run_checks = True
+                else:
+                    run_checks = False
+            if run_checks:
+                self._run_sanity_checks(response)
+            # Only sample when a per-instance "detailed" breakdown can exist at all
+            # (same condition as Check 3's detailed_expected).
+            if self.scan_report_use_profile_timings and self.scan_report_wait_ms \
+                    and self.scan_report_wait_ms > 0:
+                self._sample_partition_coverage(response)
+            return elapsed_ms, self._extract_index_scan_time_ms(response)
+        except Exception as e:
+            with self._errors_lock:
+                self.errors += 1
+            logger.warning(f"scan-report query failed: {e}")
+            return None
+
+    @with_stats
+    @with_profiles
+    def run_scan_report_workload(self):
+        if not self.scan_report_query:
+            raise Exception(
+                "scan_report_query is required in [secondary] for scan-report tests"
+            )
+
+        if self.scan_report_use_profile_timings:
+            self.configure_query_node_for_report()
+
+        query_params = self.build_query_params()
+        query_node = self.query_nodes[0]
+        iterations = self.scan_report_iterations
+        workers = max(1, self.scan_report_workers)
+
+        # Warm-up: one pass per worker, discarded.
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            list(pool.map(lambda _: self._run_one_query(query_node, query_params),
+                          range(workers)))
+        # Reset counters so warm-up does not contaminate measured-phase stats.
+        self.response_sizes_bytes = []
+        self.errors = 0
+        self.partition_instances_seen = set()
+        self._partition_sample_counter = 0
+
+        latencies = []
+        scan_times = []
+        start_wall = time.time()
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(self._run_one_query, query_node, query_params)
+                       for _ in range(iterations)]
+            for fut in futures:
+                result = fut.result()
+                if result is None:
+                    continue
+                lat_ms, scan_ms = result
+                latencies.append(lat_ms)
+                scan_times.append(scan_ms)
+        wall_seconds = max(time.time() - start_wall, 1e-6)
+
+        self.latencies_ms = latencies
+        self.index_scan_times_ms = [s for s in scan_times if s > 0] or [0.0]
+        self.throughput = len(latencies) / wall_seconds
+
+        logger.info(
+            f"scan-report workload: completed={len(latencies)} errors={self.errors} "
+            f"throughput={self.throughput:.2f} q/s"
+        )
+        if self.errors:
+            logger.warning(f"scan-report workload had {self.errors} errors out of "
+                        f"{iterations} iterations")
+
+        # Check 5 — wire-payload size analysis.
+        # Logs median response size for manual C0 vs C4 cross-run comparison.
+        # Also flags runaway reports within a single run (any response >10× median).
+        if self.response_sizes_bytes:
+            sizes = sorted(self.response_sizes_bytes)
+            median_bytes = sizes[len(sizes) // 2]
+            max_bytes = sizes[-1]
+            logger.info(
+                'SANITY [Check 5]: response payload — '
+                'median={} B, max={} B, samples={}'.format(
+                    median_bytes, max_bytes, len(sizes))
+            )
+            if max_bytes > 10 * median_bytes:
+                logger.warning(
+                    'SANITY WARN [Check 5]: max response ({} B) is >10× the '
+                    'median ({} B) — possible runaway scan report payload'.format(
+                        max_bytes, median_bytes)
+                )
+            logger.info(
+                'SANITY NOTE [Check 5]: compare median payload with paired '
+                'C0 baseline run to verify size delta is bounded (<10×)'
+            )
+
+        # Check 3 aggregate — confirms scatter/gather stayed consistent across the
+        # workload, not just the first response. Sampled (see
+        # PARTITION_COVERAGE_SAMPLE_EVERY), so this reflects a subset of iterations.
+        if self.scan_report_use_profile_timings and self.scan_report_wait_ms \
+                and self.scan_report_wait_ms > 0:
+            indexer_nodes = self.cluster_spec.servers_by_role('index')
+            if len(indexer_nodes) > 1:
+                seen = len(self.partition_instances_seen)
+                logger.info(
+                    f'SANITY [Check 3 aggregate]: {seen} of {len(indexer_nodes)} indexer '
+                    f'node-instance(s) seen across sampled workload responses '
+                    f'(1-in-{self.PARTITION_COVERAGE_SAMPLE_EVERY} sample)'
+                )
+                if seen < len(indexer_nodes):
+                    logger.warning(
+                        f'SANITY WARN [Check 3 aggregate]: only {seen} of '
+                        f'{len(indexer_nodes)} indexer node-instance(s) ever appeared '
+                        f'across the sampled responses — scatter/gather coverage may be '
+                        f'incomplete or inconsistent'
+                    )
+
+    def _report_kpi(self):
+        if not self.latencies_ms:
+            raise Exception("No successful scan-report queries to report KPIs from")
+        self.reporter.post(*self.metrics.scan_report_latency(self.latencies_ms, 90))
+        self.reporter.post(*self.metrics.scan_report_latency(self.latencies_ms, 95))
+        self.reporter.post(
+            *self.metrics.scan_report_index_scan_time(self.index_scan_times_ms)
+        )
+        if self.scan_report_workers > 1:
+            self.reporter.post(
+                *self.metrics.scan_report_throughput(self.throughput)
+            )
+
+    def safe_print_index_disk_usage(self):
+        # `calc_avg_rr_compression` divides by (recs_in_mem + recs_on_disk). For small or
+        # partitioned plasma indexes -- and for vector IVF/SQ4 indexes -- those counters
+        # come back zero from the indexer's storage stats endpoint, which crashes the
+        # default `print_index_disk_usage` flow. The scan-report KPIs (latency, scan time,
+        # throughput) are collected upstream of this diagnostic, so we log the limitation
+        # and continue rather than failing the run.
+        try:
+            self.print_index_disk_usage()
+        except ZeroDivisionError:
+            logger.warning("Skipped index disk usage stats: indexer reported zero plasma "
+                        "records (RR calc not applicable here)")
+
+    GENERATE_SCAN_REPORT_KEY = 'indexer.settings.generateScanReport'
+
+    @staticmethod
+    def _as_bool(value) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() == 'true'
+        return bool(value)
+
+    def preflight_check_feature_enabled(self):
+        """Abort early if generateScanReport on the indexer does not match the .test file."""
+        key = self.GENERATE_SCAN_REPORT_KEY
+        expected = self.test_config.gsi_settings.settings.get(key)
+        if expected is None:
+            raise Exception(
+                f"{key} is not set in the [secondary] section -- scan-report tests must "
+                f"declare it explicitly (true for feature cells, false for baselines)"
+            )
+        expected = self._as_bool(expected)
+
+        mismatches = []
+        for node in self.index_nodes:
+            try:
+                actual = self._as_bool(self.rest.get_index_settings(node).get(key))
+            except Exception as e:
+                raise Exception(f"Preflight: could not read indexer settings from {node}: {e}")
+            logger.info(f'Preflight [{node}]: {key} expected={expected} actual={actual}')
+            if actual != expected:
+                mismatches.append((node, actual))
+
+        if mismatches:
+            raise Exception(
+                f"Preflight FAILED: {key} expected {expected} but indexer reports "
+                f"{mismatches} -- the feature under test is not applied. Aborting before "
+                f"load/build. Verify the setting was pushed at cluster init and that the "
+                f"build supports it."
+            )
+        logger.info(
+            f'Preflight PASSED: {key} = {expected} on all {len(self.index_nodes)} index node(s)'
+        )
+
+    def run(self):
+        # Bare-minimum gate: confirm the feature under test is actually enabled (or
+        # disabled, for baselines) on the indexer before spending an hour on the run.
+        self.preflight_check_feature_enabled()
+        self.load()
+        self.wait_for_persistence()
+        self.build_secondaryindex()
+        # Sequential: run access to completion then drain mutations before
+        # scanning to avoid profile pollution.
+        self.access()
+        self.monitor.wait_for_mutation_drain(self.index_nodes)
+        self.run_scan_report_workload()
+        self.safe_print_index_disk_usage()
+        self.report_kpi()
+
+
+class VectorSecondaryIndexingScanReportTest(SecondaryIndexingScanReportTest,
+                                            InitialVectorSecondaryIndexTest):
+
+    """Scan-report variant for vector indexes (S5).
+
+    Reuses the vector data load (cloud_restore) and index-build path from
+    InitialVectorSecondaryIndexTest, then drives the scan-report N1QL workload
+    on top.
+    """
+
+    def batch_create_index_collection_options(self, indexes, storage):
+        return InitialVectorSecondaryIndexTest.batch_create_index_collection_options(
+            self, indexes, storage
+        )
+
+    def run(self):
+        self.preflight_check_feature_enabled()
+        self.cloud_restore()
+        self.wait_for_persistence()
+        self.build_secondaryindex()
+        self.run_scan_report_workload()
+        self.safe_print_index_disk_usage()
+        self.report_kpi()
 

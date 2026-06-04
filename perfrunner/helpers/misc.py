@@ -190,6 +190,40 @@ def human_format(number: float, p: int = 0) -> str:
     return f'{number:.{p}f}{["", "K", "M", "G", "T", "P"][magnitude]}'
 
 
+_GO_DURATION_RE = re.compile(r'(\d+(?:\.\d+)?)(ns|µs|us|ms|s|m|h)')
+
+_GO_DURATION_UNIT_MS = {
+    'ns': 1e-6,
+    'us': 1e-3,
+    'µs': 1e-3,
+    'ms': 1.0,
+    's': 1000.0,
+    'm': 60_000.0,
+    'h': 3_600_000.0,
+}
+
+
+def parse_go_duration_ms(value) -> float:
+    """Parse a Go time.Duration string to milliseconds.
+
+    Handles both single-unit ("1.234ms", "2.5s") and compound
+    ("1m40.5s", "2h3m4.005s") forms produced by Duration.String().
+    """
+    if value is None:
+        return 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+    s = str(value).strip()
+    matches = _GO_DURATION_RE.findall(s)
+    if matches:
+        return sum(float(amount) * _GO_DURATION_UNIT_MS[unit] for amount, unit in matches)
+    try:
+        return float(s)
+    except ValueError:
+        logger.warning(f"parse_go_duration_ms: unrecognized duration {s!r}, returning 0.0")
+        return 0.0
+
+
 def copy_template(source, dest):
     shutil.copyfile(source, dest)
 

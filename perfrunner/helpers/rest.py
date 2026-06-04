@@ -944,16 +944,27 @@ class DefaultRestHelper(RestBase):
         }
         return storage_backend_info
 
-    def exec_n1ql_statement(self, host: str, statement: str, query_context: str = None) -> dict:
+    def exec_n1ql_statement(self, host: str, statement: str, query_context: str = None,
+                            query_params: dict = None, as_json_body: bool = False) -> dict:
         data = {
             'statement': statement,
         }
         if query_context:
             data['query_context'] = query_context
+        if query_params:
+            for k, v in query_params.items():
+                # For a JSON body the values stay as-is (the query service reads
+                # request params from the JSON object). For the default
+                # form-urlencoded path, non-string values are JSON-encoded.
+                data[k] = v if (as_json_body or isinstance(v, str)) else json.dumps(v)
 
         url = self._get_api_url(host=host, path='query/service', plain_port=QUERY_PORT,
                                 ssl_port=QUERY_PORT_SSL)
-        response = self.post(url=url, data=data)
+        # scanreport_wait is only honoured in a JSON body, not form-urlencoded.
+        if as_json_body:
+            response = self.post(url=url, json=data)
+        else:
+            response = self.post(url=url, data=data)
         resp_data = response.json()
         if errors := resp_data.get("errors"):
             logger.warning(f"Query failed: {errors}")

@@ -1,0 +1,76 @@
+[test_case]
+test = perfrunner.tests.secondary.VectorSecondaryIndexingScanReportTest
+
+[showfast]
+title = GSI Scan Report | Detailed report + query timings | Vector scan, sift-128, no replica | 10M docs
+component = secondary
+category = vector
+sub_category = ScanReport
+
+[stats]
+server_processes = projector,indexer,n1ql
+
+[cluster]
+mem_quota = 100000
+index_mem_quota = 117760
+online_cores = 16
+kernel_mem_limit = 128G
+kernel_mem_limit_services = kv,index
+initial_nodes = 8
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number = 0
+replica_index = 0
+backend_storage = magma
+eviction_policy = fullEviction
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+num_reader_threads = disk_io_optimized
+
+[load]
+items = 10000000
+size = 1024
+workers = 50
+key_fmtr = no_hash
+
+[restore]
+backup_storage = s3://fts-vector-100m-sift-128-dims
+backup_repo = fts_vector_100m_sift_128_dims
+threads = 50
+filter_keys = ^[0-9]$|^[1-9][0-9]{0,6}$
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 3200
+indexer.settings.generateScanReport = true
+disable_perindex_stats = True
+vector_dimension = 128
+vector_scan_probes = 25
+vector_description = IVF,SQ4
+vector_similarity = L2
+override_index_def = emb Vector
+vector_def_prefix = emb
+scan_report_query = SELECT META().id FROM `bucket-1`.`scope-1`.`collection-1` ORDER BY ANN_DISTANCE(emb, [0.000, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.010, 0.011, 0.012, 0.013, 0.014, 0.015, 0.016, 0.017, 0.018, 0.019, 0.020, 0.021, 0.022, 0.023, 0.024, 0.025, 0.026, 0.027, 0.028, 0.029, 0.030, 0.031, 0.032, 0.033, 0.034, 0.035, 0.036, 0.037, 0.038, 0.039, 0.040, 0.041, 0.042, 0.043, 0.044, 0.045, 0.046, 0.047, 0.048, 0.049, 0.050, 0.051, 0.052, 0.053, 0.054, 0.055, 0.056, 0.057, 0.058, 0.059, 0.060, 0.061, 0.062, 0.063, 0.064, 0.065, 0.066, 0.067, 0.068, 0.069, 0.070, 0.071, 0.072, 0.073, 0.074, 0.075, 0.076, 0.077, 0.078, 0.079, 0.080, 0.081, 0.082, 0.083, 0.084, 0.085, 0.086, 0.087, 0.088, 0.089, 0.090, 0.091, 0.092, 0.093, 0.094, 0.095, 0.096, 0.097, 0.098, 0.099, 0.100, 0.101, 0.102, 0.103, 0.104, 0.105, 0.106, 0.107, 0.108, 0.109, 0.110, 0.111, 0.112, 0.113, 0.114, 0.115, 0.116, 0.117, 0.118, 0.119, 0.120, 0.121, 0.122, 0.123, 0.124, 0.125, 0.126, 0.127], 'L2_SQUARED', 25) LIMIT 10
+scan_report_wait_ms = 100
+scan_report_use_profile_timings = true
+scan_report_workers = 8
+scan_report_iterations = 2000
+
+[access]
+items = 10000000
+workers = 0

@@ -1,0 +1,58 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingScanReportTest
+
+[showfast]
+title = GSI Scan Report | Smoke test | Tiny dataset, full pipeline
+component = secondary
+category = lat
+sub_category = ScanReport
+
+[stats]
+server_processes = projector,indexer,n1ql
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 45000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number = 0
+replica_index = 0
+
+[load]
+items = 100000
+size = 1024
+workers = 40
+
+[secondary]
+indexes = myindex:alt_email
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+indexer.settings.generateScanReport = true
+scan_report_query = SELECT meta().id FROM `bucket-1` WHERE alt_email IS NOT NULL LIMIT 100
+scan_report_wait_ms = 100
+scan_report_use_profile_timings = true
+scan_report_workers = 8
+scan_report_iterations = 200
+
+[profiling]
+services = index n1ql
+profiles = cpu,heap
+interval = 20
+num_profiles = 2
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+items = 100000
+workers = 40
+throughput = 100000
+time = 30

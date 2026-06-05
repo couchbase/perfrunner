@@ -29,7 +29,7 @@ def buildTests(tests) {
 }
 
 def buildComponent(component, testCases) {
-    for ( release in ['goldfish', 'ionic'] ) {
+    for ( release in ['goldfish', 'ionic', 'phoenix'] ) {
         if ( testCases.containsKey(release) ) {
             echo "building tests for " + release + " : " + component
             buildTests(testCases[release][component])
@@ -48,6 +48,9 @@ pipeline {
                     }
                     if ( params.ionic_test_suite != '' ) {
                         testCases['ionic'] = readJSON file: params.ionic_test_suite
+                    }
+                    if ( params.phoenix_test_suite != '' ) {
+                        testCases['phoenix'] = readJSON file: params.phoenix_test_suite
                     }
                 }
             }
@@ -88,6 +91,24 @@ pipeline {
                     when { expression { return params.GCP_CH2 } }
                     steps {
                         buildComponent('GCP_CH2_3', testCases)
+                    }
+                }
+                stage('AZURE_CH2_1') {
+                    when { expression { return params.AZURE_CH2 } }
+                    steps {
+                        buildComponent('AZURE_CH2_1', testCases)
+                    }
+                }
+                stage('AZURE_CH2_2') {
+                    when { expression { return params.AZURE_CH2 } }
+                    steps {
+                        buildComponent('AZURE_CH2_2', testCases)
+                    }
+                }
+                stage('AZURE_CH2_3') {
+                    when { expression { return params.AZURE_CH2 } }
+                    steps {
+                        buildComponent('AZURE_CH2_3', testCases)
                     }
                 }
             }

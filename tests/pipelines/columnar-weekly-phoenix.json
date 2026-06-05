@@ -1,0 +1,15 @@
+{
+    "AZURE_CH2_1": [
+        {"job": "ColumnarAzureWeekly", "cluster": "capella_azure_4columnar_0c_d8pdsv6.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_azblob_no_cbo_no_index_unlimited_storage.test", "groups": "P0"},
+        {"job": "ColumnarAzureWeekly", "cluster": "capella_azure_4columnar_0c_d8pdsv6.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_azblob_cbo_with_index_3_aclients.test", "groups": "P0"}
+    ],
+    "AZURE_CH2_2": [
+        {"job": "ColumnarAzureWeekly2", "cluster": "capella_azure_4s_4columnar_1c_d8pdsv6_kv.spec", "test_config": "cloud/analytics/ch2_capella_columnar_azure_4n_5000w_remote_link_cbo_with_index.test", "groups": "P0"},
+        {"job": "ColumnarAzureWeekly2", "cluster": "capella_azure_4columnar_0c_d8pdsv6.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_azblob_cbo_with_index.test", "groups": "P0"}
+    ],
+    "AZURE_CH2_3": [
+        {"job": "ColumnarAzureWeekly3", "cluster": "capella_azure_4columnar_0c_d8pdsv6.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_azblob_no_cbo_with_index.test", "groups": "P0"},
+        {"job": "ColumnarAzureWeekly3", "cluster": "capella_azure_8columnar_0c_d8pdsv6.spec", "test_config": "cloud/analytics/ch2_capella_columnar_8n_5000w_azblob_cbo_with_index.test", "groups": "P0"},
+        {"job": "ColumnarAzureWeekly3", "cluster": "capella_azure_4columnar_0c_d8pdsv6.spec", "test_config": "cloud/analytics/ch2_capella_columnar_4n_5000w_azblob_cbo_no_index.test", "groups": "P0"}
+    ]
+}

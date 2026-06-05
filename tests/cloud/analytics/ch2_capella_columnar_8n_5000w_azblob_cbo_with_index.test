@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2ColumnarStandaloneDatasetTest
+
+[showfast]
+title = CH2 5000W, 8A, c=11 (standalone collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Indexes
+component = analyticscloud
+category = ch2
+sub_category = {provider}
+orderby = ch2_05000_s_08n_a01_cbo_idx
+
+[stats]
+server_processes = java
+
+[cluster]
+enable_n2n_encryption = all
+
+[analytics]
+external_dataset_type = azureblob
+external_dataset_region = eastus
+external_bucket = analytics-ch2-5000w-gz
+external_file_format = json
+external_file_include = gz
+external_azure_storage_account = cbperfstorage
+use_cbo = true
+cbo_sample_size = high
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml
+
+[ch2]
+warehouses = 5000
+aclients = 1
+tclients = 0
+iterations = 2
+warmup_iterations = 1
+duration = 0
+warmup_duration = 0
+workload = ch2_analytics
+use_backup = false
+create_gsi_index = false
+unoptimized_queries = true

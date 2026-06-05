@@ -3388,7 +3388,7 @@ class CH2:
     CUSTOMER_EXTRA_FIELDS = 128
     ORDERS_EXTRA_FIELDS = 128
     ITEM_EXTRA_FIELDS = 128
-    ACLIENT_REQUEST_PARAMS = ""
+    ACLIENT_REQUEST_PARAMS = '{"optimized-logical-plan": true, "profile": "timings"}'
 
     def __init__(self, options: dict):
         self.repo = options.get("repo", self.REPO)

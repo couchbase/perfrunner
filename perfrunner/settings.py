@@ -2869,6 +2869,7 @@ class AnalyticsSettings:
     USE_CBO = "false"
     INGEST_DURING_LOAD = "false"
     RESYNC = "true"
+    CBO_SAMPLE_SEED = 12345
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.pop('num_io_devices',
@@ -2903,6 +2904,7 @@ class AnalyticsSettings:
         self.columnar_storage_partitions = int(options.pop("columnar_storage_partitions", 0))
         self.use_cbo = maybe_atoi(options.pop("use_cbo", self.USE_CBO))
         self.cbo_sample_size = AnalyticsCBOSampleSize(options.pop("cbo_sample_size", "").lower())
+        self.cbo_sample_seed = int(options.pop("cbo_sample_seed", self.CBO_SAMPLE_SEED))
         self.ingest_during_load = maybe_atoi(
             options.pop("ingest_during_load", self.INGEST_DURING_LOAD)
         )

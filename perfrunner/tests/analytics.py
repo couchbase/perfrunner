@@ -40,6 +40,7 @@ from perfrunner.settings import (
     AnalyticsCBOSampleSize,
     AnalyticsExternalFileFormat,
     AnalyticsExternalTableFormat,
+    AnalyticsSettings,
     CH2ConnectionSettings,
     CH2Schema,
     ColumnarSettings,
@@ -166,11 +167,15 @@ class DatasetDef:
     def analyze_statement(
         self,
         sample_size: AnalyticsCBOSampleSize = AnalyticsCBOSampleSize.DEFAULT,
+        sample_seed: int = AnalyticsSettings.CBO_SAMPLE_SEED,
     ) -> str:
-        with_clause = ""
+        with_clause_options = {"sample-seed": sample_seed}
         if sample_size is not AnalyticsCBOSampleSize.DEFAULT:
-            with_clause = f' WITH {{ "sample": "{sample_size.value}" }}'
-        return f"ANALYZE ANALYTICS COLLECTION {sqlpp_escape(self.name)}{with_clause}"
+            with_clause_options["sample"] = sample_size.value
+        return (
+            f"ANALYZE ANALYTICS COLLECTION {sqlpp_escape(self.name)} "
+            f"WITH {json.dumps(with_clause_options)}"
+        )
 
 
 @dataclass(frozen=True)
@@ -394,13 +399,17 @@ class AnalyticsTest(PerfTest):
     def analyze_datasets(
         self,
         sample_size: AnalyticsCBOSampleSize = AnalyticsCBOSampleSize.DEFAULT,
+        sample_seed: int = AnalyticsSettings.CBO_SAMPLE_SEED,
         *,
         verbose: bool = False,
     ):
-        logger.info(f"Analyzing datasets for CBO using {sample_size.name.lower()} sample size")
+        logger.info(
+            f"Analyzing datasets for CBO using {sample_size.name.lower()} sample size "
+            f"and sample seed {sample_seed}"
+        )
         self._run_statements(
             self.datasets,
-            lambda dataset: dataset.analyze_statement(sample_size),
+            lambda dataset: dataset.analyze_statement(sample_size, sample_seed),
             verbose=verbose,
         )
 
@@ -1627,7 +1636,11 @@ class CH2Test(AnalyticsTest):
             self.create_gsi_indexes()
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
+            self.analyze_datasets(
+                self.test_config.analytics_settings.cbo_sample_size,
+                self.test_config.analytics_settings.cbo_sample_seed,
+                verbose=True,
+            )
 
         self.run_ch2()
         self.report_kpi()
@@ -1713,7 +1726,11 @@ class CH2ColumnarSimulatedPauseResumeTest(CH2Test):
         log_file = '{}_post_resume'.format(self.test_config.ch2_settings.workload)
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
+            self.analyze_datasets(
+                self.test_config.analytics_settings.cbo_sample_size,
+                self.test_config.analytics_settings.cbo_sample_seed,
+                verbose=True,
+            )
 
         self.run_ch2(log_file=log_file)
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
@@ -1765,7 +1782,11 @@ class CH2ColumnarStandaloneDatasetTest(CH2Test, ColumnarCopyFromObjectStoreTest)
         self.report_ingestion_kpi(copy_from_items, copy_from_time)
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
+            self.analyze_datasets(
+                self.test_config.analytics_settings.cbo_sample_size,
+                self.test_config.analytics_settings.cbo_sample_seed,
+                verbose=True,
+            )
 
     def benchmark(self):
         self.run_ch2()
@@ -2040,7 +2061,11 @@ class CH2CapellaColumnarUnlimitedStorageTest(
             self.cluster.wait_until_healthy(polling_interval_secs=10, max_retries=120)
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(self.test_config.analytics_settings.cbo_sample_size, verbose=True)
+            self.analyze_datasets(
+                self.test_config.analytics_settings.cbo_sample_size,
+                self.test_config.analytics_settings.cbo_sample_seed,
+                verbose=True,
+            )
 
         new_sf_title = f"{self.test_config.showfast.title}, POST-RESUME"
         self.test_config.config["showfast"]["title"] = new_sf_title

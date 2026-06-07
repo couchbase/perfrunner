@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 import importlib.metadata
 import time
-from typing import Callable, Union
+from typing import TYPE_CHECKING, Callable, Union
+
+if TYPE_CHECKING:
+    from perfrunner.tests import PerfTest
 
 from decorator import decorator
 
@@ -28,8 +33,26 @@ def with_stats(method: Callable, *args, **kwargs) -> Union[float, None]:
         # Add custom collectors for metrics not available via Prometheus scraping
         agent.add_custom_collectors(test)
 
+    drain_spring_data_files(test)
+
     with agent:
         return method(*args, **kwargs)
+
+
+def drain_spring_data_files(test: PerfTest):
+    """Empty the spring latency dump dir so this phase cannot inherit older data files."""
+    if not test.test_config.stats_settings.enabled:
+        return
+
+    # Only the spring latency collectors read these files, so nothing else has to pay for
+    # the round trip to every worker.
+    if not (test.COLLECTORS.get("latency") or test.COLLECTORS.get("n1ql_latency")):
+        return
+
+    try:
+        test.cleanup_spring_data_files()
+    except (Exception, SystemExit) as e:
+        logger.warning(f"Failed to clean up spring latency data files: {e!r}")
 
 
 @decorator

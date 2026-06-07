@@ -1,0 +1,32 @@
+[test_case]
+test = perfrunner.tests.operator.OperatorKVLatencyTest
+
+[showfast]
+title = Latency (ms), 1 node, 1 bucket x 1M x 1KB, 5K ops/sec
+component = cloud
+category = latency
+
+[cluster]
+mem_quota = 10240
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[load]
+items = 1000000
+size = 1024
+workers = 20
+doc_gen = large
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 5000
+items = 1000000
+workers = 8
+time = 180
+latency_percentiles = 50,99.9

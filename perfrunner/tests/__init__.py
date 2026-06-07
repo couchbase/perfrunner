@@ -9,6 +9,7 @@ from typing import Callable, Iterable, List, Optional
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cluster import ClusterManager
+from perfrunner.helpers.local_stats import SPRING_LATENCY_LIVE_DIR
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import pretty_dict, read_json
@@ -83,6 +84,7 @@ class PerfTest:
         # Initialise metrics collector agent and reporting
         self.cbmonitor_snapshots = []
         self.cbmonitor_clusters = []
+        self.spring_latency_snapshot_dirs = {}
         self.collector_agent = None
         self.init_metrics_and_collector_agent()
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
@@ -181,6 +183,16 @@ class PerfTest:
     @property
     def eventing_nodes(self) -> List[str]:
         return self.rest.get_active_nodes_by_role(self.master_node, 'eventing')
+
+    @property
+    def has_remote_workers(self) -> bool:
+        """True when workloads run on remote worker machines rather than locally.
+
+        ``worker_manager`` only exists when the test config enables workers, so the
+        attribute check stands in for ``test_case.use_workers``. Safe to read from code
+        that may run for a test with no workers at all.
+        """
+        return bool((wm := getattr(self, "worker_manager", None)) and wm.is_remote)
 
     def tear_down(self):
         if self.test_config.profiling_settings.linux_perf_profile_flag:
@@ -910,3 +922,14 @@ class PerfTest:
             time_map[service] = progress["timeTaken"] / 1000
         logger.info("rebalance timing(s): {}".format(pretty_dict(time_map)))
         return time_map
+
+    def cleanup_spring_data_files(self):
+        logger.info(
+            f"Cleaning up spring latency data files from {SPRING_LATENCY_LIVE_DIR} on all workers."
+        )
+        if self.has_remote_workers:
+            self.remote.cleanup_spring_data_files(
+                self.worker_manager.WORKER_HOME, SPRING_LATENCY_LIVE_DIR
+            )
+
+        local.cleanup_spring_data_files(SPRING_LATENCY_LIVE_DIR)

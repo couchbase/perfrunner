@@ -15,6 +15,7 @@ from numpy import random
 from psutil import cpu_count
 
 from logger import logger
+from perfrunner.helpers.local_stats import spring_latency_live_dir
 from perfrunner.helpers.sync import SyncHotWorkload
 from perfrunner.settings import PhaseSettings as WorkloadSettings
 from perfrunner.settings import TargetSettings
@@ -474,11 +475,11 @@ class Worker:
         random.seed(seed=self.sid * 9901)
 
     def dump_stats(self):
-        stat_dir = Path('./spring_latency/master_{}/'.format(self.ts.node))
+        stat_dir = Path(f"./{spring_latency_live_dir(self.ts.node)}/")
         stat_dir.mkdir(parents=True, exist_ok=True)
-        stat_filename = '{}-{}-{}-{}'.format(self.NAME, self.workload_id, self.sid, self.ts.bucket)
+        stat_filename = f"{self.NAME}-{self.workload_id}-{self.sid}-{self.ts.bucket}"
         if wn := self.ws.workload_name:
-            stat_filename += '-{}'.format(wn)
+            stat_filename += f"-{wn}"
         self.reservoir.dump(filename=stat_dir / stat_filename)
 
 

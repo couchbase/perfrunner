@@ -37,6 +37,7 @@ pip-log.txt
 .terraform
 target/
 spring_latency/
+spring_latency_snapshots/
 
 # Unit test / coverage reports
 .coverage

@@ -1,7 +1,6 @@
 import importlib.metadata
 from threading import Thread
 from time import sleep, time
-from typing import Optional
 
 import numpy
 from couchbase.bucket import Bucket
@@ -48,8 +47,8 @@ class ObserveIndexLatency(Latency):
 
     MAX_REQUEST_INTERVAL = 2
 
-    def __init__(self, settings, test: Optional[PerfTest] = None):
-        super().__init__(settings)
+    def __init__(self, settings, test: PerfTest):
+        super().__init__(settings, test)
         self.pools = []
 
     def _init_pool(self):

@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from multiprocessing import Process
-from pathlib import Path
 
 import requests
 
@@ -33,7 +32,6 @@ class CbAgent:
             self.reconstruct()
             # self.find_time_series()
             self.add_snapshots()
-            self.cleanup_spring_worker_files()
 
     def init_clusters(self, phase: str):
         self.cluster_map = OrderedDict()
@@ -91,9 +89,3 @@ class CbAgent:
         for cluster_id in self.test.cbmonitor_clusters:
             dbs += store.find_dbs(cluster_id)
         logger.info(f"Time series: {pretty_dict(dbs)}")
-
-    def cleanup_spring_worker_files(self):
-        from cbagent.collectors.latency import KVLatency, QueryLatency
-        for pattern in [KVLatency.PATTERN, QueryLatency.PATTERN]:
-            for file in Path.cwd().glob(pattern):
-                file.unlink()

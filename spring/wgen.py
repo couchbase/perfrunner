@@ -13,6 +13,7 @@ from psutil import cpu_count
 from twisted.internet import reactor
 
 from logger import logger
+from perfrunner.helpers.local_stats import spring_latency_live_dir
 from perfrunner.helpers.sync import SyncHotWorkload
 from spring.cbgen import CBAsyncGen, CBGen, SubDocGen
 from spring.cbgen_helpers import query_failure_tracker
@@ -368,9 +369,9 @@ class Worker:
         random.seed(seed=self.sid * 9901)
 
     def dump_stats(self):
-        stat_dir = Path('./spring_latency/master_{}/'.format(self.ts.node))
+        stat_dir = Path(f"./{spring_latency_live_dir(self.ts.node)}/")
         stat_dir.mkdir(parents=True, exist_ok=True)
-        stat_filename = '{}-{}-{}-{}'.format(self.NAME, self.workload_id, self.sid, self.ts.bucket)
+        stat_filename = f"{self.NAME}-{self.workload_id}-{self.sid}-{self.ts.bucket}"
         self.reservoir.dump(filename=stat_dir / stat_filename)
 
 

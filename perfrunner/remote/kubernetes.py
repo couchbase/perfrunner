@@ -5,6 +5,7 @@ import os
 import subprocess
 import time
 from typing import Optional, Union
+from uuid import uuid4
 
 import requests
 import yaml
@@ -623,6 +624,43 @@ class RemoteKubernetes(Remote):
     def dump_config_to_yaml_file(self, config, path):
         with open(path, 'w+') as file:
             yaml.dump(config, file)
+
+    def cleanup_spring_data_files(self, worker_home: str, live_dir: str):
+        for worker in self.get_worker_pods():
+            logger.info(f"Deleting all files in {live_dir}/ on {worker}")
+            self.kubectl_exec(worker, f"rm -rf {live_dir}/*")
+
+    def get_spring_data_files(
+        self, worker_home: str, file_pattern: str, live_dir: str, remote_snapshot_dir: str
+    ):
+        """
+        Fetch latency data files from `live_dir` on all remote workers into local `live_dir`.
+
+        Then move latency data files from remote worker `live_dir`s to snapshot-specific dirs.
+        """
+        pattern = f"{live_dir}/{file_pattern}"
+        for worker in self.get_worker_pods():
+            logger.info(f"Fetching all files matching {live_dir}/{file_pattern} from {worker}")
+            # Append a uuid to mark files from different workers without invalidating
+            # the glob pattern. Rename before listing so the paths we copy are the final ones.
+            self.kubectl_exec(
+                worker,
+                f'for f in {pattern}; do [ -e "$f" ] || continue; mv $f $f-{uuid4().hex[:6]}; done',
+            )
+
+            ls_out = self.kubectl_exec(worker, f"ls {pattern} 2>/dev/null || true")
+            paths = [path for line in ls_out for path in line.decode("utf-8").split()]
+            if not paths:
+                logger.info(f"No files matching {pattern} on {worker}")
+                continue
+
+            # kubectl cp takes one concrete path at a time - it does not expand globs.
+            for path in paths:
+                self.k8s_client(f"cp default/{worker}:{path} {live_dir}/{path.split('/')[-1]}")
+
+            self.kubectl_exec(
+                worker, f"mkdir -p {remote_snapshot_dir} && mv {pattern} {remote_snapshot_dir}/"
+            )
 
     def get_celery_logs(self, worker_home: str):
         logger.info('Collecting remote Celery logs')

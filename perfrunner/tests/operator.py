@@ -8,6 +8,7 @@ from perfrunner.helpers.config_files import TimeTrackingFile
 from perfrunner.remote.kubernetes import RemoteKubernetes
 from perfrunner.settings import ClusterSpec, TargetIterator, TestConfig
 from perfrunner.tests import PerfTest
+from perfrunner.tests.kv import MixedLatencyTest
 from perfrunner.tests.ycsb import YCSBTest
 
 
@@ -353,5 +354,18 @@ class ClusterMigrationTest(OperatorTest):
         # Start access workload on a self-managed cluster
         self.access_bg()
         self.migrate()
+
+        self.report_kpi()
+
+
+class OperatorKVLatencyTest(OperatorTest, MixedLatencyTest):
+    COLLECTORS = {"ns_server_system": True, "latency": True}
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.access()
 
         self.report_kpi()

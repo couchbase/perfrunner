@@ -1,11 +1,12 @@
 import os
 import shutil
 from typing import Optional
+from uuid import uuid4
 
 from logger import logger
 from perfrunner.helpers.local import _resolve_repo_url, _sanitize_repo_url
 from perfrunner.helpers.misc import get_python_sdk_installation
-from perfrunner.remote.api import cd, get, hide, run, settings, shell_env
+from perfrunner.remote.api import cd, env, get, hide, run, settings, shell_env
 from perfrunner.remote.context import (
     all_clients,
     all_clients_batch,
@@ -639,3 +640,37 @@ class Remote:
             run("apt purge -y python3-virtualenv", warn_only=True)
             run(f"pyenv local {py_version} && yes | pip install virtualenv", warn_only=True)
             run("pyenv local 3.9.7 && yes | pip install virtualenv", warn_only=True)
+
+    @all_clients
+    def cleanup_spring_data_files(self, worker_home: str, live_dir: str):
+        perfrunner_dir = f"{worker_home}/perfrunner"
+        logger.info(f"Deleting all files in {perfrunner_dir}/{live_dir}/ on {env.host_string}")
+        with cd(perfrunner_dir):
+            # `warn_only` so an unreachable worker does not abort the run. Without it
+            # fabric calls `abort()`, which raises `SystemExit` - not an `Exception` - and
+            # an unhandled `SystemExit` is printed as nothing at all.
+            run(f"rm -rf {live_dir}/*", warn_only=True)
+
+    @all_clients
+    def get_spring_data_files(
+        self, worker_home: str, file_pattern: str, live_dir: str, remote_snapshot_dir: str
+    ):
+        """
+        Fetch latency data files from `live_dir` on all remote workers into local `live_dir`.
+
+        Then move latency data files from remote worker `live_dir`s to snapshot-specific dirs.
+        """
+        perfrunner_dir = f"{worker_home}/perfrunner"
+        logger.info(
+            f"Fetching all files matching {perfrunner_dir}/{live_dir}/{file_pattern} "
+            f"from {env.host_string}"
+        )
+        with cd(perfrunner_dir):
+            pattern = f"{live_dir}/{file_pattern}"
+            r = run(f"stat {pattern}", quiet=True)
+            if not r.return_code:
+                # Append a uuid to mark files from different workers without invalidating
+                # the glob pattern
+                run(f"for f in {pattern}; do mv $f $f-{uuid4().hex[:6]}; done")
+                get(pattern, local_path=f"./{live_dir}")
+                run(f"mkdir -p {remote_snapshot_dir} && mv {pattern} {remote_snapshot_dir}/")

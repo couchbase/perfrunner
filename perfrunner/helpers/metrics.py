@@ -22,7 +22,17 @@ import numpy as np
 
 from cbagent.stores import PerfStore
 from logger import logger
-from perfrunner.helpers.local_stats import consolidate_jts_log, parse_spring_latency_file
+from perfrunner.helpers.local_stats import (
+    KV_WORKER_PATTERN,
+    QUERY_WORKER_PATTERN,
+    SpringLatencySource,
+    consolidate_jts_log,
+    parse_spring_latency_file,
+    resolve_spring_latency_files,
+    spring_latency_key,
+    spring_latency_live_dir,
+    spring_latency_target_groups,
+)
 from perfrunner.helpers.misc import sort_bucket_key
 from perfrunner.settings import CBMONITOR_HOST, ClusterSpec, TestConfig
 from perfrunner.workloads.analytics.bigfun.query_gen import Query
@@ -678,20 +688,75 @@ class MetricHelper:
         """Count how many of ``values`` are greater than or equal to ``threshold``."""
         return sum(v >= threshold for v in values)
 
+    def _spring_latency_files(self, pattern: str, cluster_idx: int = 0) -> list[str]:
+        """Return the local spring data files matching ``pattern`` for one cluster.
+
+        Spring workers dump to ``<SPRING_LATENCY_LIVE_DIR>/master_<node>`` while a phase
+        runs, and the latency collectors archive those files once the phase ends and wipe
+        the live dir (see `KVLatency.reconstruct`), so the archive is the only source left
+        by the time KPIs are reported.
+
+        The archive is looked up by master node and pattern, which resolves to the most
+        recent phase that produced data for this workload on this cluster - not necessarily
+        the last phase to run. That is the best we can do: a KPI carries no phase identity,
+        and the last stats phase is often not the one that produced the workload (e.g.
+        `N1QLTest.run` ends with the `@with_stats` `generate_query_awr_report`). Keying on
+        anything phase-derived would simply fail to find those files at all.
+        """
+        masters = list(self.cluster_spec.masters)
+        if cluster_idx >= len(masters):
+            logger.warning(
+                f"Cannot compute spring latency KPI for {pattern!r}: the cluster spec has no "
+                f"cluster for {cluster_idx=} (only {len(masters)} defined)"
+            )
+            return []
+
+        master = masters[cluster_idx]
+        archive_dir = self.test.spring_latency_snapshot_dirs.get(
+            spring_latency_key(master, pattern)
+        )
+        live_dir = spring_latency_live_dir(master)
+        files = resolve_spring_latency_files(pattern, archive_dir, live_dir)
+
+        if files.source is SpringLatencySource.ARCHIVE:
+            return files.paths
+
+        if archive_dir is None:
+            logger.warning(
+                f"No archived spring latency data for {pattern!r} on {master} ({cluster_idx=}): "
+                "no stats phase reported archiving any"
+            )
+        else:
+            logger.warning(
+                f"No spring latency data for {pattern!r} on {master} ({cluster_idx=}) in the "
+                f"archive dir {archive_dir}"
+            )
+
+        if files.source is SpringLatencySource.LIVE:
+            logger.warning(
+                f"Falling back to live dump dir {live_dir}. These files are not scoped to a "
+                "phase, so the KPI may mix data from other phases."
+            )
+            return files.paths
+
+        logger.warning(
+            f"No spring latency data for {pattern!r} on {master} in {live_dir} either. "
+            "Cannot compute this KPI."
+        )
+        return []
+
     def _local_spring_latency_values(
         self, pattern: str, operation: str, cluster_idx: int = 0
     ) -> list[float]:
         """Read spring latency samples straight from the local worker dump files.
 
         Spring workers dump their latency reservoir to CSV rows
-        ``(operation, timestamp_ns, latency_single_s, latency_total_s, target)``
-        under ``spring_latency/master_<node>/<pattern>``. The collector parses
-        these to push to the store; reading them directly here computes the KPI
-        without the push-then-pull-back round trip.
+        ``(operation, timestamp_ns, latency_single_s, latency_total_s, target)``.
+        The collector parses these to push to the store; reading them directly here
+        computes the KPI without the push-then-pull-back round trip.
         """
-        master = list(self.cluster_spec.masters)[cluster_idx]
         values = []
-        for path in glob.glob(f"spring_latency/master_{master}/{pattern}"):
+        for path in self._spring_latency_files(pattern, cluster_idx):
             for sample in parse_spring_latency_file(path):
                 if sample.operation == operation:
                     values.append(sample.latency_ms)
@@ -710,17 +775,40 @@ class MetricHelper:
             consolidate_jts_log(settings.jts_logs_dir, filename, metric == "jts_latency").values()
         )
 
-    def _local_kv_latency_timings(self, operation: str, cluster_idx: int = 0) -> list[list[float]]:
-        """Read KV latency samples as ``[timestamp_ms, latency_ms]`` from local dumps."""
+    def _target_stat_groups(self) -> dict[str, str]:
+        """Flatten the per-bucket ``scope:collection`` -> stat group map across buckets.
+
+        The KV latency KPIs already aggregate every bucket's data files together, so the
+        group a target belongs to is looked up without regard to bucket.
+        """
+        groups = {}
+        for per_bucket in spring_latency_target_groups(
+            self.test_config.collection.collection_map
+        ).values():
+            groups.update(per_bucket)
+        return groups
+
+    def _local_kv_latency_timings(
+        self, operation: str, cluster_idx: int = 0, stat_group: str = ""
+    ) -> list[list[float]]:
+        """Read KV latency samples as ``[timestamp_ms, latency_ms]`` from local dumps.
+
+        Restricted to the collections in ``stat_group``. Spring records a target on each
+        sample only when per-collection latency is on, which is exactly when stat groups
+        are configured; otherwise every sample has no target, maps to ``""``, and matches
+        the single unnamed group callers ask for.
+        """
         if operation.startswith("total_"):
             csv_op, want_total = operation[len("total_"):], True
         else:
             csv_op, want_total = operation, False
-        master = list(self.cluster_spec.masters)[cluster_idx]
+        target_groups = self._target_stat_groups()
         timings = []
-        for path in glob.glob(f"spring_latency/master_{master}/*kv-worker-*"):
+        for path in self._spring_latency_files(KV_WORKER_PATTERN, cluster_idx):
             for sample in parse_spring_latency_file(path):
                 if sample.operation != csv_op:
+                    continue
+                if target_groups.get(sample.target, "") != stat_group:
                     continue
                 value = sample.latency_total_ms if want_total else sample.latency_ms
                 if value is None:
@@ -879,8 +967,23 @@ class MetricHelper:
             extra=extra,
         )
 
+    def _query_latency_values(self, cluster_idx: int = 0) -> list[float]:
+        """Read query latency samples, aborting loudly when there are none.
+
+        Unlike the KV latency KPIs, the query latency KPIs return a single `Metric` that
+        callers splat straight into `reporter.post`, so there is no way to skip one here.
+        Abort with the reason rather than letting numpy raise on an empty list.
+        """
+        values = self._local_spring_latency_values(QUERY_WORKER_PATTERN, "query", cluster_idx)
+        if not values:
+            logger.interrupt(
+                "Cannot compute query latency KPI: no spring query latency samples for "
+                f"{cluster_idx=} (see the preceding warning for why)"
+            )
+        return values
+
     def _query_latency(self, percentile: Number, cluster_idx: int = 0) -> float:
-        values = self._local_spring_latency_values("query-worker-*", "query", cluster_idx)
+        values = self._query_latency_values(cluster_idx)
         query_latency = self._percentile(values, percentile)
         return adaptive_round(query_latency)
 
@@ -888,7 +991,7 @@ class MetricHelper:
         metric_id = f'{self.test_config.name}_query_avg'.replace('.', '')
         title = f'Average query latency (ms), {self._title}'
 
-        values = self._local_spring_latency_values("query-worker-*", "query")
+        values = self._query_latency_values()
         avg_latency = float(self._mean(values))
         latency = adaptive_round(avg_latency)
         return self._metric(
@@ -1074,9 +1177,15 @@ class MetricHelper:
         cluster_idx: int = 0,
     ) -> list[list[float]]:
         """Return sorted ``[[timestamp_ms, latency_ms]]`` of KV op latencies."""
-        timings = self._local_kv_latency_timings(operation, cluster_idx)
+        timings = self._local_kv_latency_timings(operation, cluster_idx, stat_group)
         if not timings:
-            logger.warning(f"No latency data found for {operation=}, {collector=}, {stat_group=}")
+            # `_spring_latency_files` has already logged why there is no data. These KPIs
+            # are returned as a list, so an empty result skips them rather than posting a
+            # value we cannot stand behind.
+            logger.warning(
+                f"Skipping KV latency KPI: no latency data found for {operation=}, "
+                f"{collector=}, {stat_group=}, {cluster_idx=}"
+            )
             return []
 
         return timings

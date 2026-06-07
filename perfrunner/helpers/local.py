@@ -2150,3 +2150,8 @@ def copy_aibench_to_remote(hosts: list[str], user: str, password: str, worker_ho
     to_directory = os.path.join(worker_home, "ai_bench")
     for host in hosts:
         upload_directory("ai_bench", host, user, password, to_directory)
+
+
+def cleanup_spring_data_files(spring_live_dir: str):
+    if os.path.exists(spring_live_dir):
+        local(f"rm -rf {spring_live_dir}/*")

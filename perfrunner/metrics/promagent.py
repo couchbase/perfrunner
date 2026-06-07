@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 
 from cbagent.promstore import PromStore
 from logger import logger
+from perfrunner.helpers.misc import uhex
 from perfrunner.helpers.rest import RestBase
 from perfrunner.settings import (
     CBMONITOR2_HOST,
@@ -60,6 +61,7 @@ class PrometheusAgent:
         self.rest = rest
         self.snapshot_id = None
         self.phase_name = None
+        self.phase_label = None
         self.use_tls_ports = rest.use_tls
         # Background patching thread
         self._stop_event = Event()
@@ -247,6 +249,10 @@ class PrometheusAgent:
     def set_phase(self, phase_name: str):
         """Set the current test phase name for context."""
         self.phase_name = phase_name
+        # Unlike the CbAgent path, cbmonitor cluster ids are stable for the whole test
+        # here, so collectors that keep per-phase files on disk (e.g. spring latency)
+        # need a per-phase label to tell one phase's files from another's.
+        self.phase_label = f"{phase_name}_{uhex()[:4]}"
 
     def add_service(self, services: list[str]):
         """Add a service to the snapshot metadata."""

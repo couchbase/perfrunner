@@ -36,10 +36,6 @@ class CbAgentSettings:
         self.cloud = {"enabled": False}
         self.capella_infra = test.capella_infra
 
-        self.remote = False
-        if test.test_config.test_case.use_workers:
-            self.remote = test.worker_manager.is_remote
-
         self.ssh_username, self.ssh_password = test.cluster_spec.ssh_credentials
         self.rest_username, self.rest_password = test.cluster_spec.rest_credentials
         self.bucket_username, self.bucket_password = test.cluster_spec.rest_credentials
@@ -62,9 +58,6 @@ class CbAgentSettings:
         self.is_n2n = False
         if test.test_config.cluster.enable_n2n_encryption is not None:
             self.is_n2n = True
-
-        if self.remote:
-            self.remote_worker_home = test.worker_manager.WORKER_HOME
 
         # These are set after initialisation by CbAgent
         self.cluster = None

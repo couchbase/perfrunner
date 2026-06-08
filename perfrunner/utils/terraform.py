@@ -51,36 +51,237 @@ SERVICES_PERFRUNNER_TO_CAPELLA = {
     'eventing': 'eventing'
 }
 
-AWS_DEFAULT_REGION = "us-east-1"
-AWS_REGIONS = [
-    "us-east-1",
-    "us-east-2",
-    "us-west-2",
-    "ca-central-1",
-    "ap-northeast-1",
-    "ap-northeast-2",
-    "ap-southeast-1",
-    "ap-south-1",
-    "eu-west-1",
-    "eu-west-2",
-    "eu-west-3",
-    "eu-central-1",
-    "sa-east-1",
-]
+AWS_DEFAULT_ZONE = "use1-az1"
+AWS_REGIONS_TO_ZONES = {
+    # Key:
+    #    region: (physical_zone_prefix, physical_zone_numbers, logical_zone_letters)
+    #
+    # !! Attention:
+    #   Logical zones are mapped to physical zones differently in each AWS account.
+    #   The physical zone numbers and logical zone letters below DO NOT CORRESPOND.
+    "ap-south-1": ("aps1", ["1", "2", "3"], ["a", "b", "c"]),
+    "eu-north-1": ("eun1", ["1", "2", "3"], ["a", "b", "c"]),
+    "eu-west-3": ("euw3", ["1", "2", "3"], ["a", "b", "c"]),
+    "eu-west-2": ("euw2", ["1", "2", "3"], ["a", "b", "c"]),
+    "eu-west-1": ("euw1", ["1", "2", "3"], ["a", "b", "c"]),
+    "ap-northeast-3": ("apne3", ["1", "2", "3"], ["a", "b", "c"]),
+    "ap-northeast-2": ("apne2", ["1", "2", "3", "4"], ["a", "b", "c", "d"]),
+    "ap-northeast-1": ("apne1", ["1", "2", "4"], ["a", "c", "d"]),
+    "ca-central-1": ("cac1", ["1", "2", "4"], ["a", "b", "d"]),
+    "sa-east-1": ("sae1", ["1", "2", "3"], ["a", "b", "c"]),
+    "ap-southeast-1": ("apse1", ["1", "2", "3"], ["a", "b", "c"]),
+    "ap-southeast-2": ("apse2", ["1", "2", "3"], ["a", "b", "c"]),
+    "eu-central-1": ("euc1", ["1", "2", "3"], ["a", "b", "c"]),
+    "us-east-1": ("use1", ["1", "2", "3", "4", "5", "6"], ["a", "b", "c", "d", "e", "f"]),
+    "us-east-2": ("use2", ["1", "2", "3"], ["a", "b", "c"]),
+    "us-west-1": ("usw1", ["1", "3"], ["b", "c"]),
+    "us-west-2": ("usw2", ["1", "2", "3", "4"], ["a", "b", "c", "d"]),
+}
+AWS_PHYSICAL_ZONE_PREFIXES_TO_REGIONS = {
+    prefix: region for region, (prefix, _, _) in AWS_REGIONS_TO_ZONES.items()
+}
+AWS_PHYSICAL_ZONES = {
+    f"{prefix}-az{num}" for prefix, nums, _ in AWS_REGIONS_TO_ZONES.values() for num in nums
+}
+AWS_LOGICAL_ZONES = {
+    f"{region}{letter}"
+    for region, (_, _, letters) in AWS_REGIONS_TO_ZONES.items()
+    for letter in letters
+}
 
 GCP_DEFAULT_ZONE = "us-west1-b"
-GCP_ZONES = [
-    "us-west1-b",
-    "us-west1-a",
-    "us-west1-c",
-    "us-central1-a",
-    "us-central1-b",
-    "us-central1-c",
-    "us-central1-f",
-]
+GCP_REGIONS_TO_ZONES = {
+    # GCP doesn't have distinct physical and logical zones. All zone names refer to physical zones.
+    "us-east1": ["b", "c", "d"],
+    "us-east4": ["c", "b", "a"],
+    "us-central1": ["c", "a", "f", "b"],
+    "us-west1": ["b", "c", "a"],
+    "europe-west4": ["a", "b", "c"],
+    "europe-west1": ["b", "d", "c"],
+    "europe-west3": ["c", "a", "b"],
+    "europe-west2": ["c", "b", "a"],
+    "asia-east1": ["b", "a", "c"],
+    "asia-southeast1": ["b", "a", "c"],
+    "asia-northeast1": ["b", "c", "a"],
+    "asia-south1": ["c", "b", "a"],
+    "australia-southeast1": ["b", "c", "a"],
+    "southamerica-east1": ["b", "c", "a"],
+    "africa-south1": ["a", "b", "c"],
+    "asia-east2": ["a", "b", "c"],
+    "asia-northeast2": ["a", "b", "c"],
+    "asia-northeast3": ["a", "b", "c"],
+    "asia-south2": ["a", "b", "c"],
+    "asia-southeast2": ["a", "b", "c"],
+    "asia-southeast3": ["a", "b", "c"],
+    "australia-southeast2": ["a", "b", "c"],
+    "europe-central2": ["a", "b", "c"],
+    "europe-north1": ["a", "b", "c"],
+    "europe-north2": ["a", "b", "c"],
+    "europe-southwest1": ["a", "b", "c"],
+    "europe-west10": ["a", "b", "c"],
+    "europe-west12": ["a", "b", "c"],
+    "europe-west6": ["a", "b", "c"],
+    "europe-west8": ["a", "b", "c"],
+    "europe-west9": ["a", "b", "c"],
+    "me-central1": ["a", "b", "c"],
+    "me-central2": ["a", "b", "c"],
+    "me-west1": ["a", "b", "c"],
+    "northamerica-northeast1": ["a", "b", "c"],
+    "northamerica-northeast2": ["a", "b", "c"],
+    "northamerica-south1": ["a", "b", "c"],
+    "southamerica-west1": ["a", "b", "c"],
+    "us-east5": ["a", "b", "c"],
+    "us-south1": ["a", "b", "c"],
+    "us-west2": ["a", "b", "c"],
+    "us-west3": ["a", "b", "c"],
+    "us-west4": ["a", "b", "c"],
+}
+GCP_ZONES = {
+    f"{region}-{letter}" for region, letters in GCP_REGIONS_TO_ZONES.items() for letter in letters
+}
 
-AZURE_DEFAULT_REGION = "eastus"
-AZURE_REGIONS = ["eastus", "eastus2", "westus2", "westeurope", "uksouth"]
+AZURE_DEFAULT_ZONE = "eastus-az1"
+AZURE_REGIONS_TO_ZONES = {"eastus": ["1", "2", "3"]}
+AZURE_PHYSICAL_ZONES = {
+    f"{region}-az{num}" for region, nums in AZURE_REGIONS_TO_ZONES.items() for num in nums
+}
+
+
+def validate_aws_geo(
+    region: Optional[str], physical_zone: Optional[str], logical_zone: Optional[str]
+) -> tuple[str, Optional[str], Optional[str]]:
+    if physical_zone and logical_zone:
+        logger.warning(
+            "Both physical and logical zones provided for AWS. "
+            "Proceeding with physical zone; ignoring logical zone."
+        )
+        logical_zone = None
+
+    if physical_zone and (physical_zone not in AWS_PHYSICAL_ZONES):
+        logger.interrupt(f"Invalid AWS physical zone provided: {physical_zone}")
+
+    if logical_zone and (logical_zone not in AWS_LOGICAL_ZONES):
+        logger.interrupt(f"Invalid AWS logical zone provided: {logical_zone}")
+
+    if region:
+        if not (zones := AWS_REGIONS_TO_ZONES.get(region)):
+            logger.interrupt(f"Invalid AWS region provided: {region}")
+
+        pz_prefix, pz_nums, _ = zones
+
+        if logical_zone:
+            if region != logical_zone[:-1]:
+                logger.interrupt(
+                    f"AWS logical zone '{logical_zone}' does not belong "
+                    f"to provided region '{region}'"
+                )
+        elif physical_zone:
+            if not physical_zone.split("-")[0] == pz_prefix:
+                logger.interrupt(
+                    f"AWS physical zone '{physical_zone}' does not belong "
+                    f"to provided region '{region}'"
+                )
+        else:
+            physical_zone = f"{pz_prefix}-az{pz_nums[0]}"
+    elif not logical_zone:
+        physical_zone = physical_zone or AWS_DEFAULT_ZONE
+        region = AWS_PHYSICAL_ZONE_PREFIXES_TO_REGIONS[physical_zone.split("-")[0]]
+    else:
+        region = logical_zone[:-1]
+
+    return region, physical_zone, logical_zone
+
+
+def validate_gcp_geo(
+    region: Optional[str], physical_zone: Optional[str], logical_zone: Optional[str]
+) -> tuple[str, str, None]:
+    if logical_zone:
+        if physical_zone:
+            logger.warning(
+                "Both physical and logical zones provided for GCP. "
+                "Proceeding with physical zone; ignoring logical zone."
+            )
+        else:
+            logger.warning(
+                "Logical zone provided for GCP instead of physical zone. Treating logical zone as "
+                "physical zone (GCP doesn't have separate physical and logical zones)."
+            )
+            physical_zone = logical_zone
+        logical_zone = None
+
+    if physical_zone and (physical_zone not in GCP_ZONES):
+        logger.interrupt(f"Invalid GCP physical_zone provided: {physical_zone}")
+
+    if region:
+        if not (zone_letters := GCP_REGIONS_TO_ZONES.get(region)):
+            logger.interrupt(f"Invalid GCP region provided: {region}")
+
+        if physical_zone:
+            if region != physical_zone.rsplit("-", 1)[0]:
+                logger.interrupt(
+                    f"GCP physical zone '{physical_zone}' does not belong "
+                    f"to provided region '{region}'"
+                )
+        else:
+            physical_zone = f"{region}-{zone_letters[0]}"
+    else:
+        physical_zone = physical_zone or GCP_DEFAULT_ZONE
+        region = physical_zone[:-2]
+
+    return region, physical_zone, None
+
+
+def validate_azure_geo(
+    region: Optional[str], physical_zone: Optional[str], logical_zone: Optional[str]
+) -> tuple[str, Optional[str], Optional[str]]:
+    if physical_zone and logical_zone:
+        logger.warning(
+            "Both physical and logical zones provided for Azure. "
+            "Proceeding with physical zone; ignoring logical zone."
+        )
+        logical_zone = None
+
+    if physical_zone and (physical_zone not in AZURE_PHYSICAL_ZONES):
+        logger.interrupt(f"Invalid Azure physical zone provided: {physical_zone}")
+
+    if region:
+        if not (zone_nums := AZURE_REGIONS_TO_ZONES.get(region)):
+            logger.interrupt(f"Invalid Azure region provided: {region}")
+
+        if logical_zone:
+            if logical_zone not in zone_nums:
+                logger.interrupt(
+                    f"Invalid logical zone provided for Azure region {region}: {logical_zone}"
+                )
+        elif physical_zone:
+            if physical_zone.split("-")[0] != region:
+                logger.interrupt(
+                    f"Azure physical zone '{physical_zone}' does not belong "
+                    f"to provided region '{region}'"
+                )
+        else:
+            physical_zone = f"{region}-az{zone_nums[0]}"
+    elif not logical_zone:
+        physical_zone = physical_zone or AZURE_DEFAULT_ZONE
+        region = physical_zone.split("-")[0]
+    else:
+        logger.interrupt("Azure logical zone provided without region.")
+
+    return region, physical_zone, logical_zone
+
+
+def validate_csp_geo(
+    csp: str, region: Optional[str], physical_zone: Optional[str], logical_zone: Optional[str]
+) -> tuple[str, Optional[str], Optional[str]]:
+    csp = csp.lower()
+    if csp == "aws":
+        return validate_aws_geo(region, physical_zone, logical_zone)
+    elif csp == "gcp":
+        return validate_gcp_geo(region, physical_zone, logical_zone)
+    elif csp == "azure":
+        return validate_azure_geo(region, physical_zone, logical_zone)
+
+    logger.interrupt(f"Unsupported CSP provided: {csp}")
 
 
 def raise_for_status(resp: requests.Response):
@@ -152,6 +353,9 @@ class CloudVMDeployer:
         self.options = options
         self.os_arch = self.infra_spec.infrastructure_settings.get("os_arch", "x86_64")
         self.csp = self.infra_spec.csp
+        self.region = options.region
+        self.physical_zone = options.physical_zone
+        self.logical_zone = options.logical_zone
 
         self.uuid = self.infra_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
         self.infra_spec.config.set("infrastructure", "uuid", self.uuid)
@@ -174,45 +378,20 @@ class CloudVMDeployer:
             self.infra_spec.columnar_infrastructure and not self.infra_spec.capella_infrastructure
         )
 
-        zone = self.options.zone or GCP_DEFAULT_ZONE
-        if self.csp == "gcp":
-            if zone not in GCP_ZONES:
-                logger.interrupt(f"Invalid GCP zone. Please choose from: {pretty_dict(GCP_ZONES)}")
-
-            self.zone, self.region = zone, zone.rsplit("-", 1)[0]
-        elif self.csp == "aws":
-            if (region := zone[:-1]) in AWS_REGIONS:
-                logger.info("Valid AWS zone provided. Overriding region with zone.")
-                self.zone, self.region = zone, region
-            elif (region := self.options.region or AWS_DEFAULT_REGION) in AWS_REGIONS:
-                logger.info("No valid AWS zone provided. Ignoring zone.")
-                self.zone, self.region = None, region
-            else:
-                logger.interrupt(
-                    "No valid AWS region or zone provided. "
-                    f"Valid regions: {pretty_dict(AWS_REGIONS)}"
-                )
-        elif self.csp == "azure":
-            if (region := self.options.region or AZURE_DEFAULT_REGION) not in AZURE_REGIONS:
-                logger.interrupt(
-                    f"Invalid Azure region. Please choose from: {pretty_dict(AZURE_REGIONS)}"
-                )
-            self.zone, self.region = None, region
-        else:
-            logger.interrupt(f"Unrecognised cloud service provider: {self.csp}")
-
-        logger.info(f"Deployer region, zone: {self.region}, {self.zone}")
-        self.infra_spec.config.set("infrastructure", "region", self.region)
-        self.infra_spec.update_spec_file()
+        if not self.infra_spec.cloud_region and self.region:
+            self.infra_spec.config.set("infrastructure", "region", self.region)
+            self.infra_spec.update_spec_file()
 
     def deploy(self) -> dict:
         # Configure terraform
         if not self.populate_tfvars():
             return {}
+
         self.terraform_init(self.csp)
+        plan = self.terraform_plan(self.csp)
 
         # Deploy resources
-        self.terraform_apply(self.csp)
+        self.terraform_apply(self.csp, plan)
 
         # Get info about deployed resources and update cluster spec file
         output = self.terraform_output(self.csp)
@@ -336,19 +515,19 @@ class CloudVMDeployer:
         return allowed_ips
 
     def populate_tfvars(self) -> bool:
+        tfvar_nodes, can_terraform = self._can_terraform()
+        if not can_terraform:
+            return False
+
         logger.info("Setting tfvars")
         global_tag = self.options.tag if self.options.tag else ''
         if self.csp == "gcp":
             # GCP doesn't allow uppercase letters in tags
             global_tag = global_tag.lower()
 
-        tfvar_nodes, can_terraform = self._can_terraform()
-        if not can_terraform:
-            return False
-
         tfvars = {
             "cloud_region": self.region,
-            "cloud_zone": self.zone or "",
+            "cloud_physical_zone": self.physical_zone or "",
             "cluster_nodes": tfvar_nodes["clusters"],
             "client_nodes": tfvar_nodes["clients"],
             "utility_nodes": tfvar_nodes["utilities"],
@@ -362,6 +541,12 @@ class CloudVMDeployer:
             "allowed_ips": self._get_allowed_ips(),
         }
 
+        if self.csp != "gcp":
+            tfvars["cloud_logical_zone"] = self.logical_zone or ""
+
+        if self.csp == "azure":
+            tfvars["managed_id"] = self._get_managed_id()
+
         with ConfigFile(f"terraform/{self.csp}/terraform.tfvars.json") as tfvars_file:
             tfvars_file.config = tfvars
 
@@ -372,15 +557,16 @@ class CloudVMDeployer:
         logger.info('Initializating Terraform (terraform init)')
         local(f"cd terraform/{csp} && terraform init >> terraform.log")
 
+    def terraform_plan(self, csp: str) -> str:
+        logger.info("Building Terraform deployment plan (terraform plan)")
+        plan = "tfplan.out"
+        local(f"cd terraform/{csp} && terraform plan -out {plan} >> terraform.log")
+        return plan
+
     # Apply and output terraform deployment.
-    def terraform_apply(self, csp: str):
-        logger.info('Building and executing Terraform deployment plan '
-                    '(terraform plan, terraform apply)')
-        local(
-            f"cd terraform/{csp} && "
-            "terraform plan -out tfplan.out >> terraform.log && "
-            "terraform apply -auto-approve tfplan.out"
-        )
+    def terraform_apply(self, csp: str, plan: str):
+        logger.info("Executing Terraform deployment plan (terraform apply)")
+        local(f"cd terraform/{csp} && terraform apply -auto-approve {plan}")
 
     def terraform_output(self, csp: str):
         output = json.loads(local(f"cd terraform/{csp} && terraform output -json", capture=True))
@@ -1000,6 +1186,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
                 "specs": spec,
                 "package": "enterprise",
             }
+
+            if self.csp == "aws" and not self.options.multi_az:
+                config["zones"] = [self.physical_zone]
 
             logger.info(f"Deploying Operational cluster with config: {pretty_dict(config)}")
 
@@ -1807,6 +1996,9 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 "package": {"key": "enterprise", "timezone": "PT"},
             }
 
+            if self.csp == "aws" and not self.options.multi_az:
+                config["zones"] = [self.physical_zone]
+
             logger.info(f"Deploying Columnar instance with config: {pretty_dict(config)}")
 
             override_conf = {}
@@ -1819,19 +2011,38 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                 logger.info(f"Adding overrides to deployment config: {pretty_dict(override_conf)}")
                 config["overRide"] = override_conf | {"token": os.getenv("CBC_OVERRIDE_TOKEN")}
 
-            resp = self.columnar_api.create_columnar_instance(
-                self.tenant_id, self.project_id, config
-            )
+            resp = self.create_columnar_instance(config)
             raise_for_status(resp)
 
             instance_id = resp.json().get("id")
+            cluster_id = resp.json().get("clusterId")
             self.deployment_durations[instance_id] = time()
             self.instance_ids.append(instance_id)
+            self.cluster_ids.append(cluster_id)
 
-            logger.info(f"Initialised Columnar instance deployment {instance_id}")
-            logger.info("Saving Columnar instance ID to spec file.")
+            logger.info(f"Initialised Columnar cluster deployment: {instance_id=}, {cluster_id=}")
+            logger.info("Saving Columnar instance and cluster IDs to spec file.")
             self.infra_spec.config.set("controlplane", "columnar_ids", "\n".join(self.instance_ids))
+            existing_cluster_ids = self.infra_spec.controlplane_settings.get("cluster_ids", "")
+            self.infra_spec.config.set(
+                "controlplane", "cluster_ids", existing_cluster_ids + f"\n{cluster_id}"
+            )
             self.infra_spec.update_spec_file()
+
+    def create_columnar_instance(self, config: dict) -> requests.Response:
+        """Use internal support API to deploy analytics cluster so we can specify zones."""
+        url = (
+            f"{self.columnar_api.internal_url}/internal/support/"
+            f"organizations/{self.tenant_id}/projects/{self.project_id}/instances"
+        )
+
+        resp = self.columnar_api._urllib_request(
+            url,
+            "POST",
+            params=json.dumps(config),
+            headers=self.columnar_api.cbc_api_request_headers,
+        )
+        return resp
 
     def wait_for_columnar_instance_deploy(self):
         timeout_mins = self.capella_timeout
@@ -1865,17 +2076,6 @@ class CapellaColumnarDeployer(CloudVMDeployer):
                         f"Columnar instance {instance_id} deployed successfully after "
                         f"{self.deployment_durations[instance_id]}s"
                     )
-
-                    cluster_id = resp_payload["data"]["config"]["clusterId"]
-                    logger.info(f"Cluster ID for instance {instance_id}: {cluster_id}")
-                    self.cluster_ids.append(cluster_id)
-                    existing_cluster_ids = self.infra_spec.controlplane_settings.get(
-                        "cluster_ids", ""
-                    )
-                    self.infra_spec.config.set(
-                        "controlplane", "cluster_ids", existing_cluster_ids + f"\n{cluster_id}"
-                    )
-                    self.infra_spec.update_spec_file()
 
                 statuses.append(status)
 
@@ -2172,8 +2372,9 @@ def get_args():
         "--test-config", required=False, help="the path to the test configuration file"
     )
     parser.add_argument("--verbose", action="store_true", help="enable verbose logging")
-    parser.add_argument("-r", "--region", help="the cloud region (AWS, Azure)")
-    parser.add_argument("-z", "--zone", help="the cloud zone (AWS, GCP)")
+    parser.add_argument("-r", "--region", help="the cloud region")
+    parser.add_argument("-pz", "-z", "--physical-zone", help="the physical cloud zone")
+    parser.add_argument("-lz", "--logical-zone", help="the logical cloud zone")
     parser.add_argument("--cluster-image", help="Image/AMI name to use for cluster nodes")
     parser.add_argument("--client-image", help="Image/AMI name to use for client nodes")
     parser.add_argument("--utility-image", help="Image/AMI name to use for utility nodes")
@@ -2283,9 +2484,28 @@ def main():
     infra_spec = ClusterSpec()
     infra_spec.parse(fname=args.cluster, override=args.override)
 
+    # validate csp region and zone args
+    args.region, args.physical_zone, args.logical_zone = validate_csp_geo(
+        infra_spec.csp, args.region, args.physical_zone, args.logical_zone
+    )
+    logger.info(f"Cloud location args: {args.region=}, {args.physical_zone=}, {args.logical_zone=}")
+    assert not (args.physical_zone and args.logical_zone), (
+        "Only physical zone OR logical zone should be set, not both."
+    )
+
     if infra_spec.cloud_provider != 'capella':
         deployer = CloudVMDeployer(infra_spec, args)
     else:
+        if not args.physical_zone:
+            # Capella clusters are deployed in a separate AWS account to clients and utilities,
+            # and we don't know what the logical <-> physical zone mapping is, so to guarantee
+            # that infrastructure is being deployed in the same zone we must use physical zones
+            # not logical ones.
+            logger.interrupt(
+                "Cannot provide logical cloud zone for Capella tests, "
+                "provide a physical zone instead."
+            )
+
         cp_prepper = ControlPlaneManager(
             infra_spec,
             args.capella_public_api_url,

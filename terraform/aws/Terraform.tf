@@ -16,7 +16,11 @@ variable "cloud_region" {
   type = string
 }
 
-variable "cloud_zone" {
+variable "cloud_logical_zone" {
+  type = string
+}
+
+variable "cloud_physical_zone" {
   type = string
 }
 
@@ -98,26 +102,54 @@ provider "aws" {
 data "aws_ec2_instance_type_offerings" "available" {
   filter {
     name = "instance-type"
-    values = distinct(
-      concat(
-        [for k, v in var.cluster_nodes : v.instance_type],
-        [for k, v in var.client_nodes : v.instance_type],
-        [for k, v in var.utility_nodes : v.instance_type],
-        [for k, v in var.syncgateway_nodes : v.instance_type]
-      )
-    )
+    values = distinct(concat(local.main_instance_types, local.kafka_instance_types))
   }
 
   location_type = "availability-zone"
 }
 
-data "aws_ec2_instance_type_offerings" "available_kafka" {
-  filter {
-    name = "instance-type"
-    values = distinct([for k, v in var.kafka_nodes : v.instance_type])
-  }
+locals {
+  main_instance_types = distinct(
+      concat(
+        [for k, v in var.cluster_nodes : v.instance_type],
+        [for k, v in var.client_nodes : v.instance_type],
+        [for k, v in var.utility_nodes : v.instance_type],
+        [for k, v in var.syncgateway_nodes : v.instance_type],
+      )
+    )
 
-  location_type = "availability-zone"
+  kafka_instance_types = distinct([for k, v in var.kafka_nodes : v.instance_type])
+
+  main_azs = length(local.main_instance_types) > 0 ? setintersection([
+    for instance_type in local.main_instance_types : [
+      for idx, az in data.aws_ec2_instance_type_offerings.available.locations : az
+        if data.aws_ec2_instance_type_offerings.available.instance_types[idx] == instance_type
+    ]
+  ]...) : []
+
+  kafka_azs = length(local.kafka_instance_types) > 0 ? sort(
+    setintersection([
+      for instance_type in local.kafka_instance_types : [
+        for idx, az in data.aws_ec2_instance_type_offerings.available.locations : az
+          if data.aws_ec2_instance_type_offerings.available.instance_types[idx] == instance_type
+      ]
+    ]...)
+  ) : []
+}
+
+data "aws_availability_zone" "main_az" {
+  count = length(local.main_instance_types) > 0 ? 1 : 0
+
+  # Requires that exactly one of var.cloud_logical_zone and var.cloud_physical_zone are provided
+  name    = var.cloud_logical_zone != "" ? var.cloud_logical_zone : null
+  zone_id = var.cloud_physical_zone != "" ? var.cloud_physical_zone : null
+
+  lifecycle {
+    postcondition {
+      condition = contains(local.main_azs, self.name)
+      error_message = "Desired availability zone does not support all requested instance types."
+    }
+  }
 }
 
 data "aws_ami" "cluster_ami" {
@@ -175,37 +207,8 @@ data "aws_ami" "kafka_ami" {
   }
 }
 
-resource "random_shuffle" "az" {
-  count = (
-    (
-      length(data.aws_ec2_instance_type_offerings.available.instance_types) != 0 &&
-      length(data.aws_ec2_instance_type_offerings.available.locations) != 0
-    ) || var.cloud_zone != ""
-  ) ? 1 : 0
-
-  input = var.cloud_zone != "" ? [var.cloud_zone] : setintersection([
-    for instance_type in distinct(data.aws_ec2_instance_type_offerings.available.instance_types) : [
-      for idx, loc in data.aws_ec2_instance_type_offerings.available.locations : loc
-        if data.aws_ec2_instance_type_offerings.available.instance_types[idx] == instance_type
-    ]
-  ]...)
-  result_count = 1
-}
-
-resource "random_shuffle" "kafka_broker_azs" {
-  count = length(var.kafka_nodes) != 0 ? 1 : 0
-  input = setintersection([
-    for instance_type in distinct(data.aws_ec2_instance_type_offerings.available_kafka.instance_types) : [
-      for idx, loc in data.aws_ec2_instance_type_offerings.available_kafka.locations : loc
-        if data.aws_ec2_instance_type_offerings.available_kafka.instance_types[idx] == instance_type
-    ]
-  ]...)
-  result_count = length(var.kafka_nodes)
-}
-
 resource "aws_vpc" "main"{
-  count = (length(data.aws_ec2_instance_type_offerings.available.instance_types) != 0 &&
-           length(data.aws_ec2_instance_type_offerings.available.locations) != 0) ? 1 : 0
+  count = length(concat(local.main_instance_types, local.kafka_instance_types)) > 0 ? 1 : 0
 
   cidr_block           = "10.1.0.0/18"
   enable_dns_hostnames = true
@@ -219,7 +222,7 @@ resource "aws_subnet" "public" {
   count = length(aws_vpc.main) != 0 ? 1 : 0
 
   vpc_id                  = one(aws_vpc.main[*].id)
-  availability_zone       = one(random_shuffle.az[*].result)[0]
+  availability_zone       = one(data.aws_availability_zone.main_az[*].name)
   cidr_block              = "10.1.0.0/24"
   map_public_ip_on_launch = true
   tags = {
@@ -232,11 +235,18 @@ resource "aws_subnet" "kafka_private" {
   for_each = var.kafka_nodes
 
   vpc_id                  = one(aws_vpc.main[*].id)
-  availability_zone       = random_shuffle.kafka_broker_azs[0].result[tonumber(each.key) - 1]
+  availability_zone       = element(local.kafka_azs, tonumber(each.key) - 1)
   cidr_block              = "10.1.${each.key}.0/24"
   map_public_ip_on_launch = true
   tags = {
     Name = var.global_tag != "" ? "${var.global_tag}-private-${each.key}" : "Kafka Private Subnet"
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(local.kafka_azs) > 0
+      error_message = "No availability zone supports all requested Kafka node instance types."
+    }
   }
 }
 
@@ -500,7 +510,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_sgw" {
 resource "aws_instance" "cluster_instance" {
   for_each = var.cluster_nodes
 
-  availability_zone = one(random_shuffle.az[*].result)[0]
+  availability_zone = one(data.aws_availability_zone.main_az[*].name)
   subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.cluster_ami[each.key].id
   instance_type     = each.value.instance_type
@@ -527,7 +537,7 @@ resource "aws_instance" "cluster_instance" {
 resource "aws_ebs_volume" "cluster_ebs_volume" {
   for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
 
-  availability_zone = one(random_shuffle.az[*].result)[0]
+  availability_zone = one(data.aws_availability_zone.main_az[*].name)
   type              = lower(each.value.storage_class)
   size              = each.value.volume_size
   throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
@@ -549,7 +559,7 @@ resource "aws_volume_attachment" "cluster_ebs_volume_attachment" {
 resource "aws_instance" "client_instance" {
   for_each = var.client_nodes
 
-  availability_zone = one(random_shuffle.az[*].result)[0]
+  availability_zone = one(data.aws_availability_zone.main_az[*].name)
   subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.client_ami[each.key].id
   instance_type     = each.value.instance_type
@@ -566,7 +576,7 @@ resource "aws_instance" "client_instance" {
 resource "aws_ebs_volume" "client_ebs_volume" {
   for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
 
-  availability_zone = one(random_shuffle.az[*].result)[0]
+  availability_zone = one(data.aws_availability_zone.main_az[*].name)
   type              = lower(each.value.storage_class)
   size              = each.value.volume_size
   throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
@@ -588,7 +598,7 @@ resource "aws_volume_attachment" "client_ebs_volume_attachment" {
 resource "aws_instance" "utility_instance" {
   for_each = var.utility_nodes
 
-  availability_zone = one(random_shuffle.az[*].result)[0]
+  availability_zone = one(data.aws_availability_zone.main_az[*].name)
   subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.utility_ami[each.key].id
   instance_type     = each.value.instance_type
@@ -607,7 +617,7 @@ resource "aws_instance" "utility_instance" {
 resource "aws_instance" "syncgateway_instance" {
   for_each = var.syncgateway_nodes
 
-  availability_zone = one(random_shuffle.az[*].result)[0]
+  availability_zone = one(data.aws_availability_zone.main_az[*].name)
   subnet_id         = one(aws_subnet.public[*].id)
   ami               = data.aws_ami.syncgateway_ami[each.key].id
   instance_type     = each.value.instance_type
@@ -627,7 +637,7 @@ resource "aws_instance" "syncgateway_instance" {
 resource "aws_ebs_volume" "syncgateway_ebs_volume" {
   for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
 
-  availability_zone = one(random_shuffle.az[*].result)[0]
+  availability_zone = one(data.aws_availability_zone.main_az[*].name)
   type              = lower(each.value.storage_class)
   size              = each.value.volume_size
   throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null
@@ -649,7 +659,7 @@ resource "aws_volume_attachment" "syncgateway_ebs_volume_attachment" {
 resource "aws_instance" "kafka_instance" {
   for_each = var.kafka_nodes
 
-  availability_zone = random_shuffle.kafka_broker_azs[0].result[tonumber(each.key) - 1]
+  availability_zone = element(local.kafka_azs, tonumber(each.key) - 1)
   subnet_id         = aws_subnet.kafka_private[each.key].id
   ami               = data.aws_ami.kafka_ami[each.key].id
   instance_type     = each.value.instance_type
@@ -664,7 +674,7 @@ resource "aws_instance" "kafka_instance" {
 resource "aws_ebs_volume" "kafka_ebs_volume" {
   for_each = {for k, node in var.kafka_nodes : k => node if node.volume_size > 0}
 
-  availability_zone = random_shuffle.kafka_broker_azs[0].result[tonumber(each.key) - 1]
+  availability_zone = element(local.kafka_azs, tonumber(each.key) - 1)
   type              = lower(each.value.storage_class)
   size              = each.value.volume_size
   throughput        = each.value.volume_throughput > 0 ? each.value.volume_throughput : null

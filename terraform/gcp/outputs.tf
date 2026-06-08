@@ -56,3 +56,9 @@ output "cloud_storage" {
     )
   }
 }
+
+output "az" {
+  value = {
+    physical_zone = var.cloud_physical_zone
+  }
+}

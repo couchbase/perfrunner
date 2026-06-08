@@ -45,9 +45,9 @@ output "kafka_instance_ips" {
 
 output "network" {
   value = {
-    vpc_id                   = one(aws_vpc.main[*].id)
-    public_subnet_id         = one(aws_subnet.public[*].id)
-    public_subnet_cidr       = one(aws_subnet.public[*].cidr_block)
+    vpc_id             = one(aws_vpc.main[*].id)
+    public_subnet_id   = one(aws_subnet.public[*].id)
+    public_subnet_cidr = one(aws_subnet.public[*].cidr_block)
   }
 }
 
@@ -65,5 +65,8 @@ output "cloud_storage" {
 }
 
 output "az" {
-  value = one(random_shuffle.az[*].result) != null ? one(random_shuffle.az[*].result)[0] : null
+  value = {
+    logical_zone  = one(data.aws_availability_zone.main_az[*].name)
+    physical_zone = one(data.aws_availability_zone.main_az[*].zone_id)
+  }
 }

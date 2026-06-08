@@ -1,6 +1,6 @@
 output "cluster_instance_ips" {
   value = {
-    for k, v in azurerm_virtual_machine.perf-cluster-vm: k => {
+    for k, v in azurerm_virtual_machine.perf-cluster-vm : k => {
       node_group = v.tags["node_group"]
       public_ip  = azurerm_public_ip.perf-public-cluster[k].ip_address
       private_ip = azurerm_network_interface.perf-cluster-ni[k].private_ip_address
@@ -10,7 +10,7 @@ output "cluster_instance_ips" {
 
 output "client_instance_ips" {
   value = {
-    for k, v in azurerm_virtual_machine.perf-client-vm: k => {
+    for k, v in azurerm_virtual_machine.perf-client-vm : k => {
       node_group = v.tags["node_group"]
       public_ip  = azurerm_public_ip.perf-public-client[k].ip_address
       private_ip = azurerm_network_interface.perf-client-ni[k].private_ip_address
@@ -20,7 +20,7 @@ output "client_instance_ips" {
 
 output "utility_instance_ips" {
   value = {
-    for k, v in azurerm_virtual_machine.perf-utility-vm: k => {
+    for k, v in azurerm_virtual_machine.perf-utility-vm : k => {
       public_ip  = azurerm_public_ip.perf-public-utility[k].ip_address
       private_ip = azurerm_network_interface.perf-utility-ni[k].private_ip_address
     }
@@ -29,7 +29,7 @@ output "utility_instance_ips" {
 
 output "syncgateway_instance_ips" {
   value = {
-    for k, v in azurerm_virtual_machine.perf-syncgateway-vm: k => {
+    for k, v in azurerm_virtual_machine.perf-syncgateway-vm : k => {
       node_group = v.tags["node_group"]
       public_ip  = azurerm_public_ip.perf-public-syncgateway[k].ip_address
       private_ip = azurerm_network_interface.perf-syncgateway-ni[k].private_ip_address
@@ -60,4 +60,11 @@ output "cloud_storage" {
     )
   }
   sensitive = true
+}
+
+output "az" {
+  value = {
+    logical_zone = local.cloud_logical_zone
+    physical_zone = local.lz_to_pz_map[local.cloud_logical_zone]
+  }
 }

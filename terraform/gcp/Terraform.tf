@@ -11,7 +11,7 @@ variable "cloud_region" {
   type = string
 }
 
-variable "cloud_zone" {
+variable "cloud_physical_zone" {
   type = string
 }
 
@@ -80,7 +80,7 @@ variable "allowed_ips" {
 provider "google" {
   project = "couchbase-qe"
   region  = var.cloud_region
-  zone    = var.cloud_zone
+  zone    = var.cloud_physical_zone
 }
 
 resource "google_compute_network" "perf-vn" {

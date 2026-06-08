@@ -11,6 +11,14 @@ provider "azurerm" {
   features {}
 }
 
+variable "cloud_logical_zone" {
+  type = string
+}
+
+variable "cloud_physical_zone" {
+  type = string
+}
+
 variable "uuid" {
   type = string
 }
@@ -75,6 +83,37 @@ variable "allowed_ips" {
   type = list(string)
 }
 
+locals {
+  pz_to_lz_map = {
+    for mapping in try(data.azurerm_location.eastus.zone_mappings, []) :
+    lower(try(mapping.physical_zone, "")) => tostring(mapping.logical_zone)
+    if try(mapping.physical_zone, "") != "" && try(mapping.logical_zone, "") != ""
+  }
+
+  lz_to_pz_map = {
+    for mapping in try(data.azurerm_location.eastus.zone_mappings, []) :
+    lower(try(mapping.logical_zone, "")) => tostring(mapping.physical_zone)
+    if try(mapping.physical_zone, "") != "" && try(mapping.logical_zone, "") != ""
+  }
+
+  cloud_logical_zone = (
+    var.cloud_logical_zone != "" ?
+    var.cloud_logical_zone :
+    lookup(local.pz_to_lz_map, var.cloud_physical_zone, null)
+  )
+
+  allowed_external_ips = concat(
+    var.allowed_ips,
+    [for ip in azurerm_public_ip.perf-public-client : ip.ip_address],
+    [for ip in azurerm_public_ip.perf-public-cluster : ip.ip_address],
+    [for ip in azurerm_public_ip.perf-public-syncgateway : ip.ip_address]
+  )
+}
+
+data "azurerm_location" "eastus" {
+  location = "East US"
+}
+
 data "azurerm_shared_image_version" "cluster-image" {
   for_each = var.cluster_nodes
 
@@ -118,6 +157,13 @@ resource "azurerm_virtual_network" "perf-vn" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
 
+  lifecycle {
+    precondition {
+      condition     = local.cloud_logical_zone != null
+      error_message = "Could not set cloud logical zone."
+    }
+  }
+
   tags = {
     deployment = var.global_tag != "" ? var.global_tag : null
   }
@@ -139,6 +185,8 @@ resource "azurerm_public_ip" "perf-public-cluster" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
+  sku                 = local.cloud_logical_zone != null ? "Standard" : "Basic"
+  zones               = local.cloud_logical_zone != null ? [local.cloud_logical_zone] : null
 
   tags = {
     role       = "cluster"
@@ -154,6 +202,8 @@ resource "azurerm_public_ip" "perf-public-client" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
+  sku                 = local.cloud_logical_zone != null ? "Standard" : "Basic"
+  zones               = local.cloud_logical_zone != null ? [local.cloud_logical_zone] : null
 
   tags = {
     role       = "client"
@@ -169,6 +219,8 @@ resource "azurerm_public_ip" "perf-public-utility" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
+  sku                 = local.cloud_logical_zone != null ? "Standard" : "Basic"
+  zones               = local.cloud_logical_zone != null ? [local.cloud_logical_zone] : null
 
   tags = {
     role       = "utility"
@@ -184,6 +236,8 @@ resource "azurerm_public_ip" "perf-public-syncgateway" {
   location            = "East US"
   resource_group_name = "perf-resources-eastus"
   allocation_method   = "Static"
+  sku                 = local.cloud_logical_zone != null ? "Standard" : "Basic"
+  zones               = local.cloud_logical_zone != null ? [local.cloud_logical_zone] : null
 
   tags = {
     role       = "sync_gateway"
@@ -195,9 +249,9 @@ resource "azurerm_public_ip" "perf-public-syncgateway" {
 resource "azurerm_network_interface" "perf-cluster-ni" {
   for_each = var.cluster_nodes
 
-  name                          = "perf-cluster-ni${each.key}-${var.uuid}"
-  location                      = "East US"
-  resource_group_name           = "perf-resources-eastus"
+  name                           = "perf-cluster-ni${each.key}-${var.uuid}"
+  location                       = "East US"
+  resource_group_name            = "perf-resources-eastus"
   accelerated_networking_enabled = true
 
   ip_configuration {
@@ -217,9 +271,9 @@ resource "azurerm_network_interface" "perf-cluster-ni" {
 resource "azurerm_network_interface" "perf-client-ni" {
   for_each = var.client_nodes
 
-  name                          = "perf-client-ni${each.key}-${var.uuid}"
-  location                      = "East US"
-  resource_group_name           = "perf-resources-eastus"
+  name                           = "perf-client-ni${each.key}-${var.uuid}"
+  location                       = "East US"
+  resource_group_name            = "perf-resources-eastus"
   accelerated_networking_enabled = true
 
   ip_configuration {
@@ -239,9 +293,9 @@ resource "azurerm_network_interface" "perf-client-ni" {
 resource "azurerm_network_interface" "perf-utility-ni" {
   for_each = var.utility_nodes
 
-  name                          = "perf-utility-ni${each.key}-${var.uuid}"
-  location                      = "East US"
-  resource_group_name           = "perf-resources-eastus"
+  name                           = "perf-utility-ni${each.key}-${var.uuid}"
+  location                       = "East US"
+  resource_group_name            = "perf-resources-eastus"
   accelerated_networking_enabled = true
 
   ip_configuration {
@@ -261,9 +315,9 @@ resource "azurerm_network_interface" "perf-utility-ni" {
 resource "azurerm_network_interface" "perf-syncgateway-ni" {
   for_each = var.syncgateway_nodes
 
-  name                          = "perf-syncgateway-ni${each.key}-${var.uuid}"
-  location                      = "East US"
-  resource_group_name           = "perf-resources-eastus"
+  name                           = "perf-syncgateway-ni${each.key}-${var.uuid}"
+  location                       = "East US"
+  resource_group_name            = "perf-resources-eastus"
   accelerated_networking_enabled = true
 
   ip_configuration {
@@ -336,15 +390,6 @@ resource "azurerm_network_interface_application_security_group_association" "syn
   depends_on = [azurerm_virtual_machine.perf-syncgateway-vm]
 }
 
-locals {
-  allowed_external_ips = concat(
-    var.allowed_ips,
-    [for ip in azurerm_public_ip.perf-public-client: ip.ip_address],
-    [for ip in azurerm_public_ip.perf-public-cluster: ip.ip_address],
-    [for ip in azurerm_public_ip.perf-public-syncgateway: ip.ip_address]
-  )
-}
-
 # Create network security group.
 resource "azurerm_network_security_group" "perf-nsg" {
   name                = "perf-nsg-${var.uuid}"
@@ -364,74 +409,74 @@ resource "azurerm_network_security_group" "perf-nsg" {
   }
 
   security_rule {
-    name                       = "perf-nsg-allow-broker-vnet"
-    priority                   = 1002
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "5672"
-    source_address_prefix      = "VirtualNetwork"
+    name                                       = "perf-nsg-allow-broker-vnet"
+    priority                                   = 1002
+    direction                                  = "Inbound"
+    access                                     = "Allow"
+    protocol                                   = "Tcp"
+    source_port_range                          = "*"
+    destination_port_range                     = "5672"
+    source_address_prefix                      = "VirtualNetwork"
     destination_application_security_group_ids = [azurerm_application_security_group.utility-asg.id]
   }
 
   security_rule {
-    name                       = "perf-nsg-allow-broker-external"
-    priority                   = 1003
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "5672"
-    source_address_prefixes    = local.allowed_external_ips
+    name                                       = "perf-nsg-allow-broker-external"
+    priority                                   = 1003
+    direction                                  = "Inbound"
+    access                                     = "Allow"
+    protocol                                   = "Tcp"
+    source_port_range                          = "*"
+    destination_port_range                     = "5672"
+    source_address_prefixes                    = local.allowed_external_ips
     destination_application_security_group_ids = [azurerm_application_security_group.utility-asg.id]
   }
 
   security_rule {
-    name                       = "perf-nsg-allow-couchbase-vnet"
-    priority                   = 1004
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_ranges    = ["8091-8096", "9102", "9110", "18091-18096", "19102", "19110", "11209-11210","11207"]
-    source_address_prefix      = "VirtualNetwork"
+    name                                       = "perf-nsg-allow-couchbase-vnet"
+    priority                                   = 1004
+    direction                                  = "Inbound"
+    access                                     = "Allow"
+    protocol                                   = "Tcp"
+    source_port_range                          = "*"
+    destination_port_ranges                    = ["8091-8096", "9102", "9110", "18091-18096", "19102", "19110", "11209-11210", "11207"]
+    source_address_prefix                      = "VirtualNetwork"
     destination_application_security_group_ids = [azurerm_application_security_group.cluster-asg.id]
   }
 
   security_rule {
-    name                       = "perf-nsg-allow-couchbase-external"
-    priority                   = 1005
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_ranges    = ["8091-8096", "9102", "9110", "18091-18096", "19102", "19110", "11209-11210","11207"]
-    source_address_prefixes    = local.allowed_external_ips
+    name                                       = "perf-nsg-allow-couchbase-external"
+    priority                                   = 1005
+    direction                                  = "Inbound"
+    access                                     = "Allow"
+    protocol                                   = "Tcp"
+    source_port_range                          = "*"
+    destination_port_ranges                    = ["8091-8096", "9102", "9110", "18091-18096", "19102", "19110", "11209-11210", "11207"]
+    source_address_prefixes                    = local.allowed_external_ips
     destination_application_security_group_ids = [azurerm_application_security_group.cluster-asg.id]
   }
 
   security_rule {
-    name                       = "perf-nsg-allow-syncgateway-vnet"
-    priority                   = 1006
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "4984-5025"
-    source_address_prefix      = "VirtualNetwork"
+    name                                       = "perf-nsg-allow-syncgateway-vnet"
+    priority                                   = 1006
+    direction                                  = "Inbound"
+    access                                     = "Allow"
+    protocol                                   = "Tcp"
+    source_port_range                          = "*"
+    destination_port_range                     = "4984-5025"
+    source_address_prefix                      = "VirtualNetwork"
     destination_application_security_group_ids = [azurerm_application_security_group.syncgateway-asg.id]
   }
 
   security_rule {
-    name                       = "perf-nsg-allow-syncgateway-external"
-    priority                   = 1007
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "4984-5025"
-    source_address_prefixes    = local.allowed_external_ips
+    name                                       = "perf-nsg-allow-syncgateway-external"
+    priority                                   = 1007
+    direction                                  = "Inbound"
+    access                                     = "Allow"
+    protocol                                   = "Tcp"
+    source_port_range                          = "*"
+    destination_port_range                     = "4984-5025"
+    source_address_prefixes                    = local.allowed_external_ips
     destination_application_security_group_ids = [azurerm_application_security_group.syncgateway-asg.id]
   }
 
@@ -455,6 +500,7 @@ resource "azurerm_managed_disk" "perf-cluster-os-disk" {
   storage_account_type       = "Premium_LRS"
   create_option              = "FromImage"
   gallery_image_reference_id = data.azurerm_shared_image_version.cluster-image[each.key].id
+  zone                       = local.cloud_logical_zone
 
   tags = {
     role       = "cluster"
@@ -472,6 +518,7 @@ resource "azurerm_managed_disk" "perf-client-os-disk" {
   storage_account_type       = "Premium_LRS"
   create_option              = "FromImage"
   gallery_image_reference_id = data.azurerm_shared_image_version.client-image[each.key].id
+  zone                       = local.cloud_logical_zone
 
   tags = {
     role       = "client"
@@ -489,6 +536,7 @@ resource "azurerm_managed_disk" "perf-utility-os-disk" {
   storage_account_type       = "Premium_LRS"
   create_option              = "FromImage"
   gallery_image_reference_id = data.azurerm_shared_image_version.utility-image[each.key].id
+  zone                       = local.cloud_logical_zone
 
   tags = {
     role       = "utility"
@@ -506,6 +554,7 @@ resource "azurerm_managed_disk" "perf-syncgateway-os-disk" {
   storage_account_type       = "Premium_LRS"
   create_option              = "FromImage"
   gallery_image_reference_id = data.azurerm_shared_image_version.syncgateway-image[each.key].id
+  zone                       = local.cloud_logical_zone
 
   tags = {
     role       = "sync_gateway"
@@ -515,7 +564,7 @@ resource "azurerm_managed_disk" "perf-syncgateway-os-disk" {
 
 # Config and create cluster data disks.
 resource "azurerm_managed_disk" "perf-cluster-data-disk" {
-  for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
+  for_each = { for k, node in var.cluster_nodes : k => node if node.volume_size > 0 }
 
   name                 = "perf-cluster-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
@@ -524,6 +573,7 @@ resource "azurerm_managed_disk" "perf-cluster-data-disk" {
   create_option        = "Empty"
   disk_size_gb         = each.value.volume_size
   tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+  zone                 = local.cloud_logical_zone
 
   tags = {
     role       = "cluster"
@@ -533,7 +583,7 @@ resource "azurerm_managed_disk" "perf-cluster-data-disk" {
 
 # Config and create client data disks.
 resource "azurerm_managed_disk" "perf-client-data-disk" {
-  for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
+  for_each = { for k, node in var.client_nodes : k => node if node.volume_size > 0 }
 
   name                 = "perf-client-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
@@ -542,6 +592,7 @@ resource "azurerm_managed_disk" "perf-client-data-disk" {
   create_option        = "Empty"
   disk_size_gb         = each.value.volume_size
   tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+  zone                 = local.cloud_logical_zone
 
   tags = {
     role       = "client"
@@ -551,7 +602,7 @@ resource "azurerm_managed_disk" "perf-client-data-disk" {
 
 # Config and create syncgateway data disks.
 resource "azurerm_managed_disk" "perf-syncgateway-data-disk" {
-  for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
+  for_each = { for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0 }
 
   name                 = "perf-syncgateway-data-disk-${each.key}-${var.uuid}"
   location             = "East US"
@@ -560,6 +611,7 @@ resource "azurerm_managed_disk" "perf-syncgateway-data-disk" {
   create_option        = "Empty"
   disk_size_gb         = each.value.volume_size
   tier                 = each.value.disk_tier != "" ? each.value.disk_tier : null
+  zone                 = local.cloud_logical_zone
 
   tags = {
     role       = "syncgateway"
@@ -576,18 +628,19 @@ resource "azurerm_virtual_machine" "perf-cluster-vm" {
   resource_group_name   = "perf-resources-eastus"
   network_interface_ids = [azurerm_network_interface.perf-cluster-ni[each.key].id]
   vm_size               = each.value.instance_type
+  zones                 = local.cloud_logical_zone != null ? [local.cloud_logical_zone] : null
 
   identity {
-    type = "UserAssigned"
+    type         = "UserAssigned"
     identity_ids = [var.managed_id]
   }
 
   storage_os_disk {
-    name                 = azurerm_managed_disk.perf-cluster-os-disk[each.key].name
-    managed_disk_id      = azurerm_managed_disk.perf-cluster-os-disk[each.key].id
-    create_option        = "Attach"
-    caching              = "ReadWrite"
-    os_type              = "Linux"
+    name            = azurerm_managed_disk.perf-cluster-os-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-cluster-os-disk[each.key].id
+    create_option   = "Attach"
+    caching         = "ReadWrite"
+    os_type         = "Linux"
   }
 
   delete_os_disk_on_termination    = true
@@ -601,7 +654,7 @@ resource "azurerm_virtual_machine" "perf-cluster-vm" {
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "perf-cluster-data-disk-attachment" {
-  for_each = {for k, node in var.cluster_nodes : k => node if node.volume_size > 0}
+  for_each = { for k, node in var.cluster_nodes : k => node if node.volume_size > 0 }
 
   managed_disk_id    = azurerm_managed_disk.perf-cluster-data-disk[each.key].id
   virtual_machine_id = azurerm_virtual_machine.perf-cluster-vm[each.key].id
@@ -619,18 +672,19 @@ resource "azurerm_virtual_machine" "perf-client-vm" {
   resource_group_name   = "perf-resources-eastus"
   network_interface_ids = [azurerm_network_interface.perf-client-ni[each.key].id]
   vm_size               = each.value.instance_type
+  zones                 = local.cloud_logical_zone != null ? [local.cloud_logical_zone] : null
 
   identity {
-    type = "UserAssigned"
+    type         = "UserAssigned"
     identity_ids = [var.managed_id]
   }
 
   storage_os_disk {
-    name                 = azurerm_managed_disk.perf-client-os-disk[each.key].name
-    managed_disk_id      = azurerm_managed_disk.perf-client-os-disk[each.key].id
-    create_option        = "Attach"
-    caching              = "ReadWrite"
-    os_type              = "Linux"
+    name            = azurerm_managed_disk.perf-client-os-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-client-os-disk[each.key].id
+    create_option   = "Attach"
+    caching         = "ReadWrite"
+    os_type         = "Linux"
   }
 
   delete_os_disk_on_termination    = true
@@ -644,7 +698,7 @@ resource "azurerm_virtual_machine" "perf-client-vm" {
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "perf-client-data-disk-attachment" {
-  for_each = {for k, node in var.client_nodes : k => node if node.volume_size > 0}
+  for_each = { for k, node in var.client_nodes : k => node if node.volume_size > 0 }
 
   managed_disk_id    = azurerm_managed_disk.perf-client-data-disk[each.key].id
   virtual_machine_id = azurerm_virtual_machine.perf-client-vm[each.key].id
@@ -662,16 +716,17 @@ resource "azurerm_virtual_machine" "perf-utility-vm" {
   resource_group_name   = "perf-resources-eastus"
   network_interface_ids = [azurerm_network_interface.perf-utility-ni[each.key].id]
   vm_size               = each.value.instance_type
+  zones                 = local.cloud_logical_zone != null ? [local.cloud_logical_zone] : null
 
   storage_os_disk {
-    name                 = azurerm_managed_disk.perf-utility-os-disk[each.key].name
-    managed_disk_id      = azurerm_managed_disk.perf-utility-os-disk[each.key].id
-    create_option        = "Attach"
-    caching              = "ReadWrite"
-    os_type              = "Linux"
+    name            = azurerm_managed_disk.perf-utility-os-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-utility-os-disk[each.key].id
+    create_option   = "Attach"
+    caching         = "ReadWrite"
+    os_type         = "Linux"
   }
 
-  delete_os_disk_on_termination    = true
+  delete_os_disk_on_termination = true
 
   tags = {
     role       = "utility"
@@ -688,13 +743,14 @@ resource "azurerm_virtual_machine" "perf-syncgateway-vm" {
   resource_group_name   = "perf-resources-eastus"
   network_interface_ids = [azurerm_network_interface.perf-syncgateway-ni[each.key].id]
   vm_size               = each.value.instance_type
+  zones                 = local.cloud_logical_zone != null ? [local.cloud_logical_zone] : null
 
   storage_os_disk {
-    name                 = azurerm_managed_disk.perf-syncgateway-os-disk[each.key].name
-    managed_disk_id      = azurerm_managed_disk.perf-syncgateway-os-disk[each.key].id
-    create_option        = "Attach"
-    caching              = "ReadWrite"
-    os_type              = "Linux"
+    name            = azurerm_managed_disk.perf-syncgateway-os-disk[each.key].name
+    managed_disk_id = azurerm_managed_disk.perf-syncgateway-os-disk[each.key].id
+    create_option   = "Attach"
+    caching         = "ReadWrite"
+    os_type         = "Linux"
   }
 
   delete_os_disk_on_termination    = true
@@ -708,7 +764,7 @@ resource "azurerm_virtual_machine" "perf-syncgateway-vm" {
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "perf-syncgateway-data-disk-attachment" {
-  for_each = {for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0}
+  for_each = { for k, node in var.syncgateway_nodes : k => node if node.volume_size > 0 }
 
   managed_disk_id    = azurerm_managed_disk.perf-syncgateway-data-disk[each.key].id
   virtual_machine_id = azurerm_virtual_machine.perf-syncgateway-vm[each.key].id

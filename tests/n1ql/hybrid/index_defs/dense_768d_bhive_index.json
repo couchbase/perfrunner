@@ -1,0 +1,15 @@
+{
+  "bucket-1": {
+    "_default": {
+      "_default": {
+        "dense-idx": {
+          "field": "emb VECTOR",
+          "dimension": 768,
+          "description": "'IVF,SQ8'",
+          "similarity": "'COSINE'",
+          "num_replica": 0
+        }
+      }
+    }
+  }
+}

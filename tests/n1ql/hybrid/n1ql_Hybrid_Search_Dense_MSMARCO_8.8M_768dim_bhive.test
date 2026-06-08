@@ -1,0 +1,80 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlHybridSearchTest
+
+[showfast]
+title = Hybrid Search, MS MARCO 8.8M, 768D BHIVE, dense baseline, bhive cluster 1 index node
+component = n1ql
+category = vector
+sub_category = Dense
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 96000
+index_mem_quota = 96000
+initial_nodes = 4
+num_buckets = 1
+online_cores = 16
+
+[bucket]
+backend_storage = magma
+eviction_policy = fullEviction
+
+[load]
+items = 8841823
+doc_gen = vector_embedding
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[secondary]
+indexes = tests/n1ql/hybrid/index_defs/dense_768d_bhive_index.json
+indexer.settings.storage_mode = plasma
+vector_dimension = 768
+vector_def_prefix = emb
+vector_similarity = COSINE
+vector_index_type = bhive
+vector_reranking = true
+vector_scan_probes = 100
+vector_description = 'IVF880,SQ8'
+#  topNScan (bhive rerank) shared by the recall harness and the QPS access phase.
+vector_topn_scan = 100
+retrieval_mode = dense
+query_map_s3_path = s3://hybrid-dense-msmarco/queries/
+
+[restore]
+backup_storage = s3://hybrid-dense-msmarco
+backup_repo = msmarco_hybrid
+map_data = msmarco=bucket-1
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+indexes_path = tests/n1ql/hybrid/index_defs/dense_768d_bhive_index.json
+vector_query_path = tests/n1ql/hybrid/data/msmarco_dense_queries_768d_6980.txt
+top_k_results = 100
+ground_truth_file_name = msmarco_seismic/qrels_ground_truth_seismic.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+
+[access]
+items = 8841823
+workers = 0
+time = 600
+n1ql_op = read
+doc_gen = vector_embedding
+latency_percentiles = 50,90,95,99
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+vector_query_path = tests/n1ql/hybrid/data/msmarco_dense_queries_768d_6980.txt
+
+[n1ql-q01]
+statement = SELECT RAW META(r).id FROM `bucket-1` AS r ORDER BY ANN_DISTANCE(r.emb, $1, 'SIMILARITY', NPROBES, RERANKING, TOPNSCAN) LIMIT top_k_results
+args = [{emb}]
+total_batches = 1000

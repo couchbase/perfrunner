@@ -1,0 +1,80 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlHybridSearchTest
+
+[showfast]
+title = Hybrid Search, YFCC 10M, tag-sparse baseline, bhive cluster 1 index node
+component = n1ql
+category = vector
+sub_category = Sparse
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 96000
+index_mem_quota = 96000
+initial_nodes = 4
+num_buckets = 1
+online_cores = 16
+
+[bucket]
+backend_storage = magma
+eviction_policy = fullEviction
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[secondary]
+indexes = tests/n1ql/hybrid/index_defs/yfcc_dense_bhive_index.json
+indexer.settings.storage_mode = plasma
+vector_index_type = bhive
+vector_scan_probes = 200
+retrieval_mode = sparse
+query_map_s3_path = s3://hybrid-dense-msmarco/queries/
+sparse_vector_field = sparse
+sparse_index_name = sparse-idx
+sparse_description = IVF3000
+sparsejl_dim = 7910
+sparse_query_literal_format = raw
+sparse_topn_scan = 100
+sparse_query_path = tests/n1ql/hybrid/data/yfcc_sparse_queries.5000_qtags.txt
+
+[restore]
+backup_storage = s3://hybrid-dense-msmarco
+backup_repo = yfcc_hybrid_qtags
+map_data = yfcc=bucket-1
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+indexes_path = tests/n1ql/hybrid/index_defs/yfcc_dense_bhive_index.json
+vector_query_path = tests/n1ql/hybrid/data/yfcc_dense_queries_192d.5000.txt
+top_k_results = 100
+ground_truth_file_name = yfcc/yfcc_ground_truth.5000.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+
+[load]
+items = 10000000
+doc_gen = sparse_vector_embedding
+
+[access]
+items = 10000000
+workers = 0
+time = 600
+n1ql_op = read
+doc_gen = sparse_vector_embedding
+latency_percentiles = 50,90,95,99
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+vector_query_path = tests/n1ql/hybrid/data/yfcc_dense_queries_192d.5000.txt
+
+[n1ql-q01]
+statement = SELECT RAW META(r).id FROM `bucket-1` AS r ORDER BY SPARSE_VECTOR_DISTANCE(r.sparse, $1, NPROBES, TOPNSCAN) LIMIT top_k_results
+args = [{sparse}]
+total_batches = 1000

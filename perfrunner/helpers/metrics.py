@@ -3134,6 +3134,32 @@ class MetricHelper:
         metric_info["category"] = cluster
         return round(iops), None, metric_info
 
+    def n1ql_ir_metric(self,
+                       k: int,
+                       value: float,
+                       metric_name: str,
+                       mode: str,
+                       custom_title_postfix: str = None) -> "Metric":
+        """Create IR-quality metric (Recall@k / nDCG@k / MRR@k) for hybrid search.
+
+        Args:
+            k:        cut-off (e.g. 10 for Recall@10).
+            value:    already-aggregated mean metric value (percentage for recall,
+                    0..1 for nDCG/MRR -- we publish as-is, rounded).
+            metric_name: "Recall", "nDCG" or "MRR".
+            mode:     retrieval mode -- "dense", "sparse", "hybrid_rrf", "bm25" or "hybrid_bm25".
+            custom_title_postfix: optional extra label (e.g. index type "bhive").
+        """
+        metric_id = f'{metric_name}_{k}_{mode}_{self.test_config.name}'.replace('.', '')
+        title_prefix = f"{metric_name}@{k}, {mode}"
+        if custom_title_postfix:
+            title_prefix += f" {custom_title_postfix}"
+        title = f'{title_prefix}, {self._title}'
+        # chirality=1 -> higher is better (recall / ranking quality)
+        metric_info = self._metric_info(metric_id, title, chirality=1)
+        metric_info['subCategory'] = metric_name
+        return round(value, 4), self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

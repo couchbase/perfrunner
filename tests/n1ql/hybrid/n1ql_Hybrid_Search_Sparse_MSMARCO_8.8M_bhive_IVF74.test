@@ -1,0 +1,90 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlHybridSearchTest
+
+[showfast]
+title = Sparse Vector Search, MS MARCO 8.8M, SPLADE IVF74 tuned, bhive cluster 1 index node
+component = n1ql
+category = vector
+sub_category = Sparse
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 96000
+index_mem_quota = 96000
+initial_nodes = 4
+num_buckets = 1
+online_cores = 16
+
+[bucket]
+backend_storage = magma
+eviction_policy = fullEviction
+
+[load]
+items = 8841823
+doc_gen = sparse_vector_embedding
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[secondary]
+#  dense def only resolves bucket/scope/collection; no dense index built in sparse mode.
+indexes = tests/n1ql/hybrid/index_defs/dense_768d_bhive_index.json
+indexer.settings.storage_mode = plasma
+vector_index_type = bhive
+vector_scan_probes = 25
+retrieval_mode = sparse
+query_map_s3_path = s3://hybrid-dense-msmarco/queries/
+#  SPLADE sparse leg -- tuned IVF74.
+sparse_vector_field = sparse
+sparse_index_name = sparse-idx
+sparse_description = IVF74
+sparsejl_dim = 4096
+sparse_query_literal_format = raw
+sparse_topn_scan = 100
+sparse_query_path = tests/n1ql/hybrid/data/msmarco_queries_splade_seismic.txt
+#  Tuned BHIVE knobs (cluster-global).
+indexer.bhive.vanama.efSearch = 80
+indexer.bhive.quotaSplitPercent = 95
+indexer.bhive.invertedIndex.topN = 384
+indexer.bhive.invertedIndex.candidateMultiplier = 6
+indexer.bhive.vanama.maxSeeds = 384
+indexer.bhive.vector.pruneMaxDims = 30
+indexer.bhive.query.pruneMaxDims = 10
+
+[restore]
+backup_storage = s3://hybrid-dense-msmarco
+backup_repo = msmarco_hybrid
+map_data = msmarco=bucket-1
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+indexes_path = tests/n1ql/hybrid/index_defs/dense_768d_bhive_index.json
+vector_query_path = tests/n1ql/hybrid/data/msmarco_dense_queries_768d_6980.txt
+top_k_results = 100
+ground_truth_file_name = msmarco_seismic/qrels_ground_truth_seismic.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+
+[access]
+items = 8841823
+workers = 0
+time = 600
+n1ql_op = read
+doc_gen = sparse_vector_embedding
+latency_percentiles = 50,90,95,99
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+vector_query_path = tests/n1ql/hybrid/data/msmarco_dense_queries_768d_6980.txt
+
+[n1ql-q01]
+statement = SELECT RAW META(r).id FROM `bucket-1` AS r ORDER BY SPARSE_VECTOR_DISTANCE(r.sparse, $1, NPROBES, TOPNSCAN) LIMIT top_k_results
+args = [{sparse}]
+total_batches = 1000

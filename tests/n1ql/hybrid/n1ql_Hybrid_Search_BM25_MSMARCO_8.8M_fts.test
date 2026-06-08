@@ -1,0 +1,86 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlHybridSearchTest
+
+[showfast]
+title = BM25 , MS MARCO 8.8M, FTS SEARCH_SCORE, fts 1 index node
+component = n1ql
+category = vector
+sub_category = BM25
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 96000
+index_mem_quota = 96000
+fts_index_mem_quota = 24000
+initial_nodes = 5
+num_buckets = 1
+online_cores = 16
+
+[bucket]
+backend_storage = magma
+eviction_policy = fullEviction
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[secondary]
+#  bm25 = FTS-only: no vector index built; dense def only resolves bucket/scope/collection.
+indexes = tests/n1ql/hybrid/index_defs/dense_768d_bhive_index.json
+indexer.settings.storage_mode = plasma
+#  BM25 uses no vector index; left blank so no index-type label is emitted.
+vector_index_type =
+vector_scan_probes = 25
+retrieval_mode = bm25
+query_map_s3_path = s3://hybrid-dense-msmarco/queries/
+#  BM25 leg (FTS): scores the doc `text` field; query-TEXT file in 6980 order.
+fts_text_field = text
+bm25_query_path = tests/n1ql/hybrid/data/msmarco_queries_text_6980.txt
+
+[restore]
+backup_storage = s3://hybrid-dense-msmarco
+#  Text-inclusive backup (docs = id/emb/sparse/text), source bucket-1; FTS uses `text`.
+backup_repo = msmarco_hybrid_text
+map_data = bucket-1=bucket-1
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+indexes_path = tests/n1ql/hybrid/index_defs/dense_768d_bhive_index.json
+#  vector_query_path opened eagerly at load (unused by bm25); recall uses bm25_query_path.
+vector_query_path = tests/n1ql/hybrid/data/msmarco_dense_queries_768d_6980.txt
+top_k_results = 100
+ground_truth_file_name = msmarco_seismic/qrels_ground_truth_seismic.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+#  BM25 FTS index (created via create_fts_index_n1ql() in run()).
+couchbase_fts_index_name = bm25-idx
+couchbase_fts_index_configfile = tests/n1ql/hybrid/index_defs/msmarco_bm25_fts_index.json
+
+[load]
+items = 8841823
+doc_gen = bm25_text
+
+[access]
+#  Recall via hybrid_relevance_check (FTS query vs qrels); QPS binds text at BM25_QUERY_TEXT.
+items = 8841823
+workers = 0
+time = 600
+n1ql_op = read
+latency_percentiles = 50,90,95,99
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+vector_query_path = tests/n1ql/hybrid/data/msmarco_dense_queries_768d_6980.txt
+doc_gen = bm25_text
+
+[n1ql-q01]
+statement = SELECT RAW META(b).id FROM `TARGET_BUCKET` AS b WHERE SEARCH(b, {"field":"text","match":BM25_QUERY_TEXT}) ORDER BY SEARCH_SCORE(b) DESC LIMIT top_k_results
+args = []
+total_batches = 1000
+ad_hoc = true

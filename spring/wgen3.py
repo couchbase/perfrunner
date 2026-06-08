@@ -32,6 +32,7 @@ from spring.docgen import (
     ArrayIndexingRangeScanDocument,
     ArrayIndexingUniqueDocument,
     BigFunDocument,
+    BM25TextDocument,
     Document,
     EventingCounterDocument,
     EventingSmallCounterDocument,
@@ -48,6 +49,8 @@ from spring.docgen import (
     HighCompressibleDocument,
     HotKey,
     HundredIndexDocument,
+    HybridBM25EmbeddingDocument,
+    HybridVectorEmbeddingDocument,
     ImportExportDocument,
     ImportExportDocumentArray,
     ImportExportDocumentNested,
@@ -80,6 +83,7 @@ from spring.docgen import (
     SingleFieldLargeDoc,
     SmallPlasmaDocument,
     SmallPlasmaGroupedDocument,
+    SparseVectorEmbeddingDocument,
     String,
     TextAndVectorDocument,
     TimeSeriesDocument,
@@ -430,6 +434,24 @@ class Worker:
                                                          ws.size_variation_max)
         elif self.ws.doc_gen == 'vector_embedding':
             self.docs = VectorEmbeddingDocument(self.ws.vector_query_map)
+
+        elif self.ws.doc_gen == 'sparse_vector_embedding':
+            self.docs = SparseVectorEmbeddingDocument(
+                getattr(self.ws, 'sparse_query_map', None))
+
+        elif self.ws.doc_gen == 'hybrid_vector_embedding':
+            self.docs = HybridVectorEmbeddingDocument(
+                self.ws.vector_query_map,
+                getattr(self.ws, 'sparse_query_map', None))
+
+        elif self.ws.doc_gen == 'hybrid_bm25_embedding':
+            self.docs = HybridBM25EmbeddingDocument(
+                getattr(self.ws, 'sparse_query_map', None),
+                getattr(self.ws, 'bm25_query_map', None))
+
+        elif self.ws.doc_gen == 'bm25_text':
+            self.docs = BM25TextDocument(
+                getattr(self.ws, 'bm25_query_map', None))
 
         elif self.ws.doc_gen == 'hierarchical_fts_doc':
             self.docs = HierarchicalFTSDocument(ws.size)

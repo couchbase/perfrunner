@@ -2557,13 +2557,28 @@ class FixedTextAndVectorDocument:
         return doc
 
 
+def _parse_dense_query_map(query_map: list[str]) -> list:
+    """Parse a dense query map (2 leading tokens then float dims) into vectors."""
+    return [[float(x) for x in line.split()[2:]] for line in (query_map or [])]
+
+
+def _parse_sparse_query_map(query_map: list[str]) -> list:
+    """Parse a sparse (SPLADE) query map (tab-separated id, then indices/values)."""
+    return [json.loads(line.strip().split('\t')[1]) for line in (query_map or [])]
+
+
+def _parse_bm25_query_map(query_map: list[str]) -> list:
+    """Parse a BM25 query-TEXT map (tab-separated id, then query text)."""
+    texts = []
+    for line in (query_map or []):
+        parts = line.rstrip("\n").split("\t", 1)
+        texts.append(parts[1] if len(parts) > 1 else "")
+    return texts
+
+
 class VectorEmbeddingDocument:
     def __init__(self, vector_query_map) -> None:
-        embeddings = []
-        for vector in vector_query_map:
-            query = [float(x) for x in vector.split()[2:]]
-            embeddings.append(query)
-        self.embeddings = embeddings
+        self.embeddings = _parse_dense_query_map(vector_query_map)
         self.choices = ["q","2","g","b","m","j","e","d","a","l"]
 
     def next(self, key):
@@ -2572,6 +2587,91 @@ class VectorEmbeddingDocument:
             "choice" : self.choices[random.randint(0, len(self.choices) - 1)]
         }
         return doc
+
+
+class SparseVectorEmbeddingDocument:
+    """Sparse-only query-vector source for the standalone sparse access phase.
+
+    Reads the sparse (SPLADE) query map; next() returns one sparse vector bound
+    at $1 in the SPARSE_VECTOR_DISTANCE query.
+    """
+
+    def __init__(self, sparse_query_map: list[str]) -> None:
+        self.sparse_vectors = _parse_sparse_query_map(sparse_query_map)
+        if not self.sparse_vectors:
+            raise ValueError(
+                "SparseVectorEmbeddingDocument: empty sparse query map -- "
+                "sparse_query_map must reach the worker (check sparse_query_path)."
+            )
+
+    def next(self, key: Key) -> dict:
+        i = random.randint(0, len(self.sparse_vectors) - 1)
+        return {"sparse": self.sparse_vectors[i]}
+
+
+class HybridVectorEmbeddingDocument:
+    """Aligned dense + sparse query-vector source for hybrid (reciprocal_fusion).
+
+    The dense and sparse maps are line-aligned, so next() returns both vectors
+    for the same query.
+    """
+
+    def __init__(self, dense_query_map: list[str], sparse_query_map: list[str]) -> None:
+        self.embeddings = _parse_dense_query_map(dense_query_map)
+        self.sparse_vectors = _parse_sparse_query_map(sparse_query_map)
+        self.n = min(len(self.embeddings), len(self.sparse_vectors))
+        if self.n == 0:
+            raise ValueError(
+                "HybridVectorEmbeddingDocument: empty query map(s) "
+                f"(dense={len(self.embeddings)}, sparse={len(self.sparse_vectors)})"
+                " -- vector_query_map and sparse_query_map must reach the worker."
+            )
+
+    def next(self, key: Key) -> dict:
+        i = random.randint(0, self.n - 1)
+        return {"emb": self.embeddings[i], "sparse": self.sparse_vectors[i]}
+
+
+class HybridBM25EmbeddingDocument:
+    """Aligned sparse (SPLADE) + query-TEXT source for the SPLADE+BM25 hybrid.
+
+    The sparse and BM25-text maps are line-aligned, so next() returns the sparse
+    vector and query text for the same query.
+    """
+
+    def __init__(self, sparse_query_map: list[str], bm25_query_map: list[str]) -> None:
+        self.sparse_vectors = _parse_sparse_query_map(sparse_query_map)
+        self.texts = _parse_bm25_query_map(bm25_query_map)
+        self.n = min(len(self.sparse_vectors), len(self.texts))
+        if self.n == 0:
+            raise ValueError(
+                "HybridBM25EmbeddingDocument: empty query map(s) "
+                f"(sparse={len(self.sparse_vectors)}, text={len(self.texts)}) -- "
+                "sparse_query_map and bm25_query_map must reach the worker."
+            )
+
+    def next(self, key: Key) -> dict:
+        i = random.randint(0, self.n - 1)
+        return {"sparse": self.sparse_vectors[i], "text": self.texts[i]}
+
+
+class BM25TextDocument:
+    """Query-TEXT source for standalone BM25 (FTS-only) access queries.
+
+    next() returns one query's text, injected into the FTS SEARCH() leg.
+    """
+
+    def __init__(self, bm25_query_map: list[str]) -> None:
+        self.texts = _parse_bm25_query_map(bm25_query_map)
+        self.n = len(self.texts)
+        if self.n == 0:
+            raise ValueError(
+                "BM25TextDocument: empty bm25_query_map -- bm25_query_map must "
+                "reach the worker."
+            )
+
+    def next(self, key: Key) -> dict:
+        return {"text": self.texts[random.randint(0, self.n - 1)]}
 
 
 class HierarchicalFTSDocument(Document):

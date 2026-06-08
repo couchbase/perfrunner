@@ -1,4 +1,7 @@
 import datetime
+import json
+import math
+import os
 import re
 import threading
 import time
@@ -10,9 +13,14 @@ import numpy as np
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import create_build_tuple, pretty_dict, run_aws_cli_command
+from perfrunner.helpers.misc import (
+    create_build_tuple,
+    pretty_dict,
+    read_json,
+    run_aws_cli_command,
+)
 from perfrunner.helpers.profiler import with_profiles
-from perfrunner.settings import AccessSettings
+from perfrunner.settings import AccessSettings, ClusterSpec, TestConfig
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import (
     CapellaRebalanceTest,
@@ -2263,6 +2271,439 @@ class N1qlVectorLatencyThroughputPreparedStatementTest(N1qlVectorSearchTest):
         initial_throughput = self.metrics._avg_n1ql_throughput(self.master_node)
         self.access()
         self.report_kpi(probes, recalls, accuracies, initial_throughput)
+
+
+class N1qlHybridSearchTest(N1qlVectorLatencyThroughputPreparedStatementTest):
+    """N1QL vector/hybrid search perf test across five retrieval modes.
+
+    Selected via [secondary] retrieval_mode:
+      dense       - ANN over the dense BHIVE (GSI) index
+      sparse      - SPARSE_VECTOR_DISTANCE over the sparse (SPLADE) GSI index
+      hybrid_rrf  - reciprocal-rank fusion of dense + sparse
+      bm25        - FTS SEARCH() over the text field (FTS-only, no GSI index)
+      hybrid_bm25 - reciprocal fusion of sparse (SPLADE, GSI) + BM25 (FTS)
+
+    Reports retrieval quality (Recall@k / nDCG@k / MRR@k) alongside query
+    latency and throughput. Datasets: MS MARCO, YFCC, WANDS.
+    """
+
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
+                 verbose: bool) -> None:
+        super().__init__(cluster_spec, test_config, verbose)
+        self.gsi = self.test_config.gsi_settings
+        self.fetch_query_maps()
+        self.bsc = self._bucket_scope_collection()
+        self.top_k = int(self.test_config.index_settings.top_k_results)
+        self.rrf_output_id_field = self.gsi.rrf_output_id_field
+        # Query maps read once (files on disk after fetch_query_maps); reused by
+        # the recall harness and the access phase.
+        self.dense_map = self.test_config.index_settings.vector_query_map or []
+        self.sparse_map = []
+        if self.gsi.sparse_query_path:
+            with open(self.gsi.sparse_query_path) as f:
+                self.sparse_map = f.readlines()
+        self.bm25_map = []
+        if (self.gsi.bm25_query_path
+                and self.gsi.retrieval_mode in ("bm25", "hybrid_bm25")):
+            with open(self.gsi.bm25_query_path) as f:
+                self.bm25_map = f.readlines()
+
+    def create_statements(self) -> list[str]:
+        """Index DDL: dense (inherited) + sparse when needed; bm25=none, hybrid_bm25=sparse only."""
+        if self.gsi.retrieval_mode == "bm25":
+            return []                                       # FTS-only; created in run()
+        if self.gsi.retrieval_mode in ("sparse", "hybrid_bm25"):
+            return self._sparse_index_statements()          # sparse index only
+        statements = super().create_statements()            # dense BHIVE create+build
+        if self.gsi.retrieval_mode == "hybrid_rrf":
+            statements = self._sparse_index_statements() + statements
+        return statements
+
+    def _sparse_index_statements(self) -> list[str]:
+        """Sparse BHIVE VECTOR index DDL (deferred + BUILD); gsi.sparse_index_ddl overrides."""
+        gsi = self.gsi
+        b, s, c = self.bsc
+        # sparse leg's own nprobe (else vector_scan_probes)
+        nprobe = str(gsi.sparse_scan_probes or gsi.vector_scan_probes).split(",")[0]
+        if gsi.sparse_index_ddl:
+            create = gsi.sparse_index_ddl
+        else:
+            create = (
+                f"CREATE VECTOR INDEX `{gsi.sparse_index_name}` ON "
+                f"`{b}`.`{s}`.`{c}`({gsi.sparse_vector_field} SPARSE VECTOR) "
+                f"WITH {{'defer_build':true, 'description':'{gsi.sparse_description}', "
+                f"'num_replica':0, 'scan_nprobes':{nprobe}, "
+                f"'sparsejl_dim':{gsi.sparsejl_dim}}}"
+            )
+        build = f"BUILD INDEX ON `{b}`.`{s}`.`{c}` ('{gsi.sparse_index_name}')"
+        return [create, build]
+
+    def _bucket_scope_collection(self) -> tuple[str, str, str]:
+        gsi = self.gsi
+        bucket, scopes = next(iter(gsi.indexes.items()))
+        scope, collections = next(iter(scopes.items()))
+        collection, _ = next(iter(collections.items()))
+        return bucket, scope, collection
+
+    def _subquery(self, order_expr: str, limit: int, where_clause: str = "",
+                  for_fusion: bool = False, score_expr: Optional[str] = None) -> str:
+        """Shared SELECT RAW skeleton for the dense / sparse / bm25 legs.
+
+        for_fusion projects {rrf_output_id_field: id[, score]}, else raw id;
+        where_clause (no leading WHERE) is inserted for the bm25 FTS leg.
+        """
+        b, s, c = self.bsc
+        score_kv = (f', "score": {score_expr}'
+                    if for_fusion and score_expr is not None else "")
+        proj = (f'{{"{self.rrf_output_id_field}": META(r).id{score_kv}}}'
+                if for_fusion else "META(r).id")
+        where = f"WHERE {where_clause} " if where_clause else ""
+        return (
+            f"SELECT RAW {proj} FROM `{b}`.`{s}`.`{c}` AS r "
+            f"{where}ORDER BY {order_expr} LIMIT {limit}"
+        )
+
+    def _dense_subquery(self, dense_vec: str, probe: str, limit: int,
+                        for_fusion: bool = False) -> str:
+        """Dense ANN_DISTANCE subquery; for_fusion projects {id[,score]}, else raw id."""
+        gsi = self.gsi
+        rerank = ""
+        if self.index_type == "bhive":
+            rerank = f", {str(gsi.vector_reranking).lower()}"
+            # opt-in topNScan (>= LIMIT, default OFF); shared with the access phase.
+            topn = int(gsi.vector_topn_scan or 0)
+            if topn > 0:
+                rerank = f"{rerank}, {max(topn, int(limit))}"
+        dist_expr = (f"ANN_DISTANCE(r.{gsi.vector_def_prefix}, {dense_vec}, "
+                     f"'{gsi.vector_similarity}', {probe}{rerank})")
+        # RSF: leg projects its distance as `score` only if fusion_scorer==rsf
+        # (RRF path unchanged; no score field).
+        score_expr = dist_expr if gsi.fusion_scorer == "rsf" else None
+        return self._subquery(dist_expr, limit, for_fusion=for_fusion,
+                              score_expr=score_expr)
+
+    def _format_sparse_literal(self, raw: str) -> str:
+        """Render the sparse query-vector literal for SPARSE_VECTOR_DISTANCE."""
+        fmt = self.test_config.gsi_settings.sparse_query_literal_format
+        if fmt == "indices_values":
+            ids, weights = json.loads(raw)        # raw == "[[ids],[weights]]"
+            return json.dumps({"indices": ids, "values": weights})
+        return raw  # "raw" -> pass the [[ids],[weights]] literal through unchanged
+
+    def _sparse_subquery(self, sparse_vec: str, limit: int, probe: Optional[str] = None,
+                         topn: Optional[int] = None, for_fusion: bool = False) -> str:
+        """Sparse SPARSE_VECTOR_DISTANCE subquery matching the sparse baseline."""
+        gsi = self.gsi
+        literal = self._format_sparse_literal(sparse_vec)
+        nprobe = (probe if probe is not None
+                  else str(gsi.vector_scan_probes).split(",")[0])
+        topnscan = topn if topn is not None else gsi.sparse_topn_scan
+        dist_expr = (f"SPARSE_VECTOR_DISTANCE(r.{gsi.sparse_vector_field}, {literal}, "
+                     f"{nprobe}, {topnscan})")
+        # RSF: leg projects its distance as `score` only if fusion_scorer==rsf
+        # (RRF path is byte-identical -- no score field).
+        score_expr = dist_expr if gsi.fusion_scorer == "rsf" else None
+        return self._subquery(dist_expr, limit, for_fusion=for_fusion,
+                              score_expr=score_expr)
+
+    def _bm25_subquery(self, query_text: str, limit: int, for_fusion: bool = False) -> str:
+        """BM25 leg via FTS SEARCH() -- BM25 in place of dense (option 1)."""
+        gsi = self.gsi
+        match = json.dumps(query_text)          # safe-escape the query string
+        where = (f'SEARCH(r, {{"field": "{gsi.fts_text_field}", '
+                 f'"match": {match}}})')
+        return self._subquery(
+            "SEARCH_SCORE(r) DESC", limit, where_clause=where,
+            for_fusion=for_fusion)
+
+    def _build_rrf_options(self) -> str:
+        """Build the reciprocal_fusion() options object (first arg)."""
+        gsi = self.gsi
+        if gsi.rrf_options_json:
+            return gsi.rrf_options_json
+        weights = self.gsi.rrf_weights or [1.0, 1.0]
+        args = [{"pathId": self.rrf_output_id_field,
+                 "penalty": self.gsi.rrf_constant, "weight": w} for w in weights]
+        options = {
+            "fusion": gsi.fusion_type,     # "unionall"
+            "scorer": gsi.fusion_scorer,   # "rrf"
+            "score": True,
+            "limit": self.top_k,
+            "args": args,
+        }
+        return json.dumps(options)
+
+    def _render_statement(self, dense_vec: str, sparse_vec: str, probe: str,
+                          text_query: str = "") -> str:
+        """Build the full SQL++ statement for the active retrieval mode."""
+        gsi = self.gsi
+        depth = self.gsi.fusion_candidate_depth
+        if self.gsi.retrieval_mode == "dense":
+            # final list = dense top-K directly
+            return self._dense_subquery(dense_vec, probe, self.top_k)
+        if self.gsi.retrieval_mode == "sparse":
+            return self._sparse_subquery(sparse_vec, self.top_k)
+        if self.gsi.retrieval_mode == "bm25":
+            # standalone BM25 (FTS) top-K directly
+            return self._bm25_subquery(text_query, self.top_k)
+        if self.gsi.retrieval_mode == "hybrid_bm25":
+            # SPLADE + BM25(FTS) fused via RRF (BM25 in place of
+            # dense). Both legs fetch `depth`; fusion returns top-K.
+            options_json = self._build_rrf_options()
+            sparse_probe = str(gsi.sparse_scan_probes or probe).split(",")[0]
+            sparse_leg = self._sparse_subquery(sparse_vec, depth, probe=sparse_probe,
+                                               topn=depth, for_fusion=True)
+            bm25_leg = self._bm25_subquery(text_query, depth, for_fusion=True)
+            return (
+                f"SELECT RAW f.{self.rrf_output_id_field} "
+                f"FROM reciprocal_fusion({options_json}, ({sparse_leg}), ({bm25_leg})) AS f"
+            )
+        # hybrid_rrf: fuse dense+sparse, each leg fetches `depth`, fusion returns
+        # top-K. Per-leg nprobe: dense=probe, sparse=sparse_scan_probes (else probe).
+        options_json = self._build_rrf_options()
+        sparse_probe = str(gsi.sparse_scan_probes or probe).split(",")[0]
+        dense_leg = self._dense_subquery(dense_vec, probe, depth, for_fusion=True)
+        sparse_leg = self._sparse_subquery(sparse_vec, depth, probe=sparse_probe,
+                                           topn=depth, for_fusion=True)
+        return (
+            f"SELECT RAW f.{self.rrf_output_id_field} "
+            f"FROM reciprocal_fusion({options_json}, ({dense_leg}), ({sparse_leg})) AS f"
+        )
+
+    def _load_ground_truth(self) -> list[set]:
+        """Return order-aligned ground truth (line N = query N)."""
+        gt = []
+        with open(self.test_config.index_settings.ground_truth_file_name) as f:
+            for line in f:
+                gt.append(set(line.split()))
+        return gt
+
+    @staticmethod
+    def _recall_at_k(ranked_ids: list, relevant: set, k: int) -> Optional[float]:
+        if not relevant:
+            return None
+        topk = ranked_ids[:k]
+        hits = sum(1 for d in topk if d in relevant)
+        return hits / float(len(relevant))         # |rel ∩ topk| / |rel|
+
+    @staticmethod
+    def _mrr_at_k(ranked_ids: list, relevant: set, k: int) -> float:
+        for rank, d in enumerate(ranked_ids[:k], start=1):
+            if d in relevant:
+                return 1.0 / rank
+        return 0.0
+
+    @staticmethod
+    def _ndcg_at_k(ranked_ids: list, grades: dict, k: int) -> float:
+        # grades: {docid: grade}
+        dcg = 0.0
+        for rank, d in enumerate(ranked_ids[:k], start=1):
+            g = grades.get(d, 0)
+            if g:
+                dcg += (2 ** g - 1) / math.log2(rank + 1)
+        ideal = sorted(grades.values(), reverse=True)[:k]
+        idcg = sum((2 ** g - 1) / math.log2(i + 2) for i, g in enumerate(ideal))
+        return dcg / idcg if idcg else 0.0
+
+    def hybrid_relevance_check(self) -> dict:
+        """Run the mode query per MS MARCO query; aggregate IR metrics (recall/nDCG/MRR)."""
+        query_node = self.query_nodes[0]
+        gsi = self.gsi
+        probe = str(gsi.vector_scan_probes).split(",")[0]
+        ground_truth = self._load_ground_truth()
+        dense_map = self.dense_map
+        sparse_map = self.sparse_map
+        bm25_map = self.bm25_map          # aligned query-TEXT (bm25/hybrid_bm25)
+        if self.gsi.retrieval_mode == "dense":
+            required = [dense_map]
+        elif self.gsi.retrieval_mode == "bm25":
+            required = [bm25_map]
+        elif self.gsi.retrieval_mode == "hybrid_rrf":
+            required = [dense_map, sparse_map]
+        elif self.gsi.retrieval_mode == "hybrid_bm25":
+            required = [sparse_map, bm25_map]
+        else:
+            required = [sparse_map]
+        lengths = [len(m) for m in required] + [len(ground_truth)]
+        query_len = min(lengths)
+        if len(set(lengths)) > 1:
+            logger.warn(f"map/ground-truth line counts differ {lengths} -- "
+                        f"possible misalignment; evaluating min() = {query_len}.")
+        n = query_len
+
+        def eval_one(i, first):
+            relevant = ground_truth[i]            # order-aligned: GT for query i
+            if not relevant:
+                return None
+            # dense line: '<qid> <pad> <f1>...' (worker uses split()[2:]);
+            # sparse line: '<qid> [[term_ids],[weights]]' (SPLADE file).
+            d_tokens = dense_map[i].split() if i < len(dense_map) else []
+            s_parts = (sparse_map[i].rstrip("\n").split("\t")
+                       if i < len(sparse_map) else [])
+            dense_vec = "[" + ",".join(d_tokens[2:]) + "]" if d_tokens else "[]"
+            sparse_vec = s_parts[1] if len(s_parts) > 1 else "[[],[]]"
+            text_query = ""                       # bm25/hybrid_bm25: "<qid>\t<text>"
+            if i < len(bm25_map):
+                b_parts = bm25_map[i].rstrip("\n").split("\t", 1)
+                text_query = b_parts[1] if len(b_parts) > 1 else ""
+            stmt = self._render_statement(dense_vec, sparse_vec, probe, text_query)
+            if first:
+                qid = d_tokens[0] if d_tokens else (s_parts[0] if s_parts else "?")
+                logger.info(f"[{self.gsi.retrieval_mode}] sample qid={qid} stmt: {stmt}")
+            res = self.rest.exec_n1ql_statement(query_node, stmt)
+            ranked = [row if isinstance(row, str) else row.get('id')
+                      for row in res['results']]
+            grades = {d: 1 for d in relevant}     # MS MARCO: binary relevance
+            return (self._recall_at_k(ranked, relevant, self.top_k),
+                    self._ndcg_at_k(ranked, grades, self.top_k),
+                    self._mrr_at_k(ranked, relevant, self.top_k))
+        recalls, ndcgs, mrrs = [], [], []
+        first = True
+        with ThreadPoolExecutor(max_workers=20) as ex:
+            futures = [ex.submit(eval_one, i, first and i == 0) for i in range(n)]
+            first = False
+            for fut in as_completed(futures):
+                out = fut.result()
+                if not out or out[0] is None:
+                    continue
+                recalls.append(out[0])
+                ndcgs.append(out[1])
+                mrrs.append(out[2])
+        result = {
+            "recall": float(np.mean(recalls) * 100) if recalls else 0.0,
+            "ndcg": float(np.mean(ndcgs)) if ndcgs else 0.0,
+            "mrr": float(np.mean(mrrs)) if mrrs else 0.0,
+            "probe": probe,
+            "num_queries": len(recalls),
+        }
+        logger.info(f"[{self.gsi.retrieval_mode}] IR metrics over {result['num_queries']} "
+                    f"queries: recall@{self.top_k}={result['recall']:.3f}%, "
+                    f"nDCG@{self.top_k}={result['ndcg']:.4f}, "
+                    f"MRR@{self.top_k}={result['mrr']:.4f}")
+        return result
+
+    def report_kpi(self, ir: dict, initial_throughput: float) -> None:
+        mode = self.gsi.retrieval_mode
+        k = self.top_k
+        # relevance metrics
+        self.reporter.post(*self.metrics.n1ql_ir_metric(k, ir["recall"], "Recall", mode,
+                                                        self.index_type))
+        self.reporter.post(*self.metrics.n1ql_ir_metric(k, ir["ndcg"], "nDCG", mode,
+                                                        self.index_type))
+        self.reporter.post(*self.metrics.n1ql_ir_metric(k, ir["mrr"], "MRR", mode,
+                                                        self.index_type))
+        # latency (p95 etc.) + throughput via the standard collector path
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            self.reporter.post(*self.metrics.query_latency(
+                percentile=percentile, custom_title_postfix=mode, update_subcategory=True))
+        self.reporter.post(*self.metrics.avg_n1ql_throughput(
+            self.master_node, initial_throughput=initial_throughput,
+            custom_title_postfix=mode, update_subcategory=True))
+
+    def set_custom_query_settings(self, access_settings: AccessSettings) -> AccessSettings:
+        gsi = self.gsi
+        # Per-leg tokens first; they embed the generic NPROBES/TOPNSCAN.
+        stmt = access_settings.n1ql_queries[0]['statement']
+        if "DENSE_NPROBES" in stmt or "SPARSE_NPROBES" in stmt:
+            cdepth = int(gsi.fusion_candidate_depth)
+            dense_nprobe = str(gsi.vector_scan_probes).split(",")[0]
+            sparse_nprobe = str(gsi.sparse_scan_probes or
+                                gsi.vector_scan_probes).split(",")[0]
+            dense_topn = str(max(int(gsi.vector_topn_scan or cdepth), cdepth))
+            sparse_topn = str(max(int(gsi.sparse_topn_scan or cdepth), cdepth))
+            access_settings.n1ql_queries[0]['statement'] = (
+                stmt.replace("DENSE_NPROBES", dense_nprobe)
+                    .replace("SPARSE_NPROBES", sparse_nprobe)
+                    .replace("DENSE_TOPNSCAN", dense_topn)
+                    .replace("SPARSE_TOPNSCAN", sparse_topn))
+        # super() applies the generic NPROBES/top_k/SIMILARITY/RERANKING.
+        access_settings = super().set_custom_query_settings(access_settings)
+        depth = str(gsi.fusion_candidate_depth)
+        stmt = access_settings.n1ql_queries[0]['statement']
+        # TOPNSCAN: vector_topn_scan, else fusion depth / top_k (>= LIMIT).
+        if gsi.vector_topn_scan:
+            topn = str(gsi.vector_topn_scan)
+        elif "reciprocal_fusion" in stmt:
+            topn = depth
+        else:
+            topn = str(self.test_config.index_settings.top_k_results)
+        stmt = stmt.replace("TOPNSCAN", topn)
+        stmt = stmt.replace("CANDIDATE_DEPTH", depth)
+        # Fusion options from the same builder as the recall path (honors
+        # rrf_weights / rrf_constant / fusion_scorer); no-op if the token is absent.
+        access_settings.n1ql_queries[0]['statement'] = stmt.replace(
+            "RRF_OPTIONS", self._build_rrf_options())
+        # dense ($1=emb) + sparse ($2=sparse) maps, line-aligned per query.
+        access_settings.vector_query_map = self.dense_map
+        if self.gsi.sparse_query_path:
+            access_settings.sparse_query_map = self.sparse_map
+        # BM25 query-TEXT map -> bound into FTS SEARCH() via BM25_QUERY_TEXT.
+        if (self.gsi.bm25_query_path
+                and self.gsi.retrieval_mode in ("bm25", "hybrid_bm25")):
+            access_settings.bm25_query_map = self.bm25_map
+        return access_settings
+
+    def fetch_query_maps(self) -> None:
+        """Download the query-map files from S3 to their local paths if absent."""
+        gsi = self.gsi
+        prefix = gsi.query_map_s3_path
+        if not prefix:
+            return
+        cfg = self.test_config.config
+        targets = []
+        if cfg.has_option("index", "vector_query_path"):     # dense query map
+            targets.append(cfg.get("index", "vector_query_path"))
+        if gsi.sparse_query_path:                            # sparse query map
+            targets.append(gsi.sparse_query_path)
+        if gsi.bm25_query_path:                              # BM25 query-TEXT map
+            targets.append(gsi.bm25_query_path)
+        for path in targets:
+            if path and not os.path.exists(path):
+                parent = os.path.dirname(path)
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
+                logger.info(f"fetching query map: {prefix}{os.path.basename(path)} "
+                            f"-> {path}")
+                run_aws_cli_command(
+                    f"s3 cp {prefix}{os.path.basename(path)} {path}", profile="default")
+
+    def enable_stats(self) -> None:
+        # enable_stats() only turns on the n1ql_latency collector when the class
+        # name contains "latency" (ours doesn't) -> empty p95 series. Force it on.
+        super().enable_stats()
+        self.COLLECTORS["n1ql_latency"] = True
+
+    def create_fts_index_n1ql(self) -> None:
+        """Create the BM25 FTS index on the text field (verbatim from config)."""
+        definition = read_json(
+            self.test_config.index_settings.couchbase_fts_index_configfile)
+        index_name = self.test_config.index_settings.couchbase_fts_index_name
+        definition["name"] = index_name
+        definition["sourceName"] = self.test_config.buckets[0]
+        logger.info(f"Creating BM25 FTS index: {pretty_dict(definition)}")
+        created_name = self.rest.create_fts_index(
+            self.fts_nodes[0], index_name, definition)
+        self.monitor.monitor_fts_indexing_queue(
+            self.fts_nodes[0], created_name,
+            int(self.test_config.access_settings.items))
+
+    def run(self) -> None:
+        self.cloud_restore()
+        statements = self.create_statements()
+        # Skip index creation when there's nothing to build (bm25 is FTS-only,
+        # returns []). create_indexes([]) would fall back to the dense index.
+        if statements:
+            self.create_indexes(statements=statements)
+            self.wait_for_indexing(statements=statements)
+        if self.gsi.retrieval_mode in ("bm25", "hybrid_bm25"):
+            self.create_fts_index_n1ql()            # BM25 FTS index on the text field
+        self.downloads_ground_truth_file()          # fetches the qrels file (inherited)
+        ir = self.hybrid_relevance_check()          # Recall@k / nDCG@k / MRR@k
+        # latency + QPS via the access phase (workers + collectors)
+        self.enable_stats()
+        initial_throughput = self.metrics._avg_n1ql_throughput(self.master_node)
+        self.access()                                # @with_stats inherited
+        self.report_kpi(ir, initial_throughput)
 
 
 class CapellaSnapshotBackupWithN1QLTest(CapellaSnapshotBackupRestoreTest, N1QLTest):

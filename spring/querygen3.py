@@ -1,5 +1,6 @@
 import ast
 import importlib.metadata
+import json
 import re
 from itertools import cycle
 
@@ -322,6 +323,17 @@ class N1QLQueryGen3:
         else:
             args = args.format(**doc)
             args = eval(args)
+
+        # reciprocal_fusion doesn't bind $1/$2 to its subqueries (code 5010) -> inline vectors here.
+        if 'reciprocal_fusion' in statement and isinstance(args, list):
+            for i in range(len(args), 0, -1):  # replace $2 before $1
+                statement = statement.replace(
+                    f'${i}', json.dumps(args[i - 1]))
+            args = []
+
+        # BM25/FTS leg: inline query TEXT as a JSON literal (reciprocal_fusion can't bind params).
+        if 'BM25_QUERY_TEXT' in statement and isinstance(doc, dict) and 'text' in doc:
+            statement = statement.replace('BM25_QUERY_TEXT', json.dumps(doc['text']))
 
         params = {
             'adhoc': bool(ad_hoc),

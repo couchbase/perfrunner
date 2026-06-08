@@ -2638,6 +2638,41 @@ class GSISettings:
                                                           self.DROPKEY_TEST_DURATION_SECS))
         self.dropkey_force_rotation = int(options.get('dropkey_force_rotation',
                                                       self.DROPKEY_FORCE_ROTATION))
+        # ---- Hybrid / RRF fusion settings (Hybrid Search) -------------
+        self.retrieval_mode = options.get("retrieval_mode")
+        self.rrf_constant = (int(options["rrf_constant"])
+                             if options.get("rrf_constant") else None)
+        _weights = options.get("rrf_weights", None)
+        self.rrf_weights = ([float(w) for w in _weights.split(",")]
+                            if _weights else None)
+        self.rrf_output_id_field = options.get("rrf_output_id_field", "id")
+        self.rrf_options_json = options.get("rrf_options_json", None)
+        self.fusion_candidate_depth = (int(options["fusion_candidate_depth"])
+                                       if options.get("fusion_candidate_depth") else None)
+        self.sparse_vector_field = options.get("sparse_vector_field", "sparse")
+        self.sparse_index_name = options.get("sparse_index_name", "sparse_idx")
+        self.sparse_description = options.get("sparse_description")
+        self.sparsejl_dim = (int(options["sparsejl_dim"])
+                             if options.get("sparsejl_dim") else None)
+        self.sparse_index_ddl = options.get("sparse_index_ddl", None)
+        self.sparse_query_path = options.get("sparse_query_path", None)
+        self.sparse_query_literal_format = options.get("sparse_query_literal_format", "raw")
+        # sparse leg TOPNSCAN (re-score depth); standalone-sparse default (hybrid uses leg LIMIT).
+        self.sparse_topn_scan = (int(options["sparse_topn_scan"])
+                                 if options.get("sparse_topn_scan") else None)
+        # sparse-leg nprobe (unset -> vector_scan_probes).
+        self.sparse_scan_probes = options.get("sparse_scan_probes", None)
+        # TOPNSCAN (scan depth, != LIMIT); unset -> CANDIDATE_DEPTH (fusion) / top_k_results.
+        self.vector_topn_scan = options.get("vector_topn_scan", None)
+        # ---- BM25 / FTS leg --------
+        # Used only by retrieval_mode in {"bm25","hybrid_bm25"}; other modes ignore.
+        # fts_text_field = FTS-scored field; bm25_query_path = aligned query-TEXT file.
+        self.fts_text_field = options.get("fts_text_field", "text")
+        self.bm25_query_path = options.get("bm25_query_path", None)
+        # fusion_type / fusion_scorer feed the reciprocal_fusion() options object.
+        self.fusion_type = options.get("fusion_type", "unionall")
+        self.fusion_scorer = options.get("fusion_scorer", "rrf")
+        self.query_map_s3_path = options.get("query_map_s3_path", None)
 
     def __str__(self) -> str:
         return str(self.__dict__)

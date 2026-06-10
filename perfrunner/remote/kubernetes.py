@@ -15,7 +15,7 @@ from perfrunner.helpers.config_files import (
     CAOHorizontalAutoscalerFile,
     IngressFile,
 )
-from perfrunner.remote import Remote
+from perfrunner.remote import YCSB_MAVEN_OPTS, Remote
 from perfrunner.settings import ClusterSpec, SyncgatewaySettings
 
 
@@ -600,8 +600,19 @@ class RemoteKubernetes(Remote):
                 worker_name = line.split()[0]
                 cmd = f"pyenv local 2.7.18 && bin/ycsb build {ycsb_client}"
 
-                logger.info('Running: {}'.format(cmd))
-                self.kubectl_exec(worker_name, 'cd YCSB; {}'.format(cmd))
+                logger.info(f"Running: {cmd}")
+                try:
+                    self.kubectl_exec(worker_name, f"cd YCSB; {cmd}")
+                except Exception:
+                    logger.warning(
+                        "bin/ycsb build is not supported by this branch; "
+                        "falling back to direct Maven build"
+                    )
+                    mvn_cmd = f"mvn -pl ./{ycsb_client} -am package -DskipTests"
+                    logger.info(f"Running: {mvn_cmd}")
+                    self.kubectl_exec(
+                        worker_name, f"cd YCSB; MAVEN_OPTS='{YCSB_MAVEN_OPTS}' {mvn_cmd}"
+                    )
 
     def sanitize_meta(self, config):
         config['generation'] = 0

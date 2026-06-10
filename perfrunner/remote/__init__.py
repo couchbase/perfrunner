@@ -2,7 +2,7 @@ import os
 import shutil
 from typing import Optional
 
-from fabric.api import cd, get, run, settings, shell_env
+from fabric.api import cd, get, hide, run, settings, shell_env
 
 from logger import logger
 from perfrunner.helpers.misc import get_python_sdk_installation
@@ -13,6 +13,10 @@ from perfrunner.remote.context import (
     syncgateway_servers,
 )
 from perfrunner.settings import REPO, ClusterSpec
+
+# Skip checkstyle incase upstream branch doesn't enforce it.
+# Also configure stack size for clients that haven't set anything.
+YCSB_MAVEN_OPTS = "-Dcheckstyle.skip=true -Xss16m"
 
 
 class Remote:
@@ -107,11 +111,22 @@ class Remote:
 
     @all_clients
     def build_ycsb(self, worker_home: str, ycsb_client: str):
-        cmd = 'pyenv local 2.7.18 && bin/ycsb build {}'.format(ycsb_client)
+        cmd = f"pyenv local 2.7.18 && bin/ycsb build {ycsb_client}"
 
-        logger.info('Running: {}'.format(cmd))
-        with cd(worker_home), cd('perfrunner'), cd('YCSB'):
-            run(cmd)
+        logger.info(f"Running: {cmd}")
+        with cd(worker_home), cd("perfrunner"), cd("YCSB"):
+            with settings(hide("output", "warnings"), warn_only=True):
+                result = run(cmd)
+            if result.return_code == 0:
+                return
+
+            logger.warning(
+                "bin/ycsb build is not supported by this branch; falling back to direct Maven build"
+            )
+            mvn_cmd = f"mvn -pl ./{ycsb_client} -am package -DskipTests"
+            logger.info(f"Running: {mvn_cmd}")
+            with shell_env(MAVEN_OPTS=YCSB_MAVEN_OPTS):
+                run(mvn_cmd)
 
     @all_clients
     def init_ycsb(self, repo: str, branch: str, worker_home: str, sdk_version: None):

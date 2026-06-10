@@ -1830,6 +1830,9 @@ class PhaseSettings:
         self.upsert = maybe_atoi(options.get("upsert", "false"))
         self.mongo_batch_size = options.get("mongo_batch_size")
         self.mongo_durability_level = options.get("mongo_durability_level")
+        self.mongo_journal_ack = maybe_atoi(options.get("mongo_journal_ack", "false"))
+        self.mongo_read_preference = options.get("mongo_read_preference")
+        self.mongo_read_concern = options.get("mongo_read_concern")
         self.ycsb_split_workload = int(options.get('ycsb_split_workload', self.YCSB_SPLIT_WORKLOAD))
 
         self.range_scan_sampling = options.get('range_scan_sampling', self.RANGE_SCAN_SAMPLING)
@@ -1855,6 +1858,13 @@ class PhaseSettings:
                                                        self.TRANSACTIONINSERTPROPORTION)
         self.requestdistribution = options.get('requestdistribution',
                                                self.REQUESTDISTRIBUTION)
+
+        # Airport workload settings
+        self.findoneproportion = options.get("findoneproportion", 0.70)
+        self.aggregateproportion = options.get("aggregateproportion", 0.00)
+        self.aggregate_minoccurrences = options.get("aggregate_minoccurrences", 100)
+        self.typedfields = options.get("typedfields", "true")
+        self.nesteddata = options.get("nesteddata", "true")
 
         # multiple of 1024
         self.num_atrs = int(options.get('num_atrs', self.NUM_ATRS))

@@ -24,6 +24,11 @@ from perfrunner.helpers.misc import (
 )
 from perfrunner.settings import CH2, CH3, CH2ConnectionSettings, CH3ConnectionSettings, ClusterSpec
 
+YCSB_ENV = {
+    # Skip checkstyle incase upstream branch does not enforce it.
+    # Also configure stack size for clients that haven't set anything
+    "MAVEN_OPTS": "-Dcheckstyle.skip=true -Xss16m",
+}
 
 def extract_cb(filename: str):
     cmd = 'rpm2cpio ./{} | cpio -idm'.format(filename)
@@ -748,11 +753,21 @@ def run_kvgen(hostname: str, num_docs: int, prefix: str):
 
 
 def build_ycsb(ycsb_client: str):
-    cmd = 'pyenv local 2.7.18 && bin/ycsb build {}'.format(ycsb_client)
+    cmd = f"pyenv local 2.7.18 && bin/ycsb build {ycsb_client}"
 
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
     with lcd('YCSB'):
-        local(cmd)
+        with settings(hide("output", "warnings"), warn_only=True):
+            result = local(cmd, capture=True)
+        if result.return_code == 0:
+            return
+
+        logger.warning(
+            "bin/ycsb build is not supported in this branch; falling back to direct Maven build"
+        )
+        mvn_cmd = f"mvn -pl ./{ycsb_client} -am package -DskipTests"
+        logger.info(f"Running: {mvn_cmd}")
+        run_local_shell_command(mvn_cmd, env=YCSB_ENV)
 
 
 def run_ycsb(
@@ -806,6 +821,11 @@ def run_ycsb(
     histogram_buckets: Optional[int] = None,
     histogram_bucket_size: Optional[int] = None,
     verbose_histogram: Optional[str] = None,
+    findoneproportion: float = 0.70,
+    aggregateproportion: float = 0.00,
+    aggregate_minoccurrences: int = 100,
+    typedfields: str = "true",
+    nesteddata: str = "true",
 ):
     parameters = [
         "writeallfields=true",
@@ -898,6 +918,14 @@ def run_ycsb(
     if verbose_histogram:
         parameters += [f"measurement.histogram.verbose={'true' if verbose_histogram else 'false'}"]
 
+    parameters += [
+        f"findoneproportion={findoneproportion}",
+        f"aggregateproportion={aggregateproportion}",
+        f"aggregate.minoccurrences={aggregate_minoccurrences}",
+        f"typedfields={typedfields}",
+        f"nesteddata={nesteddata}",
+    ]
+
     if collections_map:
         target_scopes = set()
         target_collections = set()
@@ -938,7 +966,7 @@ def run_ycsb(
     logger.info(f"Running: {shlex.join(cmd_args)}")
     run_local_shell_command("pyenv local 2.7.18", quiet=True, cwd=cwd)
     with open(f"{cwd}/ycsb_{action}_{instance}_{bucket}_stderr.log", "w") as stderr_file:
-        run_local_shell_command(cmd_args, quiet=True, cwd=cwd, stderr=stderr_file)
+        run_local_shell_command(cmd_args, quiet=True, cwd=cwd, stderr=stderr_file, env=YCSB_ENV)
 
 
 def run_mongo_ycsb(
@@ -978,6 +1006,11 @@ def run_mongo_ycsb(
     histogram_bucket_size: Optional[int] = None,
     verbose_histogram: bool = False,
     ycsb_status_output: bool = True,
+    findoneproportion: float = 0.70,
+    aggregateproportion: float = 0.00,
+    aggregate_minoccurrences: int = 100,
+    typedfields: str = "true",
+    nesteddata: str = "true",
 ):
     seeds = ",".join(f"{h}:{port}" for h in hosts)
 
@@ -1033,6 +1066,14 @@ def run_mongo_ycsb(
     if verbose_histogram:
         parameters += ["measurement.histogram.verbose=true"]
 
+    parameters += [
+        f"findoneproportion={findoneproportion}",
+        f"aggregateproportion={aggregateproportion}",
+        f"aggregate.minoccurrences={aggregate_minoccurrences}",
+        f"typedfields={typedfields}",
+        f"nesteddata={nesteddata}",
+    ]
+
     if soe_params:
         parameters += [
             f"totalrecordcount={items}",
@@ -1078,7 +1119,7 @@ def run_mongo_ycsb(
     logger.info(f"Running: {shlex.join(cmd_args)}")
     run_local_shell_command("pyenv local 2.7.18", quiet=True, cwd=cwd)
     with open(f"{cwd}/ycsb_{action}_{instance}_{database}_stderr.log", "w") as stderr_file:
-        run_local_shell_command(cmd_args, quiet=True, cwd=cwd, stderr=stderr_file)
+        run_local_shell_command(cmd_args, quiet=True, cwd=cwd, stderr=stderr_file, env=YCSB_ENV)
 
 
 def inject_params_into_ycsb_workload_file(

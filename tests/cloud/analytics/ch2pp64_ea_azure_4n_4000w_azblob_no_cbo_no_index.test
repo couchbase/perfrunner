@@ -17,13 +17,13 @@ initial_nodes = 4
 num_buckets = 1
 bucket_name = bench
 
-[analytics]
-external_dataset_type = azureblob
-external_dataset_region = eastus
-external_bucket = analytics-ch2pp64-4000w-gz
-external_file_format = json
-external_file_include = gz
-external_azure_storage_account = cbperfstorage
+[analytics_external_data]
+link_type = azureblob
+region = eastus
+obj_store_name = analytics-ch2pp64-4000w-gz
+file_format = json
+file_include = *.gz
+azure_storage_account = cbperfstorage
 
 [ch2]
 schema = ch2pp

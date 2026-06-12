@@ -14,12 +14,14 @@ server_processes = java
 enable_n2n_encryption = all
 
 [analytics]
-external_dataset_type = s3
-external_dataset_region = us-east-1
-external_bucket = analytics-ch2-1000w-gz
-external_file_format = json
-external_file_include = gz
 aws_credential_path = /root/.ssh/
+
+[analytics_external_data]
+link_type = s3
+region = us-east-1
+obj_store_name = analytics-ch2-1000w-gz
+file_format = json
+file_include = *.gz
 
 [ch2]
 warehouses = 1000

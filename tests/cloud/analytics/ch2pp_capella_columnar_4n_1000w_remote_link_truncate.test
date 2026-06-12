@@ -36,7 +36,7 @@ map_data = bench.ch2pp=bench.ch2pp
 include_data = bench.ch2pp.customer,bench.ch2pp.orders,bench.ch2pp.stock
 
 [analytics]
-analytics_link = RemoteLink
+couchbase_link_name = RemoteLink
 
 [ch2]
 schema = ch2pp

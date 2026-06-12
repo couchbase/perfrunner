@@ -18,7 +18,7 @@ num_buckets = 1
 bucket_name = bench
 
 [analytics]
-analytics_link = RemoteLink
+couchbase_link_name = RemoteLink
 
 [backup]
 obj_staging_dir = /stage

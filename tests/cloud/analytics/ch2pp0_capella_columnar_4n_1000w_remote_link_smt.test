@@ -36,7 +36,7 @@ map_data = bench.ch2pp=bench.ch2pp
 include_data = bench.ch2pp.customer,bench.ch2pp.orders
 
 [analytics]
-analytics_link = RemoteLink
+couchbase_link_name = RemoteLink
 
 [columnar]
 dataset_transform_def_file = tests/cloud/analytics/config/ch2pp_smt.yaml

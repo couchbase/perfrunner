@@ -29,7 +29,7 @@ threads = 8
 map_data = bench.ch2=bench.ch2
 
 [analytics]
-analytics_link = RemoteLink
+couchbase_link_name = RemoteLink
 use_cbo = true
 cbo_sample_size = high
 index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml

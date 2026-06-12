@@ -29,7 +29,7 @@ threads = 12
 map_data = bench.ch2=bench.ch2
 
 [analytics]
-analytics_link = RemoteLink
+couchbase_link_name = RemoteLink
 coresMultiplier = 8
 
 [ch2]

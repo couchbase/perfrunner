@@ -24,7 +24,7 @@ config = collections/1bucket_1scope_99collections_analytics.json
 [analytics]
 num_io_devices = 4
 dataset_conf_file = tests/analytics/config/bigfun_99_to_99_datasets.yaml
-analytics_link = RemoteLink
+couchbase_link_name = RemoteLink
 index_conf_file = tests/analytics/config/bigfun_analytics_secondary_indexes.yaml
 
 [bucket]

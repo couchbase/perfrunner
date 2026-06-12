@@ -17,9 +17,6 @@ initial_nodes = 2
 num_buckets = 1
 bucket_name = bench
 
-[analytics]
-analytics_link = KafkaLink
-
 [columnar_kafka_links]
 link_source = MONGODB
 remote_database_name = ch2

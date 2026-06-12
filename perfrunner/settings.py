@@ -2965,20 +2965,14 @@ class AnalyticsExternalTableFormat(SafeEnum):
 
 
 class AnalyticsSettings:
-
+    LOCAL_CB_LINK_NAME = "Local"
     NUM_IO_DEVICES = 1
     REPLICA_ANALYTICS = 0
     QUERIES = ""
     DATASET_CONF_FILE = ""
     INDEX_CONF_FILE = ""
     DROP_DATASET = ""
-    ANALYTICS_LINK = "Local"
-    EXTERNAL_DATASET_TYPE = "s3"  # alt: gcs, azureblob
-    EXTERNAL_DATASET_REGION = "us-east-1"
-    EXTERNAL_BUCKET = None
-    EXTERNAL_FILE_INCLUDE = None
     AWS_CREDENTIAL_PATH = None
-    EXTERNAL_AZURE_STORAGE_ACCOUNT = "cbperfstorage"
     STORAGE_FORMAT = ""
     USE_CBO = "false"
     INGEST_DURING_LOAD = "false"
@@ -2995,24 +2989,8 @@ class AnalyticsSettings:
         self.dataset_conf_file = options.pop("dataset_conf_file", self.DATASET_CONF_FILE)
         self.index_conf_file = options.pop("index_conf_file", self.INDEX_CONF_FILE)
         self.drop_dataset = options.pop("drop_dataset", self.DROP_DATASET)
-        self.analytics_link = options.pop("analytics_link", self.ANALYTICS_LINK)
-        self.external_dataset_type = options.pop("external_dataset_type",
-                                                 self.EXTERNAL_DATASET_TYPE)
-        self.external_dataset_region = options.pop("external_dataset_region",
-                                                   self.EXTERNAL_DATASET_REGION)
-        self.external_bucket = options.pop("external_bucket", self.EXTERNAL_BUCKET)
-        self.external_file_format = AnalyticsExternalFileFormat(
-            options.pop("external_file_format", "").lower()
-        )
-        self.external_table_format = AnalyticsExternalTableFormat(
-            options.pop("external_table_format", "").lower()
-        )
-        self.external_file_include = options.pop("external_file_include",
-                                                 self.EXTERNAL_FILE_INCLUDE)
-        self.aws_credential_path = options.pop('aws_credential_path', self.AWS_CREDENTIAL_PATH)
-        self.external_azure_storage_account = options.pop(
-            "external_azure_storage_account", self.EXTERNAL_AZURE_STORAGE_ACCOUNT
-        )
+        self.couchbase_link_name = options.pop("couchbase_link_name", self.LOCAL_CB_LINK_NAME)
+        self.aws_credential_path = options.pop("aws_credential_path", self.AWS_CREDENTIAL_PATH)
         self.storage_format = options.pop('storage_format', self.STORAGE_FORMAT)
 
         self.columnar_storage_partitions = int(options.pop("columnar_storage_partitions", 0))
@@ -3037,6 +3015,25 @@ class AnalyticsSettings:
         except json.JSONDecodeError:
             logger.warning("Failed to decode JSON from bigfun_request_params option")
             return {}
+
+
+class AnalyticsExternalDataSettings:
+    def __init__(self, options: dict):
+        self.link_type = options.get("link_type", "s3")  # alt: gcs, azureblob
+        self.obj_store_name = options.get("obj_store_name")
+        self.region = options.get("region", "us-east-1")
+        self.file_format = AnalyticsExternalFileFormat(options.get("file_format", "").lower())
+        self.table_format = AnalyticsExternalTableFormat(options.get("table_format", "").lower())
+        file_include = options.get("file_include")
+        self.file_include = []
+        if file_include:
+            self.file_include = file_include.replace(" ", "").split(",")
+
+        self.azure_storage_account = options.get("azure_storage_account", "cbperfstorage")
+
+    @property
+    def external_link_name(self) -> str:
+        return f"{self.link_type}_link"
 
 
 class ColumnarKafkaLinksSettings:
@@ -4452,6 +4449,11 @@ class TestConfig(Config):
     def analytics_settings(self) -> AnalyticsSettings:
         options = self._get_options_as_dict('analytics')
         return AnalyticsSettings(options)
+
+    @property
+    def analytics_external_data_settings(self) -> AnalyticsExternalDataSettings:
+        options = self._get_options_as_dict("analytics_external_data")
+        return AnalyticsExternalDataSettings(options)
 
     @property
     def columnar_kafka_links_settings(self) -> ColumnarKafkaLinksSettings:

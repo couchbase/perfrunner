@@ -135,28 +135,27 @@ class DatasetDef:
 
     def copy_into_statement(
         self,
-        external_bucket: str,
-        file_format: AnalyticsExternalFileFormat = AnalyticsExternalFileFormat.DEFAULT,
-        file_ext: Optional[str] = None,
-        path_keyword: Literal["PATH", "USING"] = "PATH",
+        obj_store_name: str,
+        link_name: str,
+        file_format: AnalyticsExternalFileFormat,
+        include: Optional[list[str]] = None,
     ) -> str:
-        name, external_bucket = sqlpp_escape(self.name, external_bucket)
+        name, obj_store_name, link_name = sqlpp_escape(self.name, obj_store_name, link_name)
 
         with_clause_options = {}
         if file_format is not AnalyticsExternalFileFormat.DEFAULT:
             with_clause_options["format"] = file_format.value
-        if file_ext:
-            with_clause_options["include"] = f"*.{file_ext}"
+        if include:
+            with_clause_options["include"] = include
 
-        cmd = (
-            f"COPY INTO {name} FROM {external_bucket} "
-            f"AT `external_link` {path_keyword} '{self.source or self.name}'"
+        with_clause = ""
+        if opts := with_clause_options:
+            with_clause = f" WITH {json.dumps(opts)}"
+
+        return (
+            f"COPY INTO {name} FROM {obj_store_name} AT {link_name} "
+            f"PATH '{self.source or self.name}'{with_clause}"
         )
-
-        if with_clause_options:
-            cmd += f" WITH {json.dumps(with_clause_options)}"
-
-        return cmd
 
     def create_primary_idx_statement(self) -> str:
         return f"CREATE PRIMARY INDEX ON {sqlpp_escape(self.name)}"
@@ -203,7 +202,8 @@ class AnalyticsTest(PerfTest):
 
         self.num_items = 0
         self.analytics_settings = self.test_config.analytics_settings
-        self.analytics_link = self.analytics_settings.analytics_link
+        self.ext_data_settings = self.test_config.analytics_external_data_settings
+        self.couchbase_link_name = self.analytics_settings.couchbase_link_name
         self.storage_format = self.test_config.analytics_settings.storage_format
         self.dataset_conf_file = self.analytics_settings.dataset_conf_file
         self.index_conf_file = self.analytics_settings.index_conf_file
@@ -350,7 +350,7 @@ class AnalyticsTest(PerfTest):
         self._run_statements(
             self.datasets,
             lambda dataset: dataset.create_at_link_statement(
-                self.analytics_link, self.storage_format
+                self.couchbase_link_name, self.storage_format
             ),
             verbose=verbose,
         )
@@ -368,10 +368,10 @@ class AnalyticsTest(PerfTest):
         self._run_statements(
             self.datasets,
             lambda dataset: dataset.create_external_statement(
-                self.analytics_settings.external_bucket,
-                self.analytics_settings.external_file_format,
-                self.analytics_settings.external_table_format,
-                self.analytics_settings.external_file_include,
+                self.ext_data_settings.obj_store_name,
+                self.ext_data_settings.file_format,
+                self.ext_data_settings.table_format,
+                self.ext_data_settings.file_include,
             ),
             verbose=verbose,
         )
@@ -414,32 +414,31 @@ class AnalyticsTest(PerfTest):
         )
 
     def create_external_link(
-        self, link_name: str = "external_link", azure_storage_account: Optional[str] = None
+        self, link_name: Optional[str] = None, azure_storage_account: Optional[str] = None
     ):
-        external_dataset_type = self.analytics_settings.external_dataset_type
+        link_name = link_name or self.ext_data_settings.external_link_name
+        link_type = self.ext_data_settings.link_type
 
         kwargs = {
             "analytics_node": self.analytics_node,
             "link_name": link_name,
-            "link_type": external_dataset_type,
+            "link_type": link_type,
         }
 
-        if external_dataset_type == "s3":
+        if link_type == "s3":
             access_key_id, secret_access_key = local.get_aws_credential(
                 self.analytics_settings.aws_credential_path
             )
             kwargs |= {
-                "s3_region": self.analytics_settings.external_dataset_region,
+                "s3_region": self.ext_data_settings.region,
                 "s3_access_key_id": access_key_id,
                 "s3_secret_access_key": secret_access_key,
             }
-        elif external_dataset_type == "gcs":
+        elif link_type == "gcs":
             with open(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"), "r") as f:
                 kwargs["gcs_json_creds"] = json.load(f)
-        elif external_dataset_type == "azureblob":
-            storage_acc_name = (
-                azure_storage_account or self.analytics_settings.external_azure_storage_account
-            )
+        elif link_type == "azureblob":
+            storage_acc_name = azure_storage_account or self.ext_data_settings.azure_storage_account
             kwargs |= {
                 "az_account_name": storage_acc_name,
                 "az_account_key": get_azure_storage_account_key(storage_acc_name),
@@ -448,7 +447,7 @@ class AnalyticsTest(PerfTest):
         else:
             logger.interrupt(
                 "Could not create external link. "
-                f"Perfrunner doesn't support external link type: {external_dataset_type}"
+                f"Perfrunner doesn't support external link type: {link_type}"
             )
 
         self.rest.create_analytics_link(**kwargs)
@@ -463,13 +462,13 @@ class AnalyticsTest(PerfTest):
         return self.wait_for_data_ingestion()
 
     def connect_link(self):
-        logger.info(f"Connecting Link {self.analytics_link}")
-        statement = f"CONNECT LINK {self.analytics_link}"
+        logger.info(f"Connecting Link {self.couchbase_link_name}")
+        statement = f"CONNECT LINK {self.couchbase_link_name}"
         self.exec_analytics_statement(self.analytics_node, statement)
 
     def disconnect_link(self):
-        logger.info(f"Disconnecting Link {self.analytics_link}")
-        statement = f"DISCONNECT LINK {self.analytics_link}"
+        logger.info(f"Disconnecting Link {self.couchbase_link_name}")
+        statement = f"DISCONNECT LINK {self.couchbase_link_name}"
         self.exec_analytics_statement(self.analytics_node, statement)
 
     @timeit
@@ -526,7 +525,9 @@ class AnalyticsTest(PerfTest):
 
         self.have_already_restored_data = True
 
-    def copy_data_from_object_store(self, datasets: list[DatasetDef] = []) -> tuple[int, float]:
+    def copy_data_from_object_store(
+        self, datasets: Optional[list[DatasetDef]] = None
+    ) -> tuple[int, float]:
         """Ingest data from cloud object store using COPY FROM.
 
         Returns the total number of items copied and the total time taken to copy the data.
@@ -535,21 +536,14 @@ class AnalyticsTest(PerfTest):
 
         datasets_to_import = datasets or self.datasets
 
-        external_bucket = self.analytics_settings.external_bucket
-        file_format = self.analytics_settings.external_file_format
-        file_include = self.analytics_settings.external_file_include
-
-        path_keyword = "PATH"
-        if not self.is_capella_columnar and (
-            (8, 0, 0, 0) < self.cluster.build_tuple < (8, 0, 0, 1452)
-        ):
-            path_keyword = "USING"
-
         total_items_copied = 0
         total_copy_time = 0
         for dataset in datasets_to_import:
             statement = dataset.copy_into_statement(
-                external_bucket, file_format, file_include, path_keyword
+                self.ext_data_settings.obj_store_name,
+                self.ext_data_settings.external_link_name,
+                self.ext_data_settings.file_format,
+                self.ext_data_settings.file_include,
             )
             t0 = time.time()
             self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
@@ -624,9 +618,12 @@ class BigFunTest(AnalyticsTest):
         self.QUERIES = self.analytics_settings.queries
 
     def sync(self) -> float:
-        if self.analytics_link != "Local":
+        if self.couchbase_link_name != "Local":
             self.rest.create_analytics_link(
-                self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+                self.analytics_node,
+                self.couchbase_link_name,
+                "couchbase",
+                cb_data_node=self.data_node,
             )
         return super().sync()
 
@@ -825,7 +822,7 @@ class ColumnarCopyFromObjectStoreTest(BigFunQueryExternalTest):
             v, snapshots, metric_info = self.metrics.avg_ingestion_rate(
                 ingestion_items,
                 ingestion_time,
-                f"copy_from_{self.analytics_settings.external_dataset_type.lower()}",
+                f"copy_from_{self.ext_data_settings.link_type.lower()}",
             )
             metric_info["category"] = "sync"
             self.reporter.post(v, snapshots, metric_info)
@@ -1019,9 +1016,9 @@ class ColumnarCopyToObjectStoreTest(ColumnarCopyFromObjectStoreTest):
         random.seed(8095)
 
         csp = self.cluster_spec.capella_backend or self.cluster_spec.cloud_provider
-        self.copy_from_link_name = "external_link"
+        self.copy_from_link_name = self.ext_data_settings.external_link_name
         self.copy_to_link_name = (
-            "external_copy_to_link" if csp == "azure" else self.copy_from_link_name
+            "copy_to_azureblob_link" if csp == "azure" else self.copy_from_link_name
         )
 
         self.create_external_link(link_name=self.copy_from_link_name)
@@ -1053,7 +1050,7 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromObjectStoreTest):
         with open(self.test_config.columnar_copy_to_settings.kv_query_file, "r") as f:
             queries = yaml.safe_load(f)
 
-        query_template = f"COPY {{}} TO {{}} AT `{self.analytics_link}` KEY {{}}"
+        query_template = f"COPY {{}} TO {{}} AT `{self.couchbase_link_name}` KEY {{}}"
 
         for query in queries:
             statement = query_template.format(
@@ -1076,7 +1073,7 @@ class ColumnarCopyToKVRemoteLinkTest(ColumnarCopyFromObjectStoreTest):
         logger.info(f"Total data ingestion time using COPY FROM (s): {copy_from_time:.2f}")
 
         self.rest.create_analytics_link(
-            self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+            self.analytics_node, self.couchbase_link_name, "couchbase", cb_data_node=self.data_node
         )
         self.connect_link()
 
@@ -1603,13 +1600,13 @@ class CH2Test(AnalyticsTest):
 
     def create_remote_link(self):
         self.rest.create_analytics_link(
-            self.analytics_node, self.analytics_link, "couchbase", cb_data_node=self.data_node
+            self.analytics_node, self.couchbase_link_name, "couchbase", cb_data_node=self.data_node
         )
 
     def run(self):
         self.init_ch2_repo()
 
-        if self.analytics_link != "Local":
+        if self.couchbase_link_name != "Local":
             self.create_remote_link()
 
         self.disconnect_link()
@@ -1754,10 +1751,10 @@ class CH2CapellaColumnarRemoteLinkTest(CH2Test):
     def create_remote_link(self):
         instance_id = self.rest.instance_ids[0]
         self.rest.create_capella_remote_link(
-            instance_id, self.analytics_link, self.cluster_spec.capella_cluster_ids[0]
+            instance_id, self.couchbase_link_name, self.cluster_spec.capella_cluster_ids[0]
         )
         self.monitor.wait_for_columnar_remote_link_ready(
-            instance_id, self.analytics_link, timeout_secs=1200
+            instance_id, self.couchbase_link_name, timeout_secs=1200
         )
 
     def restart(self):
@@ -1815,7 +1812,7 @@ class CH2CapellaColumnarTransformOnIngestTest(CH2CapellaColumnarRemoteLinkTest):
         for d in self.datasets:
             self.exec_analytics_statement(
                 self.analytics_node,
-                d.create_at_link_statement(self.analytics_link, self.storage_format),
+                d.create_at_link_statement(self.couchbase_link_name, self.storage_format),
                 verbose=True,
             )
 
@@ -1996,6 +1993,8 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
         self.docs_per_collection = {}
         self.kafka_link_connected = False
 
+        self.couchbase_link_name = "KafkaLink"
+
         source = self.kafka_links_settings.link_source
         self.source_details = {"source": source}
 
@@ -2035,8 +2034,9 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
     def create_kafka_link(self):
         logger.info('Creating Kafka Link')
 
-        statement = 'CREATE LINK `{}` TYPE KAFKA WITH {{"sourceDetails": {}}}'\
-            .format(self.analytics_link, json.dumps(self.source_details))
+        statement = 'CREATE LINK `{}` TYPE KAFKA WITH {{"sourceDetails": {}}}'.format(
+            self.couchbase_link_name, json.dumps(self.source_details)
+        )
 
         self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
 
@@ -2044,9 +2044,14 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
         logger.info('Creating standalone datasets')
 
         for dataset in self.dataset_names:
-            statement = "CREATE DATASET `{0}` PRIMARY KEY (`{1}`: string) ON {2}.{0} AT `{3}`;" \
-                .format(dataset, self.kafka_links_settings.primary_key_field,
-                        self.kafka_links_settings.remote_database_name, self.analytics_link)
+            statement = (
+                "CREATE DATASET `{0}` PRIMARY KEY (`{1}`: string) ON {2}.{0} AT `{3}`;".format(
+                    dataset,
+                    self.kafka_links_settings.primary_key_field,
+                    self.kafka_links_settings.remote_database_name,
+                    self.couchbase_link_name,
+                )
+            )
             self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
 
     @with_stats
@@ -2056,8 +2061,9 @@ class CH2ColumnarKafkaLinksIngestionTest(CH2Test):
         self.connect_link()
 
         t0 = time.time()
-        self.monitor.monitor_cbas_kafka_link_connect_status(self.analytics_node,
-                                                            self.analytics_link)
+        self.monitor.monitor_cbas_kafka_link_connect_status(
+            self.analytics_node, self.couchbase_link_name
+        )
         link_connect_time = time.time() - t0
         self.kafka_link_connected = True
         logger.info('Link connection time: {}s'.format(link_connect_time))
@@ -2220,7 +2226,7 @@ class CH2CapellaColumnarRemoteLinkTruncateTest(
     def recreate_dataset(self, dataset: DatasetDef):
         statements = [
             f"DROP DATASET {sqlpp_escape(dataset.name)}",
-            dataset.create_at_link_statement(self.analytics_link, self.storage_format),
+            dataset.create_at_link_statement(self.couchbase_link_name, self.storage_format),
         ]
         self.empty_dataset(dataset, statements, "recreate")
 
@@ -2236,10 +2242,10 @@ class CH2CapellaColumnarRemoteLinkTruncateTest(
     def run(self):
         instance_id = self.rest.instance_ids[0]
         self.rest.create_capella_remote_link(
-            instance_id, self.analytics_link, self.cluster_spec.capella_cluster_ids[0]
+            instance_id, self.couchbase_link_name, self.cluster_spec.capella_cluster_ids[0]
         )
         self.monitor.wait_for_columnar_remote_link_ready(
-            instance_id, self.analytics_link, timeout_secs=1200
+            instance_id, self.couchbase_link_name, timeout_secs=1200
         )
         self.disconnect_link()
 

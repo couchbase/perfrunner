@@ -14,11 +14,11 @@ server_processes = java
 [cluster]
 enable_n2n_encryption = all
 
-[analytics]
-external_dataset_type = gcs
-external_bucket = analytics-ch2-5000w-gz
-external_file_format = json
-external_file_include = gz
+[analytics_external_data]
+link_type = gcs
+obj_store_name = analytics-ch2-5000w-gz
+file_format = json
+file_include = *.gz
 
 [ch2]
 warehouses = 5000

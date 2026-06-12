@@ -1,4 +1,5 @@
 from collections import namedtuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Iterator, Optional
 
 from couchbase.options import QueryOptions
@@ -13,6 +14,8 @@ StatsSettings = namedtuple("StatsSettings", ("cluster", "cbmonitor_host"))
 
 
 class StatsScanner(BaseScanner):
+    MAX_WORKERS = 8
+
     STATUS_QUERY = """
         SELECT component, COUNT(1) AS total
         FROM stats
@@ -57,8 +60,7 @@ class StatsScanner(BaseScanner):
             return self.ps.get_summary(db=db, metric=metric)
         return {}
 
-    def cluster_stats(self, cluster: str) -> Iterator[dict]:
-        m = self.get_metadata_client(cluster)
+    def cluster_stats(self, m: MetadataClient, cluster: str) -> Iterator[dict]:
         for metric in m.get_metrics():
             db = self.ps.build_dbname(cluster=cluster, collector=metric["collector"])
             summary = self.get_summary(db=db, metric=metric["name"])
@@ -68,8 +70,7 @@ class StatsScanner(BaseScanner):
                     "summary": summary,
                 }
 
-    def bucket_stats(self, cluster: str) -> Iterator[dict]:
-        m = self.get_metadata_client(cluster)
+    def bucket_stats(self, m: MetadataClient, cluster: str) -> Iterator[dict]:
         for bucket in m.get_buckets():
             for metric in m.get_metrics(bucket=bucket):
                 db = self.ps.build_dbname(
@@ -83,8 +84,7 @@ class StatsScanner(BaseScanner):
                         "summary": summary,
                     }
 
-    def server_stats(self, cluster: str) -> Iterator[dict]:
-        m = self.get_metadata_client(cluster)
+    def server_stats(self, m: MetadataClient, cluster: str) -> Iterator[dict]:
         for server in m.get_servers():
             for metric in m.get_metrics(server=server):
                 db = self.ps.build_dbname(
@@ -98,8 +98,7 @@ class StatsScanner(BaseScanner):
                         "summary": summary,
                     }
 
-    def index_stats(self, cluster: str) -> Iterator[dict]:
-        m = self.get_metadata_client(cluster)
+    def index_stats(self, m: MetadataClient, cluster: str) -> Iterator[dict]:
         for index in m.get_indexes():
             for metric in m.get_metrics(index=index):
                 db = self.ps.build_dbname(
@@ -122,36 +121,44 @@ class StatsScanner(BaseScanner):
 
     def all_stats(self, url: str):
         for snapshot in self.find_snapshots(url=url):
-            for stats in self.cluster_stats(cluster=snapshot):
+            m = self.get_metadata_client(snapshot)
+            for stats in self.cluster_stats(m, cluster=snapshot):
                 yield stats
-            for stats in self.bucket_stats(cluster=snapshot):
+            for stats in self.bucket_stats(m, cluster=snapshot):
                 yield stats
-            for stats in self.server_stats(cluster=snapshot):
+            for stats in self.server_stats(m, cluster=snapshot):
                 yield stats
-            for stats in self.index_stats(cluster=snapshot):
+            for stats in self.index_stats(m, cluster=snapshot):
                 yield stats
 
-    def find_metrics(self, version: str):
-        for build in self.jenkins.find_builds(version=version):
-            meta = {
-                'version': version,
-                'cluster': build['cluster'],
-                'component': build['component'],
-                'test_config': build['test_config'],
-            }
+    def _process_build(self, build: dict, version: str):
+        if self.get_checkpoint(build["url"]) is not None:
+            return
 
-            if self.get_checkpoint(build["url"]) is None:
-                for stats in self.all_stats(url=build['url']):
-                    yield {**stats, **meta}
-                self.upsert_to_bucket(key=build["url"])
-                logger.info(f"Added checkpoint for {build['url']}")
+        meta = {
+            'version': version,
+            'cluster': build['cluster'],
+            'component': build['component'],
+            'test_config': build['test_config'],
+        }
+        for stats in self.all_stats(url=build['url']):
+            attributes = {**stats, **meta}
+            if attributes is not None:
+                self.store_metric_info(attributes)
+        self.upsert_to_bucket(key=build["url"])
+        logger.info(f"Added checkpoint for {build['url']}")
 
     def run(self):
-        for build in self.weekly.builds:
-            logger.info(f"Scanning stats from build {build}")
-            for attributes in self.find_metrics(build):
-                if attributes is not None:
-                    self.store_metric_info(attributes)
+        for version in self.weekly.builds:
+            logger.info(f"Scanning stats from build {version}")
+            builds = list(self.jenkins.find_builds(version=version))
+            with ThreadPoolExecutor(max_workers=self.MAX_WORKERS) as executor:
+                futures = {
+                    executor.submit(self._process_build, build, version): build
+                    for build in builds
+                }
+                for future in as_completed(futures):
+                    future.result()
 
     def update_status(self):
         for build in self.weekly.builds:

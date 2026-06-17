@@ -2313,45 +2313,45 @@ class CH3Test(CH2Test):
 
     def _report_kpi(self):
         ch3_metrics = self.metrics.ch3_metrics(
-            logfile=self.test_config.ch3_settings.workload,
-            tclients=self.test_config.ch3_settings.tclients,
+            logfile=self.test_config.ch2_settings.workload,
+            tclients=self.test_config.ch2_settings.tclients,
         )
 
         self.reporter.post(
-            *self.metrics.ch2_tpm(round(ch3_metrics.tpm, 2), self.test_config.ch3_settings.tclients)
+            *self.metrics.ch2_tpm(round(ch3_metrics.tpm, 2), self.test_config.ch2_settings.tclients)
         )
 
         self.reporter.post(
             *self.metrics.ch2_response_time(
-                round(ch3_metrics.txn_response_time, 2), self.test_config.ch3_settings.tclients
+                round(ch3_metrics.txn_response_time, 2), self.test_config.ch2_settings.tclients
             )
         )
 
-        if self.test_config.ch3_settings.workload == 'ch3_mixed':
+        if self.test_config.ch2_settings.workload == 'ch3_mixed':
             self.reporter.post(
                 *self.metrics.ch2_analytics_query_set_time(
                     ch3_metrics.average_cbas_query_set_time_secs,
-                    self.test_config.ch3_settings.tclients,
+                    self.test_config.ch2_settings.tclients,
                 )
             )
 
             self.reporter.post(
                 *self.metrics.ch3_fts_query_time(
                     round(ch3_metrics.average_fts_query_set_time_ms / 1000, 2),
-                    self.test_config.ch3_settings.tclients,
+                    self.test_config.ch2_settings.tclients,
                 )
             )
 
             self.reporter.post(
                 *self.metrics.ch3_fts_client_time(
                     round(ch3_metrics.average_fts_client_time_ms / 1000, 2),
-                    self.test_config.ch3_settings.tclients,
+                    self.test_config.ch2_settings.tclients,
                 )
             )
 
             self.reporter.post(
                 *self.metrics.ch3_fts_qph(
-                    ch3_metrics.fts_qph, self.test_config.ch3_settings.tclients
+                    ch3_metrics.fts_qph, self.test_config.ch2_settings.tclients
                 )
             )
 
@@ -2367,20 +2367,23 @@ class CH3Test(CH2Test):
             fts_port = FTS_PORT
             cbas_port = ANALYTICS_PORT
 
-        query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
+        query_urls = [f"{node}:{query_port}" for node in self.query_nodes]
         userid, password = self.cluster_spec.rest_credentials
         conn_settings = CH2ConnectionSettings(
             userid=userid,
             password=password,
-            analytics_url='{}:{}'.format(self.analytics_nodes[0], cbas_port),
+            analytics_url=f"{self.analytics_nodes[0]}:{cbas_port}",
             query_url=query_urls[0],
             multi_query_url=",".join(query_urls),
-            fts_url='{}:{}'.format(self.fts_nodes[0], fts_port)
+            fts_url=f"{self.fts_nodes[0]}:{fts_port}",
         )
 
-        logger.info("running {}".format(self.test_config.ch3_settings.workload))
-        local.ch3_run_task(conn_settings, self.test_config.ch3_settings,
-                           log_file=self.test_config.ch3_settings.workload)
+        logger.info(f"running {self.test_config.ch2_settings.workload}")
+        local.ch2_run_task(
+            conn_settings,
+            self.test_config.ch2_settings,
+            log_file=self.test_config.ch2_settings.workload,
+        )
 
     def create_fts_indexes(self):
         local.ch3_create_fts_index(
@@ -2389,10 +2392,16 @@ class CH3Test(CH2Test):
         )
 
     def wait_for_fts_index_persistence(self):
+        hosts = self.fts_nodes
+        bucket = self.test_config.buckets[0]
+
+        if self.server_info.build_tuple < (7, 6, 3, 0):
+            wait_func = self.monitor.monitor_fts_index_persistence
+        else:
+            wait_func = self.monitor.monitor_fts_index_persistence_and_merges
+
         for index_name in self.FTS_INDEXES:
-            self.monitor.monitor_fts_index_persistence(
-                hosts=self.fts_nodes, index=index_name, bucket=self.test_config.buckets[0]
-            )
+            wait_func(hosts=hosts, index=index_name, bucket=bucket)
 
     def load_ch3(self):
         if self.test_config.cluster.enable_n2n_encryption:
@@ -2400,7 +2409,7 @@ class CH3Test(CH2Test):
         else:
             query_port = QUERY_PORT
 
-        query_urls = ['{}:{}'.format(node, query_port) for node in self.query_nodes]
+        query_urls = [f"{node}:{query_port}" for node in self.query_nodes]
         userid, password = self.cluster_spec.rest_credentials
         conn_settings = CH2ConnectionSettings(
             userid=userid,
@@ -2411,14 +2420,14 @@ class CH3Test(CH2Test):
             multi_query_url=",".join(query_urls)
         )
 
-        logger.info("running {}".format(self.test_config.ch3_settings.workload))
-        local.ch3_load_task(conn_settings, self.test_config.ch3_settings)
+        logger.info(f"running {self.test_config.ch2_settings.workload}")
+        local.ch2_load_task(conn_settings, self.test_config.ch2_settings)
 
     def run(self):
-        local.clone_git_repo(repo=self.test_config.ch3_settings.repo,
-                             branch=self.test_config.ch3_settings.branch)
+        local.clone_git_repo(repo=self.test_config.ch2_settings.repo,
+                             branch=self.test_config.ch2_settings.branch)
 
-        if self.test_config.ch3_settings.use_backup:
+        if self.test_config.ch2_settings.use_backup:
             self.restore_local()
         else:
             self.load_ch3()
@@ -2432,7 +2441,7 @@ class CH3Test(CH2Test):
         self.wait_for_fts_index_persistence()
 
         self.run_ch3()
-        if self.test_config.ch3_settings.workload != 'ch3_analytics':
+        if self.test_config.ch2_settings.workload != 'ch3_analytics':
             self.report_kpi()
 
 

@@ -3434,6 +3434,7 @@ class CH2ConnectionSettings:
     analytics_url: Optional[str] = None
     data_url: Optional[str] = None
     multi_data_url: Optional[str] = None
+    fts_url: Optional[str] = None  # only for CH3
     use_tls: bool = False
 
     @property
@@ -3451,7 +3452,7 @@ class CH2ConnectionSettings:
 
         return flags
 
-    def cli_args_str_run(self, tclients: int, aclients: int) -> str:
+    def cli_args_str_run(self, tclients: int, aclients: int, fclients: int = 0) -> str:
         """Return a string of connection-related CLI arguments for running benchmark phase."""
         flags = self.cli_args_common
 
@@ -3463,6 +3464,9 @@ class CH2ConnectionSettings:
 
         if aclients > 0:
             flags += [f"--analytics-url {self.analytics_url}"]
+
+        if fclients > 0:
+            flags += [f"--fts-url {self.fts_url}"]
 
         return " ".join(flags)
 
@@ -3489,6 +3493,7 @@ class CH2Schema(SafeEnum):
     CH2P = "ch2p"  # CH2+: More nested than CH2, no extra, unused fields. "Between" CH2 and CH2++
     CH2PP = "ch2pp"  # CH2++: More nested than CH2+ with tunable number of extra, unused fields
     CH2PPF = "ch2ppf"  # Flat CH2++: fully normalized CH2++ schema
+    CH3 = "ch3"
 
 
 class CH2:
@@ -3498,6 +3503,7 @@ class CH2:
     DATAGEN_SEED = -1  # valid seed is >= 0
     ACLIENTS = 0
     TCLIENTS = 0
+    FCLIENTS = 0  # Only for CH3
     ITERATIONS = 1
     WARMUP_ITERATIONS = 0
     WARMUP_DURATION_SECS = 0
@@ -3525,6 +3531,7 @@ class CH2:
         self.datagen_seed = int(options.get("datagen_seed", self.DATAGEN_SEED))
         self.aclients = int(options.get("aclients", self.ACLIENTS))
         self.tclients = int(options.get("tclients", self.TCLIENTS))
+        self.fclients = int(options.get("fclients", self.FCLIENTS))
         self.load_tclients = int(options.get("load_tclients", self.LOAD_TCLIENTS))
         self.load_tasks = int(options.get("load_tasks", self.LOAD_TASKS))
         self.load_mode = options.get("load_mode", self.LOAD_MODE)
@@ -3555,8 +3562,18 @@ class CH2:
 
         self.starting_warehouse = 1
 
+        if self.schema is CH2Schema.CH3:
+            self.repo = options.get("repo", "https://github.com/couchbaselabs/ch3.git")
+            self.workload = options.get("workload", "ch3_mixed")
+            self.unoptimized_queries = False
+            self.aclient_request_params = ""
+
     def __str__(self) -> str:
         return str(self.__dict__)
+
+    @property
+    def executable_dir(self) -> str:
+        return "ch3/ch3driver/pytpcc" if self.schema is CH2Schema.CH3 else "ch2/ch2driver/pytpcc"
 
     def cli_args_str_run(self) -> str:
         """Return a string of workload-related CLI arguments for running benchmark phase."""
@@ -3565,6 +3582,9 @@ class CH2:
             f"--warehouses {self.warehouses}",
             f"--aclients {self.aclients}" if self.aclients else None,
             f"--tclients {self.tclients}" if self.tclients else None,
+            f"--fclients {self.fclients}"
+            if self.schema is CH2Schema.CH3 and self.fclients
+            else None,
             f"--duration {self.duration}" if self.duration else None,
             f"--warmup-duration {self.warmup_duration}" if self.warmup_duration else None,
             f"--query-iterations {self.iterations}" if self.iterations else None,
@@ -3575,7 +3595,7 @@ class CH2:
             "--no-load",
             "--nonOptimizedQueries" if self.unoptimized_queries else None,
             "--ignore-skip-index-hints" if self.ignore_skip_index_hints else None,
-            f"--{self.schema.value}" if self.schema is not CH2Schema.CH2 else None,
+            f"--{self.schema.value}" if self.schema not in [CH2Schema.CH2, CH2Schema.CH3] else None,
             f"--aclient-request-params '{self.aclient_request_params}'"
             if self.aclient_request_params
             else None,
@@ -3592,7 +3612,7 @@ class CH2:
             f"--tclients {self.load_tclients}",
             "--no-execute",
             f"--{self.load_mode}",
-            f"--{self.schema.value}" if self.schema is not CH2Schema.CH2 else None,
+            f"--{self.schema.value}" if self.schema not in [CH2Schema.CH2, CH2Schema.CH3] else None,
             f"--customerExtraFields {self.customer_extra_fields}"
             if self.schema is CH2Schema.CH2PP
             else None,
@@ -3604,39 +3624,6 @@ class CH2:
             else None,
         ]
         return " ".join(filter(None, flags))
-
-
-@dataclass
-class CH3ConnectionSettings(CH2ConnectionSettings):
-    fts_url: Optional[str] = None
-
-    def cli_args_str_run(self, tclients: int, aclients: int, fclients: int) -> str:
-        """Return a string of connection-related CLI arguments for running benchmark phase."""
-        args_str = super().cli_args_str_run(tclients, aclients)
-
-        if fclients > 0:
-            args_str += f" --fts-url {self.fts_url}"
-
-        return args_str
-
-
-class CH3(CH2):
-    REPO = "https://github.com/couchbaselabs/ch3.git"
-    FCLIENTS = 0
-    WORKLOAD = "ch3_mixed"
-
-    def __init__(self, options: dict):
-        super().__init__(options)
-        self.schema = CH2Schema.CH2
-        self.unoptimized_queries = False
-        self.fclients = int(options.get("fclients", self.FCLIENTS))
-
-    def __str__(self) -> str:
-        return str(self.__dict__)
-
-    def cli_args_str_run(self) -> str:
-        """Return a string of workload-related CLI arguments for running benchmark phase."""
-        return f"{super().cli_args_str_run()} --fclients {self.fclients}"
 
 
 class PYTPCCSettings:
@@ -4540,11 +4527,6 @@ class TestConfig(Config):
     def ch2_settings(self) -> CH2:
         options = self._get_options_as_dict('ch2')
         return CH2(options)
-
-    @property
-    def ch3_settings(self) -> CH3:
-        options = self._get_options_as_dict('ch3')
-        return CH3(options)
 
     @property
     def pytpcc_settings(self) -> PYTPCCSettings:

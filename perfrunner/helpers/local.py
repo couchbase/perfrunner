@@ -22,7 +22,7 @@ from perfrunner.helpers.misc import (
     pretty_dict,
     run_local_shell_command,
 )
-from perfrunner.settings import CH2, CH3, CH2ConnectionSettings, CH3ConnectionSettings, ClusterSpec
+from perfrunner.settings import CH2, CH2ConnectionSettings, ClusterSpec
 
 YCSB_ENV = {
     # Skip checkstyle incase upstream branch does not enforce it.
@@ -1722,15 +1722,22 @@ def ch2_run_task(
     conn_settings: CH2ConnectionSettings,
     task_settings: CH2,
     driver: str = "nestcollections",
-    log_file: str = "ch2_mixed",
+    log_file: Optional[str] = None,
 ):
-    cmd = (
-        f"../../../env/bin/python3 ./tpcc.py {driver} "
-        f"{conn_settings.cli_args_str_run(task_settings.tclients, task_settings.aclients)} "
-        f"{task_settings.cli_args_str_run()} > ../../../{log_file}.log"
+    cwd = os.getcwd()
+    if log_file is None:
+        log_file = f"{task_settings.schema.value}_mixed"
+
+    conn_settings_str = conn_settings.cli_args_str_run(
+        task_settings.tclients, task_settings.aclients, task_settings.fclients
     )
 
-    with lcd("ch2/ch2driver/pytpcc/"):
+    cmd = (
+        f"{cwd}/env/bin/python3 ./tpcc.py {driver} {conn_settings_str} "
+        f"{task_settings.cli_args_str_run()} > {cwd}/{log_file}.log"
+    )
+
+    with lcd(task_settings.executable_dir):
         logger.info(f"Running: {cmd}")
         local(cmd)
 
@@ -1739,43 +1746,25 @@ def ch2_load_task(
     conn_settings: CH2ConnectionSettings,
     task_settings: CH2,
     driver: str = "nestcollections",
-    log_file: str = "ch2_load",
+    log_file: Optional[str] = None,
 ):
+    cwd = os.getcwd()
+    if log_file is None:
+        log_file = f"{task_settings.schema.value}_load"
+
     if task_settings.load_mode == "qrysvc-load":
         output_dest = "/dev/null 2>&1"
     else:
-        output_dest = f"../../../{log_file}.log"
+        output_dest = f"{cwd}/{log_file}.log"
 
     cmd = (
-        f"../../../env/bin/python3 ./tpcc.py {driver} "
+        f"{cwd}/env/bin/python3 ./tpcc.py {driver} "
         f"{conn_settings.cli_args_str_load(task_settings.load_mode)} "
         f"{task_settings.cli_args_str_load()} > {output_dest}"
     )
 
-    with lcd("ch2/ch2driver/pytpcc/"):
+    with lcd(task_settings.executable_dir):
         logger.info(f"Running: {cmd}")
-        local(cmd)
-
-
-def ch3_load_task(
-    conn_settings: CH3ConnectionSettings,
-    task_settings: CH3,
-    driver: str = 'nestcollections'
-):
-    if task_settings.load_mode == "qrysvc-load":
-        output_dest = '/dev/null 2>&1'
-    else:
-        output_dest = '../../../ch3_load.log'
-
-    cmd = '../../../env/bin/python3 ./tpcc.py {} {} {} > {}'.format(
-        driver,
-        conn_settings.cli_args_str_load(task_settings.load_mode),
-        task_settings.cli_args_str_load(),
-        output_dest
-    )
-
-    with lcd('ch3/ch3driver/pytpcc/'):
-        logger.info('Running: {}'.format(cmd))
         local(cmd)
 
 
@@ -1786,26 +1775,6 @@ def ch3_create_fts_index(cluster_spec: ClusterSpec, fts_node: str):
                                                               cluster_spec.rest_credentials[1])
 
     with lcd('ch3/ch3driver/pytpcc/util'):
-        logger.info('Running: {}'.format(cmd))
-        local(cmd)
-
-
-def ch3_run_task(
-    conn_settings: CH3ConnectionSettings,
-    task_settings: CH3,
-    driver: str = 'nestcollections',
-    log_file: str = 'ch3_mixed'
-):
-    cmd = '../../../env/bin/python3 ./tpcc.py {} {} {} > ../../../{}.log'.format(
-        driver,
-        conn_settings.cli_args_str_run(task_settings.tclients,
-                                       task_settings.aclients,
-                                       task_settings.fclients),
-        task_settings.cli_args_str_run(),
-        log_file
-    )
-
-    with lcd('ch3/ch3driver/pytpcc/'):
         logger.info('Running: {}'.format(cmd))
         local(cmd)
 

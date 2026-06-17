@@ -1494,21 +1494,28 @@ class RemoteLinux(Remote):
         conn_settings: CH2ConnectionSettings,
         task_settings: CH2,
         worker_home: str,
-        driver: str = 'nestcollections',
-        log_file: str = 'ch2_mixed'
+        driver: str = "nestcollections",
+        log_file: Optional[str] = None,
     ):
-        cmd = '../../../env/bin/python3 ./tpcc.py {} {} {} > ../../../{}.log'.format(
-            driver,
-            conn_settings.cli_args_str_run(task_settings.tclients, task_settings.aclients),
-            task_settings.cli_args_str_run(),
-            log_file
+        perfrunner_dir = f"{worker_home}/perfrunner"
+        if log_file is None:
+            log_file = f"{task_settings.schema.value}_mixed"
+
+        conn_settings_str = conn_settings.cli_args_str_run(
+            task_settings.tclients, task_settings.aclients, task_settings.fclients
+        )
+
+        cmd = (
+            f"{perfrunner_dir}/env/bin/python3 ./tpcc.py {driver} "
+            f"{conn_settings_str} "
+            f"{task_settings.cli_args_str_run()} > {perfrunner_dir}/{log_file}.log"
         )
 
         with (
-            cd(f"{worker_home}/perfrunner/ch2/ch2driver/pytpcc/"),
+            cd(f"{perfrunner_dir}/{task_settings.executable_dir}/"),
             shell_env(PYTHONWARNINGS="ignore:Unverified HTTPS request"),
         ):
-            logger.info('Running: {}'.format(cmd))
+            logger.info(f"Running: {cmd}")
             run(cmd)
 
     @master_client
@@ -1517,22 +1524,22 @@ class RemoteLinux(Remote):
         conn_settings: CH2ConnectionSettings,
         task_settings: CH2,
         worker_home: str,
-        driver: str = 'nestcollections'
+        driver: str = "nestcollections",
     ):
+        perfrunner_dir = f"{worker_home}/perfrunner"
         if task_settings.load_mode == "qrysvc-load":
-            output_dest = '/dev/null 2>&1'
+            output_dest = "/dev/null 2>&1"
         else:
-            output_dest = '../../../ch2_load.log'
+            output_dest = f"{perfrunner_dir}/{task_settings.schema.value}_load.log"
 
-        cmd = '../../../env/bin/python3 ./tpcc.py {} {} {} > {}'.format(
-            driver,
-            conn_settings.cli_args_str_load(task_settings.load_mode),
-            task_settings.cli_args_str_load(),
-            output_dest
+        cmd = (
+            f"{perfrunner_dir}/env/bin/python3 ./tpcc.py {driver} "
+            f"{conn_settings.cli_args_str_load(task_settings.load_mode)} "
+            f"{task_settings.cli_args_str_load()} > {output_dest}"
         )
 
-        with cd(worker_home), cd('perfrunner'), cd('ch2/ch2driver/pytpcc/'):
-            logger.info('Running: {}'.format(cmd))
+        with cd(f"{perfrunner_dir}/{task_settings.executable_dir}/"):
+            logger.info(f"Running: {cmd}")
             run(cmd)
 
     @master_server

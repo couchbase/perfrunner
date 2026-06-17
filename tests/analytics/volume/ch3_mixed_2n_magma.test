@@ -42,7 +42,8 @@ backup_repo = ch3
 threads = 8
 map_data = bench.ch3=bench.ch3
 
-[ch3]
+[ch2]
+schema = ch3
 warehouses = 1000
 aclients = 1
 tclients = 64

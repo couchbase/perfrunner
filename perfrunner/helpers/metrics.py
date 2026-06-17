@@ -2355,15 +2355,22 @@ class MetricHelper:
             # by all tclients (so wall-clock time spent is total_no_txn_time_us / tclients)
             metrics.total_no_txn_time_us = float(elements[2])
             metrics.no_txn_success_count = int("".join(filter(str.isdigit, elements[-1])))
+            if isinstance(metrics, CH3Metrics):
+                # CH3 reports txn timings in ms not us so we need to correct here
+                metrics.total_no_txn_time_us *= 1000
         elif line.strip().startswith("TOTAL") and tclients > 0:
             # TOTAL time is the sum of microsecs spent executing txns by all tclients,
             # hence we divide by tclients to get average wall-clock time spent per client
             metrics.txn_workload_duration_secs = float(line.split()[2]) / 1e6 / tclients
-        elif "OVERALL GEOMETRIC MEAN" in line:
+            if isinstance(metrics, CH3Metrics):
+                # CH3 reports txn timings in ms not us so we need to correct here
+                metrics.txn_workload_duration_secs *= 1000
+        elif "OVERALL GEOMETRIC MEAN" in line or "OVERALL ANALYTICS GEOMETRIC MEAN" in line:
             metrics.geo_mean_cbas_query_time_secs = float(line.split()[-1])
-        elif "AVERAGE TIME PER QUERY SET" in line:
+        elif "AVERAGE TIME PER QUERY SET" in line or "AVERAGE TIME PER ANALYTICS QUERY SET" in line:
             metrics.average_cbas_query_set_time_secs = float(line.split()[-1])
-        elif "QUERIES PER HOUR" in line:
+        elif "QUERIES PER HOUR" in line or "ANAYTICS QUERIES PER HOUR" in line:
+            # typo 'ANAYTICS' is deliberate, inherited from CH3 repo...
             metrics.cbas_qph = float(line.split()[-1])
 
         if isinstance(metrics, CH3Metrics):

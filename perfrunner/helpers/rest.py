@@ -14,7 +14,7 @@ from decorator import decorator
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import my_public_ip, pretty_dict, run_local_shell_command
+from perfrunner.helpers.misc import my_public_ip, pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec
 from perfrunner.utils.terraform import SERVICES_CAPELLA_TO_PERFRUNNER, ControlPlaneManager
@@ -1139,26 +1139,12 @@ class DefaultRestHelper(RestBase):
         return cluster_info["state"] == "ACTIVE"
 
     def exec_analytics_statement(
-        self, analytics_node: str, statement: str, params: dict = {}
+        self, analytics_node: str, statement: str, params: Optional[dict] = None
     ) -> requests.Response:
-        data = params | {"statement": statement}
+        data = (params or {}) | {"statement": statement}
         url = self._get_api_url(host=analytics_node, path='analytics/service',
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
         return self.post(url=url, data=data)
-
-    def exec_analytics_statement_curl(
-        self, analytics_node: str, statement: str, params: dict = {}
-    ) -> str:
-        url = self._get_api_url(host=analytics_node, path='analytics/service',
-                                plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
-        data_json = json.dumps(params | {"statement": statement})
-        user, pwd = self._set_auth(url=url)
-        cmd = (
-            f"curl -v -k -u {user}:{pwd} "
-            f"-H \"Content-Type: application/json\" -d '{data_json}' {url}"
-        )
-        stdout, _, _ = run_local_shell_command(cmd)
-        return stdout
 
     def get_analytics_stats(self, analytics_node: str) -> dict:
         url = self._get_api_url(host=analytics_node, path='analytics/node/stats',

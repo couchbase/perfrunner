@@ -197,6 +197,12 @@ class DefaultRestHelper(RestBase):
         data = {"hostname": new_host}
         self.post(url=api, data=data)
 
+    def set_alternate_address(self, host: str, alternate_address: str):
+        logger.info(f"Setting alternate address for {host}: {alternate_address}")
+        api = self._get_api_url(host=host, path="node/controller/setupAlternateAddresses/external")
+        data = {"hostname": alternate_address}
+        self.put(url=api, data=data)
+
     def _set_service_mem_quota(
         self,
         host: str,

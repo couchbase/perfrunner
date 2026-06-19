@@ -257,6 +257,7 @@ class DefaultClusterManager(ClusterManagerBase):
             for public_ip, private_ip in self.cluster_spec.servers_public_to_private_ip.items():
                 if private_ip:
                     self.rest.rename(public_ip, private_ip)
+                    self.rest.set_alternate_address(public_ip, public_ip)
         else:
             for server in self.cluster_spec.servers:
                 self.rest.rename(server)

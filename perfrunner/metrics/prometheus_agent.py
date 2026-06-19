@@ -78,6 +78,7 @@ class PrometheusAgent:
                         "hostnames": list(self.cluster_spec.masters),
                         "port": 8091 if not self.use_tls_ports else 18091,
                         "scheme": scheme,
+                        "use_alt_addresses": self.cluster_spec.using_private_cluster_ips,
                     }
                 ],
                 "credentials": {

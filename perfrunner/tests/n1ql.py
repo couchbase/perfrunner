@@ -687,7 +687,7 @@ class N1QLAiQGThroughputTest(N1QLThroughputTest):
 
         self.create_indexes()
         self.wait_for_indexing()
-
+        time.sleep(15)
         self.store_plans()
 
         query_awr_start_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")

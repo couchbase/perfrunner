@@ -1,12 +1,13 @@
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.settings import CbAgentSettings
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.tests import PerfTest
 
 
-class AnalyticsStats(Collector):
+class AnalyticsStats(CouchbaseCollector):
 
     COLLECTOR = "analytics"
+    COLLECTOR_FLAG = "analytics"
 
     PORT = 9110
 

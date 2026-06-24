@@ -1,4 +1,6 @@
-from cbagent.collectors.collector import Collector
+from typing import Optional
+
+from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.collectors.libstats.iostat import DiskStats, IOStat
 from cbagent.collectors.libstats.meminfo import MemInfo
 from cbagent.collectors.libstats.net import NetStat
@@ -7,9 +9,12 @@ from cbagent.collectors.libstats.psstats import PSStats
 from cbagent.collectors.libstats.sysdig import SysdigStat
 from cbagent.collectors.libstats.typeperfstats import TPStats
 from cbagent.collectors.libstats.vmstat import VMStat
+from cbagent.settings import CbAgentSettings
+from perfrunner.tests import PerfTest
 
 
-class System(Collector):
+class System(CouchbaseCollector):
+    ABSTRACT = True
 
     def get_nodes(self):
         return self.settings.hostnames or super().get_nodes()
@@ -29,17 +34,53 @@ class System(Collector):
     def sample(self):
         raise NotImplementedError
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         self.settings = settings
 
         super().__init__(settings)
 
 
+class IOSystem(System):
+    """Base for collectors that need IO partitions (IO, Disk, PageCache)."""
+
+    ABSTRACT = True
+
+    @classmethod
+    def _build_partitions(cls, test: PerfTest):
+        partitions = {
+            "client": {},
+            "server": {"data": test.cluster_spec.data_path},
+        }
+        if test.test_config.showfast.component == "views":
+            partitions["server"]["index"] = test.cluster_spec.index_path
+        elif test.test_config.showfast.component == "tools":
+            partitions["client"]["tools"] = test.cluster_spec.backup
+        elif test.test_config.showfast.component == "analytics":
+            for i, path in enumerate(test.cluster_spec.analytics_paths):
+                partitions["server"][f"analytics{i}"] = path
+        return partitions
+
+    @classmethod
+    def create_instances(cls, test: PerfTest, cluster_map: dict):
+        partitions = cls._build_partitions(test)
+        instances = []
+        for cluster_id, master_node in cluster_map.items():
+            settings = CbAgentSettings(test)
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+            settings.partitions = partitions
+            instances.append(cls(settings, test))
+        return instances
+
+
 class PS(System):
-
     COLLECTOR = "atop"  # Legacy / compatibility
+    ALWAYS_ON = True
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.sampler = PSStats(hosts=self.nodes,
@@ -58,11 +99,16 @@ class PS(System):
                 self.add_stats(node, stats)
 
 
-class IO(System):
+class IO(IOSystem):
 
     COLLECTOR = "iostat"
+    COLLECTOR_FLAG = "iostat"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = True
+    REQUIRES_NON_CLOUD = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.partitions = settings.partitions
@@ -80,11 +126,16 @@ class IO(System):
             self.add_stats(node, stats)
 
 
-class Disk(System):
+class Disk(IOSystem):
 
     COLLECTOR = "disk"
+    COLLECTOR_FLAG = "disk"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = True
+    REQUIRES_NON_CLOUD = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.partitions = settings.partitions
@@ -105,11 +156,15 @@ class Disk(System):
             self.add_stats(node, stats)
 
 
-class PageCache(System):
+class PageCache(IOSystem):
 
     COLLECTOR = "pcstat"
+    COLLECTOR_FLAG = "page_cache"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.partitions = settings.partitions['server']
@@ -127,8 +182,12 @@ class PageCache(System):
 class Net(System):
 
     COLLECTOR = "net"
+    COLLECTOR_FLAG = "net"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.sampler = NetStat(hosts=self.nodes,
@@ -142,8 +201,12 @@ class Net(System):
 
 
 class TypePerf(PS):
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = False
+    REQUIRES_CYGWIN = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.sampler = TPStats(hosts=self.nodes,
@@ -153,10 +216,13 @@ class TypePerf(PS):
 
 
 class Sysdig(System):
-
     COLLECTOR = "sysdig"
+    ALWAYS_ON = True
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.sampler = SysdigStat(hosts=self.nodes,
@@ -173,8 +239,12 @@ class Sysdig(System):
 class Memory(System):
 
     COLLECTOR = 'meminfo'
+    COLLECTOR_FLAG = "memory"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.sampler = MemInfo(hosts=self.nodes,
@@ -190,8 +260,12 @@ class Memory(System):
 class VMSTAT(System):
 
     COLLECTOR = 'vmstat'
+    COLLECTOR_FLAG = "vmstat"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
+    REQUIRES_NON_CYGWIN = True
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.sampler = VMStat(hosts=self.nodes,

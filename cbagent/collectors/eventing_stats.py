@@ -1,14 +1,17 @@
 from fabric.api import run, settings
 
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
+from perfrunner.tests import PerfTest
 
 
-class EventingStats(Collector):
+class EventingStats(CouchbaseCollector):
 
     COLLECTOR = "eventing_stats"
+    COLLECTOR_FLAG = "eventing_stats"
+    SKIP_ON_DYNAMIC = True
     EVENTING_PORT = 8096
 
-    def __init__(self, settings, test):
+    def __init__(self, settings, test: PerfTest):
         super().__init__(settings)
         self.eventing_node = test.eventing_nodes[0]
         self.functions = test.functions
@@ -49,8 +52,10 @@ class EventingStats(Collector):
 class EventingPerNodeStats(EventingStats):
 
     COLLECTOR = "eventing_per_node_stats"
+    COLLECTOR_FLAG = "eventing_stats"
+    SKIP_ON_DYNAMIC = True
 
-    def __init__(self, settings, test):
+    def __init__(self, settings, test: PerfTest):
         super().__init__(settings, test)
 
     def _get_dcp_events_remaining_stats(self):
@@ -83,8 +88,11 @@ class EventingPerNodeStats(EventingStats):
 class EventingPerHandlerStats(EventingStats):
 
     COLLECTOR = "eventing_per_handler_stats"
+    COLLECTOR_FLAG = "eventing_stats"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
 
-    def __init__(self, settings, test):
+    def __init__(self, settings, test: PerfTest):
         super().__init__(settings, test)
 
     def _get_handler_stats(self, function_name):
@@ -115,6 +123,9 @@ class EventingPerHandlerStats(EventingStats):
 class EventingConsumerStats(EventingPerNodeStats):
 
     COLLECTOR = "eventing_consumer_stats"
+    COLLECTOR_FLAG = "eventing_stats"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_ON_PREM = True
 
     PS_CMD = "ps -eo pid,rss,vsize,comm " \
              "| grep '{}' " \
@@ -124,7 +135,7 @@ class EventingConsumerStats(EventingPerNodeStats):
               "| grep '{}' " \
               "| awk 'BEGIN {{FS = \" \"}} ; {{sum+=$9}} END {{print sum}}'"
 
-    def __init__(self, settings, test):
+    def __init__(self, settings, test: PerfTest):
         super().__init__(settings, test)
 
     def _get_consumer_pids(self, function_name):

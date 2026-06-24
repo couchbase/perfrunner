@@ -1,9 +1,10 @@
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
 
 
-class N1QLStats(Collector):
+class N1QLStats(CouchbaseCollector):
 
     COLLECTOR = "n1ql_stats"
+    COLLECTOR_FLAG = "n1ql_stats"
 
     def _get_n1ql_stats(self):
         samples = self.get_http(path="/pools/default/buckets/@query/stats")

@@ -1,9 +1,14 @@
-from cbagent.collectors.collector import Collector
+from typing import Optional
+
+from cbagent.collectors.collector import CouchbaseCollector
+from perfrunner.tests import PerfTest
 
 
-class SecondaryDebugStats(Collector):
+class SecondaryDebugStats(CouchbaseCollector):
 
     COLLECTOR = "secondary_debugstats"
+    COLLECTOR_FLAG = "secondary_debugstats"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = (
         "memory_used",
@@ -14,7 +19,7 @@ class SecondaryDebugStats(Collector):
 
     PORT = 9102
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.index_node = settings.index_node
 
@@ -60,6 +65,8 @@ class SecondaryDebugStats(Collector):
 class SecondaryDebugStatsBucket(SecondaryDebugStats):
 
     COLLECTOR = "secondary_debugstats_bucket"
+    COLLECTOR_FLAG = "secondary_debugstats_bucket"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = (
         "mutation_queue_size",
@@ -85,6 +92,8 @@ class SecondaryDebugStatsBucket(SecondaryDebugStats):
 class SecondaryDebugStatsIndex(SecondaryDebugStats):
 
     COLLECTOR = "secondary_debugstats_index"
+    COLLECTOR_FLAG = "secondary_debugstats_index"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = (
         "avg_scan_latency",

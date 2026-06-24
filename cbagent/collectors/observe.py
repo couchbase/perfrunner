@@ -1,5 +1,6 @@
 from threading import Thread
 from time import sleep, time
+from typing import Optional
 
 import numpy
 import pkg_resources
@@ -10,6 +11,7 @@ from cbagent.collectors import Latency
 from cbagent.collectors.libstats.pool import Pool
 from logger import logger
 from perfrunner.helpers.misc import uhex
+from perfrunner.tests import PerfTest
 from spring.docgen import Document, Key
 
 sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
@@ -31,6 +33,8 @@ def timeit(method, *args, **kargs):
 class ObserveIndexLatency(Latency):
 
     COLLECTOR = "observe"
+    COLLECTOR_FLAG = "index_latency"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = "latency_observe",
 
@@ -42,7 +46,7 @@ class ObserveIndexLatency(Latency):
 
     MAX_REQUEST_INTERVAL = 2
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.pools = []
 
@@ -104,6 +108,8 @@ class ObserveIndexLatency(Latency):
 
 
 class ObserveSecondaryIndexLatency(ObserveIndexLatency):
+    COLLECTOR_FLAG = "secondary_index_latency"
+    SKIP_ON_DYNAMIC = True
 
     @timeit
     def _wait_until_secondary_indexed(self, key, cb, query):
@@ -150,14 +156,16 @@ class ObserveSecondaryIndexLatency(ObserveIndexLatency):
 class DurabilityLatency(ObserveIndexLatency, Latency):
 
     COLLECTOR = "durability"
+    COLLECTOR_FLAG = "durability"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = "latency_replicate_to", "latency_persist_to"
 
     DURABILITY_TIMEOUT = 120
 
-    def __init__(self, settings, workload):
-        super().__init__(settings)
-        self.new_docs = Document(workload.size)
+    def __init__(self, settings, test: PerfTest):
+        super().__init__(settings, test)
+        self.new_docs = Document(test.test_config.access_settings.size)
         self.pools = []
 
     @staticmethod

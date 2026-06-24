@@ -1,16 +1,19 @@
 import time
 from glob import glob
 
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
+from perfrunner.tests import PerfTest
 
 
-class JTSCollector(Collector):
+class JTSCollector(CouchbaseCollector):
     results = dict()
 
     COLLECTOR = "jts_stats"
+    COLLECTOR_FLAG = "jts_stats"
+    SKIP_ON_DYNAMIC = True
     METRICS = ("jts_throughput", "jts_latency",)
 
-    def __init__(self, settings, test):
+    def __init__(self, settings, test: PerfTest):
         super().__init__(settings)
         self.settings = test.jts_access
 
@@ -100,57 +103,3 @@ class JTSCollector(Collector):
                         bucket=bucket,
                         collector=self.COLLECTOR,
                     )
-
-
-class JTSThroughputCollector(JTSCollector):
-    METRICS = "jts_throughput"
-
-    def read_stats(self):
-        self._consolidate_results("aggregated_throughput.log", "throughput")
-
-    def reconstruct(self):
-        if int(self.settings.custom_num_buckets) > 0:
-            self.buckets = self.custom_bucket_list()
-        timestamp_offset = round(time.time() * 1000)
-        self.read_stats()
-
-        if "throughput" in self.results:
-            for bucket in self.buckets:
-                for k in self.results["throughput"][bucket].keys():
-                    data = {
-                        'jts_throughput': float(self.results["throughput"][bucket][k])
-                    }
-                    self.store.append(
-                        data=data,
-                        timestamp=timestamp_offset
-                        + int(k) * int(self.settings.aggregation_buffer_ms),
-                        cluster=self.cluster,
-                        bucket=bucket,
-                        collector=self.COLLECTOR,
-                    )
-
-
-class JTSLatencyCollector(JTSCollector):
-    METRICS = "jts_latency"
-    results = dict()
-
-    def read_stats(self):
-        self._consolidate_results("aggregated_latency.log", "latency")
-
-    def reconstruct(self):
-        if int(self.settings.custom_num_buckets) > 0:
-            self.buckets = self.custom_bucket_list()
-        timestamp_offset = round(time.time() * 1000)
-        self.read_stats()
-        for bucket in self.buckets:
-            for k in self.results["latency"][bucket].keys():
-                data = {
-                    'jts_latency': float(self.results["latency"][bucket][k])
-                }
-                self.store.append(
-                    data=data,
-                    timestamp=timestamp_offset + int(k) * 1000,
-                    cluster=self.cluster,
-                    bucket=bucket,
-                    collector=self.COLLECTOR,
-                )

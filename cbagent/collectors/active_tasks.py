@@ -1,9 +1,10 @@
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
 
 
-class ActiveTasks(Collector):
+class ActiveTasks(CouchbaseCollector):
 
     COLLECTOR = "active_tasks"
+    COLLECTOR_FLAG = "active_tasks"
 
     def update_metadata(self):
         self.mc.add_cluster()

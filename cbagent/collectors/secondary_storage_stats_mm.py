@@ -1,13 +1,18 @@
+from typing import Optional
+
 from cbagent.collectors import SecondaryStats
+from perfrunner.tests import PerfTest
 
 
 class SecondaryStorageStatsMM(SecondaryStats):
 
     COLLECTOR = "secondary_storage_stats_mm"
+    COLLECTOR_FLAG = "secondary_storage_stats_mm"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = "Allocated", "resident", "metadata"
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.index_node = settings.index_node
 

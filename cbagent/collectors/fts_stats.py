@@ -1,10 +1,13 @@
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.tests import PerfTest
 
 
-class FTSCollector(Collector):
+class FTSCollector(CouchbaseCollector):
 
     COLLECTOR = "fts_stats"
+    COLLECTOR_FLAG = "fts_stats"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = (
         "doc_count",
@@ -37,7 +40,7 @@ class FTSCollector(Collector):
         "total_term_searchers",
     )
 
-    def __init__(self, settings, test):
+    def __init__(self, settings, test: PerfTest):
         super().__init__(settings)
         self.cbft_stats = dict()
         self.fts_index_name = "{}-0".format(test.jts_access.couchbase_index_name)
@@ -78,6 +81,15 @@ class FTSCollector(Collector):
 
     def update_metadata(self):
         self.mc.add_cluster()
+        # Register the FTS nodes as servers BEFORE their per-server metrics.
+        # add_server (re)creates the server record and drops any metric
+        # registered against a not-yet-created server, so if another collector calls
+        # add_server after these metrics are added the per-server fts_stats get
+        # orphaned (and never plotted). Collector order is not guaranteed under the
+        # self-registration registry, so adding the servers here makes this
+        # order-independent (a later add_server on an existing server is a no-op).
+        for host in self.fts_nodes:
+            self.mc.add_server(host)
         for metric in self.METRICS:
             for host in self.fts_nodes:
                 self.mc.add_metric(metric, server=host, collector=self.COLLECTOR)
@@ -91,57 +103,4 @@ class FTSCollector(Collector):
                 self.store.append(samples[host],
                                   cluster=self.cluster,
                                   server=host,
-                                  collector=self.COLLECTOR)
-
-
-class ElasticStats(FTSCollector):
-
-    COLLECTOR = "fts_latency"
-
-    METRICS = ("elastic_latency_get", "elastic_cache_size", "elastic_query_total",
-               "elastic_cache_hit", "elastic_filter_cache_size",)
-
-    def __init__(self, settings, test):
-        super().__init__(settings, test)
-        self.interval = settings.lat_interval
-        self.host = settings.master_node
-
-    def collect_stats(self):
-        self.cbft_stats = self.rest.get_elastic_stats(self.host)
-
-    def elastic_query_total(self):
-        return self.cbft_stats["_all"]["total"]["search"]["query_total"]
-
-    def elastic_cache_size(self):
-        return self.cbft_stats["_all"]["total"]["query_cache"]["memory_size_in_bytes"]
-
-    def elastic_cache_hit(self):
-        return self.cbft_stats["_all"]["total"]["query_cache"]["hit_count"]
-
-    def elastic_filter_cache_size(self):
-        return self.cbft_stats["_all"]["total"]["filter_cache"]["memory_size_in_bytes"]
-
-    def elastic_active_search(self):
-        return self.cbft_stats["_all"]["total"]["search"]["open_contexts"]
-
-    def measure(self):
-        stats = {}
-        for metric in self.METRICS:
-            latency = getattr(self, metric)()
-            if latency:
-                stats[metric] = latency
-        return stats
-
-    def update_metadata(self):
-        self.mc.add_cluster()
-        for metric in self.METRICS:
-            self.mc.add_metric(metric, collector=self.COLLECTOR)
-
-    def sample(self):
-        self.collect_stats()
-        if self.cbft_stats:
-            self.update_metric_metadata(self.METRICS)
-            samples = self.measure()
-            if samples:
-                self.store.append(samples, cluster=self.cluster,
                                   collector=self.COLLECTOR)

@@ -1,23 +1,25 @@
 import asyncio
 import csv
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional
 from uuid import uuid4
 
 from aiohttp import ClientSession, TCPConnector
 from fabric.api import cd, execute, get, parallel, run
 
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.settings import CbAgentSettings
+from perfrunner.tests import PerfTest
 
 
-class Latency(Collector):
+class Latency(CouchbaseCollector):
 
+    ABSTRACT = True
     COLLECTOR = "latency"
 
     METRICS = ()
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.stat_dir = 'spring_latency/master_{}'.format(self.master_node)
 
@@ -36,13 +38,14 @@ class Latency(Collector):
 class KVLatency(Latency):
 
     COLLECTOR = "spring_latency"
+    COLLECTOR_FLAG = "latency"
 
     METRICS = ["latency_get", "latency_set", "latency_durable_set",
                "latency_total_get", "latency_total_set", "latency_total_durable_set"]
 
     PATTERN = '*kv-worker-*'
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         if self.collections is not None:
             self.target_groups = {
@@ -168,6 +171,7 @@ class KVLatency(Latency):
 class QueryLatency(KVLatency):
 
     COLLECTOR = "spring_query_latency"
+    COLLECTOR_FLAG = "n1ql_latency"
 
     METRICS = "latency_query",
 

@@ -3,18 +3,33 @@ import re
 from collections import defaultdict
 from typing import Iterable
 
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.settings import CbAgentSettings
 from logger import logger
 from perfrunner.helpers.local import extract_cb_any, run_mcstat
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.settings import ClusterSpec
+from perfrunner.tests import PerfTest
 
 BUCKET_SEP = re.compile(r"^\*+\n", flags=re.MULTILINE)
 
 
-class KVStoreStats(Collector):
+class KVStoreStats(CouchbaseCollector):
     COLLECTOR = "kvstore_stats"
+    COLLECTOR_FLAG = "kvstore"
+    SKIP_ON_DYNAMIC = True
+    REQUIRES_NON_CYGWIN = True
+
+    # mcstat-based stat collection requires server build >= 8.0 on Capella.
+    MIN_CAPELLA_BUILD = (8, 0, 0, 0)
+
+    @classmethod
+    def is_activated(cls, test, collector_flags):
+        if not super().is_activated(test, collector_flags):
+            return False
+        if test.capella_infra and test.server_info.build_tuple < cls.MIN_CAPELLA_BUILD:
+            return False
+        return True
+
     MC_STATS_PORT = 11209
     MC_STATS_PORT_TLS = 11207
     METRIC_CAP = 50
@@ -196,13 +211,11 @@ class KVStoreStats(Collector):
         *(set(FUSION_METRICS) | set(METRICS_AVERAGE_PER_SHARD) | set(NO_CAP) | set(NESTED_METRICS)),
     )
 
-    def __init__(
-        self, settings: CbAgentSettings, collect_per_server_stats: bool, cluster_spec: ClusterSpec
-    ):
-        super().__init__(settings)
+    def __init__(self, settings: CbAgentSettings, test: PerfTest):
+        super().__init__(settings, test)
         extract_cb_any(filename="couchbase")
-        self.collect_per_server_stats = collect_per_server_stats
-        self.cluster_spec = cluster_spec
+        self.collect_per_server_stats = test.test_config.magma_settings.collect_per_server_stats
+        self.cluster_spec = test.cluster_spec
 
         # Track previous skipped nodes to avoid noisy logging
         self._prev_skipped = set()

@@ -1,5 +1,6 @@
 
 from time import sleep, time
+from typing import Optional
 
 import numpy
 
@@ -7,13 +8,14 @@ from cbagent.collectors.latency import Latency
 from cbagent.collectors.libstats.pool import Pool
 from cbagent.settings import CbAgentSettings
 from logger import logger
-from perfrunner.settings import PhaseSettings
+from perfrunner.tests import PerfTest
 from spring.docgen import Document, Key
 
 
 class XdcrLag(Latency):
 
     COLLECTOR = "xdcr_lag"
+    COLLECTOR_FLAG = "xdcr_lag"
 
     METRICS = "xdcr_lag",
 
@@ -23,11 +25,31 @@ class XdcrLag(Latency):
 
     MAX_SAMPLING_INTERVAL = 0.25  # 250 ms
 
-    def __init__(self, settings: CbAgentSettings, workload: PhaseSettings):
-        super().__init__(settings)
-        self.dest_master_node = settings.dest_master_node
+    @staticmethod
+    def _dest_master_node(test) -> Optional[str]:
+        """Master of the XDCR destination cluster."""
+        clusters = list(test.cluster_spec.clusters)
+        if len(clusters) < 2:
+            return None
+        _, dest_servers = clusters[-1]
+        return dest_servers[0]
+
+    @classmethod
+    def create_instances(cls, test: PerfTest, cluster_map: dict):
+        # Only the source (first) cluster gets an XdcrLag instance.
+        if not cluster_map:
+            return []
+        first_cluster_id, first_master = next(iter(cluster_map.items()))
+        settings = CbAgentSettings(test)
+        settings.cluster = first_cluster_id
+        settings.master_node = first_master
+        return [cls(settings, test)]
+
+    def __init__(self, settings: CbAgentSettings, test: PerfTest):
+        super().__init__(settings, test)
+        self.dest_master_node = self._dest_master_node(test)
         self.interval = self.MAX_SAMPLING_INTERVAL
-        self.new_docs = Document(workload.size)
+        self.new_docs = Document(test.test_config.access_settings.size)
         self.pools = []
 
     @staticmethod

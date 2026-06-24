@@ -1,15 +1,19 @@
 import os
+from typing import Optional
 
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
+from perfrunner.tests import PerfTest
 
 
-class SecondaryLatencyStats(Collector):
+class SecondaryLatencyStats(CouchbaseCollector):
 
     COLLECTOR = "secondaryscan_latency"
+    COLLECTOR_FLAG = "secondary_latency"
+    SKIP_ON_DYNAMIC = True
 
     SECONDARY_STATS_FILE = '/root/statsfile'
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.interval = settings.lat_interval
 

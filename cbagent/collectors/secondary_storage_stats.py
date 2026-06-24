@@ -1,9 +1,14 @@
-from cbagent.collectors.collector import Collector
+from typing import Optional
+
+from cbagent.collectors.collector import CouchbaseCollector
+from perfrunner.tests import PerfTest
 
 
-class SecondaryStorageStats(Collector):
+class SecondaryStorageStats(CouchbaseCollector):
 
     COLLECTOR = "secondary_storage_stats"
+    COLLECTOR_FLAG = "secondary_storage_stats"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = (
         "cache_hit_ratio",
@@ -34,7 +39,7 @@ class SecondaryStorageStats(Collector):
         "eviction_rate_other",
     )
 
-    def __init__(self, settings):
+    def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.index_node = settings.index_node
 

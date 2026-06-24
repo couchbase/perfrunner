@@ -128,7 +128,7 @@ class QueryTest(IndexTest):
     Access phase represents mixed KV workload and queries on views.
     """
 
-    COLLECTORS = {'query_latency': True}
+    COLLECTORS = {'n1ql_latency': True}
 
     @with_stats
     def access(self, *args):

@@ -1,11 +1,14 @@
-from cbagent.collectors import Collector
+from cbagent.collectors import CouchbaseCollector
 from perfrunner.helpers.misc import create_build_tuple
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.tests import PerfTest
 
 
-class SyncGatewayStats(Collector):
+class SyncGatewayStats(CouchbaseCollector):
     COLLECTOR_NODE = "syncgateway_node_stats"
     COLLECTOR_CLUSTER = "syncgateway_cluster_stats"
+    COLLECTOR_FLAG = "syncgateway_stats"
+    SKIP_ON_DYNAMIC = True
     REPORT_STATS_PER_NODE = False
 
     METRICS = (
@@ -244,7 +247,7 @@ class SyncGatewayStats(Collector):
         "sgw_gsi_views_channels_count",
     )
 
-    def __init__(self, settings, test):
+    def __init__(self, settings, test: PerfTest):
         super().__init__(settings)
         self.use_capella = test.cluster_spec.capella_infrastructure
         self.num_buckets = test.test_config.cluster.num_buckets

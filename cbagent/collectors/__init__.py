@@ -1,17 +1,15 @@
 from cbagent.collectors.active_tasks import ActiveTasks
+from cbagent.collectors.ai_services import WorkflowMetadataStats
 from cbagent.collectors.analytics import AnalyticsStats
 from cbagent.collectors.cbstats import CBStatsAll, CBStatsMemory
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import Collector, CouchbaseCollector
 from cbagent.collectors.eventing_stats import (
     EventingConsumerStats,
     EventingPerHandlerStats,
     EventingPerNodeStats,
     EventingStats,
 )
-from cbagent.collectors.fts_stats import (
-    ElasticStats,
-    FTSCollector,
-)
+from cbagent.collectors.fts_stats import FTSCollector
 from cbagent.collectors.jts_stats import JTSCollector
 from cbagent.collectors.kvstore_stats import KVStoreStats
 from cbagent.collectors.latency import KVLatency, Latency, QueryLatency

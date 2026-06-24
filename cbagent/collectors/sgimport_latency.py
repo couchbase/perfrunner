@@ -4,19 +4,19 @@ from time import time
 
 import requests
 
-from cbagent.collectors import Collector
+from cbagent.collectors import CouchbaseCollector
 from cbagent.collectors.libstats.pool import Pool
-from cbagent.metadata_client import MetadataClient
 from cbagent.settings import CbAgentSettings
-from cbagent.stores import PerfStore
 from logger import logger
 from perfrunner.helpers.misc import uhex
-from perfrunner.settings import ClusterSpec
+from perfrunner.tests import PerfTest
 from spring.docgen import SGImportLatencyDocument
 
 
-class SGImportLatency(Collector):
+class SGImportLatency(CouchbaseCollector):
     COLLECTOR = "sgimport_latency"
+    COLLECTOR_FLAG = "sgimport_latency"
+    SKIP_ON_DYNAMIC = True
 
     METRICS = "sgimport_latency"
 
@@ -26,15 +26,13 @@ class SGImportLatency(Collector):
 
     MAX_SAMPLING_INTERVAL = 10  # 250 ms
 
-    def __init__(self, settings: CbAgentSettings, cluster_spec: ClusterSpec):
-        super().__init__(settings)
-        self.cluster_spec = cluster_spec
-        self.mc = MetadataClient(settings)
-        self.store = PerfStore(settings.cbmonitor_host)
+    def __init__(self, settings: CbAgentSettings, test: PerfTest):
+        super().__init__(settings, test)
+        self.cluster_spec = test.cluster_spec
         self.interval = self.MAX_SAMPLING_INTERVAL
         self.cluster = settings.cluster
         self.pools: list[Pool] = []
-        self.sg_host = next(cluster_spec.sgw_masters)
+        self.sg_host = next(self.cluster_spec.sgw_masters)
         self.sg_db = "db-1"
         self.new_docs = SGImportLatencyDocument(1024)
 

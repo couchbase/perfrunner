@@ -1,9 +1,10 @@
-from cbagent.collectors.collector import Collector
+from cbagent.collectors.collector import CouchbaseCollector
 
 
-class NSServer(Collector):
+class NSServer(CouchbaseCollector):
 
     COLLECTOR = "ns_server"
+    COLLECTOR_FLAG = "ns_server"
 
     def _get_stats_uri(self):
         for bucket, stats in self.get_buckets(with_stats=True):
@@ -41,6 +42,7 @@ class NSServer(Collector):
 class NSServerSystem(NSServer):
 
     COLLECTOR = "ns_server_system"
+    COLLECTOR_FLAG = "ns_server_system"
     METRICS = 'cpu_utilization',
 
     def _get_system_stats(self):
@@ -72,9 +74,10 @@ class NSServerSystem(NSServer):
             self.update_metric_metadata(self.METRICS, server=node)
 
 
-class XdcrStats(Collector):
+class XdcrStats(CouchbaseCollector):
 
     COLLECTOR = "xdcr_stats"
+    COLLECTOR_FLAG = "xdcr_stats"
 
     def _get_stats_uri(self):
         for bucket in self.get_buckets():

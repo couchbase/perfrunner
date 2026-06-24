@@ -1,10 +1,15 @@
-from cbagent.collectors.collector import Collector
+from typing import Optional
+
+from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.settings import CbAgentSettings
+from perfrunner.tests import PerfTest
 
 
-class MetricsRestApiBase(Collector):
+class MetricsRestApiBase(CouchbaseCollector):
 
-    def __init__(self, settings: CbAgentSettings):
+    ABSTRACT = True
+
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.server_processes = settings.server_processes
         self.stats_uri = '/pools/default/stats/range/'
@@ -63,6 +68,7 @@ class MetricsRestApiBase(Collector):
 class MetricsRestApiProcesses(MetricsRestApiBase):
 
     COLLECTOR = "metrics_rest_api_processes"
+    ALWAYS_ON = True
 
     PROCESSES = (
         "cbas",
@@ -83,7 +89,7 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
         "sysproc_mem_resident"
     )
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.stats_data = [
             {
@@ -122,6 +128,7 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
 class MetricsRestApiDeduplication(MetricsRestApiBase):
 
     COLLECTOR = "metrics_rest_api_dedup"
+    COLLECTOR_FLAG = "kv_dedup"
 
     METRICS = {
         "kv_ep_total_deduplicated": "kv_ep_total_deduplicated_rate",
@@ -129,7 +136,7 @@ class MetricsRestApiDeduplication(MetricsRestApiBase):
         "kv_ep_total_enqueued": "kv_ep_total_enqueued_rate"
     }
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.stats_data = [
             {
@@ -182,9 +189,13 @@ class MetricsRestApiThroughputCollection(MetricsRestApiBase):
 
     COLLECTOR = "metrics_rest_api_collection_throughput"
 
+    @classmethod
+    def is_activated(cls, test, collector_flags):
+        return bool(test.test_config.collection.collection_stat_groups)
+
     METRIC = "kv_collection_ops"
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
         self.target_groups_per_bucket = {
@@ -313,6 +324,7 @@ class MetricsRestApiThroughputCollection(MetricsRestApiBase):
 
 class MetricsRestApiAppTelemetry(MetricsRestApiBase):
     COLLECTOR = "metrics_rest_api_app_telemetry"
+    COLLECTOR_FLAG = "app_telemetry"
 
     METRICS = (
         "cm_app_telemetry_curr_connections",
@@ -321,7 +333,7 @@ class MetricsRestApiAppTelemetry(MetricsRestApiBase):
         # This covers the per service meters as described in RFC-0084
     )
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.stats_data = [
             {
@@ -358,6 +370,10 @@ class MetricsRestApiDeks(MetricsRestApiBase):
 
     COLLECTOR = "metrics_rest_api_deks"
 
+    @classmethod
+    def is_activated(cls, test, collector_flags):
+        return bool(test.test_config.bucket.encryption_at_rest)
+
     METRICS = [
         "cm_encr_at_rest_deks_in_use",
         "cm_encr_at_rest_drop_deks_events_total",
@@ -367,7 +383,7 @@ class MetricsRestApiDeks(MetricsRestApiBase):
 
     METRIC_TYPE_PREFIX = "bucketDek_"
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.stats_data = [
             {
@@ -417,6 +433,7 @@ class MetricsRestApiDeks(MetricsRestApiBase):
 
 class MetricsRestApiContinuousBackup(MetricsRestApiBase):
     COLLECTOR = "metrics_rest_api_contbk"
+    COLLECTOR_FLAG = "contbk_stats"
 
     METRICS = {
         "contbk_backed_up_parts",
@@ -427,7 +444,7 @@ class MetricsRestApiContinuousBackup(MetricsRestApiBase):
         "contbk_gaps",
     }
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.stats_data = [
             {
@@ -531,7 +548,7 @@ class MetricsRestApiDiskIO(MetricsRestApiBase):
         "sys_disk_writes",
     )
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
         self.stats_data = [
             {
@@ -546,6 +563,10 @@ class MetricsRestApiDiskIO(MetricsRestApiBase):
             }
             for metric in self.METRICS
         ]
+
+    @classmethod
+    def is_activated(cls, test, collector_flags: dict) -> bool:
+        return bool(test.capella_infra)
 
     def get_stats(self) -> dict:
         samples = self.post_http(path=self.stats_uri, json_data=self.stats_data)

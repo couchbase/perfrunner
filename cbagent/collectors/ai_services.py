@@ -1,12 +1,17 @@
-from cbagent.collectors.collector import Collector
+from typing import Optional
+
+from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.settings import CbAgentSettings
+from perfrunner.tests import PerfTest
 
 
-class WorkflowMetadataStats(Collector):
+class WorkflowMetadataStats(CouchbaseCollector):
     COLLECTOR = "ai_workflow_stats"
+    COLLECTOR_FLAG = "ai_workflow_stats"
+    SKIP_ON_DYNAMIC = True
     METRICS = "ai_workflow_stats"
 
-    def __init__(self, settings: CbAgentSettings):
+    def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings)
 
     def sample(self):

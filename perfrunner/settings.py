@@ -4393,6 +4393,17 @@ class AIServicesSettings:
         self.aws_credential_path = options.get("aws_credential_path", "/root/.ssh")
 
 
+class RerankingSettings:
+
+    def __init__(self, options: dict):
+        self.rerank_uri = options.get("rerank_uri", "https://api.cohere.com/v2/rerank")
+        self.rerank_model = options.get("rerank_model", "rerank-v3.5")
+        self.rerank_cred_id = options.get("rerank_cred_id", "rerank-perf")
+        self.rerank_top_k = int(options.get("rerank_top_k", "10"))
+        self.rerank_query_path = options.get("rerank_query_path", "")
+        self.rerank_api_key_path = options.get("rerank_api_key_path", "/root/.ssh/cohere_api_key")
+
+
 class AIBenchSettings(PhaseSettings):
     """Provides settings for AI Bench workload generator."""
 
@@ -4956,6 +4967,11 @@ class TestConfig(Config):
     def ai_services_settings(self) -> AIServicesSettings:
         options = self._get_options_as_dict("ai_services")
         return AIServicesSettings(options)
+
+    @property
+    def reranking_settings(self) -> RerankingSettings:
+        options = self._get_options_as_dict("reranking")
+        return RerankingSettings(options)
 
     @property
     def aibench_settings(self) -> AIBenchSettings:

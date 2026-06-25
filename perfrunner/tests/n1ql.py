@@ -5,6 +5,7 @@ import os
 import re
 import threading
 import time
+import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
@@ -2317,6 +2318,45 @@ class N1qlVectorLatencyThroughputPreparedStatementTest(N1qlVectorSearchTest):
                                               update_subcategory=True)
         )
 
+    @staticmethod
+    def _recall_at_k(ranked_ids: list, relevant: set, k: int) -> Optional[float]:
+        if not relevant:
+            return None
+        topk = ranked_ids[:k]
+        hits = sum(1 for d in topk if d in relevant)
+        return hits / float(len(relevant))         # |rel ∩ topk| / |rel|
+
+    @staticmethod
+    def _mrr_at_k(ranked_ids: list, relevant: set, k: int) -> float:
+        for rank, d in enumerate(ranked_ids[:k], start=1):
+            if d in relevant:
+                return 1.0 / rank
+        return 0.0
+
+    @staticmethod
+    def _ndcg_at_k(ranked_ids: list, grades: dict, k: int) -> float:
+        # grades: {docid: grade}
+        dcg = 0.0
+        for rank, d in enumerate(ranked_ids[:k], start=1):
+            g = grades.get(d, 0)
+            if g:
+                dcg += (2 ** g - 1) / math.log2(rank + 1)
+        ideal = sorted(grades.values(), reverse=True)[:k]
+        idcg = sum((2 ** g - 1) / math.log2(i + 2) for i, g in enumerate(ideal))
+        return dcg / idcg if idcg else 0.0
+
+    def create_system_query_index(self) -> None:
+        """Pre-create the _system._query primary index so CBO doesn't build it mid-query.
+
+        With useCBO=true the first query triggers an on-the-fly build of
+        ix_system_query, which competes with the bhive graph for memory and causes
+        page evictions and latency spikes.
+        """
+        statement = (f"CREATE PRIMARY INDEX IF NOT EXISTS ON "
+                     f"`{self.test_config.buckets[0]}`.`_system`.`_query`")
+        logger.info(f"Pre-creating system query index: {statement}")
+        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
     def run(self):
         self.cloud_restore()
         statements = self.create_statements()
@@ -2535,33 +2575,6 @@ class N1qlHybridSearchTest(N1qlVectorLatencyThroughputPreparedStatementTest):
                 gt.append(set(line.split()))
         return gt
 
-    @staticmethod
-    def _recall_at_k(ranked_ids: list, relevant: set, k: int) -> Optional[float]:
-        if not relevant:
-            return None
-        topk = ranked_ids[:k]
-        hits = sum(1 for d in topk if d in relevant)
-        return hits / float(len(relevant))         # |rel ∩ topk| / |rel|
-
-    @staticmethod
-    def _mrr_at_k(ranked_ids: list, relevant: set, k: int) -> float:
-        for rank, d in enumerate(ranked_ids[:k], start=1):
-            if d in relevant:
-                return 1.0 / rank
-        return 0.0
-
-    @staticmethod
-    def _ndcg_at_k(ranked_ids: list, grades: dict, k: int) -> float:
-        # grades: {docid: grade}
-        dcg = 0.0
-        for rank, d in enumerate(ranked_ids[:k], start=1):
-            g = grades.get(d, 0)
-            if g:
-                dcg += (2 ** g - 1) / math.log2(rank + 1)
-        ideal = sorted(grades.values(), reverse=True)[:k]
-        idcg = sum((2 ** g - 1) / math.log2(i + 2) for i, g in enumerate(ideal))
-        return dcg / idcg if idcg else 0.0
-
     def hybrid_relevance_check(self) -> dict:
         """Run the mode query per MS MARCO query; aggregate IR metrics (recall/nDCG/MRR)."""
         query_node = self.query_nodes[0]
@@ -2743,18 +2756,6 @@ class N1qlHybridSearchTest(N1qlVectorLatencyThroughputPreparedStatementTest):
         self.monitor.monitor_fts_indexing_queue(
             self.fts_nodes[0], created_name,
             int(self.test_config.access_settings.items))
-
-    def create_system_query_index(self) -> None:
-        """Pre-create the _system._query primary index so CBO doesn't build it mid-query.
-
-        With useCBO=true the first query triggers an on-the-fly build of
-        ix_system_query, which competes with the bhive graph for memory and causes
-        page evictions and latency spikes.
-        """
-        statement = (f"CREATE PRIMARY INDEX IF NOT EXISTS ON "
-                     f"`{self.bsc[0]}`.`_system`.`_query`")
-        logger.info(f"Pre-creating system query index: {statement}")
-        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 
     def run(self) -> None:
         self.cloud_restore()
@@ -3292,3 +3293,479 @@ class N1QLExternalIcebergJoinTest(N1QLExternalIcebergTest):
                     if opts.get("load") == 1:
                         return scope, collection
         return "_default", "_default"
+
+
+class N1qlVectorRerankingLatencyThroughputTest(N1qlVectorLatencyThroughputPreparedStatementTest):
+    """Vector search + AI_RERANK two-stage pipeline test.
+
+    Recall phase: CTE (ANN top-100) → AI_RERANK → top-10, evaluated with
+    IR recall@10, MRR@10, nDCG@10 against MS MARCO qrels, for every value in
+    vector_scan_probes.
+    Access phase: sustained workload measuring latency and throughput, always at
+    the first vector_scan_probes value so the series stays at one operating point.
+    """
+
+    # Post the ceiling metrics (HitRate@ann_limit / Recall@ann_limit) only where the
+    # recall query actually returns ann_limit rows. The AI_RERANK arm returns exactly
+    # k rows, so its "ceiling" would just restate Recall@k under a @100 label.
+    REPORT_CEILING = False
+
+    # Fail the run rather than publish metrics when more than this fraction of
+    # queries error out (recall phase, and the access phase via query-node stats).
+    MAX_FAILED_QUERY_RATIO = 0.01
+
+    # The recall statement returns an AI_RERANK score per row; the baseline returns none.
+    EXPECTS_RERANK_SCORE = True
+
+    @property
+    def access_probe(self) -> str:
+        """Access-phase nprobes: the first vector_scan_probes value, fixed per test."""
+        return self.test_config.gsi_settings.vector_scan_probes.split(",")[0].strip()
+
+    def setup_reranking_credentials(self):
+        """Configure credstore and curl allowlist for AI_RERANK.
+
+        Reads the Cohere API key from the COHERE_API_KEY env var or from a file
+        on the client machine (rerank_api_key_path setting). Then:
+        1. Registers the key as a bearer token in the credstore.
+        2. Adds the rerank URI to the N1QL curl allowlist.
+        """
+        reranking = self.test_config.reranking_settings
+        query_node = self.query_nodes[0]
+
+        # 1. Obtain the API key (env var takes precedence over file)
+        api_key = os.environ.get("COHERE_API_KEY", "").strip()
+        if not api_key:
+            key_path = reranking.rerank_api_key_path
+            logger.info(f"COHERE_API_KEY env var not set, reading from {key_path}")
+            with open(key_path, 'r') as f:
+                api_key = f.read().strip()
+        if not api_key:
+            raise RuntimeError(
+                "Cohere API key not found. Set COHERE_API_KEY env var or "
+                f"place key in {reranking.rerank_api_key_path}"
+            )
+
+        # 2. Enable credstore on the cluster
+        self.rest.set_credential_store(self.master_node)
+
+        # 3. Register the key as a bearer-token credential (create_credential also
+        # registers it for log redaction)
+        self.rest.create_credential(
+            host=self.master_node,
+            cred_id=reranking.rerank_cred_id,
+            cred_type="http",
+            fields={"authScheme": "bearer", "token": api_key, "headerName": "Authorization"},
+            allowed_services=["n1ql"],
+            allowed_urls=[reranking.rerank_uri],
+            secret_fields=["token"],
+        )
+
+        # 4. Add rerank URI to the N1QL curl allowlist
+        self.rest.set_query_curl_allowlist(query_node, [reranking.rerank_uri])
+        logger.info("Credstore and curl allowlist configured successfully")
+
+    def _parse_reranking_query(self, line: str):
+        """Parse combined query line: qid<TAB>query_text<TAB>vec1 vec2 ... vec768."""
+        parts = line.rstrip("\n").split("\t")
+        qid = parts[0]
+        query_text = parts[1]
+        vec = [float(x) for x in parts[2].split()]
+        return qid, query_text, vec
+
+    def _archive_per_query_dump(self, path):
+        """Zip the per-query trace so scripts/upload_info.sh uploads it with the run."""
+        with zipfile.ZipFile(f"{path}.zip", "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.write(path)
+        logger.info(f"Per-query trace archived: {path}.zip")
+
+    def _topn_scan_arg(self, limit):
+        """Render the optional 6th ANN_DISTANCE arg (topNScan), or "" if unset.
+
+        topNScan is the BHive rerank depth: how many quantised candidates get
+        re-scored with full-precision vectors. Omitted, the indexer picks its own
+        depth, which varies with the scan LIMIT and is therefore not reproducible
+        or comparable across arms -- BOTH arms must pin it or neither. Clamped to
+        >= limit, since a depth below the scan limit is meaningless.
+        """
+        topn = self.test_config.gsi_settings.vector_topn_scan
+        return f", {max(int(topn), int(limit))}" if topn else ""
+
+    def _rerank_options(self) -> str:
+        """AI_RERANK options object built from [reranking], shared by both phases."""
+        reranking = self.test_config.reranking_settings
+        return json.dumps({
+            "uri": reranking.rerank_uri,
+            "model": reranking.rerank_model,
+            "cred_id": reranking.rerank_cred_id,
+        })
+
+    def _build_recall_statement(self, vec, probe, query_text, ann_limit, k):
+        """Build the recall-phase statement: ANN top-`ann_limit` -> AI_RERANK -> top-`k`.
+
+        Overridden by N1qlVectorDenseBaselineLatencyThroughputTest to drop the AI_RERANK call
+        while keeping the CTE (and therefore the index scan and the KV fetch)
+        identical, so the two arms differ only by the reranker.
+        """
+        similarity = self.test_config.gsi_settings.vector_similarity
+        topn = self._topn_scan_arg(ann_limit)
+        return (
+            f"WITH ann AS ("
+            f"SELECT META(d).id AS id, d.text "
+            f"FROM `{self.test_config.buckets[0]}` AS d "
+            f"ORDER BY ANN_DISTANCE(d.emb, {vec}, "
+            f"'{similarity}', {probe}, true{topn}) LIMIT {ann_limit}) "
+            f"SELECT a.id, AI_RERANK(a.text, {self._rerank_options()}, "
+            f"{json.dumps(query_text)}) OVER () AS score "
+            f"FROM ann AS a ORDER BY score DESC LIMIT {k}"
+        )
+
+    @staticmethod
+    def _is_rate_limited(errors) -> bool:
+        """Return True if any query error message reports an HTTP 429 from the provider."""
+        msgs = [str(e.get("msg", "")).lower() for e in errors]
+        return any("429" in m or "too many requests" in m for m in msgs)
+
+    def reranking_recall_check(self):
+        """Execute CTE+AI_RERANK queries and compute IR metrics against qrels."""
+        query_node = self.query_nodes[0]
+        gsi_settings = self.test_config.gsi_settings
+        index_settings = self.test_config.index_settings
+        reranking = self.test_config.reranking_settings
+        probes = gsi_settings.vector_scan_probes.split(",")
+
+        # Load ground truth (qrels): each line has relevant doc_id(s) for that query
+        with open(index_settings.ground_truth_file_name) as f:
+            ground_truth = [x.split() for x in f]
+
+        # Load combined query file (qid\ttext\tvec)
+        with open(self._reranking_query_local_path) as f:
+            query_lines = f.readlines()
+
+        # Queries and qrels are aligned by line only (no qid check), so a count
+        # mismatch means the two files do not belong together.
+        if len(query_lines) != len(ground_truth):
+            raise ValueError(
+                f"Query file has {len(query_lines)} lines but ground truth has "
+                f"{len(ground_truth)}; they must be line-aligned"
+            )
+        if not query_lines:
+            raise ValueError(f"Query file {self._reranking_query_local_path} is empty")
+        self.num_eval_queries = len(query_lines)
+        logger.info(f"Evaluating {self.num_eval_queries} queries")
+
+        k = reranking.rerank_top_k
+        ann_limit = int(index_settings.top_k_results)
+
+        all_recalls = []
+        all_mrrs = []
+        all_ndcgs = []
+
+        self.ceiling_hits = []
+        self.ceiling_recalls = []
+        for probe in probes:
+            recalls = []
+            mrrs = []
+            ndcgs = []
+            hits_full = []
+            recalls_full = []
+            per_query = []
+
+            def process_query(query_line, truth, is_first):
+                qid, query_text, vec = self._parse_reranking_query(query_line)
+                statement = self._build_recall_statement(
+                    vec, probe, query_text, ann_limit, k)
+
+                if is_first:
+                    logger.info(f"Reranking query: {statement[:200]}...")
+
+                max_retries = 5
+                for attempt in range(max_retries):
+                    result = self.rest.exec_n1ql_statement(query_node, statement)
+                    if 'errors' in result:
+                        if self._is_rate_limited(result['errors']) and \
+                                attempt < max_retries - 1:
+                            wait = 2 ** attempt * 5
+                            logger.warning(f"Rate limited (qid {qid}), "
+                                           f"retrying in {wait}s "
+                                           f"(attempt {attempt + 1}/{max_retries})")
+                            time.sleep(wait)
+                            continue
+                        logger.warning(f"Query error for qid {qid}: {result['errors']}")
+                        # None, not zeros: a failed query is excluded from the averages
+                        # and counted against MAX_FAILED_QUERY_RATIO instead.
+                        return None
+                    break
+
+                rows = result.get('results', [])
+                ids = [r['id'] for r in rows]
+                scores = [r.get('score') for r in rows]
+                # A provider failure that AI_RERANK surfaces as a NULL score rather
+                # than a query error would leave the top-k in arbitrary order.
+                if not rows or (self.EXPECTS_RERANK_SCORE and None in scores):
+                    logger.warning(f"Query for qid {qid} returned no rows or a NULL score")
+                    return None
+                relevant_set = set(truth)
+                # Per-query trace: rank (1-based) of the first relevant doc, 0 if the
+                # scan never retrieved one. Joining the two arms' dumps on qid shows
+                # whether the reranker PROMOTED a relevant doc into the top-k, left it
+                # where it was, or DEMOTED one the dense ordering already had -- none of
+                # which is visible in the aggregates.
+                first_rel = next((i + 1 for i, x in enumerate(ids)
+                                  if x in relevant_set), 0)
+                # Rank of EVERY relevant passage (0 = not retrieved at all), aligned
+                # positionally with relevant_ids, so multi-relevant queries can be read
+                # without re-deriving ranks from the two id lists.
+                rank_of = {d: i + 1 for i, d in enumerate(ids)}
+                ranks_all = ",".join(str(rank_of.get(d, 0)) for d in truth)
+                per_query.append("\t".join([
+                    str(qid), str(len(truth)), ",".join(truth),
+                    str(first_rel), ranks_all,
+                    ",".join(ids),
+                    ",".join("" if v is None else f"{v:.6f}" for v in scores),
+                    query_text.replace("\t", " "),
+                ]))
+
+                recall = self._recall_at_k(ids, relevant_set, k) or 0.0
+                # Ceiling metrics over the FULL returned list (the candidate pool
+                # the reranker sees). Reranking only permutes this pool, so these
+                # bound what recall@k can ever reach on this configuration.
+                hit_full = 1.0 if any(x in relevant_set for x in ids) else 0.0
+                recall_full = self._recall_at_k(ids, relevant_set, len(ids)) or 0.0
+                mrr = self._mrr_at_k(ids, relevant_set, k)
+                ndcg = self._ndcg_at_k(ids, {d: 1 for d in relevant_set}, k)
+                return recall, mrr, ndcg, hit_full, recall_full
+
+            failed = 0
+            for i, (query_line, truth) in enumerate(zip(query_lines, ground_truth)):
+                scores = process_query(query_line, truth, i == 0)
+                if scores is None:
+                    failed += 1
+                else:
+                    r, m, n, hf, rf = scores
+                    recalls.append(r)
+                    mrrs.append(m)
+                    ndcgs.append(n)
+                    hits_full.append(hf)
+                    recalls_full.append(rf)
+                if (i + 1) % 100 == 0:
+                    logger.info(f"Recall check progress: {i + 1}/{self.num_eval_queries}")
+
+            # A failed AI_RERANK query would otherwise score 0 in this arm while the
+            # baseline scores it normally, biasing the A/B against the reranker.
+            fail_ratio = failed / self.num_eval_queries
+            logger.info(f"Probe {probe}: {failed}/{self.num_eval_queries} queries failed")
+            if fail_ratio > self.MAX_FAILED_QUERY_RATIO:
+                raise RuntimeError(
+                    f"{failed}/{self.num_eval_queries} recall queries failed at probe {probe} "
+                    f"(> {self.MAX_FAILED_QUERY_RATIO:.0%}); not reporting IR metrics"
+                )
+
+            avg_recall = np.mean(recalls) * 100 if recalls else 0
+            avg_mrr = np.mean(mrrs) * 100 if mrrs else 0
+            avg_ndcg = np.mean(ndcgs) * 100 if ndcgs else 0
+
+            dump = (f"per_query_{self.test_config.name}_probe{probe}.tsv")
+            with open(dump, "w") as fh:
+                fh.write("qid\tn_relevant\trelevant_ids\trank_first_relevant\t"
+                         "ranks_all_relevant\treturned_ids_ranked\treturned_scores\t"
+                         "query_text\n")
+                fh.write("\n".join(per_query) + "\n")
+            logger.info(f"Per-query trace written: {dump} ({len(per_query)} rows)")
+            self._archive_per_query_dump(dump)
+
+            avg_hit_full = np.mean(hits_full) * 100 if hits_full else 0
+            avg_recall_full = np.mean(recalls_full) * 100 if recalls_full else 0
+
+            logger.info(f"Probe {probe}: Recall@{k}={avg_recall:.2f}%, "
+                        f"MRR@{k}={avg_mrr:.2f}%, nDCG@{k}={avg_ndcg:.2f}%")
+            if self.REPORT_CEILING:
+                logger.info(f"Probe {probe}: HitRate@{ann_limit}={avg_hit_full:.2f}%, "
+                            f"Recall@{ann_limit}={avg_recall_full:.2f}% "
+                            f"(ceiling -- reranking cannot exceed this)")
+
+            self.ceiling_hits.append(avg_hit_full)
+            self.ceiling_recalls.append(avg_recall_full)
+            all_recalls.append(avg_recall)
+            all_mrrs.append(avg_mrr)
+            all_ndcgs.append(avg_ndcg)
+
+        return probes, all_recalls, all_mrrs, all_ndcgs
+
+    def set_custom_query_settings(self, access_settings: AccessSettings):
+        # NPROBES first: the parent would substitute the whole vector_scan_probes list.
+        # TOPNSCAN resolves to ", <n>" (or "" when vector_topn_scan is unset), so the
+        # token sits directly after the reranking flag in ANN_DISTANCE(..., RERANKINGTOPNSCAN).
+        # Both arms substitute via this shared method, keeping the scan depth symmetric.
+        ann_limit = int(self.test_config.index_settings.top_k_results)
+        stmt = (access_settings.n1ql_queries[0]['statement']
+                .replace("NPROBES", self.access_probe)
+                .replace("TOPNSCAN", self._topn_scan_arg(ann_limit))
+                .replace("RERANK_OPTIONS", self._rerank_options())
+                .replace("RERANK_TOP_K", str(self.test_config.reranking_settings.rerank_top_k)))
+        access_settings.n1ql_queries[0]['statement'] = stmt
+        # SIMILARITY, RERANKING and top_k_results
+        access_settings = super().set_custom_query_settings(access_settings)
+        # Load vectors from the combined query file for the spring worker.
+        # Format: qid\ttext\tvec1 vec2 ... vec768 → spring needs "_ _ vec1 vec2 ..."
+        with open(self._reranking_query_local_path) as f:
+            query_lines = f.readlines()
+        vector_lines = []
+        for line in query_lines:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) >= 3:
+                vec_str = parts[2]
+                # Prepend 2 dummy tokens so VectorEmbeddingDocument.split()[2:] works
+                vector_lines.append(f"0 0 {vec_str}\n")
+        access_settings.vector_query_map = vector_lines
+        return access_settings
+
+    def report_reranking_kpi(self, probes, recalls, mrrs, ndcgs, initial_throughput):
+        reranking = self.test_config.reranking_settings
+        k = reranking.rerank_top_k
+        num_q = self.num_eval_queries
+        if self.REPORT_CEILING and getattr(self, "ceiling_hits", None):
+            ann_limit = int(self.test_config.index_settings.top_k_results)
+            for probe, hit, rec in zip(probes, self.ceiling_hits, self.ceiling_recalls):
+                self.reporter.post(
+                    *self.metrics.n1ql_vector_recall_and_accuracy(
+                        ann_limit, probe, hit, "HitRate", self.index_type,
+                        num_queries=num_q)
+                )
+                self.reporter.post(
+                    *self.metrics.n1ql_vector_recall_and_accuracy(
+                        ann_limit, probe, rec, "Recall", self.index_type,
+                        num_queries=num_q)
+                )
+        for probe, avg_recall, avg_mrr, avg_ndcg in zip(probes, recalls, mrrs, ndcgs):
+            self.reporter.post(
+                *self.metrics.n1ql_vector_recall_and_accuracy(
+                    k, probe, avg_recall, "Recall", self.index_type,
+                    num_queries=num_q)
+            )
+            self.reporter.post(
+                *self.metrics.n1ql_vector_recall_and_accuracy(
+                    k, probe, avg_mrr, "MRR", self.index_type,
+                    num_queries=num_q)
+            )
+            self.reporter.post(
+                *self.metrics.n1ql_vector_recall_and_accuracy(
+                    k, probe, avg_ndcg, "nDCG", self.index_type,
+                    num_queries=num_q)
+            )
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            self.reporter.post(
+                *self.metrics.query_latency(
+                    percentile=percentile,
+                    custom_title_postfix=self.index_type,
+                    update_subcategory=True,
+                )
+            )
+        self.reporter.post(
+            *self.metrics.avg_n1ql_throughput(
+                self.master_node,
+                initial_throughput=initial_throughput,
+                custom_title_postfix=self.index_type,
+                update_subcategory=True,
+            )
+        )
+
+    def _query_request_and_error_counts(self):
+        """Cumulative (requests, errors) summed over all query nodes."""
+        requests = errors = 0
+        for query_node in self.query_nodes:
+            stats = self.rest.get_query_stats(query_node)
+            requests += stats.get("requests.count", 0)
+            errors += stats.get("errors.count", 0)
+        return requests, errors
+
+    def _check_access_errors(self, requests_before, errors_before):
+        """Fail before reporting if access-phase queries errored (e.g. rerank 429s).
+
+        Spring counts a failed request like any other, so failures would otherwise
+        show up as latency/throughput.
+        """
+        requests_after, errors_after = self._query_request_and_error_counts()
+        requests = requests_after - requests_before
+        errors = errors_after - errors_before
+        logger.info(f"Access phase: {errors}/{requests} queries returned errors")
+        if not requests or errors / requests > self.MAX_FAILED_QUERY_RATIO:
+            raise RuntimeError(
+                f"{errors}/{requests} access-phase queries failed "
+                f"(> {self.MAX_FAILED_QUERY_RATIO:.0%}); not reporting latency/throughput"
+            )
+
+    def download_reranking_queries(self):
+        """Download the combined query file (text + vectors) for recall phase."""
+        query_path = self.test_config.reranking_settings.rerank_query_path
+        local_path = query_path.split("/")[-1]
+        if query_path.startswith("s3://"):
+            run_aws_cli_command(f"s3 cp {query_path} {local_path}", profile="default")
+        else:
+            local_path = query_path
+        self._reranking_query_local_path = local_path
+
+    def run(self):
+        self.cloud_restore()
+        self.setup_reranking_credentials()
+        if self.test_config.gsi_settings.pre_create_system_query_index:
+            self.create_system_query_index()
+        statements = self.create_statements()
+        self.create_indexes(statements=statements)
+        self.wait_for_indexing(statements=statements)
+        self.downloads_ground_truth_file()
+        self.download_reranking_queries()
+        probes, recalls, mrrs, ndcgs = self.reranking_recall_check()
+        self.enable_stats()
+        initial_throughput = self.metrics._avg_n1ql_throughput(self.master_node)
+        requests_before, errors_before = self._query_request_and_error_counts()
+        self.access()
+        self._check_access_errors(requests_before, errors_before)
+        self.report_reranking_kpi(probes, recalls, mrrs, ndcgs, initial_throughput)
+
+
+class N1qlVectorDenseBaselineLatencyThroughputTest(N1qlVectorRerankingLatencyThroughputTest):
+    """Dense-only baseline for the AI_RERANK test -- the matched A/B control.
+
+    Everything is shared with N1qlVectorRerankingLatencyThroughputTest: same
+    cluster spec, same BHive index (IVF880,SQ8), same nprobes, same query set and
+    ground truth, same candidate depth (CTE LIMIT 100), same 100-doc KV fetch of
+    `text`, same access duration and worker count. The ONLY difference is that
+    AI_RERANK is not called, so the returned top-10 is the raw ANN distance order.
+    The delta between the two runs is therefore attributable to the reranker alone.
+
+    A dense run on a different index (e.g. auto-centroid 'IVF,SQ8', different
+    nprobes) or with an index-only covering query (no KV fetch) would not be a
+    valid control, as its latency/throughput would differ for reasons other
+    than the reranker.
+    """
+
+    REPORT_CEILING = True
+    EXPECTS_RERANK_SCORE = False
+
+    def setup_reranking_credentials(self):
+        """No external call in the baseline -- no credstore or allowlist needed."""
+        logger.info('Dense-only baseline: skipping credstore/curl allowlist setup')
+
+    def _build_recall_statement(self, vec, probe, query_text, ann_limit, k):
+        """Dense-only ANN top-`ann_limit`, in distance order: no reranker.
+
+        Fetches the same `ann_limit` candidates the AI_RERANK arm reranks, so the
+        recall check can score both the dense top-k (recall, MRR and nDCG all slice
+        to k) and the ceiling over the full candidate pool (REPORT_CEILING). No CTE
+        and no KV fetch: the recall phase is not timed, so the simplest query that
+        yields the dense order is enough. The access phase uses the `[n1ql-q01]`
+        CTE instead, which matches the AI_RERANK arm's cost minus the reranker.
+
+        topNScan is pinned via _topn_scan_arg() exactly as in the AI_RERANK arm, so
+        both arms scan to the same depth. `query_text` is unused, since there is no
+        reranker to pass it to.
+        """
+        similarity = self.test_config.gsi_settings.vector_similarity
+        topn = self._topn_scan_arg(ann_limit)
+        return (
+            f"SELECT META(d).id AS id FROM `{self.test_config.buckets[0]}` AS d "
+            f"ORDER BY ANN_DISTANCE(d.emb, {vec}, "
+            f"'{similarity}', {probe}, true{topn}) "
+            f"LIMIT {ann_limit}"
+        )

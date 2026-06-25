@@ -1,0 +1,95 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1qlVectorRerankingLatencyThroughputTest
+
+[showfast]
+title = Vector Search + AI_RERANK (Cohere rerank-v3.5, external API), 1 bucket, MS MARCO 8.8M 768d BGE, BHive, no replica, 1s 1c
+component = n1ql
+category = vector
+sub_category = Bhive
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 127000
+online_cores = 16
+kernel_mem_limit = 128G
+kernel_mem_limit_services = kv
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+backend_storage = magma
+autofailover_enabled = false
+
+[load]
+items = 8841823
+size = 1024
+workers = 80
+doc_gen = vector_embedding
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic_default.json
+
+[access]
+items = 8841823
+workers = 0
+time = 500
+n1ql_op = read
+doc_gen = vector_embedding
+latency_percentiles = 80,95
+n1ql_queries = q01
+n1ql_query_type = Vector
+n1ql_workers = 32
+workload_instances = 1
+
+[restore]
+backup_storage = s3://msmarco-dense-reranking-8.8m
+backup_repo = reranking_backup
+threads = 50
+
+[backup]
+obj_staging_dir = /stage
+obj_region = us-east-1
+aws_credential_path = /root/.ssh
+
+[index]
+ground_truth_file_name = msmarco_seismic/qrels_ground_truth_seismic.txt
+ground_truth_s3_path = s3://atlas-fts-backup/VectorGroundTruthFiles/
+top_k_results = 100
+fields = composite
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexes = tests/gsi/index_defs/1bucket_1scope_1collections_1_vector_index_768d_msmarco_reranking.json
+override_index_def = emb VECTOR
+vector_def_prefix = emb
+vector_index_type = bhive
+vector_dimension = 768
+vector_description = 'IVF880,SQ8'
+vector_similarity = COSINE
+vector_scan_probes = 100
+vector_topn_scan = 100
+vector_reranking = true
+pre_create_system_query_index = true
+
+[reranking]
+rerank_uri = https://api.cohere.com/v2/rerank
+rerank_model = rerank-v3.5
+rerank_cred_id = rerank-perf
+rerank_top_k = 10
+rerank_query_path = s3://msmarco-dense-reranking-8.8m/queries/msmarco_reranking_queries_768d.txt
+rerank_api_key_path = /root/.ssh/cohere_api_key
+
+[n1ql-q01]
+; RERANK_OPTIONS and RERANK_TOP_K are filled from [reranking]. Spring only binds the
+; vector ($1), so every access query reranks against the same fixed text while the
+; vector varies; latency/throughput are not affected by which text is sent.
+statement = WITH ann AS (SELECT META(d).id AS id, d.text FROM `bucket-1` AS d ORDER BY ANN_DISTANCE(d.emb, $1, 'SIMILARITY', NPROBES, RERANKINGTOPNSCAN) LIMIT top_k_results) SELECT a.id, AI_RERANK(a.text, RERANK_OPTIONS, "what is a nosql database") OVER () AS score FROM ann AS a ORDER BY score DESC LIMIT RERANK_TOP_K
+args = [{emb}]
+total_batches = 1000
+
+[profiling]
+services = index
+profiles = cpu,heap
+interval = 30
+num_profiles = 3

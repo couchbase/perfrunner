@@ -333,9 +333,11 @@ class MetricHelper:
         return self._metric(throughput, chirality=1)
 
     def n1ql_vector_recall_and_accuracy(self, k: int, probe: int,  value: float,
-                                        metric: str, custom_title_postfix: str = None) -> Metric:
+                                        metric: str, custom_title_postfix: str = None,
+                                        num_queries: int = None) -> Metric:
         metric_id = f'{metric}_{k}_{probe}_{self.test_config.name}'
-        title_prefix = f"{metric}@{k}, probes-{probe} across 1000 queries"
+        # Number of queries actually evaluated; titles fall back to 1000.
+        title_prefix = f"{metric}@{k}, probes-{probe} across {num_queries or 1000} queries"
         if custom_title_postfix:
             title_prefix = title_prefix + f" {custom_title_postfix}"
         metric_id = metric_id.replace('.', '')

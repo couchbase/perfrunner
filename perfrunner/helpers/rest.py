@@ -555,20 +555,39 @@ class DefaultRestHelper(RestBase):
         cred_type: str,
         fields: dict,
         allowed_services: Optional[list[str]] = None,
+        allowed_urls: Optional[list[str]] = None,
+        secret_fields: Optional[list[str]] = None,
     ):
         """Create a named credential in ns_server's credential store.
 
         External collections store their object-store (S3/GCS/Azure) access credentials this way;
         the Query service references them by name (AT <cred_id>) in CREATE CATALOG /
-        CREATE EXTERNAL COLLECTION.
+        CREATE EXTERNAL COLLECTION. `allowed_urls` restricts an http credential to the given
+        endpoints (e.g. the AI_RERANK provider URI). `secret_fields` names the fields to redact
+        from logs; all field values are redacted if it is not given.
         """
         payload = {"type": cred_type, "fields": fields}
+        guardrails = {}
         if allowed_services:
-            payload["guardrails"] = {"allowedServices": allowed_services}
-        register_sensitive(*[str(v) for v in fields.values()])
+            guardrails["allowedServices"] = allowed_services
+        if allowed_urls:
+            guardrails["urlWhitelist"] = {"allowedUrls": allowed_urls}
+        if guardrails:
+            payload["guardrails"] = guardrails
+        secrets = fields if secret_fields is None else {f: fields[f] for f in secret_fields}
+        register_sensitive(*[str(v) for v in secrets.values()])
         url = self._get_api_url(host=host, path=f"settings/credentials/{cred_id}")
         logger.info(f"Creating credential '{cred_id}' (type={cred_type}) in credential store")
         return self.post(url=url, json=payload)
+
+    def set_query_curl_allowlist(self, host: str, allowed_urls: list[str]):
+        """Restrict N1QL CURL() and AI functions to the given URLs."""
+        url = self._get_api_url(host=host, path="settings/querySettings/curlAllowlist")
+        logger.info(f"Configuring query curl allowlist: {allowed_urls}")
+        return self.post(
+            url=url,
+            json={"all_access": False, "allowed_urls": allowed_urls, "disallowed_urls": []},
+        )
 
     def grant_service_credential_consumer(self, host: str, service: str, cred_id: str):
         """Grant a service (e.g. n1ql) the credential_consumer role for a credential."""

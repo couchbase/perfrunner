@@ -235,8 +235,11 @@ class PerfTest:
                     worker_home=self.worker_manager.WORKER_HOME,
                     sdk_version=self.test_config.ycsb_settings.sdk_version)
         else:
-            local.clone_git_repo(repo=self.test_config.ycsb_settings.repo,
-                                 branch=self.test_config.ycsb_settings.branch)
+            local.clone_git_repo(
+                repo=self.test_config.ycsb_settings.repo,
+                branch=self.test_config.ycsb_settings.branch,
+                target_dir="YCSB",
+            )
 
     def build_ycsb(self, ycsb_client):
         if self.worker_manager.is_remote:

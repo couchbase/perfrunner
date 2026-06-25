@@ -17,6 +17,7 @@ from fabric.api import cd, run
 from logger import logger
 from perfrunner.helpers.config_files import CAOCouchbaseClusterFile, CAOWorkerFile
 from perfrunner.helpers.local import (
+    _resolve_repo_url,
     cao_generate_config,
     check_if_remote_branch_exists,
     clone_git_repo,
@@ -358,8 +359,7 @@ class OperatorInstaller:
 
     def make_operator(self, release: str):
         """Generate operator CRD from source."""
-        github_token = os.getenv("GITHUB_ACCESS_TOKEN", "")
-        repo = f"https://{github_token}@github.com/couchbase/couchbase-operator.git"
+        repo = _resolve_repo_url("@https://github.com/couchbase/couchbase-operator.git")
         # Operator branches are in the form of <major>.<minor>.x ex 2.6.x
         branch = f"{release.rsplit('.', 1)[0]}.x"
         # If a version branch doesnt exist, use master

@@ -1283,14 +1283,42 @@ def start_celery_worker(queue: str):
               '-l INFO -Q {} -f worker.log &'.format(queue))
 
 
+def _resolve_repo_url(url: str) -> str:
+    """Resolve a repo URL, injecting credentials when the URL starts with '@'.
+
+    '@https://github.com/org/repo.git' signals a private repo. Strip the
+    '@', embed GITHUB_ACCESS_TOKEN, and return the authenticated URL.
+    All other URLs are returned unchanged.
+    """
+    if not url.startswith("@"):
+        return url
+    url = url[1:]
+    token = os.getenv("GITHUB_ACCESS_TOKEN")
+    if not token:
+        logger.warning("GITHUB_ACCESS_TOKEN not set; cloning private repo without credentials")
+        return url
+    if url.startswith("https://github.com/") and "@" not in url:
+        url = url.replace("https://", f"https://{token}@", 1)
+    return url
+
+
+def _sanitize_repo_url(url: str) -> str:
+    """Strip embedded credentials from a URL for safe logging."""
+    if url.startswith("https://") and "@" in url:
+        return "https://" + url.split("@", 1)[1]
+    return url
+
+
 def clone_git_repo(
     repo: str,
     branch: str,
     commit: Optional[str] = None,
     cherrypick: Optional[str] = None,
     keep_if_exists: bool = False,
+    target_dir: Optional[str] = None,
 ):
-    repo_name = repo.split("/")[-1].split(".")[0]
+    repo = _resolve_repo_url(repo)
+    repo_name = target_dir or repo.split("/")[-1].split(".")[0]
     logger.info(f"checking if repo {repo_name} exists...")
 
     if os.path.exists(repo_name):
@@ -1300,8 +1328,11 @@ def clone_git_repo(
         logger.info(f"repo {repo_name} exists...removing...")
         shutil.rmtree(repo_name, ignore_errors=True)
 
-    logger.info(f"Cloning repository: {repo} branch: {branch}")
-    local(f"git clone -q -b {branch} --single-branch {repo}")
+    logger.info(f"Cloning repository: {_sanitize_repo_url(repo)} branch: {branch}")
+    clone_cmd = f"git clone -q -b {branch} --single-branch {repo}"
+    if target_dir:
+        clone_cmd += f" {target_dir}"
+    local(clone_cmd)
 
     if commit:
         with lcd(repo_name):
@@ -1342,7 +1373,8 @@ def download_raw_github_file(
 
 def check_if_remote_branch_exists(repo: str, branch: str) -> bool:
     """Return true if a specified branch exists in the specified repo."""
-    logger.info(f"Checking if branch {branch} exists on {repo}")
+    repo = _resolve_repo_url(repo)
+    logger.info(f"Checking if branch {branch} exists on {_sanitize_repo_url(repo)}")
     ret = local(f"git ls-remote -q --heads {repo} refs/heads/{branch}", capture=True)
     return f"refs/heads/{branch}" in ret.stdout
 
@@ -1998,8 +2030,9 @@ def start_cblitedb_continuous(port: str, db_name: str):
 
 def clone_ycsb(repo: str, branch: str):
     repo = repo.replace("git://", "https://")
-    logger.info('Cloning YCSB repository: {} branch: {}'.format(repo, branch))
-    local('git clone -q -b {} {}'.format(branch, repo))
+    repo = _resolve_repo_url(repo)
+    logger.info(f"Cloning YCSB repository: {_sanitize_repo_url(repo)} branch: {branch}")
+    local(f"git clone -q -b {branch} {repo} YCSB")
 
 
 def kill_cblite():

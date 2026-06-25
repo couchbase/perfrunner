@@ -577,8 +577,8 @@ class RemoteKubernetes(Remote):
             line = line.decode("utf-8")
             if "worker" in line:
                 worker_name = line.split()[0]
-                self.kubectl_exec(worker_name, 'rm -rf YCSB')
-                self.kubectl_exec(worker_name, 'git clone -q -b {} {}'.format(branch, repo))
+                self.kubectl_exec(worker_name, "rm -rf YCSB")
+                self.kubectl_exec(worker_name, f"git clone -q -b {branch} {repo} YCSB")
                 if sdk_version is not None:
                     sdk_version = sdk_version.replace(":", ".")
                     major_version = sdk_version.split(".")[0]

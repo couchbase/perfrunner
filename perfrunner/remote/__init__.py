@@ -5,6 +5,7 @@ from typing import Optional
 from fabric.api import cd, get, hide, run, settings, shell_env
 
 from logger import logger
+from perfrunner.helpers.local import _resolve_repo_url, _sanitize_repo_url
 from perfrunner.helpers.misc import get_python_sdk_installation
 from perfrunner.remote.context import (
     all_clients,
@@ -93,13 +94,18 @@ class Remote:
         worker_home: str,
         commit: Optional[str] = None,
         cherrypick: Optional[str] = None,
+        target_dir: Optional[str] = None,
     ):
         repo = repo.replace("git://", "https://")
-        logger.info(f"Cloning repository: {repo} branch {branch}")
-        repo_name = repo.split("/")[-1].split(".")[0]
+        repo = _resolve_repo_url(repo)
+        logger.info(f"Cloning repository: {_sanitize_repo_url(repo)} branch {branch}")
+        repo_name = target_dir or repo.split("/")[-1].split(".")[0]
 
         with cd(worker_home), cd("perfrunner"):
-            run("git clone -q -b {} {}".format(branch, repo))
+            clone_cmd = f"git clone -q -b {branch} {repo}"
+            if target_dir:
+                clone_cmd += f" {target_dir}"
+            run(clone_cmd)
 
         if commit:
             with cd(worker_home), cd("perfrunner"), cd(repo_name):
@@ -131,7 +137,7 @@ class Remote:
     @all_clients
     def init_ycsb(self, repo: str, branch: str, worker_home: str, sdk_version: None):
         shutil.rmtree("YCSB", ignore_errors=True)
-        self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
+        self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home, target_dir="YCSB")
         if sdk_version is not None:
             sdk_version = sdk_version.replace(":", ".")
             major_version = sdk_version.split(".")[0]
@@ -250,16 +256,16 @@ class Remote:
     @all_clients
     def clone_ycsb(self, repo: str, branch: str, worker_home: str, ycsb_instances: int):
         repo = repo.replace("git://", "https://")
-        logger.info('Cloning YCSB repository: {} branch {}'.format(
-            repo, branch))
+        repo = _resolve_repo_url(repo)
+        logger.info(f"Cloning YCSB repository: {_sanitize_repo_url(repo)} branch: {branch}")
 
         for instance in range(ycsb_instances):
             with cd(worker_home), cd('perfrunner'):
-                run('git clone -q -b {} {}'.format(branch, repo))
-                run('mv YCSB YCSB_{}'.format(instance+1))
+                run(f"git clone -q -b {branch} {repo} YCSB")
+                run(f"mv YCSB YCSB_{instance + 1}")
 
         with cd(worker_home), cd('perfrunner'):
-            run('git clone -q -b {} {}'.format(branch, repo))
+            run(f"git clone -q -b {branch} {repo} YCSB")
 
     @all_clients
     def build_syncgateway_ycsb(self, worker_home: str, ycsb_instances: int):

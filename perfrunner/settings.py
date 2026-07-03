@@ -1866,8 +1866,6 @@ class PhaseSettings:
                                                self.REQUESTDISTRIBUTION)
 
         # Airport workload settings
-        self.findoneproportion = options.get("findoneproportion", 0.70)
-        self.aggregateproportion = options.get("aggregateproportion", 0.00)
         self.aggregate_minoccurrences = options.get("aggregate_minoccurrences", 100)
         self.typedfields = options.get("typedfields", "true")
         self.nesteddata = options.get("nesteddata", "true")

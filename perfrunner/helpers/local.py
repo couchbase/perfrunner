@@ -821,8 +821,6 @@ def run_ycsb(
     histogram_buckets: Optional[int] = None,
     histogram_bucket_size: Optional[int] = None,
     verbose_histogram: Optional[str] = None,
-    findoneproportion: float = 0.70,
-    aggregateproportion: float = 0.00,
     aggregate_minoccurrences: int = 100,
     typedfields: str = "true",
     nesteddata: str = "true",
@@ -919,8 +917,6 @@ def run_ycsb(
         parameters += [f"measurement.histogram.verbose={'true' if verbose_histogram else 'false'}"]
 
     parameters += [
-        f"findoneproportion={findoneproportion}",
-        f"aggregateproportion={aggregateproportion}",
         f"aggregate.minoccurrences={aggregate_minoccurrences}",
         f"typedfields={typedfields}",
         f"nesteddata={nesteddata}",
@@ -1006,8 +1002,6 @@ def run_mongo_ycsb(
     histogram_bucket_size: Optional[int] = None,
     verbose_histogram: bool = False,
     ycsb_status_output: bool = True,
-    findoneproportion: float = 0.70,
-    aggregateproportion: float = 0.00,
     aggregate_minoccurrences: int = 100,
     typedfields: str = "true",
     nesteddata: str = "true",
@@ -1067,8 +1061,6 @@ def run_mongo_ycsb(
         parameters += ["measurement.histogram.verbose=true"]
 
     parameters += [
-        f"findoneproportion={findoneproportion}",
-        f"aggregateproportion={aggregateproportion}",
         f"aggregate.minoccurrences={aggregate_minoccurrences}",
         f"typedfields={typedfields}",
         f"nesteddata={nesteddata}",

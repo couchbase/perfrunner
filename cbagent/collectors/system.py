@@ -79,6 +79,7 @@ class PS(System):
     SKIP_ON_DYNAMIC = True
     REQUIRES_ON_PREM = True
     REQUIRES_NON_CYGWIN = True
+    PROMETHEUS_CUSTOM = True
 
     def __init__(self, settings, test: Optional[PerfTest] = None):
         super().__init__(settings)

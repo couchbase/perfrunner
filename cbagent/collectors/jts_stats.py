@@ -11,6 +11,11 @@ class JTSCollector(CouchbaseCollector):
     COLLECTOR = "jts_stats"
     COLLECTOR_FLAG = "jts_stats"
     SKIP_ON_DYNAMIC = True
+
+    # jts_throughput/jts_latency are computed from local JTS log files and pushed
+    # to Prometheus in reconstruct(), so opt in to the custom Prometheus path
+    PROMETHEUS_CUSTOM = True
+
     METRICS = ("jts_throughput", "jts_latency",)
 
     def __init__(self, settings, test: PerfTest):

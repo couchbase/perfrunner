@@ -11,6 +11,8 @@ class SecondaryLatencyStats(CouchbaseCollector):
     COLLECTOR_FLAG = "secondary_latency"
     SKIP_ON_DYNAMIC = True
 
+    PROMETHEUS_CUSTOM = True
+
     SECONDARY_STATS_FILE = '/root/statsfile'
 
     def __init__(self, settings, test: Optional[PerfTest] = None):

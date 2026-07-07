@@ -6,7 +6,7 @@ from decorator import decorator
 
 from logger import logger
 from perfrunner.metrics.cbagent import CbAgent
-from perfrunner.metrics.prometheus_agent import PrometheusAgent
+from perfrunner.metrics.promagent import PrometheusAgent
 
 
 @decorator
@@ -25,6 +25,8 @@ def with_stats(method: Callable, *args, **kwargs) -> Union[float, None]:
     agent = test.collector_agent or CbAgent(test=test, phase=phase_name)
     if isinstance(agent, PrometheusAgent):
         agent.set_phase(phase_name)
+        # Add custom collectors for metrics not available via Prometheus scraping
+        agent.add_custom_collectors(test)
 
     with agent:
         return method(*args, **kwargs)

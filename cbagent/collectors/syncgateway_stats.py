@@ -10,6 +10,7 @@ class SyncGatewayStats(CouchbaseCollector):
     COLLECTOR_FLAG = "syncgateway_stats"
     SKIP_ON_DYNAMIC = True
     REPORT_STATS_PER_NODE = False
+    PROMETHEUS_CUSTOM = True
 
     METRICS = (
         # Iridium and Cobalt stats

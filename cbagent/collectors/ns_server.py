@@ -5,6 +5,7 @@ class NSServer(CouchbaseCollector):
 
     COLLECTOR = "ns_server"
     COLLECTOR_FLAG = "ns_server"
+    PROMETHEUS_CUSTOM = True
 
     def _get_stats_uri(self):
         for bucket, stats in self.get_buckets(with_stats=True):
@@ -44,6 +45,7 @@ class NSServerSystem(NSServer):
     COLLECTOR = "ns_server_system"
     COLLECTOR_FLAG = "ns_server_system"
     METRICS = 'cpu_utilization',
+    PROMETHEUS_CUSTOM = False
 
     def _get_system_stats(self):
         all_stats = self.get_http(path='/pools/default')

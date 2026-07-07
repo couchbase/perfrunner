@@ -17,6 +17,8 @@ class XdcrLag(Latency):
     COLLECTOR = "xdcr_lag"
     COLLECTOR_FLAG = "xdcr_lag"
 
+    PROMETHEUS_CUSTOM = True
+
     METRICS = "xdcr_lag",
 
     INITIAL_POLLING_INTERVAL = 0.001  # 1 ms

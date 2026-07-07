@@ -37,6 +37,11 @@ class Collector(metaclass=RegistryMeta):
     # If True, the collector is always instantiated (no flag check needed).
     ALWAYS_ON: bool = False
 
+    # Set to True on subclasses that produce custom-computed metrics which are
+    # not available via Prometheus scraping and so must be pushed to the metrics
+    # store. Selected by get_active_prometheus_collectors.
+    PROMETHEUS_CUSTOM: bool = False
+
     # Environment guards — set to True to restrict where the collector runs.
     SKIP_ON_DYNAMIC: bool = False  # Skip when the cluster is on K8S
     REQUIRES_ON_PREM: bool = False  # Skip when the cluster is on Capella

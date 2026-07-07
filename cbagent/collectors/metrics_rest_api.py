@@ -188,6 +188,7 @@ class MetricsRestApiDeduplication(MetricsRestApiBase):
 class MetricsRestApiThroughputCollection(MetricsRestApiBase):
 
     COLLECTOR = "metrics_rest_api_collection_throughput"
+    PROMETHEUS_CUSTOM = True
 
     @classmethod
     def is_activated(cls, test, collector_flags):

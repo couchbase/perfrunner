@@ -9,6 +9,7 @@ class SecondaryDebugStats(CouchbaseCollector):
     COLLECTOR = "secondary_debugstats"
     COLLECTOR_FLAG = "secondary_debugstats"
     SKIP_ON_DYNAMIC = True
+    PROMETHEUS_CUSTOM = True
 
     METRICS = (
         "memory_used",
@@ -67,6 +68,7 @@ class SecondaryDebugStatsBucket(SecondaryDebugStats):
     COLLECTOR = "secondary_debugstats_bucket"
     COLLECTOR_FLAG = "secondary_debugstats_bucket"
     SKIP_ON_DYNAMIC = True
+    PROMETHEUS_CUSTOM = False
 
     METRICS = (
         "mutation_queue_size",
@@ -94,6 +96,7 @@ class SecondaryDebugStatsIndex(SecondaryDebugStats):
     COLLECTOR = "secondary_debugstats_index"
     COLLECTOR_FLAG = "secondary_debugstats_index"
     SKIP_ON_DYNAMIC = True
+    PROMETHEUS_CUSTOM = False
 
     METRICS = (
         "avg_scan_latency",

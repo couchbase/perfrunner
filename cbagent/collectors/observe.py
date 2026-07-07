@@ -36,6 +36,8 @@ class ObserveIndexLatency(Latency):
     COLLECTOR_FLAG = "index_latency"
     SKIP_ON_DYNAMIC = True
 
+    PROMETHEUS_CUSTOM = True
+
     METRICS = "latency_observe",
 
     NUM_THREADS = 10
@@ -111,6 +113,8 @@ class ObserveSecondaryIndexLatency(ObserveIndexLatency):
     COLLECTOR_FLAG = "secondary_index_latency"
     SKIP_ON_DYNAMIC = True
 
+    PROMETHEUS_CUSTOM = True
+
     @timeit
     def _wait_until_secondary_indexed(self, key, cb, query):
         row = None
@@ -158,6 +162,8 @@ class DurabilityLatency(ObserveIndexLatency, Latency):
     COLLECTOR = "durability"
     COLLECTOR_FLAG = "durability"
     SKIP_ON_DYNAMIC = True
+
+    PROMETHEUS_CUSTOM = True
 
     METRICS = "latency_replicate_to", "latency_persist_to"
 

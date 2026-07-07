@@ -20,7 +20,7 @@ from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.helpers.worker import WorkerManager, WorkloadPhase, spring_task
 from perfrunner.metrics import PrometheusMetricsHelper
-from perfrunner.metrics.prometheus_agent import PrometheusAgent
+from perfrunner.metrics.promagent import PrometheusAgent
 from perfrunner.settings import (
     ClusterSpec,
     PhaseSettings,

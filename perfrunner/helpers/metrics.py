@@ -361,7 +361,9 @@ class MetricHelper:
                                          bucket=bucket)
             bucket_timings = self.store.get_values(db, metric=metric)
             bucket_metric = 0
-            if metric == "jts_latency":
+            if not bucket_timings:
+                logger.warning(f"No {metric} data found for bucket {bucket}")
+            elif metric == "jts_latency":
                 bucket_metric = round(np.percentile(bucket_timings, percentile), 2)
             elif metric == "jts_throughput":
                 bucket_metric = round(np.average(bucket_timings), 2)

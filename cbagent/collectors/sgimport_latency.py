@@ -18,6 +18,8 @@ class SGImportLatency(CouchbaseCollector):
     COLLECTOR_FLAG = "sgimport_latency"
     SKIP_ON_DYNAMIC = True
 
+    PROMETHEUS_CUSTOM = True
+
     METRICS = "sgimport_latency"
 
     INITIAL_POLLING_INTERVAL = 0.001  # 1 ms

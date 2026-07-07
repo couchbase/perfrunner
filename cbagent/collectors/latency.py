@@ -41,6 +41,8 @@ class KVLatency(Latency):
     COLLECTOR = "spring_latency"
     COLLECTOR_FLAG = "latency"
 
+    PROMETHEUS_CUSTOM = True
+
     METRICS = ["latency_get", "latency_set", "latency_durable_set",
                "latency_total_get", "latency_total_set", "latency_total_durable_set"]
 
@@ -108,12 +110,16 @@ class KVLatency(Latency):
             target_group = self.target_groups[bucket].get(target, '')
             bucket_group = self.bucket_stat_group(bucket, target_group)
 
+            # The spring reservoir records timestamps in nanoseconds; the store
+            # expects epoch milliseconds (matching the ms windows in metrics.py).
+            timestamp_ms = int(timestamp) // 1_000_000
+
             # Latency in ms
             data = {'latency_' + operation: float(latency_single) * 1000}
 
             await self.store.append_async(
                 data=data,
-                timestamp=int(timestamp),
+                timestamp=timestamp_ms,
                 cluster=self.cluster,
                 bucket=bucket_group,
                 collector=self.COLLECTOR,
@@ -125,7 +131,7 @@ class KVLatency(Latency):
 
                 await self.store.append_async(
                     data=data,
-                    timestamp=int(timestamp),
+                    timestamp=timestamp_ms,
                     cluster=self.cluster,
                     bucket=bucket_group,
                     collector=self.COLLECTOR,
@@ -180,6 +186,8 @@ class QueryLatency(KVLatency):
 
     COLLECTOR = "spring_query_latency"
     COLLECTOR_FLAG = "n1ql_latency"
+
+    PROMETHEUS_CUSTOM = True
 
     METRICS = "latency_query",
 

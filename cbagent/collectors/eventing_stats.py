@@ -126,6 +126,7 @@ class EventingConsumerStats(EventingPerNodeStats):
     COLLECTOR_FLAG = "eventing_stats"
     SKIP_ON_DYNAMIC = True
     REQUIRES_ON_PREM = True
+    PROMETHEUS_CUSTOM = True
 
     PS_CMD = "ps -eo pid,rss,vsize,comm " \
              "| grep '{}' " \

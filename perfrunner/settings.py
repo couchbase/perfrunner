@@ -1129,6 +1129,12 @@ class StatsSettings:
         self.use_prometheus_metrics = maybe_atoi(options.get("use_prometheus_metrics", "false"))
         self.collect_mctimings = maybe_atoi(options.get('collect_mctimings',
                                                         self.COLLECT_MCTIMINGS))
+        # Comma-separated collector flags to force-activate regardless of the test's
+        # COLLECTORS (e.g. extra_collectors = secondary_stats,kvstore). Each name is a
+        # collector's COLLECTOR_FLAG; the CollectorRegistry merges them in as True.
+        self.extra_collectors = [
+            flag.strip() for flag in options.get("extra_collectors", "").split(",") if flag.strip()
+        ]
 
 
         # Not used by all test classes, but can be used to decide whether to report KPIs for all

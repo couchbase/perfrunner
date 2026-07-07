@@ -1,0 +1,8 @@
+[
+  {
+    "collection": "default.iceberg.trades",
+    "namespace": "binance",
+    "table_name": "trades",
+    "parallel_scans": 8
+  }
+]

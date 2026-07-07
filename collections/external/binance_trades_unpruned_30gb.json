@@ -1,0 +1,8 @@
+[
+  {
+    "collection": "default.iceberg.trades_unpruned_30gb",
+    "namespace": "binance",
+    "table_name": "trades_unpruned_30gb",
+    "parallel_scans": 32
+  }
+]

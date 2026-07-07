@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLExternalIcebergTest
+
+[showfast]
+title = Iceberg bounded partition-pruned aggregation scan (5 symbols, 3mo), p90 latency (ms) [baseline]
+component = n1qlcloud
+category = iceberg
+sub_category = {provider}
+
+[cluster]
+mem_quota = 10000
+index_mem_quota = 2000
+initial_nodes = 5
+num_buckets = 1
+bucket_name = default
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[query_external_data]
+region = us-east-1
+aws_credential_path = /root/.ssh
+catalog_name = binance_glue
+collections_file = collections/external/binance_trades.json
+
+[load]
+items = 1000000
+size = 1024
+workers = 0
+doc_gen = reverse_lookup
+ssl_mode = capella
+
+[access]
+creates = 0
+reads = 0
+updates = 0
+deletes = 0
+workers = 0
+items = 1000000
+time = 3600
+latency_percentiles = 90
+n1ql_queries = full-scan
+n1ql_workers = 1
+n1ql_timeout = 1800
+workload_instances = 1
+ssl_mode = capella
+
+[n1ql-full-scan]
+statement = RAW_QUERY SELECT t.symbol, COUNT(*) AS trades, SUM(t.quote_qty) AS notional FROM default.iceberg.trades AS t WHERE t.is_buyer_maker = TRUE AND t.symbol IN ["TRBUSDT", "DUSKUSDT", "KMDUSDT", "IRISUSDT", "NKNUSDT"] AND t.trade_time >= 1704067200000000 AND t.trade_time < 1711929600000000 GROUP BY t.symbol;
+scan_consistency = not_bounded
+args = []

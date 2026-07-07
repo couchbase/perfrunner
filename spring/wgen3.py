@@ -1278,9 +1278,8 @@ class N1QLWorker(Worker):
                 self.first = False
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-            if not i % 5:
-                if self.time_to_stop():
-                    return
+            if self.time_to_stop():
+                return
         if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
@@ -1309,9 +1308,8 @@ class N1QLWorker(Worker):
                 self.first = False
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-            if not i % 5:
-                if self.time_to_stop():
-                    return
+            if self.time_to_stop():
+                return
         if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
@@ -1341,9 +1339,8 @@ class N1QLWorker(Worker):
                 self.first = False
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-            if not i % 5:
-                if self.time_to_stop():
-                    return
+            if self.time_to_stop():
+                return
         if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration

@@ -1,0 +1,16 @@
+{
+  "default": {
+    "_default": {
+      "_default": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "local": {
+      "instrument": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  }
+}

@@ -20,6 +20,7 @@ from perfrunner.helpers.misc import (
     run_aws_cli_command,
 )
 from perfrunner.helpers.profiler import with_profiles
+from perfrunner.helpers.rest import register_sensitive
 from perfrunner.settings import AccessSettings, ClusterSpec, TestConfig
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import (
@@ -2964,3 +2965,281 @@ class N1qlVectorLatencyRebalanceTest(N1qlVectorLatencyThroughputPreparedStatemen
         total_requests_during_rebalance = self.rebalance_indexer()
         probes, recalls, accuracies = self.vector_recall_and_accuracy_check()
         self._report_kpi(probes, recalls, accuracies, total_requests_during_rebalance)
+
+
+class N1QLExternalIcebergTest(N1QLLatencyRawStatementTest):
+    """Query service streaming external Iceberg collections from object storage.
+
+    External collections have no local KV data, GSI indexes or optimizer statistics, so the
+    index service is not necessary. Index creation is skipped if there are no index nodes.
+    The CREATE CATALOG / CREATE EXTERNAL COLLECTION statements are generated from the
+    [query_external_data] section of the .test file (see QueryExternalDataSettings).
+
+    Queries are plain RAW_QUERY statements run through the standard spring N1QL workers, and
+    p90 latency is reported via the usual `latency_query` reservoir.
+    """
+
+    COLLECTORS = {
+        "iostat": False,
+        "memory": False,
+        "n1ql_latency": True,
+        "n1ql_stats": True,
+        "ns_server_system": True,
+    }
+
+    # Used when [access] n1ql_timeout is unset (0), since a "0s" server timeout may be read
+    # as "expire immediately".
+    DEFAULT_QUERY_TIMEOUT_SECONDS = 900
+
+    @property
+    def external_query_timeout(self) -> str:
+        """Server-side timeout for setup, EXPLAIN and pre-check statements.
+
+        Derived from [access] n1ql_timeout so these steps are never tighter than the access phase.
+        """
+        n1ql_timeout = self.test_config.access_settings.n1ql_timeout
+        return f"{n1ql_timeout or self.DEFAULT_QUERY_TIMEOUT_SECONDS}s"
+
+    def get_aws_credential(self) -> tuple[str, str]:
+        """Read the AWS key pair and register it for redaction from logged REST responses."""
+        settings = self.test_config.query_external_data_settings
+        # delete_file=False: the credential file is shared and must survive for later runs.
+        access_key_id, secret_access_key = local.get_aws_credential(
+            settings.aws_credential_path, delete_file=False
+        )
+        register_sensitive(access_key_id, secret_access_key)
+        return access_key_id, secret_access_key
+
+    def create_credentials(self):
+        """Store the object-store credentials in ns_server's credential store.
+
+        CREATE CATALOG / CREATE EXTERNAL COLLECTION reference the credential by name
+        (AT <credential_name>).
+        """
+        settings = self.test_config.query_external_data_settings
+        access_key_id, secret_access_key = self.get_aws_credential()
+        fields = {
+            "accessKeyId": access_key_id,
+            "secretAccessKey": secret_access_key,
+            "region": settings.region,
+        }
+        service = settings.credential_consumer_service
+        master = self.master_node
+
+        try:
+            self.rest.set_credential_store(master)
+        except Exception as e:
+            logger.warning(f"Credential store settings not applied (ignored): {e}")
+
+        self.rest.create_credential(
+            master,
+            settings.credential_name,
+            settings.credential_type,
+            fields,
+            allowed_services=[service],
+        )
+
+        # May fail on Capella, where the grant endpoint needs Full Admin
+        try:
+            self.rest.grant_service_credential_consumer(master, service, settings.credential_name)
+        except Exception as e:
+            logger.warning(f"Service consume grant not applied (ignored): {e}")
+
+        # The query service runs on behalf of the connecting user, so that user must itself
+        # hold CONSUME CREDENTIALSTORE or queries fail with error 13014.
+        grant_statement = (
+            f"GRANT CONSUME CREDENTIALSTORE ON `{settings.credential_name}` "
+            f"TO `{self.rest.rest_username}`;"
+        )
+        try:
+            self.rest.exec_n1ql_statement(
+                self.query_nodes[0], grant_statement, timeout=self.external_query_timeout
+            )
+        except Exception as e:
+            logger.warning(f"User consume grant not applied (ignored): {e}")
+
+    def create_external_collections(self):
+        settings = self.test_config.query_external_data_settings
+        if not settings.collections:
+            raise Exception(
+                "No external collections found. Set collections_file in the "
+                "[query_external_data] section of the .test file."
+            )
+        self.create_credentials()
+
+        # CREATE EXTERNAL COLLECTION requires the scope to exist already
+        bucket = self.test_config.buckets[0]
+        try:
+            self.rest.create_scope(self.master_node, bucket, settings.external_scope)
+        except Exception as e:
+            logger.warning(f"External scope create skipped (ignored): {e}")
+
+        query_node = self.query_nodes[0]
+        for statement in settings.statements:
+            logger.info(f"Creating external collection: {statement}")
+            self.rest.exec_n1ql_statement(
+                query_node, statement, timeout=self.external_query_timeout
+            )
+            # DDL is not synchronous across the cluster
+            time.sleep(5)
+        self.grant_catalog_and_collection_privileges()
+
+    def grant_catalog_and_collection_privileges(self):
+        """Grant the querying user SELECT on the catalog and on the external collections.
+
+        Querying an external collection needs query_select_external_catalog on the catalog and
+        query_select on the collection, in addition to the credential grant.
+        """
+        settings = self.test_config.query_external_data_settings
+        user = self.rest.rest_username
+        grants = {
+            "Catalog": f"GRANT SELECT CATALOG ON `{settings.catalog_name}` TO `{user}`;",
+        }
+        for schema in settings.collections:
+            grants[f"Collection {schema['collection']}"] = (
+                f"GRANT SELECT ON {schema['collection']} TO `{user}`;"
+            )
+
+        for kind, grant in grants.items():
+            try:
+                self.rest.exec_n1ql_statement(
+                    self.query_nodes[0], grant, timeout=self.external_query_timeout
+                )
+            except Exception as e:
+                logger.warning(f"{kind} SELECT grant not applied (ignored): {e}")
+
+    def create_indexes(self, *args, **kwargs):
+        if self.test_config.index_settings.statements and self.index_nodes:
+            super().create_indexes(*args, **kwargs)
+        else:
+            logger.info("Skipping index creation (external collections have no GSI)")
+
+    def store_plans(self):
+        """Capture EXPLAIN plans for the external queries and check each returns rows.
+
+        Overrides the parent, whose bucket-name substitution would fail on external keyspaces
+        such as `default.iceberg.trades`. Statements are explained verbatim once the RAW_QUERY
+        marker is stripped. Neither step is allowed to abort the measured access phase.
+        """
+        logger.info("Storing query plans")
+        for i, query in enumerate(self.test_config.access_settings.n1ql_queries):
+            statement = query["statement"].replace("RAW_QUERY ", "")
+            logger.info(f"Grabbing plan for query: {statement}")
+            try:
+                plan = self.rest.explain_n1ql_statement(
+                    self.query_nodes[0], statement, timeout=self.external_query_timeout
+                )
+                with open(f"query_plan_{i}.json", "w") as fh:
+                    fh.write(pretty_dict(plan))
+                # Also logged, as the plan file is not archived by every job configuration
+                logger.info(f"Query plan for query {i}: {pretty_dict(plan)}")
+            except Exception as e:
+                logger.warning(f"Skipping plan capture for query {i} (ignored): {e}")
+
+            if re.search(r"\bLIMIT\s+0\b", statement, re.IGNORECASE):
+                logger.info(f"Query {i} uses LIMIT 0 by design, skipping non-empty-result check")
+                continue
+
+            try:
+                result = self.rest.exec_n1ql_statement(
+                    self.query_nodes[0], statement, timeout=self.external_query_timeout
+                )
+                # A query-level failure such as a server-side timeout comes back as HTTP 200
+                # with an `errors` array rather than as an exception
+                if result.get("errors"):
+                    logger.warning(
+                        f"Query {i} pre-check failed, the access phase is unaffected: "
+                        f"{result['errors']}"
+                    )
+                    continue
+
+                results = result.get("results", [])
+                if re.match(r"^\s*SELECT\s+COUNT\s*\(", statement, re.IGNORECASE):
+                    # A scalar COUNT always returns one row, so inspect the count itself
+                    count_value = next(iter(results[0].values()), None) if results else None
+                    is_empty = count_value == 0
+                    detail = f"count value = {count_value}"
+                else:
+                    result_count = result.get("metrics", {}).get("resultCount", 0)
+                    is_empty = result_count == 0
+                    detail = f"resultCount = {result_count}"
+
+                if is_empty:
+                    logger.warning(
+                        f"Query {i} matched ZERO rows ({detail}), the access phase will measure "
+                        f"latency against an empty result set. statement: {statement}"
+                    )
+                else:
+                    logger.info(f"Query {i} returned non-empty results ({detail})")
+            except Exception as e:
+                logger.warning(f"Skipping non-empty-result check for query {i} (ignored): {e}")
+
+    def load(self, *args):
+        logger.info("No local load for pure external Iceberg scan test")
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+        self.create_indexes()
+
+        self.create_external_collections()
+
+        self.store_plans()
+
+        self.access()
+
+        self.report_kpi()
+
+
+class N1QLExternalIcebergJoinTest(N1QLExternalIcebergTest):
+    """Join a small local `instrument` collection against the large external `trades` collection.
+
+    The local collection (one doc per trading symbol, from Binance exchangeInfo) is imported
+    once from `instrument_import_file` in the [query_external_data] section and only queried
+    afterwards.
+    """
+
+    def load(self, *args):
+        settings = self.test_config.query_external_data_settings
+        import_file = settings.instrument_import_file
+        if not import_file:
+            raise Exception(
+                "Join test requires a local dimension collection. Set instrument_import_file "
+                "in the [query_external_data] section to the Binance instrument JSON."
+            )
+
+        local.require_cb_tools()
+        # cbimport resolves relative --dataset paths against its own cwd
+        if not import_file.startswith("file://"):
+            import_file = os.path.abspath(import_file)
+
+        scope, collection = self._local_join_keyspace()
+        logger.info(f"Importing instrument collection from {import_file}")
+        local.cbimport(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            bucket=self.test_config.buckets[0],
+            data_type="json",
+            data_format="list",
+            import_file=import_file,
+            scope_collection_exp=f"{scope}.{collection}",
+            generate_key="%symbol%",
+            threads=16,
+            # Capella only exposes TLS ports; root.pem is downloaded during PerfTest init
+            use_tls=self.cluster_spec.capella_infrastructure,
+        )
+
+    def _local_join_keyspace(self) -> tuple[str, str]:
+        """Return the (scope, collection) to import the instrument docs into.
+
+        This is the first collection in the collection map with load == 1, else the default.
+        """
+        collection_map = self.test_config.collection.collection_map
+        if collection_map:
+            bucket = self.test_config.buckets[0]
+            for scope, collections in collection_map[bucket].items():
+                for collection, opts in collections.items():
+                    if opts.get("load") == 1:
+                        return scope, collection
+        return "_default", "_default"

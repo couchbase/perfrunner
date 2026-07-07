@@ -101,6 +101,7 @@ def extract_cb(package: str) -> bool:
     return True
 
 
+
 def extract_any(filename: str, to_path: str = None, remove_after: bool = True):
     """Extract the given file and store the content to the specified path.
 
@@ -244,8 +245,13 @@ def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec,
     with lcd('./opt/couchbase/bin'):
         local(cmd)
 
-def run_couchbase_tool_command(tool: str, args: str, success_msg: str = '',
-                              err_msg: str = ''):
+def run_couchbase_tool_command(
+    tool: str,
+    args: str,
+    success_msg: str = "",
+    err_msg: str = "",
+    raise_error: bool = False,
+):
     """Run a Couchbase CLI tool command with fallback from relative to absolute path.
 
     Tries ./opt/couchbase/bin/<tool> first (locally extracted tools),
@@ -257,6 +263,7 @@ def run_couchbase_tool_command(tool: str, args: str, success_msg: str = '',
         args: Arguments to pass to the tool
         success_msg: Message to print on success
         err_msg: Message to print on failure
+        raise_error: if True, raise exception if the command fails
 
     Returns:
         stdout, stderr, returncode tuple
@@ -272,11 +279,16 @@ def run_couchbase_tool_command(tool: str, args: str, success_msg: str = '',
         cmd = f"{abs_path} {args}"
     else:
         # Tool not found at either location
-        logger.warning(f"Tool {tool} not found at {rel_path} or {abs_path}")
+        msg = f"Tool {tool} not found at {rel_path} or {abs_path}"
+        if raise_error:
+            raise Exception(msg)
+        logger.warning(msg)
         return "", f"{tool}: command not found", 127
 
     logger.info(f"Running: {cmd}")
-    return run_local_shell_command(cmd, success_msg=success_msg, err_msg=err_msg)
+    return run_local_shell_command(
+        cmd, success_msg=success_msg, err_msg=err_msg, raise_error=raise_error
+    )
 
 
 def cb_tool_version(tool: str):
@@ -632,11 +644,13 @@ def cbimport(
     generate_key: str = '"#MONO_INCR#"',
     log_file: Optional[str] = None,
     is_sample_format: bool = False,
+    use_tls: bool = False,
 ):
     flags = [
         f"--format {data_format}" if data_type == "json" else None,
         f"--dataset {import_file}",
-        f"--cluster http://{master_node}",
+        f"--cluster http{'s' if use_tls else ''}://{master_node}",
+        "--cacert root.pem" if use_tls else None,
         f"--bucket {bucket}",
         f"--username {cluster_spec.rest_credentials[0]}",
         f"--password '{cluster_spec.rest_credentials[1]}'",
@@ -654,10 +668,8 @@ def cbimport(
     if scope_collection_exp:
         flags.append(f"--scope-collection-exp {scope_collection_exp}")
 
-    cmd = f"./opt/couchbase/bin/cbimport {data_type} {' '.join(filter(None, flags))}"
-
-    logger.info(f"Running: {cmd}")
-    run_local_shell_command(cmd, raise_error=True)
+    args = f"{data_type} {' '.join(filter(None, flags))}"
+    run_couchbase_tool_command("cbimport", args, raise_error=True)
 
 
 def run_cbc_pillowfight(

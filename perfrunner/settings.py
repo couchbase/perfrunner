@@ -3213,6 +3213,88 @@ class AnalyticsExternalDataSettings:
         return f"{self.link_type}_link"
 
 
+class QueryExternalDataSettings:
+    """External-collection settings for the Query service.
+
+    The CREATE CATALOG / CREATE EXTERNAL COLLECTION statements are generated from the catalog
+    options here and the schemas in `collections_file`: a JSON list of objects with `collection`
+    (the `bucket.scope.collection` keyspace), `namespace`, `table_name` and optionally
+    `parallel_scans`. Access to the object store goes through the named credential
+    `credential_name`, which is created from the credential file at `aws_credential_path`.
+    """
+
+    REGION = "us-east-1"
+    AWS_CREDENTIAL_PATH = "/root/.ssh"
+    CATALOG_NAME = None
+    CATALOG_SOURCE = "AWS_GLUE"
+    TABLE_FORMAT = "ICEBERG"
+    COLLECTIONS_FILE = None
+    INSTRUMENT_IMPORT_FILE = None  # local join-side collection (Binance instrument)
+    CREDENTIAL_NAME = "s3_binance"
+    CREDENTIAL_TYPE = "aws"  # aws | gcs | azureShared
+    CREDENTIAL_CONSUMER_SERVICE = "n1ql"
+
+    def __init__(self, options: dict):
+        self.region = options.get("region", self.REGION)
+        self.aws_credential_path = options.get("aws_credential_path", self.AWS_CREDENTIAL_PATH)
+        self.catalog_name = options.get("catalog_name", self.CATALOG_NAME)
+        self.catalog_source = options.get("catalog_source", self.CATALOG_SOURCE)
+        self.table_format = options.get("table_format", self.TABLE_FORMAT)
+        self.collections_file = options.get("collections_file", self.COLLECTIONS_FILE)
+        self.instrument_import_file = options.get(
+            "instrument_import_file", self.INSTRUMENT_IMPORT_FILE
+        )
+        self.credential_name = options.get("credential_name", self.CREDENTIAL_NAME)
+        self.credential_type = options.get("credential_type", self.CREDENTIAL_TYPE)
+        self.credential_consumer_service = options.get(
+            "credential_consumer_service", self.CREDENTIAL_CONSUMER_SERVICE
+        )
+
+    @property
+    def collections(self) -> list[dict]:
+        if not self.collections_file:
+            return []
+
+        with open(self.collections_file) as f:
+            return json.load(f)
+
+    @property
+    def external_scope(self) -> Optional[str]:
+        """The scope of the first external collection, which must exist before its DDL runs."""
+        if collections := self.collections:
+            return collections[0]["collection"].split(".")[1]
+        return None
+
+    @property
+    def catalog_statement(self) -> str:
+        return (
+            f"CREATE CATALOG {self.catalog_name} TYPE {self.table_format} "
+            f"SOURCE {self.catalog_source} AT {self.credential_name} WITH {{}};"
+        )
+
+    @property
+    def collection_statements(self) -> list[str]:
+        statements = []
+        for schema in self.collections:
+            with_options = {"namespace": schema["namespace"], "tableName": schema["table_name"]}
+            if "parallel_scans" in schema:
+                with_options["parallelScans"] = schema["parallel_scans"]
+
+            statements.append(
+                f"CREATE EXTERNAL COLLECTION {schema['collection']} ON {self.catalog_name} "
+                f"AT {self.credential_name} WITH {json.dumps(with_options)};"
+            )
+        return statements
+
+    @property
+    def statements(self) -> list[str]:
+        """All setup statements, in the order they must run."""
+        return [self.catalog_statement, *self.collection_statements]
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class ColumnarKafkaLinksSettings:
 
     # Kafka Broker settings
@@ -4619,6 +4701,11 @@ class TestConfig(Config):
     def analytics_external_data_settings(self) -> AnalyticsExternalDataSettings:
         options = self._get_options_as_dict("analytics_external_data")
         return AnalyticsExternalDataSettings(options)
+
+    @property
+    def query_external_data_settings(self) -> QueryExternalDataSettings:
+        options = self._get_options_as_dict("query_external_data")
+        return QueryExternalDataSettings(options)
 
     @property
     def columnar_kafka_links_settings(self) -> ColumnarKafkaLinksSettings:

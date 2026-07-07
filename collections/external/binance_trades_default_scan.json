@@ -1,0 +1,7 @@
+[
+  {
+    "collection": "default.iceberg.trades",
+    "namespace": "binance",
+    "table_name": "trades"
+  }
+]

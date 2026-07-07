@@ -54,7 +54,16 @@ class PerfStore:
         response = self.session.get(url)
         if response.status_code != 200:
             return []
-        return response.json()
+        try:
+            return response.json()
+        except ValueError:
+            raise RuntimeError(
+                f"No data found for metric '{metric}' at {url} "
+                f"(HTTP {response.status_code}, body: {response.text!r}). "
+                "This usually means no samples were ever recorded for this "
+                "metric -- check for query failures/timeouts or an access "
+                "window too short for any query to complete."
+            ) from None
 
     def get_values(self, db: str, metric) -> list[float]:
         return [v for _, v in self.get_timeseries(db, metric)]

@@ -1281,19 +1281,20 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
             statuses = []
             for cluster_id in pending_clusters:
-                status = (
+                status_obj = (
                     self.provisioned_api.get_cluster_internal(
                         self.tenant_id, self.project_id, cluster_id
                     )
                     .json()
                     .get("data", {})
                     .get("status", {})
-                    .get("state")
                 )
+                status = status_obj.get("state")
                 logger.info(f"Cluster state for {cluster_id}: {status}")
                 if status == "deployment_failed":
                     logger.error(
                         f"Deployment failed for cluster {cluster_id}. "
+                        f"Full status: {pretty_dict(status_obj)} "
                         f"DataDog link for debugging: {format_datadog_link(cluster_id=cluster_id)}"
                     )
                     exit(1)

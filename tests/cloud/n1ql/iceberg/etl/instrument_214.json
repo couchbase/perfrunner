@@ -1,0 +1,1714 @@
+[
+  {
+    "symbol": "BTCUSDT",
+    "baseAsset": "BTC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00001000"
+  },
+  {
+    "symbol": "ETHUSDT",
+    "baseAsset": "ETH",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00010000"
+  },
+  {
+    "symbol": "BNBUSDT",
+    "baseAsset": "BNB",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "NEOUSDT",
+    "baseAsset": "NEO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "LTCUSDT",
+    "baseAsset": "LTC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "QTUMUSDT",
+    "baseAsset": "QTUM",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ADAUSDT",
+    "baseAsset": "ADA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "XRPUSDT",
+    "baseAsset": "XRP",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "EOSUSDT",
+    "baseAsset": "EOS",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "TUSDUSDT",
+    "baseAsset": "TUSD",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "IOTAUSDT",
+    "baseAsset": "IOTA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "XLMUSDT",
+    "baseAsset": "XLM",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ONTUSDT",
+    "baseAsset": "ONT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "TRXUSDT",
+    "baseAsset": "TRX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ETCUSDT",
+    "baseAsset": "ETC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "ICXUSDT",
+    "baseAsset": "ICX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "NULSUSDT",
+    "baseAsset": "NULS",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "VETUSDT",
+    "baseAsset": "VET",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "USDCUSDT",
+    "baseAsset": "USDC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "LINKUSDT",
+    "baseAsset": "LINK",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "WAVESUSDT",
+    "baseAsset": "WAVES",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "HOTUSDT",
+    "baseAsset": "HOT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ZILUSDT",
+    "baseAsset": "ZIL",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ZRXUSDT",
+    "baseAsset": "ZRX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "BATUSDT",
+    "baseAsset": "BAT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "XMRUSDT",
+    "baseAsset": "XMR",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.10000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "ZECUSDT",
+    "baseAsset": "ZEC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "IOSTUSDT",
+    "baseAsset": "IOST",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "DASHUSDT",
+    "baseAsset": "DASH",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "NANOUSDT",
+    "baseAsset": "NANO",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "THETAUSDT",
+    "baseAsset": "THETA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ENJUSDT",
+    "baseAsset": "ENJ",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "MATICUSDT",
+    "baseAsset": "MATIC",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ATOMUSDT",
+    "baseAsset": "ATOM",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "ONEUSDT",
+    "baseAsset": "ONE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "FTMUSDT",
+    "baseAsset": "FTM",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ALGOUSDT",
+    "baseAsset": "ALGO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "DOGEUSDT",
+    "baseAsset": "DOGE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "DUSKUSDT",
+    "baseAsset": "DUSK",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ANKRUSDT",
+    "baseAsset": "ANKR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "WINUSDT",
+    "baseAsset": "WIN",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000001",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "COSUSDT",
+    "baseAsset": "COS",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00000100",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "MTLUSDT",
+    "baseAsset": "MTL",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "DENTUSDT",
+    "baseAsset": "DENT",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "MFTUSDT",
+    "baseAsset": "MFT",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "WANUSDT",
+    "baseAsset": "WAN",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "FUNUSDT",
+    "baseAsset": "FUN",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "CVCUSDT",
+    "baseAsset": "CVC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "CHZUSDT",
+    "baseAsset": "CHZ",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "BANDUSDT",
+    "baseAsset": "BAND",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "BUSDUSDT",
+    "baseAsset": "BUSD",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "XTZUSDT",
+    "baseAsset": "XTZ",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "RENUSDT",
+    "baseAsset": "REN",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "RVNUSDT",
+    "baseAsset": "RVN",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "HBARUSDT",
+    "baseAsset": "HBAR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "NKNUSDT",
+    "baseAsset": "NKN",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "STXUSDT",
+    "baseAsset": "STX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "KAVAUSDT",
+    "baseAsset": "KAVA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "BCHUSDT",
+    "baseAsset": "BCH",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.10000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "TROYUSDT",
+    "baseAsset": "TROY",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "VITEUSDT",
+    "baseAsset": "VITE",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "OGNUSDT",
+    "baseAsset": "OGN",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "DREPUSDT",
+    "baseAsset": "DREP",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "TCTUSDT",
+    "baseAsset": "TCT",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "LSKUSDT",
+    "baseAsset": "LSK",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "BNTUSDT",
+    "baseAsset": "BNT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "MBLUSDT",
+    "baseAsset": "MBL",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "COTIUSDT",
+    "baseAsset": "COTI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "STPTUSDT",
+    "baseAsset": "STPT",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "WTCUSDT",
+    "baseAsset": "WTC",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "DATAUSDT",
+    "baseAsset": "DATA",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "SOLUSDT",
+    "baseAsset": "SOL",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "CTSIUSDT",
+    "baseAsset": "CTSI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "CHRUSDT",
+    "baseAsset": "CHR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ARDRUSDT",
+    "baseAsset": "ARDR",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "KNCUSDT",
+    "baseAsset": "KNC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "LRCUSDT",
+    "baseAsset": "LRC",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "COMPUSDT",
+    "baseAsset": "COMP",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "SCUSDT",
+    "baseAsset": "SC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "SNXUSDT",
+    "baseAsset": "SNX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "DGBUSDT",
+    "baseAsset": "DGB",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "MKRUSDT",
+    "baseAsset": "MKR",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.10000000",
+    "stepSize": "0.00010000"
+  },
+  {
+    "symbol": "STORJUSDT",
+    "baseAsset": "STORJ",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "MANAUSDT",
+    "baseAsset": "MANA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "YFIUSDT",
+    "baseAsset": "YFI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "1.00000000",
+    "stepSize": "0.00001000"
+  },
+  {
+    "symbol": "BALUSDT",
+    "baseAsset": "BAL",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "BLZUSDT",
+    "baseAsset": "BLZ",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "IRISUSDT",
+    "baseAsset": "IRIS",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "KMDUSDT",
+    "baseAsset": "KMD",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ANTUSDT",
+    "baseAsset": "ANT",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "CRVUSDT",
+    "baseAsset": "CRV",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "SANDUSDT",
+    "baseAsset": "SAND",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "OCEANUSDT",
+    "baseAsset": "OCEAN",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "DOTUSDT",
+    "baseAsset": "DOT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "TRBUSDT",
+    "baseAsset": "TRB",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "SUSHIUSDT",
+    "baseAsset": "SUSHI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "KSMUSDT",
+    "baseAsset": "KSM",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "EGLDUSDT",
+    "baseAsset": "EGLD",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "RUNEUSDT",
+    "baseAsset": "RUNE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "UMAUSDT",
+    "baseAsset": "UMA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "BELUSDT",
+    "baseAsset": "BEL",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "WINGUSDT",
+    "baseAsset": "WING",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "UNIUSDT",
+    "baseAsset": "UNI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "AVAXUSDT",
+    "baseAsset": "AVAX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "FLMUSDT",
+    "baseAsset": "FLM",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ORNUSDT",
+    "baseAsset": "ORN",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "UTKUSDT",
+    "baseAsset": "UTK",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "XVSUSDT",
+    "baseAsset": "XVS",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "ALPHAUSDT",
+    "baseAsset": "ALPHA",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "AAVEUSDT",
+    "baseAsset": "AAVE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "NEARUSDT",
+    "baseAsset": "NEAR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "FILUSDT",
+    "baseAsset": "FIL",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "INJUSDT",
+    "baseAsset": "INJ",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "AUDIOUSDT",
+    "baseAsset": "AUDIO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "CTKUSDT",
+    "baseAsset": "CTK",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "AXSUSDT",
+    "baseAsset": "AXS",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "STRAXUSDT",
+    "baseAsset": "STRAX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ROSEUSDT",
+    "baseAsset": "ROSE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "SKLUSDT",
+    "baseAsset": "SKL",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "GRTUSDT",
+    "baseAsset": "GRT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "OGUSDT",
+    "baseAsset": "OG",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "CELOUSDT",
+    "baseAsset": "CELO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "CKBUSDT",
+    "baseAsset": "CKB",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "TWTUSDT",
+    "baseAsset": "TWT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "LITUSDT",
+    "baseAsset": "LIT",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "SFPUSDT",
+    "baseAsset": "SFP",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "DODOUSDT",
+    "baseAsset": "DODO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "CAKEUSDT",
+    "baseAsset": "CAKE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "OMUSDT",
+    "baseAsset": "OM",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ALICEUSDT",
+    "baseAsset": "ALICE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "PERPUSDT",
+    "baseAsset": "PERP",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "CFXUSDT",
+    "baseAsset": "CFX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "TLMUSDT",
+    "baseAsset": "TLM",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "SHIBUSDT",
+    "baseAsset": "SHIB",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000001",
+    "stepSize": "1.00"
+  },
+  {
+    "symbol": "ICPUSDT",
+    "baseAsset": "ICP",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "ARUSDT",
+    "baseAsset": "AR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "MASKUSDT",
+    "baseAsset": "MASK",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "LPTUSDT",
+    "baseAsset": "LPT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "XVGUSDT",
+    "baseAsset": "XVG",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "KLAYUSDT",
+    "baseAsset": "KLAY",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "PHAUSDT",
+    "baseAsset": "PHA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "C98USDT",
+    "baseAsset": "C98",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "CLVUSDT",
+    "baseAsset": "CLV",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "QNTUSDT",
+    "baseAsset": "QNT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "RAYUSDT",
+    "baseAsset": "RAY",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ALPACAUSDT",
+    "baseAsset": "ALPACA",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "REQUSDT",
+    "baseAsset": "REQ",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "GHSTUSDT",
+    "baseAsset": "GHST",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "DYDXUSDT",
+    "baseAsset": "DYDX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "GALAUSDT",
+    "baseAsset": "GALA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ILVUSDT",
+    "baseAsset": "ILV",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "YGGUSDT",
+    "baseAsset": "YGG",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "FIDAUSDT",
+    "baseAsset": "FIDA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "RADUSDT",
+    "baseAsset": "RAD",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "BNXUSDT",
+    "baseAsset": "BNX",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "MOVRUSDT",
+    "baseAsset": "MOVR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "ENSUSDT",
+    "baseAsset": "ENS",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "POWRUSDT",
+    "baseAsset": "POWR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "JASMYUSDT",
+    "baseAsset": "JASMY",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "PYRUSDT",
+    "baseAsset": "PYR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "RNDRUSDT",
+    "baseAsset": "RNDR",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "BICOUSDT",
+    "baseAsset": "BICO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "VOXELUSDT",
+    "baseAsset": "VOXEL",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "HIGHUSDT",
+    "baseAsset": "HIGH",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "PEOPLEUSDT",
+    "baseAsset": "PEOPLE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "SPELLUSDT",
+    "baseAsset": "SPELL",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000010",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "IMXUSDT",
+    "baseAsset": "IMX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "GLMRUSDT",
+    "baseAsset": "GLMR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "API3USDT",
+    "baseAsset": "API3",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "WOOUSDT",
+    "baseAsset": "WOO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ASTRUSDT",
+    "baseAsset": "ASTR",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "GMTUSDT",
+    "baseAsset": "GMT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "APEUSDT",
+    "baseAsset": "APE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "LDOUSDT",
+    "baseAsset": "LDO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "OPUSDT",
+    "baseAsset": "OP",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "LUNCUSDT",
+    "baseAsset": "LUNC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000001",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "POLYXUSDT",
+    "baseAsset": "POLYX",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "APTUSDT",
+    "baseAsset": "APT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "HFTUSDT",
+    "baseAsset": "HFT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "HOOKUSDT",
+    "baseAsset": "HOOK",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "MAGICUSDT",
+    "baseAsset": "MAGIC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "SYNUSDT",
+    "baseAsset": "SYN",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "SSVUSDT",
+    "baseAsset": "SSV",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.00100000"
+  },
+  {
+    "symbol": "USTCUSDT",
+    "baseAsset": "USTC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "IDUSDT",
+    "baseAsset": "ID",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ARBUSDT",
+    "baseAsset": "ARB",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "LOOMUSDT",
+    "baseAsset": "LOOM",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00001000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "WBTCUSDT",
+    "baseAsset": "WBTC",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.01000000",
+    "stepSize": "0.00001000"
+  },
+  {
+    "symbol": "EDUUSDT",
+    "baseAsset": "EDU",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "SUIUSDT",
+    "baseAsset": "SUI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "PEPEUSDT",
+    "baseAsset": "PEPE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000001",
+    "stepSize": "1.00"
+  },
+  {
+    "symbol": "FLOKIUSDT",
+    "baseAsset": "FLOKI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000001",
+    "stepSize": "1.00"
+  },
+  {
+    "symbol": "COMBOUSDT",
+    "baseAsset": "COMBO",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "PENDLEUSDT",
+    "baseAsset": "PENDLE",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "ARKMUSDT",
+    "baseAsset": "ARKM",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "WLDUSDT",
+    "baseAsset": "WLD",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "FDUSDUSDT",
+    "baseAsset": "FDUSD",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "SEIUSDT",
+    "baseAsset": "SEI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "TIAUSDT",
+    "baseAsset": "TIA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "MEMEUSDT",
+    "baseAsset": "MEME",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ORDIUSDT",
+    "baseAsset": "ORDI",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "JTOUSDT",
+    "baseAsset": "JTO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "1000SATSUSDT",
+    "baseAsset": "1000SATS",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000001",
+    "stepSize": "1.00"
+  },
+  {
+    "symbol": "BONKUSDT",
+    "baseAsset": "BONK",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000001",
+    "stepSize": "1.00"
+  },
+  {
+    "symbol": "JUPUSDT",
+    "baseAsset": "JUP",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "PYTHUSDT",
+    "baseAsset": "PYTH",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00001000",
+    "stepSize": "0.10000000"
+  },
+  {
+    "symbol": "STRKUSDT",
+    "baseAsset": "STRK",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "WIFUSDT",
+    "baseAsset": "WIF",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "BOMEUSDT",
+    "baseAsset": "BOME",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000010",
+    "stepSize": "1.00"
+  },
+  {
+    "symbol": "ENAUSDT",
+    "baseAsset": "ENA",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "NOTUSDT",
+    "baseAsset": "NOT",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00"
+  },
+  {
+    "symbol": "TONUSDT",
+    "baseAsset": "TON",
+    "quoteAsset": "USDT",
+    "status": "BREAK",
+    "tickSize": "0.00100000",
+    "stepSize": "0.01000000"
+  },
+  {
+    "symbol": "TURBOUSDT",
+    "baseAsset": "TURBO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00000100",
+    "stepSize": "1.00000000"
+  },
+  {
+    "symbol": "ONDOUSDT",
+    "baseAsset": "ONDO",
+    "quoteAsset": "USDT",
+    "status": "TRADING",
+    "tickSize": "0.00010000",
+    "stepSize": "0.10000000"
+  }
+]

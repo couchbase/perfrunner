@@ -1,5 +1,6 @@
 import base64
 import json
+import math
 import os
 import time
 from collections import namedtuple
@@ -15,7 +16,7 @@ from decorator import decorator
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import my_public_ip, pretty_dict
+from perfrunner.helpers.misc import my_public_ip, parse_duration_to_secs, pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.settings import BucketSettings, ClusterSpec
@@ -53,6 +54,24 @@ ELASTICSEARCH_REST_PORT_SSL = 19200
 CNG_DATA_PORT = 18098
 
 
+# Secret values (e.g. AWS keys injected into external-collection DDL) that must never appear in
+# logs, since server error responses can echo the failing statement.
+_SENSITIVE_STRINGS: set[str] = set()
+
+
+def register_sensitive(*values: str):
+    """Register secret values to be scrubbed from any logged REST response."""
+    _SENSITIVE_STRINGS.update(v for v in values if v)
+
+
+def redact(text) -> str:
+    """Replace any registered secret value in `text` before it is logged."""
+    text = text if isinstance(text, str) else str(text)
+    for secret in _SENSITIVE_STRINGS:
+        text = text.replace(secret, "***REDACTED***")
+    return text
+
+
 @decorator
 def retry(method: Callable, *args, **kwargs):
     r = namedtuple('request', ['url'])('')
@@ -67,8 +86,11 @@ def retry(method: Callable, *args, **kwargs):
             continue
         except requests.exceptions.HTTPError as e:
             logger.warning(e)
-            logger.warning(r.text)
-            logger.warning(f"Retrying {r.url}")
+            # `r` is still the placeholder if `method` raised from inside raise_for_status(),
+            # so prefer the response carried on the exception.
+            resp = e.response if e.response is not None else r
+            logger.warning(redact(getattr(resp, "text", "")))
+            logger.warning(f"Retrying {getattr(resp, 'url', url)}")
             time.sleep(RETRY_DELAY)
     logger.interrupt(f"Request {url} failed after {MAX_RETRY} attempts")
 
@@ -489,6 +511,53 @@ class DefaultRestHelper(RestBase):
             if key.get("name") == name:
                 return str(key.get("id"))
         return None
+
+    def set_credential_store(
+        self,
+        host: str,
+        config_encryption_override: bool = False,
+        n2n_encryption_override: bool = True,
+    ):
+        """Apply the one-time credential-store settings required before creating credentials.
+
+        n2nEncryptionOverride=true lets credentials be stored without full node-to-node
+        encryption; configEncryptionOverride=false keeps the strict config-encryption link.
+        """
+        payload = {
+            "configEncryptionOverride": config_encryption_override,
+            "n2nEncryptionOverride": n2n_encryption_override,
+        }
+        url = self._get_api_url(host=host, path="settings/credentialStore")
+        logger.info(f"Configuring credential store: {payload}")
+        return self.put(url=url, json=payload)
+
+    def create_credential(
+        self,
+        host: str,
+        cred_id: str,
+        cred_type: str,
+        fields: dict,
+        allowed_services: Optional[list[str]] = None,
+    ):
+        """Create a named credential in ns_server's credential store.
+
+        External collections store their object-store (S3/GCS/Azure) access credentials this way;
+        the Query service references them by name (AT <cred_id>) in CREATE CATALOG /
+        CREATE EXTERNAL COLLECTION.
+        """
+        payload = {"type": cred_type, "fields": fields}
+        if allowed_services:
+            payload["guardrails"] = {"allowedServices": allowed_services}
+        register_sensitive(*[str(v) for v in fields.values()])
+        url = self._get_api_url(host=host, path=f"settings/credentials/{cred_id}")
+        logger.info(f"Creating credential '{cred_id}' (type={cred_type}) in credential store")
+        return self.post(url=url, json=payload)
+
+    def grant_service_credential_consumer(self, host: str, service: str, cred_id: str):
+        """Grant a service (e.g. n1ql) the credential_consumer role for a credential."""
+        url = self._get_api_url(host=host, path=f"settings/rbac/services/{service}/roles")
+        logger.info(f"Granting {service} credential_consumer[{cred_id}]")
+        return self.put(url=url, data={"roles": f"credential_consumer[{cred_id}]"})
 
     def rest_encrypt_bucket(self, host: str, bucket: str, secret_id: str):
         url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
@@ -954,8 +1023,15 @@ class DefaultRestHelper(RestBase):
         }
         return storage_backend_info
 
-    def exec_n1ql_statement(self, host: str, statement: str, query_context: str = None,
-                            query_params: dict = None, as_json_body: bool = False) -> dict:
+    def exec_n1ql_statement(
+        self,
+        host: str,
+        statement: str,
+        query_context: Optional[str] = None,
+        query_params: Optional[dict] = None,
+        as_json_body: bool = False,
+        timeout: Optional[str] = None,
+    ) -> dict:
         data = {
             'statement': statement,
         }
@@ -967,22 +1043,38 @@ class DefaultRestHelper(RestBase):
                 # request params from the JSON object). For the default
                 # form-urlencoded path, non-string values are JSON-encoded.
                 data[k] = v if (as_json_body or isinstance(v, str)) else json.dumps(v)
+        socket_timeout = None
+        if timeout:
+            # Server-side query timeout (Go duration string, e.g. "300s")
+            data["timeout"] = timeout
+            if not math.isnan(timeout_secs := parse_duration_to_secs(timeout)):
+                socket_timeout = timeout_secs + 120
 
         url = self._get_api_url(host=host, path='query/service', plain_port=QUERY_PORT,
                                 ssl_port=QUERY_PORT_SSL)
+        post_kwargs = {"url": url}
         # scanreport_wait is only honoured in a JSON body, not form-urlencoded.
         if as_json_body:
-            response = self.post(url=url, json=data)
+            post_kwargs["json"] = data
         else:
-            response = self.post(url=url, data=data)
+            post_kwargs["data"] = data
+        if socket_timeout is not None:
+            post_kwargs["timeout"] = socket_timeout
+        response = self.post(**post_kwargs)
         resp_data = response.json()
         if errors := resp_data.get("errors"):
-            logger.warning(f"Query failed: {errors}")
+            logger.warning(f"Query failed: {redact(str(errors))}")
         return resp_data
 
-    def explain_n1ql_statement(self, host: str, statement: str, query_context: str = None):
+    def explain_n1ql_statement(
+        self,
+        host: str,
+        statement: str,
+        query_context: Optional[str] = None,
+        timeout: Optional[str] = None,
+    ):
         statement = f"EXPLAIN {statement}"
-        return self.exec_n1ql_statement(host, statement, query_context)
+        return self.exec_n1ql_statement(host, statement, query_context, timeout=timeout)
 
     def get_query_stats(self, host: str) -> dict:
         logger.info('Getting query engine stats')

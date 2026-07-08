@@ -78,3 +78,6 @@ loader
 
 .capella_creds
 .secrets.json
+
+# Personal Claude Code instructions
+CLAUDE.local.md

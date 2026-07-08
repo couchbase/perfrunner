@@ -32,8 +32,11 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 | `cbagent/` | Metrics collection agent (collectors, stores, metadata) |
 | `perfdaily/` | Daily perf reporting |
 | `scripts/` | Supporting tooling |
+| `sdks/` | SDK-specific helper programs (dotnet/go/java config-push benchmarks) |
 | `tests/` | ~500+ `.test` config files (INI-style), organized by feature subdirs |
+| `collections/` | JSON bucket/scope/collection topology configs used by test configs |
 | `clusters/` | Cluster spec / inventory files (`*.spec`) |
+| `certificates/` | TLS auto-generated certs/keys used by cluster deployments (sensitive, see below) |
 | `playbooks/` | Ansible provisioning automation |
 | `go/` | Go utilities: cachestat, dcptest, cbindexperf, kvgen, rachell, loader |
 | `cloud/` | Cloud infrastructure specs |
@@ -47,7 +50,7 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 - Target Python version: **3.9** (`target-version = "py39"` in `.ruff.toml`).
 - Line length: **100** characters.
 - Linting: `ruff` with pydocstyle (D) + isort (I) + pycodestyle (W, E). See `.ruff.toml`.
-- Type checking: `pyright` is configured (`pyrightconfig.json`) but `typeCheckingMode = "off"` — no strict gate.
+- Type checking: no static type checker is configured.
 - Unit tests use `nosetests` against `unittests.py` with `coverage`.
 - Go code under `go/` must be `gofmt`-clean (see `make gofmt`).
 - Keep CLI entry points in `perfrunner/utils/` thin; prefer logic in `perfrunner/`.
@@ -71,7 +74,7 @@ Include the exact commands run and any relevant output snippet as evidence.
 - `terraform*`, Ansible playbooks under `playbooks/`
 
 Treat these as potentially sensitive (IPs, usernames, certs, keys):
-- `clusters/`, `etc/`, `env/`, `cloud/`, `terraform/`
+- `clusters/`, `env/`, `cloud/`, `terraform/`
 - `.capella_creds`, `.secrets.json`, `root.pem`, `certificates/`
 
 Never log, display, or commit secrets.

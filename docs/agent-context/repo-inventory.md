@@ -52,7 +52,6 @@ Unit tests cover: settings parsing, config validation, workload generators (docg
 |---|---|
 | `pyproject.toml` | Package metadata, console scripts, build config |
 | `.ruff.toml` | Linter config (py39, line-length 100) |
-| `pyrightconfig.json` | Type checking off (`typeCheckingMode: "off"`) |
 | `ansible.cfg` | Ansible configuration |
 | `compose.yaml` | Docker Compose for local dev |
 | `Makefile` | Build, test, lint, Go build targets |

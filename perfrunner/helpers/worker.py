@@ -392,12 +392,16 @@ class RemoteWorkerManager:
                     f"amqp://couchbase:couchbase@{self.cluster_spec.utilities[0]}:5672/broker"
                 )
 
+        socket_settings = {}
+        if hasattr(socket, "TCP_USER_TIMEOUT"):
+            socket_settings[socket.TCP_USER_TIMEOUT] = 0
+
         celery.conf.update(
             REMOTE_CELERY_CONFIG,
             broker_url=self.broker_url,
             broker_connection_timeout=1500,
             broker_connection_max_retries=100,
-            broker_transport_options={"socket_settings": {socket.TCP_USER_TIMEOUT: 0}},
+            broker_transport_options={"socket_settings": socket_settings},
         )
         self.workers = cycle(self.cluster_spec.workers)
         self.terminate()

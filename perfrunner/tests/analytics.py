@@ -109,11 +109,12 @@ class DatasetDef:
     def create_external_statement(
         self,
         external_bucket: str,
+        link_name: str,
         file_format: AnalyticsExternalFileFormat = AnalyticsExternalFileFormat.DEFAULT,
         table_format: AnalyticsExternalTableFormat = AnalyticsExternalTableFormat.DEFAULT,
         file_ext: Optional[str] = None,
     ) -> str:
-        name, external_bucket = sqlpp_escape(self.name, external_bucket)
+        name, external_bucket, link_name = sqlpp_escape(self.name, external_bucket, link_name)
 
         with_clause_options = {}
         if file_format is not AnalyticsExternalFileFormat.DEFAULT:
@@ -124,7 +125,7 @@ class DatasetDef:
             with_clause_options["include"] = f"*.{file_ext}"
 
         cmd = (
-            f"CREATE EXTERNAL DATASET {name} ON {external_bucket} AT `external_link` "
+            f"CREATE EXTERNAL DATASET {name} ON {external_bucket} AT {link_name} "
             f"USING '{self.source or self.name}'"
         )
 
@@ -369,6 +370,7 @@ class AnalyticsTest(PerfTest):
             self.datasets,
             lambda dataset: dataset.create_external_statement(
                 self.ext_data_settings.obj_store_name,
+                self.ext_data_settings.external_link_name,
                 self.ext_data_settings.file_format,
                 self.ext_data_settings.table_format,
                 self.ext_data_settings.file_include,

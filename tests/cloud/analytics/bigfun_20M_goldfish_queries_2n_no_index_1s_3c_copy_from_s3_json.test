@@ -39,6 +39,3 @@ file_include = *.json
 [access]
 ops = 5
 workers = 1
-
-[clients]
-python_client = 4.0.2

@@ -36,6 +36,3 @@ duration = 0
 warmup_duration = 0
 workload = ch2_analytics
 use_backup = false
-
-[clients]
-python_client = 4.2.0

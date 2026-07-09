@@ -29,6 +29,3 @@ num_reader_threads = 32
 
 [bucket_extras]
 max_num_shards = 64
-
-[clients]
-python_client = 4.0.2

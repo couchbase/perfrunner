@@ -18,6 +18,3 @@ backend_storage = magma
 
 [collection]
 config = collections/1bucket_1scope_3collections_analytics.json
-
-[clients]
-python_client = 4.2.0

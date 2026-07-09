@@ -23,6 +23,3 @@ primary_key_field = _id
 obj_staging_dir = /stage
 obj_region = us-east-1
 aws_credential_path = /root/.ssh
-
-[clients]
-python_client = 4.0.2

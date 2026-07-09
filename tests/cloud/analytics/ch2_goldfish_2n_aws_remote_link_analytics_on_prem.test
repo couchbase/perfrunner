@@ -38,6 +38,3 @@ warmup_duration = 0
 workload = ch2_analytics
 create_gsi_index = false
 use_backup = false
-
-[clients]
-python_client = 4.0.2

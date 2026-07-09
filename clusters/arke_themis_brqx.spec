@@ -16,7 +16,6 @@ themis =
 [clients]
 hosts =
     172.23.97.16
-    172.23.97.17
 
 [storage]
 data = /data

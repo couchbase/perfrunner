@@ -1,7 +1,10 @@
 import json
 from typing import Dict, List
 
+from aiohttp import ClientError
 from requests import Session
+
+from logger import logger
 
 
 class PerfStore:
@@ -30,11 +33,20 @@ class PerfStore:
         self.session.post(url=url, data=json.dumps(data))
 
     async def async_push(self, db: str, data: dict, timestamp: str):
-        url = '{}/{}'.format(self.base_url, db)
+        url = f"{self.base_url}/{db}"
         if timestamp is not None:
-            url = '{}?ts={}'.format(url, timestamp)
-        async with self.async_session.post(url=url, json=data) as response:
-            return await response.json()
+            url = f"{url}?ts={timestamp}"
+        try:
+            async with self.async_session.post(url=url, json=data) as response:
+                if response.status not in (200, 201, 202):
+                    logger.warning(f"Bad response ({response.status}) from perfstore: {url}")
+                    return None
+                # cbmonitor can return an HTML error page when overloaded; ignore the
+                # declared content-type rather than failing the whole push.
+                return await response.json(content_type=None)
+        except ClientError as e:
+            logger.warning(f"Failed to push to perfstore ({url}): {e}")
+            return None
 
     def get_timeseries(self, db: str, metric: str) -> list[list[int, float]]:
         url = f"{self.base_url}/{db}/{metric}"

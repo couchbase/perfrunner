@@ -9,6 +9,7 @@ from fabric.api import cd, execute, get, parallel, run
 
 from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.settings import CbAgentSettings
+from logger import logger
 from perfrunner.tests import PerfTest
 
 
@@ -131,12 +132,19 @@ class KVLatency(Latency):
                 )
 
     async def post_all_results(self):
-        async with ClientSession(connector=TCPConnector()) as self.store.async_session:
-            await asyncio.gather(*[
-                self.post_results(fn, bucket)
-                for bucket in self.get_buckets()
-                for fn in Path(self.stat_dir).glob(self.PATTERN + bucket + "*")
-            ])
+        async with ClientSession(connector=TCPConnector()) as session:
+            self.store.async_session = session
+            results = await asyncio.gather(
+                *[
+                    self.post_results(fn, bucket)
+                    for bucket in self.get_buckets()
+                    for fn in Path(self.stat_dir).glob(self.PATTERN + bucket + "*")
+                ],
+                return_exceptions=True,
+            )
+            for result in results:
+                if isinstance(result, Exception):
+                    logger.warning(f"Failed to push latency stats to perfstore: {result}")
 
     def move_remote_stat_files(self):
         def task():

@@ -74,6 +74,7 @@ class PromStore:
 
     def _build_labels(
         self,
+        cluster: Optional[str] = None,
         server: Optional[str] = None,
         bucket: Optional[str] = None,
         index: Optional[str] = None,
@@ -81,6 +82,8 @@ class PromStore:
     ) -> str:
         """Build Prometheus label string from optional dimensions."""
         labels = {"job": self.snapshot_id}
+        if cluster:  # Disambiguates same-named buckets/nodes across clusters (e.g. XDCR)
+            labels["cluster"] = cluster
         if server:
             labels["instance"] = server  # Match the label used in other Prometheus metrics
         if bucket:
@@ -115,6 +118,7 @@ class PromStore:
     def _build_body(
         self,
         data: dict,
+        cluster: Optional[str] = None,
         server: Optional[str] = None,
         bucket: Optional[str] = None,
         index: Optional[str] = None,
@@ -126,7 +130,7 @@ class PromStore:
         ``timestamp`` is epoch milliseconds and passed through unchanged; None lets
         the import endpoint stamp ingestion time.
         """
-        labels_str = self._build_labels(server, bucket, index, collector)
+        labels_str = self._build_labels(cluster, server, bucket, index, collector)
         timestamp_ms = int(timestamp) if timestamp is not None else None
         return self._format_metrics(data, labels_str, timestamp_ms)
 
@@ -144,7 +148,7 @@ class PromStore:
 
         Args:
             data: Dict of metric_name -> value.
-            cluster: Cluster name label (not used).
+            cluster: Cluster name label (disambiguates clusters within one snapshot).
             server: Server hostname label.
             bucket: Bucket name label.
             index: Index name label.
@@ -152,7 +156,7 @@ class PromStore:
             timestamp: Epoch milliseconds (the unit collectors record and the
                 import endpoint expects). If None, Prometheus uses current time.
         """
-        body = self._build_body(data, server, bucket, index, collector, timestamp)
+        body = self._build_body(data, cluster, server, bucket, index, collector, timestamp)
 
         try:
             resp = self.session.post(
@@ -180,7 +184,7 @@ class PromStore:
         timestamp: Optional[int] = None,
     ):
         """Async version of append(). ``timestamp`` is epoch milliseconds."""
-        body = self._build_body(data, server, bucket, index, collector, timestamp)
+        body = self._build_body(data, cluster, server, bucket, index, collector, timestamp)
 
         try:
             async with self.async_session.post(

@@ -1,7 +1,7 @@
 import time
-from glob import glob
 
 from cbagent.collectors.collector import CouchbaseCollector
+from perfrunner.helpers.local_stats import consolidate_jts_log
 from perfrunner.tests import PerfTest
 
 
@@ -33,34 +33,14 @@ class JTSCollector(CouchbaseCollector):
     def _consolidate_results(self, filename_pattern: str, storage_name: str):
         self.results[storage_name] = dict()
         for bucket in self.buckets:
-            all_results = dict()
-            self.results[storage_name][bucket] = dict()
             new_filename = filename_pattern
             if self.settings.logging_method == "bucket_wise":
                 new_filename = bucket + "_" + filename_pattern
-            for file in glob("{}/*/{}".format(self.settings.jts_logs_dir, new_filename)):
-                f = open(file)
-                lines = f.readlines()
-                for line in lines:
-                    kv = line.split(":")
-                    k = 0
-                    v = 0
-                    if len(kv) > 0:
-                        k = int(kv[0])
-                        if len(kv) > 1:
-                            v = float(kv[1].rstrip('\n'))
-                        else:
-                            v = 0
-                    if k not in all_results:
-                        all_results[k] = list()
-                    all_results[k].append(v)
-
-            for k in all_results.keys():
-                self.results[storage_name][bucket][k] = 0
-                for v in all_results[k]:
-                    self.results[storage_name][bucket][k] += float(v)
-                if storage_name == "latency":
-                    self.results[storage_name][bucket][k] /= len(all_results[k])
+            # Shared with MetricHelper's local JTS compute so the pushed values and
+            # the locally-computed KPI can't drift.
+            self.results[storage_name][bucket] = consolidate_jts_log(
+                self.settings.jts_logs_dir, new_filename, storage_name == "latency"
+            )
 
     def sample(self):
         pass

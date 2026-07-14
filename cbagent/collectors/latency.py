@@ -1,7 +1,6 @@
 import asyncio
-import csv
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 from uuid import uuid4
 
 from aiohttp import ClientSession, TCPConnector
@@ -10,6 +9,7 @@ from fabric.api import cd, execute, get, parallel, run
 from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.settings import CbAgentSettings
 from logger import logger
+from perfrunner.helpers.local_stats import parse_spring_latency_file
 from perfrunner.tests import PerfTest
 
 
@@ -97,41 +97,23 @@ class KVLatency(Latency):
 
         execute(parallel(task), hosts=self.workers)
 
-    def read_stats(self, filename: str) -> Iterator:
-        with open(filename) as fh:
-            reader = csv.reader(fh)
-            for line in reader:
-                yield line
-
     async def post_results(self, filename: str, bucket: str):
-        for line in self.read_stats(filename):
-            operation, timestamp, latency_single, latency_total, target = line
-
-            target_group = self.target_groups[bucket].get(target, '')
+        for sample in parse_spring_latency_file(filename):
+            target_group = self.target_groups[bucket].get(sample.target, "")
             bucket_group = self.bucket_stat_group(bucket, target_group)
 
-            # The spring reservoir records timestamps in nanoseconds; the store
-            # expects epoch milliseconds (matching the ms windows in metrics.py).
-            timestamp_ms = int(timestamp) // 1_000_000
-
-            # Latency in ms
-            data = {'latency_' + operation: float(latency_single) * 1000}
-
             await self.store.append_async(
-                data=data,
-                timestamp=timestamp_ms,
+                data={f"latency_{sample.operation}": sample.latency_ms},
+                timestamp=sample.timestamp_ms,
                 cluster=self.cluster,
                 bucket=bucket_group,
                 collector=self.COLLECTOR,
             )
 
-            if latency_total:
-                # Latency in ms
-                data = {'latency_total_' + operation: float(latency_total) * 1000}
-
+            if sample.latency_total_ms is not None:
                 await self.store.append_async(
-                    data=data,
-                    timestamp=timestamp_ms,
+                    data={f"latency_total_{sample.operation}": sample.latency_total_ms},
+                    timestamp=sample.timestamp_ms,
                     cluster=self.cluster,
                     bucket=bucket_group,
                     collector=self.COLLECTOR,

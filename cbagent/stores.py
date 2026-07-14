@@ -49,9 +49,13 @@ class PerfStore:
             return None
 
     def get_timeseries(self, db: str, metric: str) -> list[list[int, float]]:
+        # A missing db/metric returns a non-200; treat it as "no data" rather than
+        # letting .json() blow up, so callers don't need a separate exists() guard.
         url = f"{self.base_url}/{db}/{metric}"
-        data = self.session.get(url).json()
-        return data
+        response = self.session.get(url)
+        if response.status_code != 200:
+            return []
+        return response.json()
 
     def get_values(self, db: str, metric) -> list[float]:
         return [v for _, v in self.get_timeseries(db, metric)]

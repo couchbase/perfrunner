@@ -78,6 +78,8 @@ def main():
         if not cm.has_clusters():
             return
 
+        cm.configure_internal_settings()
+
         if (
             not cm.cluster_spec.columnar_infrastructure
             or cm.cluster_spec.prov_cluster_in_columnar_test
@@ -87,6 +89,8 @@ def main():
                 cm.create_buckets()
                 cm.create_eventing_buckets()
                 cm.create_eventing_metadata_bucket()
+            cm.set_memcached_global_settings()
+            cm.configure_bucket_internal_settings()
             cm.capella_allow_client_ips()
         else:
             cm.set_analytics_settings()
@@ -157,6 +161,7 @@ def main():
         cm.create_eventing_metadata_bucket()
         cm.create_conflict_logging_buckets()
         cm.add_rbac_users()
+        cm.configure_bucket_internal_settings()
 
     cm.restart_with_alternative_bucket_options()
     cm.set_index_settings()

@@ -794,6 +794,16 @@ class DefaultRestHelper(RestBase):
         url = self._get_api_url(host=host, path='internalSettings')
         self.post(url=url, data=data)
 
+    def get_internal_settings(self, host: str) -> dict:
+        logger.info(f"Getting internal settings from {host}")
+        url = self._get_api_url(host=host, path="internalSettings")
+        return self.get(url=url).json()
+
+    def set_bucket_internal_settings(self, host: str, bucket: str, settings: dict):
+        logger.info(f"Setting internal settings on bucket '{bucket}': {pretty_dict(settings)}")
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}?internal=1")
+        self.post(url=url, data=settings)
+
     def set_xdcr_cluster_settings(self, host: str, data: dict):
         logger.info('Updating xdcr cluster settings: {}'.format(data))
         url = self._get_api_url(host=host, path='settings/replications')

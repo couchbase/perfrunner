@@ -71,6 +71,53 @@ class ClusterManagerBase:
         """Check if there are any clusters by checking if the first cluster is a valid cluster."""
         return self.server_info.is_valid()
 
+    def configure_internal_settings(self, settings: Optional[dict] = None):
+        settings_from_config = self.test_config.internal_settings
+        if self.build_tuple >= (8, 1, 0, 0):
+            settings_from_config["dataServiceFileBasedRebalanceEnabled"] = str(
+                self.test_config.cluster.enable_kv_fbr
+            ).lower()
+
+        if not (settings := settings or settings_from_config):
+            return
+
+        for master in self.cluster_spec.masters:
+            self.rest.set_internal_settings(master, settings)
+            new_settings = self.rest.get_internal_settings(master)
+            changed = {k: v for k, v in new_settings.items() if k in settings}
+            logger.info(f"Changed internal settings for {master}: {pretty_dict(changed)}")
+
+    def set_memcached_global_settings(self, settings: Optional[dict] = None):
+        if not (settings := settings or self.test_config.memcached_global_settings):
+            return
+
+        for master in self.cluster_spec.masters:
+            self.rest.set_memcached_global_settings(master, settings)
+            new_settings = self.rest.get_memcached_global_settings(master)
+            changed = {k: v for k, v in new_settings.items() if k in settings}
+            logger.info(f"Changed memcached global settings for {master}: {pretty_dict(changed)}")
+
+    def configure_bucket_internal_settings(self, settings: Optional[dict] = None):
+        if not (settings := settings or self.test_config.bucket_internal_settings):
+            return
+
+        if self.build_tuple < (8, 1, 0, 0):
+            logger.warning(
+                "Skipping bucket internal settings: requires CB 8.1+ "
+                f"(cluster build {self.build_tuple})"
+            )
+            return
+
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.rest.set_bucket_internal_settings(master, bucket, settings)
+                bucket_info = self.rest.get_bucket_info(master, bucket)
+                changed = {k: bucket_info[k] for k in settings if k in bucket_info}
+                logger.info(
+                    f"Changed internal bucket settings for '{bucket}' at {master}: "
+                    f"{pretty_dict(changed)}"
+                )
+
     def set_analytics_settings(self):
         replica_analytics = self.test_config.analytics_settings.replica_analytics
         if replica_analytics:
@@ -508,14 +555,6 @@ class DefaultClusterManager(ClusterManagerBase):
             settings = self.rest.get_auto_compaction_settings(master)
             logger.info('Auto-compaction settings: {}'.format(pretty_dict(settings)))
 
-    def configure_internal_settings(self):
-        internal_settings = self.test_config.internal_settings
-        if not internal_settings:
-            return
-
-        for master in self.cluster_spec.masters:
-            self.rest.set_internal_settings(master, internal_settings)
-
     def configure_xdcr_settings(self):
         xdcr_cluster_settings = self.test_config.xdcr_cluster_settings
         for master in self.cluster_spec.masters:
@@ -547,15 +586,6 @@ class DefaultClusterManager(ClusterManagerBase):
 
         self.remote.set_systemd_environment(env_vars)
         self.remote.restart()
-
-    def set_memcached_global_settings(self):
-        if not (mc_global_settings := self.test_config.memcached_global_settings):
-            return
-
-        for master in self.cluster_spec.masters:
-            self.rest.set_memcached_global_settings(master, mc_global_settings)
-            settings = self.rest.get_memcached_global_settings(master)
-            logger.info(f"Read memcached global settings from {master}: {pretty_dict(settings)}")
 
     def restart_with_alternative_bucket_options(self):
         """Apply custom buckets settings.

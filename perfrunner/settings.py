@@ -985,6 +985,7 @@ class ClusterSettings:
     ENABLE_N2N_ENCRYPTION = None
     ENABLE_QUERY_AWR = None
     ENABLE_FUSION = "false"
+    ENABLE_KV_FBR = "true"  # Only works for CB 8.1+
     QUERY_AWR_BUCKET = 'bucket-1'
     QUERY_AWR_SCOPE = 'scope-awr'
     QUERY_AWR_COLLECTION = 'collection-awr'
@@ -1048,6 +1049,7 @@ class ClusterSettings:
         self.enable_query_awr = options.get('enable_query_awr',
                                             self.ENABLE_QUERY_AWR)
         self.enable_fusion = maybe_atoi(options.get('enable_fusion', self.ENABLE_FUSION))
+        self.enable_kv_fbr = maybe_atoi(options.get('enable_kv_fbr', self.ENABLE_KV_FBR))
         self.query_awr_bucket = options.get('query_awr_bucket',
                                             self.QUERY_AWR_BUCKET)
         self.query_awr_scope = options.get('query_awr_scope',
@@ -4436,7 +4438,11 @@ class TestConfig(Config):
 
     @property
     def internal_settings(self) -> dict:
-        return self._get_options_as_dict('internal')
+        return self._get_options_as_dict("internal")
+
+    @property
+    def bucket_internal_settings(self) -> dict:
+        return self._get_options_as_dict("bucket_internal")
 
     @property
     def xdcr_cluster_settings(self) -> dict:

@@ -9,6 +9,7 @@ sub_category = Plasma
 
 [stats]
 server_processes = projector
+use_prometheus_metrics = true
 
 [cluster]
 mem_quota = 50000
@@ -60,5 +61,5 @@ dropkey_force_rotation = 1
 updates = 100
 ops = 50000000
 items = 18000000
-throughput = 10000
+throughput = 5000
 workers = 40

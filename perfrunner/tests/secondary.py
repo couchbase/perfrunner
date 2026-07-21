@@ -2737,6 +2737,18 @@ class DropKeySecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
                 f"Relying on auto DEK rotation (interval={interval}s, lifetime={lifetime}s)"
             )
 
+    @with_stats
+    @with_profiles
+    def drop_phase(self):
+        """Trigger DEK rotation and wait for drop completion."""
+        self.trigger_dek_rotation()
+        self._dropkey_durations = self.monitor.monitor_dropkey_completion(
+            host=self.index_nodes[0],
+            rotation_start_ts=self._rotation_start_ts,
+            duration_secs=self.test_duration,
+            polling_interval=self.polling_interval,
+        )
+
     def run(self):
         self.load_and_build_initial_index()
         self.print_index_disk_usage(heap_profile=False)
@@ -2745,13 +2757,7 @@ class DropKeySecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
         self.access_bg()
 
         # Start DEK rotation and measure drop completion.
-        self.trigger_dek_rotation()
-        self._dropkey_durations = self.monitor.monitor_dropkey_completion(
-            host=self.index_nodes[0],
-            rotation_start_ts=self._rotation_start_ts,
-            duration_secs=self.test_duration,
-            polling_interval=self.polling_interval,
-        )
+        self.drop_phase()
         durations = list(self._dropkey_durations.values())
         avg_dropkey_secs = sum(durations) / len(durations)
 
@@ -2778,13 +2784,7 @@ class ConcurrentDropKeySecondaryIndexTest(DropKeySecondaryIndexTest):
                 is_ssl=self.is_ssl,
             )
 
-        self.trigger_dek_rotation()
-        self._dropkey_durations = self.monitor.monitor_dropkey_completion(
-            host=self.index_nodes[0],
-            rotation_start_ts=self._rotation_start_ts,
-            duration_secs=self.test_duration,
-            polling_interval=self.polling_interval,
-        )
+        self.drop_phase()
         durations = list(self._dropkey_durations.values())
         avg_dropkey_secs = sum(durations) / len(durations)
 

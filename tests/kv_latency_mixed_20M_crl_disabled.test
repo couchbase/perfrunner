@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.kv.MixedLatencyTest
+
+[showfast]
+title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 10K ops/sec, mTLS mandatory client-cert auth, CRL disabled
+component = kv
+category = latency
+sub_category = CRL
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+client_cert_auth_state = mandatory
+crl_client_auth_mode = Disabled
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = large
+ssl_mode = auth
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 20000000
+workers = 12
+time = 1200
+ssl_mode = auth
+latency_percentiles = 50,95,99

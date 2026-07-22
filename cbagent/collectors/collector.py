@@ -13,6 +13,7 @@ from cbagent.settings import CbAgentSettings
 from cbagent.stores import PerfStore
 from logger import logger
 from perfrunner.helpers.server import ServerInfoManager
+from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.tests import PerfTest
 
 
@@ -218,6 +219,10 @@ class CouchbaseCollector(Collector):
     def __init__(self, settings: CbAgentSettings, test: Optional[PerfTest] = None):
         super().__init__(settings, test)
         self.session = requests.Session()
+        # This collector uses its own requests.Session, so attach the client
+        # cert here too: clusters with mandatory clientCertAuth reject HTTPS
+        # requests lacking one.
+        self.session.cert = SSLCertificate.client_cert_pair()
         self.cloud = settings.cloud
         self.cloud_enabled = self.cloud["enabled"]
         if self.cloud_enabled:

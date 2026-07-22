@@ -36,6 +36,16 @@ class SafeEnum(Enum):
         return fallback
 
 
+class CaseInsensitiveEnum(Enum):
+    """An enum whose members can also be looked up by a differently-cased value."""
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            return next((m for m in cls if m.value.casefold() == value.casefold()), None)
+        return None
+
+
 @dataclass
 class SGPortRange:
     min_port: int

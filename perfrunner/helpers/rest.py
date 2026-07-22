@@ -16,7 +16,12 @@ from decorator import decorator
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import my_public_ip, parse_duration_to_secs, pretty_dict
+from perfrunner.helpers.misc import (
+    my_public_ip,
+    parse_duration_to_secs,
+    pretty_dict,
+    remove_nulls,
+)
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.settings import BucketSettings, ClusterSpec
@@ -113,12 +118,19 @@ class RestBase:
         self.auth = self.rest_username, self.rest_password
         self.cluster_spec = cluster_spec
         self.use_tls = use_tls
+        # (cert_path, key_path) tuple for mTLS client-cert auth, attached to
+        # every request. Auto-detected here so all independently-constructed
+        # RestHelpers pick it up: once a client cert exists (ssl_mode=auth),
+        # a cluster with mandatory clientCertAuth rejects plain user/password
+        # auth over HTTPS.
+        self.client_cert = SSLCertificate.client_cert_pair()
 
     def _set_auth(self, **kwargs) -> tuple[str, str]:
         return self.auth
 
     def _get(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
+        kwargs.setdefault("cert", self.client_cert)
         return requests.get(verify=False, **kwargs)
 
     @retry
@@ -127,6 +139,7 @@ class RestBase:
 
     def _post(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
+        kwargs.setdefault("cert", self.client_cert)
         return requests.post(verify=False, **kwargs)
 
     @retry
@@ -135,6 +148,7 @@ class RestBase:
 
     def _session_post(self, session: requests.Session, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
+        kwargs.setdefault("cert", self.client_cert)
         return session.post(verify=False, **kwargs)
 
     @retry
@@ -143,6 +157,7 @@ class RestBase:
 
     def _put(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
+        kwargs.setdefault("cert", self.client_cert)
         return requests.put(verify=False, **kwargs)
 
     @retry
@@ -151,6 +166,7 @@ class RestBase:
 
     def _delete(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
+        kwargs.setdefault("cert", self.client_cert)
         return requests.delete(verify=False, **kwargs)
 
     def delete(self, **kwargs) -> requests.Response:
@@ -158,6 +174,7 @@ class RestBase:
 
     def _patch(self, **kwargs) -> requests.Response:
         kwargs.setdefault("auth", self._set_auth(**kwargs))
+        kwargs.setdefault("cert", self.client_cert)
         return requests.patch(verify=False, **kwargs)
 
     @retry
@@ -1577,16 +1594,56 @@ class DefaultRestHelper(RestBase):
         api = self._get_api_url(host=node, path="node/controller/reloadCertificate")
         self.post(url=api)
 
-    def enable_certificate_auth(self, node: str):
-        logger.info(f"Enabling certificate-based client auth on {node}")
+    def enable_certificate_auth(self, node: str, state: str = 'enable'):
+        """Configure client-certificate authentication.
+
+        `state` is one of: disable, enable, hybrid, mandatory (see
+        POST /settings/clientCertAuth). `mandatory` rejects any client that does
+        not present a certificate; `enable` still allows SASL/password fallback.
+        """
+        logger.info(f"Setting certificate-based client auth on {node} to '{state}'")
         api = self._get_api_url(host=node, path="settings/clientCertAuth")
         data = {
-            'state': 'enable',
+            'state': state,
             'prefixes': [
                 {'path': 'subject.cn', 'prefix': '', 'delimiter': ''}
             ]
         }
         self.post(url=api, json=data)
+
+    def set_crl_settings(self, node: str, settings: dict) -> dict:
+        """Update the cluster-wide CRL configuration (POST /settings/crl).
+
+        `settings` may contain `policyPerScope` (a dict of `clientAuth` and `nodeToNode` to a
+        policy) and `checkIntermediateCerts`. The setting is stored cluster-wide, but the call only
+        waits for the node that receives it to apply the change.
+        """
+        logger.info(f"Updating CRL settings on {node}: {pretty_dict(settings)}")
+        api = self._get_api_url(host=node, path="settings/crl")
+        return self.post(url=api, json=settings).json()
+
+    def reload_crl(self, node: str) -> dict:
+        """Make `node` rescan its CRL sources now and return its CRL status.
+
+        This is node-local: each node scans its own copy of the CRL directory.
+        """
+        logger.info(f"Reloading CRLs on {node}")
+        api = self._get_api_url(host=node, path="node/controller/reloadCrl")
+        return self.post(url=api).json()
+
+    def validate_crl(
+        self, node: str, policy: Optional[str] = None, certs: Optional[list[str]] = None
+    ) -> dict:
+        """Check certificates against the CRLs loaded on `node`, under a policy of the caller's.
+
+        The check ignores the policy configured on the cluster and defaults to `Require`; the
+        endpoint does not accept `Disabled`. Without `certs` it checks the cluster's own node and
+        client certificates.
+        """
+        logger.info(f"Validating CRL revocation status on {node}")
+        api = self._get_api_url(host=node, path="settings/crl/diagnostics/validate")
+        data = remove_nulls({"policy": policy, "certs": certs})
+        return self.post(url=api, json=data).json()
 
     def get_minimum_tls_version(self, node: str) -> str:
         # Because tlsv1.3 cannot be the global tls min version (unlike previous tls versions),

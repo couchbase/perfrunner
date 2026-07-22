@@ -1018,19 +1018,25 @@ class RemoteLinux(Remote):
         run(cmd)
 
     @all_servers
-    def setup_x509(self):
+    def put_inbox_files(self, files: dict[str, str]):
+        """Copy local files into each node's inbox.
+
+        `files` maps a local path to its destination relative to the node's `inbox/` directory.
+        Copying does not activate anything: certificates and CRLs take effect through the
+        corresponding REST calls.
+        """
         inbox_base_dir = f"{self.get_install_dir()}/var/lib/couchbase"
         remote_inbox = f"{inbox_base_dir}/{SSLCertificate.INBOX_DIRNAME}"
-        logger.info(f"Setting up x.509 certificates in {remote_inbox}")
+        logger.info(f"Copying {len(files)} file(s) into {remote_inbox}")
 
-        filenames = (SSLCertificate.SERVER_CERT_FILENAME, SSLCertificate.SERVER_KEY_FILENAME)
-        run(f"mkdir -p {remote_inbox}")
-        for filename in filenames:
-            put(os.path.join(SSLCertificate.INBOX, filename), f"{remote_inbox}/")
+        uploads = {local_path: f"{remote_inbox}/{path}" for local_path, path in files.items()}
+        remote_dirs = sorted({os.path.dirname(remote_path) for remote_path in uploads.values()})
+        run(f"mkdir -p {' '.join(remote_dirs)}")
+        for local_path, remote_path in uploads.items():
+            put(local_path, remote_path)
 
         # The uploads keep the remote default mode, so make them readable by the couchbase user.
-        remote_paths = " ".join(f"{remote_inbox}/{filename}" for filename in filenames)
-        run(f"chmod a+r {remote_paths}")
+        run(f"chmod a+r {' '.join(uploads.values())}")
 
     # Not just the master: the CA is also uploaded to spare nodes, and a spare is its own
     # standalone cluster until a rebalance joins it, so it has to allow the upload itself.
@@ -1077,6 +1083,21 @@ class RemoteLinux(Remote):
     @all_clients
     def cloud_put_certificate(self, cert, worker_home):
         put(cert, worker_home + '/perfrunner')
+
+    @all_clients
+    def cloud_put_x509_client_files(self, worker_home: str):
+        """Upload the CA and client certificate and key a workload authenticates with.
+
+        They go to the same relative paths as on the driver, so that a workload reads
+        `certificates/inbox/...` regardless of where it runs.
+        """
+        for path in (
+            SSLCertificate.CA_CERT_PATH,
+            SSLCertificate.CLIENT_CERT_PATH,
+            SSLCertificate.CLIENT_KEY_PATH,
+        ):
+            put(path, f"{worker_home}/perfrunner/{path}")
+        run(f"chmod 600 {worker_home}/perfrunner/{SSLCertificate.CLIENT_KEY_PATH}")
 
     @all_clients
     def cloud_put_scanfile(self, file, file_path):

@@ -20,6 +20,7 @@ from perfrunner.helpers.misc import (
     get_azure_storage_account_key,
     maybe_atoi,
     pretty_dict,
+    remove_nulls,
     run_aws_cli_command,
     run_local_shell_command,
     set_azure_capella_subscription,
@@ -29,8 +30,9 @@ from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.server import ServerInfoManager
+from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.remote.kubernetes import RemoteKubernetes
-from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.settings import ClientCertAuthState, ClusterSpec, CRLMode, TestConfig
 
 
 class ClusterManager:
@@ -278,6 +280,10 @@ class ClusterManagerBase:
 
 class DefaultClusterManager(ClusterManagerBase):
     """Cluster Manager for all non-Kubernetes self-managed clusters."""
+
+    # The first totoro build with every CRL endpoint that the CRL setup calls. Earlier builds
+    # answer them with a 404, which the REST helpers retry for minutes before failing.
+    CRL_MIN_BUILD = (8, 1, 0, 2499)
 
     def set_data_path(self):
         for server in self.cluster_spec.servers:
@@ -877,11 +883,50 @@ class DefaultClusterManager(ClusterManagerBase):
                 self.remote.update_ip_family_cli()
             self.remote.enable_ipv6()
 
+    def crl_settings(self) -> dict:
+        """Return the body of POST /settings/crl for the test's `crl_*` options, if any are set."""
+        cluster_settings = self.test_config.cluster
+        return remove_nulls(
+            {
+                "policyPerScope": {
+                    "clientAuth": getattr(cluster_settings.crl_client_auth_mode, "value", None),
+                    "nodeToNode": getattr(cluster_settings.crl_node_to_node_mode, "value", None),
+                },
+                "checkIntermediateCerts": cluster_settings.crl_check_intermediate_certs,
+            }
+        )
+
     def set_x509_certificates(self):
-        if (
-            self.test_config.access_settings.ssl_mode == "auth"
-            or self.cluster_spec.stellar_gateways
+        phases = (self.test_config.load_settings, self.test_config.access_settings)
+        use_x509 = any(phase.ssl_mode == "auth" for phase in phases) or bool(
+            self.cluster_spec.stellar_gateways
+        )
+        client_cert_auth_state = self.test_config.cluster.client_cert_auth_state
+
+        # Fail rather than skip: a run that silently skipped CRL setup would measure a cluster
+        # that checks no revocation lists.
+        crl_settings = self.crl_settings()
+        if crl_settings and not use_x509:
+            logger.interrupt(
+                "The crl_* cluster options need x.509 certificates, which are only set up when "
+                "a phase has ssl_mode = auth"
+            )
+        # clientCertAuth is cluster-wide, and memcached only enforces it on TLS ports, so a
+        # password-authenticated TLS phase cannot connect once it is mandatory.
+        if client_cert_auth_state is ClientCertAuthState.MANDATORY and any(
+            phase.ssl_mode in ("data", "n2n") for phase in phases
         ):
+            logger.interrupt(
+                "client_cert_auth_state = mandatory rejects the password-authenticated TLS of a "
+                "phase with ssl_mode = data or n2n"
+            )
+        if crl_settings and self.build_tuple < self.CRL_MIN_BUILD:
+            logger.interrupt(
+                f"The crl_* cluster options need build {self.CRL_MIN_BUILD} or later, which has "
+                f"the CRL REST endpoints (cluster build {self.build_tuple})"
+            )
+
+        if use_x509:
             server_list = list(self.cluster_spec.servers)
             if self.cluster_spec.stellar_gateways:
                 # The gateways present this certificate themselves, and goxdcr may reach
@@ -897,11 +942,28 @@ class DefaultClusterManager(ClusterManagerBase):
             local.generate_client_x509_cert(
                 client_cn, self.test_config.access_settings.ssl_keystore_password
             )
+            # Only these leave the client: the local inbox also holds the CA key and the client
+            # certificate and key.
+            node_files = {
+                SSLCertificate.SERVER_CERT_PATH: SSLCertificate.SERVER_CERT_FILENAME,
+                SSLCertificate.SERVER_KEY_PATH: SSLCertificate.SERVER_KEY_FILENAME,
+            }
+            if crl_settings:
+                # Empty, so that every test starts from a CRL that revokes nothing and the
+                # policies are the only difference between runs. Each node scans `inbox/crls`,
+                # so one copy per node covers spares too.
+                local.generate_x509_crl()
+                node_files[SSLCertificate.CRL_PATH] = f"crls/{SSLCertificate.CRL_FILENAME}"
             self.remote.allow_non_local_ca_upload()
-            self.remote.setup_x509()
+            self.remote.put_inbox_files(node_files)
+
+            # Cert setup goes over plain HTTP (8091) regardless of self.rest.use_tls: reloading a
+            # node's own TLS listener over an HTTPS connection to that same listener can hang, and
+            # n2n is not enabled until later in the deploy sequence anyway.
+            cert_rest = RestHelper(self.cluster_spec, use_tls=False)
 
             # Every cluster keeps its own certificate, so each one is set up separately, and
-            # within a cluster the three steps have different scopes.
+            # within a cluster the steps have different scopes.
             for (_, cluster_nodes), num_nodes in zip(
                 self.cluster_spec.clusters, self.initial_nodes
             ):
@@ -911,19 +973,56 @@ class DefaultClusterManager(ClusterManagerBase):
                 # joined node, and repeating it on a node that already trusts the CA fails. A
                 # spare is a standalone cluster until a rebalance joins it, so it needs its own
                 # upload to trust this CA when it does.
-                self.rest.upload_cluster_certificate(nodes[0])
+                cert_rest.upload_cluster_certificate(nodes[0])
                 for spare in spares:
-                    self.rest.upload_cluster_certificate(spare)
+                    cert_rest.upload_cluster_certificate(spare)
 
                 # Reloading is node-local: every node has to activate its own certificate,
                 # spares included, or a swapped-in node presents nothing.
                 for node in cluster_nodes:
-                    self.rest.reload_cluster_certificate(node)
+                    cert_rest.reload_cluster_certificate(node)
 
-                # Don't need to set cert auth on spare nodes as they'll inherit the settings when
-                # joining the cluster.
-                for node in nodes:
-                    self.rest.enable_certificate_auth(node)
+                if crl_settings:
+                    self.configure_crl(cert_rest, nodes[0], cluster_nodes, crl_settings)
+
+                # Client certificate auth is cluster-wide, and a spare inherits it when it joins.
+                # Enabling `mandatory` on a standalone spare would make it demand a client
+                # certificate during its own join handshake, which the master cannot satisfy.
+                cert_rest.enable_certificate_auth(
+                    nodes[0], state=client_cert_auth_state.value
+                )
+
+            if client_cert_auth_state is ClientCertAuthState.MANDATORY:
+                # self.rest drives the rest of the deploy sequence, and once clientCertAuth is
+                # mandatory its HTTPS calls need the client certificate attached.
+                self.rest.client_cert = SSLCertificate.client_cert_pair()
+
+    def configure_crl(
+        self, rest: RestHelper, master: str, cluster_nodes: list[str], crl_settings: dict
+    ):
+        """Apply `crl_settings` to a cluster whose nodes already hold the CRL in their inbox.
+
+        A node only accepts a CRL once the CRL's issuer is a trusted CA, and its first scan of the
+        inbox can run before the CA is uploaded, so every node is told to rescan. The settings are
+        cluster-wide, so the master alone receives them.
+        """
+        for node in cluster_nodes:
+            status = rest.reload_crl(node)
+            logger.info(f"CRL status on {node}: {pretty_dict(status)}")
+
+        rest.set_crl_settings(master, crl_settings)
+
+        # The validation endpoint ignores the cluster's policy and rejects `Disabled`, so only
+        # an enforcing client policy can be checked, and it is checked under that policy.
+        policy = crl_settings.get("policyPerScope", {}).get("clientAuth")
+        if policy in (None, CRLMode.DISABLED.value):
+            return
+        with open(SSLCertificate.CLIENT_CERT_PATH) as fh:
+            validation = rest.validate_crl(master, policy=policy, certs=[fh.read()])
+        logger.info(
+            f"CRL validation of the generated client certificate under {policy}: "
+            f"{pretty_dict(validation)}"
+        )
 
     def set_cipher_suite(self):
         if self.test_config.access_settings.cipher_list:

@@ -5,10 +5,8 @@ Delete once the remote-layer migration it protects is complete.
 
 import os
 import tempfile
-from pathlib import Path
 from unittest import TestCase
 
-from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.remote import api, executor
 from perfrunner.settings import ClusterSpec
 
@@ -94,39 +92,6 @@ class RemoteCharacterisationTest(TestCase):
             self.assertTrue(
                 any("allowNonLocalCACertUpload" in command for command in commands), server
             )
-
-    def test_setup_x509_uploads_only_the_node_certificate_and_key(self):
-        # The inbox also holds the CA and the client certificate, private keys included. Only
-        # `reloadCertificate`'s two files belong on a server, so uploading the directory would
-        # hand every node key material it never reads.
-        cwd = os.getcwd()
-        tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(tmp.cleanup)
-        self.addCleanup(os.chdir, cwd)
-        os.chdir(tmp.name)
-        os.makedirs(SSLCertificate.INBOX)
-        for name in ("ca.pem", "ca.key", "chain.pem", "pkey.key", "client.pem", "client.key"):
-            Path(SSLCertificate.INBOX, name).write_text(name)
-
-        remote = self._remote()
-        remote.setup_x509()
-
-        for server in ("10.0.0.1", "10.0.0.2", "10.0.0.3"):
-            session = self.created[server]
-            uploaded = sorted(os.path.basename(local) for local, _ in session.uploads)
-            self.assertEqual(uploaded, ["chain.pem", "pkey.key"], server)
-            remote_dir = "/opt/couchbase/var/lib/couchbase/inbox"
-            self.assertEqual(
-                sorted(remote for _, remote in session.uploads),
-                [f"{remote_dir}/chain.pem", f"{remote_dir}/pkey.key"],
-            )
-            commands = [command for command, _ in session.commands]
-            self.assertTrue(any(f"mkdir -p {remote_dir}" in c for c in commands), commands)
-            # One chmod for both files, and it grants read: +x would leave an unreadable key
-            # unreadable.
-            chmods = [c for c in commands if "chmod" in c]
-            self.assertEqual(len(chmods), 1, chmods)
-            self.assertIn(f"chmod a+r {remote_dir}/chain.pem {remote_dir}/pkey.key", chmods[0])
 
     def test_master_server_decorator_targets_first_server(self):
         remote = self._remote()

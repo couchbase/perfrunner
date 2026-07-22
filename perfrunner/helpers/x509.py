@@ -127,6 +127,13 @@ class SSLCertificate:
     CLIENT_KEY_PATH = f"{INBOX}/{CLIENT_KEY_FILENAME}"
     CLIENT_BUNDLE_PATH = f"{INBOX}/{CLIENT_BUNDLE_FILENAME}"
 
+    @classmethod
+    def client_cert_pair(cls) -> Optional[tuple[str, str]]:
+        """Return the client certificate and key paths, or None unless both files exist."""
+        if os.path.exists(cls.CLIENT_CERT_PATH) and os.path.exists(cls.CLIENT_KEY_PATH):
+            return cls.CLIENT_CERT_PATH, cls.CLIENT_KEY_PATH
+        return None
+
     def __init__(self, hosts: Optional[list[str]] = None, output_dir: str = INBOX):
         self.hosts = hosts or ["127.0.0.1"]
         self.output_dir = output_dir

@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from couchbase import subdocument
-from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.durability import DurabilityLevel, ServerDurability
 from couchbase.management.collections import CollectionSpec
@@ -10,7 +9,7 @@ from couchbase.options import QueryOptions
 from couchbase.views import ViewQuery
 from txcouchbase.cluster import TxCluster
 
-from spring.cbgen_helpers import backoff, get_connection, quiet, time_all, timeit
+from spring.cbgen_helpers import backoff, cluster_args, quiet, time_all, timeit
 
 
 class CBAsyncGen4:
@@ -18,15 +17,7 @@ class CBAsyncGen4:
     TIMEOUT = 120  # seconds
 
     def __init__(self, **kwargs):
-        connection_string, cert_path = get_connection(**kwargs)
-
-        self.cluster = TxCluster(
-            connection_string,
-            authenticator=PasswordAuthenticator(
-                kwargs["username"], kwargs["password"], cert_path=cert_path
-            ),
-            kv_timeout=timedelta(seconds=self.TIMEOUT),
-        )
+        self.cluster = TxCluster(*cluster_args(self.TIMEOUT, **kwargs))
 
         self.bucket_name = kwargs['bucket']
         self.collections = {}
@@ -102,15 +93,13 @@ class CBGen4(CBAsyncGen4):
         enable_tracing = (
             kwargs.get("connstr_params", {}).pop("enable_tracing", "false").lower() == "true"
         )
-        connection_string, cert_path = get_connection(**kwargs)
         self.cluster = Cluster(
-            connection_string,
-            authenticator=PasswordAuthenticator(
-                kwargs["username"], kwargs["password"], cert_path=cert_path
-            ),
-            kv_timeout=timedelta(seconds=self.TIMEOUT),
-            query_timeout=timedelta(seconds=kwargs.get("n1ql_timeout") or self.N1QL_TIMEOUT),
-            enable_tracing=enable_tracing,
+            *cluster_args(
+                self.TIMEOUT,
+                kwargs.get("n1ql_timeout") or self.N1QL_TIMEOUT,
+                enable_tracing,
+                **kwargs,
+            )
         )
         self.bucket_name = kwargs['bucket']
         self.bucket = None

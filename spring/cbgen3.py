@@ -1,21 +1,14 @@
 import time
 from ctypes import CDLL
-from datetime import timedelta
 
 from couchbase import subdocument
-from couchbase.cluster import (
-    Cluster,
-    ClusterOptions,
-    ClusterTimeoutOptions,
-    QueryOptions,
-)
+from couchbase.cluster import Cluster, QueryOptions
 from couchbase.management.collections import CollectionSpec
 from couchbase.management.users import User
-from couchbase_core.cluster import PasswordAuthenticator
 from couchbase_core.views.params import ViewQuery
 from txcouchbase.cluster import TxCluster
 
-from spring.cbgen_helpers import backoff, get_connection, quiet, time_all, timeit
+from spring.cbgen_helpers import backoff, cluster_args, quiet, time_all, timeit
 
 
 class CBAsyncGen3:
@@ -23,15 +16,7 @@ class CBAsyncGen3:
     TIMEOUT = 120  # seconds
 
     def __init__(self, **kwargs):
-        connection_string, cert_path = get_connection(**kwargs)
-        timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
-        options = ClusterOptions(
-            authenticator=PasswordAuthenticator(
-                kwargs["username"], kwargs["password"], cert_path=cert_path
-            ),
-            timeout_options=timeout,
-        )
-        self.cluster = TxCluster(connection_string=connection_string, options=options)
+        self.cluster = TxCluster(*cluster_args(self.TIMEOUT, **kwargs))
         self.bucket_name = kwargs['bucket']
         self.collections = {}
         self.collection = None
@@ -109,19 +94,9 @@ class CBGen3(CBAsyncGen3):
     N1QL_TIMEOUT = 600
 
     def __init__(self, **kwargs):
-        connection_string, cert_path = get_connection(**kwargs)
-
-        timeout = ClusterTimeoutOptions(
-            kv_timeout=timedelta(seconds=self.TIMEOUT),
-            query_timeout=timedelta(seconds=kwargs.get("n1ql_timeout") or self.N1QL_TIMEOUT),
+        self.cluster = Cluster(
+            *cluster_args(self.TIMEOUT, kwargs.get("n1ql_timeout") or self.N1QL_TIMEOUT, **kwargs)
         )
-        options = ClusterOptions(
-            authenticator=PasswordAuthenticator(
-                kwargs["username"], kwargs["password"], cert_path=cert_path
-            ),
-            timeout_options=timeout,
-        )
-        self.cluster = Cluster(connection_string=connection_string, options=options)
         self.bucket_name = kwargs['bucket']
         self.bucket = None
         self.collections = {}

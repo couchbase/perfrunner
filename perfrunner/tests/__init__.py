@@ -300,6 +300,8 @@ class PerfTest:
         if self.worker_manager.is_remote:
             for file in (certificate, client_bundle):
                 self.remote.cloud_put_certificate(file, self.worker_manager.WORKER_HOME)
+            # The spring workload reads these from `certificates/inbox`, as it does on the driver.
+            self.remote.cloud_put_x509_client_files(self.worker_manager.WORKER_HOME)
         return certificate, client_bundle
 
     def setup_client_tls(self):

@@ -1,6 +1,7 @@
 import importlib.metadata
 import random
 from collections import defaultdict
+from datetime import timedelta
 from threading import Timer
 from time import sleep, time
 from typing import Callable, Optional, Union
@@ -10,6 +11,7 @@ from decorator import decorator
 from requests import HTTPError
 
 from logger import logger
+from perfrunner.helpers.x509 import SSLCertificate
 
 sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 
@@ -18,6 +20,15 @@ if sdk_major_version == 2:
 elif sdk_major_version >= 3:
     from couchbase.exceptions import CouchbaseException as CouchbaseError
     from couchbase.exceptions import TemporaryFailException as TemporaryFailError
+
+# These moved between SDK 3 and SDK 4, so import them per SDK version.
+if sdk_major_version == 3:
+    from couchbase.auth import CertAuthenticator as CertificateAuthenticator
+    from couchbase.cluster import ClusterOptions, ClusterTimeoutOptions
+    from couchbase_core.cluster import PasswordAuthenticator
+elif sdk_major_version >= 4:
+    from couchbase.auth import CertificateAuthenticator, PasswordAuthenticator
+    from couchbase.options import ClusterOptions, ClusterTimeoutOptions
 
 
 ClientError = Union[CouchbaseError, HTTPError]
@@ -185,11 +196,25 @@ def time_all(method: Callable, *args, **kwargs):
         error_tracker.track(method.__name__, e)
 
 
-def get_connection(**kwargs) -> tuple[str, Optional[str]]:
-    """Create a desired combination of connection string and certificate from the kwargs input."""
+def cluster_args(
+    kv_timeout: int,
+    query_timeout: Optional[int] = None,
+    enable_tracing: Optional[bool] = None,
+    **kwargs,
+) -> tuple[str, "ClusterOptions"]:
+    """Return the connection string and options a `Cluster` or `TxCluster` is built from.
+
+    `kwargs` are the keyword arguments of the `CBGen` constructors: `host`, `username`,
+    `password`, `ssl_mode` and `connstr_params`. Timeouts are in seconds, and `enable_tracing`
+    only has an effect on SDK 4, where leaving it out keeps the SDK default.
+
+    With `ssl_mode = auth` the connection authenticates with the client certificate this run
+    generated, and trusts the CA that signed the cluster's certificates. The other TLS modes
+    authenticate with a password, and trust the cluster's CA bundle downloaded to `root.pem`.
+    """
     scheme = "couchbase"
     cert_path = None
-    connstr_params: dict = kwargs.get("connstr_params", {})
+    connstr_params = kwargs.get("connstr_params", {})
     ssl_mode = kwargs.get("ssl_mode", "none")
     if ssl_mode in ["data", "n2n", "capella"]:
         scheme = "couchbases"
@@ -198,7 +223,28 @@ def get_connection(**kwargs) -> tuple[str, Optional[str]]:
         else:
             cert_path = "root.pem"
         connstr_params.update({"sasl_mech_force": "PLAIN"})
+    elif ssl_mode == "auth":
+        scheme = "couchbases"
 
-    encoded_params = parse.urlencode(connstr_params)
+    if ssl_mode == "auth":
+        authenticator = CertificateAuthenticator(
+            cert_path=SSLCertificate.CLIENT_CERT_PATH,
+            key_path=SSLCertificate.CLIENT_KEY_PATH,
+            trust_store_path=SSLCertificate.CA_CERT_PATH,
+        )
+    else:
+        authenticator = PasswordAuthenticator(
+            kwargs["username"], kwargs["password"], cert_path=cert_path
+        )
+
+    timeouts = {"kv_timeout": timedelta(seconds=kv_timeout)}
+    if query_timeout:
+        timeouts["query_timeout"] = timedelta(seconds=query_timeout)
+    extra = {} if enable_tracing is None else {"enable_tracing": enable_tracing}
+
     host = kwargs.get("host", "localhost")
-    return f"{scheme}://{host}?{encoded_params}", cert_path
+    connection_string = f"{scheme}://{host}?{parse.urlencode(connstr_params)}"
+    options = ClusterOptions(
+        authenticator, timeout_options=ClusterTimeoutOptions(**timeouts), **extra
+    )
+    return connection_string, options

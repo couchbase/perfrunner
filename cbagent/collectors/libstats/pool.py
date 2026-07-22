@@ -5,24 +5,11 @@ from threading import Lock
 from time import time
 from typing import Optional
 
-from spring.cbgen_helpers import get_connection
+from spring.cbgen_helpers import cluster_args
 
 sdk_major_version = int(importlib.metadata.version("couchbase")[0])
-if sdk_major_version == 3:
-    from datetime import timedelta
-
-    from couchbase.cluster import (
-        Cluster,
-        ClusterOptions,
-        ClusterTimeoutOptions,
-    )
-    from couchbase_core.cluster import PasswordAuthenticator
-elif sdk_major_version == 4:
-    from datetime import timedelta
-
-    from couchbase.auth import PasswordAuthenticator
+if sdk_major_version >= 3:
     from couchbase.cluster import Cluster
-    from couchbase.options import ClusterOptions, ClusterTimeoutOptions
 else:
     from couchbase.bucket import Bucket
 
@@ -83,18 +70,15 @@ class CollectionsWrapper:
         quiet: bool,
         kv_timeout: int,
     ):
-        connection_string, cert_path = get_connection(host=host, ssl_mode=ssl_mode)
-        pass_auth = PasswordAuthenticator(username, password, cert_path=cert_path)
-        if sdk_major_version == 4:
-            self.cluster = Cluster(
-                connection_string,
-                authenticator=pass_auth,
-                kv_timeout=timedelta(seconds=kv_timeout),
+        self.cluster = Cluster(
+            *cluster_args(
+                kv_timeout,
+                host=host,
+                username=username,
+                password=password,
+                ssl_mode=ssl_mode,
             )
-        else:
-            timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=kv_timeout))
-            options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
-            self.cluster = Cluster(connection_string=connection_string, options=options)
+        )
         self.bucket = self.cluster.bucket(bucket)
 
         if scope and collection:

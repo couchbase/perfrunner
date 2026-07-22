@@ -16,6 +16,7 @@ from decorator import decorator
 
 from logger import logger
 from perfrunner.helpers.misc import (
+    CaseInsensitiveEnum,
     SafeEnum,
     creds_tuple,
     maybe_atoi,
@@ -1032,6 +1033,23 @@ class DeploymentSettings:
                                                           self.CAPELLA_POLL_INTERVAL_SECS))
 
 
+class CRLMode(CaseInsensitiveEnum):
+    """A policy of `POST /settings/crl`."""
+
+    DISABLED = "Disabled"
+    PERMISSIVE = "Permissive"
+    REQUIRE = "Require"
+
+
+class ClientCertAuthState(CaseInsensitiveEnum):
+    """A state of `POST /settings/clientCertAuth`."""
+
+    DISABLE = "disable"
+    ENABLE = "enable"
+    HYBRID = "hybrid"
+    MANDATORY = "mandatory"
+
+
 class ClusterSettings:
 
     NUM_BUCKETS = 1
@@ -1059,6 +1077,7 @@ class ClusterSettings:
     SGW_ONLINE_CORES = 0
     ENABLE_CPU_CORES = 'true'
     ENABLE_N2N_ENCRYPTION = None
+    CLIENT_CERT_AUTH_STATE = ClientCertAuthState.ENABLE
     ENABLE_QUERY_AWR = None
     ENABLE_FUSION = "false"
     ENABLE_KV_FBR = "true"  # Only works for CB 8.1+
@@ -1123,6 +1142,25 @@ class ClusterSettings:
                                                self.KV_KERNEL_MEM_LIMIT)
         self.enable_n2n_encryption = options.get('enable_n2n_encryption',
                                                  self.ENABLE_N2N_ENCRYPTION)
+
+        # CRL (Certificate Revocation List) settings, pushed via POST /settings/crl.
+        self.crl_client_auth_mode = (
+            CRLMode(v) if (v := options.get('crl_client_auth_mode')) else None
+        )
+        self.crl_node_to_node_mode = (
+            CRLMode(v) if (v := options.get('crl_node_to_node_mode')) else None
+        )
+        # None, not False, when unset: False is a CRL setting in its own right.
+        check_intermediate = options.get('crl_check_intermediate_certs')
+        self.crl_check_intermediate_certs = (
+            bool(maybe_atoi(check_intermediate)) if check_intermediate is not None else None
+        )
+        self.client_cert_auth_state = (
+            ClientCertAuthState(v)
+            if (v := options.get('client_cert_auth_state'))
+            else self.CLIENT_CERT_AUTH_STATE
+        )
+
         self.enable_query_awr = options.get('enable_query_awr',
                                             self.ENABLE_QUERY_AWR)
         self.enable_fusion = maybe_atoi(options.get('enable_fusion', self.ENABLE_FUSION))
@@ -1680,7 +1718,6 @@ class PhaseSettings:
     SHOW_TLS_VERSION = False
     CIPHER_LIST = None
     MIN_TLS_VERSION = None
-
     PERSIST_TO = 0
     REPLICATE_TO = 0
 

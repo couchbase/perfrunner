@@ -30,3 +30,6 @@ workers = 40
 [backup]
 threads = 16
 storage_type = rift
+
+[restore]
+threads = 8

@@ -3,6 +3,7 @@ line-length = 100
 exclude = ["cbagent/collectors/__init__.py"]
 
 [lint]
+select = ["E4", "E7", "E9", "F"]  # default ruleset for ruff <0.16.0
 extend-select = [
     "D",  # pydocstyle
     "I",  # isort

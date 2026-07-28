@@ -1,10 +1,9 @@
+import importlib.metadata
 from urllib import parse
-
-import pkg_resources
 
 from spring.cbgen_helpers import backoff, quiet, time_all, timeit
 
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 if sdk_major_version == 2:
     from couchbase import experimental, subdocument
     from couchbase.bucket import Bucket

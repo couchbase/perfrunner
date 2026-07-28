@@ -1,4 +1,5 @@
 import copy
+import importlib.metadata
 import os
 import signal
 import time
@@ -8,7 +9,6 @@ from pathlib import Path
 from threading import Timer
 from typing import Callable, List, Tuple, Union
 
-import pkg_resources
 import twisted
 from decorator import decorator
 from numpy import random
@@ -98,7 +98,7 @@ from spring.querygen3 import ViewQueryGen3 as ViewQueryGen
 from spring.querygen3 import ViewQueryGenByType3 as ViewQueryGenByType
 from spring.reservoir import Reservoir
 
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 if sdk_major_version == 3:
     from twisted.internet import reactor
 
@@ -800,15 +800,11 @@ class AsyncKVWorker(KVWorker):
             d.addErrback(self.log_and_restart, cb, i)
 
     def log_and_restart(self, err, cb, i):
-        logger.warn('Request problem with worker-{} thread-{}: {}'.format(
-            self.sid, i, err.value)
-        )
+        logger.warning(f"Request problem with worker-{self.sid} thread-{i}: {err.value}")
         self.restart(None, cb, i)
 
     def error(self, err, cb, i):
-        logger.warn('Connection problem with worker-{} thread-{}: {}'.format(
-            self.sid, i, err)
-        )
+        logger.warning(f"Connection problem with worker-{self.sid} thread-{i}: {err}")
 
         cb.bucket._close()
         time.sleep(15)

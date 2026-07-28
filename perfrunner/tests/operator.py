@@ -159,7 +159,7 @@ class OperatorUpgradeTest(YCSBTest):
         # Nodes designated for server pods but currently dont have a running pod
         empty_nodes = list(set(all_server_nodes.keys()).difference(active_server_nodes))
         if not empty_nodes:
-            logger.warn("No free node is available to perform cordon/drain")
+            logger.warning("No free node is available to perform cordon/drain")
             return False
 
         # Need the node to be drained coming from the same AZ as the free node.
@@ -197,7 +197,7 @@ class OperatorUpgradeTest(YCSBTest):
         logger.info(f"Pods before: \n{self.remote.get_pods(output='wide')}")
         if upgrade_settings.is_server_upgrade():
             if not upgrade_settings.target_version:
-                logger.warn("No target version specified. No upgrade will be performed.")
+                logger.warning("No target version specified. No upgrade will be performed.")
                 return
 
             logger.info(

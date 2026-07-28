@@ -495,7 +495,7 @@ class CloudVMDeployer:
         tfvar_nodes = self.create_tfvar_nodes()
 
         if not any(tfvar_nodes.values()) and not self.cloud_storage:
-            logger.warn("Nothing to deploy with Terraform.")
+            logger.warning("Nothing to deploy with Terraform.")
             return {}, False
 
         return tfvar_nodes, True
@@ -1479,7 +1479,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         peering_connection = self.infra_spec.infrastructure_settings.get('peering_connection', None)
 
         if not peering_connection:
-            logger.warn('No peering connection ID found in cluster spec; nothing to destroy.')
+            logger.warning("No peering connection ID found in cluster spec; nothing to destroy.")
             return
 
         local(
@@ -1494,7 +1494,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         peering_connection = self.infra_spec.infrastructure_settings.get('peering_connection', None)
 
         if not peering_connection:
-            logger.warn('No peering connection ID found in cluster spec; nothing to destroy.')
+            logger.warning("No peering connection ID found in cluster spec; nothing to destroy.")
             return
 
         dns_managed_zone = self.infra_spec.infrastructure_settings['dns_managed_zone']

@@ -1,9 +1,9 @@
+import importlib.metadata
 from threading import Thread
 from time import sleep, time
 from typing import Optional
 
 import numpy
-import pkg_resources
 from couchbase.bucket import Bucket
 from decorator import decorator
 
@@ -14,7 +14,7 @@ from perfrunner.helpers.misc import uhex
 from perfrunner.tests import PerfTest
 from spring.docgen import Document, Key
 
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 
 if sdk_major_version == 2:
     from couchbase.n1ql import N1QLQuery
@@ -99,7 +99,7 @@ class ObserveIndexLatency(Latency):
                     )
                     sleep(sleep_time)
             except Exception as e:
-                logger.warn(e)
+                logger.warning(e)
 
     def collect(self):
         threads = [Thread(target=self.sample) for _ in range(self.NUM_THREADS)]
@@ -154,7 +154,7 @@ class ObserveSecondaryIndexLatency(ObserveIndexLatency):
                     )
                     sleep(sleep_time)
             except Exception as e:
-                logger.warn(e)
+                logger.warning(e)
 
 
 class DurabilityLatency(ObserveIndexLatency, Latency):
@@ -176,7 +176,7 @@ class DurabilityLatency(ObserveIndexLatency, Latency):
 
     @staticmethod
     def gen_key() -> Key:
-        return Key(number=numpy.random.random_integers(0, 10 ** 9),
+        return Key(number=numpy.random.randint(0, 10 ** 9 + 1),
                    prefix='endure',
                    fmtr='hex')
 
@@ -214,7 +214,7 @@ class DurabilityLatency(ObserveIndexLatency, Latency):
                         )
                         sleep(sleep_time)
                     except Exception as e:
-                        logger.warn(e)
+                        logger.warning(e)
 
     def collect(self):
         ObserveIndexLatency.collect(self)

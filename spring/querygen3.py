@@ -1,12 +1,12 @@
 import ast
+import importlib.metadata
 import re
 from itertools import cycle
 from typing import List, Tuple
 
-import pkg_resources
 from numpy import random
 
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 if sdk_major_version == 3:
     from couchbase.cluster import QueryOptions, QueryScanConsistency
     from couchbase_core.views.params import ViewQuery

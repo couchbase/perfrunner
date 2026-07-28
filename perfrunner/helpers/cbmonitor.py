@@ -1,7 +1,7 @@
+import importlib.metadata
 import time
 from typing import Callable, Union
 
-import pkg_resources
 from decorator import decorator
 
 from logger import logger
@@ -34,7 +34,7 @@ def with_stats(method: Callable, *args, **kwargs) -> Union[float, None]:
 
 @decorator
 def with_cloudwatch(method, *args, **kwargs):
-    sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+    sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 
     if sdk_major_version >= 3:
         from perfrunner.helpers.cloudwatch import Cloudwatch

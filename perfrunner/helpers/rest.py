@@ -60,9 +60,9 @@ def retry(method: Callable, *args, **kwargs):
             time.sleep(RETRY_DELAY * 2)
             continue
         except requests.exceptions.HTTPError as e:
-            logger.warn(e)
-            logger.warn(r.text)
-            logger.warn('Retrying {}'.format(r.url))
+            logger.warning(e)
+            logger.warning(r.text)
+            logger.warning(f"Retrying {r.url}")
             time.sleep(RETRY_DELAY)
     logger.interrupt(f"Request {url} failed after {MAX_RETRY} attempts")
 
@@ -279,7 +279,7 @@ class DefaultRestHelper(RestBase):
                 logger.info(f"Changing {option} to {value}")
                 self.post(url=api, data=json.dumps({option: value}))
             else:
-                logger.warn(f"Skipping unknown option: {option}")
+                logger.warning(f"Skipping unknown option: {option}")
 
     def set_planner_settings(self, host: str, settings: dict):
         logger.info('Changing host {} to {}'.format(host, settings))
@@ -850,7 +850,7 @@ class DefaultRestHelper(RestBase):
             if r.status_code == 200:
                 return
             else:
-                logger.warn('Auto-failover settings rejected: {}, Data: {}'.format(r.reason, data))
+                logger.warning(f"Auto-failover settings rejected: {r.reason}, Data: {data}")
 
         raise Exception('Autofailover setting combinations rejected')
 
@@ -956,7 +956,7 @@ class DefaultRestHelper(RestBase):
         response = self.post(url=url, data=data)
         resp_data = response.json()
         if errors := resp_data.get("errors"):
-            logger.warn(f"Query failed: {errors}")
+            logger.warning(f"Query failed: {errors}")
         return resp_data
 
     def explain_n1ql_statement(self, host: str, statement: str, query_context: str = None):

@@ -652,7 +652,7 @@ class RemoteKubernetes(Remote):
 
     def create_backup(self):
         # 2020-12-04T23:33:57Z
-        current_utc = datetime.datetime.utcnow()
+        current_utc = datetime.datetime.now(datetime.timezone.utc)
         minute = (current_utc.minute + 5) % 60
         with CAOCouchbaseBackupFile() as backup_config:
             backup_config.set_schedule_time(f"{minute} * * * *")

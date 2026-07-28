@@ -46,7 +46,7 @@ def safe(method, *args, **kwargs):
     try:
         return method(*args, **kwargs)
     except (NoSectionError, NoOptionError) as e:
-        logger.warn('Failed to get option from config: {}'.format(e))
+        logger.warning(f"Failed to get option from config: {e}")
 
 
 class Config:
@@ -873,7 +873,7 @@ class ClusterSpec(Config):
 
     def set_active_clusters_by_idx(self, cluster_idxs: Iterable[int]):
         if not (new_active_clusters := set(cluster_idxs)):
-            logger.warn('No valid active clusters specified. Not changing active clusters')
+            logger.warning("No valid active clusters specified. Not changing active clusters")
             return
 
         self.inactive_cluster_idxs = set(range(len(self.config.options('clusters')))) - \
@@ -886,7 +886,7 @@ class ClusterSpec(Config):
         new_inactive_clusters = set(cluster_idxs)
 
         if new_inactive_clusters == set(range(len(self.config.options('clusters')))):
-            logger.warn('Cannot set all clusters to inactive. Not changing active clusters')
+            logger.warning("Cannot set all clusters to inactive. Not changing active clusters")
             return
 
         self.inactive_cluster_idxs = new_inactive_clusters

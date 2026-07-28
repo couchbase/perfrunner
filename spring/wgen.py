@@ -641,15 +641,11 @@ class AsyncKVWorker(KVWorker):
             d.addErrback(self.log_and_restart, cb, i)
 
     def log_and_restart(self, err, cb, i):
-        logger.warn('Request problem with worker-{} thread-{}: {}'.format(
-            self.sid, i, err.value)
-        )
+        logger.warning(f"Request problem with worker-{self.sid} thread-{i}: {err.value}")
         self.restart(None, cb, i)
 
     def error(self, err, cb, i):
-        logger.warn('Connection problem with worker-{} thread-{}: {}'.format(
-            self.sid, i, err)
-        )
+        logger.warning(f"Connection problem with worker-{self.sid} thread-{i}: {err}")
 
         cb.client._close()
         time.sleep(15)

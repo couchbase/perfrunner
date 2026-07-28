@@ -2767,7 +2767,7 @@ class MetricHelper:
             logger.info(lines)
             first_failure_time = int(lines[0].strip().split()[-1])
             if first_failure_time < failure_time[1]:
-                logger.warn('Failure happened before failover time')
+                logger.warning("Failure happened before failover time")
                 return 0
             return float(lines[2].strip().split()[-1])
         else:

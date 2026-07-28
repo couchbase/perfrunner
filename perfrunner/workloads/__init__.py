@@ -1,10 +1,10 @@
-import pkg_resources
+import importlib.metadata
 
 from logger import logger
 
 
 def spring_workload(*args):
-    sdk_version = pkg_resources.get_distribution("couchbase").version
+    sdk_version = importlib.metadata.version("couchbase")
     logger.info("CB Python SDK Version: " + sdk_version)
     sdk_major_version = int(sdk_version[0])
     if sdk_major_version == 2:

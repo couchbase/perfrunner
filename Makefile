@@ -3,21 +3,34 @@ SHELL := /bin/bash
 PATH := ${GOPATH}/bin:$(PATH):/usr/local/go/bin/
 ENV := env
 VERSION := 3.9.7
-PYTHON := python$$(echo ${VERSION} | cut -d. -f1,2)
+PYTHON := python$(basename ${VERSION})
+PIP := ${ENV}/bin/pip
 PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
 .PHONY: docker
 
-all:
-	export PYENV_ROOT="$$HOME/.pyenv" && \
+# Bootstrap pyenv (installing the target Python if needed) and create the venv.
+# Respects a preconfigured PYENV_ROOT, defaulting to $HOME/.pyenv.
+# Must run as a single shell so that the pyenv shims are on PATH when the venv is created.
+define bootstrap_venv
+	export PYENV_ROOT="$${PYENV_ROOT:-$$HOME/.pyenv}" && \
 	export PATH="$$PYENV_ROOT/bin:$$PATH" && \
 	eval "$$(pyenv init --path)" && \
 	pyenv install ${VERSION} -s && \
 	pyenv local ${VERSION} && \
-	virtualenv --quiet --python ${PYTHON} ${ENV}
-	${ENV}/bin/pip install --upgrade --quiet pip wheel setuptools
-	${ENV}/bin/pip install --quiet --no-warn-script-location -r requirements.txt
-	${ENV}/bin/python -m pip install --quiet -e .
+	${PYTHON} -m venv ${ENV}
+endef
+
+# Install all dependencies into the venv, then perfrunner itself (editable).
+define build_env
+	${PIP} install --upgrade --quiet pip wheel setuptools
+	${PIP} install --quiet --no-warn-script-location -r requirements.txt
+	${PIP} install --quiet -e .
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
+endef
+
+all:
+	$(bootstrap_venv)
+	$(build_env)
 
 clean:
 	rm -fr build perfrunner.egg-info dist cachestat dcptest kvgen cbindexperf rachell loader *.db *.log .coverage *.pid celery
@@ -27,7 +40,8 @@ pep8:
 	${ENV}/bin/ruff check ${PYTHON_PROJECTS}
 
 test:
-	${ENV}/bin/nosetests -v --with-coverage --cover-package=cbagent,perfrunner,spring unittests.py
+	${ENV}/bin/coverage run --source=cbagent,perfrunner,spring -m pytest -v unittests.py
+	${ENV}/bin/coverage report
 
 misspell:
 	go get -u github.com/client9/misspell/cmd/misspell
@@ -68,13 +82,9 @@ loader:
 docker:
 	docker build --target perfrunner -t perflab/perfrunner docker
 
-docker-cloud-worker:
-	pyenv local 3.9.7 && \
-	virtualenv --quiet --python ${PYTHON} ${ENV}
-	${ENV}/bin/pip install --upgrade --quiet pip wheel
-	${ENV}/bin/pip install --quiet --no-warn-script-location -r requirements.txt
-	${ENV}/bin/python setup.py --quiet install
-	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
+# Alias kept for the k8s worker image build and pods (see docker/Dockerfile and
+# perfrunner/remote/kubernetes.py), which invoke this target by name.
+docker-cloud-worker: all
 
 CONTAINER_PASSWORD := puppet
 docker-compose:

@@ -488,10 +488,9 @@ class _SpillKPIMixin:
                     'level to verify the workload still triggers spill'
                 )
                 probe_resp = self.rest.exec_n1ql_statement(host, statement)
-                if probe_resp.get('errors'):
-                    logger.warn(
-                        f'Pre-flight spill probe query returned errors: '
-                        f'{probe_resp["errors"]}'
+                if probe_resp.get("errors"):
+                    logger.warning(
+                        f"Pre-flight spill probe query returned errors: {probe_resp['errors']}"
                     )
             finally:
                 captured = self.remote.stop_spill_capture(host)
@@ -579,9 +578,8 @@ class N1QLScanBackfillTest(N1QLThroughputTest):
         )
         probe_resp = self.rest.exec_n1ql_statement(host, statement)
         if probe_resp.get('errors'):
-            logger.warn(
-                f'Pre-flight backfill probe query returned errors: '
-                f'{probe_resp["errors"]}'
+            logger.warning(
+                f"Pre-flight backfill probe query returned errors: {probe_resp['errors']}"
             )
         after = self.remote.count_backfill_files_in_log(host)
         delta = after - before
@@ -654,7 +652,7 @@ class N1QLScanBackfillTest(N1QLThroughputTest):
                 self.query_nodes[0]
             )
         except Exception as e:
-            logger.warn(f'gsi_throttle_duration summary skipped: {e}')
+            logger.warning(f"gsi_throttle_duration summary skipped: {e}")
             return
 
         if not raw:

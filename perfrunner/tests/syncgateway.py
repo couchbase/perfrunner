@@ -379,11 +379,11 @@ class SGPerfTest(PerfTest):
             self.remote.compress_sg_logs_new()
             return
         except Exception as ex:
-            logger.warn(ex)
+            logger.warning(ex)
         try:
             self.remote.compress_sg_logs()
         except Exception as ex:
-            logger.warn(ex)
+            logger.warning(ex)
 
     def get_sg_logs(self):
         ssh_user, ssh_pass = self.cluster_spec.ssh_credentials
@@ -392,19 +392,19 @@ class SGPerfTest(PerfTest):
             try:
                 local.get_sg_logs_new(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
             except Exception as ex:
-                logger.warn(ex)
+                logger.warning(ex)
         if self.settings.syncgateway_settings.troublemaker:
             for server in self.cluster_spec.sgw_servers:
                 try:
                     local.get_troublemaker_logs(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
                     local.rename_troublemaker_logs(from_host=server)
                 except Exception as ex:
-                    logger.warn(ex)
+                    logger.warning(ex)
                 try:
                     local.get_default_troublemaker_logs(host=server, ssh_user=ssh_user,
                                                         ssh_pass=ssh_pass)
                 except Exception as ex:
-                    logger.warn(ex)
+                    logger.warning(ex)
 
     def get_sg_console(self):
         ssh_user, ssh_pass = self.cluster_spec.ssh_credentials
@@ -413,7 +413,7 @@ class SGPerfTest(PerfTest):
             try:
                 local.get_sg_console(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
             except Exception as ex:
-                logger.warn(ex)
+                logger.warning(ex)
 
     def check_num_warnings(self):
         warn_count = 0
@@ -2447,7 +2447,7 @@ class EndToEndSingleCBLTest(EndToEndTest):
         try:
             local.kill_cblite()
         except Exception as ex:
-            logger.warn(ex)
+            logger.warning(ex)
         self.download_ycsb()
         local.clone_cblite()
         local.build_cblite()
@@ -3059,7 +3059,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
         try:
             self.remote.kill_cblite()
         except Exception as ex:
-            logger.warn(ex)
+            logger.warning(ex)
         self.remote.modify_tcp_settings()
         self.download_ycsb()
         self.remote.build_syncgateway_ycsb(
@@ -3121,7 +3121,7 @@ class EndToEndMultiCBLPushTest(EndToEndMultiCBLTest):
 
             sgw_access_tp = observed_pushed_access / sgw_access_time
         except Exception as ex:
-            logger.warn(f'PUSH access phase failed: {ex}')
+            logger.warning(f"PUSH access phase failed: {ex}")
             sgw_access_tp = 0
 
         self.collect_execution_logs()
@@ -3153,7 +3153,7 @@ class EndToEndMultiCBLPullTest(EndToEndMultiCBLTest):
 
             sgw_access_tp = observed_pulled_access / sgw_access_time
         except Exception as ex:
-            logger.warn(f'PULL access phase failed: {ex}')
+            logger.warning(f"PULL access phase failed: {ex}")
             sgw_access_tp = 0
 
         self.collect_execution_logs()
@@ -3226,7 +3226,7 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
             self.report_kpi(sgw_push_load_tp, "PUSH_INSERT")
             self.report_kpi(sgw_pull_load_tp, "PULL_INSERT")
         except Exception as ex:
-            logger.warn(f'BIDI load phase failed: {ex}')
+            logger.warning(f"BIDI load phase failed: {ex}")
 
         post_load_stats = self.post_delta_stats()
         post_load_writes = post_load_stats['push_count']
@@ -3249,7 +3249,7 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
             self.report_kpi(sgw_push_access_tp, "PUSH_UPDATE")
             self.report_kpi(sgw_pull_access_tp, "PULL_UPDATE")
         except Exception as ex:
-            logger.warn(f'BIDI access phase failed: {ex}')
+            logger.warning(f"BIDI access phase failed: {ex}")
 
         self.collect_execution_logs()
 

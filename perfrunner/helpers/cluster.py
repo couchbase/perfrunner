@@ -143,7 +143,7 @@ class ClusterManagerBase:
             elif setting in service_settings:
                 new_service_settings[setting] = value
             else:
-                logger.warn(f"Unrecognised analytics config setting: {setting}")
+                logger.warning(f"Unrecognised analytics config setting: {setting}")
 
         if not (new_service_settings or new_node_settings):
             return

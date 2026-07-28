@@ -1,3 +1,4 @@
+import importlib.metadata
 import random
 from collections import defaultdict
 from threading import Timer
@@ -5,13 +6,12 @@ from time import sleep, time
 from typing import Callable, Optional, Union
 from urllib import parse
 
-import pkg_resources
 from decorator import decorator
 from requests import HTTPError
 
 from logger import logger
 
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 
 if sdk_major_version == 2:
     from couchbase.exceptions import CouchbaseError, TemporaryFailError
@@ -55,7 +55,7 @@ class ErrorTracker:
             message += ', response text: {}'.format(exc.response.text)
         if count:
             message += ', repeated {} times'.format(count)
-        logger.warn(message)
+        logger.warning(message)
 
     def maybe_warn(self, method: str, exc: ClientError):
         count = self.errors[type(exc)]
@@ -93,13 +93,14 @@ class QueryFailureTracker:
     def log_summary(self, worker_id: int) -> None:
         if not self.total:
             return
-        lines = ['N1QL query failure summary for query-worker-{}: {} failed call(s)'.format(
-            worker_id, self.total)]
+        lines = [
+            f"N1QL query failure summary for query-worker-{worker_id}: {self.total} failed call(s)"
+        ]
         for (exc_type, msg, stmt_hint), count in sorted(
                 self.by_reason.items(), key=lambda kv: -kv[1]):
-            hint = ' [stmt: {}]'.format(stmt_hint) if stmt_hint else ''
-            lines.append('  {} x {} — {}{}'.format(count, exc_type, msg, hint))
-        logger.warn('\n'.join(lines))
+            hint = f" [stmt: {stmt_hint}]" if stmt_hint else ""
+            lines.append(f"  {count} x {exc_type} — {msg}{hint}")
+        logger.warning("\n".join(lines))
 
 
 query_failure_tracker = QueryFailureTracker()

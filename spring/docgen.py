@@ -9,8 +9,8 @@ from datetime import date, datetime, timedelta
 from typing import Iterator, List, Tuple
 
 import numpy as np
-import spooky
 from faker import Faker
+from spookyhash import _spookyhash
 
 from fastdocgen import build_achievements
 from perfrunner.settings import PhaseSettings as WorkloadSettings
@@ -41,12 +41,15 @@ OFFSET = 25000000000
 HASH_LENGTH = 16
 
 
+# Hash via spookyhash's C module directly: the pure-Python wrappers double the cost
+# of these hot-path calls. Digests must stay bit-identical to the legacy spooky package.
 def hex_digest(key: str) -> str:
-    return '%032x' % spooky.hash128(key)
+    digest = _spookyhash.hash128(key.encode(), seed1=0, seed2=0)
+    return "%032x" % int.from_bytes(digest, "little")
 
 
 def hex_digest_64(key: str) -> str:
-    return '%032x' % spooky.hash64(key)
+    return "%032x" % _spookyhash.hash64(key.encode(), 0)
 
 
 def decimal_fmtr(key: int, prefix: str) -> str:
@@ -312,8 +315,7 @@ class KeyForCASUpdate:
         left_boundary = sid * per_worker_items
         right_boundary = left_boundary + per_worker_items
 
-        number = np.random.random_integers(low=left_boundary,
-                                           high=right_boundary - 1)
+        number = np.random.randint(low=left_boundary, high=right_boundary)
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
 
 
@@ -2024,7 +2026,7 @@ class PackageDocument(Document):
 
     @staticmethod
     def build_account_id(key: int, repeated: int) -> str:
-        return '%016x' % spooky.hash64(str(key // repeated))
+        return "%016x" % _spookyhash.hash64(str(key // repeated).encode(), 0)
 
     @property
     def package_status(self) -> str:
@@ -2033,7 +2035,7 @@ class PackageDocument(Document):
 
     @staticmethod
     def build_bcdn_number(key: str) -> str:
-        return '%032x' % spooky.hash128(key)
+        return hex_digest(key)
 
     @staticmethod
     def build_shipping_date(key: int) -> str:

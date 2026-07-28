@@ -18,7 +18,7 @@ class CollectCloudwatch:
         self.vol_ids = vol_ids
         self.metric_reqs = self.all_metrics(vol_ids)
         self.start_time = start_time
-        self.end_time = datetime.datetime.utcnow()
+        self.end_time = datetime.datetime.now(datetime.timezone.utc)
 
     def single(self, metric, stat, vol_id, metric_list):
         vol_id_sub = vol_id.replace("-", "_")

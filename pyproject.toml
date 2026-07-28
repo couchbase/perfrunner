@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools","setuptools_scm[toml]"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "perfrunner"
-dynamic = ["version"]
+version = "0.0.0"
 
 [project.scripts]
 clients = "perfrunner.utils.clients:main"
@@ -33,5 +33,7 @@ x509_cert = "perfrunner.utils.x509_cert:main"
 
 [tool.setuptools]
 packages = ["perfrunner", "spring"]
-ext-modules = [ {name = "fastdocgen", sources = ["spring/fastdocgen.c"]} ]
 include-package-data = true
+
+[tool.pytest.ini_options]
+python_classes = "*Test"

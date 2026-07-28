@@ -1,14 +1,13 @@
+import importlib.metadata
 import random
 from queue import Empty, Queue
 from threading import Lock
 from time import time
 from typing import Optional
 
-import pkg_resources
-
 from spring.cbgen_helpers import get_connection
 
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 if sdk_major_version == 3:
     from datetime import timedelta
 

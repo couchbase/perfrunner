@@ -10,7 +10,7 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 |---|---|
 | Create/update venv + install deps | `make` |
 | Lint (ruff) | `make pep8` |
-| Unit tests (nose + coverage) | `make test` |
+| Unit tests (pytest + coverage) | `make test` |
 | Full local checks (lint + misspell + gofmt + tests) | `make check` |
 | Clean artifacts/logs/dbs | `make clean` |
 | Show CLI help | `env/bin/perfrunner --help` |
@@ -51,7 +51,7 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 - Line length: **100** characters.
 - Linting: `ruff` with pydocstyle (D) + isort (I) + pycodestyle (W, E). See `.ruff.toml`.
 - Type checking: no static type checker is configured.
-- Unit tests use `nosetests` against `unittests.py` with `coverage`.
+- Unit tests use `pytest` against `unittests.py` with `coverage`.
 - Go code under `go/` must be `gofmt`-clean (see `make gofmt`).
 - Keep CLI entry points in `perfrunner/utils/` thin; prefer logic in `perfrunner/`.
 - Test config files in `tests/` are INI-style; parsed by `perfrunner.settings.TestConfig`.

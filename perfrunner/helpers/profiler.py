@@ -71,10 +71,10 @@ class ProfilerBase:
         timer.start()
 
     def profile(self, host: str, service: str, profile: str):
-        logger.warn('Unknown profiler, doing nothing')
+        logger.warning("Unknown profiler, doing nothing")
 
     def _schedule_service(self, service, nodes):
-        logger.info('Scheduling "{}" service profiling'.format(service))
+        logger.info(f'Scheduling "{service}" service profiling')
         for server in nodes:
             for profile in self.profiling_settings.profiles:
                 self.timer(host=server, service=service, profile=profile)

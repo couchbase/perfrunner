@@ -113,16 +113,16 @@ class RemoteWindows(Remote):
             try:
                 r = run(script, quiet=True, timeout=self.TIMEOUT)
             except CommandTimeout:
-                logger.warn("Script timed out on {}. Retrying.".format(local_ip))
+                logger.warning(f"Script timed out on {local_ip}. Retrying.")
                 continue
 
             if r.return_code:  # Non-zero return code
-                logger.warn('Script failed on {}. Retrying.'.format(local_ip))
+                logger.warning(f"Script failed on {local_ip}. Retrying.")
                 continue
 
             return
 
-        logger.warn('Script failed with no more retries on {}'.format(local_ip))
+        logger.warning(f"Script failed with no more retries on {local_ip}")
 
     def uninstall_msi(self):
         run('msiexec /x setup.msi /n /q', warn_only=True, timeout=self.TIMEOUT)

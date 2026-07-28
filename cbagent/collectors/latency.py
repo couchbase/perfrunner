@@ -154,12 +154,7 @@ class KVLatency(Latency):
             self.get_remote_stat_files()
             self.move_remote_stat_files()
 
-        # Create a new event loop if the current one is closed
-        if (loop := asyncio.get_event_loop()).is_closed():
-            loop = asyncio.new_event_loop()
-
-        loop.run_until_complete(self.post_all_results())
-        loop.close()
+        asyncio.run(self.post_all_results())
 
         self.move_local_stat_files()
 

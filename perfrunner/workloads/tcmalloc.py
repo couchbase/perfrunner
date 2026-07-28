@@ -1,11 +1,10 @@
+import importlib.metadata
 import random
 from hashlib import md5
 
-import pkg_resources
-
 from logger import logger
 
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 if sdk_major_version == 3:
     from couchbase.cluster import ClusterOptions
     from couchbase_core.cluster import PasswordAuthenticator

@@ -56,7 +56,7 @@ class XdcrLag(Latency):
 
     @staticmethod
     def gen_key() -> Key:
-        return Key(number=numpy.random.random_integers(0, 10 ** 9),
+        return Key(number=numpy.random.randint(0, 10 ** 9 + 1),
                    prefix='xdcr',
                    fmtr='hex')
 
@@ -76,7 +76,7 @@ class XdcrLag(Latency):
             sleep(polling_interval)
             polling_interval *= 1.05  # increase interval by 5%
         else:
-            logger.warn(f"XDCR sampling timed out after {self.TIMEOUT} seconds")
+            logger.warning(f"XDCR sampling timed out after {self.TIMEOUT} seconds")
         t1 = time()
 
         src_client.delete(key.string)

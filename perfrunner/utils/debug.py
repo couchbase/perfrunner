@@ -111,7 +111,7 @@ class LokiLogsProcessor(LogsVerifier):
                 self.store_logs(filename, is_capella)
                 self.logs.clear()
             except Exception as e:
-                logger.warn(e)
+                logger.warning(e)
 
     def collect_errors(self, data: bytes):
         for error in  re.findall(self.ERROR_LOG_RE, data.decode()):
@@ -152,7 +152,7 @@ class LokiLogsProcessor(LogsVerifier):
             resp = requests.post(url=self.LOKI_PUSH_API, json=data)
             resp.raise_for_status()
         except Exception as e:
-            logger.warn(f"{e}. {data}")
+            logger.warning(f"{e}. {data}")
 
 
 class ErrorEvent:

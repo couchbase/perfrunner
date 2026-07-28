@@ -152,7 +152,7 @@ class PerfTest:
         self.tear_down()
 
         if isinstance(exc_type, KeyboardInterrupt):
-            logger.warn('The test was interrupted')
+            logger.warning("The test was interrupted")
             return True
 
         if failure:

@@ -1305,28 +1305,28 @@ class Monitor:
             time.sleep(self.POLLING_INTERVAL_ANALYTICS)
 
     def monitor_cbas_pause_status(self, analytics_node: str) -> str:
-        logger.info('Wait until analytics pause operation is completed.')
+        logger.info("Wait until analytics pause operation is completed.")
 
         start_time = time.time()
 
         while True:
             resp = self.rest.get_analytics_pause_status(analytics_node)
-            pause_status, failure = resp['status'], resp['failure']
-            logger.info('Pause status: {}'.format(pause_status))
+            pause_status, failure = resp["status"], resp["failure"]
+            logger.info(f"Pause status: {pause_status}")
 
-            if pause_status == 'running':
+            if pause_status == "running":
                 time.sleep(self.POLLING_INTERVAL)
-            elif pause_status == 'complete':
+            elif pause_status == "complete":
                 break
-            elif pause_status == 'notRunning':
-                logger.warn('No pause attempts were made.')
+            elif pause_status == "notRunning":
+                logger.warning("No pause attempts were made.")
                 break
-            elif pause_status == 'failed':
-                logger.error('Pause operation failed: {}'.format(failure))
+            elif pause_status == "failed":
+                logger.error(f"Pause operation failed: {failure}")
                 break
 
             if time.time() - start_time > 1800:
-                logger.interrupt('Monitoring analytics pause status timed out after 30 mins.')
+                logger.interrupt("Monitoring analytics pause status timed out after 30 mins.")
                 break
 
         return pause_status
@@ -2017,7 +2017,7 @@ class Monitor:
             if retries >= self.MAX_RETRY_RECOVERY:
                 # If backup timeout, log all backups for debugging
                 backups = self.rest.list_cluster_backups(host)
-                logger.warn(f"All backups: {misc.pretty_dict(backups)}")
+                logger.warning(f"All backups: {misc.pretty_dict(backups)}")
                 raise Exception("Backup timeout")
 
             time.sleep(self.MONITORING_DELAY)

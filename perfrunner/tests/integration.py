@@ -167,7 +167,7 @@ class EndToEndThroughputTest(EndToEndLatencyTest):
 
     def report_kv_kpi(self):
         if self.test_config.access_settings.throughput < float('inf'):
-            logger.warn('KV throughput was throttled. Not reporting KV throughput.')
+            logger.warning("KV throughput was throttled. Not reporting KV throughput.")
             return
 
         for metric in self.metrics.avg_ops():
@@ -175,7 +175,7 @@ class EndToEndThroughputTest(EndToEndLatencyTest):
 
     def report_n1ql_kpi(self):
         if self.test_config.access_settings.n1ql_throughput < float('inf'):
-            logger.warn('N1QL throughput was throttled. Not reporting N1QL throughput.')
+            logger.warning("N1QL throughput was throttled. Not reporting N1QL throughput.")
             return
 
         self.reporter.post(*self.metrics.avg_n1ql_throughput(self.master_node))

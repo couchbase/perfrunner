@@ -1,4 +1,5 @@
 import glob
+import importlib.metadata
 import json
 import os
 from collections import defaultdict, namedtuple
@@ -6,7 +7,6 @@ from multiprocessing import Value
 from pathlib import Path
 from unittest import TestCase
 
-import pkg_resources
 import snappy
 
 from perfrunner.helpers.misc import pretty_dict
@@ -15,7 +15,7 @@ from perfrunner.workloads.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
 from spring import docgen
 
-sdk_major_version = int(pkg_resources.get_distribution("couchbase").version[0])
+sdk_major_version = int(importlib.metadata.version("couchbase")[0])
 if sdk_major_version == 2:
     from spring.querygen import N1QLQueryGen
 elif sdk_major_version >= 3:

@@ -139,10 +139,10 @@ class XdcrTest(PerfTest):
 class CapellaXdcrTest(XdcrTest):
 
     def add_remote_cluster(self):
-        logger.warn('add_remote_cluster not supported on Capella. Not doing anything.')
+        logger.warning("add_remote_cluster not supported on Capella. Not doing anything.")
 
     def configure_wan(self):
-        logger.warn('configure_wan not supported on Capella. Not doing anything.')
+        logger.warning("configure_wan not supported on Capella. Not doing anything.")
 
     def replication_params(self, from_bucket: str, to_bucket: str, to_cluster: str,
                            direction: str, priority: str, network_usage_limit: int):

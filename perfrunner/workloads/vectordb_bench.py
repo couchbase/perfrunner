@@ -47,5 +47,5 @@ def get_db_config_for(
             "index_type": workload_settings.index_type,
         }
     else:
-        logger.warn(f"No config for '{database}' client. Defaults will be used")
+        logger.warning(f"No config for '{database}' client. Defaults will be used")
         return {}

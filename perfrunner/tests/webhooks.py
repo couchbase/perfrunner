@@ -146,7 +146,7 @@ class WebhookTestBase(PerfTest):
                 if attempt >= self.MAX_API_RETRIES:
                     raise
                 wait_s = min(2 ** attempt, self.MAX_RETRY_BACKOFF_S)
-                logger.warn(
+                logger.warning(
                     f"Request error on {method} {url}: {err}. "
                     f"Retrying in {wait_s}s ({attempt + 1}/{self.MAX_API_RETRIES})"
                 )
@@ -162,7 +162,7 @@ class WebhookTestBase(PerfTest):
             wait_s = self._retry_after_seconds(
                 resp=resp, attempt=attempt, max_backoff=self.MAX_RETRY_BACKOFF_S
             )
-            logger.warn(
+            logger.warning(
                 f"Received {resp.status_code} on {method} {url}. "
                 f"Retrying in {wait_s}s ({attempt + 1}/{self.MAX_API_RETRIES})"
             )
@@ -234,7 +234,7 @@ class WebhookTestBase(PerfTest):
             for integration_id in target_ids:
                 resp = self._delete_alert_integration(base_url, integration_id)
                 if resp.status_code not in (200, 204, 404):
-                    logger.warn(
+                    logger.warning(
                         f"Cleanup failed for integration {integration_id}: "
                         f"{resp.status_code} {resp.text}"
                     )
@@ -253,7 +253,7 @@ class WebhookTestBase(PerfTest):
                 time.sleep(self.DELETE_CLEANUP_INTERVAL_S)
                 continue
 
-            logger.warn(
+            logger.warning(
                 f"Delete retry failed for {webhook_id}: "
                 f"{delete_resp.status_code} {delete_resp.text}"
             )
@@ -520,7 +520,7 @@ class WebhookConfigApplyLatencyTest(WebhookTestBase):
             and retries < self.MAX_INTEGRATION_SLOT_RETRIES
         ):
             wait_s = min(0.5 * (2 ** retries), 5)
-            logger.warn(
+            logger.warning(
                 "Maximum alert integration limit reached during create; "
                 f"retrying in {wait_s}s ({retries + 1}/{self.MAX_INTEGRATION_SLOT_RETRIES})"
             )
@@ -824,9 +824,9 @@ class WebhookDeliveryLatencyTest(WebhookTestBase):
             if resp.status_code == 200:
                 payload = resp.json()
                 return payload.get("deliveries", []) if isinstance(payload, dict) else []
-            logger.warn(f"Mock deliveries failed: {resp.status_code} {resp.text}")
+            logger.warning(f"Mock deliveries failed: {resp.status_code} {resp.text}")
         except requests.RequestException as err:
-            logger.warn(f"Mock deliveries error: {err}")
+            logger.warning(f"Mock deliveries error: {err}")
         return []
 
     def _collect_deliveries(
@@ -947,7 +947,7 @@ class WebhookDeliveryLatencyTest(WebhookTestBase):
                                 else:
                                     failed += 1
                                     wave_fail += 1
-                                    logger.warn(
+                                    logger.warning(
                                         f"Burst trigger exception [{request_id}]: {err}"
                                     )
                                 continue
@@ -962,7 +962,7 @@ class WebhookDeliveryLatencyTest(WebhookTestBase):
                             else:
                                 failed += 1
                                 wave_fail += 1
-                                logger.warn(
+                                logger.warning(
                                     f"Burst trigger failed [{request_id}] "
                                     f"after {attempt + 1} attempt(s): {status} {body}"
                                 )
@@ -1071,7 +1071,7 @@ class WebhookDeliveryLatencyTest(WebhookTestBase):
                     "and using alertIntegrationTest burst"
                 )
             else:
-                logger.warn(
+                logger.warning(
                     f"Simulator collected {len(deliveries)} deliveries "
                     f"(< target {target_samples}); "
                     "running burst mode to reach target"

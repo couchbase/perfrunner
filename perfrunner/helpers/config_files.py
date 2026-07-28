@@ -28,7 +28,7 @@ def supported_for(
         f"from version {since}" if since else "",
         f"upto version {upto}" if upto else "",
     ]
-    logger.warn(" ".join(msg_args))
+    logger.warning(" ".join(msg_args))
 
 
 @contextmanager

@@ -48,7 +48,9 @@ class BaseScanner:
                 return
             except CouchbaseException as ex:
                 count += 1
-                logger.warn(f"Failed adding value (Retry count {count}/{self.RETRY_LIMIT}). {ex}")
+                logger.warning(
+                    f"Failed adding value (Retry count {count}/{self.RETRY_LIMIT}). {ex}"
+                )
 
     def get_checkpoint(self, key: str, default: Any = {}) -> Any:
         """Do a get on a bucket and return the content if found.

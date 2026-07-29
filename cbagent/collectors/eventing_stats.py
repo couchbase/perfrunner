@@ -1,6 +1,5 @@
-from fabric.api import run, settings
-
 from cbagent.collectors.collector import CouchbaseCollector
+from perfrunner.remote.api import run, settings
 from perfrunner.tests import PerfTest
 
 

@@ -1,8 +1,7 @@
 from typing import List
 
-from fabric.exceptions import CommandTimeout
-
 from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
+from perfrunner.remote.api import CommandTimeout
 
 
 class SysdigStat(RemoteStats):

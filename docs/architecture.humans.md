@@ -100,7 +100,7 @@ failover, and other pre-test setup.
 
 - **`perfrunner/helpers/rest.py`** (~120KB) — comprehensive REST client for all Couchbase
   Server management APIs
-- **`perfrunner/helpers/remote.py`** — SSH-based remote operations via fabric3
+- **`perfrunner/helpers/remote.py`** — SSH-based remote operations via perfrunner.remote.api (Fabric 3.x under the hood)
 - **`perfrunner/utils/install.py`** — installs Couchbase Server on cluster nodes
 - **`terraform/`** — Terraform configs for cloud infrastructure provisioning
 - **`playbooks/`** — Ansible playbooks for server provisioning

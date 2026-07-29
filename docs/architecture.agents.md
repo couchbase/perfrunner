@@ -30,7 +30,7 @@ Helpers             perfrunner/helpers/rest.py       REST API client for Couchba
                     perfrunner/helpers/worker.py     WorkerManager + Celery task definitions
                     perfrunner/helpers/reporter.py   Posts results to showfast dashboard
                     perfrunner/helpers/local.py      Local shell command wrappers
-                    perfrunner/helpers/remote.py     SSH remote execution (fabric3)
+                    perfrunner/helpers/remote.py     SSH remote execution (perfrunner.remote.api)
                     perfrunner/helpers/profiler.py   Linux perf profiling support
 
 Workload Gen        spring/wgen.py, spring/wgen3.py  Workload generators (SDK 2 and 3+)
@@ -133,7 +133,7 @@ __exit__  → cleanup collector agent, debug checks (core dumps, rebalance), tea
 | cbmonitor (`cbmonitor.sc.couchbase.com`) | Time-series metric storage | HTTP :8080 |
 | showfast (`showfast.sc.couchbase.com`) | Results dashboard | HTTP API |
 | RabbitMQ (`172.23.96.202:5672`) | Remote worker message broker | AMQP |
-| Worker machines | Workload generators | SSH (fabric3), Celery |
+| Worker machines | Workload generators | SSH (fabric/paramiko), Celery |
 | AWS/GCP/Azure | Cloud provisioning | boto3, gcloud, Terraform |
 | Jenkins | CI orchestration | python-jenkins |
 

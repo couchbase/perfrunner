@@ -1,16 +1,15 @@
 from argparse import ArgumentParser
 from multiprocessing import set_start_method
 
-from fabric import state
-from fabric.api import cd, local, run
-
 from logger import logger
 from perfrunner.helpers.misc import (
     get_python_sdk_installation,
     run_local_shell_command,
 )
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.helpers.shell import local
 from perfrunner.helpers.tableau import TableauTerminalHelper
+from perfrunner.remote.api import cd, run, state
 from perfrunner.remote.context import all_clients
 from perfrunner.settings import ClusterSpec, TestConfig
 

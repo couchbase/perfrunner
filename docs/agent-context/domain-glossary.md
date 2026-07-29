@@ -38,7 +38,7 @@
 | `TestConfig` | Python class that parses `.test` files |
 | workers | Remote machines that generate workload against the cluster |
 | celery | Distributed task queue used for remote worker coordination |
-| fabric3 | SSH-based remote execution library used for cluster operations |
+| fabric | SSH library under `perfrunner.remote` (Fabric 1-compatible API in `perfrunner.remote.api`) |
 
 ## Test Categories (from `.test` files)
 

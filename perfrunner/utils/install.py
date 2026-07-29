@@ -12,7 +12,6 @@ from urllib.parse import urlparse
 import paramiko
 import requests
 import validators
-from fabric.api import cd, run
 
 from logger import logger
 from perfrunner.helpers.config_files import CAOCouchbaseClusterFile, CAOWorkerFile
@@ -27,6 +26,7 @@ from perfrunner.helpers.local import (
 )
 from perfrunner.helpers.misc import create_build_tuple, pretty_dict, url_exist
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.remote.api import cd, run
 from perfrunner.remote.context import master_client
 from perfrunner.settings import CBProfile, ClusterSpec, TestConfig
 

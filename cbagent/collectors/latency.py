@@ -4,12 +4,12 @@ from typing import Optional
 from uuid import uuid4
 
 from aiohttp import ClientSession, TCPConnector
-from fabric.api import cd, execute, get, parallel, run
 
 from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.settings import CbAgentSettings
 from logger import logger
 from perfrunner.helpers.local_stats import parse_spring_latency_file
+from perfrunner.remote.api import cd, execute, get, parallel, run
 from perfrunner.tests import PerfTest
 
 

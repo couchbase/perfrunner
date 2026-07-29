@@ -2,11 +2,10 @@ import os
 import shutil
 from typing import Optional
 
-from fabric.api import cd, get, hide, run, settings, shell_env
-
 from logger import logger
 from perfrunner.helpers.local import _resolve_repo_url, _sanitize_repo_url
 from perfrunner.helpers.misc import get_python_sdk_installation
+from perfrunner.remote.api import cd, get, hide, run, settings, shell_env
 from perfrunner.remote.context import (
     all_clients,
     all_clients_batch,

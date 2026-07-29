@@ -6,9 +6,9 @@ import uuid
 import boto3
 from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster, ClusterOptions
-from fabric.api import local
 
 from logger import logger
+from perfrunner.helpers.shell import local
 
 
 class CollectCloudwatch:

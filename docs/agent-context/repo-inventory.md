@@ -15,7 +15,7 @@
 | setuptools | `pyproject.toml`, `setup.py` | Editable install via `make` |
 | pyenv | `.python-version` | Pins Python 3.9.7 |
 | virtualenv | `env/` | Created by `make` |
-| pip | `requirements.txt` | ~40 deps including couchbase SDK, celery, fabric3, ansible, boto3 |
+| pip | `requirements.txt` | ~40 deps including couchbase SDK, celery, fabric, ansible, boto3 |
 | Make | `Makefile` | Primary build orchestrator |
 | Go modules | `vendor/` | Vendored Go deps (govendor) |
 

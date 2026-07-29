@@ -1,7 +1,5 @@
-from fabric import state
-from fabric.api import run, settings
-
 from logger import logger
+from perfrunner.remote.api import run, settings, state
 from perfrunner.remote.kubernetes import RemoteKubernetes
 from perfrunner.remote.linux import RemoteLinux
 from perfrunner.remote.windows import RemoteWindows

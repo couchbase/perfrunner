@@ -1,8 +1,8 @@
 import sys
 
 from decorator import decorator
-from fabric.api import env, hide, parallel, run, settings
-from fabric.tasks import execute
+
+from perfrunner.remote.api import env, execute, hide, parallel, run, settings
 
 env.shell = '/bin/bash -l -c -o pipefail'
 env.keepalive = 60

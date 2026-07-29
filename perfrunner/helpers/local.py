@@ -12,7 +12,6 @@ from typing import List, Optional, Tuple
 from uuid import uuid4
 
 import paramiko
-from fabric.api import hide, lcd, local, quiet, settings, shell_env, warn_only
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
@@ -22,6 +21,7 @@ from perfrunner.helpers.misc import (
     pretty_dict,
     run_local_shell_command,
 )
+from perfrunner.helpers.shell import hide, lcd, local, quiet, settings, shell_env, warn_only
 from perfrunner.settings import CH2, CH2ConnectionSettings, ClusterSpec
 
 YCSB_ENV = {

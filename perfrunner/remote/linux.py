@@ -8,9 +8,6 @@ from typing import Any, Dict, List, Literal, Optional, Tuple
 from urllib.parse import urlparse
 
 import paramiko
-from fabric.api import cd, env, execute, get, parallel, put, quiet, run, settings, shell_env
-from fabric.contrib.files import append
-from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
 from perfrunner.helpers.misc import (
@@ -18,6 +15,21 @@ from perfrunner.helpers.misc import (
     uhex,
 )
 from perfrunner.remote import Remote
+from perfrunner.remote.api import (
+    CommandTimeout,
+    NetworkError,
+    append,
+    cd,
+    env,
+    execute,
+    get,
+    parallel,
+    put,
+    quiet,
+    run,
+    settings,
+    shell_env,
+)
 from perfrunner.remote.context import (
     all_clients,
     all_kafka_nodes,
@@ -1759,26 +1771,32 @@ class RemoteLinux(Remote):
         broker_config_file = 'kafka/config/server.properties'
 
         for broker_id, broker in enumerate(self.cluster_spec.kafka_brokers):
-            zks = ['{}:2181'.format(zk) for zk in self.cluster_spec.kafka_zookeepers]
-            zk_conn_string = ','.join(zks).replace(broker, 'localhost')
-            logger.info('Configuring Kafka broker: {} with broker id: {} and '
-                        'zookeeper conn string: {}'.format(broker, broker_id, zk_conn_string))
+            zks = [f"{zk}:2181" for zk in self.cluster_spec.kafka_zookeepers]
+            zk_conn_string = ",".join(zks).replace(broker, "localhost")
+            logger.info(
+                f"Configuring Kafka broker: {broker} with broker id: {broker_id} and "
+                f"zookeeper conn string: {zk_conn_string}"
+            )
             with settings(host_string=broker, gateway=jump_host):
                 # Set unique broker ID on each broker
-                run("sed -i 's/broker.id=0/broker.id={}/' {}"
-                    .format(broker_id, broker_config_file))
+                run(f"sed -i 's/broker.id=0/broker.id={broker_id}/' {broker_config_file}")
 
                 # Set Zookeeper connection string
-                run("sed -i 's/zookeeper.connect=localhost:2181/zookeeper.connect={}/' {}"
-                    .format(zk_conn_string, broker_config_file))
+                run(
+                    "sed -i 's/zookeeper.connect=localhost:2181/"
+                    f"zookeeper.connect={zk_conn_string}/' {broker_config_file}"
+                )
 
                 # Set Kafka log dir
-                run("sed -i -e 's/log\.dirs=.*/log.dirs=\/data\/kafka-logs/' {}"  # noqa: W605
-                    .format(broker_config_file))
+                run(
+                    rf"sed -i -e 's/log\.dirs=.*/log.dirs=\/data\/kafka-logs/' {broker_config_file}"
+                )
 
                 # Set partitions per topic
-                run("sed -i 's/num.partitions=1/num.partitions={}/' {}"
-                    .format(partitions_per_topic, broker_config_file))
+                run(
+                    f"sed -i 's/num.partitions=1/num.partitions={partitions_per_topic}/'"
+                    f" {broker_config_file}"
+                )
 
     @kafka_zookeepers
     def start_kafka_zookeepers(self):

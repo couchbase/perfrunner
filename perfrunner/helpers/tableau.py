@@ -4,11 +4,12 @@ from time import sleep
 from xml.etree import ElementTree as ETree
 
 import requests
-from fabric.api import execute, local, put, run
 from requests.packages.urllib3.fields import RequestField
 from requests.packages.urllib3.filepost import encode_multipart_formdata
 
 from logger import logger
+from perfrunner.helpers.shell import local
+from perfrunner.remote.api import execute, put, run
 from perfrunner.settings import TestConfig
 
 

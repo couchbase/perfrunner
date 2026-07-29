@@ -1,7 +1,8 @@
 from typing import Callable, List
 
 from decorator import decorator
-from fabric.api import execute, parallel, settings
+
+from perfrunner.remote.api import execute, parallel, settings
 
 
 @decorator

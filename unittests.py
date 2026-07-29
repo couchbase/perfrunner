@@ -2,6 +2,9 @@ import glob
 import importlib.metadata
 import json
 import os
+import tempfile
+import threading
+import time
 from collections import defaultdict, namedtuple
 from multiprocessing import Value
 from pathlib import Path
@@ -9,7 +12,9 @@ from unittest import TestCase
 
 import snappy
 
+from perfrunner.helpers import shell
 from perfrunner.helpers.misc import parse_go_duration_ms, pretty_dict
+from perfrunner.remote import api, executor
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
@@ -751,3 +756,582 @@ class PipelineTest(TestCase):
             with open(pipeline) as fh:
                 test_cases = json.load(fh)
                 self.assertEqual(stages, set(test_cases), pipeline)
+
+
+class LocalShellTest(TestCase):
+    def test_capture_returns_stripped_stdout_with_attributes(self):
+        with shell.quiet():
+            result = shell.local("echo hello && echo oops >&2", capture=True)
+        self.assertEqual(result, "hello")
+        self.assertEqual(result.stdout, "hello")
+        self.assertEqual(result.stderr, "oops")
+        self.assertEqual(result.return_code, 0)
+        self.assertTrue(result.succeeded)
+        self.assertFalse(result.failed)
+
+    def test_output_state_shared_with_remote_api(self):
+        # RemoteHelper sets state.output.stdout/running from its verbose flag; that
+        # must control local() too, like fabric.state.output did (Fabric 1 parity).
+        self.assertIs(api.output, shell.output)
+        self.assertIs(api.state.output, shell.output)
+
+    def test_non_verbose_discards_output_and_echo(self):
+        saved_running, saved_stdout = shell.output.running, shell.output.stdout
+        try:
+            shell.output.running = shell.output.stdout = False
+            self.assertTrue(shell._is_hidden("running"))
+            self.assertTrue(shell._is_hidden("output"))
+            result = shell.local("true")  # passthrough mode routes to devnull, no echo
+            self.assertEqual(result.return_code, 0)
+        finally:
+            shell.output.running, shell.output.stdout = saved_running, saved_stdout
+        self.assertFalse(shell._is_hidden("output"))
+
+    def test_stderr_stays_visible_in_non_verbose_mode(self):
+        # Fabric 1 keyed the streams separately and RemoteHelper only disables stdout,
+        # so error text from local commands must survive non-verbose runs.
+        saved = shell.output.stdout
+        try:
+            shell.output.stdout = False
+            self.assertTrue(shell._is_hidden("output"))
+            self.assertFalse(shell._is_hidden("stderr"))
+        finally:
+            shell.output.stdout = saved
+        with shell.hide("output"):  # per-call hide("output") covers both streams
+            self.assertTrue(shell._is_hidden("stderr"))
+
+    def test_passthrough_mode_inherits_stdio(self):
+        # capture=False with nothing hidden: child stdout/stderr inherit from the
+        # parent and the result string is empty, but attributes are still populated.
+        result = shell.local("true")
+        self.assertEqual(result, "")
+        self.assertEqual(result.return_code, 0)
+        self.assertTrue(result.succeeded)
+
+    def test_failure_aborts_by_default(self):
+        with self.assertRaises(SystemExit):
+            with shell.hide("everything"):
+                shell.local("exit 1", capture=True)
+
+    def test_warn_only_returns_failed_result(self):
+        with shell.quiet():
+            result = shell.local("exit 7", capture=True)
+        self.assertEqual(result.return_code, 7)
+        self.assertTrue(result.failed)
+        self.assertFalse(result.succeeded)
+
+    def test_settings_with_hide_and_warn_only(self):
+        with shell.settings(shell.hide("output", "warnings"), warn_only=True):
+            result = shell.local("exit 3")
+        self.assertEqual(result.return_code, 3)
+
+    def test_settings_rejects_unknown_keys(self):
+        with self.assertRaises(TypeError):
+            with shell.settings(host_string="node-1"):
+                pass
+
+    def test_lcd_nests_relative_paths(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            sub_dir = os.path.join(tmp_dir, "sub")
+            os.mkdir(sub_dir)
+            with shell.quiet(), shell.lcd(tmp_dir), shell.lcd("sub"):
+                result = shell.local("pwd", capture=True)
+        self.assertEqual(os.path.realpath(result), os.path.realpath(sub_dir))
+
+    def test_lcd_restores_previous_directory(self):
+        with shell.quiet():
+            with shell.lcd("/"):
+                pass
+            result = shell.local("pwd", capture=True)
+        self.assertEqual(os.path.realpath(result), os.path.realpath(os.getcwd()))
+
+    def test_shell_env_exports_variables(self):
+        with shell.quiet(), shell.shell_env(FOO="bar", BAZ="qux"):
+            result = shell.local("echo $FOO-$BAZ", capture=True)
+        self.assertEqual(result, "bar-qux")
+
+    def test_shell_executable_override(self):
+        with shell.quiet():
+            result = shell.local("echo $0", capture=True, shell="/bin/bash")
+        self.assertEqual(result, "/bin/bash")
+
+    def test_command_attributes_record_real_command(self):
+        with shell.quiet(), shell.lcd("/tmp"), shell.shell_env(FOO="bar"):
+            result = shell.local("true", capture=True)
+        self.assertEqual(result.command, "true")
+        self.assertIn("cd /tmp", result.real_command)
+        self.assertIn('export FOO="bar"', result.real_command)
+
+
+class RemoteApiTest(TestCase):
+    def setUp(self):
+        self.created = {}
+
+        def factory(host, config, gateway=None):
+            session = executor.FakeSession(host=host)
+            session.config = config
+            session.gateway = gateway
+            responses = self.scripted.get(host, {})
+            session.responses.update(responses)
+            self.created[host] = session
+            return session
+
+        self.scripted = {}
+        self._saved_pool = api.pool
+        api.pool = executor.ConnectionPool(factory)
+        self._saved_cwd = os.getcwd()
+        self._tmp = tempfile.TemporaryDirectory()
+        os.chdir(self._tmp.name)
+
+    def tearDown(self):
+        os.chdir(self._saved_cwd)
+        self._tmp.cleanup()
+        api.pool = self._saved_pool
+
+    def test_run_wraps_command_in_login_shell(self):
+        with api.settings(api.hide("everything"), host_string="node-1"):
+            api.run("echo hello")
+        command, kwargs = self.created["node-1"].commands[0]
+        self.assertEqual(command, '/bin/bash -l -c "echo hello"')
+        self.assertTrue(kwargs["pty"])
+
+    def test_run_escapes_shell_characters(self):
+        with api.settings(api.hide("everything"), host_string="node-1"):
+            api.run('echo "$HOME" `id`')
+            api.run('echo "$HOME"', shell_escape=False)
+        escaped, _ = self.created["node-1"].commands[0]
+        raw, _ = self.created["node-1"].commands[1]
+        self.assertEqual(escaped, '/bin/bash -l -c "echo \\"\\$HOME\\" \\`id\\`"')
+        self.assertEqual(raw, '/bin/bash -l -c "echo "$HOME""')
+
+    def test_cd_and_shell_env_prefixes(self):
+        with api.settings(api.hide("everything"), host_string="node-1"):
+            with api.cd("/tmp/perfrunner"), api.cd("worker"), api.shell_env(GOGC="300"):
+                api.run("make")
+        command, _ = self.created["node-1"].commands[0]
+        self.assertEqual(
+            command, '/bin/bash -l -c "cd /tmp/perfrunner/worker && export GOGC=\\"300\\" && make"'
+        )
+
+    def test_connection_reuse_across_calls(self):
+        with api.settings(api.hide("everything"), host_string="node-1"):
+            api.run("true")
+            api.run("true")
+        self.assertEqual(len(self.created), 1)
+        self.assertEqual(len(self.created["node-1"].commands), 2)
+
+    def test_execute_parallel_returns_dict_by_host(self):
+        hosts = ["h1", "h2", "h3"]
+        wrapped = '/bin/bash -l -c "hostname"'
+        for host in hosts:
+            self.scripted[host] = {wrapped: executor.RunResult(f"out-{host}", "", 0)}
+
+        @api.parallel
+        def task():
+            return str(api.run("hostname", quiet=True))
+
+        results = api.execute(task, hosts=hosts)
+        self.assertEqual(results, {host: f"out-{host}" for host in hosts})
+        for host in hosts:
+            self.assertEqual(len(self.created[host].commands), 1)
+
+    def test_execute_parallel_all_hosts_complete_despite_failure(self):
+        # One failing host must not discard the other hosts' work, and the
+        # original exception type must surface (not a generic wrapper).
+        wrapped = '/bin/bash -l -c "hostname"'
+        self.scripted = {
+            "h1": {wrapped: executor.RunResult("out-h1", "", 0)},
+            "h2": {wrapped: executor.CommandTimeout("timed out")},
+            "h3": {wrapped: executor.RunResult("out-h3", "", 0)},
+        }
+
+        @api.parallel
+        def task():
+            return str(api.run("hostname", quiet=True, timeout=5))
+
+        with self.assertRaises(executor.CommandTimeout):
+            api.execute(task, hosts=["h1", "h2", "h3"])
+        for host in ("h1", "h2", "h3"):
+            self.assertEqual(len(self.created[host].commands), 1)
+
+    def test_execute_serial_lambda(self):
+        results = api.execute(lambda: api.run("true", quiet=True), hosts=["h1"])
+        self.assertIn("h1", results)
+
+    def test_run_failure_aborts_by_default(self):
+        self.scripted["node-1"] = {'/bin/bash -l -c "false"': executor.RunResult("", "", 1)}
+        with self.assertRaises(SystemExit):
+            with api.settings(api.hide("everything"), host_string="node-1"):
+                api.run("false")
+
+    def test_run_failure_with_warn_only(self):
+        self.scripted["node-1"] = {'/bin/bash -l -c "false"': executor.RunResult("", "", 1)}
+        with api.settings(api.hide("everything"), host_string="node-1"):
+            result = api.run("false", warn_only=True)
+        self.assertEqual(result.return_code, 1)
+        self.assertTrue(result.failed)
+
+    def test_run_failure_reports_stderr(self):
+        wrapped = '/bin/bash -l -c "systemctl restart couchbase-server"'
+        self.scripted["n1"] = {
+            wrapped: executor.RunResult("", "Job for couchbase-server failed", 1)
+        }
+        with self.assertLogs(level="WARNING") as logs:
+            with api.settings(api.hide("running", "output"), host_string="n1"):
+                result = api.run("systemctl restart couchbase-server", warn_only=True, pty=False)
+        self.assertEqual(result.stderr, "Job for couchbase-server failed")
+        self.assertTrue(any("Job for couchbase-server failed" in line for line in logs.output))
+
+    def test_command_timeout_propagates(self):
+        self.scripted["node-1"] = {
+            '/bin/bash -l -c "sleep 100"': executor.CommandTimeout("timed out")
+        }
+        with self.assertRaises(executor.CommandTimeout):
+            with api.settings(api.hide("everything"), host_string="node-1"):
+                api.run("sleep 100", timeout=10)
+
+    def test_get_glob_with_default_host_layout(self):
+        self.scripted["10.1.1.1"] = {}
+        with api.settings(api.hide("everything"), host_string="10.1.1.1"):
+            session = api.pool.session("10.1.1.1", executor.SessionConfig())
+            session.files = {"/tmp/aaa.zip": "x", "/tmp/bbb.zip": "y", "/tmp/keep.log": "z"}
+            downloaded = api.get("/tmp/*.zip")
+        self.assertEqual(
+            sorted(session.downloads),
+            [
+                ("/tmp/aaa.zip", os.path.join("10.1.1.1", "tmp", "aaa.zip")),
+                ("/tmp/bbb.zip", os.path.join("10.1.1.1", "tmp", "bbb.zip")),
+            ],
+        )
+        self.assertEqual(len(downloaded), 2)
+
+    def test_get_relative_path_uses_cd(self):
+        with api.settings(api.hide("everything"), host_string="w1"):
+            session = api.pool.session("w1", executor.SessionConfig())
+            session.files = {"/worker/perfrunner/worker_1.log": "log"}
+            with api.cd("/worker/perfrunner"):
+                api.get("worker_*.log", local_path="celery/")
+        self.assertEqual(
+            session.downloads,
+            [("/worker/perfrunner/worker_1.log", os.path.join("celery", "worker_1.log"))],
+        )
+
+    def test_get_single_file_default_lands_at_host_slash_basename(self):
+        # Contract with the debug flow: a bare get() of one file must land exactly one level deep.
+        # Fabric 1 collapsed %(path)s to the basename for single-file downloads.
+        with api.settings(api.hide("everything"), host_string="10.1.1.3"):
+            session = api.pool.session("10.1.1.3", executor.SessionConfig())
+            session.files = {"/tmp/abc123.zip": "z"}
+            downloaded = api.get("/tmp/abc123.zip")
+        self.assertEqual(downloaded, [os.path.join("10.1.1.3", "abc123.zip")])
+
+    def test_get_glob_default_keeps_full_path(self):
+        # Glob downloads keep the full remote path under <host>/ to avoid collisions.
+        with api.settings(api.hide("everything"), host_string="h1"):
+            session = api.pool.session("h1", executor.SessionConfig())
+            session.files = {"/tmp/a.zip": "a", "/tmp/b.zip": "b"}
+            downloaded = api.get("/tmp/*.zip")
+        self.assertEqual(
+            sorted(downloaded),
+            [os.path.join("h1", "tmp", "a.zip"), os.path.join("h1", "tmp", "b.zip")],
+        )
+
+    def test_put_directory_recursively(self):
+        os.makedirs("inbox/sub")
+        Path("inbox/chain.pem").write_text("pem")
+        Path("inbox/sub/node.key").write_text("key")
+        with api.settings(api.hide("everything"), host_string="n1"):
+            uploaded = api.put("inbox", "/opt/couchbase/var/lib/couchbase")
+        session = self.created["n1"]
+        self.assertIn(
+            ("inbox/chain.pem", "/opt/couchbase/var/lib/couchbase/inbox/chain.pem"),
+            [(os.path.relpath(local), remote) for local, remote in session.uploads],
+        )
+        self.assertIn("/opt/couchbase/var/lib/couchbase/inbox/sub", session.dirs)
+        self.assertEqual(len(uploaded), 2)
+
+    def test_get_directory_downloads_tree_recursively(self):
+        with api.settings(api.hide("everything"), host_string="h1"):
+            session = api.pool.session("h1", executor.SessionConfig())
+            session.dirs = {"/data", "/data/a", "/data/b"}
+            session.files = {"/data/f0": "0", "/data/a/f1": "1", "/data/b/f2": "2"}
+            downloaded = api.get("/data", local_path="out/")
+        self.assertEqual(sorted(session.downloads), [
+            ("/data/a/f1", os.path.join("out", "data", "a", "f1")),
+            ("/data/b/f2", os.path.join("out", "data", "b", "f2")),
+            ("/data/f0", os.path.join("out", "data", "f0")),
+        ])
+        self.assertEqual(sorted(downloaded), sorted(local for _, local in session.downloads))
+        self.assertTrue(os.path.isdir(os.path.join("out", "data", "a")))
+
+    def test_download_tree_depth_guard(self):
+        # SFTP has no inode info for cycle detection; a symlink loop must fail fast
+        # with a clear error instead of a RecursionError.
+        with api.settings(api.hide("everything"), host_string="h1"):
+            session = api.pool.session("h1", executor.SessionConfig())
+            path = ""
+            for level in range(api.MAX_TREE_DEPTH + 2):
+                path = f"{path}/d"
+                session.dirs.add(path)
+            with self.assertRaises(RuntimeError):
+                api.get("/d")
+
+    def test_concurrent_channels_capped_per_session(self):
+        # Nested parallel decorators stack many threads on one pooled connection;
+        # channel opens must be capped below sshd MaxSessions.
+        counters = {"current": 0, "max": 0}
+        guard = threading.Lock()
+
+        def tracked_run_raw(command, pty=True, timeout=None):
+            with guard:
+                counters["current"] += 1
+                counters["max"] = max(counters["max"], counters["current"])
+            time.sleep(0.02)
+            with guard:
+                counters["current"] -= 1
+            return executor.RunResult("", "", 0)
+
+        with api.settings(api.hide("everything"), host_string="h1"):
+            session = api.pool.session("h1", executor.SessionConfig())
+        session.run_raw = tracked_run_raw
+
+        def worker():
+            with api.settings(api.hide("everything"), host_string="h1"):
+                api.run("true", quiet=True)
+
+        threads = [threading.Thread(target=worker) for _ in range(10)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertGreater(counters["max"], 1)
+        self.assertLessEqual(counters["max"], executor.Session.MAX_CONCURRENT_CHANNELS)
+
+    def test_put_file_into_existing_remote_directory(self):
+        # Fabric 1 parity: put("root.pem", "<dir>") with an existing remote directory
+        # (no trailing slash) must land <dir>/root.pem, not open the dir for write.
+        Path("root.pem").write_text("pem")
+        with api.settings(api.hide("everything"), host_string="c1"):
+            session = api.pool.session("c1", executor.SessionConfig())
+            session.dirs.add("/worker/perfrunner")
+            uploaded = api.put("root.pem", "/worker/perfrunner")
+        self.assertEqual(uploaded, ["/worker/perfrunner/root.pem"])
+        self.assertEqual(session.uploads, [("root.pem", "/worker/perfrunner/root.pem")])
+
+    def test_gateway_creates_jump_session(self):
+        with api.settings(api.hide("everything"), host_string="kafka-1", gateway="jump-1"):
+            api.run("true")
+        self.assertIn("jump-1", self.created)
+        self.assertIs(self.created["kafka-1"].gateway, self.created["jump-1"])
+
+    def test_append_is_idempotent_grep(self):
+        with api.settings(api.hide("everything"), host_string="n1"):
+            api.append("/opt/tomcat/bin/setenv.sh", "export LD_LIBRARY_PATH=/x")
+        command, _ = self.created["n1"].commands[0]
+        self.assertIn("grep -qF -- 'export LD_LIBRARY_PATH=/x'", command)
+        self.assertIn("| tee -a /opt/tomcat/bin/setenv.sh", command)
+        self.assertNotIn("sudo", command)
+
+    def test_append_with_use_sudo(self):
+        with api.settings(api.hide("everything"), host_string="n1"):
+            api.append("/opt/tomcat/bin/setenv.sh", "export LD_LIBRARY_PATH=/x", use_sudo=True)
+        command, _ = self.created["n1"].commands[0]
+        self.assertIn("sudo grep -qF", command)
+        self.assertIn("| sudo tee -a /opt/tomcat/bin/setenv.sh", command)
+
+    def test_state_aliases(self):
+        self.assertIs(api.state.env, api.env)
+        self.assertIs(api.state.output, api.output)
+
+    def test_settings_rejects_unknown_keys(self):
+        with self.assertRaises(TypeError):
+            with api.settings(bogus=1):
+                pass
+
+
+class RemoteCharacterisationTest(TestCase):
+    """Pin the remote layer's contract: host targeting, command strings, result shapes.
+
+    Uses FakeSession as the executor, so no SSH connection is made. The command strings
+    are the interface to remote machines. Any refactor of the execution layer or the
+    topology decorators must keep them identical.
+    """
+
+    SPEC = (
+        "[clusters]\n"
+        "test =\n"
+        "    10.0.0.1:kv\n"
+        "    10.0.0.2:kv\n"
+        "    10.0.0.3:index\n"
+        "\n"
+        "[clients]\n"
+        "hosts =\n"
+        "    10.0.1.1\n"
+        "\n"
+        "[storage]\n"
+        "data = /data\n"
+        "\n"
+        "[metadata]\n"
+        "cluster = test\n"
+    )
+
+    def setUp(self):
+        self.created = {}
+        self.scripted = {}
+
+        def factory(host, config, gateway=None):
+            session = executor.FakeSession(host=host)
+            session.responses.update(self.scripted.get(host, {}))
+            self.created[host] = session
+            return session
+
+        self._saved_pool = api.pool
+        api.pool = executor.ConnectionPool(factory)
+
+        spec_file = tempfile.NamedTemporaryFile(mode="w", suffix=".spec", delete=False)
+        spec_file.write(self.SPEC)
+        spec_file.close()
+        self.spec_fname = spec_file.name
+        self.cluster_spec = ClusterSpec()
+        self.cluster_spec.parse(self.spec_fname, override=None)
+
+    def tearDown(self):
+        api.pool = self._saved_pool
+        os.unlink(self.spec_fname)
+
+    def _remote(self):
+        from perfrunner.remote.linux import RemoteLinux
+
+        return RemoteLinux(self.cluster_spec)
+
+    def test_construction_detects_distro_on_master_only(self):
+        self._remote()
+        self.assertEqual(list(self.created), ["10.0.0.1"])
+        commands = [command for command, _ in self.created["10.0.0.1"].commands]
+        self.assertEqual(len(commands), 2)
+        self.assertIn("grep ^ID= /etc/os-release", commands[0])
+        self.assertIn("grep ^VERSION_ID= /etc/os-release", commands[1])
+
+    def test_reset_swap_runs_on_all_servers(self):
+        remote = self._remote()
+        remote.reset_swap()
+        expected = '/bin/bash -l -c "swapoff --all && swapon --all"'
+        for server in ("10.0.0.1", "10.0.0.2", "10.0.0.3"):
+            commands = [command for command, _ in self.created[server].commands]
+            self.assertIn(expected, commands)
+
+    def test_master_server_decorator_targets_first_server(self):
+        remote = self._remote()
+        remote.enable_nonlocal_diag_eval()
+        command, kwargs = self.created["10.0.0.1"].commands[-1]
+        self.assertIn("diag/eval", command)
+        self.assertFalse(kwargs["pty"])
+        self.assertNotIn("10.0.0.2", self.created)
+
+    def test_detect_core_dumps_returns_dict_per_host(self):
+        wrapped = '/bin/bash -l -c "ls /data/core*"'
+        self.scripted = {
+            "10.0.0.1": {wrapped: executor.RunResult("/data/core-memcached-1", "", 0)},
+            "10.0.0.2": {wrapped: executor.RunResult("", "", 2)},
+            "10.0.0.3": {wrapped: executor.RunResult("", "", 2)},
+        }
+        remote = self._remote()
+        dumps = remote.detect_core_dumps()
+        self.assertEqual(
+            dumps, {"10.0.0.1": ["/data/core-memcached-1"], "10.0.0.2": [], "10.0.0.3": []}
+        )
+
+    def test_all_clients_decorator_targets_workers(self):
+        remote = self._remote()
+        remote.terminate_client_processes()
+        commands = [command for command, _ in self.created["10.0.1.1"].commands]
+        self.assertTrue(any("killall -9" in command for command in commands))
+
+
+class ConnectionPoolTest(TestCase):
+    """Session lifecycle in the pool: reuse, probe-on-idle liveness, and fork safety."""
+
+    def setUp(self):
+        self.pool = executor.ConnectionPool(
+            lambda host, config, gateway=None: executor.FakeSession(host=host)
+        )
+        self.config = executor.SessionConfig()
+
+    def test_no_probe_when_recently_used(self):
+        first = self.pool.session("h1", self.config)
+        second = self.pool.session("h1", self.config)
+        self.assertIs(first, second)
+        self.assertEqual(first.probes, 0)
+
+    def test_probe_after_idle_reuses_healthy_session(self):
+        session = self.pool.session("h1", self.config)
+        session.last_used -= executor.ConnectionPool.PROBE_AFTER_IDLE + 1
+        again = self.pool.session("h1", self.config)
+        self.assertIs(session, again)
+        self.assertEqual(session.probes, 1)
+
+    def test_dead_idle_session_is_replaced(self):
+        session = self.pool.session("h1", self.config)
+        session.last_used -= executor.ConnectionPool.PROBE_AFTER_IDLE + 1
+        session.probe_error = executor.NetworkError("dropped by NAT")
+        replacement = self.pool.session("h1", self.config)
+        self.assertIsNot(session, replacement)
+        self.assertTrue(session.closed)
+        self.assertEqual(session.probes, 1)
+
+    def test_slow_probe_does_not_block_other_hosts(self):
+        # The pool lock only guards its dicts; a dead host's probe (up to the channel
+        # open timeout) must not stall parallel checkouts of healthy hosts.
+        slow = self.pool.session("slow-host", self.config)
+        slow.last_used -= executor.ConnectionPool.PROBE_AFTER_IDLE + 1
+        slow.probe_delay = 1.0
+
+        prober = threading.Thread(
+            target=self.pool.session, args=("slow-host", self.config))
+        prober.start()
+        time.sleep(0.1)  # let the probe start and hold slow-host's key lock
+
+        t0 = time.time()
+        self.pool.session("healthy-host", self.config)
+        elapsed = time.time() - t0
+        prober.join()
+        self.assertLess(elapsed, 0.5)
+        self.assertEqual(slow.probes, 1)
+
+    def test_dead_gateway_session_closed_before_replacement(self):
+        first = self.pool.session("kafka-1", self.config, gateway="jump-1")
+        gateway_key = ("jump-1", self.config.user, None)
+        old_gateway = self.pool._sessions[gateway_key]
+
+        old_gateway.active = False  # gateway died; host session rides it, so it dies too
+        first.active = False
+        self.pool.session("kafka-1", self.config, gateway="jump-1")
+
+        new_gateway = self.pool._sessions[gateway_key]
+        self.assertIsNot(old_gateway, new_gateway)
+        self.assertTrue(old_gateway.closed)
+
+    def test_forked_child_discards_inherited_sessions_without_closing(self):
+        # Forked children (e.g. cbagent collector processes) must neither reuse nor close the
+        # parent's SSH sockets: sharing the encrypted stream corrupts it,
+        # and closing sends disconnects on a socket the parent still owns.
+        parent_session = self.pool.session("h1", self.config)
+        self.pool._pid -= 1  # simulate being in a forked child
+        child_session = self.pool.session("h1", self.config)
+        self.assertIsNot(parent_session, child_session)
+        self.assertFalse(parent_session.closed)
+
+
+class SSHSessionTest(TestCase):
+    """Construction-time behaviour of the Fabric-backed session (no connection made)."""
+
+    def test_host_key_policy_follows_disable_known_hosts(self):
+        from paramiko.client import AutoAddPolicy, RejectPolicy
+
+        default = executor.SSHSession("10.9.9.9", executor.SessionConfig())
+        self.assertIsInstance(default._conn.client._policy, AutoAddPolicy)
+
+        strict = executor.SSHSession(
+            "10.9.9.9", executor.SessionConfig(disable_known_hosts=False)
+        )
+        self.assertIsInstance(strict._conn.client._policy, RejectPolicy)

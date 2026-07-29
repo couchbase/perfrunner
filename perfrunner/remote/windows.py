@@ -1,12 +1,10 @@
 import time
 from shlex import quote
 
-from fabric.api import get, put, run, settings, show
-from fabric.exceptions import CommandTimeout
-
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
+from perfrunner.remote.api import CommandTimeout, get, put, run, settings, show
 from perfrunner.remote.context import all_servers, master_server
 from perfrunner.settings import ClusterSpec
 

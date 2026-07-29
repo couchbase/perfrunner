@@ -11,7 +11,6 @@ from uuid import uuid4
 import requests
 from capella.columnar.CapellaAPI import CapellaAPI as CapellaAPIColumnar
 from capella.dedicated.CapellaAPI import CapellaAPI as CapellaAPIDedicated
-from fabric.api import local
 from requests.exceptions import HTTPError
 
 from logger import logger
@@ -22,6 +21,7 @@ from perfrunner.helpers.config_files import (
     record_time,
 )
 from perfrunner.helpers.misc import maybe_atoi, my_public_ip, pretty_dict, run_local_shell_command
+from perfrunner.helpers.shell import local
 from perfrunner.settings import ClusterSpec, TestConfig
 
 CAPELLA_CREDS_FILE = '.capella_creds'

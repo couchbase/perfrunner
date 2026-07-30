@@ -73,7 +73,7 @@ class ClusterManagerBase:
 
     def configure_internal_settings(self, settings: Optional[dict] = None):
         settings_from_config = self.test_config.internal_settings
-        if self.build_tuple >= (8, 1, 0, 0):
+        if self.build_tuple >= (8, 1, 0, 1529):
             settings_from_config["dataServiceFileBasedRebalanceEnabled"] = str(
                 self.test_config.cluster.enable_kv_fbr
             ).lower()

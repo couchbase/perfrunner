@@ -996,10 +996,14 @@ class TestCaseSettings:
     THRESHOLD = -10
 
     def __init__(self, options: dict):
-        self.test_module = '.'.join(options.get('test').split('.')[:-1])
-        self.test_class = options.get('test').split('.')[-1]
-        self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
-        self.reset_workers = int(options.get('reset_workers', self.RESET_WORKERS))
+        test = options.pop('test', None)
+        self.test_module = '.'.join(test.split('.')[:-1])
+        self.test_class = test.split('.')[-1]
+        self.use_workers = int(options.pop('use_workers', self.USE_WORKERS))
+        self.reset_workers = int(options.pop('reset_workers', self.RESET_WORKERS))
+
+        # Remaining options are specific to the test class, which parses them itself
+        self.options = options
 
 
 class ShowFastSettings:
@@ -3124,6 +3128,12 @@ class AnalyticsCBOSampleSize(SafeEnum):
     HIGH = "high"
 
 
+class AnalyticsCBOSampleMethod(SafeEnum):
+    DEFAULT = ""
+    FULL_SCAN = "full-scan"
+    RANDOM = "random"
+
+
 class AnalyticsExternalFileFormat(SafeEnum):
     DEFAULT = ""
     JSON = "json"
@@ -3153,6 +3163,7 @@ class AnalyticsSettings:
     INGEST_DURING_LOAD = "false"
     RESYNC = "true"
     CBO_SAMPLE_SEED = 12345
+    CBO_SAMPLE_METHOD = ""
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.pop('num_io_devices',
@@ -3171,6 +3182,9 @@ class AnalyticsSettings:
         self.use_cbo = maybe_atoi(options.pop("use_cbo", self.USE_CBO))
         self.cbo_sample_size = AnalyticsCBOSampleSize(options.pop("cbo_sample_size", "").lower())
         self.cbo_sample_seed = int(options.pop("cbo_sample_seed", self.CBO_SAMPLE_SEED))
+        self.cbo_sample_method = AnalyticsCBOSampleMethod(
+            options.pop("cbo_sample_method", self.CBO_SAMPLE_METHOD).lower()
+        )
         self.ingest_during_load = maybe_atoi(
             options.pop("ingest_during_load", self.INGEST_DURING_LOAD)
         )

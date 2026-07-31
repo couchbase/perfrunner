@@ -2504,6 +2504,16 @@ class MetricHelper:
             round(avg_disconnect_time, 1), metric_id=metric_id, title=title, chirality=-1
         )
 
+    def analyze_statement_latency(
+        self, analyze_time: float, extra_metric_id_suffix: str = ""
+    ) -> Metric:
+        return self.custom_metric(
+            round(analyze_time, 1),
+            "Analyze statement latency (sec), {}",
+            f"analyze{'_' + extra_metric_id_suffix if extra_metric_id_suffix else ''}",
+            chirality=-1,
+        )
+
     def analytics_volume_latency(self,
                                  query: Query,
                                  latency: int,

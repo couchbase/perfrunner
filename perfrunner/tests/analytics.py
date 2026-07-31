@@ -4,6 +4,7 @@ import json
 import os
 import random
 import re
+import threading
 import time
 from collections import defaultdict
 from collections.abc import Iterable
@@ -52,6 +53,7 @@ from perfrunner.helpers.worker import (
 from perfrunner.remote.api import cd, get, run, settings
 from perfrunner.settings import (
     CH2,
+    AnalyticsCBOSampleMethod,
     AnalyticsCBOSampleSize,
     AnalyticsExternalFileFormat,
     AnalyticsExternalTableFormat,
@@ -216,10 +218,13 @@ class BaseDatasetDef:
         self,
         sample_size: AnalyticsCBOSampleSize,
         sample_seed: int,
+        sample_method: AnalyticsCBOSampleMethod,
     ) -> str:
         with_clause_options = {"sample-seed": sample_seed}
         if sample_size is not AnalyticsCBOSampleSize.DEFAULT:
             with_clause_options["sample"] = sample_size.value
+        if sample_method is not AnalyticsCBOSampleMethod.DEFAULT:
+            with_clause_options["sample-method"] = sample_method.value
         return (
             f"ANALYZE ANALYTICS COLLECTION {sqlpp_escape(self.name)} "
             f"WITH {json.dumps(with_clause_options)}"
@@ -937,20 +942,22 @@ class AnalyticsTest(PerfTest):
             self.datasets, lambda dataset: dataset.drop_primary_idx_statement(), verbose=verbose
         )
 
+    @timeit
     def analyze_datasets(
         self,
         sample_size: AnalyticsCBOSampleSize,
         sample_seed: int,
+        sample_method: AnalyticsCBOSampleMethod,
         *,
         verbose: bool = False,
     ):
         logger.info(
-            f"Analyzing datasets for CBO using {sample_size.name.lower()} sample size "
-            f"and sample seed {sample_seed}"
+            f"Analyzing datasets for CBO using {sample_size.name.lower()} sample size, "
+            f"sample seed {sample_seed}, sample method {sample_method.name.lower()}"
         )
         self._run_statements(
             self.datasets,
-            lambda dataset: dataset.analyze_statement(sample_size, sample_seed),
+            lambda dataset: dataset.analyze_statement(sample_size, sample_seed, sample_method),
             verbose=verbose,
         )
 
@@ -1452,6 +1459,14 @@ class AnalyticsTest(PerfTest):
 
             self.reporter.post(ingest_rate, snapshots, metric_info)
 
+    def report_analyze_kpi(self, analyze_time: float, extra_metric_id_suffix: str = ""):
+        if not self.test_config.stats_settings.enabled:
+            return
+
+        self.reporter.post(
+            *self.metrics.analyze_statement_latency(analyze_time, extra_metric_id_suffix)
+        )
+
     def get_average_encoded_doc_size(self, dataset: str) -> float:
         logger.info(f"Getting average encoded document size in dataset {dataset}")
         limit = 1063 * 4  # sample size same as "high" sample size in Analytics CBO
@@ -1578,6 +1593,7 @@ class CustomQueryTest(AnalyticsTest):
             self.analyze_datasets(
                 self.test_config.analytics_settings.cbo_sample_size,
                 self.test_config.analytics_settings.cbo_sample_seed,
+                self.test_config.analytics_settings.cbo_sample_method,
                 verbose=True,
             )
         results = self.access()
@@ -2236,11 +2252,13 @@ class CH2Test(AnalyticsTest):
             self.create_gsi_indexes()
 
         if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(
+            analyze_time = self.analyze_datasets(
                 self.test_config.analytics_settings.cbo_sample_size,
                 self.test_config.analytics_settings.cbo_sample_seed,
+                self.test_config.analytics_settings.cbo_sample_method,
                 verbose=True,
             )
+            self.report_analyze_kpi(analyze_time)
 
     def benchmark(self):
         self.init_ch2_repo()
@@ -2250,6 +2268,320 @@ class CH2Test(AnalyticsTest):
     def run(self):
         self.setup()
         self.benchmark()
+
+
+class AnalyzeTiming(Enum):
+    """When CH2LSMSamplingStabilityTest runs ANALYZE relative to each mutation pass."""
+
+    AFTER_SETTLE = "after_settle"
+    AFTER_DML = "after_dml"
+    DURING_MUTATION = "during_mutation"
+
+
+# Metric-id suffix and showfast-title prefixes per timing. The suffixes key stored results.
+_ANALYZE_TIMING_LABELS = {
+    AnalyzeTiming.AFTER_SETTLE: ("post_mutation", "POST-MUTATION"),
+    AnalyzeTiming.AFTER_DML: ("no_wait_mutation", "NO-WAIT-MUTATION"),
+    AnalyzeTiming.DURING_MUTATION: ("during_mutation", "DURING-MUTATION"),
+}
+
+
+def _select_pk_at_offset_statement(dataset: StandaloneDatasetDef, offset: int) -> str:
+    """Return a statement selecting the primary key at a 0-indexed position in key order.
+
+    Finding a batch boundary this way only scans to position `offset`, rather than
+    transferring every key in the batch.
+    """
+    name, pk = sqlpp_escape((dataset.name, dataset.primary_key_field_names[0]))
+    return f"SELECT VALUE d.{pk} FROM {name} d ORDER BY d.{pk} LIMIT 1 OFFSET {offset}"
+
+
+def _delete_by_pk_range_statement(
+    dataset: StandaloneDatasetDef, low_key: str, high_key: str
+) -> str:
+    """Return a statement deleting the rows whose primary key is in [low_key, high_key]."""
+    name, pk = sqlpp_escape((dataset.name, dataset.primary_key_field_names[0]))
+    return (
+        f"DELETE FROM {name} d WHERE d.{pk} >= {json.dumps(low_key)} "
+        f"AND d.{pk} <= {json.dumps(high_key)}"
+    )
+
+
+def _reupsert_by_pk_range_statement(
+    dataset: StandaloneDatasetDef, low_key: str, high_key: str
+) -> str:
+    """Return a statement upserting the rows whose primary key is in [low_key, high_key].
+
+    Each row is written back unchanged, so every record in the range gets a new version
+    without needing any schema-specific field values.
+    """
+    name, pk = sqlpp_escape((dataset.name, dataset.primary_key_field_names[0]))
+    return (
+        f"UPSERT INTO {name} (SELECT VALUE d FROM {name} d WHERE d.{pk} >= "
+        f"{json.dumps(low_key)} AND d.{pk} <= {json.dumps(high_key)})"
+    )
+
+
+class CH2LSMSamplingStabilityTest(CH2Test):
+    """CH2 LSM Sampling stability: escalating mutation passes, then re-ANALYZE and re-run.
+
+    The fresh-data run is the normal CH2Test.benchmark(): ANALYZE (in setup()) then the
+    query mix. After it, for each cumulative mutation level, part of every dataset is
+    deleted and part re-upserted, then ANALYZE and the same query mix run again.
+
+    Mutation uses direct analytics DML rather than CH2's tclients workload: standalone
+    datasets are populated once by `COPY INTO`, with no KV bucket kept in sync, so a
+    KV-side workload would never reach the data being sampled.
+
+    The test is meaningless without ANALYZE, so `[analytics] use_cbo` is always treated as
+    true. Every dataset must be standalone with a single-field primary key.
+
+    `[test_case]` options:
+        mutation_percentages: comma-separated, strictly increasing cumulative percentages
+            of each dataset's original rows to touch (default "15,55"). Half of each
+            level's new rows are deleted and half re-upserted; see
+            `parse_mutation_percentages` for the upper bound this puts on each level.
+        analyze_timing: when ANALYZE runs at each level (default "after_settle"):
+            after_settle: after the mutation DML returns and the analytics
+                flush/merge/replicate queues have drained.
+            after_dml: as soon as the mutation DML returns.
+            during_mutation: on each dataset while that dataset is being mutated, one
+                dataset at a time.
+    """
+
+    DEFAULT_MUTATION_PERCENTAGES = "15,55"
+    # Cap on rows touched by a single DELETE/UPSERT statement: one statement over tens of
+    # millions of rows can stall the analytics service or fail with a transient 503.
+    MUTATION_BATCH_SIZE = 5_000_000
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        options = dict(self.test_config.test_case.options)
+        self.mutation_percentages = self.parse_mutation_percentages(
+            options.pop("mutation_percentages", self.DEFAULT_MUTATION_PERCENTAGES)
+        )
+        self.analyze_timing = AnalyzeTiming(
+            options.pop("analyze_timing", AnalyzeTiming.AFTER_SETTLE.value).lower()
+        )
+        if options:
+            raise ValueError(
+                f"Unknown [test_case] options for {type(self).__name__}: {sorted(options)}"
+            )
+
+        standalone = self.dataset_collection.of_type(DatasetType.STANDALONE)
+        if len(standalone) != len(self.datasets):
+            raise ValueError(f"{type(self).__name__} can only mutate standalone datasets")
+        if composite := [d.name for d in standalone if len(d.primary_key_field_names) != 1]:
+            raise ValueError(
+                f"{type(self).__name__} mutates by primary-key range, which needs a "
+                f"single-field primary key. Composite keys: {composite}"
+            )
+
+        if not self.test_config.analytics_settings.use_cbo:
+            logger.warning(f"{type(self).__name__} always runs ANALYZE; forcing use_cbo on")
+            self.test_config.config["analytics"]["use_cbo"] = "true"
+
+    @staticmethod
+    def parse_mutation_percentages(raw: str) -> list[float]:
+        """Parse `mutation_percentages`, rejecting levels the mutation scheme cannot reach.
+
+        At each level the DELETEs run first, then the UPSERTs re-read rows at positions up
+        to that level's cumulative target. Those positions must still exist once all
+        deletes so far have shrunk the dataset, so each level must satisfy
+        `level <= 100 - deleted`, where `deleted` is the percentage of the original rows
+        deleted so far, this level included. A single level is capped at 66.7%.
+        """
+        levels = [float(p) for p in raw.split(",") if p.strip()]
+        if not levels:
+            raise ValueError("mutation_percentages must list at least one percentage")
+
+        previous = deleted = 0.0
+        for level in levels:
+            if not previous < level <= 100:
+                raise ValueError(
+                    f"mutation_percentages must be strictly increasing values in (0, 100], "
+                    f"got {raw!r}"
+                )
+            deleted += (level - previous) / 2
+            if level > 100 - deleted:
+                raise ValueError(
+                    f"mutation_percentages level {level:g}% leaves only {100 - deleted:g}% "
+                    f"of the original rows after its deletes, too few to re-upsert up to "
+                    f"{level:g}% (got {raw!r})"
+                )
+            previous = level
+        return levels
+
+    def get_pk_at_offset(self, dataset: StandaloneDatasetDef, offset: int) -> str:
+        statement = _select_pk_at_offset_statement(dataset, offset)
+        results = self.exec_analytics_statement(self.analytics_node, statement).json()["results"]
+        if not results:
+            raise ValueError(f"Dataset {dataset.name} has no row at offset {offset}")
+        return results[0]
+
+    def _mutate_pk_range_in_batches(
+        self,
+        dataset: StandaloneDatasetDef,
+        offset: int,
+        count: int,
+        statement_builder: Callable[[StandaloneDatasetDef, str, str], str],
+    ) -> int:
+        """Apply `statement_builder` to `count` rows from position `offset` in key order.
+
+        Each batch covers exactly the rows at the current positions [offset, offset + batch),
+        at most `MUTATION_BATCH_SIZE` of them, and the offset then advances by the batch
+        size. After a DELETE batch the remaining rows shift down, so consecutive DELETE
+        batches are separated by untouched rows rather than forming one contiguous range.
+        Exactly `count` rows are mutated either way, and none of them twice. Returns the
+        offset after the last batch.
+        """
+        remaining = count
+        while remaining > 0:
+            batch = min(remaining, self.MUTATION_BATCH_SIZE)
+            low = self.get_pk_at_offset(dataset, offset)
+            high = self.get_pk_at_offset(dataset, offset + batch - 1)
+            self.exec_analytics_statement(
+                self.analytics_node, statement_builder(dataset, low, high), verbose=True
+            )
+            offset += batch
+            remaining -= batch
+        return offset
+
+    def _mutate_dataset(
+        self,
+        dataset: StandaloneDatasetDef,
+        target_percentage: float,
+        original_totals: dict[str, int],
+        touched: dict[str, int],
+    ):
+        """Delete and re-upsert more of `dataset` to reach a cumulative target percentage.
+
+        `original_totals` maps dataset names to their pre-mutation row counts. `touched`
+        maps them to the rows touched by earlier levels and is updated in place.
+        """
+        original_total = original_totals[dataset.name]
+        touched_so_far = touched.setdefault(dataset.name, 0)
+        to_touch = round(original_total * target_percentage / 100) - touched_so_far
+        if to_touch <= 0:
+            return
+
+        delete_count = to_touch // 2
+        offset = self._mutate_pk_range_in_batches(
+            dataset, touched_so_far, delete_count, _delete_by_pk_range_statement
+        )
+        self._mutate_pk_range_in_batches(
+            dataset, offset, to_touch - delete_count, _reupsert_by_pk_range_statement
+        )
+
+        touched[dataset.name] = touched_so_far + to_touch
+        logger.info(
+            f"Mutated dataset {dataset.name}: {touched[dataset.name]}/{original_total} rows "
+            f"touched ({100 * touched[dataset.name] / original_total:.1f}% cumulative, "
+            f"target {target_percentage}%)"
+        )
+
+    def _analyze_dataset(self, dataset: StandaloneDatasetDef) -> float:
+        """Run ANALYZE on one dataset and return how long it took."""
+        settings = self.test_config.analytics_settings
+        statement = dataset.analyze_statement(
+            settings.cbo_sample_size, settings.cbo_sample_seed, settings.cbo_sample_method
+        )
+        t0 = time.time()
+        self.exec_analytics_statement(self.analytics_node, statement, verbose=True)
+        return time.time() - t0
+
+    def _mutate_then_analyze(
+        self, target_percentage: float, original_totals: dict[str, int], touched: dict[str, int]
+    ) -> float:
+        """Mutate every dataset, then ANALYZE them all. Returns the total ANALYZE time."""
+        for dataset in self.datasets:
+            self._mutate_dataset(dataset, target_percentage, original_totals, touched)
+        if self.analyze_timing is AnalyzeTiming.AFTER_SETTLE:
+            self.monitor_cbas_pending_ops()
+
+        settings = self.test_config.analytics_settings
+        return self.analyze_datasets(
+            settings.cbo_sample_size,
+            settings.cbo_sample_seed,
+            settings.cbo_sample_method,
+            verbose=True,
+        )
+
+    def _mutate_and_analyze_concurrently(
+        self, target_percentage: float, original_totals: dict[str, int], touched: dict[str, int]
+    ) -> float:
+        """ANALYZE each dataset while it is being mutated, one dataset at a time.
+
+        A dataset's mutation runs in a background thread while the main thread ANALYZEs
+        that same dataset, and both finish before the next dataset starts. A mutation
+        failure is re-raised once both have finished. Returns the total ANALYZE time.
+        """
+        analyze_time = 0.0
+        for dataset in self.datasets:
+            errors: list[BaseException] = []
+
+            def mutate(dataset=dataset, errors=errors):
+                # BaseException: failed requests abort via logger.interrupt() (SystemExit),
+                # which a thread would otherwise drop without a trace.
+                try:
+                    self._mutate_dataset(dataset, target_percentage, original_totals, touched)
+                except BaseException as e:
+                    logger.error(f"Mutating {dataset.name} to {target_percentage}% failed: {e!r}")
+                    errors.append(e)
+
+            thread = threading.Thread(target=mutate)
+            thread.start()
+            try:
+                analyze_time += self._analyze_dataset(dataset)
+            finally:
+                thread.join()
+            if errors:
+                raise errors[0]
+        return analyze_time
+
+    def benchmark(self):
+        super().benchmark()
+
+        # Counted once, before any mutation, so no full COUNT(*) scan overlaps a timed
+        # ANALYZE later on.
+        original_totals = {
+            dataset.name: self.get_dataset_items(dataset.name) for dataset in self.datasets
+        }
+        touched: dict[str, int] = {}
+        original_title = self.test_config.showfast.title
+        suffix_prefix, title_prefix = _ANALYZE_TIMING_LABELS[self.analyze_timing]
+
+        for target_percentage in self.mutation_percentages:
+            suffix = f"{suffix_prefix}_{target_percentage:g}pct"
+
+            # Set before ANALYZE so its KPI carries this level's title, not the last one's.
+            self.test_config.config["showfast"]["title"] = (
+                f"{original_title}, {title_prefix} {target_percentage:g}pct"
+            )
+            self.test_config.update_spec_file()
+
+            logger.info(
+                f"Mutating datasets to {target_percentage}% cumulative, "
+                f"ANALYZE timing: {self.analyze_timing.value}"
+            )
+            if self.analyze_timing is AnalyzeTiming.DURING_MUTATION:
+                analyze_time = self._mutate_and_analyze_concurrently(
+                    target_percentage, original_totals, touched
+                )
+            else:
+                analyze_time = self._mutate_then_analyze(
+                    target_percentage, original_totals, touched
+                )
+            self.report_analyze_kpi(analyze_time, extra_metric_id_suffix=suffix)
+
+            log_file = f"{self.test_config.ch2_settings.workload}_{suffix}"
+            ch2_settings = self.test_config.ch2_settings
+            ch2_settings.warmup_iterations = 0
+            ch2_settings.iterations = 1
+            self.run_ch2(log_file=log_file, ch2_settings=ch2_settings)
+
+            self.report_kpi(log_file=log_file, extra_metric_id_suffix=suffix)
 
 
 class TransformOnIngestTest(AnalyticsTest):
@@ -2442,16 +2774,18 @@ class CH2CapellaColumnarUnlimitedStorageTest(CH2Test, CapellaColumnarManualOnOff
             self.rest.restart_analytics_cluster(self.analytics_node)
             self.cluster.wait_until_healthy(polling_interval_secs=10, max_retries=120)
 
-        if self.test_config.analytics_settings.use_cbo:
-            self.analyze_datasets(
-                self.test_config.analytics_settings.cbo_sample_size,
-                self.test_config.analytics_settings.cbo_sample_seed,
-                verbose=True,
-            )
-
         new_sf_title = f"{self.test_config.showfast.title}, POST-RESUME"
         self.test_config.config["showfast"]["title"] = new_sf_title
         self.test_config.update_spec_file()
+
+        if self.test_config.analytics_settings.use_cbo:
+            analyze_time = self.analyze_datasets(
+                self.test_config.analytics_settings.cbo_sample_size,
+                self.test_config.analytics_settings.cbo_sample_seed,
+                self.test_config.analytics_settings.cbo_sample_method,
+                verbose=True,
+            )
+            self.report_analyze_kpi(analyze_time, extra_metric_id_suffix="post_resume")
 
         log_file = f"{self.test_config.ch2_settings.workload}_post_resume"
         ch2_settings = self.test_config.ch2_settings

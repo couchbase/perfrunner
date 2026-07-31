@@ -1,0 +1,46 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2LSMSamplingStabilityTest
+mutation_percentages = 15,55
+
+[showfast]
+title = CH2 5000W, 4A, c=11 (standalone collections), analytics-only workload, LSM Sampling (full-scan, column), Unoptimized Queries, Analytics Indexes, 3 aclients
+component = analyticscloud
+category = ch2
+sub_category = {provider}
+orderby = ch2_05000_s_04n_a03_lsm_fs_col
+
+[stats]
+server_processes = java
+
+[cluster]
+enable_n2n_encryption = all
+
+[analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_uniform_pk.yaml
+use_cbo = true
+cbo_sample_size = high
+cbo_sample_method = full-scan
+cbo_sample_seed = 12345
+storage_format = column
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml
+aws_credential_path = /root/.ssh/
+
+[analytics_external_data]
+link_type = s3
+region = us-east-1
+obj_store_name = analytics-ch2-5000w-gz
+file_format = json
+file_include = *.gz
+
+[ch2]
+warehouses = 5000
+aclients = 3
+tclients = 0
+iterations = 2
+warmup_iterations = 1
+duration = 0
+warmup_duration = 0
+workload = ch2_analytics
+use_backup = false
+create_gsi_index = false
+unoptimized_queries = true

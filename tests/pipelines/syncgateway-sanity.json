@@ -1,0 +1,136 @@
+{
+    "Read": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_1node_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_read_1node_replicator2.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_read_revcache_4node_replicator2.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_readwithrevs_4node_replicator2.test"}
+    ],
+    "Write": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_4node_no_roundtripwrite_replicator2.test"}
+    ],
+    "Sync": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_sync_4node.test"}
+    ],
+    "Query": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_access_nocache_xattr",
+          "test": "syncgateway_auth_4node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_access_nocache_xattr",
+          "test": "syncgateway_querymix_throughput_4node.test"}
+    ],
+    "Import": [
+        {"job": "hebe_sg_multiimport",
+          "cluster": "hebe_import_5node_n1ql.spec",
+          "test_config": "syncgateway_import_multinode_throughput_10M_48partition_16vCPU.test",
+          "sg_config": "3.0/hebe_channel_xattr_import_multinode_partition_48.config",
+          "test_type":  "",
+          "load_config": ""}
+    ],
+    "Replicate": [
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_1node_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_off_channelcache_querylimit_only_15k",
+          "test": "syncgateway_deltasync_off_pull_1kb_10k_concurrency50.test"},
+
+        {"job": "syncgteway-hebe",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_1node_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_deltasync_on",
+          "test": "syncgateway_deltasync_on_pull_1kb_10k_concurrency50.test"}
+    ],
+    "SGReplicate": [
+        {"job": "hebe_sg_replicate_bidirectional",
+          "test_config": "syncgateway_replicate2_conflict_default.test",
+          "sg1_config": "3.0/hebe_replicate_sg1.config",
+          "sg2_config": "3.0/hebe_replicate_sg2.config",
+          "load_config1": "syncgateway_replicate2_conflict_load.test",
+          "load_config2": "syncgateway_replicate2_conflict_load.test"}
+    ],
+    "SGReplicateMulti": [
+        {"job": "sg_hebe_sgreplicate_multicluster",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr_kv_poolsize_8",
+          "test": "syncgateway_sg_replicate_4node_multicluster_push_3000_clients_1kb_docs_1hour.test"},
+
+        {"job": "sg_hebe_sgreplicate_multicluster",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_1node_colocated.spec",
+          "sg_config": "3.0/hebe_channel_nocache_xattr_cachelength_300k",
+          "test": "syncgateway_sg_replicate_multicluster_3000_clients.test"}
+    ],
+    "E2E": [
+        {"job": "sgw-cloud",
+          "sg_cluster_map": "cloud/infrastructure/cloud.ini",
+          "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions.config",
+          "test": "tests/syncgateway/e2e/syncgateway_e2e_push_100cbl_4sgw_1kb_8M.test"},
+
+        {"job": "sgw-cloud",
+          "sg_cluster_map": "cloud/infrastructure/cloud.ini",
+          "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions.config",
+          "test": "tests/syncgateway/e2e/syncgateway_e2e_pull_100cbl_4sgw_1kb_8M.test"},
+
+        {"job": "sgw-cloud",
+          "sg_cluster_map": "cloud/infrastructure/cloud.ini",
+          "cb_cluster_map": "cloud/infrastructure/sync_gateway/ec2_4s_4sgw_20c_large_dev.spec",
+          "sg_config": "perfrunner/utils/syncgateway/configs/3.1/hebe_e2e_basic_96partitions.config",
+          "test": "tests/syncgateway/e2e/syncgateway_e2e_bidi_100cbl_4sgw_1kb_8M.test"}
+    ],
+    "Resync": [
+      {
+        "job": "rhea-dev-sgw",
+        "cluster": "rhea_6kv_4n1ql_4index_4sgw.spec",
+        "test": "syncgateway_resync_4nodes_10M_changes.test"
+      }
+    ],
+    "WriteOnDemand": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_4node.test"},
+
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_4node",
+          "cb_cluster_map": "hebe_4nodes_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_write_4node_no_roundtripwrite.test"}
+    ],
+    "SyncOnDemand": [
+        {"job": "syncgteway-hebe-new",
+          "sg_cluster_map": "hebe_1node",
+          "cb_cluster_map": "hebe_1node_colocated.spec",
+          "sg_config": "3.0/hebe_channel_xattr",
+          "test": "syncgateway_sync_1node_nochannelcompaction_byuser_35kchannels.test"}
+    ]
+}

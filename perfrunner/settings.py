@@ -2314,6 +2314,7 @@ class JTSAccessSettings(PhaseSettings):
         self.aggregation_buffer_ms = options.get("aggregation_buffer_ms", "1000")
         self.max_segment_size = options.get("max_segment_size", None)
         self.vector_index_optimized_for = options.get("vector_index_optimized_for", None)
+        self.ivf_nprobe_pct = options.get("ivf_nprobe_pct", None)
         self.skip_indexing_collection = options.get("skip_indexing_collection", None)
         self.collections_limit_per_index = {}
         self.collections_per_index = options.get("collections_per_index", '1000')

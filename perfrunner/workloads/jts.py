@@ -145,6 +145,8 @@ def _execute_jts(
             f" -k_nearest_neighbour {settings.k_nearest_neighbour}"
             f" -fts_raw_query_map '{json.dumps(settings.fts_raw_query_map)}'"
         )
+        if settings.ivf_nprobe_pct:
+            params += f" -ivf_nprobe_pct {settings.ivf_nprobe_pct}"
     if settings.test_query_field2:
         params += f" -test_query_field2 {settings.test_query_field2}"
     print(params)

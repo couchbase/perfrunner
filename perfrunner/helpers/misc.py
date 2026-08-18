@@ -1,3 +1,4 @@
+import base64
 import datetime
 import ipaddress
 import json
@@ -16,6 +17,9 @@ from uuid import uuid4
 import requests
 import validators
 import yaml
+from botocore.auth import SigV4QueryAuth
+from botocore.awsrequest import AWSRequest
+from botocore.credentials import Credentials
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, generate_private_key
 from cryptography.x509 import (
@@ -242,6 +246,25 @@ def parse_duration_to_secs(duration: str) -> float:
 
 def copy_template(source, dest):
     shutil.copyfile(source, dest)
+
+
+def generate_bedrock_api_key(access_key: str, secret_key: str, region: str) -> str:
+    """Generate a short-term AWS Bedrock API key (bearer token) from IAM credentials.
+
+    Replicates the official `aws-bedrock-token-generator` package, which we cannot depend on
+    directly because it requires a newer botocore than the current awscli pinned allows.
+    Tokens are valid for 12 hours, so they must be generated at test run time rather than stored.
+    """
+    request = AWSRequest(
+        method="POST",
+        url="https://bedrock.amazonaws.com/",
+        headers={"host": "bedrock.amazonaws.com"},
+        params={"Action": "CallWithBearerToken"},
+    )
+    auth = SigV4QueryAuth(Credentials(access_key, secret_key), "bedrock", region, expires=43200)
+    auth.add_auth(request)
+    presigned_url = f"{request.url.removeprefix('https://')}&Version=1"
+    return f"bedrock-api-key-{base64.b64encode(presigned_url.encode()).decode()}"
 
 
 def url_exist(url: str) -> bool:

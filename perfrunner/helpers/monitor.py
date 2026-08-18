@@ -2213,19 +2213,29 @@ class Monitor:
                         logger.info("Rebalance completed and cluster is balanced")
 
     def wait_for_workflow_status(
-        self, host: str, workflow_id: str, status: str = "running", max_retries: int = 0
+        self,
+        host: str,
+        workflow_id: str,
+        status: str = "running",
+        max_retries: int = 0,
+        poll_interval: float = 0,
     ) -> Optional[dict]:
         logger.info(f"Waiting for workflow {workflow_id} to reach status {status}")
         retries = 0
         max_retries = max_retries or self.MAX_RETRY
+        poll_interval = poll_interval or self.MONITORING_DELAY
         # Progress states: deploying, running, pending, destroying
         # Final states: deployFailed, completed, partiallyCompleted, failed, destroyFailed
+        acceptable_statuses = {status.lower()}
+        if status.lower() == "running":
+            # A small workflow can go straight to completed between two polls
+            acceptable_statuses.add("completed")
         while True:
             workflow_details = self.rest.get_workflow_details(host, workflow_id)
             workflow_status = (
                 workflow_details.get("workflowRuns", [{}])[0].get("status", "").lower()
             )
-            if workflow_status == status.lower():
+            if workflow_status in acceptable_statuses:
                 return workflow_details
 
             if workflow_status in ["deployfailed", "failed", "destroyfailed", "partiallycompleted"]:
@@ -2241,7 +2251,7 @@ class Monitor:
                     f"Workflow {workflow_id} failed to reach the desired status. {workflow_details}"
                 )
 
-            time.sleep(self.MONITORING_DELAY)
+            time.sleep(poll_interval)
 
     def monitor_eventing_dcp_mutation(self, eventing_node: str, items: int):
         logger.info("Monitoring eventing backlog")

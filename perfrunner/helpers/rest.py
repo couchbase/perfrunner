@@ -2886,6 +2886,39 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         resp.raise_for_status()
         return resp.json().get("id")
 
+    def create_bedrock_integration(self, name: str, api_key: str, region: str) -> str:
+        # AutoVec workflows only support Bedrock integrations with a short-term API key auth
+        payload = {
+            "name": name,
+            "integrationType": "bedrock",
+            "data": {
+                "apiKey": api_key,
+                "region": region,
+            },
+        }
+        resp = self.dedicated_client.create_autovec_integration(self.tenant_id, payload)
+        if resp.status_code == 422 and "IntegrationAlreadyExists" in resp.text:
+            # A rerun on the same cluster: delete the stale integration (its short-term
+            # API key may be expired or of the wrong auth type) and recreate it. The
+            # integration id format is not a stable contract, so resolve it by name
+            logger.info(f"Bedrock integration '{name}' already exists. Recreating it.")
+            if integration_id := self.find_integration_id(name, "bedrock"):
+                self.delete_integration(integration_id)
+            resp = self.dedicated_client.create_autovec_integration(self.tenant_id, payload)
+        resp.raise_for_status()
+        return resp.json().get("id")
+
+    def find_integration_id(self, name: str, integration_type: str) -> Optional[str]:
+        resp = self.dedicated_client.list_autovec_integrations(
+            self.tenant_id, integration_type=integration_type, per_page=100
+        )
+        resp.raise_for_status()
+        for integration in resp.json().get("data", []):
+            data = integration.get("data", integration)
+            if data.get("name") == name:
+                return data.get("id")
+        return None
+
     def delete_integration(self, integration_id: str):
         resp = self.dedicated_client.delete_autovec_integration(self.tenant_id, integration_id)
         resp.raise_for_status()

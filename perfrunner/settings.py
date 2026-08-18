@@ -4102,6 +4102,14 @@ class AIServicesSettings:
         # Options: capella | openAI | bedrock
         self.model_provider = options.get("provider", "openAI")
         self.model_dimensions = int(options.get("model_dimensions", "1024"))
+
+        # Bedrock-specific settings. The region the Bedrock model is invoked in and
+        # whether model traffic should go through a private endpoint
+        self.bedrock_region = options.get("bedrock_region", "us-east-1")
+        self.private_endpoint_enabled = maybe_atoi(options.get("private_endpoint_enabled", "false"))
+        # Deploy a second workflow against an empty collection at the end of the test to
+        # measure the reuse-path deploy time (e.g. private endpoint lookup instead of creation)
+        self.measure_reuse_deploy = maybe_atoi(options.get("measure_reuse_deploy", "false"))
         # AI functions names
         self.functions_names = options.get("functions_names", "").split(",")
 

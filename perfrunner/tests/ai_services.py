@@ -9,7 +9,7 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.config_files import TimeTrackingFile
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import generate_bedrock_api_key, pretty_dict
 from perfrunner.helpers.rest import RestType
 from perfrunner.helpers.worker import aibench_task
 from perfrunner.settings import (
@@ -30,13 +30,13 @@ class AIWorkflow:
         hosted_model: dict,
         infra_uuid: Optional[str],
         s3_integration_id: Optional[str],
-        openai_integration_id: Optional[str],
+        model_integration_id: Optional[str],
     ):
         self.flow_uuid = infra_uuid
         self.ai_services_settings = ai_services_settings
         self.hosted_model = hosted_model
         self.s3_integration_id = s3_integration_id
-        self.openai_integration_id = openai_integration_id
+        self.model_integration_id = model_integration_id
 
     def _get_embedding_model(self) -> dict:
         if self.ai_services_settings.model_source == "internal" and self.hosted_model:
@@ -49,24 +49,31 @@ class AIWorkflow:
                     "modelName": self.hosted_model.get("model_name"),
                     "apiKeyId": ControlPlaneManager.get_model_api_key_id(),
                     "apiKeyToken": ControlPlaneManager.get_model_api_key(),
-                    "privateEndpointEnabled": False,
+                    "privateEndpointEnabled": self.ai_services_settings.private_endpoint_enabled,
                 }
             }
 
         # Otherwise we are using an external model specified by the test
-        return {
-            "external": {
-                "id": self.openai_integration_id,
-                "modelName": self.ai_services_settings.model_name,
-                "provider": self.ai_services_settings.model_provider,
-            }
+        external_model = {
+            "id": self.model_integration_id,
+            "modelName": self.ai_services_settings.model_name,
+            "provider": self.ai_services_settings.model_provider,
         }
+        if self.ai_services_settings.model_provider.lower() == "bedrock":
+            external_model.update(
+                {
+                    "dimensions": self.ai_services_settings.model_dimensions,
+                    "privateEndpointEnabled": self.ai_services_settings.private_endpoint_enabled,
+                }
+            )
+        return {"external": external_model}
 
     def get_workflow_payload(
         self,
         bucket: str,
         scope: str = "_default",
         collection: str = "_default",
+        name_suffix: str = "",
     ) -> dict:
         payload = {
             "type": self.ai_services_settings.workflow_type,
@@ -80,7 +87,7 @@ class AIWorkflow:
             "embeddingFieldMappings": {
                 "emb": {"sourceFields": self.ai_services_settings.schema_fields}
             },
-            "name": f"perfflow{self.flow_uuid}",
+            "name": f"perfflow{self.flow_uuid}{name_suffix}",
         }
         if self.ai_services_settings.workflow_type == "unstructured":
             payload.update(
@@ -176,26 +183,51 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
         "ai_workflow_stats": True,
     }
 
+    # Retries and polling interval for workflow deployment. Deploy times are compared with
+    # second-level granularity (e.g. private endpoint reuse), so poll every second
+    DEPLOY_MAX_RETRIES = 900
+    DEPLOY_POLL_INTERVAL = 1
+
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
         self.functions = {}
         self.runtimes = {}
         self.s3_integration_id = ""
-        self.openai_integration_id = ""
+        self.model_integration_id = ""
         self.workflow_id = None
+        self.workflow_ids = []
         self.wer_results = None
         self.f1_results = None
+        self._aws_credentials = None
 
     @timeit
-    def deploy_workflow(self):
+    def deploy_workflow(
+        self,
+        bucket: Optional[str] = None,
+        scope: str = "_default",
+        collection: str = "_default",
+        name_suffix: str = "",
+    ):
+        self.workflow_id = None
         try:
-            payload = self.workflow.get_workflow_payload(self.test_config.buckets[0])
+            payload = self.workflow.get_workflow_payload(
+                bucket or self.test_config.buckets[0],
+                scope=scope,
+                collection=collection,
+                name_suffix=name_suffix,
+            )
             self.workflow_id = self.rest.create_workflow(self.master_node, payload)
-            # Store the workflow id in the cluster spec so it can be destroyed later
-            self.cluster_spec.config.set("controlplane", "workflow_id", self.workflow_id)
+            self.workflow_ids.append(self.workflow_id)
+            # Store the workflow ids in the cluster spec so they can be destroyed later
+            self.cluster_spec.config.set(
+                "controlplane", "workflow_id", ",".join(self.workflow_ids)
+            )
             self.cluster_spec.update_spec_file()
             workflow_details = self.monitor.wait_for_workflow_status(
-                host=self.eventing_nodes[0], workflow_id=self.workflow_id
+                host=self.eventing_nodes[0],
+                workflow_id=self.workflow_id,
+                max_retries=self.DEPLOY_MAX_RETRIES,
+                poll_interval=self.DEPLOY_POLL_INTERVAL,
             )
             logger.info(f"Workflow details: {pretty_dict(workflow_details)}")
             # When a workflow reaches a running state, it will start processing the data
@@ -228,22 +260,31 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
             # We can still process the UDS workflow results in this case.
             logger.error(f"Error while waiting for workflow completion: {e}")
 
+    def get_aws_credentials(self) -> tuple[str, str]:
+        """Read and cache AWS credentials.
+
+        `local.get_aws_credential()` deletes the credential file after reading it, so
+        cache the result in case more than one integration needs it (e.g. S3 + Bedrock).
+        """
+        if self._aws_credentials is None:
+            try:
+                self._aws_credentials = local.get_aws_credential(
+                    self.ai_services_settings.aws_credential_path, True
+                )
+            except Exception:
+                self._aws_credentials = ("", "")
+        return self._aws_credentials
+
     def create_integrations(self, cluster_uuid: str):
         """
         Create integrations for the workflow if needed.
 
         - S3 integration for unstructured workflows
-        - OpenAI integration for internal models
+        - OpenAI or Bedrock integration for external models
         """
         # Check if we need to create an s3 integration
         if self.ai_services_settings.workflow_type == "unstructured":
-            try:
-                access_key_id, secret_access_key = local.get_aws_credential(
-                    self.ai_services_settings.aws_credential_path, True
-                )
-            except Exception:
-                access_key_id, secret_access_key = ("", "")
-
+            access_key_id, secret_access_key = self.get_aws_credentials()
             self.s3_integration_id = self.rest.create_s3_integration(
                 name=f"perfs3{cluster_uuid}",
                 access_key=access_key_id,
@@ -254,16 +295,29 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
             )
             logger.info(f"Created s3 integration: {self.s3_integration_id}")
 
-        # Check if we need to create an openai integration
+        # Check if we need to create a model integration
         if self.ai_services_settings.model_source == "internal":
-            # If we are using an internal model, we don't need to create an openai integration
+            # If we are using an internal model, we don't need to create a model integration
             return
 
-        self.openai_integration_id = self.rest.create_openai_integration(
+        if self.ai_services_settings.model_provider.lower() == "bedrock":
+            access_key_id, secret_access_key = self.get_aws_credentials()
+            api_key = generate_bedrock_api_key(
+                access_key_id, secret_access_key, self.ai_services_settings.bedrock_region
+            )
+            self.model_integration_id = self.rest.create_bedrock_integration(
+                name=f"perfbedrock{cluster_uuid}",
+                api_key=api_key,
+                region=self.ai_services_settings.bedrock_region,
+            )
+            logger.info(f"Created Bedrock integration: {self.model_integration_id}")
+            return
+
+        self.model_integration_id = self.rest.create_openai_integration(
             name=f"perfopenai{cluster_uuid}",
             access_key=self.get_provider_api_key(),
         )
-        logger.info(f"Created openAI integration: {self.openai_integration_id}")
+        logger.info(f"Created openAI integration: {self.model_integration_id}")
 
     def prepare_and_deploy_workflow(self):
         cluster_uuid = self.cluster_spec.infrastructure_settings.get("uuid", uuid4().hex[:6])
@@ -273,7 +327,7 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
             self.hosted_model_info.embedding_model,
             cluster_uuid,
             self.s3_integration_id,
-            self.openai_integration_id,
+            self.model_integration_id,
         )
         sleep(30)  # collect some initial metrics before starting the workflow
         workflow_deploy_time = self.deploy_workflow()
@@ -294,8 +348,40 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
         workflow_time = self.wait_for_workflow_completion_or_time()
         self.runtimes["workflow_time"] = workflow_time
 
+    def measure_reuse_deploy_time(self):
+        """Deploy a second workflow to measure the reuse-path deploy time.
+
+        The second workflow targets an empty collection, so it deploys and completes
+        without vectorising anything. With private endpoints enabled, its deploy time
+        should only include an endpoint lookup instead of endpoint provisioning.
+        """
+        if self.ai_services_settings.workflow_type != "structured":
+            # An unstructured workflow would re-ingest its S3 data source, so an
+            # empty target collection would not make its deployment any cheaper
+            logger.warning("Skipping reuse deploy time measurement for unstructured workflow")
+            return
+
+        main_workflow_id = self.workflow_id
+        bucket = self.test_config.buckets[0]
+        # Unique per deployment, so reruns don't collide with leftover collections or
+        # workflow names from previous runs on the same cluster
+        collection = f"reuse{uuid4().hex[:4]}"
+        self.rest.create_collection(self.master_node, bucket, "_default", collection)
+        reuse_deploy_time = self.deploy_workflow(
+            bucket=bucket, collection=collection, name_suffix=collection
+        )
+        if not self.workflow_id:
+            raise Exception("Failed to create reuse workflow")
+        self.runtimes["workflow_reuse_deploy_time"] = reuse_deploy_time
+        # Restore the main workflow id so that reporting reads the metadata of the
+        # workflow that actually vectorised the dataset, not the empty reuse one
+        self.workflow_id = main_workflow_id
+
     def run(self):
         self.run_workflow()
+
+        if self.ai_services_settings.measure_reuse_deploy:
+            self.measure_reuse_deploy_time()
 
         latencies = self.get_eventing_latencies()
         logger.info(f"{latencies=}")
@@ -321,6 +407,21 @@ class WorkflowIngestionAndLatencyTest(AIServicesTest):
         model_name = self.ai_services_settings.model_name
         if self.hosted_model_info.embedding_model:
             model_name = self.hosted_model_info.embedding_model.get("model_name")
+
+        if deploy_time := self.runtimes.get("workflow_deploy_time"):
+            self.reporter.post(*self.metrics.workflow_deploy_time(deploy_time, model_name))
+
+        if reuse_deploy_time := self.runtimes.get("workflow_reuse_deploy_time"):
+            self.reporter.post(
+                *self.metrics.workflow_deploy_time(reuse_deploy_time, model_name, reuse=True)
+            )
+
+        # Embedding call latency, as seen by the eventing function calling the model
+        latency_stats = self.process_latency_stats()
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            metric = self.metrics.embedding_call_latency(percentile, latency_stats, model_name)
+            if metric[0] > 0:
+                self.reporter.post(*metric)
 
         if self.wer_results:
             avg_wer = float(self.wer_results.get("avg_wer", 1.0))

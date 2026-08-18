@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.ai_services.AutoVecWorkflowTest
+
+[showfast]
+title = Autovec 1M docs (1KB), Bedrock Titan V2 model, private endpoint
+component = aiservices
+category = autovec
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 7
+num_buckets = 1
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 1000000
+size = 1024
+workers = 100
+ssl_mode = capella
+
+[access]
+time = 0
+latency_percentiles = 95,99
+
+[ai_services]
+model_source = external
+workflow_type = structured
+provider = bedrock
+model_name = amazon.titan-embed-text-v2:0
+model_dimensions = 1024
+bedrock_region = us-east-1
+private_endpoint_enabled = true
+measure_reuse_deploy = true
+schema_fields = body

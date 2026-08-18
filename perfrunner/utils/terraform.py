@@ -1561,31 +1561,36 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
     def destroy_workflow(self):
         # In the future we could go through all the deployed workflows attached to the
         # cluster and destroy them. But, as of now, the APIs to check this may not exist in some
-        # branches. Instead here we will only destroy the workflow if the test has explicitly
-        # deployed it.
-        workflow_id = self.infra_spec.controlplane_settings.get("workflow_id")
-        if not workflow_id:
+        # branches. Instead here we will only destroy the workflows if the test has explicitly
+        # deployed them. Tests deploying several workflows store their ids comma-separated.
+        workflow_ids = self.infra_spec.controlplane_settings.get("workflow_id", "")
+        if not workflow_ids:
             return
 
         cluster_id = self.cluster_ids[0]
-        try:
-            logger.info(f"Destroying workflow {workflow_id}")
-            resp = self.provisioned_api.delete_autovec_workflow(
-                self.tenant_id, self.project_id, cluster_id, workflow_id
-            )
-            raise_for_status(resp)
-            self.wait_for_workflow_destroy(cluster_id, workflow_id)
-        except Exception as e:
-            logger.error(f"Error while waiting for a workflow to be destroyed: {e}")
+        for workflow_id in workflow_ids.split(","):
+            try:
+                logger.info(f"Destroying workflow {workflow_id}")
+                resp = self.provisioned_api.delete_autovec_workflow(
+                    self.tenant_id, self.project_id, cluster_id, workflow_id
+                )
+                raise_for_status(resp)
+                self.wait_for_workflow_destroy(cluster_id, workflow_id)
+            except Exception as e:
+                logger.error(f"Error while waiting for a workflow to be destroyed: {e}")
 
-    def wait_for_workflow_destroy(self, cluster_id: str, workflow_id: str):
+    def wait_for_workflow_destroy(self, cluster_id: str, workflow_id: str, max_retries: int = 120):
         logger.info(f"Waiting for workflow {workflow_id} to be destroyed")
-        while True:
+        for _ in range(max_retries):
             resp = self.provisioned_api.get_autovec_workflow(
                 self.tenant_id, self.project_id, cluster_id, workflow_id
             )
             if resp.status_code == 404:
-                break
+                return
+            sleep(5)
+        # A workflow can get stuck in destroyFailed and never reach 404. Give up so the rest of the
+        # teardown can proceed; the cluster destroy will surface the leak
+        logger.error(f"Workflow {workflow_id} was not destroyed after {max_retries} checks.")
 
 
 class EKSDeployer(CloudVMDeployer):

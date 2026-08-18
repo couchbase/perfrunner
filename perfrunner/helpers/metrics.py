@@ -3012,6 +3012,37 @@ class MetricHelper:
         metric_id = f"{self.test_config.name}_processing_time"
         return self._metric(s2m(workflow_time), metric_id=metric_id, title=title)
 
+    def workflow_deploy_time(
+        self, deploy_time: float, model_name: str, reuse: bool = False
+    ) -> Metric:
+        """Report workflow deploy time in seconds.
+
+        `reuse` marks the deploy time of a subsequent workflow that reuses infrastructure
+        set up by the first deployment (e.g. an existing Bedrock private endpoint).
+        """
+        workflow_label = "Reuse Workflow" if reuse else "Workflow"
+        title = f"{workflow_label} Deploy Time (sec), {self._title} ({model_name})"
+        metric_id = f"{self.test_config.name}_deploy_time"
+        if reuse:
+            metric_id = f"{metric_id}_reuse"
+        return self._metric(round(deploy_time, 1), metric_id=metric_id, title=title, chirality=-1)
+
+    def embedding_call_latency(
+        self, percentile: float, latency_stats: dict, model_name: str
+    ) -> Metric:
+        """Report the eventing -> model embedding call latency (curl latency) in ms."""
+        latency = 0
+        for name, stats in latency_stats.items():
+            if name.startswith("curl_latency_") and stats:
+                latency = self.eventing_get_percentile_latency(percentile, stats)
+        title = (
+            f"{percentile:g}th percentile embedding call latency (ms), "
+            f"{self._title} ({model_name})"
+        )
+        percentile_str = f"{percentile:g}".replace(".", "_")
+        metric_id = f"{self.test_config.name}_embedding_latency_p{percentile_str}"
+        return self._metric(round(latency, 1), metric_id=metric_id, title=title, chirality=-1)
+
     def vectorization_throughput(
         self, autovec_time: float, num_successful_embeddings: int, model_name: str
     ) -> Metric:

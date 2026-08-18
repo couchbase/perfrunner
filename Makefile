@@ -5,8 +5,9 @@ ENV := env
 VERSION := 3.9.7
 PYTHON := python$(basename ${VERSION})
 PIP := ${ENV}/bin/pip
-PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
+PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring unittests.py
 .PHONY: docker
+RUFF := ${ENV}/bin/ruff check ${PYTHON_PROJECTS}
 
 # Bootstrap pyenv (installing the target Python if needed) and create the venv.
 # Respects a preconfigured PYENV_ROOT, defaulting to $HOME/.pyenv.
@@ -37,7 +38,10 @@ clean:
 	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:
-	${ENV}/bin/ruff check ${PYTHON_PROJECTS}
+	${RUFF}
+
+ruff-fix:
+	${RUFF} --fix
 
 test:
 	${ENV}/bin/coverage run --source=cbagent,perfrunner,spring -m pytest -v unittests.py

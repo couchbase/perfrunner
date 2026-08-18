@@ -169,8 +169,10 @@ class N1QLTest(PerfTest):
             scope = self.test_config.cluster.query_awr_scope
             collection = self.test_config.cluster.query_awr_collection
             location = f"{bucket}.{scope}.{collection}"
-            statement = (f'update system:awr set location="{location}", '
-                         f'interval="1m", threshold=0, enabled=true;')
+            statement = (
+                f'UPDATE system:awr SET location="{location}", '
+                f'interval="1m", threshold="0s", enabled=true;'
+            )
             logger.info(f"Enabling query AWR: {statement}")
             self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 

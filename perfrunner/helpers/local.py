@@ -17,6 +17,7 @@ from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from logger import logger
 from perfrunner.helpers.misc import (
     SSLCertificate,
+    X509CertPathPair,
     get_max_arg_strlen,
     pretty_dict,
     run_local_shell_command,
@@ -2045,9 +2046,22 @@ def create_javascript_udf(node, udflib, user, password, security):
     local(cmd)
 
 
-def create_x509_certificates(nodes: list[str]):
+def generate_server_x509_cert(nodes: list[str]):
     ssl = SSLCertificate(nodes)
-    ssl.generate()
+    ssl.generate_server_cert()
+
+
+def generate_client_x509_cert(
+    username: str = SSLCertificate.DEFAULT_CLIENT_CN,
+    storepass: str = SSLCertificate.DEFAULT_STOREPASS,
+) -> X509CertPathPair:
+    ssl = SSLCertificate()
+    return ssl.generate_client_cert(username, storepass)
+
+
+def generate_x509_crl(revoked_serial_numbers: Optional[list[int]] = None) -> str:
+    ssl = SSLCertificate()
+    return ssl.generate_crl(revoked_serial_numbers)
 
 
 def build_sdk_benchmark(benchmark_name: str, sdk_type: str, build_cmd: str = None):

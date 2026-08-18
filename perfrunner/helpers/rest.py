@@ -14,7 +14,7 @@ from decorator import decorator
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import my_public_ip, pretty_dict
+from perfrunner.helpers.misc import SSLCertificate, my_public_ip, pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec
 from perfrunner.utils.terraform import SERVICES_CAPELLA_TO_PERFRUNNER, ControlPlaneManager
@@ -1457,7 +1457,7 @@ class DefaultRestHelper(RestBase):
 
     def upload_cluster_certificate(self, node: str):
         logger.info("Uploading cluster certificate to {}".format(node))
-        data = open('./certificates/inbox/ca.pem', 'rb').read()
+        data = open(SSLCertificate.CA_CERT_PATH, 'rb').read()
         url = self._get_api_url(host=node, path='controller/uploadClusterCA')
         self.post(url=url, data=data)
 

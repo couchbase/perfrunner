@@ -714,11 +714,11 @@ class XdcrCngTest(XdcrInitTest):
 
     @property
     def node_certificate(self) -> str:
-       return self.read_inbox_file('chain.pem')
+        return self.read_inbox_file(SSLCertificate.SERVER_CERT_FILENAME)
 
     @property
     def node_key(self) -> str:
-        return self.read_inbox_file('pkey.key')
+        return self.read_inbox_file(SSLCertificate.SERVER_KEY_FILENAME)
 
     def root_certificate(self, host: str) -> str:
         return self.rest.get_certificate(host).split('\n\n')[0]

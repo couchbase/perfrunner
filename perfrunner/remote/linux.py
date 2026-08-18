@@ -11,6 +11,7 @@ import paramiko
 
 from logger import logger
 from perfrunner.helpers.misc import (
+    SSLCertificate,
     pretty_dict,
     uhex,
 )
@@ -1008,13 +1009,22 @@ class RemoteLinux(Remote):
 
     @all_servers
     def setup_x509(self):
-        logger.info('Setting up x.509 certificates')
-        install_dir = self.get_install_dir()
-        put("certificates/inbox", f"{install_dir}/var/lib/couchbase/")
-        run(f"chmod a+x {install_dir}/var/lib/couchbase/inbox/chain.pem")
-        run(f"chmod a+x {install_dir}/var/lib/couchbase/inbox/pkey.key")
+        inbox_base_dir = f"{self.get_install_dir()}/var/lib/couchbase"
+        remote_inbox = f"{inbox_base_dir}/{SSLCertificate.INBOX_DIRNAME}"
+        logger.info(f"Setting up x.509 certificates in {remote_inbox}")
 
-    @master_server
+        filenames = (SSLCertificate.SERVER_CERT_FILENAME, SSLCertificate.SERVER_KEY_FILENAME)
+        run(f"mkdir -p {remote_inbox}")
+        for filename in filenames:
+            put(os.path.join(SSLCertificate.INBOX, filename), f"{remote_inbox}/")
+
+        # The uploads keep the remote default mode, so make them readable by the couchbase user.
+        remote_paths = " ".join(f"{remote_inbox}/{filename}" for filename in filenames)
+        run(f"chmod a+r {remote_paths}")
+
+    # Not just the master: the CA is also uploaded to spare nodes, and a spare is its own
+    # standalone cluster until a rebalance joins it, so it has to allow the upload itself.
+    @all_servers
     def allow_non_local_ca_upload(self):
         logger.info('Enabling non-local CA upload')
         command = ("curl -X POST -v -u Administrator:password http://localhost:8091" +

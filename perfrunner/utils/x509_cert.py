@@ -16,14 +16,10 @@ def main():
 
     args = parser.parse_args()
 
-    cert = SSLCertificate(args.addresses.split(","))
+    dest = args.dest or SSLCertificate.INBOX
+    SSLCertificate(args.addresses.split(","), output_dir=dest).generate_server_cert()
 
-    path = os.path.abspath(args.dest or cert.INBOX)
-    if not os.path.exists(path):
-        os.makedirs(path)
-    cert.INBOX = path
-    cert.generate()
-    logger.info(f"Generated certificates located at {path}")
+    logger.info(f"Generated certificates located at {os.path.abspath(dest)}")
 
 
 if __name__ == "__main__":

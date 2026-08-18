@@ -891,20 +891,34 @@ class DefaultClusterManager(ClusterManagerBase):
                     extra_hosts += self.cluster_spec.stellar_gateway_haproxy_hosts
                 server_list += [host for host in extra_hosts if host not in server_list]
             logger.info(f"X509 certificate setup for: {server_list}")
-            local.create_x509_certificates(server_list)
+            local.generate_server_x509_cert(server_list)
             self.remote.allow_non_local_ca_upload()
             self.remote.setup_x509()
 
-            # Every cluster keeps its own certificate, so the CA has to be uploaded to, and
-            # the certificate reloaded on, each of them separately.
-            offset = 0
-            for num_nodes in self.initial_nodes:
-                nodes = self.cluster_spec.servers[offset:offset + num_nodes]
+            # Every cluster keeps its own certificate, so each one is set up separately, and
+            # within a cluster the three steps have different scopes.
+            for (_, cluster_nodes), num_nodes in zip(
+                self.cluster_spec.clusters, self.initial_nodes
+            ):
+                nodes, spares = cluster_nodes[:num_nodes], cluster_nodes[num_nodes:]
+
+                # Uploading the CA is cluster-wide, so one call on the master covers every
+                # joined node, and repeating it on a node that already trusts the CA fails. A
+                # spare is a standalone cluster until a rebalance joins it, so it needs its own
+                # upload to trust this CA when it does.
                 self.rest.upload_cluster_certificate(nodes[0])
-                for node in nodes:
+                for spare in spares:
+                    self.rest.upload_cluster_certificate(spare)
+
+                # Reloading is node-local: every node has to activate its own certificate,
+                # spares included, or a swapped-in node presents nothing.
+                for node in cluster_nodes:
                     self.rest.reload_cluster_certificate(node)
+
+                # Don't need to set cert auth on spare nodes as they'll inherit the settings when
+                # joining the cluster.
+                for node in nodes:
                     self.rest.enable_certificate_auth(node)
-                offset += num_nodes
 
     def set_cipher_suite(self):
         if self.test_config.access_settings.cipher_list:

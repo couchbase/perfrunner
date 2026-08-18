@@ -25,6 +25,7 @@ pip-log.txt
 # Local testing
 *.db
 *.pem
+*.key
 *.pid
 *.result
 *.out

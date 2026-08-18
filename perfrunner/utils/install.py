@@ -20,8 +20,8 @@ from perfrunner.helpers.local import (
     cao_generate_config,
     check_if_remote_branch_exists,
     clone_git_repo,
-    create_x509_certificates,
     extract_any,
+    generate_server_x509_cert,
     run_custom_cmd,
 )
 from perfrunner.helpers.misc import create_build_tuple, pretty_dict, url_exist
@@ -307,7 +307,7 @@ class OperatorInstaller:
                     f"*.{cluster_name}-cloud-native-gateway-service.default.svc.cluster.local",
                 }
             )
-        create_x509_certificates(addresses)
+        generate_server_x509_cert(addresses)
         self.remote.create_certificate_secrets()
         self.remote.create_docker_secret(self.docker_config_path)
 

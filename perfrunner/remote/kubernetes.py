@@ -16,6 +16,7 @@ from perfrunner.helpers.config_files import (
     CAOHorizontalAutoscalerFile,
     IngressFile,
 )
+from perfrunner.helpers.misc import SSLCertificate
 from perfrunner.remote import YCSB_MAVEN_OPTS, Remote
 from perfrunner.settings import ClusterSpec, SyncgatewaySettings
 
@@ -223,13 +224,14 @@ class RemoteKubernetes(Remote):
             docker_config_path)
 
     def create_certificate_secrets(self):
-        cert_dir = "certificates/inbox"
-        self.create_secret("couchbase-operator-tls", "generic", f"{cert_dir}/ca.pem")
+        self.create_secret("couchbase-operator-tls", "generic", SSLCertificate.CA_CERT_PATH)
         self.create_secret(
-            "couchbase-server-ca", "tls", (f"{cert_dir}/ca.pem", f"{cert_dir}/ca_key.key")
+            "couchbase-server-ca", "tls", (SSLCertificate.CA_CERT_PATH, SSLCertificate.CA_KEY_PATH)
         )
         self.create_secret(
-            "couchbase-server-tls", "tls", (f"{cert_dir}/chain.pem", f"{cert_dir}/pkey.key")
+            "couchbase-server-tls",
+            "tls",
+            (SSLCertificate.SERVER_CERT_PATH, SSLCertificate.SERVER_KEY_PATH),
         )
 
     def delete_secret(self, secret_name, ignore_errors=True):

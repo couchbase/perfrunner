@@ -4,6 +4,7 @@ import importlib.metadata
 import json
 import math
 import os
+import stat
 import subprocess
 import sys
 import tempfile
@@ -30,7 +31,7 @@ from perfrunner.helpers.local_stats import (
     spring_latency_snapshot_dir,
     spring_latency_target_groups,
 )
-from perfrunner.helpers.misc import parse_duration_to_secs, pretty_dict
+from perfrunner.helpers.misc import SSLCertificate, parse_duration_to_secs, pretty_dict
 from perfrunner.remote import api, executor
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.analytics.bigfun.query_gen import new_queries
@@ -1369,6 +1370,115 @@ class RemoteApiTest(TestCase):
                 pass
 
 
+class X509ClusterSetupTest(TestCase):
+    """Pin the scope of each REST step in `set_x509_certificates()`.
+
+    Uploading the CA is cluster-wide, reloading is node-local, and enabling client certificate
+    auth is cluster-wide but must not reach a standalone spare. A spec with spares and more than
+    one cluster is the only shape that tells the three apart.
+    """
+
+    SPEC = (
+        "[clusters]\n"
+        "c1 =\n"
+        "    10.0.0.1:kv\n"
+        "    10.0.0.2:kv\n"
+        "    10.0.0.3:kv\n"
+        "c2 =\n"
+        "    10.0.1.1:kv\n"
+        "    10.0.1.2:kv\n"
+        "\n"
+        "[clients]\n"
+        "hosts =\n"
+        "    10.0.2.1\n"
+        "\n"
+        "[storage]\n"
+        "data = /data\n"
+        "\n"
+        "[metadata]\n"
+        "cluster = test\n"
+    )
+
+    def setUp(self):
+        from perfrunner.helpers import cluster as cluster_module
+
+        spec_file = tempfile.NamedTemporaryFile(mode="w", suffix=".spec", delete=False)
+        spec_file.write(self.SPEC)
+        spec_file.close()
+        self.addCleanup(os.unlink, spec_file.name)
+        self.cluster_spec = ClusterSpec()
+        self.cluster_spec.parse(spec_file.name, override=None)
+
+        self.calls = []
+        self.generated = []
+
+        # `local` writes real certificates to disk; stand in for it so the test only observes
+        # which hosts end up in the SAN list.
+        self.cluster_module = cluster_module
+        self.addCleanup(setattr, cluster_module, "local", cluster_module.local)
+        cluster_module.local = SimpleNamespace(generate_server_x509_cert=self.generated.append)
+
+    def _manager(self, initial_nodes):
+        def record(name):
+            return lambda node, *args, **kwargs: self.calls.append((name, node))
+
+        # Constructed without __init__, which would build a RestHelper, a RemoteHelper and a
+        # Monitor. None of them affect which nodes each step targets.
+        cm = object.__new__(self.cluster_module.DefaultClusterManager)
+        cm.cluster_spec = self.cluster_spec
+        cm.initial_nodes = initial_nodes
+        cm.test_config = SimpleNamespace(
+            access_settings=SimpleNamespace(ssl_mode="auth"),
+            xdcr_settings=SimpleNamespace(cng_haproxy=False),
+        )
+        cm.rest = SimpleNamespace(
+            upload_cluster_certificate=record("upload"),
+            reload_cluster_certificate=record("reload"),
+            enable_certificate_auth=record("enable"),
+        )
+        cm.remote = SimpleNamespace(
+            allow_non_local_ca_upload=lambda: None,
+            setup_x509=lambda: None,
+        )
+        return cm
+
+    def _hosts(self, kind):
+        return [node for name, node in self.calls if name == kind]
+
+    def test_each_step_targets_the_right_nodes(self):
+        self._manager([2, 1]).set_x509_certificates()
+
+        # The SAN list covers every host in the spec, spares included.
+        self.assertEqual(
+            self.generated,
+            [["10.0.0.1", "10.0.0.2", "10.0.0.3", "10.0.1.1", "10.0.1.2"]],
+        )
+        # Cluster-wide: the master of each cluster, plus each standalone spare.
+        self.assertEqual(self._hosts("upload"), ["10.0.0.1", "10.0.0.3", "10.0.1.1", "10.0.1.2"])
+        # Node-local: everything, so a swapped-in spare presents a certificate.
+        self.assertEqual(
+            self._hosts("reload"),
+            ["10.0.0.1", "10.0.0.2", "10.0.0.3", "10.0.1.1", "10.0.1.2"],
+        )
+        # Joined nodes only: a standalone spare with this enabled would demand a client
+        # certificate during its own join handshake.
+        self.assertEqual(self._hosts("enable"), ["10.0.0.1", "10.0.0.2", "10.0.1.1"])
+
+    def test_second_cluster_is_not_read_off_the_first_clusters_spares(self):
+        # Walking the flat server list by offset put the second cluster's window inside the
+        # first cluster's spare nodes.
+        self._manager([2, 1]).set_x509_certificates()
+
+        self.assertIn("10.0.1.1", self._hosts("enable"))
+        self.assertNotIn("10.0.0.3", self._hosts("enable"))
+
+    def test_a_cluster_without_spares_reloads_only_its_own_nodes(self):
+        self._manager([3, 2]).set_x509_certificates()
+
+        self.assertEqual(self._hosts("upload"), ["10.0.0.1", "10.0.1.1"])
+        self.assertEqual(self._hosts("enable"), self._hosts("reload"))
+
+
 class RemoteCharacterisationTest(TestCase):
     """Pin the remote layer's contract: host targeting, command strings, result shapes.
 
@@ -1439,6 +1549,50 @@ class RemoteCharacterisationTest(TestCase):
         for server in ("10.0.0.1", "10.0.0.2", "10.0.0.3"):
             commands = [command for command, _ in self.created[server].commands]
             self.assertIn(expected, commands)
+
+    def test_allow_non_local_ca_upload_runs_on_every_server(self):
+        # Spares get their own CA upload, and a spare is a standalone cluster, so it has to
+        # allow the upload itself rather than inheriting it from the master.
+        remote = self._remote()
+        remote.allow_non_local_ca_upload()
+        for server in ("10.0.0.1", "10.0.0.2", "10.0.0.3"):
+            commands = [command for command, _ in self.created[server].commands]
+            self.assertTrue(
+                any("allowNonLocalCACertUpload" in command for command in commands), server
+            )
+
+    def test_setup_x509_uploads_only_the_node_certificate_and_key(self):
+        # The inbox also holds the CA and the client certificate, private keys included. Only
+        # `reloadCertificate`'s two files belong on a server, so uploading the directory would
+        # hand every node key material it never reads.
+        cwd = os.getcwd()
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.addCleanup(os.chdir, cwd)
+        os.chdir(tmp.name)
+        os.makedirs(SSLCertificate.INBOX)
+        for name in ("ca.pem", "ca.key", "chain.pem", "pkey.key", "client.pem", "client.key"):
+            Path(SSLCertificate.INBOX, name).write_text(name)
+
+        remote = self._remote()
+        remote.setup_x509()
+
+        for server in ("10.0.0.1", "10.0.0.2", "10.0.0.3"):
+            session = self.created[server]
+            uploaded = sorted(os.path.basename(local) for local, _ in session.uploads)
+            self.assertEqual(uploaded, ["chain.pem", "pkey.key"], server)
+            remote_dir = "/opt/couchbase/var/lib/couchbase/inbox"
+            self.assertEqual(
+                sorted(remote for _, remote in session.uploads),
+                [f"{remote_dir}/chain.pem", f"{remote_dir}/pkey.key"],
+            )
+            commands = [command for command, _ in session.commands]
+            self.assertTrue(any(f"mkdir -p {remote_dir}" in c for c in commands), commands)
+            # One chmod for both files, and it grants read: +x would leave an unreadable key
+            # unreadable.
+            chmods = [c for c in commands if "chmod" in c]
+            self.assertEqual(len(chmods), 1, chmods)
+            self.assertIn(f"chmod a+r {remote_dir}/chain.pem {remote_dir}/pkey.key", chmods[0])
 
     def test_master_server_decorator_targets_first_server(self):
         remote = self._remote()
@@ -1871,3 +2025,242 @@ class CeleryTaskAbortTest(TestCase):
         FailingWorkerManager().abort_all_tasks()
 
         self.assertEqual(aborted, ["task-1", "task-3"])
+
+
+class SSLCertificateTest(TestCase):
+    """Coverage for X.509 node and client certificate generation."""
+
+    def setUp(self):
+        # `output_dir` keeps generation out of the repo inbox, so these tests need neither a
+        # chdir nor a writable `certificates/inbox`, and stay safe under pytest-xdist.
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.inbox = tmp.name
+
+    def _cert(self, hosts: list = None) -> SSLCertificate:
+        return SSLCertificate(hosts, output_dir=self.inbox)
+
+    def _path(self, filename: str) -> str:
+        return os.path.join(self.inbox, filename)
+
+    def _load_cert(self, path: str):
+        from cryptography.x509 import load_pem_x509_certificate
+
+        with open(path, "rb") as fh:
+            return load_pem_x509_certificate(fh.read())
+
+    def _common_name(self, cert) -> str:
+        from cryptography.x509.oid import NameOID
+
+        return cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+
+    def _read(self, filename: str) -> bytes:
+        with open(os.path.join(self.inbox, filename), "rb") as fh:
+            return fh.read()
+
+    def test_certificate_file_names(self):
+        # Couchbase Server requires the node certificate and key to be named chain.pem and
+        # pkey.key in its inbox, so these constants are not free to change.
+        self.assertEqual(SSLCertificate.SERVER_CERT_FILENAME, "chain.pem")
+        self.assertEqual(SSLCertificate.SERVER_KEY_FILENAME, "pkey.key")
+        self.assertEqual(SSLCertificate.CA_CERT_FILENAME, "ca.pem")
+        self.assertEqual(SSLCertificate.CLIENT_CERT_FILENAME, "client.pem")
+        self.assertEqual(SSLCertificate.CLIENT_KEY_FILENAME, "client.key")
+
+        # Every path constant is that file name inside the inbox.
+        for filename, path in (
+            (SSLCertificate.CA_CERT_FILENAME, SSLCertificate.CA_CERT_PATH),
+            (SSLCertificate.CA_KEY_FILENAME, SSLCertificate.CA_KEY_PATH),
+            (SSLCertificate.CRL_FILENAME, SSLCertificate.CRL_PATH),
+            (SSLCertificate.SERVER_CERT_FILENAME, SSLCertificate.SERVER_CERT_PATH),
+            (SSLCertificate.SERVER_KEY_FILENAME, SSLCertificate.SERVER_KEY_PATH),
+            (SSLCertificate.CLIENT_CERT_FILENAME, SSLCertificate.CLIENT_CERT_PATH),
+            (SSLCertificate.CLIENT_KEY_FILENAME, SSLCertificate.CLIENT_KEY_PATH),
+            (SSLCertificate.CLIENT_BUNDLE_FILENAME, SSLCertificate.CLIENT_BUNDLE_PATH),
+        ):
+            self.assertEqual(path, os.path.join(SSLCertificate.INBOX, filename))
+
+    def test_generate_server_cert(self):
+        from cryptography.x509 import (
+            ExtendedKeyUsage,
+            SubjectAlternativeName,
+        )
+        from cryptography.x509.oid import ExtendedKeyUsageOID
+
+        self._cert(["127.0.0.1", "node1.perf.couchbase.com"]).generate_server_cert()
+
+        for name in ("ca.pem", "ca.key", "chain.pem", "pkey.key"):
+            self.assertTrue(os.path.exists(self._path(name)), name)
+
+        cert = self._load_cert(self._path(SSLCertificate.SERVER_CERT_FILENAME))
+        self.assertEqual(self._common_name(cert), "Couchbase Server")
+
+        eku = cert.extensions.get_extension_for_class(ExtendedKeyUsage).value
+        self.assertIn(ExtendedKeyUsageOID.SERVER_AUTH, eku)
+
+        san = cert.extensions.get_extension_for_class(SubjectAlternativeName).value
+        self.assertEqual(
+            {str(name.value) for name in san},
+            {"127.0.0.1", "node1.perf.couchbase.com"},
+        )
+
+    def test_generate_client_cert(self):
+        from cryptography.x509 import ExtendedKeyUsage, SubjectAlternativeName
+        from cryptography.x509.extensions import ExtensionNotFound
+        from cryptography.x509.oid import ExtendedKeyUsageOID
+
+        cert_path, key_path = self._cert().generate_client_cert("Administrator")
+
+        self.assertEqual(key_path, self._path(SSLCertificate.CLIENT_KEY_FILENAME))
+        self.assertEqual(cert_path, self._path(SSLCertificate.CLIENT_CERT_FILENAME))
+
+        cert = self._load_cert(cert_path)
+        # The CN is the Couchbase RBAC username the client authenticates as.
+        self.assertEqual(self._common_name(cert), "Administrator")
+
+        eku = cert.extensions.get_extension_for_class(ExtendedKeyUsage).value
+        self.assertEqual(list(eku), [ExtendedKeyUsageOID.CLIENT_AUTH])
+
+        # A client cert has no SAN: it identifies a user, not a host.
+        with self.assertRaises(ExtensionNotFound):
+            cert.extensions.get_extension_for_class(SubjectAlternativeName)
+
+    def test_client_and_server_certs_share_a_ca(self):
+        self._cert(["127.0.0.1"]).generate_server_cert()
+        ca_key = self._read("ca.key")
+
+        self._cert().generate_client_cert("Administrator")
+
+        # The existing CA must be reused, not regenerated: a new CA would
+        # invalidate the node certificates already deployed to the cluster.
+        self.assertEqual(self._read("ca.key"), ca_key)
+
+        ca = self._load_cert(self._path(SSLCertificate.CA_CERT_FILENAME))
+        for cert_path in (
+            self._path(SSLCertificate.SERVER_CERT_FILENAME),
+            self._path(SSLCertificate.CLIENT_CERT_FILENAME),
+        ):
+            cert = self._load_cert(cert_path)
+            self.assertEqual(cert.issuer, ca.subject, cert_path)
+
+    def test_private_keys_are_not_world_readable(self):
+        ssl_cert = self._cert(["127.0.0.1"])
+        ssl_cert.generate_server_cert()
+        ssl_cert.generate_client_cert("Administrator")
+
+        for key_name in ("ca.key", "pkey.key", "client.key", "client.p12"):
+            mode = os.stat(self._path(key_name)).st_mode
+            self.assertEqual(stat.S_IMODE(mode), 0o600, key_name)
+
+    def test_node_cert_allows_client_auth_for_node_to_node(self):
+        from cryptography.x509 import ExtendedKeyUsage
+        from cryptography.x509.oid import ExtendedKeyUsageOID
+
+        self._cert(["127.0.0.1"]).generate_server_cert()
+
+        cert = self._load_cert(self._path(SSLCertificate.SERVER_CERT_FILENAME))
+        eku = cert.extensions.get_extension_for_class(ExtendedKeyUsage).value
+        # Under n2n encryption a node is also a TLS client of other nodes, so serverAuth
+        # alone is not enough.
+        self.assertEqual(
+            sorted(oid.dotted_string for oid in eku),
+            sorted(
+                [
+                    ExtendedKeyUsageOID.SERVER_AUTH.dotted_string,
+                    ExtendedKeyUsageOID.CLIENT_AUTH.dotted_string,
+                ]
+            ),
+        )
+
+    def test_client_bundle_is_readable_by_keytool_password(self):
+        from cryptography.hazmat.primitives.serialization import pkcs12
+
+        self._cert().generate_client_cert("Administrator", storepass="s3cret")
+
+        with open(self._path(SSLCertificate.CLIENT_BUNDLE_FILENAME), "rb") as fh:
+            key, cert, cas = pkcs12.load_key_and_certificates(fh.read(), b"s3cret")
+
+        # The bundle has to carry the same identity as the PEM pair, plus the CA, or the
+        # keystore built from it cannot complete the handshake in either direction.
+        self.assertEqual(self._common_name(cert), "Administrator")
+        self.assertEqual(
+            cert.serial_number,
+            self._load_cert(self._path(SSLCertificate.CLIENT_CERT_FILENAME)).serial_number,
+        )
+        self.assertEqual([self._common_name(ca) for ca in cas], ["Couchbase Root CA"])
+        self.assertIsNotNone(key)
+
+    def test_ca_can_sign_a_crl(self):
+        from cryptography.x509 import KeyUsage, load_pem_x509_crl
+
+        crl_path = self._cert().generate_crl(revoked_serial_numbers=[1234, 5678])
+
+        self.assertEqual(crl_path, self._path(SSLCertificate.CRL_FILENAME))
+
+        ca = self._load_cert(self._path(SSLCertificate.CA_CERT_FILENAME))
+        # RFC 5280 4.2.1.3: a CRL issuer's KeyUsage has to assert cRLSign.
+        key_usage = ca.extensions.get_extension_for_class(KeyUsage).value
+        self.assertTrue(key_usage.crl_sign)
+
+        with open(crl_path, "rb") as fh:
+            crl = load_pem_x509_crl(fh.read())
+        self.assertEqual(crl.issuer, ca.subject)
+        self.assertTrue(crl.is_signature_valid(ca.public_key()))
+        self.assertEqual(sorted(revoked.serial_number for revoked in crl), [1234, 5678])
+
+    def test_empty_crl_is_valid(self):
+        from cryptography.x509 import load_pem_x509_crl
+
+        crl_path = self._cert().generate_crl()
+        with open(crl_path, "rb") as fh:
+            crl = load_pem_x509_crl(fh.read())
+        self.assertEqual(len(list(crl)), 0)
+
+    def test_expired_ca_is_replaced_instead_of_reused(self):
+        from datetime import timedelta
+
+        stale = self._cert(["127.0.0.1"])
+        stale.not_valid_before = stale.not_valid_before - timedelta(days=400)
+        stale.not_valid_after = stale.not_valid_before + timedelta(days=60)
+        stale.generate_ca()
+        stale_ca_key = self._read("ca.key")
+
+        # A checkout that is reused rather than made fresh can hold a CA from an earlier
+        # run. An expired one must not be reused: everything it signs fails validation.
+        self._cert(["127.0.0.1"]).generate_server_cert()
+
+        self.assertNotEqual(self._read("ca.key"), stale_ca_key)
+        ca = self._load_cert(self._path(SSLCertificate.CA_CERT_FILENAME))
+        cert = self._load_cert(self._path(SSLCertificate.SERVER_CERT_FILENAME))
+        self.assertEqual(cert.issuer, ca.subject)
+        self.assertGreaterEqual(ca.not_valid_after_utc, cert.not_valid_after_utc)
+
+    def test_ca_close_to_expiry_is_replaced(self):
+        from datetime import timedelta
+
+        # Still valid today, but with less than MIN_CA_VALIDITY left, so a test starting now
+        # could outlive it.
+        short = self._cert(["127.0.0.1"])
+        short.not_valid_after = short.not_valid_before + timedelta(days=5)
+        short.generate_ca()
+        short_ca_key = self._read("ca.key")
+
+        self._cert(["127.0.0.1"]).generate_server_cert()
+
+        self.assertNotEqual(self._read("ca.key"), short_ca_key)
+
+    def test_output_dir_is_self_contained_and_leaves_the_inbox_alone(self):
+        # `x509_cert --dest` used to generate into the repo inbox and copy out of it, which
+        # omitted a reused CA from the destination and deleted the inbox's staged certificates.
+        # A separate output directory gets its own complete set and touches nothing else.
+        inbox, dest = self._path("inbox"), self._path("dest")
+        SSLCertificate(["127.0.0.1"], output_dir=inbox).generate_server_cert()
+        staged = {name: Path(inbox, name).read_bytes() for name in os.listdir(inbox)}
+
+        SSLCertificate(["10.0.0.1"], output_dir=dest).generate_server_cert()
+
+        # Complete, so the node certificate in `dest` can be verified against a CA beside it.
+        self.assertEqual(sorted(os.listdir(dest)), ["ca.key", "ca.pem", "chain.pem", "pkey.key"])
+        self.assertEqual({name: Path(inbox, name).read_bytes() for name in staged}, staged)
+        # A CA in another directory is not a CA to reuse.
+        self.assertNotEqual(Path(dest, "ca.pem").read_bytes(), staged["ca.pem"])

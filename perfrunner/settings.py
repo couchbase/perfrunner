@@ -16,6 +16,7 @@ from decorator import decorator
 from logger import logger
 from perfrunner.helpers.misc import (
     SafeEnum,
+    SSLCertificate,
     creds_tuple,
     maybe_atoi,
     run_aws_cli_command,
@@ -1628,7 +1629,6 @@ class PhaseSettings:
     SSL_MODE = 'none'
     SSL_AUTH_KEYSTORE = "certificates/auth.keystore"
     SSL_DATA_KEYSTORE = "certificates/data.keystore"
-    SSL_KEYSTOREPASS = "storepass"
     CERTIFICATE_FILE = "root.pem"
     SHOW_TLS_VERSION = False
     CIPHER_LIST = None
@@ -1923,7 +1923,7 @@ class PhaseSettings:
 
         # SSL settings
         self.ssl_mode = (options.get('ssl_mode', self.SSL_MODE))
-        self.ssl_keystore_password = self.SSL_KEYSTOREPASS
+        self.ssl_keystore_password = SSLCertificate.DEFAULT_STOREPASS
         if self.ssl_mode == 'auth':
             self.ssl_keystore_file = self.SSL_AUTH_KEYSTORE
         else:

@@ -108,7 +108,7 @@ class DateBuilder:
         self.years = itertools.cycle(yrange)
         self.month = itertools.cycle(mrange)
         self.days = itertools.cycle(drange)
-        self.dates_list = list()
+        self.dates_list = []
         self.total_size = 10*12*30
         self.form_dates_list()
 

@@ -33,7 +33,7 @@ class CBAsyncGen3:
         )
         self.cluster = TxCluster(connection_string=connection_string, options=options)
         self.bucket_name = kwargs['bucket']
-        self.collections = dict()
+        self.collections = {}
         self.collection = None
 
     def connect_collections(self, scope_collection_list):
@@ -124,7 +124,7 @@ class CBGen3(CBAsyncGen3):
         self.cluster = Cluster(connection_string=connection_string, options=options)
         self.bucket_name = kwargs['bucket']
         self.bucket = None
-        self.collections = dict()
+        self.collections = {}
         self.collection = None
 
     def create(self, *args, **kwargs):

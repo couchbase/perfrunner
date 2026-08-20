@@ -48,9 +48,9 @@ class SecondaryStorageStats(CouchbaseCollector):
         port = '9102'
         uri = "/stats/storage"
         samples = self.get_http(path=uri, server=server, port=port)
-        index_stats = dict()
+        index_stats = {}
         for sample in samples:
-            stats = dict()
+            stats = {}
             if "Index" not in sample:
                 continue
             index = sample["Index"].split(":", 1)[1]

@@ -1402,12 +1402,12 @@ class CollectionSettings:
 
         self.collection_stat_groups = self.COLLECTION_STAT_GROUPS
         if self.collection_map:
-            self.collection_stat_groups = set([
-                options.get('stat_group')
+            self.collection_stat_groups = {
+                options.get("stat_group")
                 for scopes in self.collection_map.values()
                 for collections in scopes.values()
                 for options in collections.values()
-            ]) - {None}
+            } - {None}
 
     def create_uniform_collection_map(self, buckets: Iterable[str]):
         coll_map = {
@@ -3290,7 +3290,7 @@ class ColumnarCopyToSettings:
         if not self.pairwise_param_combinations:
             return list(itertools.product(*all_param_lists))
 
-        param_list_lengths = set(len(p) for p in all_param_lists)
+        param_list_lengths = {len(p) for p in all_param_lists}
         num_lengths = len(param_list_lengths)
         max_len = max(param_list_lengths)
         if num_lengths > 2 or (num_lengths == 2 and 1 not in param_list_lengths):
@@ -3299,7 +3299,7 @@ class ColumnarCopyToSettings:
                 f"Got parameter lists with lengths: {param_list_lengths}."
             )
 
-        return list(zip(*map(lambda ps: ps * max_len if len(ps) == 1 else ps, all_param_lists)))
+        return list(zip(*(ps * max_len if len(ps) == 1 else ps for ps in all_param_lists)))
 
 
 class ColumnarSettings:

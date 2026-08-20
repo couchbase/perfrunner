@@ -1337,9 +1337,9 @@ class N1QLWorker(Worker):
             self.do_batch_update()
 
     def init_n1ql_access_targets(self):
-        self.bucket_targets = dict()
-        self.access_targets = dict()
-        self.replacement_targets = dict()
+        self.bucket_targets = {}
+        self.access_targets = {}
+        self.replacement_targets = {}
         # create bucket_targets
         for bucket in self.ws.bucket_list:
             targets = []

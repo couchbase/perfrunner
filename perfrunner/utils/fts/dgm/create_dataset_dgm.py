@@ -11,7 +11,7 @@ class NumericExctractor:
         self.cb = Bucket(
             f"couchbase://{cb_url}/{bucket_name}?operation_timeout=10", password="password"
         )
-        self.output_list = list()
+        self.output_list = []
 
     def run(self):
         n = 0
@@ -100,7 +100,7 @@ class TermProcessor:
 
     def get_fuzzies(self, output1_file, output2_file, input_file, size=5):
         lines = self._shuffle_and_cut(input_file, 10 ** 6)
-        sized_lines = list()
+        sized_lines = []
         items = 0
         for line in lines:
             line = line.split()[0]
@@ -146,7 +146,7 @@ class TermProcessor:
         cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, "bucket-1"),
                     password="password")
         lines = self._shuffle_and_cut(input_file, 10 ** 6)
-        formatted_lines = list()
+        formatted_lines = []
         for line in lines:
             formatted_lines.append(line.split()[0])
         lines = formatted_lines

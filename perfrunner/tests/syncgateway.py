@@ -2309,7 +2309,7 @@ class EndToEndTest(SGPerfTest):
                     a = str.find("}")
                     push_count += int(float(str[a+2:]))
                 break
-        return dict(pull_count=pull_count, push_count=push_count)
+        return {"pull_count": pull_count, "push_count": push_count}
 
     def print_ycsb_logs(self):
         for f in glob.glob(f'{self.LOCAL_DIR}/*runtest*.result'):

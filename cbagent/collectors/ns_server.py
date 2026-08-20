@@ -89,7 +89,7 @@ class XdcrStats(CouchbaseCollector):
     def _get_stats(self, bucket, uri):
         samples = self.get_http(path=uri)
 
-        stats = dict()
+        stats = {}
         for metric, values in samples['op']['samples'].items():
             if 'replications' in metric and 'backfill' not in metric:
                 metric = metric.split('/')[-1]

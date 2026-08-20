@@ -837,7 +837,7 @@ class AnalyticsTest(PerfTest):
             d["name"]: d.get("repeat", 1)
             for d in self.dataset_collection.raw_config.get("datasets", [])
         }
-        ds_names = set(d.name for d in self.datasets)
+        ds_names = {d.name for d in self.datasets}
 
         for idx in self.index_configs:
             idx_name = idx["name"]
@@ -1805,9 +1805,9 @@ class ColumnarCopyToObjectStoreTest(AnalyticsTest):
 
         obj_store_name = self.cluster_spec.backup.split("://")[1]
 
-        valid_param_combinations = set(
+        valid_param_combinations = {
             CopyToParameters(*p) for p in copy_to_settings.all_param_combinations
-        )
+        }
 
         for params in valid_param_combinations:
             for conf in query_configs:

@@ -42,7 +42,7 @@ class FTSCollector(CouchbaseCollector):
 
     def __init__(self, settings, test: PerfTest):
         super().__init__(settings)
-        self.cbft_stats = dict()
+        self.cbft_stats = {}
         self.fts_index_name = f"{test.jts_access.couchbase_index_name}-0"
         self.fts_index_map = test.jts_access.fts_index_map
         self.allbuckets = [x for x in self.get_buckets()]
@@ -63,11 +63,11 @@ class FTSCollector(CouchbaseCollector):
         return 0
 
     def measure(self):
-        stats = dict()
+        stats = {}
         for metric in self.METRICS:
             for host in self.fts_nodes:
                 if host not in stats:
-                    stats[host] = dict()
+                    stats[host] = {}
                 stats[host][metric] = 0
                 for index in self.fts_index_map.keys():
                     stats[host][metric] += \

@@ -273,7 +273,7 @@ class SyncGatewayStats(CouchbaseCollector):
         self.rest = RestHelper(
             test.cluster_spec, bool(test.test_config.cluster.enable_n2n_encryption)
         )
-        self.sg_stats = dict()
+        self.sg_stats = {}
 
         self.sgw_master_node = next(test.cluster_spec.sgw_masters)
         self.build = self.rest.get_sgversion(self.sgw_master_node)
@@ -330,8 +330,7 @@ class SyncGatewayStats(CouchbaseCollector):
                 break
 
     def measure(self):
-        stats = dict()
-        stats["_totals"] = dict()
+        stats = {"_totals": {}}
         if self.use_capella:
             for host in self.hosts:
                 for line in self.sg_stats[host].splitlines():
@@ -349,7 +348,7 @@ class SyncGatewayStats(CouchbaseCollector):
             for metric in self.METRICS:
                 for host in self.hosts:
                     if host not in stats:
-                        stats[host] = dict()
+                        stats[host] = {}
                     stats[host][metric] = float(self.get_metric_value_by_name(host, metric))
                     if metric not in stats["_totals"]:
                         stats["_totals"][metric] = 0

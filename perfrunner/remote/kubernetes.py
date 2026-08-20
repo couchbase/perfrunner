@@ -800,8 +800,8 @@ class RemoteKubernetes(Remote):
         raise ex
 
     def get_ip_port_mapping(self):
-        host_to_ip = dict()
-        port_translation = dict()
+        host_to_ip = {}
+        port_translation = {}
         pods = self.get_pods()
         nodes = self.get_nodes()
         svcs = self.get_services()

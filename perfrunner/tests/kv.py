@@ -366,7 +366,7 @@ class FragmentationTest(PerfTest):
                     password, collections=self.test_config.collection.collection_map).run()
 
     def calc_fragmentation_ratio(self) -> float:
-        ratios = list()
+        ratios = []
         for target in self.target_iterator:
             port = self.rest.get_memcached_port(target.node)
             stats = self.memcached.get_stats(target.node, port, target.bucket, stats='memory')

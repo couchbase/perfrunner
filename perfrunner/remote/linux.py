@@ -1703,8 +1703,7 @@ class RemoteLinux(Remote):
         run("mkdir -p /etc/systemd/system/couchbase-server.service.d")
         with cd('/etc/systemd/system/couchbase-server.service.d'):
             meminfo = run('cat /proc/meminfo')
-            meminfo = dict((i.split()[0].rstrip(':'),
-                            int(i.split()[1])) for i in meminfo.splitlines())
+            meminfo = {i.split()[0].rstrip(":"): int(i.split()[1]) for i in meminfo.splitlines()}
             mem_kib = meminfo['MemTotal']
             with open("system_limits.conf", 'w') as f:
                 l1 = "[Service]\n"

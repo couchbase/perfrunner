@@ -926,10 +926,10 @@ class PerfTest:
         return bus
 
     def _measure_disk_ops(self):
-        ret_stats = dict()
+        ret_stats = {}
         for bucket in self.test_config.buckets:
             for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
-                ret_stats[server] = dict()
+                ret_stats[server] = {}
                 port = self.rest.get_memcached_port(server)
 
                 stats = self.memcached.get_stats(server, port, bucket)
@@ -948,7 +948,7 @@ class PerfTest:
         """Get times in seconds for the last successful rebalance/failover task."""
         logger.info("getting rebalance report")
         rebalance_report = self.rest.get_rebalance_report(self.master_node)
-        time_map = dict()
+        time_map = {}
         time_map["total_time"] = rebalance_report["timeTaken"]/1000
         stage_info = rebalance_report["stageInfo"]
         for service, progress in stage_info.items():

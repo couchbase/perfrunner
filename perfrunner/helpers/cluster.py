@@ -700,8 +700,7 @@ class DefaultClusterManager(ClusterManagerBase):
             }
 
             for i, group_info in enumerate(server_group_info["groups"]):
-                node_group_json["groups"].append(dict((k, group_info[k])
-                                                      for k in ["name", "uri"]))
+                node_group_json["groups"].append({k: group_info[k] for k in ["name", "uri"]})
                 node_group_json["groups"][i]["nodes"] = []
             nodes_initialised = 1
             for server, group in self.cluster_spec.server_group_map.items():

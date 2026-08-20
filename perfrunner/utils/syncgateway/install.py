@@ -42,7 +42,7 @@ def main():
     _cluster_full_path = os.path.abspath(_cluster_path)
     _config_full_path = os.path.abspath(_config_path)
 
-    playbook_vars = dict()
+    playbook_vars = {}
     playbook_vars["sync_gateway_config_filepath"] = _config_full_path
     playbook_vars["couchbase_sync_gateway_package_base_url"] = base_url
     playbook_vars["couchbase_sync_gateway_package"] = sg_package_name

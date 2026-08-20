@@ -6,7 +6,7 @@ from perfrunner.tests import PerfTest
 
 
 class JTSCollector(CouchbaseCollector):
-    results = dict()
+    results = {}
 
     COLLECTOR = "jts_stats"
     COLLECTOR_FLAG = "jts_stats"
@@ -31,7 +31,7 @@ class JTSCollector(CouchbaseCollector):
                                    collector=self.COLLECTOR)
 
     def _consolidate_results(self, filename_pattern: str, storage_name: str):
-        self.results[storage_name] = dict()
+        self.results[storage_name] = {}
         for bucket in self.buckets:
             new_filename = filename_pattern
             if self.settings.logging_method == "bucket_wise":

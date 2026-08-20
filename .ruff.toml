@@ -29,6 +29,12 @@ extend-select = [
     "FURB129",  # readlines-in-for
     "UP006",  # non-pep585-annotation
     "UP035",  # deprecated-import
+    "C408",  # unnecessary-collection-call
+    "C401",  # unnecessary-generator-set
+    "C402",  # unnecessary-generator-dict
+    "C403",  # unnecessary-list-comprehension-set
+    "C417",  # unnecessary-map
+    "C419",  # unnecessary-comprehension-in-call
 ]
 ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "D211", "D213"]
 

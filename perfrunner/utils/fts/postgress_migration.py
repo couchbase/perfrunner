@@ -91,7 +91,7 @@ def load_as_separate_docs(bucketname, count, limit):
             subdocument["edits_pending"] = not artist[9] == 0
             subdocument["last_updated"] = str(artist[10])
             subdocument["id"] = artist[11]
-            subdocument["track_id"] = list()
+            subdocument["track_id"] = []
 
         key = hex(key_counter)[2:]
 

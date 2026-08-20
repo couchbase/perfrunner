@@ -105,7 +105,7 @@ class ViewGen:
         if len(pattern) > 10:
             raise Exception('Maximum 10 design documents allowed')
 
-        ddocs = dict()
+        ddocs = {}
         for number_of_views in pattern:
             ddoc_name = self.ddoc_names.next()
             ddocs[ddoc_name] = {'views': {}}

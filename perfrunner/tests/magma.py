@@ -376,10 +376,10 @@ class KVTest(PerfTest):
         return stats
 
     def get_memcached_stats(self):
-        stats = dict()
+        stats = {}
         for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
-            stats[server] = dict()
-            temp_stats = dict()
+            stats[server] = {}
+            temp_stats = {}
             cmd_op = self.remote.get_memcached_io_stats(server=server)
             for line in cmd_op.split("\n"):
                 values = line.split(":")
@@ -397,7 +397,7 @@ class KVTest(PerfTest):
         self.memcached_stats = self.get_memcached_stats()
 
     def _print_amplifications(self, old_stats, now_stats, now_ops, doc_size, stat_type):
-        ampl_stats = dict()
+        ampl_stats = {}
         for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
             if (server not in now_stats.keys()) or (server not in old_stats.keys()):
                 logger.info(f"{stat_type} stats for {server} not found!")

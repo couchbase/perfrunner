@@ -40,7 +40,7 @@ class SecondaryDebugStats(CouchbaseCollector):
     def _get_secondary_debugstats(self, bucket=None, index=None) -> dict:
         stats = self.get_stats()
 
-        samples = dict()
+        samples = {}
         for metric in self.METRICS:
             _metric = bucket and f"{bucket}:{metric}" or metric
             _metric = index and f"{bucket}:{index}:{metric}" or _metric

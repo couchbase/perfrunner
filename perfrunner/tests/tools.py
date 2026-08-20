@@ -1292,7 +1292,7 @@ class CapellaSnapshotBackupWithSGWTest(SGRead, CapellaSnapshotBackupRestoreTest)
             dbs = self.rest.sgw_get_app_service_dbs(sgw_cluster_id)
             if not dbs:
                 continue
-            db_status = all([db.get("data", {}).get("state") == "Online" for db in dbs])
+            db_status = all(db.get("data", {}).get("state") == "Online" for db in dbs)
             logger.info(f"AppService DBs: {pretty_dict(dbs)}")
 
     def _post_restore(self):

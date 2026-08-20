@@ -8,7 +8,7 @@ class N1QLStats(CouchbaseCollector):
 
     def _get_n1ql_stats(self):
         samples = self.get_http(path="/pools/default/buckets/@query/stats")
-        stats = dict()
+        stats = {}
         for metric, values in samples['op']['samples'].items():
             metric = metric.replace('/', '_')
             stats[metric] = values[-1]  # only the most recent sample

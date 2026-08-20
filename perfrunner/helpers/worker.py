@@ -82,12 +82,18 @@ except Exception as ex:
     print(ex)
 
 
-COMMON_CELERY_CONFIG = dict(
-    task_serializer="pickle",
-    result_serializer="pickle",
-    accept_content=["pickle", "json", "application/json", "application/data", "application/text"],
-    task_protocol=2,
-)
+COMMON_CELERY_CONFIG = {
+    "task_serializer": "pickle",
+    "result_serializer": "pickle",
+    "accept_content": [
+        "pickle",
+        "json",
+        "application/json",
+        "application/data",
+        "application/text",
+    ],
+    "task_protocol": 2,
+}
 
 LOCAL_BROKER_DB = "perfrunner.db"
 LOCAL_RESULTS_DB = "results.db"

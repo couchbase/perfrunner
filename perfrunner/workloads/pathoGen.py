@@ -176,12 +176,12 @@ class PathoGen:
             promotion_policy = AlwaysPromote()
 
         # Create queues
-        self.queues = list()
+        self.queues = []
         for i in range(self.num_workers):
             self.queues.append(multiprocessing.Queue())
 
         # Create and spin up workers
-        self.workers = list()
+        self.workers = []
         for i in range(self.num_workers):
             if i == self.num_workers - 1:
                 # Last one is the Supervisor
@@ -320,7 +320,7 @@ class Supervisor(Worker):
         self._connect()
 
         # Create initial list of documents on the 'finished' queue
-        finished_items = list()
+        finished_items = []
         for i in range(self.num_items):
             finished_items.append((i, 0))
 
@@ -340,7 +340,7 @@ class Supervisor(Worker):
                     (i,
                      self.promotion_policy.build_generator(i),
                      0))
-            finished_items = list()
+            finished_items = []
 
             while expected_items > 0:
                 (i, doc, size) = self.in_queue.get()

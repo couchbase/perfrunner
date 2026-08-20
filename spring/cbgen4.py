@@ -29,7 +29,7 @@ class CBAsyncGen4:
         )
 
         self.bucket_name = kwargs['bucket']
-        self.collections = dict()
+        self.collections = {}
         self.collection = None
 
     def connect_collections(self, scope_collection_list):
@@ -114,7 +114,7 @@ class CBGen4(CBAsyncGen4):
         )
         self.bucket_name = kwargs['bucket']
         self.bucket = None
-        self.collections = dict()
+        self.collections = {}
         self.collection = None
 
     @quiet

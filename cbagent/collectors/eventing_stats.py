@@ -95,8 +95,8 @@ class EventingPerHandlerStats(EventingStats):
         super().__init__(settings, test)
 
     def _get_handler_stats(self, function_name):
-        handler_stats = dict()
-        handler_stats[function_name] = dict()
+        handler_stats = {}
+        handler_stats[function_name] = {}
         on_update_success = 0
         for node in self.eventing_nodes:
             stats = self.get_eventing_stats(server=node)

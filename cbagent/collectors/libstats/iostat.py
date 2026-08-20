@@ -30,7 +30,7 @@ class IOStat(RemoteStats):
         stdout = self.run(f"iostat -dkxyN 1 1 {device} | grep -v '^$' | tail -n 2")
         stdout = stdout.split()
         header = stdout[:len(stdout) // 2]
-        data = dict()
+        data = {}
         for i, value in enumerate(stdout[len(stdout) // 2:]):
             data[header[i]] = value
         return data

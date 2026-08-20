@@ -102,7 +102,7 @@ class VectorDBBenchTest(PerfTest):
             # Change the pattern to the local downloaded path
             pattern = f"VectorDBBench/result_*_{self.build_tag}_{database.lower()}.json"
 
-        results = dict()
+        results = {}
         logger.info(f"Generating results from {pattern}")
         for filename in glob(pattern):
             with open(filename) as file:

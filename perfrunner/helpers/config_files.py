@@ -231,7 +231,7 @@ class CAOCouchbaseClusterFile(CAOFiles):
             )
 
     def set_services(self):
-        server_types = dict()
+        server_types = {}
         server_roles = self.cluster_spec.roles
         for _, role in server_roles.items():
             # If role is empty, it is a node used for overprovisioning, so dont set it up

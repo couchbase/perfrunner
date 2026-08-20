@@ -10,7 +10,7 @@ class SecondaryStats(CouchbaseCollector):
     def _get_secondary_stats(self, bucket):
         uri = f"/pools/default/buckets/@index-{bucket}/stats"
         samples = self.get_http(path=uri)
-        stats = dict()
+        stats = {}
         for metric, values in samples['op']['samples'].items():
             if not values:
                 # The index-stats endpoint can return a metric whose sample series

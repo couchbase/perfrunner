@@ -97,10 +97,12 @@ class CollectCloudwatch:
 
     def get(self):
         cw = self.session.client("cloudwatch")
-        cw_kwargs = dict(MetricDataQueries=self.metric_reqs,
-                         StartTime=self.start_time,
-                         EndTime=self.end_time,
-                         ScanBy='TimestampAscending')
+        cw_kwargs = {
+            "MetricDataQueries": self.metric_reqs,
+            "StartTime": self.start_time,
+            "EndTime": self.end_time,
+            "ScanBy": "TimestampAscending",
+        }
 
         reslist = [cw.get_metric_data(**cw_kwargs)]
         while "NextToken" in reslist[-1]:

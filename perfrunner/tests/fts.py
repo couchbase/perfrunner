@@ -19,8 +19,7 @@ from perfrunner.utils.fts.vector_recall_calculator import VectorRecallCalculator
 
 
 class JTSTest(PerfTest):
-
-    result = dict()
+    result = {}
 
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
@@ -28,8 +27,8 @@ class JTSTest(PerfTest):
         if self.test_config.collection.collection_map:
             self.jts_access.collections_enabled = True
         self.showfast = self.test_config.showfast
-        self.fts_index_map = dict()
-        self.fts_index_defs = dict()
+        self.fts_index_map = {}
+        self.fts_index_defs = {}
         self.jts_access.capella_infrastructure = self.cluster_spec.capella_infrastructure
         self.jts_access.fts_raw_query_map = None
         if self.jts_access.raw_query_map_file:
@@ -226,7 +225,6 @@ class FTSTest(JTSTest):
         key_values = []
 
         if self.jts_access.test_query_mode == 'mixed':
-            self.mixed_query_map = dict()
             self.mixed_query_map = read_json(self.jts_access.couchbase_index_configmap)
             self.jts_access.mixed_query_map = self.mixed_query_map
 
@@ -992,8 +990,8 @@ class FTSFusionMultiVariantTest(FTSTest):
     def _build_index(self):
         if self.fts_index_defs:
             self.delete_indexes()
-        self.fts_index_defs = dict()
-        self.fts_index_map = dict()
+        self.fts_index_defs = {}
+        self.fts_index_map = {}
         self.create_fts_index_definitions()
         self.create_fts_indexes()
         size_final = int(self.calculate_index_size() / (1024 ** 2))

@@ -757,8 +757,8 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.memory_usage = dict()
-        self.disk_usage = dict()
+        self.memory_usage = {}
+        self.disk_usage = {}
 
     def _report_kpi(self, usage_diff, memory_type, unit="GB"):
         usage_diff = float(usage_diff) / 2 ** 30

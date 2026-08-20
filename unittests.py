@@ -102,8 +102,8 @@ class SettingsTest(TestCase):
             try:
                 TestConfig().parse(file_name)
             except Exception as e:
-                failures.append('{}: {}: {}'.format(file_name, type(e).__name__, e))
-        self.assertEqual(failures, [], '{} config(s) failed to parse'.format(len(failures)))
+                failures.append(f'{file_name}: {type(e).__name__}: {e}')
+        self.assertEqual(failures, [], f'{len(failures)} config(s) failed to parse')
 
     def test_fts_configs(self):
         for file in glob.glob("tests/fts/enduser/tests_dgm/*latency*.test"):

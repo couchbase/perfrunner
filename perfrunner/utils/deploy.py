@@ -110,12 +110,7 @@ class AWSDeployer(Deployer):
         for i in range(0, 5):
             response = self.ec2client.describe_vpcs(
                 Filters=[
-                    {
-                        'Name': 'cidr-block-association.cidr-block',
-                        'Values': [
-                            '10.{}.0.0/16'.format(i)
-                        ]
-                    }
+                    {"Name": "cidr-block-association.cidr-block", "Values": [f"10.{i}.0.0/16"]}
                 ]
             )
             resp = response['Vpcs']
@@ -132,14 +127,20 @@ class AWSDeployer(Deployer):
         if self.desired_infra['k8s']:
             desired_tenancy = 'default'
         response = self.ec2client.create_vpc(
-            CidrBlock='10.{}.0.0/16'.format(self.vpc_int),
+            CidrBlock=f"10.{self.vpc_int}.0.0/16",
             AmazonProvidedIpv6CidrBlock=False,
             DryRun=False,
             InstanceTenancy=desired_tenancy,
             TagSpecifications=[
-                {'ResourceType': 'vpc',
-                 'Tags': [{'Key': 'Use', 'Value': 'CloudPerfTesting'},
-                          {'Key': 'Name', 'Value': self.options.tag}]}])
+                {
+                    "ResourceType": "vpc",
+                    "Tags": [
+                        {"Key": "Use", "Value": "CloudPerfTesting"},
+                        {"Key": "Name", "Value": self.options.tag},
+                    ],
+                }
+            ],
+        )
         self.deployed_infra['vpc'] = response['Vpc']
         self.write_infra_file()
         time.sleep(5)
@@ -188,13 +189,12 @@ class AWSDeployer(Deployer):
                 tags.append({"Key": "kubernetes.io/role/elb", "Value": "1"})
             for az in availability_zones * needed_subnets:
                 response = self.ec2client.create_subnet(
-                    TagSpecifications=[
-                        {'ResourceType': 'subnet',
-                         'Tags': tags}],
+                    TagSpecifications=[{"ResourceType": "subnet", "Tags": tags}],
                     AvailabilityZone=az,
-                    CidrBlock='10.{}.{}.0/24'.format(self.vpc_int, subnets+1),
-                    VpcId=self.deployed_infra['vpc']['VpcId'],
-                    DryRun=False)
+                    CidrBlock=f"10.{self.vpc_int}.{subnets + 1}.0/24",
+                    VpcId=self.deployed_infra["vpc"]["VpcId"],
+                    DryRun=False,
+                )
                 subnets += 1
                 subnet_id = response['Subnet']['SubnetId']
                 self.deployed_infra['vpc']['subnets'][subnet_id] = response['Subnet']
@@ -207,17 +207,20 @@ class AWSDeployer(Deployer):
                 az = 'us-west-2b'
             response = self.ec2client.create_subnet(
                 TagSpecifications=[
-                    {'ResourceType': 'subnet',
-                     'Tags': [
-                         {'Key': 'Use',
-                          'Value': 'CloudPerfTesting'},
-                         {'Key': 'Role',
-                          'Value': 'ec2'},
-                         {'Key': 'Name', 'Value': self.options.tag}]}],
+                    {
+                        "ResourceType": "subnet",
+                        "Tags": [
+                            {"Key": "Use", "Value": "CloudPerfTesting"},
+                            {"Key": "Role", "Value": "ec2"},
+                            {"Key": "Name", "Value": self.options.tag},
+                        ],
+                    }
+                ],
                 AvailabilityZone=az,
-                CidrBlock='10.{}.{}.0/24'.format(self.vpc_int, subnets+1),
-                VpcId=self.deployed_infra['vpc']['VpcId'],
-                DryRun=False)
+                CidrBlock=f"10.{self.vpc_int}.{subnets + 1}.0/24",
+                VpcId=self.deployed_infra["vpc"]["VpcId"],
+                DryRun=False,
+            )
             subnets += 1
             subnet_id = response['Subnet']['SubnetId']
             self.deployed_infra['vpc']['subnets'][subnet_id] = response['Subnet']
@@ -376,7 +379,7 @@ class AWSDeployer(Deployer):
                     "endpointPublicAccess": True,
                     "endpointPrivateAccess": False,
                 },
-                kubernetesNetworkConfig={"serviceIpv4Cidr": "172.{}.0.0/16".format(20 + i)},
+                kubernetesNetworkConfig={"serviceIpv4Cidr": f"172.{20 + i}.0.0/16"},
                 tags={"Use": "CloudPerfTesting", "Role": cluster_name},
             )
             self.deployed_infra['vpc']['eks_clusters'][response['cluster']['name']] = \
@@ -425,7 +428,7 @@ class AWSDeployer(Deployer):
                      "user": str(cluster_arn)},
                   "name": str(cluster_arn)}],
             "current-context": str(cluster_arn)}
-        config_path = '{}/{}'.format(self.generated_kube_config_dir, cluster_name)
+        config_path = f"{self.generated_kube_config_dir}/{cluster_name}"
         with open(config_path, 'w+') as fp:
             yaml.dump(cluster_config, fp, default_flow_style=False)
         self.deployed_infra['vpc']['eks_clusters'][cluster_name]['kube_config'] = cluster_config
@@ -549,7 +552,7 @@ class AWSDeployer(Deployer):
                 raise Exception("need at least one subnet with tag ec2 to deploy instances")
             for ec2_cluster_name, ec2_cluster_config in self.desired_infra["ec2"].items():
                 for node_group in ec2_cluster_config["node_groups"].split(","):
-                    resource_path = "ec2.{}.{}".format(ec2_cluster_name, node_group)
+                    resource_path = f"ec2.{ec2_cluster_name}.{node_group}"
                     tags = [
                         {"Key": "Use", "Value": "CloudPerfTesting"},
                         {"Key": "Role", "Value": node_group},
@@ -736,7 +739,7 @@ class AWSDeployer(Deployer):
         bucket_name = self.infra_spec.backup
         if bucket_name and bucket_name.startswith('s3'):
             bucket_name = "{}-{}".format(bucket_name.split("/")[-1], self.deployment_id)
-            logger.info('Creating S3 bucket: {}'.format(bucket_name))
+            logger.info(f"Creating S3 bucket: {bucket_name}")
             if self.region == 'us-east-1':
                 self.s3.create_bucket(Bucket=bucket_name)
             else:
@@ -863,7 +866,7 @@ class AWSDeployer(Deployer):
                         del k8_nodes[node_name]
                         break
 
-                logger.info("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                logger.info(f"cluster: {cluster}, hosts: {str(address_replace_list)}")
 
                 with open(self.cluster_path) as f:
                     s = f.read()
@@ -932,11 +935,11 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((address, next_ip))
 
-                logger.info("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                logger.info(f"cluster: {cluster}, hosts: {str(address_replace_list)}")
 
                 server_list = ""
                 for server_tuple in address_replace_list:
-                    server_list += "{}\n".format(server_tuple[1])
+                    server_list += f"{server_tuple[1]}\n"
                 server_list = server_list.rstrip()
 
                 with open(self.cloud_ini) as f:
@@ -961,11 +964,11 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((host, next_ip))
 
-                logger.info("clients: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                logger.info(f"clients: {cluster}, hosts: {str(address_replace_list)}")
 
                 worker_list = ""
                 for worker_tuple in address_replace_list:
-                    worker_list += "{}\n".format(worker_tuple[1])
+                    worker_list += f"{worker_tuple[1]}\n"
                 worker_list = worker_list.rstrip()
 
                 with open(self.cloud_ini) as f:
@@ -990,11 +993,11 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((host, next_ip))
 
-                logger.info("sgws: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                logger.info(f"sgws: {cluster}, hosts: {str(address_replace_list)}")
 
                 sgw_list = ""
                 for sgw_tuple in address_replace_list:
-                    sgw_list += "{}\n".format(sgw_tuple[1])
+                    sgw_list += f"{sgw_tuple[1]}\n"
 
                 sgw_list = sgw_list.rstrip()
 
@@ -1043,7 +1046,7 @@ class AWSDeployer(Deployer):
                 s = f.read()
             with open(self.cluster_path, 'w') as f:
                 if storage_bucket := self.deployed_infra.get('storage_bucket', None):
-                    s = s.replace(backup, 's3://{}'.format(storage_bucket))
+                    s = s.replace(backup, f"s3://{storage_bucket}")
                 f.write(s)
 
     def deploy(self):
@@ -1079,7 +1082,7 @@ class OpenshiftDeployer(AWSDeployer):
 
     def __init__(self, infra_spec: ClusterSpec, options):
         super().__init__(infra_spec, options)
-        self.yaml_path = '{}/oc.yaml'.format(self.OPENSHIFT_PATH)
+        self.yaml_path = f"{self.OPENSHIFT_PATH}/oc.yaml"
         self.pull_secret = os.environ['OPENSHIFT_PULL_SECRET']
         # make the base url a bit shorter which are in the form of *.cluster_name.domain
         self.cluster_name = options.tag.replace('jenkins-', '').lower()
@@ -1104,9 +1107,11 @@ class OpenshiftDeployer(AWSDeployer):
             super().deploy()
 
     def get_oc_binary(self):
-        os.system('wget -q https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-{}'
-                  '/openshift-install-linux.tar.gz && '
-                  'tar xfv openshift-install-linux.tar.gz'.format(self.openshift_version))
+        os.system(
+            f"wget -q https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-{self.openshift_version}"
+            "/openshift-install-linux.tar.gz && "
+            "tar xfv openshift-install-linux.tar.gz"
+        )
 
     def populate_yaml(self):
         self.find_and_replace(self.yaml_path, 'CLUSTER_NAME', self.cluster_name)
@@ -1114,7 +1119,7 @@ class OpenshiftDeployer(AWSDeployer):
         self.find_and_replace(self.yaml_path, 'NODE_COUNT',
                               str(self.desired_infra['instance_count']))
         self.find_and_replace(self.yaml_path, 'REGION', self.desired_infra['region'])
-        self.find_and_replace(self.yaml_path, 'PULL_SECRET', '\'{}\''.format(self.pull_secret))
+        self.find_and_replace(self.yaml_path, "PULL_SECRET", f"'{self.pull_secret}'")
 
     def update_labels(self):
         nodes = iter(self.remote.get_nodes(selector='node-role.kubernetes.io/worker'))
@@ -1122,11 +1127,11 @@ class OpenshiftDeployer(AWSDeployer):
         for k, v in self.infra_spec.infrastructure_clusters.items():
             if 'couchbase' in k:
                 for host in v.split():
-                    labels = 'NodeRoles={} '.format(k)
+                    labels = f"NodeRoles={k} "
                     node = next(nodes)['metadata']['name']
                     _, services = host.split(":")
                     for service in services.split(','):
-                        labels = '{} {}_enabled=true'.format(labels, service)
+                        labels = f"{labels} {service}_enabled=true"
                     self.remote.add_node_label(node, labels)
 
         # client machines are either 'workers' or 'backups' machines
@@ -1135,7 +1140,7 @@ class OpenshiftDeployer(AWSDeployer):
                 if 'workers' in k or 'backups' in k:
                     for host in v.split():
                         node = next(nodes)['metadata']['name']
-                        labels = 'NodeRoles={} '.format(k)
+                        labels = f"NodeRoles={k} "
                         self.remote.add_node_label(node, labels)
 
         # utilities we only need broker nodes
@@ -1163,12 +1168,12 @@ class OpenshiftDeployer(AWSDeployer):
             'k8s_node_group_1', 'instance_type')
 
     def create_cluster(self):
-        os.system('cp {} {}/install-config.yaml'.format(self.yaml_path, self.OPENSHIFT_PATH))
-        os.system('./openshift-install create cluster --dir={}'.format(self.OPENSHIFT_PATH))
+        os.system(f"cp {self.yaml_path} {self.OPENSHIFT_PATH}/install-config.yaml")
+        os.system(f"./openshift-install create cluster --dir={self.OPENSHIFT_PATH}")
         os.system(
-            'cp {}/auth/kubeconfig cloud/infrastructure/generated/kube_configs/k8s_cluster_1'
-            .format(self.OPENSHIFT_PATH))
-
+            f"cp {self.OPENSHIFT_PATH}/auth/kubeconfig "
+            "cloud/infrastructure/generated/kube_configs/k8s_cluster_1"
+        )
 
 
 class AzureDeployer(Deployer):
@@ -1223,7 +1228,7 @@ class GCPDeployer(Deployer):
     def create_vpc(self):
         logger.info('Creating VPC...')
 
-        vpc_name = "perf-vpc-{}".format(self.deployment_id)
+        vpc_name = f"perf-vpc-{self.deployment_id}"
         vpc = compute.Network(
             name=vpc_name,
             auto_create_subnetworks=False,
@@ -1247,13 +1252,13 @@ class GCPDeployer(Deployer):
 
         ip_cidr_range = "10.0.0.0/16"
         vpc_name = self.deployed_infra['vpc']['name']
-        subnet_name = "perf-subnet-{}".format(self.deployment_id)
+        subnet_name = f"perf-subnet-{self.deployment_id}"
 
         subnet = compute.Subnetwork(
             name=subnet_name,
             ip_cidr_range=ip_cidr_range,
-            network="projects/{}/global/networks/{}".format(self.project, vpc_name),
-            private_ip_google_access=True
+            network=f"projects/{self.project}/global/networks/{vpc_name}",
+            private_ip_google_access=True,
         )
 
         try:
@@ -1278,63 +1283,37 @@ class GCPDeployer(Deployer):
         logger.info('Creating firewall rules...')
 
         vpc_name = self.deployed_infra['vpc']['name']
-        network = "projects/{}/global/networks/{}".format(self.project, vpc_name)
+        network = f"projects/{self.project}/global/networks/{vpc_name}"
         firewall_configs = [
-            {   # Allow all network traffic going from instances in our subnet to any other
+            {  # Allow all network traffic going from instances in our subnet to any other
                 # instance in our VPC, effectively allowing unrestricted network traffic between
                 # our instances
-                "name": "{}-allow-custom".format(vpc_name),
+                "name": f"{vpc_name}-allow-custom",
                 "network": network,
                 "direction": "INGRESS",
-                "allowed": [
-                    compute.Allowed(
-                        I_p_protocol="all"
-                    )
-                ],
-                "source_ranges": [
-                    self.deployed_infra['vpc']['primary_subnet']['ipCidrRange']
-                ]
+                "allowed": [compute.Allowed(I_p_protocol="all")],
+                "source_ranges": [self.deployed_infra["vpc"]["primary_subnet"]["ipCidrRange"]],
             },
-            {   # Allow SSH connections from any IP address (external or internal) to any instance
+            {  # Allow SSH connections from any IP address (external or internal) to any instance
                 # in our VPC
-                "name": "{}-allow-ssh".format(vpc_name),
+                "name": f"{vpc_name}-allow-ssh",
                 "network": network,
                 "direction": "INGRESS",
-                "allowed": [
-                    compute.Allowed(
-                        I_p_protocol="tcp",
-                        ports=[
-                            "22"
-                        ]
-                    )
-                ],
-                "source_ranges": [
-                    "0.0.0.0/0"
-                ]
+                "allowed": [compute.Allowed(I_p_protocol="tcp", ports=["22"])],
+                "source_ranges": ["0.0.0.0/0"],
             },
-            {   # Allow connections from any IP address to the RabbitMQ ports of broker instances
-                "name": "{}-allow-broker".format(vpc_name),
+            {  # Allow connections from any IP address to the RabbitMQ ports of broker instances
+                "name": f"{vpc_name}-allow-broker",
                 "network": network,
                 "direction": "INGRESS",
-                "target_tags": [
-                    "broker"
-                ],
-                "allowed": [
-                    compute.Allowed(
-                        I_p_protocol="tcp",
-                        ports=[
-                            "5672"
-                        ]
-                    )
-                ],
-                "source_ranges": [
-                    "0.0.0.0/0"
-                ]
+                "target_tags": ["broker"],
+                "allowed": [compute.Allowed(I_p_protocol="tcp", ports=["5672"])],
+                "source_ranges": ["0.0.0.0/0"],
             },
             {
                 # Allow connections from any IP address to the couchbase ports
                 # (for stats collectors)
-                "name": "{}-allow-couchbase".format(vpc_name),
+                "name": f"{vpc_name}-allow-couchbase",
                 "network": network,
                 "direction": "INGRESS",
                 "target_tags": [
@@ -1351,22 +1330,18 @@ class GCPDeployer(Deployer):
                             "8091-8096",
                             "9998-9999",
                             "18091-18096",
-                            "11210"
-                        ]
+                            "11210",
+                        ],
                     )
                 ],
-                "source_ranges": [
-                    "0.0.0.0/0"
-                ]
+                "source_ranges": ["0.0.0.0/0"],
             },
             {
                 # Allow connections from any IP address to the sgw ports
-                "name": "{}-allow-sgw".format(vpc_name),
+                "name": f"{vpc_name}-allow-sgw",
                 "network": network,
                 "direction": "INGRESS",
-                "target_tags": [
-                    "sgws"
-                ],
+                "target_tags": ["sgws"],
                 "allowed": [
                     compute.Allowed(
                         I_p_protocol="tcp",
@@ -1374,34 +1349,20 @@ class GCPDeployer(Deployer):
                             "4984",
                             "4985",
                             "4988",
-                        ]
+                        ],
                     )
                 ],
-                "source_ranges": [
-                    "0.0.0.0/0"
-                ]
+                "source_ranges": ["0.0.0.0/0"],
             },
             {
                 # Allow connections from any IP address to the memcached and cblite ports
-                "name": "{}-allow-client".format(vpc_name),
+                "name": f"{vpc_name}-allow-client",
                 "network": network,
                 "direction": "INGRESS",
-                "target_tags": [
-                    "client"
-                ],
-                "allowed": [
-                    compute.Allowed(
-                        I_p_protocol="tcp",
-                        ports=[
-                            "4980-5500",
-                            "7990-8010"
-                        ]
-                    )
-                ],
-                "source_ranges": [
-                    "0.0.0.0/0"
-                ]
-            }
+                "target_tags": ["client"],
+                "allowed": [compute.Allowed(I_p_protocol="tcp", ports=["4980-5500", "7990-8010"])],
+                "source_ranges": ["0.0.0.0/0"],
+            },
         ]
 
         try:
@@ -1418,7 +1379,7 @@ class GCPDeployer(Deployer):
         finally:
             request = compute.ListFirewallsRequest(
                 project=self.project,
-                filter='network = "https://www.googleapis.com/compute/v1/{}"'.format(network)
+                filter=f'network = "https://www.googleapis.com/compute/v1/{network}"',
             )
             deployed = self.firewall_client.list(request=request)
             deployed_dicts = [MessageToDict(firewall._pb) for firewall in deployed]
@@ -1436,7 +1397,7 @@ class GCPDeployer(Deployer):
                 for node_group in gce_cluster_config['node_groups'].split(','):
                     node_group_spec = gce_cluster_config[node_group]
                     num_nodes = int(node_group_spec['instance_capacity'])
-                    resource_path = 'gce.{}.{}'.format(gce_cluster_name, node_group)
+                    resource_path = f"gce.{gce_cluster_name}.{node_group}"
 
                     disk_params = []
                     volume_size = int(node_group_spec.get('volume_size', 0))
@@ -1448,8 +1409,8 @@ class GCPDeployer(Deployer):
                             iops = 0
 
                         params = {
-                            'disk_size_gb': volume_size,
-                            'disk_type': 'zones/{}/diskTypes/{}'.format(self.zone, volume_type),
+                            "disk_size_gb": volume_size,
+                            "disk_type": f"zones/{self.zone}/diskTypes/{volume_type}",
                         }
 
                         if iops:
@@ -1487,8 +1448,8 @@ class GCPDeployer(Deployer):
                                 host_resource, services = host.split(":")
                                 if resource_path in host_resource:
                                     instance_conf = deepcopy(instance_template)
-                                    instance_conf['name'] = "perf-{}-{}-{}".format(
-                                        k, (i := i+1), self.deployment_id
+                                    instance_conf["name"] = (
+                                        f"perf-{k}-{(i := i + 1)}-{self.deployment_id}"
                                     )
                                     instance_conf['labels']['node_roles'] = k
                                     instance_conf['tags'] = ['server'] + services.split(',')
@@ -1504,8 +1465,8 @@ class GCPDeployer(Deployer):
                             for host in v.split():
                                 if resource_path in host:
                                     instance_conf = deepcopy(instance_template)
-                                    instance_conf['name'] = "perf-{}-{}-{}".format(
-                                        k, (i := i+1), self.deployment_id
+                                    instance_conf["name"] = (
+                                        f"perf-{k}-{(i := i + 1)}-{self.deployment_id}"
                                     )
                                     instance_conf['labels']['node_roles'] = k
                                     instance_conf['tags'] = ['client']
@@ -1521,8 +1482,8 @@ class GCPDeployer(Deployer):
                             for host in v.split():
                                 if resource_path in host:
                                     instance_conf = deepcopy(instance_template)
-                                    instance_conf['name'] = "perf-{}-{}-{}".format(
-                                        k, (i := i+1), self.deployment_id
+                                    instance_conf["name"] = (
+                                        f"perf-{k}-{(i := i + 1)}-{self.deployment_id}"
                                     )
                                     instance_conf['labels']['node_roles'] = k
                                     instance_conf['tags'] = ['broker']
@@ -1538,8 +1499,8 @@ class GCPDeployer(Deployer):
                             for host in v.split():
                                 if resource_path in host:
                                     instance_conf = deepcopy(instance_template)
-                                    instance_conf['name'] = "perf-{}-{}-{}".format(
-                                        k, (i := i+1), self.deployment_id
+                                    instance_conf["name"] = (
+                                        f"perf-{k}-{(i := i + 1)}-{self.deployment_id}"
                                     )
                                     instance_conf['labels']['node_roles'] = k
                                     instance_conf['tags'] = ['sgws']
@@ -1548,11 +1509,12 @@ class GCPDeployer(Deployer):
                                     instances.append(instance_conf)
 
                     if num_nodes != len(instances):
-                        raise Exception('Node number mismatch in {}. '
-                                        'Found {} nodes but instance capacity is {}.'
-                                        .format(node_group, len(instances), num_nodes))
+                        raise Exception(
+                            f"Node number mismatch in {node_group}. "
+                            f"Found {len(instances)} nodes but instance capacity is {num_nodes}."
+                        )
 
-                    logger.info('Launching instances for {}...'.format(node_group))
+                    logger.info(f"Launching instances for {node_group}...")
 
                     try:
                         ops = []
@@ -1581,7 +1543,7 @@ class GCPDeployer(Deployer):
                         self.deployed_infra['vpc']['gce'][node_group] = gce_group
                         self.write_infra_file()
 
-                    logger.info('All instances created for {}.'.format(node_group))
+                    logger.info(f"All instances created for {node_group}.")
 
         logger.info('All instances created.')
 
@@ -1593,9 +1555,9 @@ class GCPDeployer(Deployer):
         # Configure the boot disk from the given "disk image" (equivalent to AWS AMI)
         custom_image = self.image_client.get(project=project, image=boot_disk_image)
         boot_init_params = compute.AttachedDiskInitializeParams(
-            source_image="projects/{}/global/images/{}".format(project, boot_disk_image),
+            source_image=f"projects/{project}/global/images/{boot_disk_image}",
             disk_size_gb=custom_image.disk_size_gb,
-            disk_type="zones/{}/diskTypes/pd-balanced".format(zone)
+            disk_type=f"zones/{zone}/diskTypes/pd-balanced",
         )
         boot_disk = compute.AttachedDisk(
             initialize_params=boot_init_params,
@@ -1635,14 +1597,12 @@ class GCPDeployer(Deployer):
         # Assemble the full instance configuration
         instance = compute.Instance(
             name=name,
-            machine_type="projects/{}/zones/{}/machineTypes/{}".format(
-                project, zone, machine_type
-            ),
+            machine_type=f"projects/{project}/zones/{zone}/machineTypes/{machine_type}",
             disks=disks,
             service_accounts=[service_account],
             network_interfaces=[network_interface],
             labels=labels,
-            tags=compute.Tags(items=tags)
+            tags=compute.Tags(items=tags),
         )
 
         return instance
@@ -1653,7 +1613,7 @@ class GCPDeployer(Deployer):
         if bucket_name and bucket_name.startswith(prefix):
             logger.info('Creating Cloud Storage bucket...')
 
-            bucket_name = "{}-{}".format(bucket_name.split(prefix)[1], self.deployment_id)
+            bucket_name = f"{bucket_name.split(prefix)[1]}-{self.deployment_id}"
 
             bucket = self.storage_client.bucket(bucket_name)
             bucket.storage_class = 'STANDARD'
@@ -1685,18 +1645,17 @@ class GCPDeployer(Deployer):
                     raise Exception('ERROR: ', new_op.error)
 
                 if new_op.warnings:
-                    logger.warning('Warnings for operation {}: {}'
-                                   .format(new_op.id, new_op.warnings))
+                    logger.warning(f"Warnings for operation {new_op.id}: {new_op.warnings}")
 
                 if new_op.status == compute.Operation.Status.DONE:
-                    logger.info('Operation {} completed successfully.'.format(new_op.id))
+                    logger.info(f"Operation {new_op.id} completed successfully.")
                 else:
                     new_ops.append(new_op)
 
             pending_ops = new_ops
 
     def _get_deployed_gce_instances(self, instance_names: list[str]):
-        instance_filter = ' OR '.join('(name = {})'.format(name) for name in instance_names)
+        instance_filter = " OR ".join(f"(name = {name})" for name in instance_names)
         request = compute.ListInstancesRequest(
             project=self.project,
             zone=self.zone,
@@ -1734,7 +1693,7 @@ class GCPDeployer(Deployer):
         for cluster, hosts in clusters.items():
             public_address_replace_list = []
             private_address_replace_list = []
-            internal_ip_section += "{} =\n".format(cluster)
+            internal_ip_section += f"{cluster} =\n"
             for host in hosts.split():
                 address = host.split(":")[0]
                 node_group, node_num = address.split(".")[2:4]
@@ -1742,10 +1701,10 @@ class GCPDeployer(Deployer):
                 private_ip = node_group_ips[node_group][node_num]['private']
                 public_address_replace_list.append((address, public_ip))
                 private_address_replace_list.append((address, private_ip))
-                server_list += "{}\n".format(public_ip)
-                internal_ip_section += "        {}\n".format(private_ip)
+                server_list += f"{public_ip}\n"
+                internal_ip_section += f"        {private_ip}\n"
 
-            logger.info("cluster: {}, hosts: {}".format(cluster, str(public_address_replace_list)))
+            logger.info(f"cluster: {cluster}, hosts: {str(public_address_replace_list)}")
 
             # Perform the IP replacement in the infra spec
             with open(self.cluster_path) as f:
@@ -1774,10 +1733,10 @@ class GCPDeployer(Deployer):
                 node_group, node_num = host.split(".")[2:4]
                 public_ip = node_group_ips[node_group][node_num]['public']
                 address_replace_list.append((host, public_ip))
-                worker_list += "{}\n".format(public_ip)
+                worker_list += f"{public_ip}\n"
             worker_list = worker_list.rstrip()
 
-            logger.info("clients: {}, hosts: {}".format(cluster, str(address_replace_list)))
+            logger.info(f"clients: {cluster}, hosts: {str(address_replace_list)}")
 
             with open(self.cluster_path) as f:
                 s = f.read()
@@ -1801,10 +1760,10 @@ class GCPDeployer(Deployer):
                 node_group, node_num = host.split(".")[2:4]
                 public_ip = node_group_ips[node_group][node_num]['public']
                 address_replace_list.append((host, public_ip))
-                sgw_list += "{}\n".format(public_ip)
+                sgw_list += f"{public_ip}\n"
             sgw_list = sgw_list.rstrip()
 
-            logger.info("sgw: {}, hosts: {}".format(cluster, str(address_replace_list)))
+            logger.info(f"sgw: {cluster}, hosts: {str(address_replace_list)}")
 
             with open(self.cluster_path) as f:
                 s = f.read()
@@ -1829,7 +1788,7 @@ class GCPDeployer(Deployer):
                     (host, node_group_ips[node_group][node_num]['public'])
                 )
 
-            logger.info("utilities: {}, hosts: {}".format(cluster, str(address_replace_list)))
+            logger.info(f"utilities: {cluster}, hosts: {str(address_replace_list)}")
 
             with open(self.cluster_path) as f:
                 s = f.read()
@@ -1843,7 +1802,7 @@ class GCPDeployer(Deployer):
             s = f.read()
         with open(self.cluster_path, 'w') as f:
             if storage_bucket := self.deployed_infra.get('storage_bucket', None):
-                s = s.replace(backup, 'gs://{}'.format(storage_bucket))
+                s = s.replace(backup, f"gs://{storage_bucket}")
             f.write(s)
 
     def deploy(self):
@@ -1907,12 +1866,12 @@ def main():
         elif infra_provider == 'gcp':
             deployer = GCPDeployer(infra_spec, args)
         else:
-            raise Exception("{} is not a valid infrastructure provider".format(infra_provider))
+            raise Exception(f"{infra_provider} is not a valid infrastructure provider")
         try:
             deployer.deploy()
         except Exception as ex:
             with open(infra_spec.generated_cloud_config_path) as f:
-                logger.info("infrastructure dump:\n{}".format(pretty_dict(json.load(f))))
+                logger.info(f"infrastructure dump:\n{pretty_dict(json.load(f))}")
             raise ex
 
 

@@ -82,12 +82,12 @@ class Monitor:
         start_time = time.time()
         while not is_running:
             is_running, progress = self.rest.get_task_status(host, task_type='rebalance')
-            logger.info('Rebalance running: {}'.format(is_running))
+            logger.info(f"Rebalance running: {is_running}")
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Monitoring got stuck')
             time.sleep(self.POLLING_INTERVAL)
 
-        logger.info('Rebalance started. Rebalance progress: {} %'.format(progress))
+        logger.info(f"Rebalance started. Rebalance progress: {progress} %")
 
     def wait_for_rebalance_task(self, host: str):
         """Wait for rebalance task to complete (successfully or not) on the given host."""
@@ -150,13 +150,13 @@ class Monitor:
                 if stats:
                     last_value = stats[-1]
                     if last_value:
-                        logger.info('{} = {:,}'.format(metric, last_value))
+                        logger.info(f"{metric} = {last_value:,}")
                         continue
                     else:
-                        logger.info('{} reached 0'.format(metric))
+                        logger.info(f"{metric} reached 0")
                     metrics.remove(metric)
                 else:
-                    logger.info('{} reached 0'.format(metric))
+                    logger.info(f"{metric} reached 0")
                     metrics.remove(metric)
             if metrics:
                 time.sleep(self.POLLING_INTERVAL)
@@ -188,8 +188,7 @@ class Monitor:
             bucket_stats = self.rest.get_bucket_stats(host, bucket)
             curr_items = bucket_stats['op']['samples'].get("curr_items")[-1]
             replica_curr_items = bucket_stats['op']['samples'].get("vb_replica_curr_items")[-1]
-            logger.info("curr_items: {}, replica_curr_items: {}".format(curr_items,
-                                                                        replica_curr_items))
+            logger.info(f"curr_items: {curr_items}, replica_curr_items: {replica_curr_items}")
             if (curr_items * replica_number) == replica_curr_items:
                 break
             time.sleep(self.POLLING_INTERVAL)
@@ -246,9 +245,9 @@ class Monitor:
                 if stats:
                     last_value = stats[0]
                     if last_value != 100:
-                        logger.info('{} : {}'.format(metric, last_value))
+                        logger.info(f"{metric} : {last_value}")
                     elif last_value == 100:
-                        logger.info('{} Completed 100 %'.format(metric))
+                        logger.info(f"{metric} Completed 100 %")
                         metrics.remove(metric)
             if metrics:
                 time.sleep(self.POLLING_INTERVAL)
@@ -256,12 +255,12 @@ class Monitor:
                 raise Exception('Monitoring got stuck')
 
     def monitor_disk_queues(self, host, bucket):
-        logger.info('Monitoring disk queues: {}'.format(bucket))
+        logger.info(f"Monitoring disk queues: {bucket}")
         self._wait_for_empty_queues(host, bucket, self.DISK_QUEUES,
                                     self.rest.get_bucket_stats)
 
     def monitor_dcp_queues(self, host: str, bucket: str, bucket_replica: int):
-        logger.info('Monitoring DCP queues: {}'.format(bucket))
+        logger.info(f"Monitoring DCP queues: {bucket}")
         if self.build_version_number < (1, 0, 0, 0):
             if bucket_replica != 0:
                 if self.build_version_number < (0, 0, 0, 2106):
@@ -293,7 +292,7 @@ class Monitor:
                                         self.rest.get_bucket_stats)
 
     def monitor_replica_count(self, host, bucket):
-        logger.info('Monitoring replica count match: {}'.format(bucket))
+        logger.info(f"Monitoring replica count match: {bucket}")
         self._wait_for_replica_count_match(host, bucket)
 
     def _wait_for_xdcr_to_start(self, host: str):
@@ -319,7 +318,7 @@ class Monitor:
         num_nodes: int,
         mobile: Optional[str] = None
     ):
-        logger.info('Monitoring XDCR queues: {}'.format(bucket))
+        logger.info(f"Monitoring XDCR queues: {bucket}")
         self._wait_for_xdcr_to_start(host)
         # adding temporary delay to make sure replication_changes_left stats arrives
         time.sleep(20)
@@ -350,8 +349,10 @@ class Monitor:
         if mobile:
             previous_xdcr_mobile_docs_filtered_total = \
                 self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
-            logger.info('Initial xdcr_mobile_docs_filtered_total = {:,}'.
-                        format(previous_xdcr_mobile_docs_filtered_total))
+            logger.info(
+                "Initial xdcr_mobile_docs_filtered_total = "
+                f"{previous_xdcr_mobile_docs_filtered_total:,}"
+            )
         # No need to check for every bucket if we have multiple buckets
         if bucket == "bucket-1" and num_replication == 0:
             logger.info("Sleep until xdcr_changes_left_total starts to be updated")
@@ -362,16 +363,17 @@ class Monitor:
         while True:
             xdcr_changes_left_total = self.rest.get_xdcr_changes_left_total(host, bucket)
             if xdcr_changes_left_total:
-                logger.info('xdcr_changes_left_total = {:,}'.format(xdcr_changes_left_total))
+                logger.info(f"xdcr_changes_left_total = {xdcr_changes_left_total:,}")
                 if xdcr_changes_left_total == 1:
                     xdcr_docs_written_total = self.rest.get_xdcr_docs_written_total(host, bucket)
-                    logger.info('xdcr_docs_written_total = {:,}'.format(xdcr_docs_written_total))
+                    logger.info(f"xdcr_docs_written_total = {xdcr_docs_written_total:,}")
 
                     if xdcr_docs_written_total >= total_docs / num_nodes:
                         xdcr_mobile_docs_filtered_total = \
                             self.rest.xdcr_mobile_docs_filtered_total(host, bucket)
-                        logger.info('xdcr_mobile_docs_filtered_total = {:,}'.
-                                    format(xdcr_mobile_docs_filtered_total))
+                        logger.info(
+                            f"xdcr_mobile_docs_filtered_total = {xdcr_mobile_docs_filtered_total:,}"
+                        )
                         if xdcr_mobile_docs_filtered_total > \
                            previous_xdcr_mobile_docs_filtered_total:
                             logger.info('Reached the end of the replication')
@@ -387,7 +389,7 @@ class Monitor:
                 raise Exception('Monitoring got stuck')
 
     def monitor_xdcr_changes_left(self, host: str, bucket: str, xdcrlink1: str, xdcrlink2: str):
-        logger.info('Monitoring XDCR queues: {}'.format(bucket))
+        logger.info(f"Monitoring XDCR queues: {bucket}")
         self._wait_for_xdcr_to_start(host)
         start_time = time.time()
         link1_time, link2_items = self._wait_for_replication_completion(host, bucket,
@@ -396,7 +398,7 @@ class Monitor:
         return start_time, link1_time, link2_items
 
     def monitor_xdcr_completeness(self, host: str, bucket: str, xdcr_link: str):
-        logger.info('Monitoring XDCR Link Completeness: {}'.format(bucket))
+        logger.info(f"Monitoring XDCR Link Completeness: {bucket}")
         self._wait_for_completeness(host=host, bucket=bucket, xdcr_link=xdcr_link,
                                     stats_function=self.rest.get_xdcr_stats)
         return time.time()
@@ -448,7 +450,7 @@ class Monitor:
     def monitor_num_items(
         self, host: str, bucket: str, bucket_replica: int, num_items: int, max_retry: int = None
     ):
-        logger.info('Checking the number of items in {}'.format(bucket))
+        logger.info(f"Checking the number of items in {bucket}")
 
         if not max_retry:
             max_retry = self.MAX_RETRY
@@ -459,19 +461,18 @@ class Monitor:
             if curr_items == num_items:
                 break
             else:
-                logger.info('{}(curr_items) != {}(num_items)'.format(curr_items, num_items))
+                logger.info(f"{curr_items}(curr_items) != {num_items}(num_items)")
 
             time.sleep(self.POLLING_INTERVAL)
             retries += 1
         else:
             actual_items = self._get_num_items(host, bucket, bucket_replica, total=True)
-            raise Exception('Mismatch in the number of items: {}'
-                            .format(actual_items))
+            raise Exception(f"Mismatch in the number of items: {actual_items}")
 
     def monitor_num_backfill_items(
         self, host: str, bucket: str, bucket_replica: int, num_items: int
     ):
-        logger.info('Checking the number of items in {}'.format(bucket))
+        logger.info(f"Checking the number of items in {bucket}")
 
         t0 = time.time()
         while True:
@@ -481,13 +482,13 @@ class Monitor:
                 t1 = time.time()
                 break
             else:
-                logger.info('{}(curr_items) != {}(num_items)'.format(curr_items, num_items))
+                logger.info(f"{curr_items}(curr_items) != {num_items}(num_items)")
 
             time.sleep(self.POLLING_INTERVAL)
         return t1-t0
 
     def monitor_task(self, host, task_type):
-        logger.info('Monitoring task: {}'.format(task_type))
+        logger.info(f"Monitoring task: {task_type}")
         time.sleep(self.MONITORING_DELAY * 2)
 
         while True:
@@ -503,7 +504,7 @@ class Monitor:
                     ))
             else:
                 break
-        logger.info('Task {} successfully completed'.format(task_type))
+        logger.info(f"Task {task_type} successfully completed")
 
     def _monitor_warmup(
         self,
@@ -581,7 +582,7 @@ class Monitor:
             stats = memcached.get_stats(host, memcached_port, bucket)
             json_docs = int(stats['ep_active_datatype_json'])
             if json_docs:
-                logger.info('Still uncompressed: {:,} items'.format(json_docs))
+                logger.info(f"Still uncompressed: {json_docs:,} items")
                 time.sleep(self.POLLING_INTERVAL)
         logger.info('All items are compressed')
 
@@ -653,7 +654,7 @@ class Monitor:
         while not self.is_index_ready(host):
             time.sleep(self.POLLING_INTERVAL_INDEXING * 5)
             pending_docs = self.estimate_pending_docs([host])
-            logger.info('Pending docs: {:,}'.format(pending_docs))
+            logger.info(f"Pending docs: {pending_docs:,}")
 
         logger.info('Indexing completed')
 
@@ -874,8 +875,7 @@ class Monitor:
 
     def wait_for_secindex_init_build(self, host, indexes):
         # POLL until initial index build is complete
-        logger.info(
-            "Waiting for the following indexes to be ready: {}".format(indexes))
+        logger.info(f"Waiting for the following indexes to be ready: {indexes}")
 
         indexes_ready = [0 for _ in indexes]
 
@@ -899,7 +899,7 @@ class Monitor:
             time.sleep(self.POLLING_INTERVAL_INDEXING)
             update_indexes_ready()
         finish_ts = time.time()
-        logger.info('secondary index build time: {}'.format(finish_ts - init_ts))
+        logger.info(f"secondary index build time: {finish_ts - init_ts}")
         time_elapsed = round(finish_ts - init_ts)
         return time_elapsed
 
@@ -920,15 +920,13 @@ class Monitor:
                             num_replica = index_config["num_replica"]
                             index_list.append(index)
                             for i in range(1, num_replica+1):
-                                index_list.append("{index_name} (replica {number})"
-                                                  .format(index_name=index, number=i))
+                                index_list.append(f"{index} (replica {i})")
                         else:
                             for index_name in index_map:
                                 index_list.append(index_name)
 
         indexes = index_list
-        logger.info(
-            "Waiting for the following indexes to be ready: {}".format(indexes))
+        logger.info(f"Waiting for the following indexes to be ready: {indexes}")
 
         indexes_ready = [0 for _ in indexes]
 
@@ -955,11 +953,11 @@ class Monitor:
         while sum(indexes_ready) != len(indexes):
             time.sleep(polling_interval)
             update_indexes_ready()
-        logger.info('secondary index build complete: {}'.format(indexes))
+        logger.info(f"secondary index build complete: {indexes}")
 
     def wait_for_secindex_incr_build(self, index_nodes, bucket, indexes, numitems):
         # POLL until incremental index build is complete
-        logger.info('expecting {} num_docs_indexed for indexes {}'.format(numitems, indexes))
+        logger.info(f"expecting {numitems} num_docs_indexed for indexes {indexes}")
 
         # collect num_docs_indexed information globally from all index nodes
         def get_num_docs_indexed():
@@ -990,7 +988,7 @@ class Monitor:
             if curr_num_pending == expected_num_pending:
                 break
         curr_num_indexed = get_num_docs_indexed()
-        logger.info("Number of Items indexed {}".format(curr_num_indexed))
+        logger.info(f"Number of Items indexed {curr_num_indexed}")
 
     def wait_for_secindex_incr_build_collections(self, index_nodes, index_map, expected_num_docs):
         indexes = []
@@ -1000,18 +998,13 @@ class Monitor:
                     for index_name, index_def in coll_index_map.items():
                         if scope_name == '_default' \
                                 and collection_name == '_default':
-                            target_index = "{}:{}".format(
-                                bucket_name,
-                                index_name)
+                            target_index = f"{bucket_name}:{index_name}"
                         else:
-                            target_index = "{}:{}:{}:{}".format(
-                                bucket_name,
-                                scope_name,
-                                collection_name,
-                                index_name)
+                            target_index = (
+                                f"{bucket_name}:{scope_name}:{collection_name}:{index_name}"
+                            )
                         indexes.append(target_index)
-        logger.info('expecting {} num_docs_indexed for indexes {}'
-                    .format(expected_num_docs, indexes))
+        logger.info(f"expecting {expected_num_docs} num_docs_indexed for indexes {indexes}")
 
         # collect num_docs_indexed information globally from all index nodes
         def get_num_docs_indexed():
@@ -1043,7 +1036,7 @@ class Monitor:
                 break
 
         curr_num_indexed = get_num_docs_indexed()
-        logger.info("Number of Items indexed {}".format(curr_num_indexed))
+        logger.info(f"Number of Items indexed {curr_num_indexed}")
 
     def wait_for_num_connections(self, index_node, expected_connections):
         curr_connections = self.rest.get_index_num_connections(index_node)
@@ -1051,7 +1044,7 @@ class Monitor:
         while curr_connections < expected_connections and retry < self.MAX_RETRY:
             time.sleep(self.POLLING_INTERVAL_INDEXING)
             curr_connections = self.rest.get_index_num_connections(index_node)
-            logger.info("Got current connections {}".format(curr_connections))
+            logger.info(f"Got current connections {curr_connections}")
             retry += 1
         if retry == self.MAX_RETRY:
             return False
@@ -1061,7 +1054,7 @@ class Monitor:
         time.sleep(self.MONITORING_DELAY)
         for retry in range(self.MAX_RETRY_RECOVERY):
             response = self.rest.get_index_stats(index_nodes)
-            item = "{}:{}:disk_load_duration".format(bucket, index)
+            item = f"{bucket}:{index}:disk_load_duration"
             if item in response:
                 return response[item]
             else:
@@ -1083,11 +1076,11 @@ class Monitor:
         logger.interrupt('Some nodes are still down')
 
     def monitor_fts_indexing_queue(self, host: str, index: str, items: int, bucket="bucket-1"):
-        logger.info('{} : Waiting for indexing to finish'.format(index))
+        logger.info(f"{index} : Waiting for indexing to finish")
         count = 0
         while count < items:
             count = self.rest.get_fts_doc_count(host, index, bucket)
-            logger.info('FTS indexed documents for {}: {:,}'.format(index, count))
+            logger.info(f"FTS indexed documents for {index}: {count:,}")
             time.sleep(self.POLLING_INTERVAL)
 
     def monitor_fts_index_persistence(self, hosts: list[str], index: str, bucket: str):
@@ -1165,11 +1158,11 @@ class Monitor:
         while pending_items:
             stats = self.rest.get_elastic_stats(host)
             pending_items = stats['indices'][index]['total']['translog']['operations']
-            logger.info('Records to persist: {:,}'.format(pending_items))
+            logger.info(f"Records to persist: {pending_items:,}")
             time.sleep(self.POLLING_INTERVAL)
 
     def wait_for_bootstrap(self, nodes: list, function: str):
-        logger.info('Waiting for bootstrap of eventing function: {} '.format(function))
+        logger.info(f"Waiting for bootstrap of eventing function: {function} ")
         for node in nodes:
             retry = 1
             while retry < self.MAX_RETRY_BOOTSTRAP:
@@ -1178,8 +1171,7 @@ class Monitor:
                 time.sleep(self.POLLING_INTERVAL)
                 retry += 1
             if retry == self.MAX_RETRY_BOOTSTRAP:
-                logger.info('Failed to bootstrap function: {}, node: {}'.
-                            format(function, node))
+                logger.info(f"Failed to bootstrap function: {function}, node: {node}")
 
     def wait_for_bootstrap_bulk(self, nodes: list, functions: list[str], num_functions: int):
         logger.info('Waiting for bootstrap of eventing functions')
@@ -1200,7 +1192,7 @@ class Monitor:
                 logger.info(f'Failed to bootstrap functions on node: {node}')
 
     def get_num_analytics_items(self, analytics_node: str, bucket: str) -> int:
-        stats_key = '{}:all:incoming_records_count_total'.format(bucket)
+        stats_key = f"{bucket}:all:incoming_records_count_total"
         num_items = 0
         for node in self.rest.get_active_nodes_by_role(analytics_node, 'cbas'):
             stats = self.rest.get_analytics_stats(node)
@@ -1209,11 +1201,10 @@ class Monitor:
 
     def query_num_analytics_items(self, analytics_node: str, dataset: str) -> int:
         """Get the number of items in an analytics dataset using an analytics query."""
-        statement = "SELECT COUNT(*) from `{}`;".format(dataset)
+        statement = f"SELECT COUNT(*) from `{dataset}`;"
         result = self.rest.exec_analytics_statement(analytics_node, statement)
         num_analytics_items = result.json()['results'][0]['$1']
-        logger.info("Number of items in dataset `{}`: {}".
-                    format(dataset, num_analytics_items))
+        logger.info(f"Number of items in dataset `{dataset}`: {num_analytics_items}")
         return num_analytics_items
 
     def get_ingestion_progress(self, analytics_node: str) -> int:
@@ -1363,7 +1354,7 @@ class Monitor:
         while True:
             resp = self.rest.get_analytics_link_info(analytics_node, link_name, link_scope)
             link_state = resp.get('linkState', None)
-            logger.info('Link state: {}'.format(link_state))
+            logger.info(f"Link state: {link_state}")
 
             if link_state == 'CONNECTED':
                 break
@@ -1395,16 +1386,19 @@ class Monitor:
         t0 = time.time()
         while datasets_still_ingesting:
             if time.time() - t0 > (timeout_mins * 60):
-                logger.interrupt('Monitoring Kafka Link data ingestion timed out after {} mins.'
-                                 .format(timeout_mins))
+                logger.interrupt(
+                    f"Monitoring Kafka Link data ingestion timed out after {timeout_mins} mins."
+                )
                 break
 
             for dataset in list(datasets_still_ingesting):
                 target_items = final_dataset_counts[dataset]
                 num_items = self.query_num_analytics_items(analytics_node, dataset)
                 if num_items == target_items:
-                    logger.info('Dataset `{}` has reached target count {} after ~{}s'
-                                .format(dataset, num_items, time.time() - t0))
+                    logger.info(
+                        f"Dataset `{dataset}` has reached target count {num_items} "
+                        f"after ~{time.time() - t0}s"
+                    )
                     datasets_still_ingesting.remove(dataset)
 
             time.sleep(self.POLLING_INTERVAL_ANALYTICS)
@@ -1418,7 +1412,7 @@ class Monitor:
             time.sleep(self.POLLING_INTERVAL)
 
     def wait_for_timer_event(self, node: str, function: str, event="timer_events"):
-        logger.info('Waiting for timer events to start processing: {} '.format(function))
+        logger.info(f"Waiting for timer events to start processing: {function} ")
         retry = 1
         while retry < self.MAX_RETRY_TIMER_EVENT:
             if 0 < self.rest.get_num_events_processed(
@@ -1427,7 +1421,7 @@ class Monitor:
             time.sleep(self.POLLING_INTERVAL_EVENTING)
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
-            logger.info('Failed to get timer event for function: {}'.format(function))
+            logger.info(f"Failed to get timer event for function: {function}")
 
     def wait_for_all_mutations_processed(
         self, host: str, bucket1: str, bucket2: str, bucket_replica: int
@@ -1445,7 +1439,7 @@ class Monitor:
             logger.info('Failed to process all mutations... TIMEOUT')
 
     def wait_for_all_timer_creation(self, node: str, function: str):
-        logger.info('Waiting for all timers to be created by : {} '.format(function))
+        logger.info(f"Waiting for all timers to be created by : {function} ")
         retry = 1
         events_processed = {}
         while retry < self.MAX_RETRY_TIMER_EVENT:
@@ -1460,7 +1454,7 @@ class Monitor:
                 events_processed["timer_responses_received"], function))
 
     def wait_for_function_status(self, node: str, function: str, status: str):
-        logger.info('Waiting for {} function to {}'.format(function, status))
+        logger.info(f"Waiting for {function} function to {status}")
         retry = 1
         while retry < self.MAX_RETRY_TIMER_EVENT:
             op = self.rest.get_apps_with_status(node, status)
@@ -1469,7 +1463,7 @@ class Monitor:
             time.sleep(self.POLLING_INTERVAL_EVENTING)
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
-            logger.info('Function {} failed to {}...!!!'.format(function, status))
+            logger.info(f"Function {function} failed to {status}...!!!")
 
     def monitor_eventing(self, eventing_nodes: list[str], bucket_name: str, bucket_replica: int):
         previous_docs = 0
@@ -1492,7 +1486,7 @@ class Monitor:
         while True:
             stats = self.rest.get_bucket_stats(host=host, bucket=bucket)
             fragmentation = int(stats['op']['samples'].get("couch_docs_fragmentation")[-1])
-            logger.info("couch_docs_fragmentation: {}".format(fragmentation))
+            logger.info(f"couch_docs_fragmentation: {fragmentation}")
             if fragmentation <= target_fragmentation:
                 break
             time.sleep(self.POLLING_INTERVAL)
@@ -1552,7 +1546,7 @@ class Monitor:
         while True:
             time.sleep(self.POLLING_INTERVAL * 4)
             imports = self.get_import_count(host, num_buckets)
-            logger.info('Docs imported: {}'.format(imports))
+            logger.info(f"Docs imported: {imports}")
             if imports >= expected_docs:
                 end_time = time.time()
                 time_taken = end_time - start_time
@@ -1565,9 +1559,9 @@ class Monitor:
     ):
         logger.info('Monitoring SGReplicate items:')
         initial_items, start_time = self._wait_for_sg_replicate_start(host, replicate_id, version)
-        logger.info('initial items: {} start time: {}'.format(initial_items, start_time))
+        logger.info(f"initial items: {initial_items} start time: {start_time}")
         items_in_range = expected_docs - initial_items
-        logger.info('items in range: {}'.format(items_in_range))
+        logger.info(f"items in range: {items_in_range}")
         time_taken, final_items = self._wait_for_sg_replicate_complete(
             host, num_buckets, expected_docs, start_time, replicate_id, version
         )
@@ -1578,7 +1572,7 @@ class Monitor:
 
     def _wait_for_sg_replicate_start(self, host, replicate_id, version):
         logger.info('Checking if replicate process started')
-        logger.info('host: {}'.format(host))
+        logger.info(f"host: {host}")
         replicate_docs = 0
         while True:
             if isinstance(host, list):
@@ -1664,7 +1658,7 @@ class Monitor:
                         elif stat['replication_id'] == 'sgr1_pull':
                             replicate_docs += int(stat.get('docs_read', 0))
 
-            logger.info('Docs replicated: {}'.format(replicate_docs))
+            logger.info(f"Docs replicated: {replicate_docs}")
             if replicate_id == 'sgr2_conflict_resolution':
                 sg_stats = self.rest.get_sg_stats(host=host)
                 local_count = 0
@@ -1672,7 +1666,7 @@ class Monitor:
                 merge_count = 0
                 num_docs_pushed = 0
                 for count in range(1, num_buckets + 1):
-                    db = 'db-{}'.format(count)
+                    db = f"db-{count}"
                     sgr_stats = sg_stats['syncgateway']['per_db'][db]['replications'][replicate_id]
                     local_count += int(sgr_stats['sgr_conflict_resolved_local_count'])
                     remote_count += int(sgr_stats['sgr_conflict_resolved_remote_count'])
@@ -1758,8 +1752,7 @@ class Monitor:
             retries += 1
             if retries >= max_retries:
                 raise Exception(
-                    "Push failed to start within {} seconds".format(
-                        max_retries*self.POLLING_INTERVAL_SGW)
+                    f"Push failed to start within {max_retries * self.POLLING_INTERVAL_SGW} seconds"
                 )
             time.sleep(self.POLLING_INTERVAL_SGW)
 
@@ -1779,8 +1772,7 @@ class Monitor:
             retries += 1
             if retries >= max_retries:
                 raise Exception(
-                    "Pull failed to start within {} seconds".format(
-                        max_retries*self.POLLING_INTERVAL_SGW)
+                    f"Pull failed to start within {max_retries * self.POLLING_INTERVAL_SGW} seconds"
                 )
             time.sleep(self.POLLING_INTERVAL_SGW)
 
@@ -1798,7 +1790,7 @@ class Monitor:
 
             if push_count >= target_docs:
                 return finished_time, push_count
-            logger.info("push count: {}".format(push_count))
+            logger.info(f"push count: {push_count}")
             if push_count == last_push_count:
                 retries += 1
                 if retries >= max_retries:
@@ -1822,7 +1814,7 @@ class Monitor:
 
             if pull_count >= target_docs:
                 return finished_time, pull_count
-            logger.info("pull count: {}".format(pull_count))
+            logger.info(f"pull count: {pull_count}")
             if pull_count == last_pull_count:
                 retries += 1
                 if retries >= max_retries:
@@ -1835,7 +1827,7 @@ class Monitor:
     def wait_sgw_log_streaming_status(self, desired_status: str):
         retries = 0
         max_retries = 180
-        logger.info('Waiting for \'{}\' log-streaming status'.format(desired_status))
+        logger.info(f"Waiting for '{desired_status}' log-streaming status")
         while True:
             current_status = self.rest.get_log_streaming_config().get('data', {}).get('status')
             if current_status == desired_status:
@@ -1843,9 +1835,9 @@ class Monitor:
             retries += 1
             if retries >= max_retries:
                 raise Exception(
-                    "Desired ({}) log-streaming status not reached after {}s. Status: {}".format(
-                        desired_status, max_retries*self.POLLING_INTERVAL_SGW_LOGSTREAMING,
-                        current_status)
+                    f"Desired ({desired_status}) log-streaming status not reached "
+                    f"after {max_retries * self.POLLING_INTERVAL_SGW_LOGSTREAMING}s. "
+                    f"Status: {current_status}"
                 )
             time.sleep(self.POLLING_INTERVAL_SGW_LOGSTREAMING)
 

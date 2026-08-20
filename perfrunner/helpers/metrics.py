@@ -246,7 +246,7 @@ class MetricHelper:
     @property
     def _custom_bucket_names(self):
         return [
-            'bucket-{}'.format(i + 1)
+            f"bucket-{i + 1}"
             for i in range(int(self.test_config.jts_access_settings.custom_num_buckets))
         ]
 
@@ -260,7 +260,7 @@ class MetricHelper:
         for prefix in 'CU', 'QU', 'QF', 'CF', 'CI', 'Q', 'UP', 'DL', 'AG', 'PI', 'BF', 'WF':
             query_id = query_id.replace(prefix, '')
         if query_id.isnumeric():
-            return '{:05d}'.format(int(query_id))
+            return f"{int(query_id):05d}"
         else:
             return query_id
 
@@ -268,8 +268,8 @@ class MetricHelper:
                             custom_title_postfix: str = None,
                             update_subcategory: bool = False) -> Metric:
         """Generate cluster total query throughput metric."""
-        metric_id = '{}_avg_query_requests'.format(self.test_config.name)
-        title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
+        metric_id = f"{self.test_config.name}_avg_query_requests"
+        title = f"Avg. Query Throughput (queries/sec), {self._title}"
         if custom_title_postfix:
             title = f"{title} {custom_title_postfix}"
 
@@ -304,8 +304,8 @@ class MetricHelper:
         return round(throughput, throughput < 1 and 1 or 0)
 
     def avg_n1ql_rebalance_throughput(self, rebalance_time, total_requests) -> Metric:
-        metric_id = '{}_avg_query_requests'.format(self.test_config.name)
-        title = 'Avg. Query Throughput (queries/sec), during rebalance, {}'.format(self._title)
+        metric_id = f"{self.test_config.name}_avg_query_requests"
+        title = f"Avg. Query Throughput (queries/sec), during rebalance, {self._title}"
 
         throughput = int(total_requests / rebalance_time)
         return self._metric(
@@ -337,17 +337,17 @@ class MetricHelper:
         metric_id = self.test_config.name
         title_temp = self._title
         title_test = title_temp.split("(sec), ")[1]
-        title = 'Total Index build time(sec), {}'.format(title_test)
+        title = f"Total Index build time(sec), {title_test}"
 
         index_time = round(elapsed_time, 1)
 
         return self._metric(index_time, metric_id=metric_id, title=title, chirality=-1)
 
     def fts_index_size(self, index_size_raw: int) -> Metric:
-        metric_id = "{}_indexsize".format(self.test_config.name)
+        metric_id = f"{self.test_config.name}_indexsize"
         title_temp = self._title
         title_test = title_temp.split("(sec), ")[1]
-        title = 'Index size (MB), {}'.format(title_test)
+        title = f"Index size (MB), {title_test}"
 
         index_size_mb = int(bytes_to_mib(index_size_raw))
 
@@ -355,7 +355,7 @@ class MetricHelper:
 
     def fts_index_with_latency(self, elapsed_time: float) -> Metric:
         metric_id = self.test_config.name.replace("latency", "index_time")
-        title = 'Total Index build time(sec), {}'.format(self._title)
+        title = f"Total Index build time(sec), {self._title}"
         index_time = round(elapsed_time, 1)
         return self._metric(
             index_time,
@@ -366,8 +366,8 @@ class MetricHelper:
         )
 
     def fts_size_with_latency(self, index_size_raw: int) -> Metric:
-        metric_id = "{}_indexsize".format(self.test_config.name).replace("latency", "")
-        title = 'Index size (MB), {}'.format(self._title)
+        metric_id = f"{self.test_config.name}_indexsize".replace("latency", "")
+        title = f"Index size (MB), {self._title}"
         index_size_mb = int(bytes_to_mib(index_size_raw))
         return self._metric(
             index_size_mb,
@@ -419,10 +419,10 @@ class MetricHelper:
         return self._metric(lat, metric_id=metric_id, title=title, order_by=order_by, chirality=-1)
 
     def jts_recall_and_accuracy(self, value, metric, k_nearest_neighbour):
-        metric_id = '{}_{}at{}'.format(self.test_config.name, metric, k_nearest_neighbour)
-        title_prefix = "Average {}@{} across 1000 queries".format(metric, k_nearest_neighbour)
+        metric_id = f"{self.test_config.name}_{metric}at{k_nearest_neighbour}"
+        title_prefix = f"Average {metric}@{k_nearest_neighbour} across 1000 queries"
         metric_id = metric_id.replace('.', '')
-        title = "{}, {}".format(title_prefix, self._title)
+        title = f"{title_prefix}, {self._title}"
         return self._metric(
             round(value, 3),
             metric_id=metric_id,
@@ -454,8 +454,10 @@ class MetricHelper:
             bucket_metric_list.append(bucket_metric)
             timings += bucket_timings
         if len(bucket_metric_list) > 1:
-            logger.info("The standard deviation across all buckets is: {}".format(
-                statistics.stdev(bucket_metric_list)))
+            logger.info(
+                "The standard deviation across all buckets is: "
+                f"{statistics.stdev(bucket_metric_list)}"
+            )
         return timings
 
     def _ops_data(self,
@@ -555,21 +557,21 @@ class MetricHelper:
             # Overall throughput first
             # We do this here to ensure the title is correct when we are using stat groups
             metric_id = None
-            title = '{}, {}'.format(metric_name, self._title)
+            title = f"{metric_name}, {self._title}"
             if len(self.test.cbmonitor_clusters) > 1:
-                metric_id = '{}_cluster{}'.format(self.test_config.name, cluster_idx + 1)
-                title = '{} (cluster {})'.format(title, cluster_idx + 1)
+                metric_id = f"{self.test_config.name}_cluster{cluster_idx + 1}"
+                title = f"{title} (cluster {cluster_idx + 1})"
 
             metric_info = self._metric_info(metric_id, title, chirality=1)
             metrics = [(overall_throughput, self._snapshots, metric_info)]
 
             # Per-collection throughputs
             for stat_group, throughput in stat_group_throughputs.items():
-                metric_id = '{}_{}'.format(self.test_config.name, stat_group)
-                title = '{} per collection ({}), {}'.format(metric_name, stat_group, self._title)
+                metric_id = f"{self.test_config.name}_{stat_group}"
+                title = f"{metric_name} per collection ({stat_group}), {self._title}"
                 if len(self.test.cbmonitor_clusters) > 1:
-                    metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
-                    title = '{} (cluster {})'.format(title, cluster_idx + 1)
+                    metric_id = f"{metric_id}_cluster{cluster_idx + 1}"
+                    title = f"{title} (cluster {cluster_idx + 1})"
 
                 metric_info = self._metric_info(metric_id, title, chirality=1)
                 metrics.append((throughput, self._snapshots, metric_info))
@@ -942,18 +944,18 @@ class MetricHelper:
     def query_latency(self, percentile: Number, cluster_idx: int = 0,
                       custom_title_postfix: str = None,
                       update_subcategory: bool = False) -> Metric:
-        metric_id = '{}_query_{:g}th'.format(self.test_config.name, percentile)
+        metric_id = f"{self.test_config.name}_query_{percentile:g}th"
         metric_id = metric_id.replace('.', '')
 
-        title_prefix = '{:g}th percentile query latency (ms)'.format(percentile)
+        title_prefix = f"{percentile:g}th percentile query latency (ms)"
         if custom_title_postfix:
             title_prefix = title_prefix + f" {custom_title_postfix}"
 
         if len(self.test.cbmonitor_clusters) > 1:
-            metric_id = '{}_cluster{}'.format(metric_id, cluster_idx + 1)
-            title_prefix = '{} (cluster {})'.format(title_prefix, cluster_idx + 1)
+            metric_id = f"{metric_id}_cluster{cluster_idx + 1}"
+            title_prefix = f"{title_prefix} (cluster {cluster_idx + 1})"
 
-        title = '{}, {}'.format(title_prefix, self._title)
+        title = f"{title_prefix}, {self._title}"
 
         latency = self._query_latency(percentile, cluster_idx)
         extra = {"subCategory": "Latency"} if update_subcategory else None
@@ -1028,13 +1030,11 @@ class MetricHelper:
         return self._metric(rate, metric_id=metric_id, title=title, chirality=1)
 
     def secondary_scan_latency(self, percentile: Number, title: str = None) -> Metric:
-        metric_id = "{}_{:g}th".format(self.test_config.name, percentile)
+        metric_id = f"{self.test_config.name}_{percentile:g}th"
         if title is None:
-            title = '{:g}th percentile secondary scan latency (ms), {}'.format(percentile,
-                                                                               self._title)
+            title = f"{percentile:g}th percentile secondary scan latency (ms), {self._title}"
         else:
-            title = '{:g}th percentile secondary scan latency (ms), {}'.format(percentile,
-                                                                               title)
+            title = f"{percentile:g}th percentile secondary scan latency (ms), {title}"
         cluster = ""
         for cid in self.test.cbmonitor_clusters:
             if "apply_scanworkload" in cid:
@@ -1042,7 +1042,7 @@ class MetricHelper:
                 break
         timings = self._read_values("Nth-latency", "secondaryscan_latency", cluster=cluster)
         timings = list(map(int, timings))
-        logger.info("Number of samples are {}".format(len(timings)))
+        logger.info(f"Number of samples are {len(timings)}")
         scan_latency = ns_to_ms(self._percentile(timings, percentile))
         scan_latency = round(scan_latency, 2)
 
@@ -1053,9 +1053,8 @@ class MetricHelper:
     def secondary_scan_latency_value(self, scan_latency,
                                      percentile: Number, title: str = None,
                                      update_category: bool = True) -> Metric:
-        metric_id = "{}_{:g}th".format(self.test_config.name, percentile)
-        title = '{:g}th percentile secondary scan latency (ms), {}'.format(percentile,
-                                                                           title)
+        metric_id = f"{self.test_config.name}_{percentile:g}th"
+        title = f"{percentile:g}th percentile secondary scan latency (ms), {title}"
         scan_latency = ns_to_ms(scan_latency)
         scan_latency = round(scan_latency, 2)
 
@@ -1297,8 +1296,8 @@ class MetricHelper:
         return metrics
 
     def observe_latency(self, percentile: Number) -> Metric:
-        metric_id = '{}_{:g}th'.format(self.test_config.name, percentile)
-        title = '{:g}th percentile {}'.format(percentile, self._title)
+        metric_id = f"{self.test_config.name}_{percentile:g}th"
+        title = f"{percentile:g}th percentile {self._title}"
 
         timings = []
         for bucket in self.test_config.buckets:
@@ -1388,11 +1387,11 @@ class MetricHelper:
                           unit: str = "min",
                           name: str = "",
                           update_category: bool = True) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, index_type.lower())
+        metric_id = f"{self.test_config.name}_{index_type.lower()}"
         test_name = self._title
         if name:
             test_name = name
-        title = '{} index ({}), {}'.format(index_type, unit, test_name)
+        title = f"{index_type} index ({unit}), {test_name}"
 
         value = s2m(value)
 
@@ -1404,11 +1403,11 @@ class MetricHelper:
                      index_type: str,
                      unit: str = "min",
                      name: str = "") -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, index_type.lower())
+        metric_id = f"{self.test_config.name}_{index_type.lower()}"
         test_name = self._title
         if name:
             test_name = name
-        title = '{} index ({}), {}'.format(index_type, unit, test_name)
+        title = f"{index_type} index ({unit}), {test_name}"
         metric_info = self._metric_info(metric_id, title, chirality=-1)
         metric_info['category'] = "ddl"
 
@@ -1429,7 +1428,7 @@ class MetricHelper:
                         memory_type: str) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name,
                                    memory_type.replace(" ", "").lower())
-        title = '{} (GB), {}'.format(memory_type, self._title)
+        title = f"{memory_type} (GB), {self._title}"
 
         return self._metric(value, metric_id=metric_id, title=title, chirality=-1)
 
@@ -1479,10 +1478,8 @@ class MetricHelper:
                   storage: str = None) -> Metric:
 
         tool_and_storage = tool + '-' + storage if storage else tool
-        metric_id = '{}_{}_time_{}'.format(
-            self.test_config.name, tool_and_storage, edition)
-        title = '{} {} time elapsed (seconds), {}'.format(
-            edition, tool, self._title)
+        metric_id = f"{self.test_config.name}_{tool_and_storage}_time_{edition}"
+        title = f"{edition} {tool} time elapsed (seconds), {self._title}"
 
         return self._metric(round(time_elapsed), metric_id=metric_id, title=title, chirality=-1)
 
@@ -1492,26 +1489,23 @@ class MetricHelper:
                     storage: str = None) -> Metric:
 
         tool_and_storage = tool + '-' + storage if storage else tool
-        metric_id = '{}_{}_size_{}'.format(
-            self.test_config.name, tool_and_storage, edition)
-        title = '{} {} size (GB), {}'.format(edition,
-                                             tool,
-                                             self._title)
+        metric_id = f"{self.test_config.name}_{tool_and_storage}_size_{edition}"
+        title = f"{edition} {tool} size (GB), {self._title}"
 
         return self._metric(size, metric_id=metric_id, title=title, chirality=-1)
 
     def disk_size(self, size: float) -> Metric:
 
-        metric_id = '{}_size'.format(self.test_config.name)
-        title = 'Disk Size (GB), {}'.format(self._title)
+        metric_id = f"{self.test_config.name}_size"
+        title = f"Disk Size (GB), {self._title}"
         size = round(bytes_to_gib(float(size)))
 
         return self._metric(size, metric_id=metric_id, title=title, chirality=-1)
 
     def disk_size_reduction(self, disk_size: float, raw_data_size: float) -> Metric:
 
-        metric_id = '{}_disk_size_reduction'.format(self.test_config.name)
-        title = 'Disk Size Reduction (%), {}'.format(self._title)
+        metric_id = f"{self.test_config.name}_disk_size_reduction"
+        title = f"Disk Size Reduction (%), {self._title}"
         reduction = round((1.0 - disk_size / raw_data_size) * 100)
 
         return self._metric(reduction, metric_id=metric_id, title=title, chirality=1)
@@ -1523,10 +1517,8 @@ class MetricHelper:
                          storage: str = None) -> Metric:
 
         tool_and_storage = tool + '-' + storage if storage else tool
-        metric_id = '{}_{}_thr_{}'.format(
-            self.test_config.name, tool_and_storage, edition)
-        title = '{} {} throughput (Avg. MB/sec), {}'.format(
-            edition, tool, self._title)
+        metric_id = f"{self.test_config.name}_{tool_and_storage}_thr_{edition}"
+        title = f"{edition} {tool} throughput (Avg. MB/sec), {self._title}"
 
         data_size = bytes_to_mib(
             2 * self.test_config.load_settings.items * self.test_config.load_settings.size
@@ -1542,11 +1534,8 @@ class MetricHelper:
                        storage: str = None) -> Metric:
 
         tool_and_storage = tool + '-' + storage if storage else tool
-        metric_id = '{}_{}_size_diff_{}'.format(
-            self.test_config.name, tool_and_storage, edition)
-        title = '{} {} size difference (GB), {}'.format(edition,
-                                                        tool,
-                                                        self._title)
+        metric_id = f"{self.test_config.name}_{tool_and_storage}_size_diff_{edition}"
+        title = f"{edition} {tool} size difference (GB), {self._title}"
         return size_diff, self._snapshots, self._metric_info(metric_id, title, chirality=-1)
 
     def import_and_export_throughput(self, time_elapsed: float) -> Metric:
@@ -1568,8 +1557,8 @@ class MetricHelper:
     def verify_series_in_limits(self, expected_number: int) -> bool:
         values = self._read_values("num_connections", "secondary_debugstats")
         values = list(map(float, values))
-        logger.info("Number of samples: {}".format(len(values)))
-        logger.info("Sample values: {}".format(values))
+        logger.info(f"Number of samples: {len(values)}")
+        logger.info(f"Sample values: {values}")
 
         if any(value > expected_number for value in values):
             return False
@@ -1610,7 +1599,7 @@ class MetricHelper:
 
     def _ycsb_perc_calc(self, _temp: List[Number], io_type: str, percentile: Number,
                         lat_dic: Dict[str, Number], _fc: int) -> Dict[str, Number]:
-        pio_type = '{}th Percentile {}'.format(percentile, io_type)
+        pio_type = f"{percentile}th Percentile {io_type}"
         p_lat = round(self._percentile(_temp, percentile) / 1000, 3)
         if _fc > 1:
             p_lat = round((((lat_dic[pio_type] * (_fc - 1)) + p_lat) / _fc), 3)
@@ -1619,7 +1608,7 @@ class MetricHelper:
 
     def _ycsb_avg_calc(self, _temp: List[Number], io_type: str, lat_dic: Dict[str, Number],
                        _fc: int) -> Dict[str, Number]:
-        aio_type = 'Average {}'.format(io_type)
+        aio_type = f"Average {io_type}"
         a_lat = round((sum(_temp) / len(_temp)) / 1000, 3)
         if _fc > 1:
             a_lat = round((((lat_dic[aio_type] * (_fc - 1)) + a_lat) / _fc), 3)
@@ -1649,7 +1638,7 @@ class MetricHelper:
                 if re.search('], (.*?)000,', line):
                     io_type = line.split('[')[1].split(']')[0]
                     _n = 0
-                    while (line.startswith('[{}]'.format(io_type))):
+                    while line.startswith(f"[{io_type}]"):
                         lat = float(line.split()[-1])
                         _temp.append(lat)
                         line = fh.readline()
@@ -1745,7 +1734,7 @@ class MetricHelper:
                         io_type: str,
                         failures: int,) -> Metric:
         type = io_type + " Failures"
-        title = '{} {}'.format(type, self._title)
+        title = f"{type} {self._title}"
         metric_id = '{}_{}'.format(self.test_config.name, type.replace(' ', '_').casefold())
         return self._metric(failures, title=title, metric_id=metric_id, chirality=-1)
 
@@ -1754,7 +1743,7 @@ class MetricHelper:
                              max_latency: int,) -> Metric:
 
         max_type = "Max " + io_type + " Latency (ms)"
-        title = '{}, {}'.format(max_type, self._title)
+        title = f"{max_type}, {self._title}"
         metric_id = '{}_{}'.format(self.test_config.name, max_type.replace(' ', '_')
                                    .replace('(', '').replace(')', '').casefold())
 
@@ -1842,7 +1831,7 @@ class MetricHelper:
                      io_type: str,
                      latency: int,
                      ) -> Metric:
-        title = '{} {}'.format(io_type, self._title)
+        title = f"{io_type} {self._title}"
         title = title.replace('.0', '')
         metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_').casefold())
         # 50.0 -> 50
@@ -1857,7 +1846,7 @@ class MetricHelper:
                            phase: int,
                            workload: str
                            ) -> Metric:
-        title = '{} Latency(ms), {}, Phase {}, {}'.format(io_type, self._title, phase, workload)
+        title = f"{io_type} Latency(ms), {self._title}, Phase {phase}, {workload}"
         metric_id = '{}_{}_{}_{}'.\
             format(self.test_config.name, workload.replace(' ', '_').casefold(),
                    phase, io_type.replace(' ', '_').casefold())
@@ -1867,7 +1856,7 @@ class MetricHelper:
                          io_type: str,
                          latency: int,
                          ) -> Metric:
-        title = '{} Latency (ms), {}'.format(io_type, self._title)
+        title = f"{io_type} Latency (ms), {self._title}"
         metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_')
                                    .replace('(', '').replace(')', '').casefold())
         return self._metric(latency, title=title, metric_id=metric_id, chirality=-1)
@@ -2267,12 +2256,12 @@ class MetricHelper:
     def rebalance_order_by(self) -> str:
         order_by = ''
         for num_nodes in self.test_config.cluster.initial_nodes:
-            order_by += '{:03d}'.format(num_nodes)
+            order_by += f"{num_nodes:03d}"
 
-        order_by += '{:018d}'.format(self.test_config.load_settings.items)
+        order_by += f"{self.test_config.load_settings.items:018d}"
 
         for num_nodes in self.test_config.rebalance_settings.nodes_after:
-            order_by += '{:03d}'.format(num_nodes)
+            order_by += f"{num_nodes:03d}"
 
         return order_by
 
@@ -2286,15 +2275,15 @@ class MetricHelper:
 
     def failure_detection_time(self, delta: float) -> Metric:
         title_split = self._title.split(sep=",", maxsplit=1)
-        title = "[{}] Failure detection time (s),{}".format(title_split[0], title_split[1])
-        metric_id = '{}_detection_time'.format(self.test_config.name)
+        title = f"[{title_split[0]}] Failure detection time (s),{title_split[1]}"
+        metric_id = f"{self.test_config.name}_detection_time"
 
         return self._metric(delta, metric_id=metric_id, title=title, chirality=-1)
 
     def autofailover_time(self, delta: float) -> Metric:
         title_split = self._title.split(sep=",", maxsplit=1)
-        title = "[{}] Auto failover time (ms),{}".format(title_split[0], title_split[1])
-        metric_id = '{}_failover_time'.format(self.test_config.name)
+        title = f"[{title_split[0]}] Auto failover time (ms),{title_split[1]}"
+        metric_id = f"{self.test_config.name}_failover_time"
 
         return self._metric(delta, metric_id=metric_id, title=title, chirality=-1)
 
@@ -2302,7 +2291,7 @@ class MetricHelper:
                         title: str = None, update_category: bool = True) -> Metric:
         metric_info = self._metric_info()
         if metric_id_append_str is not None:
-            metric_id = '{}_{}'.format(self.test_config.name, metric_id_append_str)
+            metric_id = f"{self.test_config.name}_{metric_id_append_str}"
             metric_info = self._metric_info(metric_id=metric_id, title=title, chirality=1)
         if update_category:
             metric_info['category'] = "thr"
@@ -2349,7 +2338,7 @@ class MetricHelper:
         return self._metric(time, metric_id=metric_id, title=title, chirality=-1)
 
     def magma_benchmark_metrics(self, throughput: float, precision: int, benchmark: str) -> Metric:
-        title = "{}, {}".format(benchmark, self._title)
+        title = f"{benchmark}, {self._title}"
         metric_id = '{}_{}'.format(self.test_config.name,
                                    benchmark.replace(" ", "_").replace(",", "").replace("%", ""))
         return self._metric(
@@ -2406,11 +2395,9 @@ class MetricHelper:
     def analytics_latency(self, query: Query, latency: int) -> Metric:
         metric_id = self.test_config.name + strip(query.description)
 
-        title = 'Avg. query latency (ms), {} {}, {}'.format(query.id,
-                                                            query.description,
-                                                            self._title)
+        title = f"Avg. query latency (ms), {query.id} {query.description}, {self._title}"
 
-        order_by = '{}_{:05d}_{}'.format(query.id[:2], int(query.id[2:]), self._order_by)
+        order_by = f"{query.id[:2]}_{int(query.id[2:]):05d}_{self._order_by}"
 
         return self._metric(
             latency, metric_id=metric_id, title=title, order_by=order_by, chirality=-1
@@ -2419,7 +2406,7 @@ class MetricHelper:
     def analytics_avg_connect_time(self, avg_connect_time: int) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, "connect")
 
-        title = 'Avg. connect time (sec), {}'.format(self._title)
+        title = f"Avg. connect time (sec), {self._title}"
 
         return self._metric(
             round(avg_connect_time, 1), metric_id=metric_id, title=title, chirality=-1
@@ -2428,7 +2415,7 @@ class MetricHelper:
     def analytics_avg_disconnect_time(self, avg_disconnect_time: int) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, "disconnect")
 
-        title = 'Avg. disconnect time (sec), {}'.format(self._title)
+        title = f"Avg. disconnect time (sec), {self._title}"
 
         return self._metric(
             round(avg_disconnect_time, 1), metric_id=metric_id, title=title, chirality=-1
@@ -2446,7 +2433,7 @@ class MetricHelper:
 
         title = title.format(query.id, query.description, self._title)
 
-        order_by = '{}_{:05d}_{}'.format(query.id[:2], int(query.id[2:]), self._order_by)
+        order_by = f"{query.id[:2]}_{int(query.id[2:]):05d}_{self._order_by}"
 
         return self._metric(
             latency, metric_id=metric_id, title=title, order_by=order_by, chirality=-1
@@ -2624,9 +2611,8 @@ class MetricHelper:
         )
 
     def sgimport_latency(self, percentile: Number = 95) -> Metric:
-        metric_id = '{}_{}th_sgimport_latency'.format(self.test_config.name, percentile)
-        title = '{}th percentile sgimport latency (ms), {}'.format(
-            percentile, self._title)
+        metric_id = f"{self.test_config.name}_{percentile}th_sgimport_latency"
+        title = f"{percentile}th percentile sgimport latency (ms), {self._title}"
 
         values = self._read_values("sgimport_latency", "sgimport_latency")
         lag = round(self._percentile(values, percentile), 2)
@@ -2634,7 +2620,7 @@ class MetricHelper:
 
     def sgimport_items_per_sec(self, time_elapsed: float, items_in_range: int,
                                operation: str) -> Metric:
-        title = 'Average throughput (docs/sec) {}, {}'.format(operation, self._title)
+        title = f"Average throughput (docs/sec) {operation}, {self._title}"
         metric_id = '{}_{}_{}'.format(
             self.test_config.name, "throughput", operation)
         items_in_range = items_in_range
@@ -2643,7 +2629,7 @@ class MetricHelper:
 
     def sgreplicate_items_per_sec(self, time_elapsed: float, items_in_range: int) -> Metric:
         items_in_range = items_in_range
-        logger.info("*** {} {} ***".format(items_in_range, time_elapsed))
+        logger.info(f"*** {items_in_range} {time_elapsed} ***")
         rate = round(items_in_range / time_elapsed)
         return self._metric(rate)
 
@@ -2770,13 +2756,13 @@ class MetricHelper:
 
     def sg_throughput(self, title, operation: str = "") -> Metric:
         metric_id = f'{self.test_config.name}_{operation}throughput'
-        metric_title = "{}{}".format(title, self._title)
+        metric_title = f"{title}{self._title}"
         throughput = self._parse_sg_throughput(operation)
         return self._metric(throughput, metric_id=metric_id, title=metric_title)
 
     def avg_sg_cpu_usage(self, title) -> Metric:
-        metric_id = '{}_Average_sg_cpu_usage'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
+        metric_id = f"{self.test_config.name}_Average_sg_cpu_usage"
+        metric_title = f"{title}{self._title}"
         if self.cluster_spec.capella_infrastructure:
             metric = "sgw_resource_utilization_process_cpu_percent_utilization"
         else:
@@ -2786,8 +2772,8 @@ class MetricHelper:
         return self._metric(avg_cpu, metric_id=metric_id, title=metric_title)
 
     def avg_sg_mem_usage(self, title) -> Metric:
-        metric_id = '{}_Average_sg_memory_usage'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
+        metric_id = f"{self.test_config.name}_Average_sg_memory_usage"
+        metric_title = f"{title}{self._title}"
 
         if self.cluster_spec.capella_infrastructure:
             metric = "sgw_resource_utilization_process_memory_resident"
@@ -2804,38 +2790,38 @@ class MetricHelper:
         return self._metric(round(resync_throughput), metric_id=metric_id, title=metric_title)
 
     def sg_bp_throughput(self, title) -> Metric:
-        metric_id = '{}_throughput'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
+        metric_id = f"{self.test_config.name}_throughput"
+        metric_title = f"{title}{self._title}"
         throughput = round(self._parse_sg_bp_throughput())
         return self._metric(throughput, metric_id=metric_id, title=metric_title)
 
     def sg_newdocpush_throughput(self, title) -> Metric:
-        metric_id = '{}_throughput'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
+        metric_id = f"{self.test_config.name}_throughput"
+        metric_title = f"{title}{self._title}"
         throughput = round(self._parse_newdocpush_throughput())
         return self._metric(throughput, metric_id=metric_id, title=metric_title)
 
     def sg_bp_total_docs_pulled(self, title, duration) -> Metric:
-        metric_id = '{}_docs_pulled'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
+        metric_id = f"{self.test_config.name}_docs_pulled"
+        metric_title = f"{title}{self._title}"
         docs_pulled_per_sec = round(self._sg_bp_total_docs_pulled() / duration)
         return self._metric(docs_pulled_per_sec, metric_id=metric_id, title=metric_title)
 
     def sg_bp_total_docs_pushed(self, title, duration) -> Metric:
-        metric_id = '{}_docs_pushed'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
+        metric_id = f"{self.test_config.name}_docs_pushed"
+        metric_title = f"{title}{self._title}"
         docs_pulled_per_sec = round(self._sg_bp_total_docs_pushed() / duration)
         return self._metric(docs_pulled_per_sec, metric_id=metric_id, title=metric_title)
 
     def sg_bp_num_replications(self, title, documents: int) -> Metric:
-        metric_id = '{}_num_replications'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
+        metric_id = f"{self.test_config.name}_num_replications"
+        metric_title = f"{title}{self._title}"
         num_replications = self._get_num_replications(documents)
         return self._metric(num_replications, metric_id=metric_id, title=metric_title)
 
     def sg_latency(self, metric_name, title) -> Metric:
-        metric_id = '{}_latency'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
+        metric_id = f"{self.test_config.name}_latency"
+        metric_title = f"{title}{self._title}"
 
         lat = float(self._parse_sg_latency(metric_name) / 1000)
         if lat < 10:
@@ -2846,24 +2832,24 @@ class MetricHelper:
         return self._metric(lat, metric_id=metric_id, title=metric_title)
 
     def deltasync_time(self, replication_time: float) -> Metric:
-        title = 'Replication time (sec) {}'.format(self._title)
+        title = f"Replication time (sec) {self._title}"
         metric_id = '{}_{}'.format(self.test_config.name, "time")
         replication_time = round(replication_time, 3)
         return self._metric(replication_time, title=title, metric_id=metric_id)
 
     def deltasync_throughput(self, throughput: int) -> Metric:
-        title = 'Throughput (docs/sec) {}'.format(self._title)
+        title = f"Throughput (docs/sec) {self._title}"
         metric_id = '{}_{}'.format(self.test_config.name, "throughput")
 
         return self._metric(throughput, title=title, metric_id=metric_id)
 
     def deltasync_bandwidth(self, bandwidth: float) -> Metric:
-        title = 'Bandwidth Usage (MB/sec) {}'.format(self._title)
+        title = f"Bandwidth Usage (MB/sec) {self._title}"
         metric_id = '{}_{}'.format(self.test_config.name, "bandwidth")
         return self._metric(bandwidth, title=title, metric_id=metric_id)
 
     def deltasync_bytes(self, bytes: float) -> Metric:
-        title = 'Bytes Transfer (MB) {}'.format(self._title)
+        title = f"Bytes Transfer (MB) {self._title}"
         metric_id = '{}_{}'.format(self.test_config.name, "Mbytes")
         # in MB
         bytes = round(((bytes/1024)/1024), 2)
@@ -2871,16 +2857,16 @@ class MetricHelper:
 
     def sgw_e2e_throughput(self, throughput: int,
                            operation: str, replication: str) -> Metric:
-        title = 'SGW {} {} Throughput (docs/sec) {}'.format(
-            replication.lower(), operation, self._title)
+        title = f"SGW {replication.lower()} {operation} Throughput (docs/sec) {self._title}"
         metric_id = '{}_{}_{}_{}'.format(
             self.test_config.name, "throughput", operation, replication.lower())
         return self._metric(round(throughput), title=title, metric_id=metric_id)
 
     def sgw_e2e_throughput_per_cblite(self, throughput: int,
                                       operation: str, replication: str) -> Metric:
-        title = 'SGW {} {} Throughput (docs/sec) per cblite {}'.format(
-            replication.lower(), operation, self._title)
+        title = (
+            f"SGW {replication.lower()} {operation} Throughput (docs/sec) per cblite {self._title}"
+        )
         metric_id = '{}_{}_{}_{}'.format(
             self.test_config.name, "throughput_per_cblite", operation, replication.lower())
         return self._metric(round(throughput), title=title, metric_id=metric_id)
@@ -2888,7 +2874,7 @@ class MetricHelper:
     def sdk_bench_config_push_time(self, failure_time: tuple, benchmark_name: str,
                                    time_func) -> Metric:
         sdk_type = self.test_config.sdktesting_settings.sdk_type[-1]
-        filename = 'sdks/{}/{}_stdout.log'.format(sdk_type, benchmark_name)
+        filename = f"sdks/{sdk_type}/{benchmark_name}_stdout.log"
         write_unavailable_time = self._parse_sdk_benchmark_logs(filename, failure_time, time_func)
         return write_unavailable_time, self._snapshots, self._metric_info()
 
@@ -2928,10 +2914,10 @@ class MetricHelper:
                         and log_msg.startswith('[FAILURE]'):
                     failure_start_found = True
                     first_failure_time = log_time
-                    logger.info('Failure start: "{}"'.format(line.rstrip()))
+                    logger.info(f'Failure start: "{line.rstrip()}"')
                 elif failure_start_found and log_msg.startswith('[SUCCESS] Store') \
                     and log_time > failure_time[0]:
-                    logger.info('Write success start: "{}"'.format(line.rstrip()))
+                    logger.info(f'Write success start: "{line.rstrip()}"')
                     return round(log_time - failure_time[0], 2)
 
         raise Exception('Benchmark didnot recover from failure' if failure_start_found else
@@ -3106,7 +3092,7 @@ class DailyMetricHelper(MetricHelper):
             throughput = self._max_ops(collector='metrics_rest_api_collection_throughput',
                                        stat_group=stat_group,
                                        metric='kv_collection_ops')
-            metric_title = 'Max throughput per collection (ops/sec) ({})'.format(stat_group)
+            metric_title = f"Max throughput per collection (ops/sec) ({stat_group})"
             metrics.append((metric_title, throughput, self._snapshots))
         return metrics
 
@@ -3158,7 +3144,7 @@ class DailyMetricHelper(MetricHelper):
 
     def analytics_latency(self, query: Query, latency: int) -> DailyMetric:
         matches = query.description.split("(")[1].split(")")[0]
-        metric = 'Avg Latency {} {}'.format(query.id, matches)
+        metric = f"Avg Latency {query.id} {matches}"
         return metric, latency,  self._snapshots
 
     def magma_benchmark_metrics(self, throughput: float, precision: int, benchmark: str) -> Metric:

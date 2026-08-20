@@ -22,12 +22,14 @@ def load_as_separate_docs(bucketname, count, limit):
     curr = conn.cursor()
 
     print("Fetching all tracks")
-    curr.execute("select id, gid, artist_credit, name, length, comment, edits_pending, "
-                 "last_updated from recording offset {} limit {}".format(count, limit))
+    curr.execute(
+        "select id, gid, artist_credit, name, length, comment, edits_pending, "
+        f"last_updated from recording offset {count} limit {limit}"
+    )
     rows = curr.fetchall()
 
     print("Connecting to Couchbase")
-    cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, bucket_name), password="")
+    cb = Bucket(f"couchbase://{cb_url}/{bucket_name}?operation_timeout=10", password="")
 
     print("Loading data")
     key_counter = count
@@ -45,9 +47,11 @@ def load_as_separate_docs(bucketname, count, limit):
         document["last_updated"] = str(row[7])
 
         id = row[2]
-        query = "select artist_credit_name.artist from artist_credit_name, artist_credit" \
-                " where artist_credit_name.artist_credit = artist_credit.id " \
-                "and artist_credit.id = {} limit 1".format(id)
+        query = (
+            "select artist_credit_name.artist from artist_credit_name, artist_credit"
+            " where artist_credit_name.artist_credit = artist_credit.id "
+            f"and artist_credit.id = {id} limit 1"
+        )
 
         curr.execute(query)
         credit = curr.fetchall()[0]
@@ -57,19 +61,19 @@ def load_as_separate_docs(bucketname, count, limit):
             "artist.begin_date_month, artist.begin_date_day, artist.end_date_year, "
             "artist.end_date_month, artist.end_date_day, artist.comment, artist.edits_pending, "
             "artist.last_updated, artist.id "
-            "from artist where artist.id = {} limit 1"
-        ).format(credit[0])
+            f"from artist where artist.id = {credit[0]} limit 1"
+        )
 
         curr.execute(query)
         artist = curr.fetchall()[0]
         words = artist.split(' ')
         if len(words) > 10:
             words = words[:9]
-            artist_key = "{}:".format(artist[11])
+            artist_key = f"{artist[11]}:"
             for word in words:
-                artist_key = "{} {}".format(artist_key, word)
+                artist_key = f"{artist_key} {word}"
         else:
-            artist_key = "{}:{}".format(artist[11], artist[0])
+            artist_key = f"{artist[11]}:{artist[0]}"
 
         try:
             subdocument = cb.get(artist_key).value

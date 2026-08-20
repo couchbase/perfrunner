@@ -68,8 +68,7 @@ def main():
             failures['storage_corrupted'][file_name] = True
 
     if failures:
-        logger.interrupt(
-            "Following failures found: {}".format(pretty_dict(failures)))
+        logger.interrupt(f"Following failures found: {pretty_dict(failures)}")
 
 
 if __name__ == '__main__':

@@ -412,7 +412,7 @@ def get_cb_hosts(cluster):
 
 def get_memcached_host(cluster: ClusterSpec, workload_settings: PhaseSettings):
     if cluster.cloud_infrastructure and cluster.infrastructure_settings["provider"] == "gcp":
-        memcached_ip = "10.0.0.{}".format(6 + int(workload_settings.syncgateway_settings.nodes))
+        memcached_ip = f"10.0.0.{6 + int(workload_settings.syncgateway_settings.nodes)}"
     elif cluster.cloud_infrastructure and (
         cluster.infrastructure_settings["provider"] == "azure"
         or (
@@ -562,8 +562,8 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
 
     bucket = target.bucket
     db = 'db-{}'.format(bucket.split('-')[1])
-    log_file_name = "{}_loaddocs_{}_{}.log".format(sgs.log_title, worker_id, db)
-    res_file_name = "{}_loaddocs_{}_{}.result".format(sgs.log_title, worker_id, db)
+    log_file_name = f"{sgs.log_title}_loaddocs_{worker_id}_{db}.log"
+    res_file_name = f"{sgs.log_title}_loaddocs_{worker_id}_{db}.result"
     params = LOAD_DOCS_CMD.format(
         ycsb_command=sgs.ycsb_command,
         workload=sgs.workload,

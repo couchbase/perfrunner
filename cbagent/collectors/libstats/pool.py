@@ -36,8 +36,7 @@ class BucketWrapper:
     TIMEOUT = 120
 
     def __init__(self, host, bucket, password, quiet=True, port=8091):
-        connection_string = 'couchbase://{}:{}/{}?password={}'\
-            .format(host, port, bucket, password)
+        connection_string = f"couchbase://{host}:{port}/{bucket}?password={password}"
         self.client = Bucket(connection_string=connection_string, quiet=quiet)
         self.client.timeout = self.TIMEOUT
         self.use_count = 0

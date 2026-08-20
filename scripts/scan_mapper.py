@@ -21,7 +21,7 @@ def main():
     bucket = 'bucket-1'
     scope = "scope-1"
     for i in range(1000):
-        collection = "collection-{}".format(i+1)
+        collection = f"collection-{i + 1}"
         collection_index_defs = index_map[bucket][scope][collection]
         for index_name in collection_index_defs.keys():
             index_def = collection_index_defs[index_name]

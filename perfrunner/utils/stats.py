@@ -148,14 +148,14 @@ class StatsScanner(BaseScanner):
 
     def run(self):
         for build in self.weekly.builds:
-            logger.info('Scanning stats from build {}'.format(build))
+            logger.info(f"Scanning stats from build {build}")
             for attributes in self.find_metrics(build):
                 if attributes is not None:
                     self.store_metric_info(attributes)
 
     def update_status(self):
         for build in self.weekly.builds:
-            logger.info('Updating status of build {}'.format(build))
+            logger.info(f"Updating status of build {build}")
 
             for status in self.cluster.query(
                 self.STATUS_QUERY, QueryOptions(positional_parameters=[build])

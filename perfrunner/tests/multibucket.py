@@ -38,7 +38,7 @@ class HighBucketDensityTest(RebalanceKVTest,
         self.pre_rebalance()
         rebalance_time = self._rebalance(None)
         self.post_rebalance()
-        logger.info("Rebalance time: {} min".format(rebalance_time / 60))
+        logger.info(f"Rebalance time: {rebalance_time / 60} min")
 
     def access_and_rebalance(self, src_target_iterator: SrcTargetIterator):
 
@@ -161,7 +161,7 @@ class HighBucketDensityTest(RebalanceKVTest,
                 known_nodes = servers[:nodes_after]
             elif nodes_after < initial_nodes:  # rebalance-out
                 ejected_nodes = servers[nodes_after:initial_nodes]
-                logger.info("ejected_nodes {}".format(ejected_nodes))
+                logger.info(f"ejected_nodes {ejected_nodes}")
             elif swap:
                 service = services.split(",")[0]
                 new_nodes = servers[initial_nodes:initial_nodes + swap]
@@ -170,61 +170,61 @@ class HighBucketDensityTest(RebalanceKVTest,
                 if ejected_nodes[0] == new_nodes[0]:
                     ejected_nodes = \
                         [self.cluster_spec.servers_by_role_from_first_cluster(service)[-2]]
-                logger.info("ejected_nodes {}".format(ejected_nodes))
+                logger.info(f"ejected_nodes {ejected_nodes}")
             else:
                 continue
 
             for node in new_nodes:
-                logger.info("Adding {} as {}".format(node, services))
+                logger.info(f"Adding {node} as {services}")
                 self.rest.add_node(master, node, services=services)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
-            logger.info("Rebalance master: {}".format(master))
+            logger.info(f"Rebalance master: {master}")
 
             self.monitor_progress(master)
 
             if swap:
                 time.sleep(self.SLEEP_TIME_BETWEEN_REBALNCE)
                 for node in ejected_nodes:
-                    logger.info("Adding {} as {}".format(node, services))
+                    logger.info(f"Adding {node} as {services}")
                     self.rest.add_node(master, node, services=services)
 
-                logger.info("ejected_nodes {}".format(servers[initial_nodes:initial_nodes + 1]))
+                logger.info(f"ejected_nodes {servers[initial_nodes : initial_nodes + 1]}")
                 self.rest.rebalance(master, known_nodes, servers[initial_nodes:initial_nodes + 1])
-                logger.info("Rebalance master: {}".format(master))
+                logger.info(f"Rebalance master: {master}")
 
                 self.monitor_progress(master)
 
             break
 
     def rebalance_out_node(self, services):
-        logger.info("Rebalancing out {} node".format(services))
+        logger.info(f"Rebalancing out {services} node")
         rebalance_time = self.custom_rebalance(services,
                                                self.rebalance_settings.nodes_after,
                                                self.test_config.cluster.initial_nodes,
                                                0)
-        logger.info("Rebalancing out {} node, COMPLETED.".format(services))
-        logger.info("Rebalance time: {} min".format(rebalance_time / 60))
+        logger.info(f"Rebalancing out {services} node, COMPLETED.")
+        logger.info(f"Rebalance time: {rebalance_time / 60} min")
         time.sleep(self.SLEEP_TIME_BETWEEN_REBALNCE)
 
     def rebalance_in_node(self, services):
-        logger.info("Rebalancing in {} node, STARTING".format(services))
+        logger.info(f"Rebalancing in {services} node, STARTING")
         rebalance_time = self.custom_rebalance(services,
                                                self.test_config.cluster.initial_nodes,
                                                self.rebalance_settings.nodes_after,
                                                0)
-        logger.info("Rebalancing in {} node, COMPLETED.".format(services))
-        logger.info("Rebalance time: {} min".format(rebalance_time / 60))
+        logger.info(f"Rebalancing in {services} node, COMPLETED.")
+        logger.info(f"Rebalance time: {rebalance_time / 60} min")
         time.sleep(self.SLEEP_TIME_BETWEEN_REBALNCE)
 
     def swap_node(self, services):
-        logger.info("Swapping in {} node, STARTING".format(services))
+        logger.info(f"Swapping in {services} node, STARTING")
         rebalance_time = self.custom_rebalance(services,
                                                self.test_config.cluster.initial_nodes,
                                                self.test_config.cluster.initial_nodes,
                                                1)
-        logger.info("Swapping in {} node, COMPLETED.".format(services))
-        logger.info("Rebalance time: {} min".format(rebalance_time / 60))
+        logger.info(f"Swapping in {services} node, COMPLETED.")
+        logger.info(f"Rebalance time: {rebalance_time / 60} min")
         time.sleep(self.SLEEP_TIME_BETWEEN_REBALNCE)
 
     @with_stats
@@ -279,7 +279,7 @@ class HighBucketDensityTest(RebalanceKVTest,
     def back_up(self):
         self.extract_tools()
         time_elapsed = self.backup()
-        logger.info("Backup time: {} min".format(time_elapsed / 60))
+        logger.info(f"Backup time: {time_elapsed / 60} min")
 
     def run(self):
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
@@ -293,7 +293,7 @@ class HighBucketDensityTest(RebalanceKVTest,
         self.create_indexes()
         self.wait_for_indexing()
         index_build_time = time.time() - t0
-        logger.info("Index build time: {} min".format(index_build_time / 60))
+        logger.info(f"Index build time: {index_build_time / 60} min")
 
         self.init_only_xdcr()
         """
@@ -395,4 +395,4 @@ class MultibucketGSI(HighBucketDensityTest):
         PerfTest.create_indexes(self)
         self.wait_for_indexing()
         index_build_time = time.time() - t0
-        logger.info("Index build time: {} min".format(index_build_time / 60))
+        logger.info(f"Index build time: {index_build_time / 60} min")

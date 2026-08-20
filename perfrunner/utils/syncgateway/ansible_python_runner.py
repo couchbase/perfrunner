@@ -74,12 +74,12 @@ class Runner(object):
                  verbosity=0, subset=constants.DEFAULT_SUBSET):
 
         if not os.path.exists(inventory_filename):
-            raise Exception("Cannot find inventory_filename: {}. "
-                            " Current dir: {}".format(inventory_filename, os.getcwd()))
+            raise Exception(
+                f"Cannot find inventory_filename: {inventory_filename}.  Current dir: {os.getcwd()}"
+            )
 
         if not os.path.exists(playbook):
-            raise Exception("Cannot find playbook: {}. "
-                            " Current dir: {}".format(playbook, os.getcwd()))
+            raise Exception(f"Cannot find playbook: {playbook}.  Current dir: {os.getcwd()}")
 
         self.options = Options()
         self.options.verbosity = verbosity
@@ -163,7 +163,7 @@ class Runner(object):
         self.variable_manager.set_inventory(self.inventory)
 
         # Setup playbook executor, but don't run until run() called
-        logger.info("Running playbook: {}".format(playbook))
+        logger.info(f"Running playbook: {playbook}")
         self.pbex = playbook_executor.PlaybookExecutor(
             playbooks=[playbook],
             inventory=self.inventory,

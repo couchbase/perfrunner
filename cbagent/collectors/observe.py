@@ -138,8 +138,9 @@ class ObserveSecondaryIndexLatency(ObserveIndexLatency):
                                           client=client, pool=pool)
 
     def sample(self):
-        connection_string = 'couchbase://{}/{}?password={}'.format(
-            self.master_node, self.buckets[0], self.auth[1])
+        connection_string = (
+            f"couchbase://{self.master_node}/{self.buckets[0]}?password={self.auth[1]}"
+        )
         cb = Bucket(connection_string)
         query = N1QLQuery("select alt_email from `bucket-1` where alt_email=$c", c="abc")
         query.adhoc = False

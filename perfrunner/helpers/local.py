@@ -32,22 +32,23 @@ YCSB_ENV = {
 }
 
 def extract_cb(filename: str):
-    cmd = 'rpm2cpio ./{} | cpio -idm'.format(filename)
+    cmd = f"rpm2cpio ./{filename} | cpio -idm"
     with quiet():
         local(cmd)
 
 
 def extract_cb_deb(filename: str):
-    cmd = 'ar p {} data.tar.xz | unxz | tar x'.format(filename)
+    cmd = f"ar p {filename} data.tar.xz | unxz | tar x"
     with quiet():
         local(cmd)
 
 
 def extract_cb_any(filename: str):
-    if os.path.exists("{}.deb".format(filename)):
-        extract_cb_deb("{}.deb".format(filename))
+    if os.path.exists(f"{filename}.deb"):
+        extract_cb_deb(f"{filename}.deb")
     else:
-        extract_cb("{}.rpm".format(filename))
+        extract_cb(f"{filename}.rpm")
+
 
 def extract_any(filename: str, to_path: str = None, remove_after: bool = True):
     """Extract the given file and store the content to the specified path.
@@ -117,14 +118,14 @@ def cleanup(backup_dir: str):
     logger.info("Clearing the backup directory before backup/export")
 
     if (path := Path(backup_dir)).exists():
-        local("find {} -mindepth 1 -name '*' -delete".format(backup_dir))
+        local(f"find {backup_dir} -mindepth 1 -name '*' -delete")
     else:
         path.mkdir(parents=True)
 
     # Discard unused blocks. Twice.
     if platform == "linux2":  # this never gets run? platform is "linux" on linux
         logger.info('Running fstrim on backup directory to discard unused blocks')
-        local('fstrim -v {0} && fstrim -v {0}'.format(backup_dir))
+        local(f"fstrim -v {backup_dir} && fstrim -v {backup_dir}")
 
 
 def drop_caches():
@@ -184,17 +185,14 @@ def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec,
                     threads: int, mode: str):
     postfix = ''
     if mode:
-        postfix = '-m {}'.format(mode)
+        postfix = f"-m {mode}"
 
-    cmd = './cbbackupwrapper http://{}:8091 {} -u {} -p {} -P {} {}'.format(
-        master_node,
-        cluster_spec.backup,
-        cluster_spec.rest_credentials[0],
-        cluster_spec.rest_credentials[1],
-        threads,
-        postfix,
+    cmd = (
+        f"./cbbackupwrapper http://{master_node}:8091 {cluster_spec.backup} "
+        f"-u {cluster_spec.rest_credentials[0]} -p {cluster_spec.rest_credentials[1]} "
+        f"-P {threads} {postfix}"
     )
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
     with lcd('./opt/couchbase/bin'):
         local(cmd)
 
@@ -302,18 +300,18 @@ def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
     logger.info('Running cbbackumgr cbcollect-logs on localhost ')
 
     flags = [
-        '--archive {}'.format(cluster_spec.backup),
-        '--output-dir .',
-        '--obj-region {}'.format(obj_region) if obj_region else None,
-        '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-        '--obj-access-key-id {}'.format(obj_access_key_id) if obj_access_key_id else None,
-        '--passphrase {}'.format(passphrase) if encrypted else None,
+        f"--archive {cluster_spec.backup}",
+        "--output-dir .",
+        f"--obj-region {obj_region}" if obj_region else None,
+        f"--obj-staging-dir {obj_staging_dir}" if obj_staging_dir else None,
+        f"--obj-access-key-id {obj_access_key_id}" if obj_access_key_id else None,
+        f"--passphrase {passphrase}" if encrypted else None,
     ]
 
     cmd = './opt/couchbase/bin/cbbackupmgr collect-logs {}'.format(
           ' '.join(filter(None, flags)))
 
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
     local(cmd)
 
 
@@ -321,14 +319,12 @@ def get_backup_snapshots(cluster_spec: ClusterSpec) -> List[str]:
 
     logger.info('running cbbackupmgr info command ')
 
-    cmd = \
-        './opt/couchbase/bin/cbbackupmgr info ' \
-        '--archive {} --repo default '.format(cluster_spec.backup)
+    cmd = f"./opt/couchbase/bin/cbbackupmgr info --archive {cluster_spec.backup} --repo default "
 
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
 
     snapshots = []
-    pattern = '  {}-'.format(date.today().year)
+    pattern = f"  {date.today().year}-"
     for line in local(cmd, capture=True).split('\n'):
         if pattern in line:
             snapshot = line.strip().split()[1]
@@ -407,24 +403,22 @@ def purge_restore_progress(cluster_spec: ClusterSpec, archive: str = '',
                            repo: str = 'default'):
     archive_path = archive or cluster_spec.backup
     repo_dir = '{}/{}'.format(archive_path.rstrip('/'), repo)
-    logger.info('Purging restore progress from {}'.format(repo_dir))
-    cmd = 'rm -rf {}/.restore'.format(repo_dir)
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Purging restore progress from {repo_dir}")
+    cmd = f"rm -rf {repo_dir}/.restore"
+    logger.info(f"Running: {cmd}")
     local(cmd)
-    logger.info('Deleting logs directory from {}'.format(repo_dir))
-    cmd = 'rm -rf {}/logs'.format(repo_dir)
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Deleting logs directory from {repo_dir}")
+    cmd = f"rm -rf {repo_dir}/logs"
+    logger.info(f"Running: {cmd}")
     local(cmd)
 
 
 def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
-    cmd = './cbrestorewrapper {} http://{}:8091 -u {} -p {}'.format(
-        cluster_spec.backup,
-        master_node,
-        cluster_spec.rest_credentials[0],
-        cluster_spec.rest_credentials[1],
+    cmd = (
+        f"./cbrestorewrapper {cluster_spec.backup} http://{master_node}:8091 "
+        f"-u {cluster_spec.rest_credentials[0]} -p {cluster_spec.rest_credentials[1]}"
     )
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
     with lcd('./opt/couchbase/bin'):
         local(cmd)
 
@@ -734,21 +728,17 @@ def run_dcptest(host: str, username: str, password: str, bucket: str,
                      num_items=num_items,
                      num_connections=num_connections)
 
-    cbauth = 'http://{user}:{password}@{host}:8091'.format(host=host,
-                                                           user=username,
-                                                           password=password)
+    cbauth = f"http://{username}:{password}@{host}:8091"
 
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
 
     with shell_env(CBAUTH_REVRPC_URL=cbauth):
         local(cmd)
 
 
 def run_kvgen(hostname: str, num_docs: int, prefix: str):
-    cmd = './kvgen -hostname {} -docs {} -prefix {}'.format(hostname,
-                                                            num_docs,
-                                                            prefix)
-    logger.info('Running: {}'.format(cmd))
+    cmd = f"./kvgen -hostname {hostname} -docs {num_docs} -prefix {prefix}"
+    logger.info(f"Running: {cmd}")
     with shell_env(GOGC='300'):
         local(cmd)
 
@@ -1162,8 +1152,8 @@ def run_tpcds_loader(host: str,
 
 
 def run_custom_cmd(path: str, binary: str, params: str):
-    logger.info("Executing command {} {}".format(binary, params))
-    cmd = "{} {}".format(binary, params)
+    logger.info(f"Executing command {binary} {params}")
+    cmd = f"{binary} {params}"
     with lcd(path):
         local(cmd)
 
@@ -1180,21 +1170,21 @@ def clear_jts_logs(jts_home: str):
 
 def get_jts_logs(jts_home: str, local_dir: str):
     logger.info("Collecting remote JTS logs")
-    source_dir = "{}/logs".format(jts_home)
-    for file in glob("{}".format(source_dir)):
-        local("cp -r {} {}/".format(file, local_dir))
+    source_dir = f"{jts_home}/logs"
+    for file in glob(f"{source_dir}"):
+        local(f"cp -r {file} {local_dir}/")
 
 
 def run_cmd(path, command, parameters, output_file):
-    cmd = "{} {} 2>{}".format(command, parameters, output_file)
-    logger.info('Running : {}'.format(cmd))
+    cmd = f"{command} {parameters} 2>{output_file}"
+    logger.info(f"Running : {cmd}")
     with lcd(path):
         local(cmd)
 
 
 def restart_memcached(mem_host: str = 'localhost', mem_limit: int = 10000, port: int = 8000):
     cmd1 = 'systemctl stop memcached'
-    logger.info('Running: {}'.format(cmd1))
+    logger.info(f"Running: {cmd1}")
     with settings(warn_only=True):
         local(cmd1, capture=True)
 
@@ -1211,7 +1201,7 @@ def restart_memcached(mem_host: str = 'localhost', mem_limit: int = 10000, port:
 
     cmd2 = 'memcached -u root -m {mem_limit} -l {memhost} -p {port} -d'
     cmd2 = cmd2.format(mem_limit=mem_limit, port=port, memhost=mem_host)
-    logger.info('Running: {}'.format(cmd2))
+    logger.info(f"Running: {cmd2}")
     local(cmd2, capture=True)
 
     for counter in range(5):
@@ -1237,53 +1227,60 @@ def run_cbindexperf(path_to_tool: str, node: str, rest_username: str,
                     gcpercent: int = None):
     logger.info('Initiating scan workload')
     if gcpercent:
-        cmdstr = "{} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
-            "-statsfile /root/statsfile -gcpercent {}".\
-            format(path_to_tool, node, rest_username, rest_password, configfile, gcpercent)
+        cmdstr = (
+            f'{path_to_tool} -cluster {node}:8091 -auth="{rest_username}:{rest_password}" '
+            f"-configfile {configfile} -resultfile result.json "
+            f"-statsfile /root/statsfile -gcpercent {gcpercent}"
+        )
     else:
-        cmdstr = "{} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
-                 "-statsfile /root/statsfile" \
-            .format(path_to_tool, node, rest_username, rest_password, configfile)
+        cmdstr = (
+            f'{path_to_tool} -cluster {node}:8091 -auth="{rest_username}:{rest_password}" '
+            f"-configfile {configfile} -resultfile result.json "
+            "-statsfile /root/statsfile"
+        )
+
     if collect_profile:
         cmdstr += " -cpuprofile cpuprofile.prof -memprofile memprofile.prof "
     if is_ssl:
         cmdstr += " -use_tls -cacert ./root.pem"
     if run_in_background:
         cmdstr += " &"
-    logger.info('To be applied: {}'.format(cmdstr))
+    logger.info(f"To be applied: {cmdstr}")
     ret = local(cmdstr)
     return ret.return_code
 
 
 def run_cbindex(path_to_tool: str, options: str, index_nodes):
-    batch_options = \
-        "-auth=Administrator:password " \
-        "-server {index_node}:8091 " \
-        "-type batch_process " \
-        "-input /tmp/batch.txt " \
-        "-refresh_settings=true".format(index_node=index_nodes[0])
+    batch_options = (
+        "-auth=Administrator:password "
+        f"-server {index_nodes[0]}:8091 "
+        "-type batch_process "
+        "-input /tmp/batch.txt "
+        "-refresh_settings=true"
+    )
     with open("/tmp/batch.txt", "w+") as bf:
         bf.write(options)
     logger.info('Running cbindex on the client')
-    cmdstr = "{} {}"\
-             .format(path_to_tool, batch_options)
-    logger.info('Running {}'.format(cmdstr))
+    cmdstr = f"{path_to_tool} {batch_options}"
+    logger.info(f"Running {cmdstr}")
     ret = local(cmdstr)
     return ret.return_code, ret.stderr
 
 
 def kill_process(process: str):
-    logger.info('Killing the following process: {}'.format(process))
+    logger.info(f"Killing the following process: {process}")
     with quiet():
-        local("killall -9 {}".format(process))
+        local(f"killall -9 {process}")
 
 
 def start_celery_worker(queue: str):
     with shell_env(PYTHONOPTIMIZE='1', PYTHONWARNINGS='ignore', C_FORCE_ROOT='1'):
-        local('WORKER_TYPE=local '
-              'BROKER_URL=sqla+sqlite:///perfrunner.db '
-              'nohup env/bin/celery -A perfrunner.helpers.worker worker '
-              '-l INFO -Q {} -f worker.log &'.format(queue))
+        local(
+            "WORKER_TYPE=local "
+            "BROKER_URL=sqla+sqlite:///perfrunner.db "
+            "nohup env/bin/celery -A perfrunner.helpers.worker worker "
+            f"-l INFO -Q {queue} -f worker.log &"
+        )
 
 
 def _resolve_repo_url(url: str) -> str:
@@ -1395,28 +1392,20 @@ def init_jts(repo: str, branch: str, jts_home: str):
 
 
 def generate_bigfun_data(user_docs: int):
-    logger.info('Generating socialGen documents for {} users'.format(user_docs))
+    logger.info(f"Generating socialGen documents for {user_docs} users")
     with lcd('socialGen'):
-        cmd = \
-            "./scripts/initb.sh data 1 0 {users} " \
-            "-f JSON -k STRING#%015d > socialGen.log".format(
-                users=user_docs)
+        cmd = f"./scripts/initb.sh data 1 0 {user_docs} -f JSON -k STRING#%015d > socialGen.log"
         local('mvn clean package')
         local(cmd)
 
 
 def run_loader(hostname: str, bucket: str, password: str, workers: int,
                table: str, path: str = 'socialGen/data/p1'):
-    logger.info('Loading socialGen documents ("{}" table)'.format(table))
-    cmd = \
-        "./loader -hostname {hostname} -bucket {bucket} -password {password} " \
-        "-workers {workers} -table {table} -path {path} > loader.log".format(
-            hostname=hostname,
-            bucket=bucket,
-            password=password,
-            workers=workers,
-            table=table,
-            path=path)
+    logger.info(f'Loading socialGen documents ("{table}" table)')
+    cmd = (
+        f"./loader -hostname {hostname} -bucket {bucket} -password {password} "
+        f"-workers {workers} -table {table} -path {path} > loader.log"
+    )
     local(cmd)
 
 
@@ -1426,10 +1415,8 @@ def load_bigfun_data(hostname: str, bucket: str, password: str, workers: int):
 
 
 def get_indexer_heap_profile(indexer: str, user: str, password: str) -> str:
-    cmd = 'go tool pprof --text http://{}:{}@{}:9102/debug/pprof/heap'.format(user,
-                                                                              password,
-                                                                              indexer)
-    logger.info('Running: {}'.format(cmd))
+    cmd = f"go tool pprof --text http://{user}:{password}@{indexer}:9102/debug/pprof/heap"
+    logger.info(f"Running: {cmd}")
     for counter in range(10):
         time.sleep(2)
         with settings(warn_only=True):
@@ -1437,26 +1424,26 @@ def get_indexer_heap_profile(indexer: str, user: str, password: str) -> str:
         if result.succeeded:
             break
         else:
-            logger.info('Error: {}'.format(result.stderr))
+            logger.info(f"Error: {result.stderr}")
     else:
-        raise Exception('Command failed: {}'.format(cmd))
+        raise Exception(f"Command failed: {cmd}")
     return result
 
 
 def govendor_fetch(path: str, revision: str, package: str):
-    logger.info('Fetching: {} with revision {} and package as {}'.format(path, revision, package))
-    local('govendor fetch {}/{}@{}'.format(path, package, revision))
+    logger.info(f"Fetching: {path} with revision {revision} and package as {package}")
+    local(f"govendor fetch {path}/{package}@{revision}")
 
 
 def generate_ssl_keystore(root_certificate: str, keystore_file: str,
                           storepass: str):
     logger.info('Generating SSL keystore')
     with quiet():
-        local("keytool -delete -keystore {} -alias couchbase -storepass storepass"
-              .format(keystore_file))
-    local("keytool -importcert -file {} -storepass {} -trustcacerts "
-          "-noprompt -keystore {} -alias couchbase"
-          .format(root_certificate, storepass, keystore_file))
+        local(f"keytool -delete -keystore {keystore_file} -alias couchbase -storepass storepass")
+    local(
+        f"keytool -importcert -file {root_certificate} -storepass {storepass} -trustcacerts "
+        f"-noprompt -keystore {keystore_file} -alias couchbase"
+    )
 
 
 def build_java_dcp_client():
@@ -1467,20 +1454,18 @@ def build_java_dcp_client():
 def run_java_dcp_client(connection_string: str, messages: int,
                         config_file: str, instance: int = None, collections: list = None):
 
-    cmd = 'perf/run.sh {} {} {} '.format(connection_string,
-                                         messages,
-                                         config_file)
+    cmd = f"perf/run.sh {connection_string} {messages} {config_file} "
 
     if collections:
         for collection in collections:
             cmd += collection+","
         cmd = cmd[:-1]
     if instance:
-        cmd += ' > java_dcp_{}.log'.format(str(instance))
+        cmd += f" > java_dcp_{str(instance)}.log"
     else:
         cmd += ' > java_dcp.log'
     with lcd('java-dcp-client'):
-        logger.info('Running: {}'.format(cmd))
+        logger.info(f"Running: {cmd}")
         local(cmd)
 
 
@@ -1495,12 +1480,12 @@ def run_cbstats(command: str, server: str, port: int, username: str, password: s
     If `bucket` not provided, then run cbstats with the -a flag (iterating over all buckets).
     """
     args = [
-        '{}:{}'.format(server, port),
-        '-u {}'.format(username),
-        '-p {}'.format(password),
-        '-b {}'.format(bucket) if bucket else '-a',
-        '-j',
-        command
+        f"{server}:{port}",
+        f"-u {username}",
+        f"-p {password}",
+        f"-b {bucket}" if bucket else "-a",
+        "-j",
+        command,
     ]
     cmd = "./opt/couchbase/bin/cbstats {}".format(' '.join(args))
     stdout, _, returncode = run_local_shell_command(cmd)
@@ -1570,7 +1555,7 @@ def read_aws_credential(credential_path: str, delete_file: bool = True) -> str:
 
 def get_aws_credential(credential_path: str, delete_file: bool = True):
     logger.info("Reading AWS credential")
-    with open('{}/aws_credential'.format(credential_path)) as f:
+    with open(f"{credential_path}/aws_credential") as f:
         lines = f.read().splitlines()
     aws_access_key_id = ''
     aws_secret_access_key = ''
@@ -1581,7 +1566,7 @@ def get_aws_credential(credential_path: str, delete_file: bool = True):
             aws_secret_access_key = line.replace(" ", "").split("=")[-1]
 
     if delete_file:
-        cmd = 'rm {}/aws_credential'.format(credential_path)
+        cmd = f"rm {credential_path}/aws_credential"
         local(cmd)
 
     if aws_access_key_id and aws_secret_access_key:
@@ -1592,50 +1577,53 @@ def get_aws_credential(credential_path: str, delete_file: bool = True):
 
 def cbepctl(master_node: str, cluster_spec: ClusterSpec, bucket: str,
             option: str, value: int):
-    flags = ['{}:11209'.format(master_node),
-             '-u {}'.format(cluster_spec.rest_credentials[0]),
-             '-p {}'.format(cluster_spec.rest_credentials[1]),
-             '-b {}'.format(bucket),
-             'set flush_param {} {}'.format(option, value)]
+    flags = [
+        f"{master_node}:11209",
+        f"-u {cluster_spec.rest_credentials[0]}",
+        f"-p {cluster_spec.rest_credentials[1]}",
+        f"-b {bucket}",
+        f"set flush_param {option} {value}",
+    ]
 
     cmd = './opt/couchbase/bin/cbepctl {}'.format(
         ' '.join(flags))
 
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
     local(cmd)
 
 
 def download_pytppc(repo: str, branch: str):
-    cmd = 'git clone -q -b {} {}'.format(branch, repo)
+    cmd = f"git clone -q -b {branch} {repo}"
     local(cmd)
 
 
 def download_all_s3_logs(path_name: str, file_name: str):
-    logger.info('Downloading {}'.format(file_name))
+    logger.info(f"Downloading {file_name}")
     # <organization name>/<date as YYYY-MM-DD>/<logfile>
-    cmd = 'aws s3 cp {} {}'.format(path_name, file_name)
+    cmd = f"aws s3 cp {path_name} {file_name}"
     local(cmd)
 
 def pytpcc_create_collections(collection_config: str, master_node:  str):
 
     cmd = 'cp py-tpcc/pytpcc/constants.py.collections py-tpcc/pytpcc/constants.py'
-    logger.info("Copyied constants.py.collections {}".format(cmd))
+    logger.info(f"Copyied constants.py.collections {cmd}")
 
     local(cmd)
-    cmd = './py-tpcc/pytpcc/util/{} {}'.format(collection_config, master_node)
+    cmd = f"./py-tpcc/pytpcc/util/{collection_config} {master_node}"
 
-    logger.info("Creating Collections : {}".format(cmd))
+    logger.info(f"Creating Collections : {cmd}")
     local(cmd)
 
 
 def pytpcc_create_indexes(master_node: str, run_sql_shell: str, cbrindex_sql: str,
                           port: str, index_replica: int):
 
-    cmd = './py-tpcc/pytpcc/util/{} {}:{} {} ' \
-          '< ./py-tpcc/pytpcc/util/{} '.format(run_sql_shell, master_node, port,
-                                               index_replica, cbrindex_sql)
+    cmd = (
+        f"./py-tpcc/pytpcc/util/{run_sql_shell} {master_node}:{port} {index_replica} "
+        f"< ./py-tpcc/pytpcc/util/{cbrindex_sql} "
+    )
 
-    logger.info("Creating pytpcc Indexes : {}".format(cmd))
+    logger.info(f"Creating pytpcc Indexes : {cmd}")
 
     local(cmd)
 
@@ -1643,11 +1631,12 @@ def pytpcc_create_indexes(master_node: str, run_sql_shell: str, cbrindex_sql: st
 def pytpcc_create_functions(master_node: str, run_function_shell: str, cbrfunction_sql: str,
                             port: str, index_replica: int):
 
-    cmd = './py-tpcc/pytpcc/util/{} {}:{} {} ' \
-          '< ./py-tpcc/pytpcc/util/{} '.format(run_function_shell, master_node, port,
-                                               index_replica, cbrfunction_sql)
+    cmd = (
+        f"./py-tpcc/pytpcc/util/{run_function_shell} {master_node}:{port} {index_replica} "
+        f"< ./py-tpcc/pytpcc/util/{cbrfunction_sql} "
+    )
 
-    logger.info("Creating pytpcc Functions : {}".format(cmd))
+    logger.info(f"Creating pytpcc Functions : {cmd}")
 
     local(cmd)
 
@@ -1781,49 +1770,44 @@ def ch2_load_task(
 
 def ch3_create_fts_index(cluster_spec: ClusterSpec, fts_node: str):
 
-    cmd = 'sh -x ./cbcrftsindexcollection.sh {} {}:{}'.format(fts_node,
-                                                              cluster_spec.rest_credentials[0],
-                                                              cluster_spec.rest_credentials[1])
+    cmd = (
+        f"sh -x ./cbcrftsindexcollection.sh {fts_node} "
+        f"{cluster_spec.rest_credentials[0]}:{cluster_spec.rest_credentials[1]}"
+    )
 
     with lcd('ch3/ch3driver/pytpcc/util'):
-        logger.info('Running: {}'.format(cmd))
+        logger.info(f"Running: {cmd}")
         local(cmd)
 
 
 def get_sg_logs(host: str, ssh_user: str, ssh_pass: str):
-    local('sshpass -p {} scp {}@{}:/home/sync_gateway/*logs.tar.gz ./'.format(ssh_pass,
-                                                                              ssh_user,
-                                                                              host))
+    local(f"sshpass -p {ssh_pass} scp {ssh_user}@{host}:/home/sync_gateway/*logs.tar.gz ./")
 
 
 def get_sg_logs_new(host: str, ssh_user: str, ssh_pass: str):
-    local('sshpass -p {0} scp {1}@{2}:/var/tmp/sglogs/syncgateway_logs.tar.gz '
-          './{2}_syncgateway_logs.tar.gz'.format(ssh_pass,
-                                                 ssh_user,
-                                                 host))
+    local(
+        f"sshpass -p {ssh_pass} scp {ssh_user}@{host}:/var/tmp/sglogs/syncgateway_logs.tar.gz "
+        f"./{host}_syncgateway_logs.tar.gz"
+    )
 
 
 def get_sg_console(host: str, ssh_user: str, ssh_pass: str):
     with settings(warn_only=True):
-        local('sshpass -p {0} scp {1}@{2}:/var/tmp/sg_console* ./{2}_sg_console*'.format(ssh_pass,
-                                                                                         ssh_user,
-                                                                                         host))
+        local(
+            f"sshpass -p {ssh_pass} scp {ssh_user}@{host}:/var/tmp/sg_console* ./{host}_sg_console*"
+        )
 
 
 def get_troublemaker_logs(host: str, ssh_user: str, ssh_pass: str):
-    local('sshpass -p {} scp {}@{}:/root/troublemaker.log ./'.format(ssh_pass,
-                                                                     ssh_user,
-                                                                     host))
+    local(f"sshpass -p {ssh_pass} scp {ssh_user}@{host}:/root/troublemaker.log ./")
 
 
 def get_default_troublemaker_logs(host: str, ssh_user: str, ssh_pass: str):
-    local('sshpass -p {} scp {}@{}:/tmp/Logs/troublemaker-log.txt ./'.format(ssh_pass,
-                                                                             ssh_user,
-                                                                             host))
+    local(f"sshpass -p {ssh_pass} scp {ssh_user}@{host}:/tmp/Logs/troublemaker-log.txt ./")
 
 
 def rename_troublemaker_logs(from_host: str):
-    local('cp ./troublemaker.log ./{}_troublemaker.log'.format(from_host))
+    local(f"cp ./troublemaker.log ./{from_host}_troublemaker.log")
     local('rm ./troublemaker.log')
 
 
@@ -1916,36 +1900,46 @@ def remove_sg_newdocpusher_logs():
 
 def replicate_push(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
     if cluster_spec.capella_infrastructure:
-        cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'push --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
-              'wss://{1}:4984/db-1'.format(cblite_db, sgw_ip)
+        cmd = (
+            "/root/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"push --user guest:guest /root/couchbase-mobile-tools/{cblite_db}.cblite2 "
+            f"wss://{sgw_ip}:4984/db-1"
+        )
     else:
-        cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'push --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
-              'ws://{1}:4984/db-1'.format(cblite_db, sgw_ip)
-    logger.info('Running: {}'.format(cmd))
+        cmd = (
+            "/root/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"push --user guest:guest /root/couchbase-mobile-tools/{cblite_db}.cblite2 "
+            f"ws://{sgw_ip}:4984/db-1"
+        )
+    logger.info(f"Running: {cmd}")
     with quiet():
         return local(cmd, capture=True)
 
 
 def replicate_pull(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
     if cluster_spec.capella_infrastructure:
-        cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'pull --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
-              'wss://{1}:4984/db-1'.format(cblite_db, sgw_ip)
+        cmd = (
+            "/root/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"pull --user guest:guest /root/couchbase-mobile-tools/{cblite_db}.cblite2 "
+            f"wss://{sgw_ip}:4984/db-1"
+        )
     else:
-        cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'pull --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
-              'ws://{1}:4984/db-1'.format(cblite_db, sgw_ip)
-    logger.info('Running: {}'.format(cmd))
+        cmd = (
+            "/root/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"pull --user guest:guest /root/couchbase-mobile-tools/{cblite_db}.cblite2 "
+            f"ws://{sgw_ip}:4984/db-1"
+        )
+    logger.info(f"Running: {cmd}")
     with quiet():
         return local(cmd, capture=True)
 
 
 def start_cblitedb(port: str, db_name: str):
-    cmd = 'nohup /root/couchbase-mobile-tools/cblite/build_cmake/cblite --create serve --port' \
-          ' {} /root/couchbase-mobile-tools/{}.cblite2 &>/dev/null &'.format(port, db_name)
-    logger.info('Running: {}'.format(cmd))
+    cmd = (
+        "nohup /root/couchbase-mobile-tools/cblite/build_cmake/cblite --create serve --port"
+        f" {port} /root/couchbase-mobile-tools/{db_name}.cblite2 &>/dev/null &"
+    )
+    logger.info(f"Running: {cmd}")
     with lcd('/root/couchbase-mobile-tools/'):
         local(cmd)
 
@@ -1978,28 +1972,36 @@ def build_cblite():
 
 def replicate_push_continuous(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
     if cluster_spec.capella_infrastructure:
-        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-              'wss://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
+        cmd = (
+            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{cblite_db}.cblite2 "
+            f"wss://{sgw_ip}:4984/db-1 &>/dev/null &"
+        )
     else:
-        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-              'ws://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
-    logger.info('Running: {}'.format(cmd))
+        cmd = (
+            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{cblite_db}.cblite2 "
+            f"ws://{sgw_ip}:4984/db-1 &>/dev/null &"
+        )
+    logger.info(f"Running: {cmd}")
     with quiet():
         local(cmd)
 
 
 def replicate_pull_continuous(cluster_spec: ClusterSpec, cblite_db: str, sgw_ip: str):
     if cluster_spec.capella_infrastructure:
-        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-              'wss://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
+        cmd = (
+            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{cblite_db}.cblite2 "
+            f"wss://{sgw_ip}:4984/db-1 &>/dev/null &"
+        )
     else:
-        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-              'ws://{1}:4984/db-1 &>/dev/null &'.format(cblite_db, sgw_ip)
-    logger.info('Running: {}'.format(cmd))
+        cmd = (
+            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{cblite_db}.cblite2 "
+            f"ws://{sgw_ip}:4984/db-1 &>/dev/null &"
+        )
+    logger.info(f"Running: {cmd}")
     with quiet():
         local(cmd)
 
@@ -2012,9 +2014,11 @@ def cleanup_cblite_db_coninuous():
 
 
 def start_cblitedb_continuous(port: str, db_name: str):
-    cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite --create serve --port' \
-          ' {} {}.cblite2 &>/dev/null &'.format(port, db_name)
-    logger.info('Running: {}'.format(cmd))
+    cmd = (
+        "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite --create serve --port"
+        f" {port} {db_name}.cblite2 &>/dev/null &"
+    )
+    logger.info(f"Running: {cmd}")
     with lcd('/tmp/couchbase-mobile-tools/'), quiet():
         local(cmd)
     logger.info('cblite started')
@@ -2036,9 +2040,11 @@ def kill_cblite():
 
 def create_javascript_udf(node, udflib, user, password, security):
     logger.info('Create Javascript UDF function')
-    cmd = "curl -k -v -X POST " \
-          "http://{}:8093/evaluator/v1/libraries/{} " \
-          "-u {}:{}".format(node, udflib, user, password)
+    cmd = (
+        "curl -k -v -X POST "
+        f"http://{node}:8093/evaluator/v1/libraries/{udflib} "
+        f"-u {user}:{password}"
+    )
     if security:
         cmd = cmd.replace("http", "https")
         cmd = cmd.replace("8093", "18093")
@@ -2070,17 +2076,16 @@ def build_sdk_benchmark(benchmark_name: str, sdk_type: str, build_cmd: str = Non
         return
 
     # Clean any existing log files
-    with settings(hide('everything'), lcd('sdks/{}/'.format(sdk_type)), warn_only=True):
-        local('rm {benchmark_name} {benchmark_name}*.log {benchmark_name}*.out'
-              .format(benchmark_name=benchmark_name))
+    with settings(hide("everything"), lcd(f"sdks/{sdk_type}/"), warn_only=True):
+        local(f"rm {benchmark_name} {benchmark_name}*.log {benchmark_name}*.out")
 
-    run_cmd('sdks/{}/'.format(sdk_type), build_cmd, '', '{}.out'.format(benchmark_name))
+    run_cmd(f"sdks/{sdk_type}/", build_cmd, "", f"{benchmark_name}.out")
 
 
 def get_java_classpath(benchmark_name: str) -> str:
     """Return the cp.txt content as generated by maven during `build_sdk_benchmark`."""
     # Filename should be the sameone specified by `-Dmdep.outputFile=` in `get_sdk_build_command`.
-    with open('sdks/java/{}/cp.txt'.format(benchmark_name), 'r') as cp:
+    with open(f"sdks/java/{benchmark_name}/cp.txt", "r") as cp:
         first_line = cp.readline()
         return first_line.replace('classpath=', '') if first_line else ''
 
@@ -2093,10 +2098,12 @@ def download_dotnet_client(version: str):
     local('git clone https://github.com/couchbase/couchbase-net-client.git')
     with lcd('couchbase-net-client'):
         if 'refs/changes/' in version:
-            local('git fetch https://review.couchbase.org/couchbase-net-client '
-                  '{} && git cherry-pick FETCH_HEAD'.format(version))
+            local(
+                "git fetch https://review.couchbase.org/couchbase-net-client "
+                f"{version} && git cherry-pick FETCH_HEAD"
+            )
         else:
-            local('git checkout {}'.format(version))
+            local(f"git checkout {version}")
         local('dotnet build --configuration Release couchbase-net-client.sln')
         return local('pwd', capture=True)
 
@@ -2106,7 +2113,7 @@ def cbq(node: str, cluster_spec: ClusterSpec, script: str, port: int = 8095):
            f'-u={cluster_spec.rest_credentials[0]} '
            f'-p={cluster_spec.rest_credentials[1]} < {script}')
 
-    logger.info('Running: {}'.format(cmd))
+    logger.info(f"Running: {cmd}")
     local(cmd)
 
 def build_vectordb_bench():
@@ -2130,7 +2137,7 @@ def run_vectordb_bench(
             NUM_PER_BATCH=str(batch_size),
         ):
             # Run using a command line tool which may not exist in upstream version
-            local("env/bin/cmd_run {}".format(options))
+            local(f"env/bin/cmd_run {options}")
 
 
 def collect_cbopinfo_logs(kubeconfig: str):

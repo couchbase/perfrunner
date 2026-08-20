@@ -87,7 +87,7 @@ class OperatorBackupRestoreTest(OperatorBackupTest):
     def flush_buckets(self):
         logger.info('Flushing bucket')
         for i in range(self.test_config.cluster.num_buckets):
-            bucket = 'bucket-{}'.format(i + 1)
+            bucket = f"bucket-{i + 1}"
             self.rest.flush_bucket(self.master_node, bucket)
             self.check_num_items(bucket_items={bucket: 0})
 

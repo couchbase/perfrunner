@@ -50,7 +50,7 @@ def tpcds(rest: RestHelper,
           num_requests: int,
           query_set: str) -> Iterator:
     for query in new_queries(query_set):
-        logger.info('Running: {}'.format(query.statement))
+        logger.info(f"Running: {query.statement}")
         timings = run_concurrent_queries(rest,
                                          nodes,
                                          query,

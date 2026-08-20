@@ -8,7 +8,7 @@ class SecondaryStats(CouchbaseCollector):
     SKIP_ON_DYNAMIC = True
 
     def _get_secondary_stats(self, bucket):
-        uri = "/pools/default/buckets/@index-{}/stats".format(bucket)
+        uri = f"/pools/default/buckets/@index-{bucket}/stats"
         samples = self.get_http(path=uri)
         stats = dict()
         for metric, values in samples['op']['samples'].items():

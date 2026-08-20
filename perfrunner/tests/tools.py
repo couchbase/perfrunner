@@ -25,7 +25,7 @@ class BackupRestoreTest(PerfTest):
 
     def flush_buckets(self, master_node: Optional[str] = None):
         for i in range(self.test_config.cluster.num_buckets):
-            bucket = 'bucket-{}'.format(i + 1)
+            bucket = f"bucket-{i + 1}"
             self.rest.flush_bucket(master_node or self.master_node, bucket)
 
     def backup(self, master_node: Optional[str] = None, mode: Optional[str] = None):
@@ -512,9 +512,9 @@ class ExportImportTest(BackupRestoreTest):
     def import_data(self):
         import_file = self.test_config.export_settings.import_file
         if import_file is None:
-            import_file = 'data.{}'.format(self.test_config.export_settings.type)
+            import_file = f"data.{self.test_config.export_settings.type}"
             import_file = os.path.join(self.cluster_spec.backup, import_file)
-        import_file = 'file://{}'.format(import_file)
+        import_file = f"file://{import_file}"
 
         is_sample_format = self.test_config.export_settings.format == 'sample'
 
@@ -949,7 +949,7 @@ class ProvisionedCapellaBackup(PerfTest):
     def backup(self):
         self.rest.backup(self.master_node, self.test_config.buckets[0])
         backup_time, backup_id = self.rest.wait_for_backup(self.master_node)
-        logger.info("Backup took: {}s ".format(backup_time))
+        logger.info(f"Backup took: {backup_time}s ")
         return backup_time, backup_id
 
     def _report_kpi(self, time_elapsed):

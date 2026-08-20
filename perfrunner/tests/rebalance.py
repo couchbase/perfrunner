@@ -112,14 +112,14 @@ class RebalanceTest(PerfTest):
 
     def pre_rebalance(self):
         """Execute additional steps before rebalance."""
-        logger.info('Sleeping for {} seconds before taking actions'
-                    .format(self.rebalance_settings.start_after))
+        logger.info(
+            f"Sleeping for {self.rebalance_settings.start_after} seconds before taking actions"
+        )
         time.sleep(self.rebalance_settings.start_after)
 
     def post_rebalance(self):
         """Execute additional steps after rebalance."""
-        logger.info('Sleeping for {} seconds before finishing'
-                    .format(self.rebalance_settings.stop_after))
+        logger.info(f"Sleeping for {self.rebalance_settings.stop_after} seconds before finishing")
         time.sleep(self.rebalance_settings.stop_after)
 
     @with_stats
@@ -135,7 +135,7 @@ class CapellaRebalanceTest(RebalanceTest):
     def update_cluster_configs(self) -> list[str]:
         new_clusters = self.rest.get_all_cluster_nodes()
 
-        logger.info('Cluster nodes: {}'.format(pretty_dict(new_clusters)))
+        logger.info(f"Cluster nodes: {pretty_dict(new_clusters)}")
 
         for cluster_name, new_nodes in new_clusters.items():
             self.cluster_spec.config.set('clusters', cluster_name, '\n' + '\n'.join(new_nodes))
@@ -304,15 +304,15 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
         logger.info("Sleeping for 10s before the index creation")
         time.sleep(10)
         total_index_time = self.build_indexes()
-        logger.info("Total index build time: {} seconds".format(total_index_time))
+        logger.info(f"Total index build time: {total_index_time} seconds")
 
         self.wait_for_index_persistence(fts_nodes=fts_nodes_before)
 
         total_index_size_bytes = self.calculate_index_size()
-        logger.info("Total index size: {} MB".format(int(total_index_size_bytes / (1024 ** 2))))
+        logger.info(f"Total index size: {int(total_index_size_bytes / (1024**2))} MB")
 
         self.rebalance(services="fts")
-        logger.info("Total rebalance time: {} seconds".format(self.rebalance_time))
+        logger.info(f"Total rebalance time: {self.rebalance_time} seconds")
 
         if self.is_balanced():
             self.report_kpi()
@@ -348,8 +348,10 @@ class RecoveryTest(RebalanceTest):
                     self.rest.set_delta_recovery_type(master, node)
 
     def pre_failover(self):
-        logger.info('Sleeping {} seconds before triggering failover'
-                    .format(self.rebalance_settings.delay_before_failover))
+        logger.info(
+            f"Sleeping {self.rebalance_settings.delay_before_failover} seconds "
+            "before triggering failover"
+        )
         time.sleep(self.rebalance_settings.delay_before_failover)
 
     @timeit
@@ -699,16 +701,20 @@ class OnlineMigrationWithRebalanceTest(RebalanceKVTest):
             new_storage_backend = 'couchstore'
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
-                logger.info('Storage backend before migration: {}'.format(
-                    self.rest.get_bucket_storage_backend_info(master, bucket)))
+                logger.info(
+                    "Storage backend before migration: "
+                    f"{self.rest.get_bucket_storage_backend_info(master, bucket)}"
+                )
                 self.rest.update_bucket_storage_backend(master, bucket, new_storage_backend)
         return super().pre_rebalance()
 
     def post_rebalance(self):
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
-                logger.info('Storage backend after rebalance: {}'.format(
-                    self.rest.get_bucket_storage_backend_info(master, bucket)))
+                logger.info(
+                    "Storage backend after rebalance: "
+                    f"{self.rest.get_bucket_storage_backend_info(master, bucket)}"
+                )
         return super().post_rebalance()
 
     @with_stats
@@ -772,7 +778,7 @@ class FailoverSDKConfigPushTest(FailoverTest):
         for node in self.nodes_to_fail:
             node_keys = self.rest.get_random_local_key(node, self.test_config.buckets[0],
                                                        keys_count=key_count)
-            logger.info('Node: {} keys: "{}"'.format(node, node_keys))
+            logger.info(f'Node: {node} keys: "{node_keys}"')
             keys.extend(node_keys)
         return ','.join(keys)
 
@@ -783,7 +789,7 @@ class FailoverSDKConfigPushTest(FailoverTest):
 
     def _failover(self, *args):
         for node in self.nodes_to_fail:
-            logger.info('Failing node: {}'.format(node))
+            logger.info(f"Failing node: {node}")
             self.remote.shutdown(node)
         # Fof this usecase start the failure time after the shutdown command is sent.
         # Works for single-node failure tests, need improvements for multi-node failure tests.
@@ -815,8 +821,9 @@ class FailoverSDKConfigPushTest(FailoverTest):
         t_failure_detection = self.convert_time(t_failure_detection)
         failure_detection_time = round(t_failure_detection - self.t_failure[0], 2)  # sec
 
-        logger.info('Failover time: {}s Failure detection time: {}s'.format(
-            failover_time, failure_detection_time))
+        logger.info(
+            f"Failover time: {failover_time}s Failure detection time: {failure_detection_time}s"
+        )
 
         # SDK write unavailable time
         self.reporter.post(

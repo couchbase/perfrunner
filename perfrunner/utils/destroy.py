@@ -191,10 +191,15 @@ class AWSDestroyer(Destroyer):
         logger.info("Deleting persistent volumes...")
         eks_clusters = self.deployed_infra.get('vpc', {}).get('eks_clusters', {})
         response = self.ec2client.describe_volumes(
-            Filters=[{'Name': 'tag-key',
-                      'Values':
-                          ['kubernetes.io/cluster/{}'.format(eks_cluster_name)
-                           for eks_cluster_name in eks_clusters.keys()]}],
+            Filters=[
+                {
+                    "Name": "tag-key",
+                    "Values": [
+                        f"kubernetes.io/cluster/{eks_cluster_name}"
+                        for eks_cluster_name in eks_clusters.keys()
+                    ],
+                }
+            ],
             DryRun=False,
         )
         volumes = response['Volumes']
@@ -226,7 +231,7 @@ class AWSDestroyer(Destroyer):
     def delete_s3bucket(self):
         bucket_name = self.infra_spec.backup
         if bucket_name and bucket_name.startswith('s3'):
-            logger.info('delete S3 bucket: {}'.format(bucket_name))
+            logger.info(f"delete S3 bucket: {bucket_name}")
             bucket_name = bucket_name.split("/")[-1]
             try:
                 s3_bucket = self.s3.Bucket(bucket_name)
@@ -237,8 +242,7 @@ class AWSDestroyer(Destroyer):
                 logger.info(ex)
 
     def destroy(self):
-        logger.info("Deleting deployed infrastructure: {}"
-                    .format(self.generated_cloud_config_path))
+        logger.info(f"Deleting deployed infrastructure: {self.generated_cloud_config_path}")
 
         self.delete_eks_node_groups()
         self.delete_ec2s()
@@ -364,19 +368,17 @@ class GCPDestroyer(Destroyer):
                     raise Exception('ERROR: ', new_op.error)
 
                 if new_op.warnings:
-                    logger.warning('Warnings for operation {}: {}'
-                                   .format(new_op.id, new_op.warnings))
+                    logger.warning(f"Warnings for operation {new_op.id}: {new_op.warnings}")
 
                 if new_op.status == compute.Operation.Status.DONE:
-                    logger.info('Operation {} completed successfully.'.format(new_op.id))
+                    logger.info(f"Operation {new_op.id} completed successfully.")
                 else:
                     new_ops.append(new_op)
 
             pending_ops = new_ops
 
     def destroy(self):
-        logger.info("Deleting deployed infrastructure: {}"
-                    .format(self.generated_cloud_config_path))
+        logger.info(f"Deleting deployed infrastructure: {self.generated_cloud_config_path}")
 
         self.delete_gce_instances()
         self.delete_firewalls()
@@ -395,7 +397,7 @@ class OpenshiftDestoryer(Destroyer):
         super().__init__(infra_spec, options)
 
     def destroy(self):
-        os.system("./openshift-install destroy cluster --dir={}".format(self.OPENSHIFT_PATH))
+        os.system(f"./openshift-install destroy cluster --dir={self.OPENSHIFT_PATH}")
         if self.infra_spec.external_client:
             logger.info('Destroying external resources')
             AWSDestroyer(self.infra_spec, self.options).destroy()
@@ -429,7 +431,7 @@ def main():
         elif infra_provider == 'gcp':
             destroyer = GCPDestroyer(infra_spec, args)
         else:
-            raise Exception("{} is not a valid infrastructure provider".format(infra_provider))
+            raise Exception(f"{infra_provider} is not a valid infrastructure provider")
         destroyer.destroy()
 
 

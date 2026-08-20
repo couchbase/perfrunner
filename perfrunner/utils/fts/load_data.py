@@ -56,8 +56,10 @@ class Docgen:
                 break
 
     def start_load(self):
-        cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.bucket_name),
-                    password="password")
+        cb = Bucket(
+            f"couchbase://{self.cb_url}/{self.bucket_name}?operation_timeout=10",
+            password="password",
+        )
         master_file = open(self.master_file_path)
         shadow_file = open(self.shadow_file_path)
 
@@ -128,8 +130,10 @@ class Numeric(Docgen):
             cb.upsert(key, {"time": val})
 
     def start_load(self):
-        c = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.bucket_name),
-                   password="password")
+        c = Bucket(
+            f"couchbase://{self.cb_url}/{self.bucket_name}?operation_timeout=10",
+            password="password",
+        )
         self.insert_cb(c)
 
 

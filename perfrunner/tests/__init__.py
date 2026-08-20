@@ -225,8 +225,8 @@ class PerfTest:
             task_regexp=self.test_config.access_settings.cbcollect_regexp,
         )
         for hostname in self.cluster_spec.servers:
-            for fname in glob.glob('{}/*.zip'.format(hostname)):
-                shutil.move(fname, '{}.zip'.format(hostname))
+            for fname in glob.glob(f"{hostname}/*.zip"):
+                shutil.move(fname, f"{hostname}.zip")
 
     def reset_memory_settings(self):
         if self.capella_infra or self.dynamic_infra:
@@ -301,7 +301,7 @@ class PerfTest:
         for master in self.cluster_spec.masters:
             num_failovers = self.rest.get_failover_counter(master)
             if num_failovers:
-                return 'Failover happened {} time(s)'.format(num_failovers)
+                return f"Failover happened {num_failovers} time(s)"
 
     def check_core_dumps(self) -> str:
         if self.capella_infra:
@@ -330,9 +330,10 @@ class PerfTest:
         for target in self.target_iterator:
             if restore_mapping is None and not collection_map.get(
                     target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
-                restore_mapping = \
-                    "{0}._default._default={0}.scope-1.collection-1"\
-                    .format(target.bucket)
+                restore_mapping = (
+                    f"{target.bucket}._default._default={target.bucket}.scope-1.collection-1"
+                )
+
             logger.info('Restoring data')
             self.remote.purge_restore_progress(
                 self.test_config.restore_settings.backup_storage,
@@ -601,10 +602,10 @@ class PerfTest:
             ind_type_mapping = \
                 copy.deepcopy(definition["params"]["mapping"]["default_mapping"])
             definition["params"]["mapping"]["default_mapping"]["enabled"] = False
-            new_type_mapping_name = "{}.{}".format(scope_name, collection_name)
+            new_type_mapping_name = f"{scope_name}.{collection_name}"
             definition["params"]["mapping"]["types"] = {new_type_mapping_name: ind_type_mapping}
 
-        logger.info('Index definition: {}'.format(pretty_dict(definition)))
+        logger.info(f"Index definition: {pretty_dict(definition)}")
         index_name = self.test_config.index_settings.couchbase_fts_index_name
         created_name = self.rest.create_fts_index(self.fts_nodes[0], index_name, definition)
         self.monitor.monitor_fts_indexing_queue(
@@ -621,7 +622,7 @@ class PerfTest:
                 query_name = query_name.strip()
                 if not query_name:
                     continue
-                section = 'n1ql-{}'.format(query_name)
+                section = f"n1ql-{query_name}"
                 if not self.test_config.config.has_section(section):
                     continue
                 statement = self.test_config.config.get(section, 'statement', fallback=None)
@@ -641,7 +642,7 @@ class PerfTest:
 
     def sleep(self):
         access_settings = self.test_config.access_settings
-        logger.info('Running phase for {} seconds'.format(access_settings.time))
+        logger.info(f"Running phase for {access_settings.time} seconds")
         time.sleep(access_settings.time)
 
     def log_task_settings(self, phases: Iterable[WorkloadPhase]):
@@ -723,7 +724,7 @@ class PerfTest:
                 )
             ]
 
-        logger.info('Running {} phase'.format(phase_name))
+        logger.info(f"Running {phase_name} phase")
         self.log_task_settings(phases)
 
         return phases
@@ -920,7 +921,7 @@ class PerfTest:
         stage_info = rebalance_report["stageInfo"]
         for service, progress in stage_info.items():
             time_map[service] = progress["timeTaken"] / 1000
-        logger.info("rebalance timing(s): {}".format(pretty_dict(time_map)))
+        logger.info(f"rebalance timing(s): {pretty_dict(time_map)}")
         return time_map
 
     def cleanup_spring_data_files(self):

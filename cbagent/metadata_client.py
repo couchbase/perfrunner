@@ -12,7 +12,7 @@ class InternalServerError(Exception):
         self.url = url
 
     def __str__(self):
-        return "Internal server error: {}".format(self.url)
+        return f"Internal server error: {self.url}"
 
 
 @decorator
@@ -47,7 +47,7 @@ class MetadataClient(RestClient):
     def __init__(self, settings):
         super(MetadataClient, self).__init__()
         self.settings = settings
-        self.base_url = "http://{}/cbmonitor".format(settings.cbmonitor_host)
+        self.base_url = f"http://{settings.cbmonitor_host}/cbmonitor"
 
     def get_clusters(self) -> List[str]:
         url = self.base_url + "/get_clusters/"

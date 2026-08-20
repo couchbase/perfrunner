@@ -119,7 +119,7 @@ class JTSTest(PerfTest):
             local.clear_jts_logs(self.jts_access.jts_home_dir)
 
     def custom_target_iterator(self, num_buckets):
-        bucket_list = ['bucket-{}'.format(i + 1) for i in range(num_buckets)]
+        bucket_list = [f"bucket-{i + 1}" for i in range(num_buckets)]
         self.target_iterator = TargetIterator(
             self.cluster_spec, self.test_config, buckets=bucket_list)
 
@@ -181,10 +181,10 @@ class FTSTest(JTSTest):
         for collection_group in collection_list:
             types_col = {}
             for col_name in collection_group:
-                key_name = "{}.{}".format(scope_name, col_name)
+                key_name = f"{scope_name}.{col_name}"
                 if len(custom_type_mapping_keys) != 0:
                     for ind, custom_key in enumerate(custom_type_mapping_keys):
-                        key_name = key_name+".{}".format(custom_key)
+                        key_name = key_name + f".{custom_key}"
                         types_col[key_name] = index_type_mapping[ind]
                 else:
                     types_col[key_name] = index_type_mapping
@@ -216,7 +216,7 @@ class FTSTest(JTSTest):
         result = self.rest.get_bucket_info(self.fts_nodes[0], bucket_name)
         cb_version = result["nodes"][0]["version"].split("-")[0]
         cb_build = result["nodes"][0]["version"].split("-")[1]
-        logger.info("This is the version {} and build {}".format(cb_version, cb_build))
+        logger.info(f"This is the version {cb_version} and build {cb_build}")
 
         logger.info("Creating indexing definitions:")
         collection_map = self.test_config.collection.collection_map
@@ -326,8 +326,7 @@ class FTSTest(JTSTest):
                     for coll_group_id, collection_type_mapping in \
                             enumerate(index_type_mapping_per_group):
                         for index_count in range(0, self.jts_access.indexes_per_group):
-                            index_name = "{}-{}".format(self.jts_access.couchbase_index_name,
-                                                        index_id)
+                            index_name = f"{self.jts_access.couchbase_index_name}-{index_id}"
                             collection_index_def = copy.deepcopy(bucket_index_def)
                             collection_index_def.update({
                                 'name': index_name,
@@ -353,7 +352,7 @@ class FTSTest(JTSTest):
                     if len(key_values) > 0:
                         # there is custom mapping
                         for type_name in key_values:
-                            type_mapping_key_name = key_name + ".{}".format(type_name)
+                            type_mapping_key_name = key_name + f".{type_name}"
                             default_index_type_mapping[type_mapping_key_name] = \
                                 bucket_index_def["params"]["mapping"]["types"][type_name]
                     else:
@@ -362,7 +361,7 @@ class FTSTest(JTSTest):
 
                 # default, multiple indexes with the same index def
                 for num_indexes in range(0, self.jts_access.indexes_per_group):
-                    index_name = "{}-{}".format(self.jts_access.couchbase_index_name, num_indexes)
+                    index_name = f"{self.jts_access.couchbase_index_name}-{num_indexes}"
                     collection_index_def = copy.deepcopy(bucket_index_def)
                     collection_index_def.update({
                         'name': index_name,
@@ -422,10 +421,10 @@ class FTSTest(JTSTest):
         total_time = 0
         thread_dict = {}
         index_def_list = []
-        logger.info("this is the defs : {}".format(self.fts_index_defs))
+        logger.info(f"this is the defs : {self.fts_index_defs}")
         for index_name in self.fts_index_defs.keys():
             index_def = self.fts_index_defs[index_name]['index_def']
-            logger.info('Index definition: {}'.format(pretty_dict(index_def)))
+            logger.info(f"Index definition: {pretty_dict(index_def)}")
             bucket_name = self.fts_index_map[index_name]["bucket"]
             if self.jts_access.index_creation_style == 'async':
                 if thread_dict.get(bucket_name, None) is None:
@@ -435,9 +434,9 @@ class FTSTest(JTSTest):
                     args=(index_name, index_def)))
             else:
                 index_def_list.append([index_name, index_def])
-        logger.info('Index map: {}'.format(pretty_dict(self.fts_index_map)))
+        logger.info(f"Index map: {pretty_dict(self.fts_index_map)}")
         t0 = time.time()
-        logger.info("Creating indexes {}hronously.".format(self.jts_access.index_creation_style))
+        logger.info(f"Creating indexes {self.jts_access.index_creation_style}hronously.")
         if self.jts_access.index_creation_style == 'async':
             self.async_index_create(thread_dict)
         else:
@@ -549,9 +548,10 @@ class FTSTest(JTSTest):
             for target in self.target_iterator:
                 if not collection_map.get(
                         target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
-                    restore_mapping = \
-                        "{0}._default._default={0}.scope-1.collection-1"\
-                        .format(target.bucket)
+                    restore_mapping = (
+                        f"{target.bucket}._default._default={target.bucket}.scope-1.collection-1"
+                    )
+
         archive = self.test_config.restore_settings.backup_storage
         if self.test_config.restore_settings.use_csp_specific_archive:
             archive += f"/{self.cluster_spec.csp.lower()}"
@@ -590,7 +590,7 @@ class FTSThroughputTest(FTSTest):
         self.create_fts_indexes()
         index_size = self.calculate_index_size()
         size_final = int(index_size / (1024 ** 2))
-        logger.info("The index size is {} MB".format(size_final))
+        logger.info(f"The index size is {size_final} MB")
         self.download_jts()
         self.wait_for_index_persistence()
         self.warmup()
@@ -620,7 +620,7 @@ class FTSLatencyTest(FTSTest):
         self.create_fts_indexes()
         index_size = self.calculate_index_size()
         size_final = int(index_size / (1024 ** 2))
-        logger.info("The index size is {} MB".format(size_final))
+        logger.info(f"The index size is {size_final} MB")
         self.download_jts()
         self.wait_for_index_persistence()
         self.warmup()
@@ -906,7 +906,7 @@ class FTSVectorSearchRecallTest(FTSLatencyTest):
         logger.info("Downloading ground truth files from aws")
         s3_bucket_path = self.jts_access.ground_truth_s3_path
         ground_truth_file_name = self.jts_access.ground_truth_file_name
-        logger.info('Downloading {}'.format(ground_truth_file_name))
+        logger.info(f"Downloading {ground_truth_file_name}")
         run_aws_cli_command(
             f"s3 cp {s3_bucket_path+ground_truth_file_name} {ground_truth_file_name}")
 
@@ -929,7 +929,7 @@ class FTSVectorSearchModifiedDataTest(FTSLatencyTest):
         self.create_fts_indexes()
         index_size = self.calculate_index_size()
         size_final = int(index_size / (1024 ** 2))
-        logger.info("The index size is {} MB".format(size_final))
+        logger.info(f"The index size is {size_final} MB")
         self.download_jts()
         self.wait_for_index_persistence()
         self.warmup()

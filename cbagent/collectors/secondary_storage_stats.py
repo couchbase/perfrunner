@@ -74,10 +74,10 @@ class SecondaryStorageStats(CouchbaseCollector):
             for index, bucket, scope, collection in self.get_all_indexes():
                 index_name = index
                 if scope and collection and scope != "_default" and collection != "_default":
-                    index = "{}:{}:{}".format(scope, collection, index)
+                    index = f"{scope}:{collection}:{index}"
                 if index in index_stats and index_stats[index]:
                     stats = index_stats[index]
-                    index1 = "{}.{}".format(bucket, index_name)
+                    index1 = f"{bucket}.{index_name}"
                     self.update_metric_metadata(stats.keys(), index=index1)
                     self.store.append(stats, cluster=self.cluster,
                                       index=index1, collector=self.COLLECTOR)
@@ -85,4 +85,4 @@ class SecondaryStorageStats(CouchbaseCollector):
     def update_metadata(self):
         self.mc.add_cluster()
         for index, bucket, scope, collection in self.get_all_indexes():
-            self.mc.add_index("{}.{}".format(bucket, index))
+            self.mc.add_index(f"{bucket}.{index}")

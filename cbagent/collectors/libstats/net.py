@@ -19,8 +19,8 @@ class NetStat(RemoteStats):
 
     def get_dev_stats(self) -> Dict[str, int]:
         iface = self.detect_iface()
-        cmd = "grep {} /proc/net/dev".format(iface)
-        stdout = self.run("{0}; sleep 1; {0}".format(cmd))
+        cmd = f"grep {iface} /proc/net/dev"
+        stdout = self.run(f"{cmd}; sleep 1; {cmd}")
         s1, s2 = stdout.split('\n')
         s1 = [int(v.split(":")[-1]) for v in s1.split() if v.split(":")[-1]]
         s2 = [int(v.split(":")[-1]) for v in s2.split() if v.split(":")[-1]]
@@ -34,7 +34,7 @@ class NetStat(RemoteStats):
     def get_tcp_stats(self) -> Dict[str, int]:
         stats = {}
         for state in 'established', 'time-wait':
-            cmd = 'ss --tcp -o state {} | wc -l'.format(state)
+            cmd = f"ss --tcp -o state {state} | wc -l"
             stdout = self.run(cmd)
             num_connections = int(stdout.strip())
             metric = state.upper().replace('-', '_')

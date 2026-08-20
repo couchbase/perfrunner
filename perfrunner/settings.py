@@ -59,9 +59,9 @@ class Config:
         self.fname = ''
 
     def parse(self, fname: str, override: Optional[list[str]] = None):
-        logger.info('Reading configuration file: {}'.format(fname))
+        logger.info(f"Reading configuration file: {fname}")
         if not os.path.isfile(fname):
-            logger.interrupt("File doesn't exist: {}".format(fname))
+            logger.interrupt(f"File doesn't exist: {fname}")
         self.config.optionxform = str
         self.config.read(fname)
 
@@ -647,7 +647,7 @@ class ClusterSpec(Config):
                 clients = []
                 for k, v in client_map.items():
                     if "workers" in k:
-                        clients += ["{}.{}".format(k, host) for host in v.split()]
+                        clients += [f"{k}.{host}" for host in v.split()]
                 return clients
             else:
                 client_map = self.infrastructure_clients
@@ -667,7 +667,7 @@ class ClusterSpec(Config):
                 clients = []
                 for k, v in client_map.items():
                     if "workers" in k:
-                        clients += ["{}.{}".format(k, host) for host in v.split()]
+                        clients += [f"{k}.{host}" for host in v.split()]
                 return clients
             else:
                 client_map = self.infrastructure_clients
@@ -862,7 +862,7 @@ class ClusterSpec(Config):
                 iids = []
                 for host in hosts:
                     iid = self.get_aws_iid(host, self.cloud_region)
-                    logger.info("Instance ID for {}: {}".format(host, iid))
+                    logger.info(f"Instance ID for {host}: {iid}")
                     iids.append(iid)
                 self.config.set("cluster_instance_ids", cluster_name, "\n" + "\n".join(iids))
             self.update_spec_file()
@@ -909,8 +909,7 @@ class ClusterSpec(Config):
         self.inactive_cluster_idxs = set(range(len(self.config.options('clusters')))) - \
             new_active_clusters
 
-        logger.info('Active clusters set to {}'
-                    .format(list(self.infrastructure_clusters.keys())))
+        logger.info(f"Active clusters set to {list(self.infrastructure_clusters.keys())}")
 
     def set_inactive_clusters_by_idx(self, cluster_idxs: Iterable[int]):
         new_inactive_clusters = set(cluster_idxs)
@@ -920,8 +919,7 @@ class ClusterSpec(Config):
             return
 
         self.inactive_cluster_idxs = new_inactive_clusters
-        logger.info('Active clusters set to {}'
-                    .format(list(self.infrastructure_clusters.keys())))
+        logger.info(f"Active clusters set to {list(self.infrastructure_clusters.keys())}")
 
     def set_all_clusters_active(self):
         self.inactive_cluster_idxs = set()
@@ -1370,11 +1368,8 @@ class CollectionSettings:
     def create_uniform_collection_map(self, buckets: Iterable[str]):
         coll_map = {
             bucket: {
-                'scope-{}'.format(i + 1): {
-                    'collection-{}'.format(j + 1): {
-                        'access': 1,
-                        'load': 1
-                    }
+                f"scope-{i + 1}": {
+                    f"collection-{j + 1}": {"access": 1, "load": 1}
                     for j in range(self.collections_per_scope)
                 }
                 for i in range(self.scopes_per_bucket)
@@ -2048,9 +2043,11 @@ class PhaseSettings:
     def configure_bucket_list(self, buckets):
         for b_id in self.num_buckets:
             if not 1 <= b_id <= len(buckets):
-                raise ValueError('Bucket number out of range: {}. '
-                                 'Bucket numbers should be in range [1, no. of buckets]. '
-                                 'Current no. of buckets: {}'.format(b_id, len(buckets)))
+                raise ValueError(
+                    f"Bucket number out of range: {b_id}. "
+                    "Bucket numbers should be in range [1, no. of buckets]. "
+                    f"Current no. of buckets: {len(buckets)}"
+                )
 
         self.bucket_list = [buckets[i-1] for i in self.num_buckets] or buckets
 
@@ -2676,11 +2673,11 @@ class IndexSettings:
                             index_num = 1
                             if options['load'] == 1:
                                 collection_num = collection.replace("collection-", "")
-                                index_name = 'pi{}_{}'\
-                                    .format(collection_num, index_num)
-                                new_statement = \
-                                    "CREATE PRIMARY INDEX {} ON default:`{}`.`{}`.`{}`". \
-                                    format(index_name, bucket, scope, collection)
+                                index_name = f"pi{collection_num}_{index_num}"
+                                new_statement = (
+                                    f"CREATE PRIMARY INDEX {index_name} "
+                                    f"ON default:`{bucket}`.`{scope}`.`{collection}`"
+                                )
                                 with_clause = " WITH {'defer_build': 'true',"
                                 if self.replicas > 0:
                                     with_clause += "'num_replica': " + str(self.replicas) + ","
@@ -2688,8 +2685,10 @@ class IndexSettings:
                                 with_clause += "}"
                                 new_statement += with_clause
                                 statements.append(new_statement)
-                                build_statement = "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')" \
-                                    .format(bucket, scope, collection, index_name)
+                                build_statement = (
+                                    f"BUILD INDEX ON "
+                                    f"default:`{bucket}`.`{scope}`.`{collection}`('{index_name}')"
+                                )
                                 build_statements.append(build_statement)
                                 index_num += 1
             else:
@@ -2718,17 +2717,13 @@ class IndexSettings:
                                     for permutation in subset_permutations:
                                         index_field_list = list(permutation)
 
-                                        index_name = "i{}_{}".format(collection_num,
-                                                                     str(indexes_created+1))
+                                        index_name = f"i{collection_num}_{str(indexes_created + 1)}"
                                         index_fields = ",".join(index_field_list)
-                                        new_statement = \
-                                            "CREATE INDEX {} ON default:`{}`.`{}`.`{}`({})".\
-                                            format(
-                                                index_name,
-                                                bucket,
-                                                scope,
-                                                collection,
-                                                index_fields)
+                                        new_statement = (
+                                            f"CREATE INDEX {index_name} "
+                                            f"ON default:`{bucket}`.`{scope}`"
+                                            f".`{collection}`({index_fields})"
+                                        )
                                         with_clause = " WITH {'defer_build': 'true',"
                                         if self.replicas > 0:
                                             with_clause += \
@@ -2737,9 +2732,11 @@ class IndexSettings:
                                         with_clause += "}"
                                         new_statement += with_clause
                                         statements.append(new_statement)
-                                        build_statement = \
-                                            "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')" \
-                                            .format(bucket, scope, collection, index_name)
+                                        build_statement = (
+                                            f"BUILD INDEX ON "
+                                            f"default:`{bucket}`.`{scope}`"
+                                            f".`{collection}`('{index_name}')"
+                                        )
                                         build_statements.append(build_statement)
                                         indexes_created += 1
                                         if indexes_created == self.indexes_per_collection:
@@ -4321,15 +4318,11 @@ class TestConfig(Config):
         elif self.cluster.num_buckets != 1 and isinstance(self.cluster.bucket_name, list):
             return self.cluster.bucket_name
         else:
-            return [
-                'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
-            ]
+            return [f"bucket-{i + 1}" for i in range(self.cluster.num_buckets)]
 
     @property
     def eventing_buckets(self) -> list[str]:
-        return [
-            'eventing-bucket-{}'.format(i + 1) for i in range(self.cluster.eventing_buckets)
-        ]
+        return [f"eventing-bucket-{i + 1}" for i in range(self.cluster.eventing_buckets)]
 
     @property
     def eventing_metadata_bucket(self) -> list[str]:
@@ -4339,9 +4332,7 @@ class TestConfig(Config):
 
     @property
     def conflict_buckets(self) -> list[str]:
-        return [
-            'conflict-bucket-{}'.format(i + 1) for i in range(self.cluster.conflict_buckets)
-        ]
+        return [f"conflict-bucket-{i + 1}" for i in range(self.cluster.conflict_buckets)]
 
     @property
     def compaction(self) -> CompactionSettings:
@@ -4578,10 +4569,10 @@ class TestConfig(Config):
         return SGWAuditSettings(options)
 
     def get_n1ql_query_definition(self, query_name: str) -> dict:
-        return self._get_options_as_dict('n1ql-{}'.format(query_name))
+        return self._get_options_as_dict(f"n1ql-{query_name}")
 
     def get_sever_group_definition(self, server_group_name: str) -> dict:
-        return self._get_options_as_dict('sg-{}'.format(server_group_name))
+        return self._get_options_as_dict(f"sg-{server_group_name}")
 
     @property
     def fio(self) -> dict:
@@ -4658,7 +4649,7 @@ class TestConfig(Config):
 
         for section in base_settings.workload_mix:
             phase_options = self._get_options_as_dict(base_section)
-            override_options = self._get_options_as_dict('{}-{}'.format(base_section, section))
+            override_options = self._get_options_as_dict(f"{base_section}-{section}")
             phase_options.update(override_options)
             phase = settings_cls(phase_options)
             phase.configure(self)
@@ -4705,12 +4696,7 @@ class TargetSettings:
 
     @property
     def connection_string(self) -> str:
-        return 'couchbase://{username}:{password}@{host}/{bucket}'.format(
-            username=self.username,
-            password=self.password,
-            host=self.node,
-            bucket=self.bucket,
-        )
+        return f"couchbase://{self.username}:{self.password}@{self.node}/{self.bucket}"
 
 
 class AIGatewayTargetSettings(TargetSettings):

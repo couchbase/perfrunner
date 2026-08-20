@@ -264,7 +264,7 @@ class EventingTest(PerfTest):
                 time_to_undeploy += self.undeploy_function(name=name, func_scope=func_scope[name])
             else:
                 time_to_undeploy += self.undeploy_function(name=name)
-            logger.info("Function {} is undeployed.".format(name))
+            logger.info(f"Function {name} is undeployed.")
         return time_to_undeploy
 
     def pause(self, func_scope=None) -> int:
@@ -274,7 +274,7 @@ class EventingTest(PerfTest):
                 time_to_pause += self.pause_function(name=name, func_scope=func_scope[name])
             else:
                 time_to_pause += self.pause_function(name=name)
-            logger.info("Function {} is paused.".format(name))
+            logger.info(f"Function {name} is paused.")
         return time_to_pause
 
     def resume(self, func_scope=None) -> int:
@@ -284,7 +284,7 @@ class EventingTest(PerfTest):
                 time_to_resume += self.resume_function(name=name, func_scope=func_scope[name])
             else:
                 time_to_resume += self.resume_function(name=name)
-            logger.info("Function {} is resumed.".format(name))
+            logger.info(f"Function {name} is resumed.")
         return time_to_resume
 
     def validate_failures(self) -> str:
@@ -295,9 +295,7 @@ class EventingTest(PerfTest):
         for node in self.eventing_nodes:
             all_stats = self.rest.get_eventing_stats(node=node)
 
-            logger.info("Stats for {node} : {stats}"
-                        .format(node=node,
-                                stats=pretty_dict(all_stats)))
+            logger.info(f"Stats for {node} : {pretty_dict(all_stats)}")
             for function_stats in all_stats:
                 execution_stats = function_stats["execution_stats"]
                 failure_stats = function_stats["failure_stats"]
@@ -320,12 +318,14 @@ class EventingTest(PerfTest):
                 try:
                     max_consumer_rss, max_producer_rss = \
                         self.metrics.get_max_rss_values(function_name=name, server=node)
-                    logger.info("Max Consumer rss is {}MB on {} for function {}".
-                                format(max_consumer_rss, node, name))
-                    logger.info("Max Producer rss is {}MB on {} for function {}".
-                                format(max_producer_rss, node, name))
+                    logger.info(
+                        f"Max Consumer rss is {max_consumer_rss}MB on {node} for function {name}"
+                    )
+                    logger.info(
+                        f"Max Producer rss is {max_producer_rss}MB on {node} for function {name}"
+                    )
                 except (ValueError, IndexError):
-                    logger.info("Failed to get max rss on {}".format(node))
+                    logger.info(f"Failed to get max rss on {node}")
 
     def debug(self):
         self.print_max_rss_values()
@@ -565,14 +565,14 @@ class EventingRebalance(EventingTest):
 
     def pre_rebalance(self):
         """Execute additional steps before rebalance."""
-        logger.info('Sleeping for {} seconds before taking actions'
-                    .format(self.rebalance_settings.start_after))
+        logger.info(
+            f"Sleeping for {self.rebalance_settings.start_after} seconds before taking actions"
+        )
         time.sleep(self.rebalance_settings.start_after)
 
     def post_rebalance(self):
         """Execute additional steps after rebalance."""
-        logger.info('Sleeping for {} seconds before finishing'
-                    .format(self.rebalance_settings.stop_after))
+        logger.info(f"Sleeping for {self.rebalance_settings.stop_after} seconds before finishing")
         time.sleep(self.rebalance_settings.stop_after)
 
     def rebalance(self, initial_nodes, nodes_after):
@@ -616,7 +616,7 @@ class FunctionsRebalanceThroughputTest(EventingRebalance):
 
         self.post_rebalance()
         time_taken = round(time_taken, 2)
-        logger.info("Time taken for rebalance: {}sec".format(time_taken))
+        logger.info(f"Time taken for rebalance: {time_taken}sec")
         return time_taken
 
     def run(self):
@@ -779,7 +779,7 @@ class TimerRebalanceThroughputTest(EventingRebalance):
 
         self.post_rebalance()
         time_taken = round(time_taken, 2)
-        logger.info("Time taken for rebalance: {}sec".format(time_taken))
+        logger.info(f"Time taken for rebalance: {time_taken}sec")
         return time_taken
 
     def wait_for_timer_event(self):

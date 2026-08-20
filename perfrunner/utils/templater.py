@@ -131,9 +131,9 @@ def render_template(t: Template, **kwargs) -> str:
 
 
 def store_cfg(content: str, extension: str, filename: str):
-    filename = '{}'.format(filename).replace('.', '_')
-    logger.info('Creating a new file: {}{}'.format(filename, extension))
-    with open('{}{}'.format(filename, extension), 'w') as f:
+    filename = f"{filename}".replace(".", "_")
+    logger.info(f"Creating a new file: {filename}{extension}")
+    with open(f"{filename}{extension}", "w") as f:
         f.write(content)
 
 

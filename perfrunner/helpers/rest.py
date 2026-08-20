@@ -285,7 +285,7 @@ class DefaultRestHelper(RestBase):
                 logger.warning(f"Skipping unknown option: {option}")
 
     def set_planner_settings(self, host: str, settings: dict):
-        logger.info('Changing host {} to {}'.format(host, settings))
+        logger.info(f"Changing host {host} to {settings}")
         url = self._get_api_url(host=host, path='settings/planner', plain_port=INDEXING_PORT,
                                 ssl_port=INDEXING_PORT_SSL)
         self.post(url=url, data=settings)
@@ -309,24 +309,24 @@ class DefaultRestHelper(RestBase):
                      storage: str = 'memdb', scope: str = '_default',
                      collection: str = '_default'):
         data = {
-            'index': {
-                'bucket': bucket,
-                'scope': scope,
-                'collection': collection,
-                'using': storage,
-                'name': name,
-                'secExprs': ['`{}`'.format(field)],
-                'exprType': 'N1QL',
-                'isPrimary': False,
-                'where': '',
-                'deferred': False,
-                'partitionKey': '',
-                'partitionScheme': 'SINGLE',
+            "index": {
+                "bucket": bucket,
+                "scope": scope,
+                "collection": collection,
+                "using": storage,
+                "name": name,
+                "secExprs": [f"`{field}`"],
+                "exprType": "N1QL",
+                "isPrimary": False,
+                "where": "",
+                "deferred": False,
+                "partitionKey": "",
+                "partitionScheme": "SINGLE",
             },
-            'type': 'create',
-            'version': 1,
+            "type": "create",
+            "version": 1,
         }
-        logger.info('Creating index {}'.format(pretty_dict(data)))
+        logger.info(f"Creating index {pretty_dict(data)}")
         url = self._get_api_url(host=host, path='createIndex', plain_port=INDEXING_PORT,
                                 ssl_port=INDEXING_PORT_SSL)
         self.post(url=url, data=json.dumps(data))
@@ -360,7 +360,7 @@ class DefaultRestHelper(RestBase):
         self.post(url=url, data=data)
 
     def add_node_to_group(self, host: str, new_host: str, services: str = None, group: str = None):
-        logger.info('Adding new node: {} to group {}'.format(new_host, group))
+        logger.info(f"Adding new node: {new_host} to group {group}")
         server_group_info = self.get_server_group_info(host)["groups"]
         for group_info in server_group_info:
             if group_info['name'] == group:
@@ -401,7 +401,7 @@ class DefaultRestHelper(RestBase):
         self.post(url=url, data=data)
 
     def increase_bucket_limit(self, host: str, num_buckets: int):
-        logger.info('increasing bucket limit to {}'.format(num_buckets))
+        logger.info(f"increasing bucket limit to {num_buckets}")
 
         data = {
             'maxBucketCount': num_buckets
@@ -420,7 +420,7 @@ class DefaultRestHelper(RestBase):
         return counters.get("rebalance_start", 0) == counters.get("rebalance_success", 0)
 
     def get_failover_counter(self, host: str) -> int:
-        logger.info('Checking failover counter ({})'.format(host))
+        logger.info(f"Checking failover counter ({host})")
         counters = self.get_counters(host)
         return counters.get('failover_node')
 
@@ -543,8 +543,8 @@ class DefaultRestHelper(RestBase):
         return self.post(url=url, data="")
 
     def delete_bucket(self, host: str, name: str):
-        logger.info('Deleting new bucket: {}'.format(name))
-        self.delete(url=self._get_api_url(host=host, path='pools/default/buckets/{}'.format(name)))
+        logger.info(f"Deleting new bucket: {name}")
+        self.delete(url=self._get_api_url(host=host, path=f"pools/default/buckets/{name}"))
 
     def create_bucket(
         self,
@@ -563,7 +563,7 @@ class DefaultRestHelper(RestBase):
         history_bytes: int = 0,
         max_ttl: int = 0,
     ) -> requests.Response:
-        logger.info('Adding new bucket: {}'.format(name))
+        logger.info(f"Adding new bucket: {name}")
 
         data = {
             'name': name,
@@ -598,19 +598,20 @@ class DefaultRestHelper(RestBase):
         if max_ttl:
             data['maxTTL'] = max_ttl
 
-        logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
+        logger.info(f"Bucket configuration: {pretty_dict(data)}")
 
         url = self._get_api_url(host=host, path='pools/default/buckets')
         self.post(url=url, data=data)
 
     def flush_bucket(self, host: str, bucket: str):
-        logger.info('Flushing bucket: {}'.format(bucket))
-        url = self._get_api_url(host=host,
-                                path='pools/default/buckets/{}/controller/doFlush'.format(bucket))
+        logger.info(f"Flushing bucket: {bucket}")
+        url = self._get_api_url(
+            host=host, path=f"pools/default/buckets/{bucket}/controller/doFlush"
+        )
         self.post(url=url)
 
     def configure_auto_compaction(self, host, settings):
-        logger.info('Applying auto-compaction settings: {}'.format(settings))
+        logger.info(f"Applying auto-compaction settings: {settings}")
         data = {
             'databaseFragmentationThreshold[percentage]': settings.db_percentage,
             'viewFragmentationThreshold[percentage]': settings.view_percentage,
@@ -624,26 +625,32 @@ class DefaultRestHelper(RestBase):
         return self.get(url=self._get_api_url(host=host, path='settings/autoCompaction')).json()
 
     def get_bucket_stats(self, host: str, bucket: str) -> dict:
-        url = self._get_api_url(host=host, path='pools/default/buckets/{}/stats'.format(bucket))
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}/stats")
         return self.get(url=url).json()
 
     def get_scope_and_collection_items(self, host: str, bucket: str, scope: str,
                                        coll: str = None) -> dict:
-        api = 'pools/default/stats/range/kv_collection_item_count?bucket={}&' \
-            'scope={}&start=-1'.format(bucket, scope)
+        api = (
+            f"pools/default/stats/range/kv_collection_item_count?bucket={bucket}&"
+            f"scope={scope}&start=-1"
+        )
         if coll:
-            api += '&collection={}'.format(coll)
+            api += f"&collection={coll}"
 
         return self.get(url=self._get_api_url(host=host, path=api)).json()
 
     def get_dcp_replication_items(self, host: str, bucket: str) -> dict:
-        api = 'pools/default/stats/range/kv_dcp_items_remaining?bucket={}&' \
-            'connection_type=replication&aggregationFunction=sum'.format(bucket)
+        api = (
+            f"pools/default/stats/range/kv_dcp_items_remaining?bucket={bucket}&"
+            "connection_type=replication&aggregationFunction=sum"
+        )
         return self.get(url=self._get_api_url(host=host, path=api)).json()
 
     def get_dcp_replication_items_v2(self, host: str, bucket: str) -> dict:
-        api = 'pools/default/stats/range/kv_dcp_items_remaining?bucket={}' \
-            '&connection_type=replication&nodesAggregation=sum'.format(bucket)
+        api = (
+            f"pools/default/stats/range/kv_dcp_items_remaining?bucket={bucket}"
+            "&connection_type=replication&nodesAggregation=sum"
+        )
         return self.get(url=self._get_api_url(host=host, path=api)).json()
 
     def get_xdcr_stats(self, host: str, bucket: str) -> dict:
@@ -702,7 +709,7 @@ class DefaultRestHelper(RestBase):
                            name: str,
                            secure_type: str,
                            certificate: str):
-        logger.info('Adding a remote cluster: {}'.format(remote_host))
+        logger.info(f"Adding a remote cluster: {remote_host}")
         payload = {
             'name': name,
             'hostname': remote_host,
@@ -726,13 +733,13 @@ class DefaultRestHelper(RestBase):
         return resp.json()
 
     def create_replication(self, host: str, params: dict):
-        logger.info('Starting replication with parameters {}'.format(params))
+        logger.info(f"Starting replication with parameters {params}")
         url = self._get_api_url(host=host, path='controller/createReplication')
         self.post(url=url, data=params)
 
     def edit_replication(self, host: str, params: dict, replicationid: str):
-        logger.info('Editing replication {} with parameters {}'.format(replicationid, params))
-        url = self._get_api_url(host=host, path='settings/replications/{}'.format(replicationid))
+        logger.info(f"Editing replication {replicationid} with parameters {params}")
+        url = self._get_api_url(host=host, path=f"settings/replications/{replicationid}")
         self.post(url=url, data=params)
 
     def delete_replication(self, host: str, replicationid: str):
@@ -741,33 +748,30 @@ class DefaultRestHelper(RestBase):
         self.delete(url=url)
 
     def trigger_bucket_compaction(self, host: str, bucket: str):
-        logger.info('Triggering bucket {} compaction'.format(bucket))
-        url = self._get_api_url(host=host,
-                                path='pools/default/buckets/{}/controller/compactBucket'.format(bucket))
+        logger.info(f"Triggering bucket {bucket} compaction")
+        url = self._get_api_url(
+            host=host, path=f"pools/default/buckets/{bucket}/controller/compactBucket"
+        )
         self.post(url=url)
 
     def trigger_index_compaction(self, host: str, bucket: str, ddoc: str):
-        logger.info('Triggering ddoc {} compaction, bucket {}'.format(ddoc, bucket))
-        api = 'pools/default/buckets/{}/ddocs/_design%2F{}/' \
-            'controller/compactView'.format(bucket, ddoc)
+        logger.info(f"Triggering ddoc {ddoc} compaction, bucket {bucket}")
+        api = f"pools/default/buckets/{bucket}/ddocs/_design%2F{ddoc}/controller/compactView"
         self.post(url=self._get_api_url(host=host, path=api))
 
     def create_ddoc(self, host: str, bucket: str, ddoc_name: str, ddoc: dict):
-        logger.info('Creating new ddoc {}, bucket {}'.format(ddoc_name, bucket))
+        logger.info(f"Creating new ddoc {ddoc_name}, bucket {bucket}")
         data = json.dumps(ddoc)
         headers = {'Content-type': 'application/json'}
-        url = self._get_api_url(host=host,
-                                path='couchBase/{}/_design/{}'.format(bucket, ddoc_name))
+        url = self._get_api_url(host=host, path=f"couchBase/{bucket}/_design/{ddoc_name}")
         self.put(url=url, data=data, headers=headers)
 
     def query_view(self, host: str, bucket: str, ddoc_name: str,
                    view_name: str, params: dict):
-        logger.info('Querying view: {}/_design/{}/_view/{}'.format(
-            bucket, ddoc_name, view_name
-        ))
-        url = self._get_api_url(host=host,
-                                path='couchBase/{}/_design/{}/_view/{}'.format(bucket, ddoc_name,
-                                                                               view_name))
+        logger.info(f"Querying view: {bucket}/_design/{ddoc_name}/_view/{view_name}")
+        url = self._get_api_url(
+            host=host, path=f"couchBase/{bucket}/_design/{ddoc_name}/_view/{view_name}"
+        )
         self.get(url=url, params=params)
 
     def get_version_raw(self, host: str) -> str:
@@ -783,17 +787,17 @@ class DefaultRestHelper(RestBase):
         return r.status_code == requests.codes.ok
 
     def get_memcached_port(self, host: str) -> int:
-        logger.info('Getting memcached port from {}'.format(host))
+        logger.info(f"Getting memcached port from {host}")
         r = self.get(url=self._get_api_url(host=host, path='nodes/self')).json()
         return r['ports']['direct']
 
     def get_otp_node_name(self, host: str) -> str:
-        logger.info('Getting OTP node name from {}'.format(host))
+        logger.info(f"Getting OTP node name from {host}")
         r = self.get(url=self._get_api_url(host=host, path='nodes/self')).json()
         return r['otpNode']
 
     def set_internal_settings(self, host: str, data: dict):
-        logger.info('Updating internal settings: {}'.format(data))
+        logger.info(f"Updating internal settings: {data}")
         url = self._get_api_url(host=host, path='internalSettings')
         self.post(url=url, data=data)
 
@@ -808,7 +812,7 @@ class DefaultRestHelper(RestBase):
         self.post(url=url, data=settings)
 
     def set_xdcr_cluster_settings(self, host: str, data: dict):
-        logger.info('Updating xdcr cluster settings: {}'.format(data))
+        logger.info(f"Updating xdcr cluster settings: {data}")
         url = self._get_api_url(host=host, path='settings/replications')
         self.post(url=url, data=data)
 
@@ -840,7 +844,7 @@ class DefaultRestHelper(RestBase):
 
     def set_auto_failover(self, host: str, enabled: str, failover_timeouts: list[int],
                           disk_failover_timeout: int):
-        logger.info('Setting auto-failover to: {}'.format(enabled))
+        logger.info(f"Setting auto-failover to: {enabled}")
 
         for timeout in failover_timeouts:
             data = {'enabled': enabled,
@@ -864,25 +868,25 @@ class DefaultRestHelper(RestBase):
         return certs
 
     def fail_over(self, host: str, node: str):
-        logger.info('Failing over node: {}'.format(node))
+        logger.info(f"Failing over node: {node}")
         data = {'otpNode': self.get_otp_node_name(node)}
         url = self._get_api_url(host=host, path='controller/failOver')
         self.post(url=url, data=data)
 
     def graceful_fail_over(self, host: str, node: str):
-        logger.info('Gracefully failing over node: {}'.format(node))
+        logger.info(f"Gracefully failing over node: {node}")
         data = {'otpNode': self.get_otp_node_name(node)}
         url = self._get_api_url(host=host, path='controller/startGracefulFailover')
         self.post(url=url, data=data)
 
     def add_back(self, host: str, node: str):
-        logger.info('Adding node back: {}'.format(node))
+        logger.info(f"Adding node back: {node}")
         data = {'otpNode': self.get_otp_node_name(node)}
         url = self._get_api_url(host=host, path='controller/reAddNode')
         self.post(url=url, data=data)
 
     def set_delta_recovery_type(self, host: str, node: str):
-        logger.info('Enabling delta recovery: {}'.format(node))
+        logger.info(f"Enabling delta recovery: {node}")
         data = {
             'otpNode': self.get_otp_node_name(node),
             'recoveryType': 'delta'  # alt: full
@@ -899,7 +903,7 @@ class DefaultRestHelper(RestBase):
         return {node['hostname']: node['status'] for node in data['nodes']}
 
     def get_node_stats(self, host: str, bucket: str) -> Iterator:
-        api = 'pools/default/buckets/{}/nodes'.format(bucket)
+        api = f"pools/default/buckets/{bucket}/nodes"
         data = self.get(url=self._get_api_url(host=host, path=api)).json()
         for server in data['servers']:
             url = self._get_api_url(host=host, path=server['stats']['uri'][1:])
@@ -907,7 +911,7 @@ class DefaultRestHelper(RestBase):
             yield node_data['hostname'], node_data['op']['samples']
 
     def get_vbmap(self, host: str, bucket: str) -> dict:
-        logger.info('Reading vbucket map: {}/{}'.format(host, bucket))
+        logger.info(f"Reading vbucket map: {host}/{bucket}")
         data = self.get_bucket_info(host, bucket)
 
         return data['vBucketServerMap']['vBucketMap']
@@ -919,7 +923,7 @@ class DefaultRestHelper(RestBase):
                 for server in data['vBucketServerMap']['serverList']]
 
     def get_bucket_info(self, host: str, bucket: str) -> dict:
-        url = self._get_api_url(host=host, path='pools/default/buckets/{}'.format(bucket))
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
         return self.get(url=url).json()
 
     def set_bucket_history(self, host: str, bucket: str, history_bytes: int = 0,
@@ -928,14 +932,14 @@ class DefaultRestHelper(RestBase):
             'historyRetentionBytes': history_bytes,
             'historyRetentionSeconds': history_seconds
         }
-        url = self._get_api_url(host=host, path='pools/default/buckets/{}'.format(bucket))
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
         return self.post(url=url, data=data)
 
     def update_bucket_storage_backend(self, host: str, bucket: str, mode: str):
         data = {
             'storageBackend': mode
         }
-        url = self._get_api_url(host=host, path='pools/default/buckets/{}'.format(bucket))
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
         response = self.post(url=url, data=data)
         response.raise_for_status()
 
@@ -974,7 +978,7 @@ class DefaultRestHelper(RestBase):
         return resp_data
 
     def explain_n1ql_statement(self, host: str, statement: str, query_context: str = None):
-        statement = 'EXPLAIN {}'.format(statement)
+        statement = f"EXPLAIN {statement}"
         return self.exec_n1ql_statement(host, statement, query_context)
 
     def get_query_stats(self, host: str) -> dict:
@@ -1009,7 +1013,7 @@ class DefaultRestHelper(RestBase):
         self.post(url=url, data={'queryTmpSpaceSize': size_mib})
 
     def enable_other_encryption(self, host: str, key_id: int = 0):
-        logger.info('Enabling Other Encryption with encryptionKeyId={}'.format(key_id))
+        logger.info(f"Enabling Other Encryption with encryptionKeyId={key_id}")
         url = self._get_api_url(host=host, path='settings/security/encryptionAtRest/other')
         payload = {'encryptionMethod': 'encryptionKey', 'encryptionKeyId': key_id}
         self.post(url=url, data=json.dumps(payload),
@@ -1025,24 +1029,27 @@ class DefaultRestHelper(RestBase):
         return self.get(url=url).json()
 
     def delete_fts_index(self, host: str, index: str):
-        logger.info('Deleting FTS index: {}'.format(index))
-        url = self._get_api_url(host=host, path='api/index/{}'.format(index),
-                                plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
+        logger.info(f"Deleting FTS index: {index}")
+        url = self._get_api_url(
+            host=host, path=f"api/index/{index}", plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL
+        )
         self.delete(url=url)
 
     def create_fts_index(self, host: str, index: str, definition: dict) -> str:
         logger.info(f"Creating a new FTS index: {index}")
         headers = {'Content-Type': 'application/json'}
         data = json.dumps(definition, ensure_ascii=False)
-        url = self._get_api_url(host=host, path='api/index/{}'.format(index),
-                                plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
+        url = self._get_api_url(
+            host=host, path=f"api/index/{index}", plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL
+        )
         response = self.put(url=url, data=data, headers=headers)
         response.raise_for_status()
         return response.json().get('name', index)
 
     def get_fts_doc_count(self, host: str, index: str, bucket: str) -> int:
-        url = self._get_api_url(host=host, path='api/index/{}/count'.format(index),
-                                plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL)
+        url = self._get_api_url(
+            host=host, path=f"api/index/{index}/count", plain_port=FTS_PORT, ssl_port=FTS_PORT_SSL
+        )
         response = self.get(url=url).json()
         return response['count']
 
@@ -1059,13 +1066,13 @@ class DefaultRestHelper(RestBase):
         return response.json()
 
     def delete_elastic_index(self, host: str, index: str):
-        logger.info('Deleting Elasticsearch index: {}'.format(index))
+        logger.info(f"Deleting Elasticsearch index: {index}")
         url = self._get_api_url(host=host, path=index, plain_port=ELASTICSEARCH_REST_PORT,
                                 ssl_port=ELASTICSEARCH_REST_PORT_SSL)
         self.delete(url=url)
 
     def create_elastic_index(self, host: str, index: str, definition: dict):
-        logger.info('Creating a new Elasticsearch index: {}'.format(index))
+        logger.info(f"Creating a new Elasticsearch index: {index}")
         headers = {'Content-Type': 'application/json'}
         data = json.dumps(definition, ensure_ascii=False)
 
@@ -1074,9 +1081,12 @@ class DefaultRestHelper(RestBase):
         self.put(url=url, data=data, headers=headers)
 
     def get_elastic_doc_count(self, host: str, index: str) -> int:
-        url = self._get_api_url(host=host, path='{}/_count'.format(index),
-                                plain_port=ELASTICSEARCH_REST_PORT,
-                                ssl_port=ELASTICSEARCH_REST_PORT_SSL)
+        url = self._get_api_url(
+            host=host,
+            path=f"{index}/_count",
+            plain_port=ELASTICSEARCH_REST_PORT,
+            ssl_port=ELASTICSEARCH_REST_PORT_SSL,
+        )
         response = self.get(url=url).json()
         return response['count']
 
@@ -1131,23 +1141,22 @@ class DefaultRestHelper(RestBase):
         return self.get(url=self._get_api_url(host=host, path='settings/rbac/roles')).json()
 
     def delete_rbac_user(self, host: str, bucket: str):
-        logger.info('Deleting an RBAC user: {}'.format(bucket))
+        logger.info(f"Deleting an RBAC user: {bucket}")
         for domain in 'local', 'builtin':
-            api = 'settings/rbac/users/{}/{}'.format(domain, bucket)
+            api = f"settings/rbac/users/{domain}/{bucket}"
             r = self._delete(url=self._get_api_url(host=host, path=api))
             if r.status_code == 200:
                 break
 
     def add_rbac_user(self, host: str, user: str, password: str, roles: list[str]):
-        logger.info('Adding an RBAC user: {}, roles: {}'.format(user, roles))
+        logger.info(f"Adding an RBAC user: {user}, roles: {roles}")
         data = {
             'password': password,
             'roles': ','.join(roles),
         }
 
         for domain in 'local', 'builtin':
-            url = self._get_api_url(host=host,
-                                    path='settings/rbac/users/{}/{}'.format(domain, user))
+            url = self._get_api_url(host=host, path=f"settings/rbac/users/{domain}/{user}")
             r = self._put(url=url, data=data)
             if r.status_code == 200:
                 break
@@ -1158,7 +1167,7 @@ class DefaultRestHelper(RestBase):
         return self.get(url=url).json()
 
     def analytics_node_active(self, host: str) -> bool:
-        logger.info('Checking if analytics node is active: {}'.format(host))
+        logger.info(f"Checking if analytics node is active: {host}")
         cluster_info = self.get_analytics_cluster_info(host)
         return cluster_info["state"] == "ACTIVE"
 
@@ -1214,8 +1223,7 @@ class DefaultRestHelper(RestBase):
         )
         r = self.post(url=api)
         if r.status_code not in (200, 202,):
-            logger.warning('Unexpected request status code {}'.
-                           format(r.status_code))
+            logger.warning(f"Unexpected request status code {r.status_code}")
 
     def validate_analytics_settings(
         self, analytics_node: str, level: Literal["service", "node"], settings: dict[str, str]
@@ -1266,7 +1274,7 @@ class DefaultRestHelper(RestBase):
 
     def get_analytics_link_info(self, analytics_node: str, link_name: str,
                                 link_scope: str = 'Default') -> dict:
-        path = 'analytics/link/{}/{}'.format(link_scope, link_name)
+        path = f"analytics/link/{link_scope}/{link_name}"
         url = self._get_api_url(host=analytics_node, path=path,
                                 plain_port=ANALYTICS_PORT, ssl_port=ANALYTICS_PORT_SSL)
 
@@ -1380,18 +1388,18 @@ class DefaultRestHelper(RestBase):
         return self.get(url=url).json()
 
     def change_function_settings(self, node: str, func: dict, name: str, func_scope: dict):
-        logger.info('Changing function settings on node {}: {}'.format(node, pretty_dict(func)))
-        logger.info('function scope for {} is {}'.format(name, pretty_dict(func_scope)))
-        api = 'api/v1/functions/{}/settings'.format(name)
+        logger.info(f"Changing function settings on node {node}: {pretty_dict(func)}")
+        logger.info(f"function scope for {name} is {pretty_dict(func_scope)}")
+        api = f"api/v1/functions/{name}/settings"
         if func_scope:
             api += '?bucket={}&scope={}'.format(func_scope['bucket'], func_scope['scope'])
-        logger.info("API path {}".format(api))
+        logger.info(f"API path {api}")
         url = self._get_api_url(host=node, path=api, plain_port=EVENTING_PORT,
                                 ssl_port=EVENTING_PORT_SSL)
         self.post(url=url, data=func)
 
     def get_num_events_processed(self, event: str, node: str, name: str):
-        logger.info('get stats on node {} for {}'.format(node, name))
+        logger.info(f"get stats on node {node} for {name}")
 
         data = {}
         all_stats = self.get_eventing_stats(node=node)
@@ -1423,7 +1431,7 @@ class DefaultRestHelper(RestBase):
         return self.get(url=url).json()
 
     def get_eventing_stats(self, node: str, full_stats: bool = False) -> dict:
-        logger.info('get eventing stats on node {}'.format(node))
+        logger.info(f"get eventing stats on node {node}")
         api = 'api/v1/stats'
         if full_stats:
             api += "?type=full"
@@ -1441,7 +1449,7 @@ class DefaultRestHelper(RestBase):
 
         for node in self.cluster_spec.servers_by_role(role):
             lookup = ip_map[node] if use_private_ips else node
-            lookup = lookup + ':{}'.format(REST_PORT)
+            lookup = lookup + f":{REST_PORT}"
             if lookup in active_nodes:
                 active_nodes_by_role.append(node)
         return active_nodes_by_role
@@ -1456,7 +1464,7 @@ class DefaultRestHelper(RestBase):
         self.put(url=api, data=data, headers=headers)
 
     def upload_cluster_certificate(self, node: str):
-        logger.info("Uploading cluster certificate to {}".format(node))
+        logger.info(f"Uploading cluster certificate to {node}")
         data = open(SSLCertificate.CA_CERT_PATH, 'rb').read()
         url = self._get_api_url(host=node, path='controller/uploadClusterCA')
         self.post(url=url, data=data)
@@ -1589,40 +1597,39 @@ class DefaultRestHelper(RestBase):
                 self.post(url=api, data=data)
 
     def create_scope(self, host, bucket, scope):
-        logger.info("Creating scope {}:{}".format(bucket, scope))
+        logger.info(f"Creating scope {bucket}:{scope}")
         data = {
             'name': scope
         }
-        url = self._get_api_url(host=host, path='pools/default/buckets/{}/scopes'.format(bucket))
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}/scopes")
         self.post(url=url, data=data)
 
     def delete_scope(self, host, bucket, scope):
-        logger.info("Deleting scope {}:{}".format(bucket, scope))
-        path = 'pools/default/buckets/{}/scopes/{}'.format(bucket, scope)
+        logger.info(f"Deleting scope {bucket}:{scope}")
+        path = f"pools/default/buckets/{bucket}/scopes/{scope}"
         self.delete(url=self._get_api_url(host=host, path=path))
 
     def create_collection(self, host: str, bucket: str, scope: str, collection: str,
                           history: Optional[bool] = None) -> requests.Response:
-        logger.info("Creating collection {}:{}.{} (history={})"
-                    .format(bucket, scope, collection, history))
+        logger.info(f"Creating collection {bucket}:{scope}.{collection} (history={history})")
         data = {
             'name': collection,
         }
         if history is not None:
             data['history'] = str(history).lower()
 
-        path = 'pools/default/buckets/{}/scopes/{}/collections'.format(bucket, scope)
+        path = f"pools/default/buckets/{bucket}/scopes/{scope}/collections"
         url = self._get_api_url(host=host, path=path)
         self.post(url=url, data=data)
 
     def delete_collection(self, host, bucket, scope, collection):
-        logger.info("Dropping collection {}:{}.{}".format(bucket, scope, collection))
-        api = 'pools/default/buckets/{}/scopes/{}/collections/{}'.format(bucket, scope, collection)
+        logger.info(f"Dropping collection {bucket}:{scope}.{collection}")
+        api = f"pools/default/buckets/{bucket}/scopes/{scope}/collections/{collection}"
         self.delete(url=self._get_api_url(host=host, path=api))
 
     def set_collection_map(self, host, bucket, collection_map):
-        logger.info("Setting collection map on {} via bulk api".format(bucket))
-        url = self._get_api_url(host=host, path='pools/default/buckets/{}/scopes'.format(bucket))
+        logger.info(f"Setting collection map on {bucket} via bulk api")
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}/scopes")
         self.put(url=url, data=json.dumps(collection_map))
 
     def create_server_group(self, host: str, server_group: str) -> requests.Response:
@@ -1736,7 +1743,7 @@ class DefaultRestHelper(RestBase):
         return stats
 
     def get_sgversion(self, host: str) -> str:
-        logger.info('Getting SG Server version on server: {}'.format(host))
+        logger.info(f"Getting SG Server version on server: {host}")
         url = self._get_api_url(host=host, path='', plain_port=SGW_ADMIN_PORT,
                                 ssl_port=SGW_ADMIN_PORT)
         r = self.get(url=url).json()
@@ -1746,7 +1753,7 @@ class DefaultRestHelper(RestBase):
 
     def get_sg_stats(self, host: str) -> dict:
         if self.cluster_spec.capella_infrastructure:
-            url = 'https://{}:{}/metrics'.format(host, SGW_APPSERVICE_METRICS_PORT)
+            url = f"https://{host}:{SGW_APPSERVICE_METRICS_PORT}/metrics"
         else:
             url = self._get_api_url(host=host, path='_expvar', plain_port=SGW_ADMIN_PORT,
                                     ssl_port=SGW_ADMIN_PORT)
@@ -1756,17 +1763,17 @@ class DefaultRestHelper(RestBase):
         return response.json()
 
     def start_sg_replication(self, host, payload):
-        logger.info('Start sg replication. Payload: {}'.format(payload))
+        logger.info(f"Start sg replication. Payload: {payload}")
         url = self._get_api_url(host=host, path='_replicate', plain_port=SGW_ADMIN_PORT,
                                 ssl_port=SGW_ADMIN_PORT)
-        logger.info('api: {}'.format(url))
+        logger.info(f"api: {url}")
         self.post(url=url, data=json.dumps(payload))
 
     def start_sg_replication2(self, host, payload):
-        logger.info('Start sg replication. Payload: {}'.format(payload))
+        logger.info(f"Start sg replication. Payload: {payload}")
         url = self._get_api_url(host=host, path='db-1/_replication/', plain_port=SGW_ADMIN_PORT,
                                 ssl_port=SGW_ADMIN_PORT)
-        logger.info('api: {}'.format(url))
+        logger.info(f"api: {url}")
         self.post(url=url, data=json.dumps(payload))
 
     def get_sgreplicate_stats(self, host: str, version: int) -> dict:
@@ -1782,13 +1789,13 @@ class DefaultRestHelper(RestBase):
     def get_expvar_stats(self, host: str) -> dict:
         try:
             if self.cluster_spec.capella_infrastructure:
-                url = 'https://{}:{}/metrics'.format(host, SGW_APPSERVICE_METRICS_PORT)
+                url = f"https://{host}:{SGW_APPSERVICE_METRICS_PORT}/metrics"
             else:
                 url = self._get_api_url(host=host, path='_expvar', plain_port=SGW_ADMIN_PORT,
                                         ssl_port=SGW_ADMIN_PORT)
             response = self.get(url=url)
         except Exception as ex:
-            logger.info("Expvar request failed: {}".format(ex))
+            logger.info(f"Expvar request failed: {ex}")
             raise ex
         if self.cluster_spec.capella_infrastructure:
             return response
@@ -1804,33 +1811,33 @@ class DefaultRestHelper(RestBase):
             user="guest",
             password="guest",
             collections=None):
-        api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        api = f"http://{cblite_host}:{cblite_port}/_replicate"
         if self.use_tls:
             ws_prefix = "wss://"
         else:
             ws_prefix = "ws://"
         if user and password:
             data = {
-                "source": "{}".format(cblite_db),
-                "target": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
+                "source": f"{cblite_db}",
+                "target": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
                 "continuous": 1,
                 "user": user,
                 "password": password,
-                "bidi": 0
+                "bidi": 0,
             }
         else:
             data = {
-                "source": "{}".format(cblite_db),
-                "target": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
+                "source": f"{cblite_db}",
+                "target": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
                 "continuous": 1,
-                "bidi": 0
+                "bidi": 0,
             }
         if collections:
             data['collections'] = collections
 
-        logger.info("The sgw host is: {}".format(sgw_host))
-        logger.info("The url is: {}".format(api))
-        logger.info("The json data is: {}".format(data))
+        logger.info(f"The sgw host is: {sgw_host}")
+        logger.info(f"The url is: {api}")
+        logger.info(f"The json data is: {data}")
         self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
         logger.info("Successfully posted")
 
@@ -1844,33 +1851,33 @@ class DefaultRestHelper(RestBase):
             user="guest",
             password="guest",
             collections=None):
-        api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        api = f"http://{cblite_host}:{cblite_port}/_replicate"
         if self.use_tls:
             ws_prefix = "wss://"
         else:
             ws_prefix = "ws://"
         if user and password:
             data = {
-                "source": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
-                "target": "{}".format(cblite_db),
+                "source": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
+                "target": f"{cblite_db}",
                 "continuous": 1,
                 "user": user,
                 "password": password,
-                "bidi": 0
+                "bidi": 0,
             }
         else:
             data = {
-                "source": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
-                "target": "{}".format(cblite_db),
+                "source": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
+                "target": f"{cblite_db}",
                 "continuous": 1,
-                "bidi": 0
+                "bidi": 0,
             }
         if collections:
             data['collections'] = collections
 
-        logger.info("The sgw host is: {}".format(sgw_host))
-        logger.info("The url is: {}".format(api))
-        logger.info("The json data is: {}".format(data))
+        logger.info(f"The sgw host is: {sgw_host}")
+        logger.info(f"The url is: {api}")
+        logger.info(f"The json data is: {data}")
         self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
         logger.info("Successfully posted")
 
@@ -1884,38 +1891,38 @@ class DefaultRestHelper(RestBase):
             user="guest",
             password="guest",
             collections=None):
-        api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        api = f"http://{cblite_host}:{cblite_port}/_replicate"
         if self.use_tls:
             ws_prefix = "wss://"
         else:
             ws_prefix = "ws://"
         if user and password:
             data = {
-                "source": "{}".format(cblite_db),
-                "target": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
+                "source": f"{cblite_db}",
+                "target": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
                 "continuous": 1,
                 "user": user,
                 "password": password,
-                "bidi": 1
+                "bidi": 1,
             }
         else:
             data = {
-                "source": "{}".format(cblite_db),
-                "target": "{}{}:{}/db-1".format(ws_prefix, sgw_host, sgw_port),
+                "source": f"{cblite_db}",
+                "target": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
                 "continuous": 1,
-                "bidi": 1
+                "bidi": 1,
             }
         if collections:
             data['collections'] = collections
 
-        logger.info("The sgw host is: {}".format(sgw_host))
-        logger.info("The url is: {}".format(api))
-        logger.info("The json data is: {}".format(data))
+        logger.info(f"The sgw host is: {sgw_host}")
+        logger.info(f"The url is: {api}")
+        logger.info(f"The json data is: {data}")
         self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
         logger.info("Successfully posted the current sgw")
 
     def get_cblite_info(self, cblite_host, cblite_port, cblite_db):
-        api = 'http://{}:{}/{}'.format(cblite_host, cblite_port, cblite_db)
+        api = f"http://{cblite_host}:{cblite_port}/{cblite_db}"
         return self.cblite_get(url=api).json()
 
     def sgw_create_db(self, db_name: str, db_config: dict, host: str):
@@ -2091,8 +2098,9 @@ class DefaultRestHelper(RestBase):
                              keys_count: int = 1) -> list[str]:
         """Get a list of random key(s) local to the vBuckets in this node."""
         keys = []
-        path = 'pools/default/buckets/{}/scopes/{}/collections/' \
-            '{}/localRandomKey'.format(bucket,scope, collection)
+        path = (
+            f"pools/default/buckets/{bucket}/scopes/{scope}/collections/{collection}/localRandomKey"
+        )
         url = self._get_api_url(host=host,path=path)
         for _ in range(0, keys_count):
             resp = self.get(url=url)
@@ -2325,7 +2333,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     ):
         cluster_id = self.hostname_to_cluster_id(host)
 
-        logger.info('Adding new bucket on cluster {}: {}'.format(cluster_id, name))
+        logger.info(f"Adding new bucket on cluster {cluster_id}: {name}")
         if bucket_type not in ("couchbase", "ephemeral"):
             bucket_type = "couchbase"
 
@@ -2350,7 +2358,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         if supports_vbuckets_update and backend_storage == "magma":
             data['numVBuckets'] = num_vbuckets
 
-        logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
+        logger.info(f"Bucket configuration: {pretty_dict(data)}")
 
         resp = self.dedicated_client.create_bucket(
             self.tenant_id, self.project_id, cluster_id, data
@@ -2390,7 +2398,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def flush_bucket(self, host: str, bucket: str):
         cluster_id = self.hostname_to_cluster_id(host)
         bucket_id = base64.urlsafe_b64encode(bucket.encode()).decode()
-        logger.info('Flushing bucket on cluster {}: {}'.format(cluster_id, bucket_id))
+        logger.info(f"Flushing bucket on cluster {cluster_id}: {bucket_id}")
         resp = self.dedicated_client.flush_bucket(
             self.tenant_id, self.project_id, cluster_id, bucket_id)
         return resp
@@ -2398,7 +2406,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     @retry
     def delete_bucket(self, host: str, bucket: str):
         cluster_id = self.hostname_to_cluster_id(host)
-        logger.info('Deleting bucket on cluster {}: {}'.format(cluster_id, bucket))
+        logger.info(f"Deleting bucket on cluster {cluster_id}: {bucket}")
         resp = self.dedicated_client.delete_bucket(
             self.tenant_id, self.project_id, cluster_id, bucket)
         return resp
@@ -2406,14 +2414,16 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     @retry
     def update_cluster_configuration(self, host: str, new_cluster_config: dict):
         cluster_id = self.hostname_to_cluster_id(host)
-        logger.info('Updating cluster config for cluster {}. New config: {}'
-                    .format(cluster_id, pretty_dict(new_cluster_config)))
+        logger.info(
+            f"Updating cluster config for cluster {cluster_id}. "
+            f"New config: {pretty_dict(new_cluster_config)}"
+        )
         resp = self.dedicated_client.update_specs(self.tenant_id, self.project_id, cluster_id,
                                                   new_cluster_config)
         return resp
 
     def create_replication(self, host: str, params: dict):
-        logger.info('Creating XDCR replication with parameters: {}'.format(pretty_dict(params)))
+        logger.info(f"Creating XDCR replication with parameters: {pretty_dict(params)}")
         cluster_id = self.hostname_to_cluster_id(host)
         resp = self.dedicated_client.create_xdcr_replication(self.tenant_id, self.project_id,
                                                              cluster_id, params)
@@ -2435,9 +2445,9 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             for hostname, services in services_per_node.items():
                 services_string = ','.join(SERVICES_CAPELLA_TO_PERFRUNNER[svc] for svc in services)
                 if 'kv' in services_string:
-                    kv_nodes.append("{}:{}".format(hostname, services_string))
+                    kv_nodes.append(f"{hostname}:{services_string}")
                 else:
-                    non_kv_nodes.append("{}:{}".format(hostname, services_string))
+                    non_kv_nodes.append(f"{hostname}:{services_string}")
 
             cluster_name = self.cluster_spec.config.options('clusters')[i]
             cluster_nodes[cluster_name] = kv_nodes + non_kv_nodes
@@ -2509,7 +2519,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                 if resp.status_code == 204:
                     continue
                 else:
-                    logger.info('Restore trigger failed, error code: {}'.format(resp.status_code))
+                    logger.info(f"Restore trigger failed, error code: {resp.status_code}")
 
     def wait_for_restore(self, host: str, bucket):
         cluster_id = self.hostname_to_cluster_id(host)
@@ -2556,7 +2566,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         )
 
     def get_sgversion(self, host: str) -> str:
-        logger.info('Getting SG Server version on server: {}'.format(host))
+        logger.info(f"Getting SG Server version on server: {host}")
         cluster_id = self.cluster_ids[0]
         sgw_cluster_id = \
             self.cluster_spec.infrastructure_settings['app_services_cluster']
@@ -2572,7 +2582,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
         return build
 
     def create_or_override_log_streaming_config(self, config: dict):
-        logger.info("Creating log streaming: {}".format(config))
+        logger.info(f"Creating log streaming: {config}")
         cluster_id = self.cluster_ids[0]
         sgw_cluster_id = \
             self.cluster_spec.infrastructure_settings['app_services_cluster']

@@ -32,7 +32,7 @@ class RemoteWindows(Remote):
 
     @staticmethod
     def exists(fname):
-        r = run('test -f "{}"'.format(fname), warn_only=True, quiet=True)
+        r = run(f'test -f "{fname}"', warn_only=True, quiet=True)
         return not r.return_code
 
     def reset_swap(self):
@@ -59,7 +59,7 @@ class RemoteWindows(Remote):
 
         run('rm -f *.zip')
 
-        fname = '{}.zip'.format(uhex())
+        fname = f"{uhex()}.zip"
         params = [fname]
         if task_regexp is not None:
             task_regexp = quote(task_regexp)
@@ -68,15 +68,15 @@ class RemoteWindows(Remote):
         r = run(f'{self.CB_DIR}/bin/cbcollect_info.exe {param_string}',
                 warn_only=True, timeout=timeout)
         if not r.return_code:
-            get('{}'.format(fname))
-            run('rm -f {}'.format(fname))
+            get(f"{fname}")
+            run(f"rm -f {fname}")
 
     @all_servers
     def clean_data(self):
         for path in self.cluster_spec.paths:
             path = path.replace(':', '').replace('\\', '/')
-            path = '/cygdrive/{}'.format(path)
-            run('rm -fr {}/*'.format(path))
+            path = f"/cygdrive/{path}"
+            run(f"rm -fr {path}/*")
 
     @all_servers
     def kill_processes(self):
@@ -129,13 +129,12 @@ class RemoteWindows(Remote):
         t0 = time.time()
         while self.exists(self.VERSION_FILE) and \
                 time.time() - t0 < self.TIMEOUT:
-            logger.info('Waiting for all files to be removed on {}'
-                        .format(local_ip))
+            logger.info(f"Waiting for all files to be removed on {local_ip}")
             time.sleep(5)
 
     def clean_installation(self):
         with settings(warn_only=True):
-            run('rm -fr {}'.format(self.CB_DIR))
+            run(f"rm -fr {self.CB_DIR}")
 
     @all_servers
     def uninstall_couchbase(self):
@@ -149,25 +148,23 @@ class RemoteWindows(Remote):
                 self.uninstall_exe(local_ip)
             self.monitor_remaining_files(local_ip)
         else:
-            logger.info('Package not present on {}'.format(local_ip))
+            logger.info(f"Package not present on {local_ip}")
 
-        logger.info('Removing files on {}'.format(local_ip))
+        logger.info(f"Removing files on {local_ip}")
         self.clean_installation()
 
     @all_servers
     def upload_iss_files(self, release: str):
         if release > "5.0":
-            logger.info('Copying ISS files skipped for release {}'.format(release))
+            logger.info(f"Copying ISS files skipped for release {release}")
             return
-        logger.info('Copying {} ISS files'.format(release))
-        put('iss/install_{}.iss'.format(release),
-            '/cygdrive/c/install.iss')
-        put('iss/uninstall_{}.iss'.format(release),
-            '/cygdrive/c/uninstall.iss')
+        logger.info(f"Copying {release} ISS files")
+        put(f"iss/install_{release}.iss", "/cygdrive/c/install.iss")
+        put(f"iss/uninstall_{release}.iss", "/cygdrive/c/uninstall.iss")
 
     def download_package(self, url: str, ext: str):
         run('rm -fr setup.*')
-        self.wget(url, outfile='setup.{}'.format(ext))
+        self.wget(url, outfile=f"setup.{ext}")
 
     def install_exe(self):
         run('chmod +x setup.exe', quiet=True)
@@ -178,7 +175,7 @@ class RemoteWindows(Remote):
 
     def monitor_new_files(self, local_ip: str):
         while not self.exists(self.VERSION_FILE):
-            logger.info('Checking files on {}'.format(local_ip))
+            logger.info(f"Checking files on {local_ip}")
             time.sleep(5)
 
     @all_servers
@@ -197,7 +194,7 @@ class RemoteWindows(Remote):
 
         self.monitor_new_files(local_ip)
 
-        logger.info('Sleeping for {} seconds'.format(self.SLEEP_TIME))
+        logger.info(f"Sleeping for {self.SLEEP_TIME} seconds")
         time.sleep(self.SLEEP_TIME)
 
     def restart(self):
@@ -245,8 +242,10 @@ class RemoteWindows(Remote):
     def start_system_state_recovery(self, host, version):
         # Performs a system state recovery to a specified version
         with settings(show('output'), host_string=host):
-            run('wbadmin start systemstaterecovery -version:{} -autoReboot -quiet'
-                .format(version), warn_only=True)
+            run(
+                f"wbadmin start systemstaterecovery -version:{version} -autoReboot -quiet",
+                warn_only=True,
+            )
 
     def enable_secrets(self, *args, **kwargs):
         pass

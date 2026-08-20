@@ -46,9 +46,7 @@ class JTSCollector(CouchbaseCollector):
         pass
 
     def custom_bucket_list(self):
-        return [
-                'bucket-{}'.format(i + 1) for i in range(int(self.settings.custom_num_buckets))
-            ]
+        return [f"bucket-{i + 1}" for i in range(int(self.settings.custom_num_buckets))]
 
     def read_stats(self):
         self._consolidate_results("aggregated_throughput.log", "throughput")

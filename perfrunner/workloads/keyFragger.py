@@ -196,8 +196,10 @@ class KeyFragger:
             self.workers.append(t)
 
     def run(self):
-        logger.info('Starting KeyFragger: {} items, {} workers'.format(
-            self.batches * self.batch_size, self.num_workers))
+        logger.info(
+            f"Starting KeyFragger: {self.batches * self.batch_size} items, "
+            f"{self.num_workers} workers"
+        )
 
         for t in self.workers:
             t.start()
@@ -205,8 +207,7 @@ class KeyFragger:
             t.join()
 
         if self.sleep_when_done:
-            logger.info('Sleeping for {}s to allow capture of'
-                        ' defragmentation'.format(self.sleep_when_done))
+            logger.info(f"Sleeping for {self.sleep_when_done}s to allow capture of defragmentation")
             time.sleep(self.sleep_when_done)
 
 
@@ -286,8 +287,7 @@ class Worker(multiprocessing.Process):
                 success = True
             except (TimeoutError,
                     TemporaryFailError) as e:
-                logger.debug('Worker-{0}: Sleeping for {1}s due to {2}'.format(
-                    self.start, backoff, e))
+                logger.debug(f"Worker-{self.start}: Sleeping for {backoff}s due to {e}")
                 time.sleep(backoff)
                 backoff *= 2
 
@@ -306,8 +306,7 @@ class Worker(multiprocessing.Process):
                 success = True
             except (TimeoutError,
                     TemporaryFailError) as e:
-                logger.debug('Worker-{0}: Sleeping for {1}s due to {2}'.format(
-                    self.start, backoff, e))
+                logger.debug(f"Worker-{self.start}: Sleeping for {backoff}s due to {e}")
                 time.sleep(backoff)
                 backoff *= 2
 
@@ -385,18 +384,13 @@ class Supervisor(Worker):
             finished_items = \
                 [(i, s) for (i, s) in finished_items if s == self.max_size]
 
-            logger.info(
-                'Completed iteration {}/{}'.format(iteration + 1,
-                                                   self.num_iterations))
+            logger.info(f"Completed iteration {iteration + 1}/{self.num_iterations}")
             frozen = (self.batches - len(finished_items)) * self.batch_size
-            logger.info(
-                'Frozen {}/{} documents'
-                ' (aggregate)'.format(frozen,
-                                      self.batches * self.batch_size))
+            logger.info(f"Frozen {frozen}/{self.batches * self.batch_size} documents (aggregate)")
 
             # Sleep to give the disk write queue a chance to drain.
             if iteration < self.num_iterations - 1:
-                logger.info('Sleeping for {}s'.format(self.sleep_time))
+                logger.info(f"Sleeping for {self.sleep_time}s")
                 time.sleep(self.sleep_time)
 
         # All iterations complete. Send a special null generator

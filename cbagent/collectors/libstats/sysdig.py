@@ -11,10 +11,8 @@ class SysdigStat(RemoteStats):
     SYSTEM_CALLS = 'pread', 'pwrite'
 
     def get_call_rate(self, process: str, syscall: str) -> float:
-        evt_filter = 'proc.pid=`pgrep {}` and evt.type={} and evt.dir=>'\
-            .format(process, syscall)
-        cmd = 'sysdig -M{} -p "%evt.num" "{}" | wc -l'.format(
-            self.SAMPLING_INTERVAL, evt_filter)
+        evt_filter = f"proc.pid=`pgrep {process}` and evt.type={syscall} and evt.dir=>"
+        cmd = f'sysdig -M{self.SAMPLING_INTERVAL} -p "%evt.num" "{evt_filter}" | wc -l'
 
         try:
             stdout = self.run(cmd, timeout=5, quiet=True)
@@ -29,6 +27,6 @@ class SysdigStat(RemoteStats):
         samples = {}
         for process in processes:
             for syscall in self.SYSTEM_CALLS:
-                key = "{}_{}".format(process, syscall)
+                key = f"{process}_{syscall}"
                 samples[key] = self.get_call_rate(process, syscall)
         return samples

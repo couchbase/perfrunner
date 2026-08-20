@@ -29,8 +29,7 @@ class CBStatsMemory(CouchbaseCollector):
             stdout, returncode = run_cbstats("memory", server, self.CB_STATS_PORT, uname, pwd,
                                              bucket)
             if returncode != 0:
-                logger.warning("CBStatsMemory failed to get memory stats from server: {}"
-                               .format(server))
+                logger.warning(f"CBStatsMemory failed to get memory stats from server: {server}")
                 return stats
 
             data = json.loads(stdout)
@@ -106,7 +105,7 @@ class CBStatsAll(CouchbaseCollector):
             uname, pwd = self.auth
             stdout, returncode = run_cbstats("all", server, self.CB_STATS_PORT, uname, pwd, bucket)
             if returncode != 0:
-                logger.warning("CBStatsAll failed to get stats from server: {}".format(server))
+                logger.warning(f"CBStatsAll failed to get stats from server: {server}")
                 return stats
 
             data = json.loads(stdout)

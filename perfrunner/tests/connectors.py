@@ -20,12 +20,12 @@ class AnalyticsConnectorTest(CH2Test):
     def create_analytics_collections(self):
         logger.info('Creating analytics collections.')
         for coll in self.ANALYTICS_COLLECTIONS:
-            statement = 'ALTER COLLECTION bench.ch2.{} ENABLE ANALYTICS;'.format(coll)
-            logger.info('Running: {}'.format(statement))
+            statement = f"ALTER COLLECTION bench.ch2.{coll} ENABLE ANALYTICS;"
+            logger.info(f"Running: {statement}")
             self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     def create_tabular_views(self):
-        with open('{}/tabular_views.n1ql'.format(self.extra_config_path)) as f:
+        with open(f"{self.extra_config_path}/tabular_views.n1ql") as f:
             statements = f.read()
 
         logger.info('Creating tabular views')
@@ -43,11 +43,10 @@ class AnalyticsConnectorTest(CH2Test):
             )
 
     def _exec_analytics_statement(self, statement: str, outfile: str):
-        api = 'http://{}:8095/analytics/service'.format(self.analytics_node)
+        api = f"http://{self.analytics_node}:8095/analytics/service"
         data = {'statement': statement}
 
-        logger.info('Executing analytics statement and saving result to file:\n\t{}'
-                    .format(statement))
+        logger.info(f"Executing analytics statement and saving result to file:\n\t{statement}")
 
         with self.rest.post(url=api, data=data, stream=True) as r:
             with open(outfile, 'wb') as f:

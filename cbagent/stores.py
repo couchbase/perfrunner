@@ -12,7 +12,7 @@ class PerfStore:
     def __init__(self, host: str):
         self.session = Session()
         self.async_session = None
-        self.base_url = 'http://{}:8080'.format(host)
+        self.base_url = f"http://{host}:8080"
         self.dbs = set()
 
     @staticmethod
@@ -27,9 +27,9 @@ class PerfStore:
         return db_name
 
     def push(self, db: str, data: dict, timestamp: str):
-        url = '{}/{}'.format(self.base_url, db)
+        url = f"{self.base_url}/{db}"
         if timestamp is not None:
-            url = '{}?ts={}'.format(url, timestamp)
+            url = f"{url}?ts={timestamp}"
         self.session.post(url=url, data=json.dumps(data))
 
     async def async_push(self, db: str, data: dict, timestamp: str):
@@ -74,11 +74,11 @@ class PerfStore:
         )
 
     def get_summary(self, db: str, metric: str) -> Dict[str, float]:
-        url = '{}/{}/{}/summary'.format(self.base_url, db, metric)
+        url = f"{self.base_url}/{db}/{metric}/summary"
         return self.session.get(url).json()
 
     def exists(self, db: str, metric: str) -> bool:
-        url = '{}/{}/{}'.format(self.base_url, db, metric)
+        url = f"{self.base_url}/{db}/{metric}"
         response = self.session.get(url)
         return response.status_code == 200
 
@@ -86,7 +86,7 @@ class PerfStore:
         urls = []
         for name in self.session.get(self.base_url).json():
             if db in name:
-                url = '{}/{}'.format(self.base_url, name)
+                url = f"{self.base_url}/{name}"
                 urls.append(url)
         return urls
 

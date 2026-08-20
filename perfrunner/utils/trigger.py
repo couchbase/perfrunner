@@ -38,7 +38,7 @@ def read_latest(release: str) -> int:
 
 
 def store_latest(release: str, build: int):
-    logger.info('Storing build {}'.format(build))
+    logger.info(f"Storing build {build}")
 
     checkpoint = os.path.join(CHECKPOINT_DIR, release)
     with open(checkpoint, 'w') as f:
@@ -46,17 +46,15 @@ def store_latest(release: str, build: int):
 
 
 def build_exists(release: str, build: str) -> bool:
-    url = '{}/{release}/{build}/'.format(BASE_URL, release=release, build=build)
+    url = f"{BASE_URL}/{release}/{build}/"
 
     r = requests.head(url)
     return r.status_code == 200
 
 
 def deb_package_exists(release: str, build: str, semver: str) -> bool:
-    package = 'couchbase-server-enterprise_{semver}-{build}-linux_amd64.deb'\
-        .format(semver=semver, build=build)
-    url = '{}/{release}/{build}/{package}'.format(
-        BASE_URL, release=release, build=build, package=package)
+    package = f"couchbase-server-enterprise_{semver}-{build}-linux_amd64.deb"
+    url = f"{BASE_URL}/{release}/{build}/{package}"
 
     r = requests.head(url)
     return r.status_code == 200
@@ -82,7 +80,7 @@ def main():
     while missing < MAX_MISSING:
         build += 1
 
-        logger.info('Checking build {}'.format(build))
+        logger.info(f"Checking build {build}")
 
         if not build_exists(args.release, str(build)):
             missing += 1

@@ -32,7 +32,7 @@ class EndToEndLatencyTest(N1QLThroughputTest):
             elif statement.split()[0].upper() == 'BUILD':
                 build_statements.append(statement)
             else:
-                logger.info("Something is wrong with {}".format(statement))
+                logger.info(f"Something is wrong with {statement}")
 
         for statement in create_statements:
             logger.info('Creating index: ' + statement)
@@ -142,7 +142,7 @@ class EndToEndLatencyTest(N1QLThroughputTest):
 
         if n1ql:
             index_build_time = self.create_indexes_with_stats()
-            logger.info("index build completed in {} sec".format(index_build_time))
+            logger.info(f"index build completed in {index_build_time} sec")
             index_meta = {"time": index_build_time, "type": "initial", "unit": "min"}
             self.report_index_kpi(index_meta)
             self.store_plans()
@@ -225,7 +225,7 @@ class EndToEndRebalanceLatencyTest(EndToEndLatencyTest, CapellaRebalanceTest):
 
         if n1ql:
             build_time = self.create_indexes_with_stats()
-            logger.info("index build completed in {} sec".format(build_time))
+            logger.info(f"index build completed in {build_time} sec")
             index_meta = {"time": build_time, "type": "initial", "unit": "min"}
             self.report_index_kpi(index_meta)
             self.store_plans()
@@ -254,7 +254,7 @@ class EndToEndRebalanceThroughputTest(EndToEndThroughputTest, EndToEndRebalanceL
 
         if n1ql:
             build_time = self.create_indexes_with_stats()
-            logger.info("index build completed in {} sec".format(build_time))
+            logger.info(f"index build completed in {build_time} sec")
             index_meta = {"time": build_time, "type": "initial", "unit": "min"}
             self.report_index_kpi(index_meta)
             self.store_plans()
@@ -288,7 +288,7 @@ class EndToEndLatencyWithXDCRTest(EndToEndLatencyTest, CapellaXdcrTest):
         logger.info('Waiting for index build on primary cluster')
         self.wait_for_indexing(index_nodes=index_nodes_per_cluster[0])
         index_build_time = time.time() - t0
-        logger.info("Index build completed in {} sec".format(index_build_time))
+        logger.info(f"Index build completed in {index_build_time} sec")
 
         # Wait for index build to complete on remaining clusters
         logger.info('Waiting for index build to complete on remaining clusters')
@@ -512,7 +512,7 @@ class EndToEndFTSLatencyTest(EndToEndLatencyTest, FTSLatencyLoadTest):
         self.download_jts()
         self.wait_for_index_persistence()
         build_time = self.create_indexes_with_stats()
-        logger.info("index build completed in {} sec".format(build_time))
+        logger.info(f"index build completed in {build_time} sec")
         index_meta = {"time": build_time, "type": "initial", "unit": "min"}
         self._report_kpi(index_meta)
         self.enable_stats()
@@ -546,7 +546,7 @@ class EndToEndRebalanceLatencyTestWithStatementsOnly(EndToEndRebalanceLatencyTes
 
         if n1ql:
             build_time = self.create_indexes_with_stats()
-            logger.info("index build completed in {} sec".format(build_time))
+            logger.info(f"index build completed in {build_time} sec")
             index_meta = {"time": build_time, "type": "initial", "unit": "min"}
             self.report_index_kpi(index_meta)
 

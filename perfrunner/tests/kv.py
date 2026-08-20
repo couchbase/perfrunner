@@ -378,7 +378,7 @@ class FragmentationTest(PerfTest):
 
         ratio = 100 * (1 - sum(ratios) / len(ratios))
         ratio = round(ratio, 1)
-        logger.info('Fragmentation: {}'.format(ratio))
+        logger.info(f"Fragmentation: {ratio}")
         return ratio
 
     def _report_kpi(self):
@@ -559,7 +559,7 @@ class PillowFightTest(PerfTest):
                                  task_regexp=self.test_config.access_settings.cbcollect_regexp)
         end_time = time.time()
         self.cb_time = round(end_time - start_time)
-        logger.info("cbcollect_info finished and it took: {} seconds".format(self.cb_time))
+        logger.info(f"cbcollect_info finished and it took: {self.cb_time} seconds")
         self.worker_manager.wait_for_bg_tasks()
 
     def run(self):

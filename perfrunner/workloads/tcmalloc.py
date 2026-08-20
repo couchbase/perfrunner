@@ -27,15 +27,15 @@ class SmallIterator:
         return self
 
     def _id(self, i):
-        return '{}'.format(i).zfill(self.FIXED_KEY_WIDTH)
+        return f"{i}".zfill(self.FIXED_KEY_WIDTH)
 
     def _key(self, _id):
-        return 'AB_{}_0'.format(_id)
+        return f"AB_{_id}_0"
 
     def _field(self, _id):
         _id = _id.encode('utf-8')
         data = md5(_id).hexdigest()[:16]
-        return {'pn': str(_id), 'nam': 'ViberPhone_{}'.format(data)}
+        return {"pn": str(_id), "nam": f"ViberPhone_{data}"}
 
 
 class KeyValueIterator(SmallIterator):
@@ -93,7 +93,7 @@ class LargeIterator(SmallIterator):
     FIELD_SIZE = 102400
 
     def _key(self, _id):
-        return '{}'.format(_id)
+        return f"{_id}"
 
     def _field(self, _id):
         rev_id = _id[::-1].encode('utf-8')
@@ -157,8 +157,7 @@ class WorkloadGen:
                 d.addCallback(self._on_set)
                 d.addErrback(self._interrupt)
         except StopIteration:
-            logger.info('Started iteration: {}-{}'.format(self.iteration,
-                                                          self.fraction))
+            logger.info(f"Started iteration: {self.iteration}-{self.fraction}")
             self._append()
 
     def run(self):
@@ -192,8 +191,7 @@ class WorkloadGen:
                 d.addCallback(self._on_get, f, k)
                 d.addErrback(self._interrupt)
         except StopIteration:
-            logger.info('Finished iteration: {}-{}'.format(self.iteration,
-                                                           self.fraction))
+            logger.info(f"Finished iteration: {self.iteration}-{self.fraction}")
             if self.fraction == 4:
                 num_items = self.num_items
                 self.fraction = 1
@@ -204,6 +202,5 @@ class WorkloadGen:
                 self.fraction *= 2
                 num_items = self.num_items / self.fraction
             self.field_iterator = self.field_cls(num_items)
-            logger.info('Started iteration: {}-{}'.format(self.iteration,
-                                                          self.fraction))
+            logger.info(f"Started iteration: {self.iteration}-{self.fraction}")
             self._append()

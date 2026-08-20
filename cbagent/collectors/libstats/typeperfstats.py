@@ -28,7 +28,7 @@ class TPStats(RemoteStats):
                 v = float(v.replace('"', ''))
                 sum_rss += v
             metric, multiplier = self.METRICS[0]
-            title = "{}_{}".format(process, metric)
+            title = f"{process}_{metric}"
             samples[title] = float(sum_rss) * multiplier
             return samples
 

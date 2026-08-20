@@ -1937,8 +1937,8 @@ class BigFunQueryFailoverTest(BigFunTest):
         time.sleep(120)
         t_start = self.remote.detect_hard_failover_start(self.master_node)
         t_end = self.remote.detect_failover_end(self.master_node)
-        logger.info("failover starts at {}".format(t_start))
-        logger.info("failover ends at {}".format(t_end))
+        logger.info(f"failover starts at {t_start}")
+        logger.info(f"failover ends at {t_end}")
         return active_analytics_nodes
 
     def run(self):
@@ -2011,9 +2011,9 @@ class ConnectTest(AnalyticsTest):
         total_disconnect_time = 0
         for op in range(ops):
             disconnect_time = self.disconnect_analytics_link()
-            logger.info("disconnect time: {}".format(disconnect_time))
+            logger.info(f"disconnect time: {disconnect_time}")
             connect_time = self.connect_analytics_link()
-            logger.info("connect time: {}".format(connect_time))
+            logger.info(f"connect time: {connect_time}")
             total_connect_time += connect_time
             total_disconnect_time += disconnect_time
         return total_connect_time / ops, total_disconnect_time / ops
@@ -2826,7 +2826,7 @@ class ScanTest(AnalyticsTest):
     def all_operations(self):
         sql_suite = self.test_config.access_settings.sql_suite
         path = f"/data2/backup/analytics/SQL/{sql_suite}.sql"
-        logger.info("Executing {}.sql...".format(sql_suite))
+        logger.info(f"Executing {sql_suite}.sql...")
         local.cbq(
             node=self.analytics_node,
             cluster_spec=self.cluster_spec,

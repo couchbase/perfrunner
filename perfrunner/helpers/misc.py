@@ -78,16 +78,12 @@ class SGPortRange:
         self.protocol = protocol
 
     def port_range_str(self) -> str:
-        return '{}{}'.format(
-            self.min_port,
-            '-{}'.format(self.max_port) if self.max_port != self.min_port else ''
+        return "{}{}".format(
+            self.min_port, f"-{self.max_port}" if self.max_port != self.min_port else ""
         )
 
     def __str__(self) -> str:
-        return '(ports={}, protocol={})'.format(
-            self.port_range_str(),
-            self.protocol
-        )
+        return f"(ports={self.port_range_str()}, protocol={self.protocol})"
 
 
 def uhex() -> str:
@@ -359,9 +355,9 @@ def get_max_arg_strlen() -> int:
 
 def set_azure_subscription(sub_name: str, alias: str) -> int:
     _, _, err = run_local_shell_command(
-        command='az account set --subscription "{}"'.format(sub_name),
-        success_msg='Set active Azure subscription to "{}" ({})'.format(sub_name, alias),
-        err_msg='Failed to set active Azure subscription to "{}" ({})'.format(sub_name, alias)
+        command=f'az account set --subscription "{sub_name}"',
+        success_msg=f'Set active Azure subscription to "{sub_name}" ({alias})',
+        err_msg=f'Failed to set active Azure subscription to "{sub_name}" ({alias})',
     )
     return err
 
@@ -398,13 +394,13 @@ def get_python_sdk_installation(version: str) -> str:
     """
     if validators.url(version) or os.path.exists(version):
         # direct url to internal package source or file path
-        return '"{}"'.format(version)
+        return f'"{version}"'
     elif 'refs/changes' in version:  # gerrit change
-        return 'git+https://review.couchbase.org/couchbase-python-client@{}'.format(version)
+        return f"git+https://review.couchbase.org/couchbase-python-client@{version}"
     elif '.' not in version:  # git commit
-        return 'git+https://github.com/couchbase/couchbase-python-client.git@{}'.format(version)
+        return f"git+https://github.com/couchbase/couchbase-python-client.git@{version}"
     else:
-        return 'couchbase=={}'.format(version)
+        return f"couchbase=={version}"
 
 
 def run_aws_cli_command(command_template: str, *args, profile: str = "") -> Optional[str]:

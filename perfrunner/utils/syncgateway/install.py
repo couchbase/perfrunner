@@ -27,18 +27,17 @@ def main():
         base_url = "http://172.23.126.166/builds/latestbuilds/sync_gateway/toys/{}"\
             .format(_build.split("/")[7])
         _build = (_build.split("/")[-1]).split("_")[1]
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
+        sg_package_name = f"couchbase-sync-gateway-enterprise_{_build}_x86_64.deb"
+        accel_package_name = f"couchbase-sg-accel-enterprise_{_build}_x86_64.deb"
     elif "-" not in _build:
-        base_url = "http://172.23.126.166/builds/releases/mobile/" \
-                   "couchbase-sync-gateway/{}".format(_build)
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
+        base_url = f"http://172.23.126.166/builds/releases/mobile/couchbase-sync-gateway/{_build}"
+        sg_package_name = f"couchbase-sync-gateway-enterprise_{_build}_x86_64.deb"
+        accel_package_name = f"couchbase-sg-accel-enterprise_{_build}_x86_64.deb"
     else:
         v, b = _build.split("-")
-        base_url = "http://172.23.126.166/builds/latestbuilds/sync_gateway/{}/{}".format(v, b)
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.deb".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.deb".format(_build)
+        base_url = f"http://172.23.126.166/builds/latestbuilds/sync_gateway/{v}/{b}"
+        sg_package_name = f"couchbase-sync-gateway-enterprise_{_build}_x86_64.deb"
+        accel_package_name = f"couchbase-sg-accel-enterprise_{_build}_x86_64.deb"
 
     _cluster_full_path = os.path.abspath(_cluster_path)
     _config_full_path = os.path.abspath(_config_path)
@@ -90,8 +89,7 @@ class LegacyInstaller:
             filedata = file.read()
 
         # Replace the target string
-        filedata = filedata.replace('couchbase://172.23.100.190',
-                                    'couchbase://{}'.format(server_ip))
+        filedata = filedata.replace("couchbase://172.23.100.190", f"couchbase://{server_ip}")
 
         # Write the file out again
         with open(config_path, 'w') as file:
@@ -118,7 +116,7 @@ class BootstrapInstaller(LegacyInstaller):
 
     def add_server_ip(self, bootstrap_path: str, server_ip: str):
         config = self._get_json(bootstrap_path)
-        config['bootstrap']['server'] = "couchbase://{}".format(server_ip)
+        config["bootstrap"]["server"] = f"couchbase://{server_ip}"
 
         with open(bootstrap_path, "w") as bootstrap_f:
             json.dump(config, bootstrap_f)
@@ -163,10 +161,13 @@ class BootstrapInstaller(LegacyInstaller):
 
     def _create_db_rest(self, db_config: dict):
         db_name, config, sync_ip = db_config
-        logger.info('Creating database: {} using {}'.format(db_name, sync_ip))
-        resp = requests.put('http://{}:4985/{}/'.format(sync_ip, db_name),
-                            headers={'Content-Type': 'application/json'},
-                            data=json.dumps(config), verify=False)
+        logger.info(f"Creating database: {db_name} using {sync_ip}")
+        resp = requests.put(
+            f"http://{sync_ip}:4985/{db_name}/",
+            headers={"Content-Type": "application/json"},
+            data=json.dumps(config),
+            verify=False,
+        )
         resp.raise_for_status()
 
     def _get_json(self, path: str) -> dict:

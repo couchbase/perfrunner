@@ -288,16 +288,16 @@ def raise_for_status(resp: requests.Response):
     try:
         resp.raise_for_status()
     except HTTPError as e:
-        logger.error('HTTP Error {}: response content: {}'.format(resp.status_code, resp.content))
+        logger.error(f"HTTP Error {resp.status_code}: response content: {resp.content}")
         raise e
 
 
 def format_datadog_link(cluster_id: str = None, dataplane_id: str = None,
                         database_id: str = None) -> str:
     filters = [
-        'clusterId%3A{}'.format(cluster_id) if cluster_id else None,
-        'dataplaneId%3A{}'.format(dataplane_id) if dataplane_id else None,
-        'databaseId%3A{}'.format(database_id) if database_id else None
+        f"clusterId%3A{cluster_id}" if cluster_id else None,
+        f"dataplaneId%3A{dataplane_id}" if dataplane_id else None,
+        f"databaseId%3A{database_id}" if database_id else None,
     ]
 
     filters = [f for f in filters if f]
@@ -1216,9 +1216,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             self.infra_spec,
             self.node_list['clusters'],
             self.options.enable_disk_autoscaling)
-        names = ['perf-cluster-{}'.format(self.uuid) for _ in specs]
+        names = [f"perf-cluster-{self.uuid}" for _ in specs]
         if len(names) > 1:
-            names = ['{}-{}'.format(name, i) for i, name in enumerate(names)]
+            names = [f"{name}-{i}" for i, name in enumerate(names)]
 
         for name, spec in zip(names, specs):
             config = {
@@ -1264,8 +1264,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             cluster_id = resp.json().get('id')
             self.cluster_ids.append(cluster_id)
 
-            logger.info('Initialised cluster deployment for cluster {} \n  config: {}'.
-                        format(cluster_id, config))
+            logger.info(
+                f"Initialised cluster deployment for cluster {cluster_id} \n  config: {config}"
+            )
             logger.info('Saving cluster ID to spec file.')
             self.infra_spec.config.set("controlplane", "cluster_ids", "\n".join(self.cluster_ids))
             self.infra_spec.update_spec_file()
@@ -1344,9 +1345,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         for hostname, services in services_per_node.items():
             services_string = ','.join(SERVICES_CAPELLA_TO_PERFRUNNER[svc] for svc in services)
             if 'kv' in services_string:
-                kv_nodes.append("{}:{}".format(hostname, services_string))
+                kv_nodes.append(f"{hostname}:{services_string}")
             else:
-                non_kv_nodes.append("{}:{}".format(hostname, services_string))
+                non_kv_nodes.append(f"{hostname}:{services_string}")
 
         ret_list = kv_nodes + non_kv_nodes
         return ret_list
@@ -1372,8 +1373,8 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
         for cluster_id in self.cluster_ids:
             logger.info(
-                'Creating deployment circuit breaker to prevent auto-scaling for cluster {}.'
-                .format(cluster_id)
+                "Creating deployment circuit breaker to prevent auto-scaling "
+                f"for cluster {cluster_id}."
             )
 
             resp = self.provisioned_api.create_circuit_breaker(cluster_id)
@@ -1382,7 +1383,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             resp = self.provisioned_api.get_circuit_breaker(cluster_id)
             raise_for_status(resp)
 
-            logger.info('Circuit breaker created: {}'.format(pretty_dict(resp.json())))
+            logger.info(f"Circuit breaker created: {pretty_dict(resp.json())}")
 
     def peer_vpc(self, network_info, cluster_id):
         logger.info('Setting up VPC peering...')
@@ -1409,7 +1410,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         route_table = network_info['route_table_id']
         cluster_cidr = self.get_deployed_cidr(cluster_id)
 
-        logger.info('Adding Capella private network (AWS): VPC ID = {}'.format(client_vpc))
+        logger.info(f"Adding Capella private network (AWS): VPC ID = {client_vpc}")
 
         account_id = local('AWS_PROFILE=default env/bin/aws sts get-caller-identity '
                            '--query Account --output text',
@@ -1442,20 +1443,20 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
             # Finish peering process using AWS CLI
             for command in aws_commands:
-                local("AWS_PROFILE=default env/bin/{}".format(command))
+                local(f"AWS_PROFILE=default env/bin/{command}")
 
             # Finally, set up route table in our client VPC
             logger.info('Configuring route table in client VPC')
             local(
                 (
-                    "AWS_PROFILE=default env/bin/aws --region {} ec2 create-route "
-                    "--route-table-id {} "
-                    "--destination-cidr-block {} "
-                    "--vpc-peering-connection-id {}"
-                ).format(self.region, route_table, cluster_cidr, peering_connection_id)
+                    f"AWS_PROFILE=default env/bin/aws --region {self.region} ec2 create-route "
+                    f"--route-table-id {route_table} "
+                    f"--destination-cidr-block {cluster_cidr} "
+                    f"--vpc-peering-connection-id {peering_connection_id}"
+                )
             )
         except Exception as e:
-            logger.error('Failed to complete VPC peering: {}'.format(e))
+            logger.error(f"Failed to complete VPC peering: {e}")
 
         return peering_connection_id
 
@@ -1467,7 +1468,7 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         cidr = network_info['subnet_cidr']
         service_account = local("gcloud config get account", capture=True)
 
-        logger.info('Adding Capella private network (GCP): VPC name = {}'.format(client_vpc))
+        logger.info(f"Adding Capella private network (GCP): VPC name = {client_vpc}")
 
         project_id = local('gcloud config get project', capture=True)
 
@@ -1502,23 +1503,23 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
 
             peering_connection_name, capella_vpc_uri = local(
                 (
-                    'gcloud compute networks peerings list '
-                    '--network={} '
+                    "gcloud compute networks peerings list "
+                    f"--network={client_vpc} "
                     '--format="value(peerings[].name,peerings[].network)"'
-                ).format(client_vpc),
-                capture=True
+                ),
+                capture=True,
             ).split()
 
             dns_managed_zone_name = local(
                 (
-                    'gcloud dns managed-zones list '
-                    '--filter="(peeringConfig.targetNetwork.networkUrl = {})" '
+                    "gcloud dns managed-zones list "
+                    f'--filter="(peeringConfig.targetNetwork.networkUrl = {capella_vpc_uri})" '
                     '--format="value(name)"'
-                ).format(capella_vpc_uri),
-                capture=True
+                ),
+                capture=True,
             )
         except Exception as e:
-            logger.error('Failed to complete VPC peering: {}'.format(e))
+            logger.error(f"Failed to complete VPC peering: {e}")
 
         return peering_connection_name, dns_managed_zone_name, client_vpc
 
@@ -1539,9 +1540,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         local(
             (
                 "AWS_PROFILE=default env/bin/aws "
-                "--region {} ec2 delete-vpc-peering-connection "
-                "--vpc-peering-connection-id {}"
-            ).format(self.region, peering_connection)
+                f"--region {self.region} ec2 delete-vpc-peering-connection "
+                f"--vpc-peering-connection-id {peering_connection}"
+            )
         )
 
     def _destroy_peering_connection_gcp(self):
@@ -1554,9 +1555,10 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         dns_managed_zone = self.infra_spec.infrastructure_settings['dns_managed_zone']
         client_vpc = self.infra_spec.infrastructure_settings['client_vpc']
 
-        local('gcloud compute networks peerings delete {} --network={}'
-              .format(peering_connection, client_vpc))
-        local('gcloud dns managed-zones delete {}'.format(dns_managed_zone))
+        local(
+            f"gcloud compute networks peerings delete {peering_connection} --network={client_vpc}"
+        )
+        local(f"gcloud dns managed-zones delete {dns_managed_zone}")
 
     def destroy_workflow(self):
         # In the future we could go through all the deployed workflows attached to the
@@ -1767,10 +1769,10 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
         """
         config = {
             "clusterId": self.cluster_id,
-            "name": "perf-sgw-{}".format(self.uuid),
+            "name": f"perf-sgw-{self.uuid}",
             "description": "",
             "desired_capacity": self.test_config.syncgateway_settings.nodes,
-            "compute": {"type": self.test_config.syncgateway_settings.instance}
+            "compute": {"type": self.test_config.syncgateway_settings.instance},
         }
 
         if self.options.capella_sgw_version:
@@ -1805,9 +1807,11 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
             )
             logger.info(f'Cluster state for {pending_sgw_cluster}: {status}')
             if status == "deploymentFailed":
-                logger.error('Deployment failed for cluster {}. DataDog link for debugging: {}'
-                             .format(pending_sgw_cluster,
-                                     format_datadog_link(cluster_id=pending_sgw_cluster)))
+                logger.error(
+                    f"Deployment failed for cluster {pending_sgw_cluster}. "
+                    "DataDog link for debugging: "
+                    f"{format_datadog_link(cluster_id=pending_sgw_cluster)}"
+                )
                 exit(1)
 
             if status == "healthy":
@@ -1828,7 +1832,7 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
         """
         bucket_count = int(bucket_name.split("-")[1])
         sgw_db_name = f'db-{bucket_count}'
-        logger.info("The sgw db name is: {}".format(sgw_db_name))
+        logger.info(f"The sgw db name is: {sgw_db_name}")
         config = {
             "name": sgw_db_name,
             "bucket": bucket_name,

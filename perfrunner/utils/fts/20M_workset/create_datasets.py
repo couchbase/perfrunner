@@ -25,8 +25,8 @@ class TestDataset:
             for line2 in lines2:
                 line2 = line2.split()[0]
                 if line1 != line2:
-                    direct = "{} {}".format(line1, line2)
-                    reverse = "{} {}".format(line2, line1)
+                    direct = f"{line1} {line2}"
+                    reverse = f"{line2} {line1}"
                     if reverse not in map:
                         map.add(direct)
 
@@ -51,8 +51,8 @@ class TestDataset:
                 for line3 in lines3:
                     line3 = line3.split()[0]
                     if line2 != line3:
-                        direct = "{} {} {}".format(line1, line2, line3)
-                        reverse = "{} {} {}".format(line1, line3, line2)
+                        direct = f"{line1} {line2} {line3}"
+                        reverse = f"{line1} {line3} {line2}"
                         if reverse not in map:
                             map.add(direct)
         results = list(map)
@@ -113,9 +113,7 @@ class TestDataset:
         output_file = open(output_file, "w")
         for line in lines:
             line = line.split()[0]
-            result = "{} {} {}".format(line,
-                                       dates[random.randint(0, 1)],
-                                       dates[random.randint(2, 3)])
+            result = f"{line} {dates[random.randint(0, 1)]} {dates[random.randint(2, 3)]}"
             print(result, file=output_file)
 
     def get_phrases(self, cb_url, output_file, input_file, docs_total):
@@ -139,10 +137,10 @@ class TestDataset:
                             if len(terms) > idx + 1:
                                 term_next = terms[idx + 1]
                                 if str.isalpha(term_next):
-                                    result_phrase = "{} {}".format(term, term_next)
+                                    result_phrase = f"{term} {term_next}"
                                     results.add(result_phrase)
             except Exception as e:
-                print(("{}: {}: {}".format(key, len(results), str(e))))
+                print((f"{key}: {len(results)}: {str(e)}"))
 
             if len(results) > self.limit:
                 break

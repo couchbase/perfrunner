@@ -15,11 +15,11 @@ class Weekly:
 
     @property
     def builds(self):
-        url = '{}/builds'.format(self.BASE_URL)
+        url = f"{self.BASE_URL}/builds"
         return requests.get(url).json()
 
     def update_status(self, status: dict):
-        url = '{}/status'.format(self.BASE_URL)
+        url = f"{self.BASE_URL}/status"
         requests.post(url, json.dumps(status))
 
 

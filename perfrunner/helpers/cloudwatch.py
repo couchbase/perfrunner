@@ -132,17 +132,22 @@ class Cloudwatch:
         for ip in cluster_ips:
             logger.info(str(ip))
             i_id = local(
-                "env/bin/aws ec2 describe-instances --filter Name=dns-name,Values={} "
-                "--query \'Reservations[]."
-                "Instances[].InstanceId\' --output text".format(
-                    ip), capture=True)
+                f"env/bin/aws ec2 describe-instances --filter Name=dns-name,Values={ip} "
+                "--query 'Reservations[]."
+                "Instances[].InstanceId' --output text",
+                capture=True,
+            )
             instances.append(i_id)
-            volumes.append(local("env/bin/aws ec2 describe-volumes --filter Name=attachment."
-                                 "instance-id,Values={} "
-                                 "Name=attachment.device,Values=\"/dev/sdb\" "
-                                 "--query \'Volumes[].Attachments[].VolumeId\' "
-                                 "--output text".format(i_id),
-                                 capture=True))
+            volumes.append(
+                local(
+                    "env/bin/aws ec2 describe-volumes --filter Name=attachment."
+                    f"instance-id,Values={i_id} "
+                    'Name=attachment.device,Values="/dev/sdb" '
+                    "--query 'Volumes[].Attachments[].VolumeId' "
+                    "--output text",
+                    capture=True,
+                )
+            )
 
         record = {}
         for volume in volumes:
@@ -167,9 +172,10 @@ class Cloudwatch:
 
     def upsert_document(self, doc, cb_coll, phase):
         try:
-            key = 'snapshot-{}-{}'.format(phase, uuid.uuid4())
+            key = f"snapshot-{phase}-{uuid.uuid4()}"
             cb_coll.upsert(key, doc)
-            logger.info("Cloudwatch report available at: http://perflab.sc.couchbase.com:5000/"
-                        "{}".format(key))
+            logger.info(
+                f"Cloudwatch report available at: http://perflab.sc.couchbase.com:5000/{key}"
+            )
         except Exception as e:
             print(e)

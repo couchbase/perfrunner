@@ -272,28 +272,28 @@ class N1QLQueryGen3:
                 for bucket in replace_targets.keys():
                     scope, collection, target = replace_targets[bucket][0].split(":")
                     if target == 'True':
-                        query_context = "default:`{}`.`{}`".format(bucket, scope)
-                        replace_target = "{}.`{}`".format(query_context, collection)
+                        query_context = f"default:`{bucket}`.`{scope}`"
+                        replace_target = f"{query_context}.`{collection}`"
                         statement = statement.replace("`TARGET_BUCKET`", replace_target)
-                        replace_target = "`{}`.`{}`".format(bucket, scope)
+                        replace_target = f"`{bucket}`.`{scope}`"
                         statement = statement.replace("`TARGET_SCOPE`", replace_target)
             elif "RAW_QUERY" in statement:
                 for bucket in replace_targets.keys():
                     scope, collection, target = replace_targets[bucket][0].split(":")
                     if bucket in statement and scope in statement:
-                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                        query_context = f"default:`{bucket}`.`{scope}`"
                         break
                 statement = statement.replace("RAW_QUERY ", "")
             else:
                 for bucket in replace_targets.keys():
-                    bucket_substring = "`{}`".format(bucket)
+                    bucket_substring = f"`{bucket}`"
                     for i in range(statement.count(bucket_substring)):
                         where = [m.start() for m in re.finditer(bucket_substring, statement)][i]
                         before = statement[:where]
                         after = statement[where:]
                         scope, collection, target = replace_targets[bucket][i].split(":")
-                        query_context = "default:`{}`.`{}`".format(bucket, scope)
-                        replace_target = "{}.`{}`".format(query_context, collection)
+                        query_context = f"default:`{bucket}`.`{scope}`"
+                        replace_target = f"{query_context}.`{collection}`"
                         after = after.replace(bucket_substring, replace_target)
                         statement = before + after
         if 'key' in args:

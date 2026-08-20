@@ -32,9 +32,11 @@ class TableauTerminalHelper:
         return self._run_command(cmd, capture=True)
 
     def run_tsm_command(self, cmd: str, capture=False):
-        logger.info('Running: tsm {}'.format(cmd))
-        full_cmd = ('tsm_dir=( /opt/tableau/tableau_server/packages/customer-bin.* ) && '
-                    '"${{tsm_dir[0]}}"/tsm {}'.format(cmd))
+        logger.info(f"Running: tsm {cmd}")
+        full_cmd = (
+            "tsm_dir=( /opt/tableau/tableau_server/packages/customer-bin.* ) && "
+            f'"${{tsm_dir[0]}}"/tsm {cmd}'
+        )
         return self._run_command(full_cmd, capture=capture)
 
     def get_connector_version(self):
@@ -45,7 +47,7 @@ class TableauTerminalHelper:
 
     def copy_file(self, file: str, destination: str):
         if self.host == 'localhost':
-            local('cp {} {}'.format(file, destination))
+            local(f"cp {file} {destination}")
         else:
             execute(lambda: put(file, destination), hosts=[self.host])
 
@@ -96,10 +98,7 @@ class TableauRestHelper:
         else:
             kwargs['headers'].update(self._auth_header())
 
-        url = 'http://{}/api/{}/sites/{}{}'.format(self.host,
-                                                   self.api_version,
-                                                   self.site_id,
-                                                   endpoint)
+        url = f"http://{self.host}/api/{self.api_version}/sites/{self.site_id}{endpoint}"
 
         response = requests.request(command, url, **kwargs)
 
@@ -119,20 +118,20 @@ class TableauRestHelper:
 
     def signin(self):
         request_body = self.SIGNIN_REQUEST_BODY.format(**self.credentials)
-        url = 'http://{}/api/{}/auth/signin'.format(self.host, self.api_version)
+        url = f"http://{self.host}/api/{self.api_version}/auth/signin"
         response = requests.post(url, data=request_body)
         tree = ETree.fromstring(response.content)
-        self.token = tree.find('.//{}credentials'.format(self.ns)).attrib['token']
-        self.site_id = tree.find('.//{}site'.format(self.ns)).attrib['id']
+        self.token = tree.find(f".//{self.ns}credentials").attrib["token"]
+        self.site_id = tree.find(f".//{self.ns}site").attrib["id"]
 
     def fetch_datasources(self):
         response = self.api_get('/datasources')
         tree = ETree.fromstring(response.content)
-        for ds in tree.findall('.//{}datasource'.format(self.ns)):
+        for ds in tree.findall(f".//{self.ns}datasource"):
             self.datasources[ds.attrib['name']] = ds.attrib['id']
 
     def publish_datasource(self, datasource_file: str):
-        logger.info('Tableau Server: publishing datasource from file {}'.format(datasource_file))
+        logger.info(f"Tableau Server: publishing datasource from file {datasource_file}")
         ds_path = Path(datasource_file)
         ds_template_path = Path(datasource_file + '.template')
 
@@ -157,20 +156,20 @@ class TableauRestHelper:
 
         request_body, content_type = encode_multipart_formdata(fields)
         boundary = content_type.split(';')[-1]
-        headers = {'Content-Type': 'multipart/mixed; {}'.format(boundary)}
+        headers = {"Content-Type": f"multipart/mixed; {boundary}"}
 
         response = self.api_post('/datasources?overwrite=true',
                                  data=request_body,
                                  headers=headers)
         tree = ETree.fromstring(response.content)
 
-        ds = tree.find('.//{}datasource'.format(self.ns))
+        ds = tree.find(f".//{self.ns}datasource")
         self.datasources[ds.attrib['name']] = ds.attrib['id']
 
     def delete_datasource(self, datasource_name: str):
-        logger.info('Tableau Server: deleting datasource {}'.format(datasource_name))
+        logger.info(f"Tableau Server: deleting datasource {datasource_name}")
         datasource_id = self.datasources[datasource_name]
-        endpoint = '/datasources/{}'.format(datasource_id)
+        endpoint = f"/datasources/{datasource_id}"
 
         response = self.api_delete(endpoint)
 
@@ -178,60 +177,59 @@ class TableauRestHelper:
             del self.datasources[datasource_name]
 
     def create_extract(self, datasource_name: str) -> tuple[str, str, str]:
-        logger.info('Tableau Server: creating extract for datasource {}'.format(datasource_name))
+        logger.info(f"Tableau Server: creating extract for datasource {datasource_name}")
         datasource_id = self.datasources[datasource_name]
-        endpoint = '/datasources/{}/createExtract'.format(datasource_id)
+        endpoint = f"/datasources/{datasource_id}/createExtract"
 
         response = self.api_post(endpoint)
         tree = ETree.fromstring(response.content)
 
-        job = tree.find('.//{}job'.format(self.ns))
+        job = tree.find(f".//{self.ns}job")
         return (
             job.attrib['id'], self.CREATE_EXTRACT_JOB, job.attrib['createdAt']
         )
 
     def refresh_extract(self, datasource_name: str) -> tuple[str, str, str]:
-        logger.info('Tableau Server: refreshing extract for datasource {}'.format(datasource_name))
+        logger.info(f"Tableau Server: refreshing extract for datasource {datasource_name}")
         datasource_id = self.datasources[datasource_name]
-        endpoint = '/datasources/{}/refresh'.format(datasource_id)
+        endpoint = f"/datasources/{datasource_id}/refresh"
 
         request_body = "<tsRequest></tsRequest>"
         response = self.api_post(endpoint, data=request_body)
         tree = ETree.fromstring(response.content)
 
-        job = tree.find('.//{}job'.format(self.ns))
+        job = tree.find(f".//{self.ns}job")
         return (
             job.attrib['id'], self.REFRESH_EXTRACT_JOB, job.attrib['createdAt']
         )
 
     def delete_extract(self, datasource_name: str):
-        logger.info('Tableau Server: deleting extract for datasource {}'.format(datasource_name))
+        logger.info(f"Tableau Server: deleting extract for datasource {datasource_name}")
         datasource_id = self.datasources[datasource_name]
-        endpoint = '/datasources/{}/deleteExtract'.format(datasource_id)
+        endpoint = f"/datasources/{datasource_id}/deleteExtract"
 
         response = self.api_post(endpoint)
 
         if not response.ok:
-            raise Exception('Failed to delete extract for datasource {}'
-                            .format(datasource_name))
+            raise Exception(f"Failed to delete extract for datasource {datasource_name}")
 
     def get_job_direct(self, job_id: str) -> ETree.Element:
-        endpoint = '/jobs/{}'.format(job_id)
+        endpoint = f"/jobs/{job_id}"
 
         response = self.api_get(endpoint)
 
         tree = ETree.fromstring(response.content)
-        job = tree.find('.//{}job'.format(self.ns))
+        job = tree.find(f".//{self.ns}job")
         return job
 
     def _get_jobs(self, job_type: str = None, created_since: str = None) -> ETree.Element:
         filters = []
 
         if job_type:
-            filters.append('jobType:eq:{}'.format(job_type))
+            filters.append(f"jobType:eq:{job_type}")
 
         if created_since:
-            filters.append('createdAt:gte:{}'.format(created_since))
+            filters.append(f"createdAt:gte:{created_since}")
 
         query_filter = '?filter={}'.format(','.join(filters)) if filters else ''
 
@@ -248,12 +246,12 @@ class TableauRestHelper:
             job = self.get_job_direct(job_id)
         else:
             tree = self._get_jobs(job_type=job_type, created_since=created_since)
-            job = tree.find(".//{}backgroundJob[@id='{}']".format(self.ns, job_id))
+            job = tree.find(f".//{self.ns}backgroundJob[@id='{job_id}']")
         return job
 
     def get_jobs(self, job_type: str = None, created_since: str = None) -> list[ETree.Element]:
         tree = self._get_jobs(job_type=job_type, created_since=created_since)
-        jobs = tree.findall('.//{}backgroundJob'.format(self.ns))
+        jobs = tree.findall(f".//{self.ns}backgroundJob")
         return jobs
 
     def wait_for_job_complete(self, job_id: str,

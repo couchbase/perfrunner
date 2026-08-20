@@ -113,7 +113,7 @@ class MetricsRestApiProcesses(MetricsRestApiBase):
                 metric_name = metric['metric']['name']
                 proc = metric['metric']['proc']
                 value = float(metric['values'][-1][-1])
-                title = '{}_{}'.format(proc, metric_name)
+                title = f"{proc}_{metric_name}"
                 if node not in stats:
                     stats[node] = {title: value}
                 else:
@@ -245,7 +245,7 @@ class MetricsRestApiThroughputCollection(MetricsRestApiBase):
     @staticmethod
     def bucket_stat_group(bucket: str, group: str) -> str:
         if group != '':
-            return '{}_{}'.format(bucket, group)
+            return f"{bucket}_{group}"
         return bucket
 
     def calculate_minimal_targets(self) -> dict[str, str]:
@@ -267,7 +267,7 @@ class MetricsRestApiThroughputCollection(MetricsRestApiBase):
             for scope, collections in scopes.items():
                 coll_groups = set()
                 for collection, options in collections.items():
-                    target = '{}:{}:{}'.format(bucket, scope, collection)
+                    target = f"{bucket}:{scope}:{collection}"
 
                     if g := options.get('stat_group'):
                         coll_groups.add(g)
@@ -282,7 +282,7 @@ class MetricsRestApiThroughputCollection(MetricsRestApiBase):
                     g = coll_groups.pop()
                     for _ in collections:
                         groups[g].pop(-1)
-                    groups[g].append('{}:{}'.format(bucket, scope))
+                    groups[g].append(f"{bucket}:{scope}")
 
             if len(scope_groups) == 1:
                 g = scope_groups.pop()

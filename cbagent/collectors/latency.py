@@ -81,7 +81,7 @@ class KVLatency(Latency):
     @staticmethod
     def bucket_stat_group(bucket: str, group: str) -> str:
         if group != '':
-            return '{}_{}'.format(bucket, group)
+            return f"{bucket}_{group}"
         return bucket
 
     def update_metadata(self):

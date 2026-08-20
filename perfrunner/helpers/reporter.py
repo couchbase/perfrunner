@@ -37,9 +37,8 @@ class ShowFastReporter(Reporter):
         cluster = self.cluster_spec.parameters
         cluster['Name'] = self.cluster_spec.name
 
-        logger.info('Adding a cluster: {}'.format(pretty_dict(cluster)))
-        requests.post('http://{}/api/v1/clusters'.format(SHOWFAST_HOST),
-                      json.dumps(cluster))
+        logger.info(f"Adding a cluster: {pretty_dict(cluster)}")
+        requests.post(f"http://{SHOWFAST_HOST}/api/v1/clusters", json.dumps(cluster))
 
     def _post_metric(self, metric: JSON):
         cluster = self.cluster_spec.name
@@ -62,9 +61,8 @@ class ShowFastReporter(Reporter):
             'hidden': False,
         })
 
-        logger.info('Adding a metric: {}'.format(pretty_dict(metric)))
-        requests.post('http://{}/api/v1/metrics'.format(SHOWFAST_HOST),
-                      json.dumps(metric))
+        logger.info(f"Adding a metric: {pretty_dict(metric)}")
+        requests.post(f"http://{SHOWFAST_HOST}/api/v1/metrics", json.dumps(metric))
 
     def _generate_benchmark(self,
                             metric: str,
@@ -90,7 +88,7 @@ class ShowFastReporter(Reporter):
                self.test_config.backup_settings.show_tls_version or \
                self.test_config.restore_settings.show_tls_version:
                 build_str = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + build_str
-                logger.info('build: {}'.format(self.build))
+                logger.info(f"build: {self.build}")
 
         if self.cluster_spec.capella_infrastructure and \
            self.test_config.cluster.show_cp_version:
@@ -113,13 +111,12 @@ class ShowFastReporter(Reporter):
 
     @staticmethod
     def _log_benchmark(benchmark: JSON):
-        logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
+        logger.info(f"Dry run: {pretty_dict(benchmark)}")
 
     @staticmethod
     def _post_benchmark(benchmark: JSON):
-        logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
-        requests.post('http://{}/api/v1/benchmarks'.format(SHOWFAST_HOST),
-                      json.dumps(benchmark))
+        logger.info(f"Adding a benchmark: {pretty_dict(benchmark)}")
+        requests.post(f"http://{SHOWFAST_HOST}/api/v1/benchmarks", json.dumps(benchmark))
 
     def post(self,
              value: Union[float, int],
@@ -141,14 +138,12 @@ class DailyReporter(Reporter):
 
     @staticmethod
     def _post_daily_benchmark(benchmark: JSON):
-        logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
-        requests.post(
-            'http://{}/daily/api/v1/benchmarks'.format(SHOWFAST_HOST),
-            json.dumps(benchmark))
+        logger.info(f"Adding a benchmark: {pretty_dict(benchmark)}")
+        requests.post(f"http://{SHOWFAST_HOST}/daily/api/v1/benchmarks", json.dumps(benchmark))
 
     @staticmethod
     def _log_daily_benchmark(benchmark: JSON):
-        logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
+        logger.info(f"Dry run: {pretty_dict(benchmark)}")
 
     def post(self,
              metric: str,

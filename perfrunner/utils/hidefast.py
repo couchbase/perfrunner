@@ -21,12 +21,12 @@ def get_cloud_menu() -> dict:
 
 
 def get_benchmarks(component: str, category: str) -> List[dict]:
-    api = '/api/v1/benchmarks/{}/{}'.format(component, category)
+    api = f"/api/v1/benchmarks/{component}/{category}"
     return requests.get(url=BASE_URL + api).json() or []
 
 
 def hide_benchmark(benchmark_id: str):
-    api = '/api/v1/benchmarks/{}'.format(benchmark_id)
+    api = f"/api/v1/benchmarks/{benchmark_id}"
     requests.patch(url=BASE_URL + api)
 
 

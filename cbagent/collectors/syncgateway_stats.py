@@ -305,7 +305,7 @@ class SyncGatewayStats(CouchbaseCollector):
             if i in self.sg_stats[host]:
                 if j in self.sg_stats[host][i]:
                     for db in range(1, self.num_buckets + 1):
-                        k = "db-{}".format(db)
+                        k = f"db-{db}"
                         if k in self.sg_stats[host][i][j]:
                             if l in self.sg_stats[host][i][j][k]:
                                 if m in self.sg_stats[host][i][j][k][l]:

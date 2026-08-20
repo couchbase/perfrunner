@@ -195,7 +195,7 @@ class JenkinsScanner(BaseScanner):
 
     def update_status(self):
         for build in self.weekly.builds:
-            logger.info('Updating status of build {}'.format(build))
+            logger.info(f"Updating status of build {build}")
 
             for status in self.cluster.query(
                 self.STATUS_QUERY, QueryOptions(positional_parameters=[build])

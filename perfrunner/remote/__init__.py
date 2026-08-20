@@ -28,11 +28,11 @@ class Remote:
 
     @staticmethod
     def wget(url, outdir='/tmp', outfile=None):
-        logger.info('Fetching {}'.format(url))
+        logger.info(f"Fetching {url}")
         if outfile is not None:
-            run('wget -nc "{}" -P {} -O {}'.format(url, outdir, outfile))
+            run(f'wget -nc "{url}" -P {outdir} -O {outfile}')
         else:
-            run('wget -N "{}" -P {}'.format(url, outdir))
+            run(f'wget -N "{url}" -P {outdir}')
 
     @all_clients
     def terminate_client_processes(self):
@@ -46,8 +46,8 @@ class Remote:
 
     @all_clients
     def init_repo(self, worker_home: str, cherrypick: Optional[str] = None):
-        run('rm -fr {}'.format(worker_home))
-        run('mkdir -p {}'.format(worker_home))
+        run(f"rm -fr {worker_home}")
+        run(f"mkdir -p {worker_home}")
 
         with cd(worker_home):
             run(f"git clone -q {REPO}")
@@ -59,11 +59,13 @@ class Remote:
     @all_clients
     def install_clients(self, perfrunner_home: str, python_client: str, need_pymongo: bool = False):
         if python_client is not None:
-            logger.info('Installing Python SDK on remote client: {}'.format(python_client))
+            logger.info(f"Installing Python SDK on remote client: {python_client}")
             with cd(perfrunner_home):
                 package = get_python_sdk_installation(python_client)
-                run("PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {} "
-                    "--no-cache-dir".format(package), warn_only=True)
+                run(
+                    f"PYCBC_USE_CPM_CACHE=OFF env/bin/pip install {package} --no-cache-dir",
+                    warn_only=True,
+                )
 
                 if need_pymongo:
                     run("env/bin/pip install pymongo --no-cache-dir", warn_only=True)
@@ -80,12 +82,15 @@ class Remote:
             with cd(worker_home), shell_env(PYTHONOPTIMIZE='1',
                                             PYTHONWARNINGS='ignore',
                                             C_FORCE_ROOT='1'):
-                run('ulimit -n 10240; '
-                    'WORKER_TYPE=remote '
-                    'BROKER_URL={1} '
-                    'nohup env/bin/celery -A perfrunner.helpers.worker worker '
-                    '-l INFO -Q {0} -n {0} --discard '
-                    '&>worker_{0}.log &'.format(worker, broker_url), pty=False)
+                run(
+                    "ulimit -n 10240; "
+                    "WORKER_TYPE=remote "
+                    f"BROKER_URL={broker_url} "
+                    "nohup env/bin/celery -A perfrunner.helpers.worker worker "
+                    f"-l INFO -Q {worker} -n {worker} --discard "
+                    f"&>worker_{worker}.log &",
+                    pty=False,
+                )
 
     def clone_git_repo(
         self,
@@ -147,9 +152,9 @@ class Remote:
                     cb_version += ""
                 else:
                     cb_version += major_version
-                original_string = '<{0}.version>*.*.*<\\/{0}.version>'.format(cb_version)
-                new_string = '<{0}.version>{1}<\\/{0}.version>'.format(cb_version, sdk_version)
-                cmd = "sed -i 's/{}/{}/g' pom.xml".format(original_string, new_string)
+                original_string = f"<{cb_version}.version>*.*.*<\\/{cb_version}.version>"
+                new_string = f"<{cb_version}.version>{sdk_version}<\\/{cb_version}.version>"
+                cmd = f"sed -i 's/{original_string}/{new_string}/g' pom.xml"
                 run(cmd)
 
     @all_clients
@@ -185,17 +190,17 @@ class Remote:
     @all_clients
     def get_jts_logs(self, worker_home: str, jts_home: str, local_dir: str):
         logger.info("Collecting remote JTS logs")
-        jts_logs_dir = "{}/logs".format(jts_home)
+        jts_logs_dir = f"{jts_home}/logs"
         with cd(worker_home), cd('perfrunner'), cd(jts_logs_dir):
             directories = run('ls -d */')
             directories = directories.split()
             for directory in directories:
-                target_dir = "{}/{}".format(local_dir, directory)
+                target_dir = f"{local_dir}/{directory}"
                 if not os.path.exists(target_dir):
                     os.mkdir(target_dir)
-                r = run('stat {}*.log'.format(directory), quiet=True)
+                r = run(f"stat {directory}*.log", quiet=True)
                 if not r.return_code:
-                    get('{}*.log'.format(directory), local_path=target_dir)
+                    get(f"{directory}*.log", local_path=target_dir)
 
     @all_clients
     def get_celery_logs(self, worker_home: str):
@@ -239,22 +244,22 @@ class Remote:
     def extract_cb_any(self, filename: str, worker_home: str):
         logger.info('Extracting couchbase archive')
         with cd(worker_home), cd('perfrunner'):
-            r = run('stat {}.deb'.format(filename), quiet=True)
+            r = run(f"stat {filename}.deb", quiet=True)
             if not r.return_code:
                 logger.info('Extracting couchbase.deb')
                 with settings(shell='/bin/bash -l -c'):  # Ignore pipefails for this command
-                    run('ar p {}.deb data.tar.xz | unxz | tar x'.format(filename))
+                    run(f"ar p {filename}.deb data.tar.xz | unxz | tar x")
             else:
                 logger.info('Extracting couchbase.rpm')
-                run('rpm2cpio ./{}.rpm | cpio -idm'.format(filename), quiet=True)
+                run(f"rpm2cpio ./{filename}.rpm | cpio -idm", quiet=True)
 
     @all_clients
     def get_ch2_logfile(self, worker_home: str, logfile: str):
         logger.info('Collecting CH2 log')
         with cd(worker_home), cd('perfrunner'):
-            r = run('stat {}*.log'.format(logfile), quiet=True)
+            r = run(f"stat {logfile}*.log", quiet=True)
             if not r.return_code:
-                get('{}*.log'.format(logfile), local_path='./')
+                get(f"{logfile}*.log", local_path="./")
 
     @all_clients
     def init_ch2(self, repo: str, branch: str, worker_home: str, cherrypick: Optional[str] = None):
@@ -280,7 +285,7 @@ class Remote:
     def build_syncgateway_ycsb(self, worker_home: str, ycsb_instances: int):
         logger.info('Building YCSB jar...')
         for instance in range(ycsb_instances):
-            with cd(worker_home), cd('perfrunner'), cd('YCSB_{}'.format(instance+1)):
+            with cd(worker_home), cd("perfrunner"), cd(f"YCSB_{instance + 1}"):
                 run('mvn -pl com.yahoo.ycsb:syncgateway-binding '
                     '-am package '
                     '-DskipTests dependency:build-classpath '
@@ -294,30 +299,30 @@ class Remote:
 
     @all_clients
     def get_syncgateway_ycsb_logs(self, worker_home, sgs, local_dir):
-        localpath = "{}/".format(local_dir)
+        localpath = f"{local_dir}/"
         instances = int(sgs.instances_per_client)
-        pattern = "{}*".format(sgs.log_title)
+        pattern = f"{sgs.log_title}*"
         logger.info('Collecting YCSB logs')
         with cd(worker_home), cd('perfrunner'):
-            r = run('stat YCSB/{}'.format(pattern), quiet=True)
+            r = run(f"stat YCSB/{pattern}", quiet=True)
             if not r.return_code:
-                get('YCSB/{}'.format(pattern), local_path=localpath)
+                get(f"YCSB/{pattern}", local_path=localpath)
             for i in range(instances):
-                r = run('stat YCSB_{}/{}'.format(i+1, pattern), quiet=True)
+                r = run(f"stat YCSB_{i + 1}/{pattern}", quiet=True)
                 if not r.return_code:
-                    get('YCSB_{}/{}'.format(i+1, pattern), local_path=local_dir)
+                    get(f"YCSB_{i + 1}/{pattern}", local_path=local_dir)
 
     def get_cblite_logs(self, worker, instance_id, local_dir):
-        localpath = "{}/".format(local_dir)
-        pattern = "serve_db_{}.log".format(instance_id)
+        localpath = f"{local_dir}/"
+        pattern = f"serve_db_{instance_id}.log"
         logger.info('Collecting cblite serve logs')
         with settings(host_string=worker):
             with cd('/root'):
-                r = run('stat {}'.format(pattern), quiet=True)
+                r = run(f"stat {pattern}", quiet=True)
                 if not r.return_code:
-                    get('{}'.format(pattern), local_path=localpath)
+                    get(f"{pattern}", local_path=localpath)
                     try:
-                        os.rename(localpath+pattern, localpath+"{}_{}".format(worker, pattern))
+                        os.rename(localpath + pattern, localpath + f"{worker}_{pattern}")
                     except Exception as ex:
                         print(ex)
 
@@ -340,9 +345,9 @@ class Remote:
         pattern = "*{}*".format('_blackholepuller_')
         logger.info('Collecting SG blackholepuller logs')
         with cd(worker_home), cd('perfrunner'):
-            r = run('stat {}'.format(pattern), quiet=True)
+            r = run(f"stat {pattern}", quiet=True)
             if not r.return_code:
-                get('{}'.format(pattern), local_path='.')
+                get(f"{pattern}", local_path=".")
 
     @all_clients
     def get_sgblackholepuller_result_files(self):
@@ -357,9 +362,9 @@ class Remote:
         pattern = "*{}*".format('_newdocpusher_')
         logger.info('Collecting SG newdocpusher logs')
         with cd(worker_home), cd('perfrunner'):
-            r = run('stat {}'.format(pattern), quiet=True)
+            r = run(f"stat {pattern}", quiet=True)
             if not r.return_code:
-                get('{}'.format(pattern), local_path='.')
+                get(f"{pattern}", local_path=".")
 
     @all_clients
     def get_newdocpusher_result_files(self):
@@ -379,8 +384,11 @@ class Remote:
     @all_clients
     def create_cblite_ramdisk(self, ramdisk_size):
         logger.info('Creating cblite ramdisk')
-        run('mount -t tmpfs -o size={}m cbliteramdisk /tmp/couchbase-mobile-tools'.
-            format(ramdisk_size), quiet=True, warn_only=True)
+        run(
+            f"mount -t tmpfs -o size={ramdisk_size}m cbliteramdisk /tmp/couchbase-mobile-tools",
+            quiet=True,
+            warn_only=True,
+        )
 
     @all_clients
     def destroy_cblite_ramdisk(self):
@@ -399,27 +407,27 @@ class Remote:
         try:
             self.cblite_update_submodule()
         except Exception as ex:
-            logger.info("{}".format(ex))
+            logger.info(f"{ex}")
         logger.info('Building cblite: checking out version...')
         try:
             self.cblite_checkout_version()
         except Exception as ex:
-            logger.info("{}".format(ex))
+            logger.info(f"{ex}")
         logger.info('Building cblite: creating build directory...')
         try:
             self.cblite_make_build_dir()
         except Exception as ex:
-            logger.info("{}".format(ex))
+            logger.info(f"{ex}")
         logger.info('Building cblite: running cmake...')
         try:
             self.cblite_build_cmake()
         except Exception as ex:
-            logger.info("{}".format(ex))
+            logger.info(f"{ex}")
         logger.info('Building cblite: running make...')
         try:
             self.cblite_build_make()
         except Exception as ex:
-            logger.info("{}".format(ex))
+            logger.info(f"{ex}")
 
     @all_clients_batch
     def cblite_update_submodule(self):
@@ -449,7 +457,7 @@ class Remote:
     def start_cblitedb_continuous(self, worker: str, db_name: str, port: int, verbose: int = 1,
                                   collection: dict = {}):
         cblite = '/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite'
-        db_path = '/tmp/couchbase-mobile-tools/{}.cblite2'.format(db_name)
+        db_path = f"/tmp/couchbase-mobile-tools/{db_name}.cblite2"
         cmd = '{} --create serve {} --port {} {} &>serve_{}.log & '\
             .format(cblite, '--verbose' if verbose else '', port, db_path, db_name)
         logger.info(cmd)
@@ -461,7 +469,7 @@ class Remote:
             if scope == '_default':
                 continue
             for col_name, _ in coll.items():
-                cmd = '{} mkcoll {} {}/{}'.format(cblite, db_path, scope, col_name)
+                cmd = f"{cblite} mkcoll {db_path} {scope}/{col_name}"
                 with settings(host_string=worker):
                     run(cmd, pty=False)
 
@@ -472,10 +480,11 @@ class Remote:
                                           cblite_db,
                                           user,
                                           password):
-        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite pull --replicate'\
-              ' --continuous --user {0}:{1} wss://{2}:{3}/db-1'\
-              ' /tmp/couchbase-mobile-tools/{4}.cblite2 &>pull_{0}.log &'\
-              .format(user, password, sgw_host, sgw_port, cblite_db)
+        cmd = (
+            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite pull --replicate"
+            f" --continuous --user {user}:{password} wss://{sgw_host}:{sgw_port}/db-1"
+            f" /tmp/couchbase-mobile-tools/{cblite_db}.cblite2 &>pull_{user}.log &"
+        )
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)
@@ -487,10 +496,12 @@ class Remote:
                                           cblite_db,
                                           user,
                                           password):
-        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite push --replicate'\
-              ' --continuous --user {0}:{1} /tmp/couchbase-mobile-tools/{2}.cblite2'\
-              '  wss://{3}:{4}/db-1 &>push_{0}.log &'\
-              .format(user, password, cblite_db, sgw_host, sgw_port)
+        cmd = (
+            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite push --replicate"
+            f" --continuous --user {user}:{password}"
+            f" /tmp/couchbase-mobile-tools/{cblite_db}.cblite2"
+            f"  wss://{sgw_host}:{sgw_port}/db-1 &>push_{user}.log &"
+        )
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)
@@ -502,10 +513,11 @@ class Remote:
                                           cblite_db,
                                           user,
                                           password):
-        cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite cp --replicate --bidi'\
-              ' --continuous --user {0}:{1} wss://{2}:{3}/db-1'\
-              ' /tmp/couchbase-mobile-tools/{4}.cblite2 &>bidi_{0}.log &'\
-              .format(user, password, sgw_host, sgw_port, cblite_db)
+        cmd = (
+            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite cp --replicate --bidi"
+            f" --continuous --user {user}:{password} wss://{sgw_host}:{sgw_port}/db-1"
+            f" /tmp/couchbase-mobile-tools/{cblite_db}.cblite2 &>bidi_{user}.log &"
+        )
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)
@@ -533,17 +545,21 @@ class Remote:
             run("sysctl net.ipv4.tcp_tw_reuse=0")
 
     def replicate_push_continuous(self, worker: str, db_name: str, sgw_ip: str):
-        cmd = '/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-              'ws://{1}:4984/db-1 &>push_{0}.log &'.format(db_name, sgw_ip)
+        cmd = (
+            "/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{db_name}.cblite2 "
+            f"ws://{sgw_ip}:4984/db-1 &>push_{db_name}.log &"
+        )
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)
 
     def replicate_pull_continuous(self, worker: str, db_name: str, sgw_ip: str):
-        cmd = '/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
-              'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
-              'ws://{1}:4984/db-1 &>pull_{0}.log &'.format(db_name, sgw_ip)
+        cmd = (
+            "/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite "
+            f"pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{db_name}.cblite2 "
+            f"ws://{sgw_ip}:4984/db-1 &>pull_{db_name}.log &"
+        )
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)

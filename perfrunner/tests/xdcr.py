@@ -510,7 +510,7 @@ class BiDirXdcrInitTest(XdcrInitTest):
         PerfTest.access(self, *args, target_iterator=self.load_target_iterator)
 
     def _report_kpi(self, time_elapsed):
-        logger.info("Time elapsed is: {}".format(time_elapsed))
+        logger.info(f"Time elapsed is: {time_elapsed}")
         m1, m2 = self.cluster_spec.masters
         bucket_replica = self.test_config.bucket.replica_number
         m1_bucket_docs = self.monitor.get_num_items(host=m1, bucket="bucket-1",
@@ -610,10 +610,10 @@ class BiDirXdcrUpdateTest(BiDirXdcrInitTest):
 
         logger.info("Starting the XDCR replication")
         time_elapsed = self.init_xdcr()
-        logger.info("Time elapsed load is: {}".format(time_elapsed))
+        logger.info(f"Time elapsed load is: {time_elapsed}")
         logger.info("Finished the XDCR replication, starting the update conflict phase")
         acess_time = self.access()
-        logger.info("Time elapsed access is: {}".format(acess_time))
+        logger.info(f"Time elapsed access is: {acess_time}")
         self.report_kpi(acess_time)
 
 
@@ -1019,9 +1019,7 @@ class XdcrPriorityThroughputTest(XdcrTest):
         return cluster_uuid, cluster_map
 
     def build_xdcrlink(self, uuid: str, from_bucket: str, to_bucket: str):
-        xdcr_link = 'replications/{}/{}/{}/percent_completeness'.format(uuid,
-                                                                        from_bucket,
-                                                                        to_bucket)
+        xdcr_link = f"replications/{uuid}/{from_bucket}/{to_bucket}/percent_completeness"
         return xdcr_link
 
     @with_stats

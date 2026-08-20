@@ -48,28 +48,24 @@ class MagmaBenchmarkTest(PerfTest):
 
     def create_command(self, settings):
 
-        cmd = "/opt/couchbase/bin/priv/magma_bench {DATA_DIR}/{ENGINE} " \
-              "--kvstore {NUM_KVSTORES} --ndocs {NUM_DOCS} " \
-              "--batch-size {WRITE_BATCHSIZE} --keylen {KEY_LEN} --vallen {DOC_SIZE} " \
-              "--nwrites {NUM_WRITES} --nreads {NUM_READS} " \
-              "--nreaders {NUM_READERS} --nwriters {NUM_WRITERS} " \
-              "--memquota {MEM_QUOTA} --fs-cache-size {FS_CACHE_SIZE} --active-stats " \
-              "--engine {ENGINE} --engine-config {ENGINE_CONFIG} --stats {STATS_FILE}"\
-            .format(NUM_KVSTORES=settings.num_kvstores, NUM_DOCS=settings.num_docs,
-                    WRITE_BATCHSIZE=settings.write_batchsize, KEY_LEN=settings.key_len,
-                    DOC_SIZE=settings.doc_size,
-                    NUM_WRITES=settings.num_writes, NUM_READS=settings.num_reads,
-                    NUM_READERS=settings.num_readers, NUM_WRITERS=settings.num_writers,
-                    MEM_QUOTA=settings.memquota,
-                    FS_CACHE_SIZE=settings.fs_cache_size, DATA_DIR=settings.data_dir,
-                    ENGINE=settings.engine, ENGINE_CONFIG=settings.engine_config,
-                    STATS_FILE=self.stats_file)
+        cmd = (
+            f"/opt/couchbase/bin/priv/magma_bench {settings.data_dir}/{settings.engine} "
+            f"--kvstore {settings.num_kvstores} --ndocs {settings.num_docs} "
+            f"--batch-size {settings.write_batchsize} --keylen {settings.key_len} "
+            f"--vallen {settings.doc_size} "
+            f"--nwrites {settings.num_writes} --nreads {settings.num_reads} "
+            f"--nreaders {settings.num_readers} --nwriters {settings.num_writers} "
+            f"--memquota {settings.memquota} --fs-cache-size {settings.fs_cache_size} "
+            "--active-stats "
+            f"--engine {settings.engine} --engine-config {settings.engine_config} "
+            f"--stats {self.stats_file}"
+        )
         return cmd
 
     def run_and_get_stats(self, cmd: str) -> dict:
         self.remote.run_magma_benchmark(cmd, self.stats_file)
         data = read_json(self.stats_file)
-        logger.info("\nStats: {}".format(pretty_dict(data)))
+        logger.info(f"\nStats: {pretty_dict(data)}")
         return data
 
     def load_docs(self):
@@ -339,8 +335,9 @@ class KVTest(PerfTest):
             stdout, returncode = local.run_cbstats("kvstore", self.master_node, self.CB_STATS_PORT,
                                                    uname, pwd, self.test_config.buckets[0])
             if returncode != 0:
-                logger.warning("KVTest failed to get kvstore stats from server: {}"
-                               .format(self.master_node))
+                logger.warning(
+                    f"KVTest failed to get kvstore stats from server: {self.master_node}"
+                )
                 return
 
             data = json.loads(stdout)
@@ -352,7 +349,7 @@ class KVTest(PerfTest):
                         value = json.loads(value)
                     stats[key] = value
 
-            logger.info("kvstore stats for first 4 shards: {}".format(pretty_dict(stats)))
+            logger.info(f"kvstore stats for first 4 shards: {pretty_dict(stats)}")
         except Exception:
             pass
 
@@ -376,7 +373,7 @@ class KVTest(PerfTest):
                     stats[server]["nwb"] = int(values[9]) * sector_size
                     break
             else:
-                logger.info("Failed to get disk stats for {}".format(server))
+                logger.info(f"Failed to get disk stats for {server}")
         return stats
 
     def get_memcached_stats(self):
@@ -404,7 +401,7 @@ class KVTest(PerfTest):
         ampl_stats = dict()
         for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
             if (server not in now_stats.keys()) or (server not in old_stats.keys()):
-                logger.info("{} stats for {} not found!".format(stat_type, server))
+                logger.info(f"{stat_type} stats for {server} not found!")
                 continue
             get_ops = now_ops[server]["get_ops"] - self.disk_ops[server]["get_ops"]
             set_ops = now_ops[server]["set_ops"] - self.disk_ops[server]["set_ops"]
@@ -424,26 +421,28 @@ class KVTest(PerfTest):
                 ampl_stats["read_bytes_per_get"] = \
                     (now_stats[server]["nrb"] - old_stats[server]["nrb"]) / get_ops
 
-            logger.info("{} Amplification stats for {}: {}".format(stat_type, server,
-                                                                   pretty_dict(ampl_stats)))
+            logger.info(f"{stat_type} Amplification stats for {server}: {pretty_dict(ampl_stats)}")
             logger.info("Note: read_bytes_per_set and read_io_per_set are "
                         "valid for set only workload.")
 
     def print_amplifications(self, doc_size: int):
         now_ops = self._measure_disk_ops()
-        logger.info("Saved ops: {}\nCurrent ops: {}".
-                    format(pretty_dict(self.disk_ops), pretty_dict(now_ops)))
+        logger.info(f"Saved ops: {pretty_dict(self.disk_ops)}\nCurrent ops: {pretty_dict(now_ops)}")
 
         now_disk_stats = self.get_disk_stats()
-        logger.info("Saved disk stats: {}\nCurrent disk stats: {}".
-                    format(pretty_dict(self.disk_stats), pretty_dict(now_disk_stats)))
+        logger.info(
+            f"Saved disk stats: {pretty_dict(self.disk_stats)}\n"
+            f"Current disk stats: {pretty_dict(now_disk_stats)}"
+        )
 
         self._print_amplifications(old_stats=self.disk_stats, now_stats=now_disk_stats,
                                    now_ops=now_ops, doc_size=doc_size, stat_type="Actual")
 
         now_memcached_ops = self.get_memcached_stats()
-        logger.info("Saved memcached stats: {}\nCurrent memcached stats: {}".
-                    format(pretty_dict(self.memcached_stats), pretty_dict(now_memcached_ops)))
+        logger.info(
+            f"Saved memcached stats: {pretty_dict(self.memcached_stats)}\n"
+            f"Current memcached stats: {pretty_dict(now_memcached_ops)}"
+        )
 
         self._print_amplifications(old_stats=self.memcached_stats, now_stats=now_memcached_ops,
                                    now_ops=now_ops, doc_size=doc_size, stat_type="Virtual")
@@ -1150,12 +1149,12 @@ class YCSBThroughputLatencyHIDDPhaseTest(YCSBThroughputHIDDTest):
 
             access_settings.workload_path = "workloads/workloadc"
             access_settings.items = self.test_config.load_settings.items * (phase + 1)
-            logger.info("Starting Phase {} Workload C".format((phase + 1)))
+            logger.info(f"Starting Phase {phase + 1} Workload C")
             self.access(settings=access_settings)
             self.report_kpi(phase=(phase+1), workload="Workload C")
 
             access_settings.workload_path = "workloads/workloada"
-            logger.info("Starting Phase {} Workload A".format((phase + 1)))
+            logger.info(f"Starting Phase {phase + 1} Workload A")
             self.access(settings=access_settings)
             self.report_kpi(phase=(phase+1), workload="Workload A")
 
@@ -1311,11 +1310,11 @@ class CombinedLatencyAndRebalanceCDCTest(RebalanceCDCTest):
         percentile = metric_info.get('percentile')
         operation = metric_info.get('operation')
         if percentile is not None and operation is not None:
-            metric_info['title'] = '{:.1f}th percentile {}{} latency (ms), {}'.format(
+            metric_info["title"] = "{:.1f}th percentile {}{} latency (ms), {}".format(
                 percentile,
                 operation.upper(),
-                ' ({})'.format(stat_group) if (stat_group := metric_info.get('statGroup')) else '',
-                self.test_config.showfast.title
+                f" ({stat_group})" if (stat_group := metric_info.get("statGroup")) else "",
+                self.test_config.showfast.title,
             )
 
         return metric_info
@@ -1562,8 +1561,7 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
                     scan_thr: float = 0,
                     time_elapsed: float = 0):
 
-        title = "Secondary Scan Throughput (scanps) {}" \
-            .format(str(self.test_config.showfast.title).strip())
+        title = f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
         self.reporter.post(
             *self.metrics.scan_throughput(scan_thr,
                                           metric_id_append_str="thr",
@@ -1623,8 +1621,8 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies=percentile_latencies, scan_thr=scan_thr)
         self.validate_num_connections()

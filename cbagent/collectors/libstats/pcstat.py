@@ -9,8 +9,8 @@ class PCStat(RemoteStats):
 
     def get_pcstat(self, partition: str) -> float:
         stdout = self.run(
-            'find {} -regex .*[0-9]+\\.couch\\.[0-9]+ \
-            | xargs pcstat -nohdr -terse 2>/dev/null'.format(partition),
+            f"find {partition} -regex .*[0-9]+\\.couch\\.[0-9]+ \
+            | xargs pcstat -nohdr -terse 2>/dev/null",
         )
         percents = []
         for line in stdout.splitlines():
@@ -33,7 +33,7 @@ class PCStat(RemoteStats):
         }
 
         for purpose, partition in partitions.items():
-            key = "{}_avg_page_cache_rr".format(purpose)
+            key = f"{purpose}_avg_page_cache_rr"
             samples[key] = self.get_pcstat(partition)
 
         return samples

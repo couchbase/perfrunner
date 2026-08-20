@@ -133,8 +133,8 @@ class SGPerfTest(PerfTest):
 
     def update_sync_function(self):
         sync_function = (
-            'function (doc) {{ channel("channel-".concat((Date.now()) % {0}));}}'.
-            format(self.sg_settings.channels)
+            'function (doc) { channel("channel-".concat((Date.now()) % '
+            f"{self.sg_settings.channels}));}}"
         )
         collections_map = self.test_config.collection.collection_map
         if collections_map:
@@ -2719,9 +2719,10 @@ class EndToEndMultiCBLTest(EndToEndTest):
             for target in self.target_iterator:
                 if not collection_map.get(
                         target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
-                    restore_mapping = \
-                        "{0}._default._default={0}.scope-1.collection-1"\
-                        .format(target.bucket)
+                    restore_mapping = (
+                        f"{target.bucket}._default._default={target.bucket}.scope-1.collection-1"
+                    )
+
         archive = self.test_config.restore_settings.backup_storage
         if self.test_config.restore_settings.use_csp_specific_archive:
             archive += f"/{self.cluster_spec.csp.lower()}"
@@ -3167,14 +3168,14 @@ class EndToEndMultiCBLPullRestoreTest(EndToEndMultiCBLTest):
         load_docs = int(self.settings.syncgateway_settings.documents)
         pre_load_stats = self.post_delta_stats()
         pre_load_reads = pre_load_stats['pull_count']
-        logger.info("initial pulled: {}".format(pre_load_reads))
+        logger.info(f"initial pulled: {pre_load_reads}")
 
         sgw_load_time, observed_pulled_load = self.pull_restore(pre_load_reads, load_docs)
         sgw_load_tp = observed_pulled_load / sgw_load_time
 
         post_load_stats = self.post_delta_stats()
         post_load_reads = post_load_stats['pull_count']
-        logger.info("post load pulled: {}".format(post_load_reads))
+        logger.info(f"post load pulled: {post_load_reads}")
 
         self.collect_execution_logs()
         self.report_kpi(sgw_load_tp, 0)

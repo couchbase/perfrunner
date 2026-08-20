@@ -205,8 +205,8 @@ class ClientInstaller:
 
         url = (
             "http://172.23.126.166/builds/latestbuilds/couchbase-tableau-connector/"
-            "{0}/{1}/couchbase-tableau-connector-{0}-{1}.zip"
-        ).format(version, build)
+            f"{version}/{build}/couchbase-tableau-connector-{version}-{build}.zip"
+        )
 
         logger.info(f"Installing Couchbase Tableau Connector using URL: {url}")
         archive = "tableau_connector.zip"

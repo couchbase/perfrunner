@@ -52,9 +52,9 @@ class ErrorTracker:
     def warn(self, method: str, exc: ClientError, count: int = 0):
         message = self.MSG.format(method, exc)
         if isinstance(exc, HTTPError):
-            message += ', response text: {}'.format(exc.response.text)
+            message += f", response text: {exc.response.text}"
         if count:
-            message += ', repeated {} times'.format(count)
+            message += f", repeated {count} times"
         logger.warning(message)
 
     def maybe_warn(self, method: str, exc: ClientError):

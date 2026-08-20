@@ -45,7 +45,7 @@ class Reservoir:
 
     def dump(self, filename: str):
         """Write all measurements to a local CSV file."""
-        logger.info('Writing measurements to {}'.format(filename))
+        logger.info(f"Writing measurements to {filename}")
         with open(filename, 'w') as fh:
             writer = csv.writer(fh)
             for measurement in self.values:

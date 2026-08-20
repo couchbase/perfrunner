@@ -8,8 +8,9 @@ class NumericExctractor:
         self.distance = 39000
         self.output_lines_goal = 1000
         self.total_docs = items
-        self.cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, bucket_name),
-                         password="password")
+        self.cb = Bucket(
+            f"couchbase://{cb_url}/{bucket_name}?operation_timeout=10", password="password"
+        )
         self.output_list = list()
 
     def run(self):
@@ -18,9 +19,9 @@ class NumericExctractor:
         while i<self.output_lines_goal:
             n, min = self.read_number(n)
             max = min + random.randint(999999, 9999999999)
-            self.output_list.append("{}   max".format(max))
-            self.output_list.append("{}   min".format(min))
-            self.output_list.append("{}:{}   max_min".format(max, min))
+            self.output_list.append(f"{max}   max")
+            self.output_list.append(f"{min}   min")
+            self.output_list.append(f"{max}:{min}   max_min")
             i += 1
             print(i)
         self.write_and_exit()
@@ -62,8 +63,8 @@ class TermProcessor:
             for line2 in lines2:
                 line2 = line2.split()[0]
                 if line1 != line2:
-                    direct = "{} {}".format(line1, line2)
-                    reverse = "{} {}".format(line2, line1)
+                    direct = f"{line1} {line2}"
+                    reverse = f"{line2} {line1}"
                     if reverse not in map:
                         map.add(direct)
         results = list(map)
@@ -72,7 +73,7 @@ class TermProcessor:
 
         result_file = open(output_name, "w")
         for line in results:
-            result_file.write("{}\n".format(line))
+            result_file.write(f"{line}\n")
         result_file.close()
 
     def combine_3(self, output_name, file1, file2, file3):
@@ -87,8 +88,8 @@ class TermProcessor:
                 for line3 in lines3:
                     line3 = line3.split()[0]
                     if line2 != line3:
-                        direct = "{} {} {}".format(line1, line2, line3)
-                        reverse = "{} {} {}".format(line1, line3, line2)
+                        direct = f"{line1} {line2} {line3}"
+                        reverse = f"{line1} {line3} {line2}"
                         if reverse not in map:
                             map.add(direct)
         results = list(map)
@@ -96,7 +97,7 @@ class TermProcessor:
         results = results[:self.limit]
         result_file = open(output_name, "w")
         for line in results:
-            result_file.write("{}\n".format(line))
+            result_file.write(f"{line}\n")
         result_file.close()
 
     def get_fuzzies(self, output1_file, output2_file, input_file, size=5):
@@ -127,7 +128,7 @@ class TermProcessor:
             if len(line) == 4:
                 term = line
                 term = line[:2] + '*' + line[3:]
-                of.write("{}\n".format(term))
+                of.write(f"{term}\n")
         of.close()
 
     def get_prefix(self, output_file, input_file):
@@ -140,7 +141,7 @@ class TermProcessor:
         map = list(map)[:self.limit]
         output_file = open(output_file, "w")
         for line in map:
-            output_file.write("{}\n".format(line))
+            output_file.write(f"{line}\n")
         output_file.close()
 
     def get_phrases(self, cb_url, output_file, input_file, docs_total):
@@ -164,17 +165,17 @@ class TermProcessor:
                             if len(terms) > idx + 1:
                                 term_next = terms[idx + 1]
                                 if str.isalpha(term_next):
-                                    result_phrase = "{} {}".format(term, term_next)
+                                    result_phrase = f"{term} {term_next}"
                                     results.add(result_phrase)
             except Exception as e:
-                print(("{}: {}: {}".format(key, len(results), str(e))))
+                print((f"{key}: {len(results)}: {str(e)}"))
 
             if len(results) > self.limit:
                 break
 
         output_file = open(output_file, "w")
         for phrase in results:
-            output_file.write("{}\n".format(phrase))
+            output_file.write(f"{phrase}\n")
 
     def get_dates(self, output_file, input_file):
         lines = self._shuffle_and_cut(input_file, self.limit)
@@ -191,11 +192,12 @@ class TermProcessor:
                 m2 = b
             d1 = random.randint(1, 30)
             d2 = random.randint(1, 30)
-            date1 = "{}-{}-{}".format(y, m1, d1)
-            date2 = "{}-{}-{}".format(y, m2, d2)
+            date1 = f"{y}-{m1}-{d1}"
+            date2 = f"{y}-{m2}-{d2}"
 
-            result = "{} {}:{}".format(line, date1, date2)
-            output_file.write("{}\n".format(result))
+            result = f"{line} {date1}:{date2}"
+            output_file.write(f"{result}\n")
+
 
 '''
 nex = NumericExctractor("172.23.99.211", "bucket-1", 20000000)

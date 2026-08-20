@@ -99,13 +99,13 @@ class N1QLTest(PerfTest):
                         for scope in bucket_scopes.keys():
                             for collection in bucket_scopes[scope].keys():
                                 if bucket_scopes[scope][collection]["access"] == 1:
-                                    query_context = "default:`{}`.`{}`".format(bucket, scope)
-                                    query_target = "{}.`{}`".format(query_context, collection)
+                                    query_context = f"default:`{bucket}`.`{scope}`"
+                                    query_target = f"{query_context}.`{collection}`"
                                     replace_target = "`TARGET_BUCKET`"
                                     query_statement = query_statement.\
                                         replace(replace_target, query_target)
 
-                                    target_scope = "`{}`.`{}`".format(bucket, scope)
+                                    target_scope = f"`{bucket}`.`{scope}`"
                                     replace_target = "`TARGET_SCOPE`"
                                     query_statement = query_statement.\
                                         replace(replace_target, target_scope)
@@ -117,8 +117,7 @@ class N1QLTest(PerfTest):
                         if bucket_replaced:
                             break
                         else:
-                            raise Exception('No access target for bucket: {}'
-                                            .format(bucket))
+                            raise Exception(f"No access target for bucket: {bucket}")
                 elif "RAW_QUERY" in query_statement:
                     replace_target = "RAW_QUERY "
                     query_statement = query_statement.replace(replace_target, "")
@@ -131,9 +130,9 @@ class N1QLTest(PerfTest):
                             for scope in bucket_scopes.keys():
                                 for collection in bucket_scopes[scope].keys():
                                     if bucket_scopes[scope][collection]["access"] == 1:
-                                        query_context = "default:`{}`.`{}`".format(bucket, scope)
-                                        query_target = "{}.`{}`".format(query_context, collection)
-                                        replace_target = "`{}`".format(bucket)
+                                        query_context = f"default:`{bucket}`.`{scope}`"
+                                        query_target = f"{query_context}.`{collection}`"
+                                        replace_target = f"`{bucket}`"
                                         query_statement = query_statement.\
                                             replace(replace_target, query_target)
                                         bucket_replaced = True
@@ -143,15 +142,14 @@ class N1QLTest(PerfTest):
                             if bucket_replaced:
                                 break
                             else:
-                                raise Exception('No access target for bucket: {}'
-                                                .format(bucket))
-                logger.info("Grabbing plan for query: {}".format(query_statement))
+                                raise Exception(f"No access target for bucket: {bucket}")
+                logger.info(f"Grabbing plan for query: {query_statement}")
                 plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
                                                         query_context)
             else:
                 plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query['statement'])
 
-            with open('query_plan_{}.json'.format(i), 'w') as fh:
+            with open(f"query_plan_{i}.json", "w") as fh:
                 fh.write(pretty_dict(plan))
 
     def enable_stats(self):
@@ -321,7 +319,7 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
                             if scope in query_statement:
                                 for collection in bucket_scopes[scope].keys():
                                     if collection in query_statement:
-                                        query_context = "default:`{}`.`{}`".format(bucket, scope)
+                                        query_context = f"default:`{bucket}`.`{scope}`"
                                         bucket_replaced = True
                                         break
                                 if bucket_replaced:
@@ -329,14 +327,14 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
                         if bucket_replaced:
                             break
                         else:
-                            raise Exception('No access target for bucket: {}'.format(bucket))
-                logger.info("Grabbing plan for query: {}".format(query_statement))
+                            raise Exception(f"No access target for bucket: {bucket}")
+                logger.info(f"Grabbing plan for query: {query_statement}")
                 plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement,
                                                         query_context)
             else:
                 plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement)
 
-            with open('query_plan_{}.json'.format(i), 'w') as fh:
+            with open(f"query_plan_{i}.json", "w") as fh:
                 fh.write(pretty_dict(plan))
 
     def access_bg(self, *args):
@@ -986,14 +984,18 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
     def rebalance(self, initial_nodes):
         self.access_n1ql_bg()
 
-        logger.info('Sleeping for {} seconds before taking actions'
-                    .format(self.test_config.rebalance_settings.start_after))
+        logger.info(
+            f"Sleeping for {self.test_config.rebalance_settings.start_after} seconds "
+            "before taking actions"
+        )
         time.sleep(self.test_config.rebalance_settings.start_after)
         total_requests_before = self.get_n1ql_request_count_until_now()
         rebalance_time = self._rebalance(initial_nodes)
         total_requests_after = self.get_n1ql_request_count_until_now()
-        logger.info('Sleeping for {} seconds before finishing'
-                    .format(self.test_config.rebalance_settings.stop_after))
+        logger.info(
+            f"Sleeping for {self.test_config.rebalance_settings.stop_after} seconds "
+            "before finishing"
+        )
         time.sleep(self.test_config.rebalance_settings.stop_after)
 
         total_requests = total_requests_after - total_requests_before
@@ -1175,17 +1177,17 @@ class N1QLBulkTest(N1QLTest):
                         for collection in bucket_scopes[scope].keys():
                             if bucket_scopes[scope][collection]["access"] == 1 \
                                     and bucket_scopes[scope][collection]["load"] == 1:
-                                replace_target = "default:`{}`.`{}`.`{}`"\
-                                    .format(bucket, scope, collection)
-                                statement_with_coll = statement.\
-                                    replace("`{}`".format(bucket), replace_target)
+                                replace_target = f"default:`{bucket}`.`{scope}`.`{collection}`"
+                                statement_with_coll = statement.replace(
+                                    f"`{bucket}`", replace_target
+                                )
                                 statement_list.append(statement_with_coll)
         else:
             statement_list.append(statement)
         if not statement_list:
             raise Exception('No statements to execute')
         for statement in statement_list:
-            print("executing {}".format(statement))
+            print(f"executing {statement}")
             self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 
     def _report_kpi(self, time_elapsed):
@@ -1919,9 +1921,10 @@ class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
             for target in self.target_iterator:
                 if not collection_map.get(
                         target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
-                    restore_mapping = \
-                        "{0}._default._default={0}.scope-1.collection-1"\
-                        .format(target.bucket)
+                    restore_mapping = (
+                        f"{target.bucket}._default._default={target.bucket}.scope-1.collection-1"
+                    )
+
         archive = self.test_config.restore_settings.backup_storage
         if self.test_config.restore_settings.use_csp_specific_archive:
             archive += f"/{self.cluster_spec.csp.lower()}"
@@ -2355,14 +2358,11 @@ class JoinEnumTest(N1QLTest):
     @with_stats
     @timeit
     def run_query_suite(self, suite: str):
-       suite_file = f'{self.base_path.replace("file://", "")}{suite}.sql'
-       logger.info("Executing {}...".format(suite_file))
-       local.cbq(
-           node=self.query_nodes[0],
-           cluster_spec=self.cluster_spec,
-           script=suite_file,
-           port=8093
-       )
+        suite_file = f"{self.base_path.replace('file://', '')}{suite}.sql"
+        logger.info(f"Executing {suite_file}...")
+        local.cbq(
+            node=self.query_nodes[0], cluster_spec=self.cluster_spec, script=suite_file, port=8093
+        )
 
     def run_all_query_suites(self):
         for suite in ["60Joins", "Focus", "RST.HashJoins", "RST.NLJoins", "RSTU.HashJoins"]:

@@ -19,7 +19,7 @@ for line in dataset:
                       data=json.dumps(full_query),
                       auth=('Administrator', 'password'))
     if json.loads(r.text)["total_hits"] > 10:
-        result_dataset.append("{} {}".format(words[0], words[1]))
+        result_dataset.append(f"{words[0]} {words[1]}")
         if len(result_dataset) > 2000:
             break
         else:

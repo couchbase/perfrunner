@@ -16,7 +16,7 @@ class AnsibleRunner:
 
         inventory_filename = self.provisiong_config
 
-        playbook_filename = "{}/{}".format(PLAYBOOKS_HOME, script_name)
+        playbook_filename = f"{PLAYBOOKS_HOME}/{script_name}"
 
         runner = Runner(
             inventory_filename=inventory_filename,

@@ -52,7 +52,7 @@ class YCSBTest(PerfTest):
         )
         end_time = time.time()
         self.cb_time = round(end_time - start_time)
-        logger.info("cbcollect_info finished and it took: {} seconds".format(self.cb_time))
+        logger.info(f"cbcollect_info finished and it took: {self.cb_time} seconds")
         self.worker_manager.wait_for_bg_tasks()
 
     def run(self):
@@ -134,7 +134,7 @@ class YCSBTest(PerfTest):
                             and type in key \
                             and "CLEANUP" not in key \
                             and "FAILED" not in key:
-                        logger.info("{}: {}".format(key, latency_dic[key]))
+                        logger.info(f"{key}: {latency_dic[key]}")
 
     def log_percentiles(self):
         logger.info("------------------")
@@ -169,14 +169,14 @@ class YCSBDurabilityThroughputTest(YCSBTest):
 
         for key, value in self.metrics.ycsb_get_max_latency().items():
             max_latency, _, _ = self.metrics.ycsb_slo_max_latency(key, value)
-            logger.info("Max {} Latency: {}".format(key, max_latency))
+            logger.info(f"Max {key} Latency: {max_latency}")
 
         for key, value in self.metrics.ycsb_get_failed_ops().items():
             failures, _, _ = self.metrics.ycsb_failed_ops(key, value)
-            logger.info("{} Failures: {}".format(key, failures))
+            logger.info(f"{key} Failures: {failures}")
 
         gcs, _, _ = self.metrics.ycsb_gcs()
-        logger.info("Garbage Collections: {}".format(gcs))
+        logger.info(f"Garbage Collections: {gcs}")
 
         self.reporter.post(
             *self.metrics.ycsb_durability_throughput()

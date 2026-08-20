@@ -15,8 +15,7 @@ class IOStat(RemoteStats):
     )
 
     def get_device_name(self, path: str) -> Tuple[Optional[str], bool]:
-        stdout = self.run("df '{}' | head -2 | tail -1".format(path),
-                          quiet=True)
+        stdout = self.run(f"df '{path}' | head -2 | tail -1", quiet=True)
         if not stdout.return_code:
             name = stdout.split()[0]
             if name.startswith('/dev/mapper/') or name.startswith('/dev/md'):
@@ -28,9 +27,7 @@ class IOStat(RemoteStats):
         return None, None
 
     def get_iostat(self, device: str) -> Dict[str, str]:
-        stdout = self.run(
-            "iostat -dkxyN 1 1 {} | grep -v '^$' | tail -n 2".format(device)
-        )
+        stdout = self.run(f"iostat -dkxyN 1 1 {device} | grep -v '^$' | tail -n 2")
         stdout = stdout.split()
         header = stdout[:len(stdout) // 2]
         data = dict()
@@ -55,7 +52,7 @@ class IOStat(RemoteStats):
             if device is not None:
                 stats = self.get_iostat(device)
                 for metric, column, multiplier in metrics:
-                    key = "{}_{}".format(purpose, metric)
+                    key = f"{purpose}_{metric}"
                     samples[key] = float(stats[column]) * multiplier
 
         return samples
@@ -67,16 +64,16 @@ class DiskStats(IOStat):
         device_name = device.split('/')[-1]
 
         # https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
-        stdout = self.run("grep '{}' /proc/diskstats".format(device_name))
+        stdout = self.run(f"grep '{device_name}' /proc/diskstats")
         stats = stdout.split()
         sectors_read, sectors_written = int(stats[5]), int(stats[9])
 
         # https://www.kernel.org/doc/Documentation/block/queue-sysfs.txt
         if 'nvme' in device and 'p1' not in device and 'p2' not in device:
-            stdout = self.run('cat /sys/block/{}/queue/hw_sector_size'.format(device_name))
+            stdout = self.run(f"cat /sys/block/{device_name}/queue/hw_sector_size")
         else:
-            parent = self.run('lsblk -no pkname {}'.format(device)).strip()
-            stdout = self.run('cat /sys/block/{}/queue/hw_sector_size'.format(parent))
+            parent = self.run(f"lsblk -no pkname {device}").strip()
+            stdout = self.run(f"cat /sys/block/{parent}/queue/hw_sector_size")
         sector_size = int(stdout)
 
         return sectors_read * sector_size, sectors_written * sector_size

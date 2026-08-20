@@ -163,9 +163,9 @@ class EventingConsumerStats(EventingPerNodeStats):
                 counter = 0
                 # run top command in batches of 20 pids as per top command limitation
                 for pid in pids.values():
-                    grep_text_ps += '^[[:space:]]*{}\\|'.format(pid)
-                    pid_list_top_str += '{},'.format(pid)
-                    grep_text_top_str += '{}\\|'.format(pid)
+                    grep_text_ps += f"^[[:space:]]*{pid}\\|"
+                    pid_list_top_str += f"{pid},"
+                    grep_text_top_str += f"{pid}\\|"
                     counter += 1
                     if counter == 20:
                         counter = 0

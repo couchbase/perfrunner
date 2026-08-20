@@ -92,13 +92,13 @@ class RemoteKubernetes(Remote):
         return self.run_subprocess(params, split_lines=split_lines, max_attempts=max_attempts)
 
     def kubectl_exec(self, pod, params):
-        return self.k8s_client("exec {} -- bash -c {}".format(pod, params))
+        return self.k8s_client(f"exec {pod} -- bash -c {params}")
 
     def create_namespace(self, name):
-        self.k8s_client("create namespace {}".format(name))
+        self.k8s_client(f"create namespace {name}")
 
     def delete_namespace(self, name):
-        self.k8s_client("delete namespace {}".format(name))
+        self.k8s_client(f"delete namespace {name}")
 
     def get_pods(
         self,
@@ -137,10 +137,7 @@ class RemoteKubernetes(Remote):
         }
 
     def get_services(self, namespace="default"):
-        raw_svcs = self.k8s_client(
-            "get svc -o json -n {}".format(namespace),
-            split_lines=False
-        )
+        raw_svcs = self.k8s_client(f"get svc -o json -n {namespace}", split_lines=False)
         svcs = json.loads(raw_svcs.decode('utf8'))
         return svcs["items"]
 
@@ -176,7 +173,7 @@ class RemoteKubernetes(Remote):
 
     def delete_storage_class(self, storage_class, ignore_errors=True):
         try:
-            self.k8s_client("delete sc {}".format(storage_class))
+            self.k8s_client(f"delete sc {storage_class}")
         except Exception as ex:
             if not ignore_errors:
                 raise ex
@@ -198,21 +195,23 @@ class RemoteKubernetes(Remote):
 
     def create_secret(self, secret_name, secret_type, file):
         if secret_type == 'docker':
-            cmd = "create secret generic {} " \
-                  "--from-file=.dockerconfigjson={} " \
-                  "--type=kubernetes.io/dockerconfigjson".format(secret_name, file)
+            cmd = (
+                f"create secret generic {secret_name} "
+                f"--from-file=.dockerconfigjson={file} "
+                "--type=kubernetes.io/dockerconfigjson"
+            )
         elif secret_type == 'generic':
-            cmd = "create secret generic {} " \
-                  "--from-file={}".format(secret_name, file)
+            cmd = f"create secret generic {secret_name} --from-file={file}"
         elif secret_type == 'tls':
             cert, key = file
             cmd = f"create secret tls {secret_name} --cert={cert} --key={key}"
         elif secret_type == 'docker-registry':
-            cmd = "create secret docker-registry {} " \
-                  "--docker-server=ghcr.io " \
-                  "--docker-username={} " \
-                  "--docker-password={} " \
-                  .format(secret_name, self._git_username, self._git_access_token)
+            cmd = (
+                f"create secret docker-registry {secret_name} "
+                "--docker-server=ghcr.io "
+                f"--docker-username={self._git_username} "
+                f"--docker-password={self._git_access_token} "
+            )
         else:
             raise Exception('unknown secret type')
         self.k8s_client(cmd)
@@ -236,7 +235,7 @@ class RemoteKubernetes(Remote):
 
     def delete_secret(self, secret_name, ignore_errors=True):
         try:
-            self.k8s_client("delete secret {}".format(secret_name))
+            self.k8s_client(f"delete secret {secret_name}")
         except Exception as ex:
             if not ignore_errors:
                 raise ex
@@ -282,16 +281,14 @@ class RemoteKubernetes(Remote):
 
     def get_backup(self, backup_name):
         raw_backup = self.k8s_client(
-            "get couchbasebackup {} -o json".format(backup_name),
-            split_lines=False)
+            f"get couchbasebackup {backup_name} -o json", split_lines=False
+        )
         backup = json.loads(raw_backup.decode('utf8'))
         return backup
 
     def get_restore(self, restore_name):
         raw_restore = self.k8s_client(
-            "get couchbasebackuprestore {} -o json".format(restore_name),
-            split_lines=False,
-            max_attempts=1
+            f"get couchbasebackuprestore {restore_name} -o json", split_lines=False, max_attempts=1
         )
         backup = json.loads(raw_restore.decode('utf8'))
         return backup
@@ -530,8 +527,8 @@ class RemoteKubernetes(Remote):
                         mapped_port = port[1]
                     if port[0] == '15672':
                         ui_port = port[1]
-        broker_ui_url = "amqp://{}:{}@{}:{}".format(username, password, ip, ui_port)
-        broker_url = "amqp://{}:{}@{}:{}/broker".format(username, password, ip, mapped_port)
+        broker_ui_url = f"amqp://{username}:{password}@{ip}:{ui_port}"
+        broker_url = f"amqp://{username}:{password}@{ip}:{mapped_port}/broker"
         return broker_url, broker_ui_url
 
     def _get_broker_route_urls(self, username: str, password: str) -> tuple[str, str]:
@@ -553,11 +550,12 @@ class RemoteKubernetes(Remote):
         username_password = raw_url.split("//")[1].split("@")[0]
         url = raw_url.split("//")[1].split("@")[1]
         with open(rabbitmq_config_path) as data:
-            requests.post('http://{}/api/definitions'.format(url),
-                          headers={'Content-Type': 'application/json'},
-                          data=data,
-                          auth=(username_password.split(":")[0],
-                                username_password.split(":")[1]))
+            requests.post(
+                f"http://{url}/api/definitions",
+                headers={"Content-Type": "application/json"},
+                data=data,
+                auth=(username_password.split(":")[0], username_password.split(":")[1]),
+            )
 
     def start_memcached(self, mem_limit: int = 20000, port: int = 11211):
         # Deploy memcached and its headless service
@@ -590,10 +588,10 @@ class RemoteKubernetes(Remote):
                         cb_version += ""
                     else:
                         cb_version += major_version
-                    original_string = '<{0}.version>*.*.*<\\/{0}.version>'.format(cb_version)
-                    new_string = '<{0}.version>{1}<\\/{0}.version>'.format(cb_version, sdk_version)
-                    cmd = "sed -i 's/{}/{}/g' pom.xml".format(original_string, new_string)
-                    self.kubectl_exec(worker_name, 'cd YCSB; {}'.format(cmd))
+                    original_string = f"<{cb_version}.version>*.*.*<\\/{cb_version}.version>"
+                    new_string = f"<{cb_version}.version>{sdk_version}<\\/{cb_version}.version>"
+                    cmd = f"sed -i 's/{original_string}/{new_string}/g' pom.xml"
+                    self.kubectl_exec(worker_name, f"cd YCSB; {cmd}")
 
     def build_ycsb(self, worker_home: str, ycsb_client: str):
         ret = self.k8s_client("get pods")
@@ -667,8 +665,7 @@ class RemoteKubernetes(Remote):
     def get_celery_logs(self, worker_home: str):
         logger.info('Collecting remote Celery logs')
         for worker in self.get_worker_pods():
-            cmd = "cp default/{0}:worker_{0}.log celery/worker_{0}.log" \
-                .format(worker)
+            cmd = f"cp default/{worker}:worker_{worker}.log celery/worker_{worker}.log"
             self.k8s_client(cmd)
 
     def get_export_files(self, worker_home: str):
@@ -876,16 +873,16 @@ class RemoteKubernetes(Remote):
                             worker_name,
                             worker_hostname,
                             broker_url):
-        cmd = 'C_FORCE_ROOT=1 ' \
-              'PYTHONOPTIMIZE=1 ' \
-              'PYTHONWARNINGS=ignore ' \
-              'WORKER_TYPE=remote ' \
-              'BROKER_URL={1} ' \
-              'nohup env/bin/celery -A perfrunner.helpers.worker worker' \
-              ' -l INFO -Q {0} -n {0} --discard &>worker_{2}.log &' \
-            .format(worker_hostname,
-                    broker_url,
-                    worker_name)
+        cmd = (
+            "C_FORCE_ROOT=1 "
+            "PYTHONOPTIMIZE=1 "
+            "PYTHONWARNINGS=ignore "
+            "WORKER_TYPE=remote "
+            f"BROKER_URL={broker_url} "
+            "nohup env/bin/celery -A perfrunner.helpers.worker worker"
+            f" -l INFO -Q {worker_hostname} -n {worker_hostname}"
+            f" --discard &>worker_{worker_name}.log &"
+        )
         self.kubectl_exec(worker_name, cmd)
 
     def terminate_client_pods(self, worker_path):

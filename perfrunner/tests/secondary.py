@@ -143,7 +143,7 @@ class SecondaryIndexTest(PerfTest):
         return username, password
 
     def remove_statsfile(self):
-        rmfile = "rm -f {}".format(self.SECONDARY_STATS_FILE)
+        rmfile = f"rm -f {self.SECONDARY_STATS_FILE}"
         status = subprocess.call(rmfile, shell=True)
         if status != 0:
             raise Exception('existing 2i latency stats file could not be removed')
@@ -166,9 +166,10 @@ class SecondaryIndexTest(PerfTest):
             for target in self.target_iterator:
                 if not collection_map.get(
                         target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
-                    restore_mapping = \
-                        "{0}._default._default={0}.scope-1.collection-1"\
-                        .format(target.bucket)
+                    restore_mapping = (
+                        f"{target.bucket}._default._default={target.bucket}.scope-1.collection-1"
+                    )
+
         archive = self.test_config.restore_settings.backup_storage
         if self.test_config.restore_settings.use_csp_specific_archive:
             archive += f"/{self.cluster_spec.csp.lower()}"
@@ -204,15 +205,13 @@ class SecondaryIndexTest(PerfTest):
                         if isinstance(index_config, dict):
                             index_def = index_config.pop("field")
                             for config, value in index_config.items():
-                                configs = configs + '"{}":{},'.format(config, value)
+                                configs = configs + f'"{config}":{value},'
 
                             if index_config.get("num_partition", 0) > 1:
                                 if "meta()" in index_def:
-                                    partition_keys = " --scheme KEY" \
-                                        " --partitionKeys {} ".format(index_def)
+                                    partition_keys = f" --scheme KEY --partitionKeys {index_def} "
                                 else:
-                                    partition_keys = " --scheme KEY" \
-                                                     " --partitionKeys `{}` ".format(index_def)
+                                    partition_keys = f" --scheme KEY --partitionKeys `{index_def}` "
                         else:
                             index_def = index_config
 
@@ -223,40 +222,34 @@ class SecondaryIndexTest(PerfTest):
                             fields = index_def
                         fields_list = fields.split(",")
 
-                        options = "-type create " \
-                                  "-bucket {bucket} " \
-                                  "-scope {scope} " \
-                                  "-collection {collection} ". \
-                            format(bucket=bucket_name,
-                                   scope=scope_name,
-                                   collection=collection_name)
+                        options = (
+                            "-type create "
+                            f"-bucket {bucket_name} "
+                            f"-scope {scope_name} "
+                            f"-collection {collection_name} "
+                        )
 
                         options += "-fields "
                         for field in fields_list:
                             if "meta()" in field:
-                                options += "{},".format(field)
+                                options += f"{field},"
                             else:
-                                options += "`{}`,".format(field)
+                                options += f"`{field}`,"
 
                         options = options.rstrip(",")
                         options = options + " "
 
                         if where is not None:
-                            options = '{options} -where "{where_clause}"' \
-                                .format(options=options, where_clause=where)
+                            options = f'{options} -where "{where}"'
 
                         if storage == 'memdb' or storage == 'plasma':
-                            options = '{options} -using {db}'.format(options=options,
-                                                                     db=storage)
+                            options = f"{options} -using {storage}"
 
                         if partition_keys:
-                            options = "{options} {partition_keys}"\
-                                .format(options=options, partition_keys=partition_keys)
+                            options = f"{options} {partition_keys}"
 
-                        options = "{options} -index {index} " \
-                            .format(options=options, index=index)
-
-                        options = options + '-with {{{}"defer_build":true}} \n'.format(configs)
+                        options = f"{options} -index {index} "
+                        options = options + f'-with {{{configs}"defer_build":true}} \n'
                         options = options.rstrip(',')
                         all_options = all_options + options
 
@@ -267,15 +260,13 @@ class SecondaryIndexTest(PerfTest):
         for bucket_name, scope_map in indexes.items():
             for scope_name, collection_map in scope_map.items():
                 for collection_name, index_map in collection_map.items():
-                    build_indexes = ",".join(["{}:{}:{}:{}".format(
-                        bucket_name,
-                        scope_name,
-                        collection_name,
-                        index_name)
-                        for index_name in index_map.keys()])
-                    options = "-type build " \
-                              "-indexes {build_indexes} \n" \
-                        .format(build_indexes=build_indexes)
+                    build_indexes = ",".join(
+                        [
+                            f"{bucket_name}:{scope_name}:{collection_name}:{index_name}"
+                            for index_name in index_map.keys()
+                        ]
+                    )
+                    options = f"-type build -indexes {build_indexes} \n"
                     all_options = all_options + options
         return all_options
 
@@ -388,7 +379,7 @@ class SecondaryIndexTest(PerfTest):
                                                    self.worker_manager.WORKER_HOME,
                                                    run_in_background, is_ssl=is_ssl)
 
-        logger.info("scan status {}".format(status))
+        logger.info(f"scan status {status}")
         if status != 0:
             raise Exception('Scan workload could not be applied: ' + str(status))
         else:
@@ -410,8 +401,8 @@ class SecondaryIndexTest(PerfTest):
 
         total_recs_in_mem = total_num_rec_allocs - total_num_rec_frees
         total_recs_on_disk = total_num_rec_swapout - total_num_rec_swapin
-        logger.info("Total Recs in Mem {}".format(total_recs_in_mem))
-        logger.info("Total Recs in Disk {}".format(total_recs_on_disk))
+        logger.info(f"Total Recs in Mem {total_recs_in_mem}")
+        logger.info(f"Total Recs in Disk {total_recs_on_disk}")
         avg_rr = total_recs_in_mem / (total_recs_on_disk + total_recs_in_mem)
         return avg_rr
 
@@ -435,8 +426,8 @@ class SecondaryIndexTest(PerfTest):
 
         total_recs_in_mem = total_num_rec_allocs - total_num_rec_frees + total_num_rec_compressed
         total_recs_on_disk = total_num_rec_swapout - total_num_rec_swapin
-        logger.info("Total Recs in Mem {}".format(total_recs_in_mem))
-        logger.info("Total Recs in Disk {}".format(total_recs_on_disk))
+        logger.info(f"Total Recs in Mem {total_recs_in_mem}")
+        logger.info(f"Total Recs in Disk {total_recs_on_disk}")
         avg_rr = total_recs_in_mem / (total_recs_on_disk + total_recs_in_mem)
         return avg_rr
 
@@ -463,23 +454,23 @@ class SecondaryIndexTest(PerfTest):
             return
 
         if text:
-            logger.info("{}".format(text))
+            logger.info(f"{text}")
 
         disk_usage = self.remote.get_disk_usage(self.index_nodes[0],
                                                 self.cluster_spec.index_path)
-        logger.info("Disk usage:\n{}".format(disk_usage))
+        logger.info(f"Disk usage:\n{disk_usage}")
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
-        logger.info("Index storage stats:\n{}".format(storage_stats.text))
+        logger.info(f"Index storage stats:\n{storage_stats.text}")
         if heap_profile:
             heap_profile = get_indexer_heap_profile(self.index_nodes[0],
                                                     self.rest.rest_username,
                                                     self.rest.rest_password)
-            logger.info("Indexer heap profile:\n{}".format(heap_profile))
+            logger.info(f"Indexer heap profile:\n{heap_profile}")
 
         if self.storage == 'plasma':
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
-            logger.info("Index storage stats mm:\n{}".format(stats))
+            logger.info(f"Index storage stats mm:\n{stats}")
 
         return self.remote.get_disk_usage(self.index_nodes[0],
                                           self.cluster_spec.index_path,
@@ -503,7 +494,7 @@ class SecondaryIndexTest(PerfTest):
                 (self.test_config.access_settings.items - num_hot_items)
         end = start + num_hot_items
 
-        logger.info("new start {} new end {}".format(start, end))
+        logger.info(f"new start {start} new end {end}")
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
@@ -511,7 +502,7 @@ class SecondaryIndexTest(PerfTest):
             json_file.write(json.dumps(data))
 
     def read_scanresults(self):
-        with open('{}'.format(self.configfile)) as config_file:
+        with open(f"{self.configfile}") as config_file:
             configdata = json.load(config_file)
         numscans = 0
         for scanspec in configdata['ScanSpecs']:
@@ -537,7 +528,7 @@ class SecondaryIndexTest(PerfTest):
             elif statement.split()[0].upper() == 'BUILD':
                 build_statements.append(statement)
             else:
-                logger.info("Something is wrong with {}".format(statement))
+                logger.info(f"Something is wrong with {statement}")
 
         for statement in create_statements:
             logger.info('Creating index: ' + statement)
@@ -669,21 +660,21 @@ class CloudInitialandIncrementalSecondaryIndexTest(InitialandIncrementalSecondar
             return
 
         if text:
-            logger.info("{}".format(text))
+            logger.info(f"{text}")
 
         disk_usage = self.remote.get_disk_usage(self.index_nodes[0],
                                                 self.cluster_spec.index_path)
-        logger.info("Disk usage:\n{}".format(disk_usage))
+        logger.info(f"Disk usage:\n{disk_usage}")
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
-        logger.info("Index storage stats:\n{}".format(storage_stats.text))
+        logger.info(f"Index storage stats:\n{storage_stats.text}")
 
         heap_profile = self.remote.get_indexer_heap_profile(self.index_nodes[0])
-        logger.info("Indexer heap profile:\n{}".format(heap_profile))
+        logger.info(f"Indexer heap profile:\n{heap_profile}")
 
         if self.storage == 'plasma':
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
-            logger.info("Index storage stats mm:\n{}".format(stats))
+            logger.info(f"Index storage stats mm:\n{stats}")
 
         return self.remote.get_disk_usage(self.index_nodes[0],
                                           self.cluster_spec.index_path,
@@ -792,9 +783,9 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
                                                       self.bucket,
                                                       list(self.indexes.keys()),
                                                       numitems)
-            self.disk_usage[i] = \
-                self.print_index_disk_usage(
-                    text="After running incremental load for {} iteration/s =>\n".format(i))
+            self.disk_usage[i] = self.print_index_disk_usage(
+                text=f"After running incremental load for {i} iteration/s =>\n"
+            )
             self.memory_usage[i] = self.remote.get_indexer_rss(self.index_nodes[0])
             time.sleep(30)
 
@@ -895,8 +886,9 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
                                                     name=title)
                 )
         else:
-            title = "Secondary Scan Throughput (scanps) {}" \
-                .format(str(self.test_config.showfast.title).strip())
+            title = (
+                f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
+            )
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr,
                                               metric_id_append_str="thr",
@@ -947,8 +939,8 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf", is_ssl=self.is_ssl)
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
@@ -974,8 +966,9 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
                                                     name=title)
                 )
         else:
-            title = "Secondary Scan Throughput (scanps) {}" \
-                .format(str(self.test_config.showfast.title).strip())
+            title = (
+                f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
+            )
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr,
                                               metric_id_append_str="thr",
@@ -998,17 +991,17 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
 
         disk_usage = self.remote.get_disk_usage(self.index_nodes[0],
                                                 self.cluster_spec.index_path)
-        logger.info("Disk usage:\n{}".format(disk_usage))
+        logger.info(f"Disk usage:\n{disk_usage}")
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
-        logger.info("Index storage stats:\n{}".format(storage_stats.text))
+        logger.info(f"Index storage stats:\n{storage_stats.text}")
 
         heap_profile = self.remote.get_indexer_heap_profile(self.index_nodes[0])
-        logger.info("Indexer heap profile:\n{}".format(heap_profile))
+        logger.info(f"Indexer heap profile:\n{heap_profile}")
 
         if self.storage == 'plasma':
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
-            logger.info("Index storage stats mm:\n{}".format(stats))
+            logger.info(f"Index storage stats mm:\n{stats}")
 
         return self.remote.get_disk_usage(self.index_nodes[0],
                                           self.cluster_spec.index_path,
@@ -1033,8 +1026,7 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
                                                      self.test_config.gsi_settings.settings)
                         cluster_settings = self.rest.get_index_settings(index_node)
                         cluster_settings = pretty_dict(self.rest.get_index_settings(index_node))
-                        logger.info('Index settings: {}'.format(cluster_settings))
-
+                        logger.info(f"Index settings: {cluster_settings}")
 
     def run(self):
         self.download_certificate()
@@ -1054,8 +1046,8 @@ class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
         self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
 
@@ -1077,8 +1069,8 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
@@ -1114,8 +1106,8 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
@@ -1143,8 +1135,8 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
@@ -1162,7 +1154,7 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
         self.scan_thr = []
 
     def get_config(self):
-        with open('{}'.format(self.configfile)) as config_file:
+        with open(f"{self.configfile}") as config_file:
             config_data = json.load(config_file)
         return config_data['ScanSpecs'][0]['NInterval'], config_data['Concurrency']
 
@@ -1188,7 +1180,7 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
 
     def calc_throughput(self) -> float:
         """Calculate average throughput from list of throughput's."""
-        logger.info('Throughputs collected over hot workloads: {}'.format(self.scan_thr))
+        logger.info(f"Throughputs collected over hot workloads: {self.scan_thr}")
         return sum(self.scan_thr) / len(self.scan_thr)
 
     @with_stats
@@ -1269,8 +1261,8 @@ class ScanOverlapWorkloadTest(SecondaryIndexingScanTest):
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
@@ -1433,8 +1425,8 @@ class InitialIncrementalScanTest(InitialandIncrementalDGMSecondaryIndexTest):
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.report_kpi(scan_thr)
         self.validate_num_connections()
 
@@ -1508,7 +1500,7 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
         for configfile in self.configfiles:
             self.apply_scanworkload_configfile(configfile)
             diff = self.read_duration_from_results()
-            logger.info("Config File: {} - Time taken: {}".format(configfile, diff))
+            logger.info(f"Config File: {configfile} - Time taken: {diff}")
             total_time += diff
         return total_time
 
@@ -1526,10 +1518,10 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
         self.access_bg()
 
         multifilter_time = self.apply_scan_multifilter_workload()
-        logger.info("Multifilter time taken: {}".format(multifilter_time))
+        logger.info(f"Multifilter time taken: {multifilter_time}")
 
         independent_time = self.apply_scanworkloads()
-        logger.info("Independent filters time taken: {}".format(independent_time))
+        logger.info(f"Independent filters time taken: {independent_time}")
 
         self.report_kpi(multifilter_time, independent_time)
 
@@ -1554,7 +1546,7 @@ class CreateBackupandRestoreIndexTest(SecondaryIndexTest):
     def run_create_index(self, create_options):
         status, error = run_cbindex(self.local_path_to_cbindex, create_options, self.index_nodes)
         if status != 0:
-            raise Exception('Cbindex command failed with {}'.format(error))
+            raise Exception(f"Cbindex command failed with {error}")
         self.monitor.wait_for_secindex_init_build_collections(self.index_nodes[0],
                                                               self.indexes,
                                                               recovery=False,
@@ -1592,8 +1584,7 @@ class CreateBackupandRestoreIndexTest(SecondaryIndexTest):
         self.report_kpi(time_elapsed, "Create")
 
         for server in self.rest.get_active_nodes_by_role(self.master_node, 'index'):
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
 
         time_to_backup = self.backup()
         self.drop_all_indexes()
@@ -1640,7 +1631,7 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         self.update_category = True
 
     def get_config(self):
-        with open('{}'.format(self.configfile)) as config_file:
+        with open(f"{self.configfile}") as config_file:
             config_data = json.load(config_file)
         return config_data['ScanSpecs'][0]['NInterval'], config_data['Concurrency']
 
@@ -1653,8 +1644,7 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
                 duration += int(row[2].split(":")[1])
                 lines += 1
         interval, concurrency = self.get_config()
-        logger.info("interval: {}, concurrency: {}, duration: {}".format(interval, concurrency,
-                                                                         duration))
+        logger.info(f"interval: {interval}, concurrency: {concurrency}, duration: {duration}")
         return lines * interval / (duration / 1000000000 / concurrency)
 
     def pre_rebalance(self):
@@ -1671,8 +1661,7 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         build_time = self.build_secondaryindex()
         logger.info(f"indexer build completed in {build_time}")
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.print_index_disk_usage()
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
@@ -1703,7 +1692,7 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         kill_process("cbindexperf")
         scan_thr = self.get_throughput()
         percentile_latencies = self.calculate_scan_latencies()
-        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr)
         self.validate_num_connections()
@@ -1721,8 +1710,9 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         if rebalance_time:
             self.reporter.post(*self.metrics.rebalance_time(self.rebalance_time))
         else:
-            title = "Secondary Scan Throughput (scanps) {}" \
-                .format(str(self.test_config.showfast.title).strip())
+            title = (
+                f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
+            )
             self.reporter.post(
                 *self.metrics.scan_throughput(
                     scan_thr,
@@ -1778,8 +1768,8 @@ class SecondaryIndexingThroughputCompactAllTest(SecondaryIndexTest):
         self.set_plasma_diag()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
@@ -1811,8 +1801,8 @@ class SecondaryIndexingThroughputCompressAllTest(SecondaryIndexTest):
         self.set_plasma_diag()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
@@ -1844,8 +1834,8 @@ class SecondaryIndexingThroughputEvictAllTest(SecondaryIndexTest):
         self.set_plasma_diag()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
@@ -1871,7 +1861,7 @@ class InitialIncrementalMovingScanLatencyTestColdScans(InitialIncrementalMovingS
                 (self.test_config.access_settings.items - num_hot_items)
         end = (start + num_hot_items)
 
-        logger.info("new start {} new end {}".format(start, end))
+        logger.info(f"new start {start} new end {end}")
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
@@ -1919,7 +1909,7 @@ class InitialIncrementalMovingScanLatencyTestMixedScans \
                 (self.test_config.access_settings.items - num_hot_items)
         end = (start + num_hot_items)
 
-        logger.info("new start {} new end {}".format(start, end))
+        logger.info(f"new start {start} new end {end}")
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
@@ -1947,7 +1937,7 @@ class MovingScanThroughputTestColdScan(InitialIncrementalMovingScanThroughputTes
                 (self.test_config.access_settings.items - num_hot_items)
         end = (start + num_hot_items)
 
-        logger.info("new start {} new end {}".format(start, end))
+        logger.info(f"new start {start} new end {end}")
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
@@ -1991,7 +1981,7 @@ class MovingScanThroughputTestMixScan(MovingScanThroughputTestColdScan):
                 (self.test_config.access_settings.items - num_hot_items)
         end = (start + num_hot_items)
 
-        logger.info("new start {} new end {}".format(start, end))
+        logger.info(f"new start {start} new end {end}")
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
@@ -2044,8 +2034,9 @@ class SecondaryIndexingThroughputNoAccessTest(SecondaryIndexingThroughputTest):
                                                     name=title)
                 )
         else:
-            title = "Secondary Scan Throughput (scanps) {}" \
-                .format(str(self.test_config.showfast.title).strip())
+            title = (
+                f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
+            )
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr,
                                               metric_id_append_str="thr",
@@ -2077,11 +2068,11 @@ class SecondaryIndexingThroughputNoAccessTest(SecondaryIndexingThroughputTest):
             spec["Repeat"] = spec["Repeat"] * 5
         with open(self.configfile, "w") as json_file:
             json_file.write(json.dumps(data))
-        logger.info("updated cbindexperf config file: \n {}".format(data))
+        logger.info(f"updated cbindexperf config file: \n {data}")
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         percentile_latencies = self.calculate_scan_latencies()
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
@@ -2133,8 +2124,7 @@ class InMemoryCompressionTest(SecondaryIndexingThroughputTest):
         return percentile_latencies
 
     def _report_kpi(self, percentile_latencies, scan_thr: float = 0):
-        title = "Secondary Scan Throughput (scanps) {}" \
-            .format(str(self.test_config.showfast.title).strip())
+        title = f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
         self.reporter.post(
             *self.metrics.scan_throughput(scan_thr,
                                           metric_id_append_str="thr",
@@ -2166,12 +2156,12 @@ class InMemoryCompressionTest(SecondaryIndexingThroughputTest):
             spec["Repeat"] = spec["Repeat"]*5
         with open(self.configfile, "w") as json_file:
             json_file.write(json.dumps(data))
-        logger.info("updated cbindexperf config file: \n {}".format(data))
+        logger.info(f"updated cbindexperf config file: \n {data}")
         self.scan_time = self.scan_time*5
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         percentile_latencies = self.calculate_scan_latencies()
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr)
@@ -2238,8 +2228,9 @@ class InitialScanThroughputLatencyCloudTest(SecondaryIndexingThroughputTest):
                                                     name=title)
                 )
         else:
-            title = "Secondary Scan Throughput (scanps) {}" \
-                .format(str(self.test_config.showfast.title).strip())
+            title = (
+                f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
+            )
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr,
                                               metric_id_append_str="thr",
@@ -2265,8 +2256,8 @@ class InitialScanThroughputLatencyCloudTest(SecondaryIndexingThroughputTest):
         self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         percentile_latencies = self.calculate_scan_latencies()
         self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(percentile_latencies, scan_thr)
@@ -2317,8 +2308,9 @@ class ThroughputLatencyMutationScanCloudTest(SecondaryIndexingThroughputTest):
                                                 name=title)
             )
         else:
-            title = "Secondary Scan Throughput (scanps) {}" \
-                .format(str(self.test_config.showfast.title).strip())
+            title = (
+                f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
+            )
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr,
                                               metric_id_append_str="thr",
@@ -2345,8 +2337,8 @@ class ThroughputLatencyMutationScanCloudTest(SecondaryIndexingThroughputTest):
         self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         percentile_latencies = self.calculate_scan_latencies()
         self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(percentile_latencies, scan_thr)
@@ -2367,15 +2359,13 @@ class SecondaryRebalanceOnlyTest(SecondaryRebalanceTest):
 
         self.build_secondaryindex()
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
 
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
-        logger.info("Rebalance time: {}".format(self.rebalance_time))
+        logger.info(f"Rebalance time: {self.rebalance_time}")
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(rebalance_time=True)
 
@@ -2413,8 +2403,8 @@ class SecondaryHoleCleanerTest(SecondaryIndexingScanTest):
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
@@ -2465,18 +2455,17 @@ class RebalanceThroughputLatencyMutationScanCloudTest(SecondaryRebalanceTest):
         self.build_secondaryindex()
         self.print_index_disk_usage(heap_profile=False)
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.access_bg()
         self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
                                       run_in_background=True)
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
-        logger.info("Rebalance time: {}".format(self.rebalance_time))
+        logger.info(f"Rebalance time: {self.rebalance_time}")
         self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
         scan_thr, row_thr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         percentile_latencies = self.calculate_scan_latencies()
         self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(percentile_latencies, scan_thr)
@@ -2492,13 +2481,11 @@ class SecondaryIndexRebalanceOnlyTest(SecondaryRebalanceTest):
         self.wait_for_indexing()
         self.print_index_disk_usage()
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.rebalance_timings = self.get_rebalance_timings()
         logger.info('Rebalance completed in {} secs'.format(self.rebalance_timings['total_time']))
         self.report_kpi(rebalance_time=True)
@@ -2576,7 +2563,7 @@ class InitialVectorSecondaryIndexTest(InitialandIncrementalandRecoverySecondaryI
                                 if train_list := self.test_config.gsi_settings.vector_train_list:
                                     index_config["train_list"] = train_list
                             for config, value in index_config.items():
-                                configs = configs + "'{}':{}, ".format(config, value)
+                                configs = configs + f"'{config}':{value}, "
                         else:
                             index_def = index_config
                         if self.test_config.gsi_settings.index_def_prefix:
@@ -2591,9 +2578,8 @@ class InitialVectorSecondaryIndexTest(InitialandIncrementalandRecoverySecondaryI
                                              collection=collection_name,
                                              fields=index_def)
 
-                        ddl_statement = ddl_statement + \
-                            " WITH {{ {config}'defer_build':true}}".format(config=configs)
-                        options = options + '-index_ddl "{}"'.format(ddl_statement)
+                        ddl_statement = ddl_statement + f" WITH {{ {configs}'defer_build':true}}"
+                        options = options + f'-index_ddl "{ddl_statement}"'
                         options = options.rstrip(',')
                         all_options = all_options + options
                         logger.info(all_options)
@@ -2616,8 +2602,8 @@ class VectorSecondaryIndexingScanTest(SecondaryIndexingScanTest, InitialVectorSe
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf", is_ssl=self.is_ssl)
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
-        logger.info('Scan throughput: {}'.format(scan_thr))
-        logger.info('Rows throughput: {}'.format(row_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
+        logger.info(f"Rows throughput: {row_thr}")
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
 
@@ -3136,15 +3122,13 @@ class SecondaryIndexingScanReportTest(SecondaryIndexingScanLatencyTest):
             median_bytes = sizes[len(sizes) // 2]
             max_bytes = sizes[-1]
             logger.info(
-                'SANITY [Check 5]: response payload — '
-                'median={} B, max={} B, samples={}'.format(
-                    median_bytes, max_bytes, len(sizes))
+                "SANITY [Check 5]: response payload — "
+                f"median={median_bytes} B, max={max_bytes} B, samples={len(sizes)}"
             )
             if max_bytes > 10 * median_bytes:
                 logger.warning(
-                    'SANITY WARN [Check 5]: max response ({} B) is >10× the '
-                    'median ({} B) — possible runaway scan report payload'.format(
-                        max_bytes, median_bytes)
+                    f"SANITY WARN [Check 5]: max response ({max_bytes} B) is >10× the "
+                    f"median ({median_bytes} B) — possible runaway scan report payload"
                 )
             logger.info(
                 'SANITY NOTE [Check 5]: compare median payload with paired '

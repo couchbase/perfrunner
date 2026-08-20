@@ -205,8 +205,7 @@ class PathoGen:
             self.workers.append(t)
 
     def run(self):
-        logger.info('Starting PathoGen: {} items, {} workers'.format(
-            self.num_items, self.num_workers))
+        logger.info(f"Starting PathoGen: {self.num_items} items, {self.num_workers} workers")
 
         for t in self.workers:
             t.start()
@@ -277,8 +276,7 @@ class Worker(multiprocessing.Process):
                 success = True
             except (TimeoutError,
                     TemporaryFailError) as e:
-                logger.debug('Worker-{0}: Sleeping for {1}s due to {2}'.format(
-                    self.start, backoff, e))
+                logger.debug(f"Worker-{self.start}: Sleeping for {backoff}s due to {e}")
                 time.sleep(backoff)
                 backoff *= 2
 
@@ -369,11 +367,13 @@ class Supervisor(Worker):
             # frozen at their last size.
             finished_items = [(ii, sz) for (ii, sz) in finished_items if sz == self.max_size]
 
-            logger.info('Completed iteration {}/{}, frozen {}/{} documents (aggregate)'.format(
-                iteration + 1, self.num_iterations,
-                self.num_items - len(finished_items), self.num_items))
+            logger.info(
+                f"Completed iteration {iteration + 1}/{self.num_iterations}, "
+                f"frozen {self.num_items - len(finished_items)}/{self.num_items} "
+                "documents (aggregate)"
+            )
             # Sleep at end of iteration to give disk write queue chance to drain.
-            logger.info('Sleeping for {}s'.format(self.SLEEP_TIME))
+            logger.info(f"Sleeping for {self.SLEEP_TIME}s")
             time.sleep(self.SLEEP_TIME)
 
         # All iterations complete. Send a special null generator

@@ -107,7 +107,7 @@ class SecondaryIndexCloudTest(PerfTest):
             self.cluster.open_capella_cluster_ports([SGPortRange(9100, 9105), SGPortRange(9999)])
 
     def remove_statsfile(self):
-        rmfile = "rm -f {}".format(self.SECONDARY_STATS_FILE)
+        rmfile = f"rm -f {self.SECONDARY_STATS_FILE}"
         status = subprocess.call(rmfile, shell=True)
         if status != 0:
             raise Exception('existing 2i latency stats file could not be removed')
@@ -126,11 +126,10 @@ class SecondaryIndexCloudTest(PerfTest):
                         if isinstance(index_config, dict):
                             index_def = index_config.pop("field")
                             for config, value in index_config.items():
-                                configs = configs + '"{}":{},'.format(config, value)
+                                configs = configs + f'"{config}":{value},'
 
                             if index_config.get("num_partition", 0) > 1:
-                                partition_keys = " --scheme KEY" \
-                                                 " --partitionKeys `{}` ".format(index_def)
+                                partition_keys = f" --scheme KEY --partitionKeys `{index_def}` "
                         else:
                             index_def = index_config
 
@@ -141,37 +140,31 @@ class SecondaryIndexCloudTest(PerfTest):
                             fields = index_def
                         fields_list = fields.split(",")
 
-                        options = "-type create " \
-                                  "-bucket {bucket} " \
-                                  "-scope {scope} " \
-                                  "-collection {collection} ". \
-                            format(bucket=bucket_name,
-                                   scope=scope_name,
-                                   collection=collection_name)
+                        options = (
+                            "-type create "
+                            f"-bucket {bucket_name} "
+                            f"-scope {scope_name} "
+                            f"-collection {collection_name} "
+                        )
 
                         options += "-fields "
                         for field in fields_list:
-                            options += "`{}`,".format(field)
+                            options += f"`{field}`,"
 
                         options = options.rstrip(",")
                         options = options + " "
 
                         if where is not None:
-                            options = '{options} -where "{where_clause}"' \
-                                .format(options=options, where_clause=where)
+                            options = f'{options} -where "{where}"'
 
                         if storage == 'memdb' or storage == 'plasma':
-                            options = '{options} -using {db}'.format(options=options,
-                                                                     db=storage)
+                            options = f"{options} -using {storage}"
 
                         if partition_keys:
-                            options = "{options} {partition_keys}"\
-                                .format(options=options, partition_keys=partition_keys)
+                            options = f"{options} {partition_keys}"
 
-                        options = "{options} -index {index} " \
-                            .format(options=options, index=index)
-
-                        options = options + '-with {{{}"defer_build":true}} \n'.format(configs)
+                        options = f"{options} -index {index} "
+                        options = options + f'-with {{{configs}"defer_build":true}} \n'
                         options = options.rstrip(',')
                         all_options = all_options + options
 
@@ -198,22 +191,20 @@ class SecondaryIndexCloudTest(PerfTest):
                                                      self.test_config.gsi_settings.settings)
                         cluster_settings = self.rest.get_index_settings(index_node)
                         cluster_settings = pretty_dict(self.rest.get_index_settings(index_node))
-                        logger.info('Index settings: {}'.format(cluster_settings))
+                        logger.info(f"Index settings: {cluster_settings}")
 
     def batch_build_index_collection_options(self, indexes):
         all_options = ""
         for bucket_name, scope_map in indexes.items():
             for scope_name, collection_map in scope_map.items():
                 for collection_name, index_map in collection_map.items():
-                    build_indexes = ",".join(["{}:{}:{}:{}".format(
-                        bucket_name,
-                        scope_name,
-                        collection_name,
-                        index_name)
-                        for index_name in index_map.keys()])
-                    options = "-type build " \
-                              "-indexes {build_indexes} \n" \
-                        .format(build_indexes=build_indexes)
+                    build_indexes = ",".join(
+                        [
+                            f"{bucket_name}:{scope_name}:{collection_name}:{index_name}"
+                            for index_name in index_map.keys()
+                        ]
+                    )
+                    options = f"-type build -indexes {build_indexes} \n"
                     all_options = all_options + options
         return all_options
 
@@ -309,7 +300,7 @@ class SecondaryIndexCloudTest(PerfTest):
                                                  self.worker_manager.WORKER_HOME,
                                                  run_in_background, is_ssl=is_ssl))
 
-        logger.info("scan status {}".format(status))
+        logger.info(f"scan status {status}")
         if "Log Level = error" not in status:
             raise Exception('Scan workload could not be applied: ' + str(status))
         else:
@@ -331,8 +322,8 @@ class SecondaryIndexCloudTest(PerfTest):
 
         total_recs_in_mem = total_num_rec_allocs - total_num_rec_frees
         total_recs_on_disk = total_num_rec_swapout - total_num_rec_swapin
-        logger.info("Total Recs in Mem {}".format(total_recs_in_mem))
-        logger.info("Total Recs in Disk {}".format(total_recs_on_disk))
+        logger.info(f"Total Recs in Mem {total_recs_in_mem}")
+        logger.info(f"Total Recs in Disk {total_recs_on_disk}")
         avg_rr = total_recs_in_mem / (total_recs_on_disk + total_recs_in_mem)
         return avg_rr
 
@@ -354,8 +345,8 @@ class SecondaryIndexCloudTest(PerfTest):
 
         total_recs_in_mem = total_num_rec_allocs - total_num_rec_frees + total_num_rec_compressed
         total_recs_on_disk = total_num_rec_swapout - total_num_rec_swapin
-        logger.info("Total Recs in Mem {}".format(total_recs_in_mem))
-        logger.info("Total Recs in Disk {}".format(total_recs_on_disk))
+        logger.info(f"Total Recs in Mem {total_recs_in_mem}")
+        logger.info(f"Total Recs in Disk {total_recs_on_disk}")
         avg_rr = total_recs_in_mem / (total_recs_on_disk + total_recs_in_mem)
         return avg_rr
 
@@ -380,23 +371,23 @@ class SecondaryIndexCloudTest(PerfTest):
             return
 
         if text:
-            logger.info("{}".format(text))
+            logger.info(f"{text}")
 
         disk_usage = self.remote.get_disk_usage(self.index_nodes[0],
                                                 self.cluster_spec.index_path)
-        logger.info("Disk usage:\n{}".format(disk_usage))
+        logger.info(f"Disk usage:\n{disk_usage}")
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
-        logger.info("Index storage stats:\n{}".format(storage_stats.text))
+        logger.info(f"Index storage stats:\n{storage_stats.text}")
         if heap_profile:
             heap_profile = get_indexer_heap_profile(self.index_nodes[0],
                                                     self.rest.rest_username,
                                                     self.rest.rest_password)
-            logger.info("Indexer heap profile:\n{}".format(heap_profile))
+            logger.info(f"Indexer heap profile:\n{heap_profile}")
 
         if self.storage == 'plasma':
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
-            logger.info("Index storage stats mm:\n{}".format(stats))
+            logger.info(f"Index storage stats mm:\n{stats}")
 
         return self.remote.get_disk_usage(self.index_nodes[0],
                                           self.cluster_spec.index_path,
@@ -420,7 +411,7 @@ class SecondaryIndexCloudTest(PerfTest):
                 (self.test_config.access_settings.items - num_hot_items)
         end = start + num_hot_items
 
-        logger.info("new start {} new end {}".format(start, end))
+        logger.info(f"new start {start} new end {end}")
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
@@ -428,7 +419,7 @@ class SecondaryIndexCloudTest(PerfTest):
             json_file.write(json.dumps(data))
 
     def read_scanresults(self):
-        with open('{}'.format(self.configfile)) as config_file:
+        with open(f"{self.configfile}") as config_file:
             configdata = json.load(config_file)
         numscans = 0
         for scanspec in configdata['ScanSpecs']:
@@ -530,7 +521,7 @@ class CapellaSecondaryRebalanceOnlyTest(CapellaRebalanceTest):
         self.create_indexes()
         self.wait_for_indexing()
         self.rebalance_indexer(services="index,n1ql")
-        logger.info("Rebalance time: {}".format(self.rebalance_time))
+        logger.info(f"Rebalance time: {self.rebalance_time}")
         self.report_kpi(rebalance_time=True)
 
 
@@ -555,7 +546,7 @@ class CloudSecondaryInitalBuildTest(CapellaSecondaryRebalanceOnlyTest):
         self.load()
         self.wait_for_persistence()
         build_time = self.build_index()
-        logger.info("index build time: {}".format(build_time))
+        logger.info(f"index build time: {build_time}")
         self.report_kpi(build_time, 'Initial')
 
 
@@ -574,7 +565,7 @@ class CloudSecondaryRebalanceTest(SecondaryIndexingScanTest, CapellaRebalanceTes
         self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
 
     def get_config(self):
-        with open('{}'.format(self.configfile)) as config_file:
+        with open(f"{self.configfile}") as config_file:
             config_data = json.load(config_file)
         return config_data['ScanSpecs'][0]['NInterval'], config_data['Concurrency']
 
@@ -587,8 +578,7 @@ class CloudSecondaryRebalanceTest(SecondaryIndexingScanTest, CapellaRebalanceTes
                 duration += int(row[2].split(":")[1])
                 lines += 1
         interval, concurrency = self.get_config()
-        logger.info("interval: {}, concurrency: {}, duration: {}".format(interval, concurrency,
-                                                                         duration))
+        logger.info(f"interval: {interval}, concurrency: {concurrency}, duration: {duration}")
         return lines * interval / (duration / 1000000000 / concurrency)
 
     def run(self):
@@ -600,8 +590,7 @@ class CloudSecondaryRebalanceTest(SecondaryIndexingScanTest, CapellaRebalanceTes
 
         self.build_secondaryindex()
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.print_average_rr()
         self.access_bg()
         self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
@@ -618,14 +607,13 @@ class CloudSecondaryRebalanceTest(SecondaryIndexingScanTest, CapellaRebalanceTes
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.report_kpi(rebalance_time=True)
         self.remote.kill_client_process("cbindexperf")
         self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
         scan_thr = self.get_throughput()
         percentile_latencies = self.calculate_scan_latencies()
-        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info(f"Scan throughput: {scan_thr}")
         self.print_average_rr()
         self.report_kpi(percentile_latencies, scan_thr)
 
@@ -643,8 +631,9 @@ class CloudSecondaryRebalanceTest(SecondaryIndexingScanTest, CapellaRebalanceTes
                 *self.metrics.rebalance_time(self.rebalance_time)
             )
         else:
-            title = "Secondary Scan Throughput (scanps) {}" \
-                .format(str(self.test_config.showfast.title).strip())
+            title = (
+                f"Secondary Scan Throughput (scanps) {str(self.test_config.showfast.title).strip()}"
+            )
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr,
                                               metric_id_append_str="thr",
@@ -672,8 +661,7 @@ class CloudSecondaryRebalanceTestWithoutScan(CloudSecondaryRebalanceTest):
 
         self.build_secondaryindex()
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.print_average_rr()
         self.access_bg()
         if self.test_config.gsi_settings.excludeNode:
@@ -688,8 +676,7 @@ class CloudSecondaryRebalanceTestWithoutScan(CloudSecondaryRebalanceTest):
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.print_average_rr()
         self.report_kpi(rebalance_time=True)
 
@@ -713,19 +700,17 @@ class CloudSecondaryRebalanceOnlyTest(EndToEndLatencyTest, SecondaryRebalanceTes
         self.wait_for_persistence()
 
         build_time = self.create_indexes_with_stats()
-        logger.info("index build completed in {} sec".format(build_time))
+        logger.info(f"index build completed in {build_time} sec")
         index_meta = {"time": build_time, "type": "initial", "unit": "min"}
         self.report_index_kpi(index_meta)
 
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
 
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
-        logger.info("Rebalance time: {}".format(self.rebalance_time))
+        logger.info(f"Rebalance time: {self.rebalance_time}")
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server,
-                                                 self.rest.indexes_instances_per_node(server)))
+            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
         self.print_index_disk_usage(heap_profile=False)
         self.report_kpi(rebalance_time=True)

@@ -76,7 +76,7 @@ class CloudRunner:
             elif ebs_type == "gp":
                 instance_settings.update(**self.DEVICE_SETTINGS_GP)
             else:
-                raise Exception("ebs_type {} not supported".format(ebs_type))
+                raise Exception(f"ebs_type {ebs_type} not supported")
 
         instances = self.ec2.create_instances(
             ImageId=self.AMI[group],
@@ -114,13 +114,13 @@ class CloudRunner:
         return ips
 
     def store_ips(self, ips: Dict[str, str], group: str):
-        logger.info('Storing information in {}'.format(self.EC2_META))
+        logger.info(f"Storing information in {self.EC2_META}")
         with open(self.EC2_META, 'a') as fp:
             meta = {group: ips}
             yaml.dump(meta, fp)
 
     def read_ids(self) -> List[str]:
-        logger.info('Reading information from {}'.format(self.EC2_META))
+        logger.info(f"Reading information from {self.EC2_META}")
         ids = []
         with open(self.EC2_META) as fp:
             meta = yaml.load(fp, Loader=yaml.FullLoader)
@@ -130,7 +130,7 @@ class CloudRunner:
 
     def terminate(self, instance_ids: Iterator[str]):
         for instance_id in instance_ids:
-            logger.info('Terminating: {}'.format(instance_id))
+            logger.info(f"Terminating: {instance_id}")
             instance = self.ec2.Instance(instance_id)
             instance.terminate()
         try:

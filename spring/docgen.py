@@ -222,8 +222,10 @@ class MovingWorkingSetKey:
             num_items = num_existing_items - num_hot_items
             offset = current_hot_load_start.value + self.working_set_moving_docs
             current_hot_load_start.value = int(offset % num_items)
-            logger.info("New hotload start {} end {}".format(current_hot_load_start.value,
-                        current_hot_load_start.value + num_hot_items))
+            logger.info(
+                f"New hotload start {current_hot_load_start.value} "
+                f"end {current_hot_load_start.value + num_hot_items}"
+            )
 
         left_boundary = curr_deletes + current_hot_load_start.value
         right_boundary = left_boundary + num_hot_items

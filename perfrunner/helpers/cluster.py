@@ -124,7 +124,7 @@ class ClusterManagerBase:
             self.rest.set_analytics_replica(self.master_node, replica_analytics)
             self.rebalance()
             check_replica = self.rest.get_analytics_settings(self.master_node)
-            logger.info("Analytics replica setting: {}".format(check_replica))
+            logger.info(f"Analytics replica setting: {check_replica}")
 
         if not (analytics_nodes := self.cluster_spec.servers_by_role("cbas")):
             return
@@ -292,7 +292,7 @@ class DefaultClusterManager(ClusterManagerBase):
         paths = []
         for path in self.cluster_spec.analytics_paths:
             for i in range(self.test_config.analytics_settings.num_io_devices):
-                io_device = '{}/dev{}'.format(path, i)
+                io_device = f"{path}/dev{i}"
                 paths.append(io_device)
         for server in self.cluster_spec.servers_by_role('cbas'):
             for path in self.cluster_spec.analytics_paths:
@@ -349,7 +349,7 @@ class DefaultClusterManager(ClusterManagerBase):
                 self.rest.set_query_settings(query_nodes[0], settings)
             settings = self.rest.get_query_settings(query_nodes[0])
             settings = pretty_dict(settings)
-            logger.info('Query settings: {}'.format(settings))
+            logger.info(f"Query settings: {settings}")
 
     def set_index_settings(self):
         logger.info('Setting index settings')
@@ -363,7 +363,7 @@ class DefaultClusterManager(ClusterManagerBase):
                                                     self.test_config.gsi_settings.settings)
                     cluster_settings = self.rest.get_index_settings(index_node)
                     cluster_settings = pretty_dict(self.rest.get_index_settings(index_node))
-                    logger.info('Index settings: {}'.format(cluster_settings))
+                    logger.info(f"Index settings: {cluster_settings}")
 
     def set_services(self):
         for master in self.cluster_spec.masters:
@@ -553,7 +553,7 @@ class DefaultClusterManager(ClusterManagerBase):
         for master in self.cluster_spec.masters:
             self.rest.configure_auto_compaction(master, compaction_settings)
             settings = self.rest.get_auto_compaction_settings(master)
-            logger.info('Auto-compaction settings: {}'.format(pretty_dict(settings)))
+            logger.info(f"Auto-compaction settings: {pretty_dict(settings)}")
 
     def configure_xdcr_settings(self):
         xdcr_cluster_settings = self.test_config.xdcr_cluster_settings
@@ -607,7 +607,7 @@ class DefaultClusterManager(ClusterManagerBase):
             for master in self.cluster_spec.masters:
                 for bucket in (self.test_config.buckets + self.test_config.eventing_buckets +
                                self.test_config.eventing_metadata_bucket):
-                    logger.info('Changing {} to {}'.format(bucket, params))
+                    logger.info(f"Changing {bucket} to {params}")
                     diag_eval = cmd.format(bucket, params[:len(params) - 1])
                     self.rest.run_diag_eval(master, diag_eval)
 
@@ -644,8 +644,8 @@ class DefaultClusterManager(ClusterManagerBase):
         for master in self.cluster_spec.masters:
             for payload in diag_eval_settings.payloads:
                 payload = payload.strip('\'')
-                logger.info("Running diag/eval: '{}' on {}".format(payload, master))
-                self.rest.run_diag_eval(master, '{}'.format(payload))
+                logger.info(f"Running diag/eval: '{payload}' on {master}")
+                self.rest.run_diag_eval(master, f"{payload}")
 
         # Some config may be replicated to other nodes asynchronously.
         # Allow configurable delay before restart
@@ -675,7 +675,7 @@ class DefaultClusterManager(ClusterManagerBase):
                                         disk_failover_timeout)
 
     def add_server_groups(self):
-        logger.info("Server group map: {}".format(self.cluster_spec.server_group_map))
+        logger.info(f"Server group map: {self.cluster_spec.server_group_map}")
         if self.cluster_spec.server_group_map:
             server_group_info = self.rest.get_server_group_info(self.master_node)["groups"]
             existing_server_groups = [group_info["name"] for group_info in server_group_info]
@@ -706,11 +706,11 @@ class DefaultClusterManager(ClusterManagerBase):
             for server, group in self.cluster_spec.server_group_map.items():
                 for server_info in node_group_json["groups"]:
                     if server_info["name"] == group and nodes_initialised <= self.initial_nodes[0]:
-                        server_info["nodes"].append({"otpNode": "ns_1@{}".format(server)})
+                        server_info["nodes"].append({"otpNode": f"ns_1@{server}"})
                         nodes_initialised += 1
                         break
 
-            logger.info("node json {}".format(node_group_json))
+            logger.info(f"node json {node_group_json}")
             self.rest.change_group_membership(self.master_node,
                                               server_group_info["uri"],
                                               node_group_json)
@@ -720,7 +720,7 @@ class DefaultClusterManager(ClusterManagerBase):
                     self.delete_server_group(server_grp["name"])
 
     def delete_server_group(self, server_group):
-        logger.info("Deleting Server Group {}".format(server_group))
+        logger.info(f"Deleting Server Group {server_group}")
         server_group_info = self.rest.get_server_group_info(self.master_node)["groups"]
         for server_grp in server_group_info:
             if server_grp["name"] == server_group:
@@ -819,7 +819,7 @@ class DefaultClusterManager(ClusterManagerBase):
                 bucket_roles = [role.format(bucket=bucket) for role in roles]
                 bucket_roles.append("admin")
                 for i in range(1, num_users+1):
-                    user = 'user{user_number}'.format(user_number=str(i))
+                    user = f"user{str(i)}"
                     self.rest.add_rbac_user(
                         host=master,
                         user=user,
@@ -923,24 +923,24 @@ class DefaultClusterManager(ClusterManagerBase):
     def set_cipher_suite(self):
         if self.test_config.access_settings.cipher_list:
             check_cipher_suit = self.rest.get_cipher_suite(self.master_node)
-            logger.info('current cipher suit: {}'.format(check_cipher_suit))
+            logger.info(f"current cipher suit: {check_cipher_suit}")
             self.rest.set_cipher_suite(
                 self.master_node, self.test_config.access_settings.cipher_list)
             check_cipher_suit = self.rest.get_cipher_suite(self.master_node)
-            logger.info('new cipher suit: {}'.format(check_cipher_suit))
+            logger.info(f"new cipher suit: {check_cipher_suit}")
 
     def set_min_tls_version(self):
         if self.test_config.access_settings.min_tls_version or \
            self.test_config.backup_settings.min_tls_version or \
            self.test_config.restore_settings.min_tls_version:
             check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
-            logger.info('current tls version: {}'.format(check_tls_version))
+            logger.info(f"current tls version: {check_tls_version}")
             self.rest.set_minimum_tls_version(
                 self.master_node,
                 self.test_config.access_settings.min_tls_version
             )
             check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
-            logger.info('new tls version: {}'.format(check_tls_version))
+            logger.info(f"new tls version: {check_tls_version}")
 
     def set_systemd_resource_limits(self):
         if not (limits_settings := self.test_config.systemd_limits).has_any_limits:
@@ -1023,7 +1023,7 @@ class DefaultClusterManager(ClusterManagerBase):
         )
 
         if arn := run_aws_cli_command(command_template, name):
-            logger.info('Found ARN for MSK Connect custom plugin "{}": {}'.format(name, arn))
+            logger.info(f'Found ARN for MSK Connect custom plugin "{name}": {arn}')
 
         return arn
 
@@ -1035,7 +1035,7 @@ class DefaultClusterManager(ClusterManagerBase):
         )
 
         if arn := run_aws_cli_command(command_template, name):
-            logger.info('Found ARN for MSK Connect worker configuration "{}": {}'.format(name, arn))
+            logger.info(f'Found ARN for MSK Connect worker configuration "{name}": {arn}')
 
         return arn
 
@@ -1047,9 +1047,7 @@ class DefaultClusterManager(ClusterManagerBase):
         )
 
         if arn := run_aws_cli_command(command_template, name):
-            logger.info(
-                'Found ARN for MSK Connect service execution role "{}": {}'.format(name, arn)
-            )
+            logger.info(f'Found ARN for MSK Connect service execution role "{name}": {arn}')
 
         return arn
 
@@ -1060,10 +1058,10 @@ class DefaultClusterManager(ClusterManagerBase):
             "'connectors[?kafkaCluster.apacheKafkaCluster.bootstrapServers==`{}`].connectorArn' "
             "--output text"
         )
-        bootstrap_servers = ",".join(["{}:9092".format(k) for k in self.cluster_spec.kafka_brokers])
+        bootstrap_servers = ",".join([f"{k}:9092" for k in self.cluster_spec.kafka_brokers])
 
         if arns := run_aws_cli_command(command_template, bootstrap_servers):
-            logger.info("Found ARNs for MSK Connect connectors: {}".format(arns))
+            logger.info(f"Found ARNs for MSK Connect connectors: {arns}")
 
         return arns
 
@@ -1158,7 +1156,7 @@ class CapellaClusterManager(ClusterManagerBase):
         logger.info("Getting free memory available for buckets on Capella cluster.")
         mem_info = self.rest.get_bucket_mem_available(next(self.cluster_spec.masters))
         mem_quota = mem_info["free"]
-        logger.info("Free memory for buckets (per node): {}MB".format(mem_quota))
+        logger.info(f"Free memory for buckets (per node): {mem_quota}MB")
 
         mem_quota -= (
             self.test_config.cluster.eventing_metadata_bucket_mem_quota
@@ -1265,14 +1263,14 @@ class CapellaClusterManager(ClusterManagerBase):
             if not (vpc_id := self.get_capella_aws_cluster_vpc_id(hostname)):
                 logger.error(
                     "Failed to get Capella cluster VPC ID in order to get Security Group ID. "
-                    "Cannot open desired ports for cluster {}.".format(cluster_id)
+                    f"Cannot open desired ports for cluster {cluster_id}."
                 )
                 continue
 
             if not (sg_id := self.get_capella_aws_cluster_security_group_id(vpc_id)):
                 logger.error(
                     "Failed to get Security Group ID for Capella cluster VPC. "
-                    "Cannot open desired ports for cluster {}.".format(cluster_id)
+                    f"Cannot open desired ports for cluster {cluster_id}."
                 )
                 continue
 
@@ -1288,8 +1286,8 @@ class CapellaClusterManager(ClusterManagerBase):
 
             run_local_shell_command(
                 command=command,
-                success_msg="Successfully opened ports for Capella cluster {}.".format(cluster_id),
-                err_msg="Failed to open ports for Capella cluster {}.".format(cluster_id),
+                success_msg=f"Successfully opened ports for Capella cluster {cluster_id}.",
+                err_msg=f"Failed to open ports for Capella cluster {cluster_id}.",
             )
 
     def _open_capella_azure_cluster_ports(self, port_ranges: Iterable[SGPortRange]):
@@ -1308,7 +1306,7 @@ class CapellaClusterManager(ClusterManagerBase):
         # NSG rule priorities need to be unique within an NSG, so choose one at random from a
         # large enough range to minimize collisions
         rule_priority = random.randint(1000, 2000)
-        rule_name = "AllowPerfrunnerInbound-{}".format(uuid4().hex[:6])
+        rule_name = f"AllowPerfrunnerInbound-{uuid4().hex[:6]}"
 
         err = set_azure_capella_subscription(
             self.cluster_spec.controlplane_settings.get("env", "sandbox")
@@ -1324,10 +1322,8 @@ class CapellaClusterManager(ClusterManagerBase):
 
                 run_local_shell_command(
                     command=command,
-                    success_msg="Successfully opened ports for Capella cluster {}.".format(
-                        cluster_id
-                    ),
-                    err_msg="Failed to create NSG rule for cluster {}".format(cluster_id),
+                    success_msg=f"Successfully opened ports for Capella cluster {cluster_id}.",
+                    err_msg=f"Failed to create NSG rule for cluster {cluster_id}",
                 )
 
             set_azure_perf_subscription()
@@ -1343,7 +1339,7 @@ class CapellaClusterManager(ClusterManagerBase):
         vpc_id = run_aws_cli_command(command_template, cluster_node_hostname)
 
         if vpc_id:
-            logger.info("Found VPC ID: {}".format(vpc_id))
+            logger.info(f"Found VPC ID: {vpc_id}")
 
         return vpc_id
 
@@ -1358,7 +1354,7 @@ class CapellaClusterManager(ClusterManagerBase):
         sg_id = run_aws_cli_command(command_template, vpc_id)
 
         if sg_id:
-            logger.info("Found Security Group ID: {}".format(sg_id))
+            logger.info(f"Found Security Group ID: {sg_id}")
 
         return sg_id
 

@@ -24,8 +24,11 @@ def main():
         collection_indexes = {}
         num_coll_indexes = 0
         for field1 in doc_fields:
-            collection_indexes["myindex"+str(i+1)+"-"+str(num_coll_indexes+1)] = \
-                {"field": "{}".format(field1), "num_partition": 0, "num_replica": 0}
+            collection_indexes["myindex" + str(i + 1) + "-" + str(num_coll_indexes + 1)] = {
+                "field": f"{field1}",
+                "num_partition": 0,
+                "num_replica": 0,
+            }
             num_coll_indexes += 1
         index_map['bucket-1']['scope-1']['collection-'+str(i+1)] = collection_indexes
     outpath = 'tests/gsi/index_defs/'

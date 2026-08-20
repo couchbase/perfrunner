@@ -42,8 +42,8 @@ class SecondaryDebugStats(CouchbaseCollector):
 
         samples = dict()
         for metric in self.METRICS:
-            _metric = bucket and "{}:{}".format(bucket, metric) or metric
-            _metric = index and "{}:{}:{}".format(bucket, index, metric) or _metric
+            _metric = bucket and f"{bucket}:{metric}" or metric
+            _metric = index and f"{bucket}:{index}:{metric}" or _metric
 
             if _metric in stats:
                 value = stats[_metric]
@@ -123,12 +123,12 @@ class SecondaryDebugStatsIndex(SecondaryDebugStats):
         for index, bucket, scope, collection in self.get_all_indexes():
             if scope and collection and \
                             scope != "_default" and collection != "_default":
-                full_index_name = "{}:{}:{}".format(scope, collection, index)
+                full_index_name = f"{scope}:{collection}:{index}"
                 stats = self._get_secondary_debugstats(bucket=bucket, index=full_index_name)
             else:
                 stats = self._get_secondary_debugstats(bucket=bucket, index=index)
             if stats:
-                _index = "{}.{}".format(bucket, index)
+                _index = f"{bucket}.{index}"
                 self.update_metric_metadata(self.METRICS, index=_index)
                 self.store.append(stats,
                                   cluster=self.cluster,
@@ -138,4 +138,4 @@ class SecondaryDebugStatsIndex(SecondaryDebugStats):
     def update_metadata(self):
         self.mc.add_cluster()
         for index, bucket, scope, collection in self.get_all_indexes():
-            self.mc.add_index("{}.{}".format(bucket, index))
+            self.mc.add_index(f"{bucket}.{index}")

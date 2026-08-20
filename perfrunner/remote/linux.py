@@ -92,19 +92,19 @@ class RemoteLinux(Remote):
         cmd = 'grep ^{}= /etc/os-release | cut -d= -f2 | tr -d \'"\''
         distro_id = run(cmd.format('ID'))
         distro_version = run(cmd.format('VERSION_ID'))
-        logger.info('Detected Linux distribution: {} {}'.format(distro_id, distro_version))
+        logger.info(f"Detected Linux distribution: {distro_id} {distro_version}")
         return distro_id, distro_version
 
     def run_cbindex_command(self, options, worker_home='/tmp/perfrunner'):
-        cmd = "/opt/couchbase/bin/cbindex {options}".format(options=options)
-        logger.info('Running: {}'.format(cmd))
+        cmd = f"/opt/couchbase/bin/cbindex {options}"
+        logger.info(f"Running: {cmd}")
         run(cmd, shell_escape=False, pty=False)
 
     def run_cbindex_command_cloud(self, options:str, worker_home='/tmp/perfrunner'):
         options = options.replace("$", "\\$")
         with cd(worker_home), cd('perfrunner'):
-            cmd = "ulimit -n 20000 && opt/couchbase/bin/cbindex {options}".format(options=options)
-            logger.info('Running: {}'.format(cmd))
+            cmd = f"ulimit -n 20000 && opt/couchbase/bin/cbindex {options}"
+            logger.info(f"Running: {cmd}")
             run(cmd, shell_escape=False, pty=False)
 
     def build_index(self, index_node, indexes, is_ssl, auth):
@@ -146,27 +146,22 @@ class RemoteLinux(Remote):
             )
             options += "-fields "
             for field in fields_list:
-                options += "\\\\\\`{}\\\\\\`,".format(field)
+                options += f"\\\\\\`{field}\\\\\\`,"
 
             options = options.rstrip(",")
             options = options + " "
 
             if num_partition > 1:
                 # HASH-partition on the leading field, same as the collection index path.
-                options += "--scheme KEY --partitionKeys \\\\\\`{}\\\\\\` ".format(
-                    fields_list[0])
+                options += f"--scheme KEY --partitionKeys \\\\\\`{fields_list[0]}\\\\\\` "
 
             if where is not None:
-                options = '{options} -where \\\"{where_clause}\\\"'\
-                    .format(options=options, where_clause=where)
+                options = f'{options} -where \\"{where}\\"'
 
             if storage == 'memdb' or storage == 'plasma':
-                options = '{options} -using {db}'.format(options=options,
-                                                         db=storage)
+                options = f"{options} -using {storage}"
 
-            options = "{options} -index {index} " \
-                .format(options=options, index=index)
-
+            options = f"{options} -index {index} "
             # cbindex parses -with as JSON. Braces must be escaped from bash so
             # that the comma inside {"defer_build":true,"num_replica":N} doesn't
             # trigger brace expansion and split the arg in two.
@@ -177,7 +172,7 @@ class RemoteLinux(Remote):
                 with_clause += ',\\\\\\"num_partition\\\\\\":' + str(num_partition)
             options = options + '-with \\{' + with_clause + '\\}'
 
-            bucket_indexes.append("{}:{}".format(bucket, index))
+            bucket_indexes.append(f"{bucket}:{index}")
             if is_ssl:
                 put("root.pem", "/root/root.pem")
                 options = options + " -use_tools=true -cacert ./root.pem"
@@ -309,7 +304,7 @@ class RemoteLinux(Remote):
             '/sys/kernel/mm/redhat_transparent_hugepage/enabled',
             '/sys/kernel/mm/transparent_hugepage/defrag',
         ):
-            run('echo never > {}'.format(path), quiet=True)
+            run(f"echo never > {path}", quiet=True)
 
     @all_servers
     def flush_iptables(self):
@@ -352,7 +347,7 @@ class RemoteLinux(Remote):
 
         fname = '/data/@2i'
         cmd_zip = 'zip -rq @2i.zip /data/@2i'
-        r = run('stat {}'.format(fname), quiet=True, warn_only=True)
+        r = run(f"stat {fname}", quiet=True, warn_only=True)
         if not r.return_code:
             run(cmd_zip, warn_only=True, pty=False)
             get('{}'.format('@2i.zip'), local_path='.')
@@ -371,7 +366,7 @@ class RemoteLinux(Remote):
         logger.info('Killing processes that match pattern: {}'
                     .format(', '.join(self.PROCESS_PATTERNS)))
         for pattern in self.PROCESS_PATTERNS:
-            run('pkill -9 -f {}'.format(pattern), quiet=True)
+            run(f"pkill -9 -f {pattern}", quiet=True)
 
         self._killall(self.PROCESSES)
 
@@ -395,9 +390,8 @@ class RemoteLinux(Remote):
 
     def set_write_permissions(self, mask: str, host: str, path: str):
         with settings(host_string=host):
-            logger.info('Setting permissions {} to CB data folder {} on host {}'
-                        .format(mask, path, host))
-            run('chmod {} {}'.format(mask, path))
+            logger.info(f"Setting permissions {mask} to CB data folder {path} on host {host}")
+            run(f"chmod {mask} {path}")
 
     @all_servers
     def uninstall_couchbase(self):
@@ -482,14 +476,14 @@ class RemoteLinux(Remote):
         return stdout.strip().split()[4]
 
     def detect_ip(self, _if):
-        stdout = run('ifdata -pa {}'.format(_if))
+        stdout = run(f"ifdata -pa {_if}")
         return stdout.strip()
 
     @all_servers
     def disable_wan(self):
         logger.info('Disabling WAN effects')
         _if = self.detect_if()
-        run('tc qdisc del dev {} root'.format(_if), warn_only=True, quiet=True)
+        run(f"tc qdisc del dev {_if} root", warn_only=True, quiet=True)
 
     @all_servers
     def enable_wan(self, delay: int):
@@ -515,8 +509,7 @@ class RemoteLinux(Remote):
             _filter = src_list
 
         for ip in _filter:
-            run('tc filter add dev {} protocol ip prio 1 u32 '
-                'match ip dst {} flowid 1:11'.format(_if, ip))
+            run(f"tc filter add dev {_if} protocol ip prio 1 u32 match ip dst {ip} flowid 1:11")
 
     def start_haproxy(self, node, config):
         with settings(host_string=node):
@@ -588,7 +581,7 @@ class RemoteLinux(Remote):
         # Based on kernel.core_pattern = /data/core-%e-%p
         logger.info('Detecting core dumps')
         target_dir = '/data' if not self.cluster_spec.capella_infrastructure else '/var/cb/data'
-        r = run('ls {}/core*'.format(target_dir), quiet=True)
+        r = run(f"ls {target_dir}/core*", quiet=True)
         if not r.return_code:
             return r.split()
         else:
@@ -605,13 +598,13 @@ class RemoteLinux(Remote):
     @master_server
     def purge_restore_progress(self, archive: str, repo: str):
         repo_dir = '{}/{}'.format(archive.rstrip('/'), repo)
-        logger.info('Purging restore progress from {}'.format(repo_dir))
-        cmd = 'rm -rf {}/.restore'.format(repo_dir)
-        logger.info('Running: {}'.format(cmd))
+        logger.info(f"Purging restore progress from {repo_dir}")
+        cmd = f"rm -rf {repo_dir}/.restore"
+        logger.info(f"Running: {cmd}")
         run(cmd)
-        logger.info('Deleting logs directory from {}'.format(repo_dir))
-        cmd = 'rm -rf {}/logs'.format(repo_dir)
-        logger.info('Running: {}'.format(cmd))
+        logger.info(f"Deleting logs directory from {repo_dir}")
+        cmd = f"rm -rf {repo_dir}/logs"
+        logger.info(f"Running: {cmd}")
         run(cmd)
 
     @master_server
@@ -635,12 +628,13 @@ class RemoteLinux(Remote):
         logger.info("Loading data into the collections")
         scope_name = scope_prefix + str(scope)
         name_of_backup = "/fts/backup/exportFiles/" + name_of_backup + ".json"
-        cmd = "python3 /fts/backup/exportFiles/splitData.py --num_col {} " \
-              "--collection_prefix {} " \
-              "--scope_name {} " \
-              "--data_file {}".format(num_collections, collection_prefix,
-                                      scope_name, name_of_backup)
-        logger.info("the command {}".format(cmd))
+        cmd = (
+            f"python3 /fts/backup/exportFiles/splitData.py --num_col {num_collections} "
+            f"--collection_prefix {collection_prefix} "
+            f"--scope_name {scope_name} "
+            f"--data_file {name_of_backup}"
+        )
+        logger.info(f"the command {cmd}")
         run(cmd)
 
     @master_server
@@ -893,7 +887,7 @@ class RemoteLinux(Remote):
 
         for core in offline_cores:
             for cpu in cpu_map[core]:
-                run('echo 0 > /sys/devices/system/cpu/cpu{}/online'.format(cpu))
+                run(f"echo 0 > /sys/devices/system/cpu/cpu{cpu}/online")
 
     @syncgateway_servers
     def disable_cpu_sgw(self, sgw_online_cores: int):
@@ -904,29 +898,29 @@ class RemoteLinux(Remote):
 
         for core in offline_cores:
             for cpu in cpu_map[core]:
-                run('echo 0 > /sys/devices/system/cpu/cpu{}/online'.format(cpu))
+                run(f"echo 0 > /sys/devices/system/cpu/cpu{cpu}/online")
 
     @all_servers
     @syncgateway_servers
     def enable_cpu(self):
         logger.info('Enabling all CPU cores')
         for i in range(1, self.num_vcpu):
-            run('echo 1 > /sys/devices/system/cpu/cpu{}/online'.format(i))
+            run(f"echo 1 > /sys/devices/system/cpu/cpu{i}/online")
 
     @servers_by_role(roles=['index'])
     def kill_process_on_index_node(self, process):
-        logger.info('Killing following process on index node: {}'.format(process))
-        run("killall {}".format(process), warn_only=True)
+        logger.info(f"Killing following process on index node: {process}")
+        run(f"killall {process}", warn_only=True)
 
     def change_owner(self, host, path, owner='couchbase'):
         with settings(host_string=host):
-            run('chown -R {0}:{0} {1}'.format(owner, path))
+            run(f"chown -R {owner}:{owner} {path}")
 
     def get_disk_usage(self, host, path, human_readable=True):
         with settings(host_string=host):
             if human_readable:
-                return run("du -h {}".format(path))
-            data = run("du -sb {}/@2i".format(path))
+                return run(f"du -h {path}")
+            data = run(f"du -sb {path}/@2i")
             return int(data.split()[0])
 
     def get_indexer_rss(self, host):
@@ -945,11 +939,13 @@ class RemoteLinux(Remote):
         run('reboot', quiet=True, pty=False)
 
     def tune_memory_settings(self, host_string: str, size: str):
-        logger.info('Changing kernel memory to {} on {}'.format(size, host_string))
+        logger.info(f"Changing kernel memory to {size} on {host_string}")
         with settings(host_string=host_string):
             run("sed -ir 's/mem=[0-9]*[kmgKMG]//g' /etc/default/grub")
-            run("sed -i 's/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"mem={}\"/'\
-                 /etc/default/grub".format(size))
+            run(
+                f'sed -i \'s/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="mem={size}"/\'\
+                 /etc/default/grub'
+            )
             self.grub_config()
             self.reboot()
 
@@ -963,9 +959,9 @@ class RemoteLinux(Remote):
     def is_up(self, host_string: str) -> bool:
         with settings(host_string=host_string):
             try:
-                logger.info('checking {}'.format(host_string))
+                logger.info(f"checking {host_string}")
                 result = run(":", timeout=60)
-                logger.info('done {}'.format(host_string))
+                logger.info(f"done {host_string}")
                 return result.return_code == 0  # 0 means success
             except NetworkError:
                 return False
@@ -1004,7 +1000,7 @@ class RemoteLinux(Remote):
         cmd = \
             "curl -u Administrator:password -d 'afamily=ipv6' " \
             "http://localhost:8091/node/controller/setupNetConfig"
-        logger.info("Running: {}".format(cmd))
+        logger.info(f"Running: {cmd}")
         run(cmd)
 
     @all_servers
@@ -1036,15 +1032,17 @@ class RemoteLinux(Remote):
     @all_clients
     def generate_ssl_keystore(self, root_certificate, keystore_file, storepass, worker_home):
         logger.info('Generating SSL keystore')
-        remote_keystore = "{}/perfrunner/{}".format(worker_home, keystore_file)
-        remote_root_cert = "{}/perfrunner/{}".format(worker_home, root_certificate)
+        remote_keystore = f"{worker_home}/perfrunner/{keystore_file}"
+        remote_root_cert = f"{worker_home}/perfrunner/{root_certificate}"
 
         with quiet():
-            run("keytool -delete -keystore {} -alias couchbase -storepass storepass"
-                .format(remote_keystore))
-        run("keytool -importcert -file {} -storepass {} -trustcacerts "
-            "-noprompt -keystore {} -alias couchbase"
-            .format(remote_root_cert, storepass, remote_keystore))
+            run(
+                f"keytool -delete -keystore {remote_keystore} -alias couchbase -storepass storepass"
+            )
+        run(
+            f"keytool -importcert -file {remote_root_cert} -storepass {storepass} -trustcacerts "
+            f"-noprompt -keystore {remote_keystore} -alias couchbase"
+        )
 
     @all_clients
     def cloud_put_certificate(self, cert, worker_home):
@@ -1064,27 +1062,29 @@ class RemoteLinux(Remote):
                         is_ssl: bool = False):
         with cd(worker_home), cd('perfrunner'):
             logger.info('Initiating scan workload')
-            cmdstr = "export CBAUTH_REVRPC_URL=http://Administrator:password@{}" \
-                     ":8091/query;" \
-                     " {} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} " \
-                     "-resultfile result.json " \
-                     "-statsfile /root/statsfile" \
-                .format(node, path_to_tool, node, rest_username, rest_password, configfile)
+            cmdstr = (
+                f"export CBAUTH_REVRPC_URL=http://Administrator:password@{node}"
+                ":8091/query;"
+                f" {path_to_tool} -cluster {node}:8091"
+                f' -auth="{rest_username}:{rest_password}" -configfile {configfile} '
+                "-resultfile result.json "
+                "-statsfile /root/statsfile"
+            )
             if collect_profile:
                 cmdstr += " -cpuprofile cpuprofile.prof -memprofile memprofile.prof "
             if is_ssl:
                 cmdstr += " -use_tls -cacert ./root.pem"
             if run_in_background:
                 cmdstr += " &"
-            logger.info('To be applied: {}'.format(cmdstr))
+            logger.info(f"To be applied: {cmdstr}")
             status = run(cmdstr)
             return status
 
     @master_client
     def kill_client_process(self, process: str):
-        logger.info('Killing the following process: {}'.format(process))
+        logger.info(f"Killing the following process: {process}")
         with quiet():
-            run("killall -9 {}".format(process))
+            run(f"killall -9 {process}")
 
     @master_client
     def run_cbindexperf_cloud(self, path_to_tool: str, node: str,
@@ -1100,10 +1100,12 @@ class RemoteLinux(Remote):
             if is_ssl:
                 port = 18091
             ulimitcmdstr = "ulimit -n 20000 && "
-            cmdstr = "{} -cluster {}:{} -auth='{}:{}' -configfile {} " \
-                     "-resultfile result.json " \
-                     "-statsfile /root/statsfile" \
-                .format(path_to_tool, node, port, rest_username, rest_password, configfile)
+            cmdstr = (
+                f"{path_to_tool} -cluster {node}:{port} "
+                f"-auth='{rest_username}:{rest_password}' -configfile {configfile} "
+                "-resultfile result.json "
+                "-statsfile /root/statsfile"
+            )
             if collect_profile:
                 cmdstr += " -cpuprofile cpuprofile.prof -memprofile memprofile.prof "
             if is_ssl:
@@ -1113,18 +1115,20 @@ class RemoteLinux(Remote):
                         cmdstr + " > /tmp/cbindexperf.log < /tmp/cbindexperf.log & sleep 5"
             else:
                 cmdstr = ulimitcmdstr + cmdstr
-            logger.info('To be applied: {}'.format(cmdstr))
+            logger.info(f"To be applied: {cmdstr}")
             status = run(cmdstr)
             return status.return_code
 
     @master_client
     def get_indexer_heap_profile(self, indexer: str):
-        cmd = 'export GOPATH=$HOME/go; ' \
-              'export GOROOT=/usr/local/go; ' \
-              'export PATH=$PATH:$GOROOT/bin; ' \
-              'go tool pprof --text http://Administrator:password@{}:9102' \
-              '/debug/pprof/heap'.format(indexer)
-        logger.info('Running: {}'.format(cmd))
+        cmd = (
+            "export GOPATH=$HOME/go; "
+            "export GOROOT=/usr/local/go; "
+            "export PATH=$PATH:$GOROOT/bin; "
+            f"go tool pprof --text http://Administrator:password@{indexer}:9102"
+            "/debug/pprof/heap"
+        )
+        logger.info(f"Running: {cmd}")
         result = run(cmd)
         return result
 
@@ -1167,34 +1171,34 @@ class RemoteLinux(Remote):
 
     @master_server
     def run_magma_benchmark(self, cmd: str, stats_file: str):
-        logger.info('Running magma benchmark cmd: {}'.format(cmd))
+        logger.info(f"Running magma benchmark cmd: {cmd}")
         stdout = run(cmd)
         logger.info(stdout)
-        get('{}'.format(stats_file), local_path="./")
+        get(f"{stats_file}", local_path="./")
 
     def get_disk_stats(self, server: str):
-        logger.info("Getting disk stats for {}".format(server))
+        logger.info(f"Getting disk stats for {server}")
         stats = ""
         with settings(host_string=server):
             stats = run("cat /proc/diskstats")
         return stats
 
     def get_device(self, server: str):
-        logger.info("Getting device for {}".format(server))
+        logger.info(f"Getting device for {server}")
         device = ""
         with settings(host_string=server):
             device = run("realpath $(df -P /data | awk 'END{print $1}')")
         return device
 
     def get_device_sector_size(self, server: str, device: str):
-        logger.info("Getting device sector size for {} {}".format(server, device))
+        logger.info(f"Getting device sector size for {server} {device}")
         sector_size = 0
         with settings(host_string=server):
-            sector_size = run("blockdev --getss {}".format(device))
+            sector_size = run(f"blockdev --getss {device}")
         return sector_size
 
     def get_memcached_io_stats(self, server: str):
-        logger.info("Getting memcached stats for {}".format(server))
+        logger.info(f"Getting memcached stats for {server}")
         stats = ""
         with settings(host_string=server):
             stats = run("cat /proc/`pidof memcached`/io")
@@ -1203,7 +1207,7 @@ class RemoteLinux(Remote):
     @master_client
     def calc_backup_size(self, cluster_spec: ClusterSpec,
                          rounded: bool = True) -> float:
-        backup_size = run('du -sb0 {}'.format(cluster_spec.backup))
+        backup_size = run(f"du -sb0 {cluster_spec.backup}")
         backup_size = backup_size.split()[0]
         backup_size = float(backup_size) / 2 ** 30  # B -> GB
 
@@ -1254,8 +1258,8 @@ class RemoteLinux(Remote):
     @master_client
     def cleanup(self, backup_dir: str):
         logger.info("Clearing the backup directory before backup/export")
-        run("find {} -mindepth 1 -name '*' -delete".format(backup_dir), warn_only=True)
-        run('mkdir -p {}'.format(backup_dir))
+        run(f"find {backup_dir} -mindepth 1 -name '*' -delete", warn_only=True)
+        run(f"mkdir -p {backup_dir}")
 
     @master_client
     def create_aws_credential(self, credential):
@@ -1263,7 +1267,7 @@ class RemoteLinux(Remote):
         with cd('~/'):
             run('mkdir -p .aws')
             with cd('.aws'):
-                cmd = 'echo "{}" > credentials'.format(credential)
+                cmd = f'echo "{credential}" > credentials'
                 run(cmd)
 
     @all_servers
@@ -1272,7 +1276,7 @@ class RemoteLinux(Remote):
         with cd('/home/couchbase/'):
             run('mkdir -p .aws')
             with cd('.aws'):
-                cmd = 'echo "{}" > credentials'.format(credential)
+                cmd = f'echo "{credential}" > credentials'
                 run(cmd)
                 cmd = 'echo -e "[default] \nregion=us-east-1 \noutput=json" > config'
                 run(cmd)
@@ -1281,7 +1285,7 @@ class RemoteLinux(Remote):
     def cbbackupmgr_version(self, worker_home: str):
         with cd(worker_home), cd('perfrunner'):
             cmd = './opt/couchbase/bin/cbbackupmgr --version'
-            logger.info('Running: {}'.format(cmd))
+            logger.info(f"Running: {cmd}")
             result = run(cmd)
             logger.info(result)
 
@@ -1506,20 +1510,17 @@ class RemoteLinux(Remote):
         else:
             sub_cmd = 'script --no-inline'
 
-        args = [
-            'perf {}'.format(sub_cmd),
-            '-i {0} > {0}.txt'.format(filename)
-        ]
+        args = [f"perf {sub_cmd}", f"-i {filename} > {filename}.txt"]
         perf_cmd = ' '.join(args)
-        logger.info('Generating linux perf data report : {}'.format(perf_cmd))
+        logger.info(f"Generating linux perf data report : {perf_cmd}")
 
-        zip_cmd = 'zip -q {0}.zip {0}.txt'.format(filename)
+        zip_cmd = f"zip -q {filename}.zip {filename}.txt"
         try:
             with settings(warn_only=True), cd(self.get_linux_perf_profile_path()):
                 run(perf_cmd, timeout=600, pty=False)
                 run(zip_cmd, pty=False)
         except Exception as e:
-            logger.error('Failed to process perf files. {}'.format(e))
+            logger.error(f"Failed to process perf files. {e}")
 
     @all_servers
     def get_linuxperf_files(self):
@@ -1534,17 +1535,18 @@ class RemoteLinux(Remote):
     def txn_query_cleanup(self, timeout):
         logger.info('Running txn cleanup window')
 
-        cmd = \
-            "curl -s -u Administrator:password http://localhost:8091/" \
-            "settings/querySettings  -d 'queryCleanupWindow={}s'".format(timeout)
+        cmd = (
+            "curl -s -u Administrator:password http://localhost:8091/"
+            f"settings/querySettings  -d 'queryCleanupWindow={timeout}s'"
+        )
 
-        logger.info("Running: {}".format(cmd))
+        logger.info(f"Running: {cmd}")
         run(cmd, pty=False)
 
         cmd2 = "curl -u Administrator:password http://localhost:8093/admin/settings" \
                " -XPOST -d '{\"atrcollection\":\"default._default._default\"}'"
 
-        logger.info("Running: {}".format(cmd2))
+        logger.info(f"Running: {cmd2}")
 
         with settings(warn_only=True):
             run(cmd2, pty=False)
@@ -1557,33 +1559,36 @@ class RemoteLinux(Remote):
 
     @master_server
     def set_magma_quota(self, bucket: str, storage_quota_percentage: int):
-        logger.info('Set Magma quota percentage to {}'.format(storage_quota_percentage))
-        run("curl -s -u Administrator:password "
-            "localhost:8091/pools/default/buckets/{} -d 'storageQuotaPercentage={}'"
-            .format(bucket, storage_quota_percentage), pty=False)
+        logger.info(f"Set Magma quota percentage to {storage_quota_percentage}")
+        run(
+            "curl -s -u Administrator:password "
+            f"localhost:8091/pools/default/buckets/{bucket} "
+            f"-d 'storageQuotaPercentage={storage_quota_percentage}'",
+            pty=False,
+        )
 
     @master_server
     def set_magma_min_memory_quota(self, magma_min_memory_quota: int):
-        logger.info('Set Magma min memory quota to {}'.format(magma_min_memory_quota))
-        run("curl -s -u Administrator:password "
-            "localhost:8091/internalSettings -d 'magmaMinMemoryQuota={}'"
-            .format(magma_min_memory_quota), pty=False)
+        logger.info(f"Set Magma min memory quota to {magma_min_memory_quota}")
+        run(
+            "curl -s -u Administrator:password "
+            f"localhost:8091/internalSettings -d 'magmaMinMemoryQuota={magma_min_memory_quota}'",
+            pty=False,
+        )
 
     @all_servers
     def create_data_backup(self, backup_directory: str):
-        logger.info('Creating backup file: {}'.format(backup_directory))
-        cmd = "tar cf {}/backup.tar.bz2 /data/ --use-compress-program=lbzip2"\
-            .format(backup_directory)
-        logger.info('cmd: {}'.format(cmd))
+        logger.info(f"Creating backup file: {backup_directory}")
+        cmd = f"tar cf {backup_directory}/backup.tar.bz2 /data/ --use-compress-program=lbzip2"
+        logger.info(f"cmd: {cmd}")
         run(cmd, pty=False)
         logger.info('backup create done')
 
     @all_servers
     def copy_backup(self, backup_directory: str):
         logger.info('Copying data back to /data')
-        cmd = "tar xf {}/backup.tar.bz2 --use-compress-program=lbzip2 -C /"\
-            .format(backup_directory)
-        logger.info('cmd: {}'.format(cmd))
+        cmd = f"tar xf {backup_directory}/backup.tar.bz2 --use-compress-program=lbzip2 -C /"
+        logger.info(f"cmd: {cmd}")
         run(cmd, pty=False)
         logger.info('backup copy done')
 
@@ -1700,7 +1705,7 @@ class RemoteLinux(Remote):
             mem_kib = meminfo['MemTotal']
             with open("system_limits.conf", 'w') as f:
                 l1 = "[Service]\n"
-                l2 = "MemoryLimit={}".format(mem_kib*1024)
+                l2 = f"MemoryLimit={mem_kib * 1024}"
                 f.writelines([l1, l2])
             put('system_limits.conf', 'system_limits.conf')
         run('systemctl daemon-reload')
@@ -1839,15 +1844,15 @@ class RemoteLinux(Remote):
 
     @all_kafka_nodes
     def install_kafka(self, version: str):
-        logger.info('Installing Kafka version: {}'.format(version))
-        archive_name = 'kafka_2.12-{}.tgz'.format(version)
+        logger.info(f"Installing Kafka version: {version}")
+        archive_name = f"kafka_2.12-{version}.tgz"
 
-        run('wget https://archive.apache.org/dist/kafka/{}/{}'.format(version, archive_name))
-        logger.info('Downloaded {}'.format(archive_name))
+        run(f"wget https://archive.apache.org/dist/kafka/{version}/{archive_name}")
+        logger.info(f"Downloaded {archive_name}")
 
         run('mkdir kafka')
-        run('tar xzf {} -C kafka --strip-components=1'.format(archive_name))
-        logger.info('Extracted {}'.format(archive_name))
+        run(f"tar xzf {archive_name} -C kafka --strip-components=1")
+        logger.info(f"Extracted {archive_name}")
 
     def configure_kafka_brokers(self, partitions_per_topic: int = 1):
         jump_host = self.cluster_spec.servers[0]
@@ -1904,8 +1909,8 @@ class RemoteLinux(Remote):
     @all_servers
     def set_kafka_links_env_vars(self, settings: Dict[str, Any]):
         logger.info('Setting environment variables for Kafka Links to work')
-        env_var_list_str = ' '.join(['{}={}'.format(k, v) for k, v in settings.items()])
-        run('systemctl set-environment {}'.format(env_var_list_str))
+        env_var_list_str = " ".join([f"{k}={v}" for k, v in settings.items()])
+        run(f"systemctl set-environment {env_var_list_str}")
 
     @all_servers
     def set_kafka_links_metakv_settings(self, settings: Dict[str, Any]):
@@ -1913,7 +1918,7 @@ class RemoteLinux(Remote):
         api = 'http://localhost:8091/_metakv/cbas/settings/kafkaClusterDetails/{}'
         for k, v in settings.items():
             url = api.format(k)
-            run('curl -X PUT {} --data-urlencode value=\'{}\''.format(url, v))
+            run(f"curl -X PUT {url} --data-urlencode value='{v}'")
 
     def find_java_home(self):
         java_home = None
@@ -2080,7 +2085,7 @@ class RemoteLinux(Remote):
         command = (f"/opt/couchbase/bin/cbqueryreportgen -c couchbase://localhost -u Administrator "
                    f"-p password -k {keyspace} -t1 {start_time},{end_time} -o /tmp/rpt.html")
 
-        logger.info("Running: {}".format(command))
+        logger.info(f"Running: {command}")
         run(command)
 
     @all_servers

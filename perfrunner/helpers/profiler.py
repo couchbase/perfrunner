@@ -87,7 +87,7 @@ class ProfilerBase:
                 role = 'kv' if (service == 'projector' or service == 'goxdcr') else service
                 for _, servers in self.cluster_spec.clusters:
                     self.master_node = servers[0]
-                    logger.info("The current master node is: {}".format(self.master_node))
+                    logger.info(f"The current master node is: {self.master_node}")
                     active_nodes_by_role = self.rest.get_active_nodes_by_role(self.master_node,
                                                                             role=role)
                     self._schedule_service(service, active_nodes_by_role)
@@ -228,7 +228,7 @@ class GoDebugProfiler (ProfilerBase):
     def save(self, host: str, service: str, profile: str, content: bytes):
         fname = '{}_{}_{}_{}_{}.pprof'.format(
             host, service, profile, time.strftime("%y%m%d%H%M%S"), uhex()[:6])
-        logger.info('Collected {} '.format(fname))
+        logger.info(f"Collected {fname} ")
         with open(fname, 'wb') as fh:
             fh.write(content)
 
@@ -262,7 +262,7 @@ class LinuxPerfProfiler (ProfilerBase):
             self.profiling_settings.services = ['kv']
 
     def profile(self, host: str, service: str, profile: str):
-        fname = 'linux_{}_{}_{}_{}_perf.data'.format(host, service, profile, uhex()[:4])
+        fname = f"linux_{host}_{service}_{profile}_{uhex()[:4]}_perf.data"
 
         service = self.SERVICE_MAP.get(service, service)
         perf_profile = self.PERF_COMMANDS.get(profile, profile)
@@ -275,18 +275,18 @@ class LinuxPerfProfiler (ProfilerBase):
                            password=self.ssh_password)
 
         except Exception:
-            logger.info('Cannot connect to the "{}" via SSH Server'.format(host))
+            logger.info(f'Cannot connect to the "{host}" via SSH Server')
             exit()
 
-        logger.info('Capturing linux `perf {}` profile on {}'.format(profile, host))
+        logger.info(f"Capturing linux `perf {profile}` profile on {host}")
 
         args = [
-            'perf {} -a'.format(perf_profile),
-            '-F {}'.format(self.profiling_settings.linux_perf_frequency),
-            '-g --call-graph {}'.format(self.profiling_settings.linux_perf_callgraph),
-            '-p $(pgrep {})'.format(service) if 'mem' not in profile else '',
-            '-o {}{}'.format(self.linux_perf_path, fname),
-            '-- sleep {}'.format(self.profiling_settings.linux_perf_profile_duration)
+            f"perf {perf_profile} -a",
+            f"-F {self.profiling_settings.linux_perf_frequency}",
+            f"-g --call-graph {self.profiling_settings.linux_perf_callgraph}",
+            f"-p $(pgrep {service})" if "mem" not in profile else "",
+            f"-o {self.linux_perf_path}{fname}",
+            f"-- sleep {self.profiling_settings.linux_perf_profile_duration}",
         ]
         cmd = '{}'.format(' '.join(args))
         _, stdout, _ = client.exec_command(cmd)
@@ -295,6 +295,6 @@ class LinuxPerfProfiler (ProfilerBase):
         if exit_status == 0:
             logger.info('linux perf record: linux perf profile capture completed')
         else:
-            logger.info('perf record failed , exit_status : {}'.format(exit_status))
+            logger.info(f"perf record failed , exit_status : {exit_status}")
 
         client.close()

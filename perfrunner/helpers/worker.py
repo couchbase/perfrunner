@@ -539,7 +539,7 @@ class RemoteWorkerManager:
         if '--remote-copy' in sys.argv:
             self.remote.remote_copy(self.WORKER_HOME)
         for worker in self.cluster_spec.workers:
-            logger.info('Starting remote Celery worker, host={}'.format(worker))
+            logger.info(f"Starting remote Celery worker, host={worker}")
             self.remote.start_celery_worker(worker, perfrunner_home, self.broker_url)
 
     def start_kubernetes_workers(self):
@@ -558,8 +558,7 @@ class RemoteWorkerManager:
                 worker_idx += 1
 
     def wait_until_workers_are_ready(self):
-        workers = ['celery@{}'.format(worker)
-                   for worker in self.cluster_spec.workers]
+        workers = [f"celery@{worker}" for worker in self.cluster_spec.workers]
         while True:
             responses = celery.control.ping(workers)
             if len(responses) == len(workers):
@@ -573,10 +572,10 @@ class RemoteWorkerManager:
 
         async_results = []
         for sig, worker in phase.task_sigs(self.workers):
-            logger.info('Running task on {}'.format(worker))
+            logger.info(f"Running task on {worker}")
             async_results.append(sig.apply_async())
 
-        logger.info('Task results: {}'.format(async_results))
+        logger.info(f"Task results: {async_results}")
 
         return async_results
 
@@ -594,7 +593,7 @@ class RemoteWorkerManager:
             try:
                 res.get()
             except Exception as e:
-                logger.info("Exception while getting result {}".format(e))
+                logger.info(f"Exception while getting result {e}")
                 raise
 
     def wait_for_fg_tasks(self):
@@ -694,8 +693,9 @@ class RemoteWorkerManager:
                 for _ in range(instances_per_client):
                     for client in self.cluster_spec.workers[:total_clients]:
                         worker_id += 1
-                        logger.info('Running the \'{}\' by worker #{} on client {}'
-                                    .format(phase, worker_id, client))
+                        logger.info(
+                            f"Running the '{phase}' by worker #{worker_id} on client {client}"
+                        )
                         task_settings.syncgateway_settings.threads_per_instance = \
                             str(threads_per_instance)
 
@@ -711,8 +711,7 @@ class RemoteWorkerManager:
                 time.sleep(15)
             else:
                 client = self.cluster_spec.workers[0]
-                logger.info('Running single-instance task \'{}\' on client {}'
-                            .format(phase, client))
+                logger.info(f"Running single-instance task '{phase}' on client {client}")
                 task_settings.syncgateway_settings.threads_per_instance = \
                     task_settings.syncgateway_settings.threads
                 async_result = task.apply_async(
@@ -740,8 +739,7 @@ class RemoteWorkerManager:
                 total_clients = int(task_settings.syncgateway_settings.clients)
                 for client in self.cluster_spec.workers[:total_clients]:
                     worker_id += 1
-                    logger.info('Running the \'{}\' by worker #{} on'
-                                ' client {}'.format(phase, worker_id, client))
+                    logger.info(f"Running the '{phase}' by worker #{worker_id} on client {client}")
                     async_result = task.apply_async(
                         args=(task_settings, target, timer, worker_id, self.cluster_spec),
                         queue=client, expires=timer,)
@@ -749,7 +747,7 @@ class RemoteWorkerManager:
                 time.sleep(15)
             else:
                 client = self.cluster_spec.workers[0]
-                logger.info('Running sigle-instance task \'{}\' on client {}'.format(phase, client))
+                logger.info(f"Running sigle-instance task '{phase}' on client {client}")
                 async_result = task.apply_async(
                     args=(task_settings, target, timer, 0, self.cluster_spec),
                     queue=client, expires=timer)
@@ -879,8 +877,9 @@ class LocalWorkerManager(RemoteWorkerManager):
                     for _ in range(total_clients):
                         client = self.next_worker()
                         worker_id += 1
-                        logger.info('Running the \'{}\' by worker #{} on client {}'
-                                    .format(phase, worker_id, client))
+                        logger.info(
+                            f"Running the '{phase}' by worker #{worker_id} on client {client}"
+                        )
                         task_settings.syncgateway_settings.threads_per_instance = \
                             str(threads_per_instance)
                         async_result = task.apply_async(
@@ -892,8 +891,7 @@ class LocalWorkerManager(RemoteWorkerManager):
                 time.sleep(15)
             else:
                 client = self.next_worker()
-                logger.info('Running single-instance task \'{}\' on client {}'
-                            .format(phase, client))
+                logger.info(f"Running single-instance task '{phase}' on client {client}")
                 task_settings.syncgateway_settings.threads_per_instance = \
                     task_settings.syncgateway_settings.threads
                 async_result = task.apply_async(

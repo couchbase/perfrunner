@@ -108,7 +108,7 @@ def with_sleep(method, *args):
 
 
 def set_cpu_afinity(sid):
-    os.system('taskset -p -c {} {}'.format(sid % cpu_count(), os.getpid()))
+    os.system(f"taskset -p -c {sid % cpu_count()} {os.getpid()}")
 
 
 Client = Union[CBAsyncGen, CBGen, SubDocGen]
@@ -162,8 +162,11 @@ class Worker:
         self.keys_for_cas_update = KeyForCASUpdate(self.ws.n1ql_workers,
                                                    self.ts.prefix,
                                                    self.ws.key_fmtr)
-        logger.info("existing_keys {}, keys_for_removal {}, keys_for_cas_update {}"
-                    .format(self.existing_keys, self.keys_for_removal, self.keys_for_cas_update))
+        logger.info(
+            f"existing_keys {self.existing_keys}, "
+            f"keys_for_removal {self.keys_for_removal}, "
+            f"keys_for_cas_update {self.keys_for_cas_update}"
+        )
 
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
@@ -359,7 +362,7 @@ class Worker:
                 curr_ops > self.next_report * self.ws.ops:
             progress = 100.0 * curr_ops / self.ws.ops
             self.next_report += 0.05
-            logger.info('Current progress: {:.2f} %'.format(progress))
+            logger.info(f"Current progress: {progress:.2f} %")
 
     def time_to_stop(self):
         return (self.shutdown_event is not None and
@@ -535,9 +538,9 @@ class KVWorker(Worker):
                 self.do_batch()
                 self.report_progress(curr_ops.value)
         except KeyboardInterrupt:
-            logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
+            logger.info(f"Interrupted: {self.NAME}-{self.sid}-{self.ts.bucket}")
         else:
-            logger.info('Finished: {}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
+            logger.info(f"Finished: {self.NAME}-{self.sid}-{self.ts.bucket}")
         finally:
             self.dump_stats()
 
@@ -624,7 +627,7 @@ class AsyncKVWorker(KVWorker):
                     self.curr_ops.value >= self.ws.ops or self.time_to_stop()):
                 with self.batch_lock:
                     self.done = True
-                logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+                logger.info(f"Finished: {self.NAME}-{self.sid}")
                 reactor.stop()
             else:
                 self.do_batch(_, cb, i)
@@ -681,7 +684,7 @@ class AsyncKVWorker(KVWorker):
             d = cb.client.connect()
             d.addCallback(self.do_batch, cb, i)
             d.addErrback(self.error, cb, i)
-        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
+        logger.info(f"Started: {self.NAME}-{self.sid}")
         reactor.run()
 
 
@@ -785,9 +788,9 @@ class ViewWorker(Worker):
             while not self.time_to_stop():
                 self.do_batch()
         except KeyboardInterrupt:
-            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
+            logger.info(f"Interrupted: {self.NAME}-{self.sid}")
         else:
-            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+            logger.info(f"Finished: {self.NAME}-{self.sid}")
         finally:
             self.dump_stats()
 
@@ -907,9 +910,9 @@ class N1QLWorker(Worker):
             while not self.time_to_stop():
                 self.do_batch()
         except KeyboardInterrupt:
-            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
+            logger.info(f"Interrupted: {self.NAME}-{self.sid}")
         else:
-            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+            logger.info(f"Finished: {self.NAME}-{self.sid}")
         finally:
             query_failure_tracker.log_summary(self.sid)
             self.dump_stats()

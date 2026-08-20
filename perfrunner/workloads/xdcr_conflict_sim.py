@@ -52,7 +52,7 @@ def run_conflictsim(workload_settings: PhaseSettings,
                                        debugMode=debug_mode,
                                        batchSize=batch_size)
 
-    logger.info("Running conflictSim with params: {}".format(params))
+    logger.info(f"Running conflictSim with params: {params}")
 
     path = "/tmp/conflictsim/"
 

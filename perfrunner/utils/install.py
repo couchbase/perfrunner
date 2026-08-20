@@ -40,6 +40,7 @@ LATESTBUILDS_BASE_URL = "http://latestbuilds.service.couchbase.com/builds"
 SERVER_CODENAMES = {
     "couchbase-server": (
         "totoro",
+        "totoro-8.1.0",
         "morpheus",
         "cypher",
         "trinity",

@@ -42,9 +42,11 @@ class PipelineTest(TestCase):
                     parent_path = str(Path(test_config).parent)
                     name = Path(test_config).name
 
-                    if (paths := filenames_to_paths.get(name, [])) and parent_path == ".":
-                        continue
-                    elif any(root.endswith(parent_path) for root in paths):
+                    if (
+                        (paths := filenames_to_paths.get(name, []))
+                        and parent_path == "."
+                        or any(root.endswith(parent_path) for root in paths)
+                    ):
                         continue
                     else:
                         missing_stage_test_configs.append(test_config)

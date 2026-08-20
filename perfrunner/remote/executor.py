@@ -155,7 +155,7 @@ class SSHSession(Session):
     def isdir(self, path: str) -> bool:
         try:
             return stat.S_ISDIR(self._sftp().stat(path).st_mode)
-        except IOError:
+        except OSError:
             return False
 
     def download(self, remote_file: str, local_file: str):
@@ -172,7 +172,7 @@ class SSHSession(Session):
             current = posixpath.join(current, part) if current else part
             try:
                 sftp.stat(current)
-            except IOError:
+            except OSError:
                 sftp.mkdir(current)
 
     def is_active(self) -> bool:

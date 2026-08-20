@@ -70,7 +70,7 @@ class Docgen:
 
 class Numeric(Docgen):
     def __init__(self, master_file_path, shadow_file_path, cb_url, bucket_name):
-        super(Numeric, self).__init__(master_file_path, shadow_file_path, cb_url, bucket_name)
+        super().__init__(master_file_path, shadow_file_path, cb_url, bucket_name)
         '''
         now = datetime.datetime(2003, 6, 21, 10, 24, 23, 483163)
         '''
@@ -154,7 +154,7 @@ class Datefacet:
         self.cycledates = itertools.cycle(self.dateiter.keys())
 
     def createdateset(self):
-        for resultid in range(0, self.dsize):
+        for resultid in range(self.dsize):
             key = hex(resultid)[2:]
             '''
             Day 1 should have approximately 65% of the documents

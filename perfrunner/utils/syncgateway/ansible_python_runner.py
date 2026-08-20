@@ -12,8 +12,7 @@ from ansible.vars.manager import VariableManager
 from logger import logger
 
 
-class Options(object):
-
+class Options:
     """Options class to replace Ansible OptParser."""
 
     def __init__(self, verbosity=None, inventory=None, listhosts=None,
@@ -68,8 +67,7 @@ class Options(object):
         self.module_path = module_path
 
 
-class Runner(object):
-
+class Runner:
     def __init__(self, inventory_filename, playbook, extra_vars,
                  verbosity=0, subset=constants.DEFAULT_SUBSET):
 

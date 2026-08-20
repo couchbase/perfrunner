@@ -2102,7 +2102,7 @@ class DefaultRestHelper(RestBase):
             f"pools/default/buckets/{bucket}/scopes/{scope}/collections/{collection}/localRandomKey"
         )
         url = self._get_api_url(host=host,path=path)
-        for _ in range(0, keys_count):
+        for _ in range(keys_count):
             resp = self.get(url=url)
             keys.append(resp.json().get('key'))
         return keys

@@ -2717,7 +2717,7 @@ class IndexSettings:
                                     for permutation in subset_permutations:
                                         index_field_list = list(permutation)
 
-                                        index_name = f"i{collection_num}_{str(indexes_created + 1)}"
+                                        index_name = f"i{collection_num}_{indexes_created + 1!s}"
                                         index_fields = ",".join(index_field_list)
                                         new_statement = (
                                             f"CREATE INDEX {index_name} "

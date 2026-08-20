@@ -597,7 +597,7 @@ class CloudVMDeployer:
             public_ips = [ip["public_ip"] for ip in ips]
             self.infra_spec.config.set("utilities", "hosts", "\n".join(public_ips))
             if private_ips := [ip["private_ip"] for ip in ips if "private_ip" in ip]:
-                if not self.infra_spec.config.has_section((section := "utility_private_ips")):
+                if not self.infra_spec.config.has_section(section := "utility_private_ips"):
                     self.infra_spec.config.add_section(section)
                 self.infra_spec.config.set(section, "hosts", "\n".join(private_ips))
 
@@ -658,15 +658,15 @@ class CloudVMDeployer:
                     section, cluster, "\n" + "\n".join(node_info["public_ips"])
                 )
 
-                if any((private_ips := node_info["private_ips"])):
+                if any(private_ips := node_info["private_ips"]):
                     if not self.infra_spec.config.has_section(private_section):
                         self.infra_spec.config.add_section(private_section)
                     self.infra_spec.config.set(
                         private_section, cluster, "\n" + "\n".join(private_ips)
                     )
 
-                if section == "kafka_clusters" and any((subnet_ids := node_info["subnet_ids"])):
-                    if not self.infra_spec.config.has_section((section := "kafka_subnet_ids")):
+                if section == "kafka_clusters" and any(subnet_ids := node_info["subnet_ids"]):
+                    if not self.infra_spec.config.has_section(section := "kafka_subnet_ids"):
                         self.infra_spec.config.add_section(section)
                     self.infra_spec.config.set(section, cluster, "\n" + "\n".join(subnet_ids))
 
@@ -1448,12 +1448,10 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             # Finally, set up route table in our client VPC
             logger.info('Configuring route table in client VPC')
             local(
-                (
-                    f"AWS_PROFILE=default env/bin/aws --region {self.region} ec2 create-route "
-                    f"--route-table-id {route_table} "
-                    f"--destination-cidr-block {cluster_cidr} "
-                    f"--vpc-peering-connection-id {peering_connection_id}"
-                )
+                f"AWS_PROFILE=default env/bin/aws --region {self.region} ec2 create-route "
+                f"--route-table-id {route_table} "
+                f"--destination-cidr-block {cluster_cidr} "
+                f"--vpc-peering-connection-id {peering_connection_id}"
             )
         except Exception as e:
             logger.error(f"Failed to complete VPC peering: {e}")
@@ -1538,11 +1536,9 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             return
 
         local(
-            (
-                "AWS_PROFILE=default env/bin/aws "
-                f"--region {self.region} ec2 delete-vpc-peering-connection "
-                f"--vpc-peering-connection-id {peering_connection}"
-            )
+            "AWS_PROFILE=default env/bin/aws "
+            f"--region {self.region} ec2 delete-vpc-peering-connection "
+            f"--vpc-peering-connection-id {peering_connection}"
         )
 
     def _destroy_peering_connection_gcp(self):
@@ -1724,7 +1720,7 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
 
         sgw_option = self.infra_spec.config.options('syncgateways')[0]
         sgw_list = []
-        for _ in range(0, self.test_config.syncgateway_settings.nodes):
+        for _ in range(self.test_config.syncgateway_settings.nodes):
             sgw_list.append(adminurl)
         logger.info(f'the sgw list is: {sgw_list}')
         self.infra_spec.config.set('syncgateways', sgw_option, '\n' + '\n'.join(sgw_list))

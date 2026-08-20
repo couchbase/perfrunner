@@ -718,8 +718,7 @@ class WorkerFactory:
     def __new__(cls, settings):
         if getattr(settings, 'async', None):
             worker = AsyncKVWorker
-        elif getattr(settings, 'seq_upserts') and \
-                getattr(settings, 'xattr_field', None):
+        elif settings.seq_upserts and getattr(settings, "xattr_field", None):
             worker = SeqXATTRUpdatesWorker
         elif getattr(settings, 'seq_upserts', None):
             worker = SeqUpsertsWorker

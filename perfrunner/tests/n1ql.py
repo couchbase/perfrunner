@@ -250,10 +250,11 @@ class N1QLLatencyRawStatementTest(N1QLLatencyTest):
 
         for statement in statements or self.test_config.index_settings.statements:
             check_stmt = statement.replace(" ", "").upper()
-            if 'CREATEINDEX' in check_stmt \
-                    or 'CREATEPRIMARYINDEX' in check_stmt:
-                create_statements.append(statement)
-            elif 'CREATEVECTORINDEX' in check_stmt:
+            if (
+                "CREATEINDEX" in check_stmt
+                or "CREATEPRIMARYINDEX" in check_stmt
+                or "CREATEVECTORINDEX" in check_stmt
+            ):
                 create_statements.append(statement)
             elif 'BUILDINDEX' in check_stmt:
                 build_statements.append(statement)
@@ -1963,9 +1964,9 @@ class N1qlVectorSearchTest(N1QLLatencyRawStatementTest):
         probes = gsi_settings.vector_scan_probes.split(",")
 
         # Load ground truth data: expected results for each query
-        ground_truth = [x.split() for x in
-                        open(self.test_config.index_settings.ground_truth_file_name,
-                             'r').readlines()]
+        ground_truth = [
+            x.split() for x in open(self.test_config.index_settings.ground_truth_file_name, "r")
+        ]
 
         # Initialize result containers for each probe value
         recalls = []

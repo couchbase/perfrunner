@@ -2,8 +2,8 @@ import random
 from datetime import datetime
 from typing import Iterator, List
 
-import dateutil.parser as parser
 import yaml
+from dateutil import parser
 
 from perfrunner.helpers.misc import human_format
 

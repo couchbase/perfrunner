@@ -819,7 +819,7 @@ class DefaultClusterManager(ClusterManagerBase):
                 bucket_roles = [role.format(bucket=bucket) for role in roles]
                 bucket_roles.append("admin")
                 for i in range(1, num_users+1):
-                    user = f"user{str(i)}"
+                    user = f"user{i!s}"
                     self.rest.add_rbac_user(
                         host=master,
                         user=user,

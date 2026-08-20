@@ -35,7 +35,7 @@ def build_multihost_url(cluster, workload_settings):
 def generate_csv_file(clients: int, users: int, users_file_name: str):
     with open(users_file_name, 'w') as fh:
         writer = csv.writer(fh)
-        for user in range(0, clients):
+        for user in range(clients):
             current_user = f"sg-user-{random.randint(0, users)}"
             writer.writerow([current_user, "password"])
 

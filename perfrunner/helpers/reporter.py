@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import requests
 
@@ -64,10 +64,7 @@ class ShowFastReporter(Reporter):
         logger.info(f"Adding a metric: {pretty_dict(metric)}")
         requests.post(f"http://{SHOWFAST_HOST}/api/v1/metrics", json.dumps(metric))
 
-    def _generate_benchmark(self,
-                            metric: str,
-                            value: Union[float, int],
-                            snapshots: List[str]) -> JSON:
+    def _generate_benchmark(self, metric: str, value: float, snapshots: List[str]) -> JSON:
 
         build_str = self.build
 
@@ -118,10 +115,7 @@ class ShowFastReporter(Reporter):
         logger.info(f"Adding a benchmark: {pretty_dict(benchmark)}")
         requests.post(f"http://{SHOWFAST_HOST}/api/v1/benchmarks", json.dumps(benchmark))
 
-    def post(self,
-             value: Union[float, int],
-             snapshots: List[str],
-             metric: JSON):
+    def post(self, value: float, snapshots: List[str], metric: JSON):
         metric['id'] = '{}_{}'.format(metric['id'], self.cluster_spec.name)
         benchmark = self._generate_benchmark(metric['id'], value, snapshots)
 
@@ -145,10 +139,7 @@ class DailyReporter(Reporter):
     def _log_daily_benchmark(benchmark: JSON):
         logger.info(f"Dry run: {pretty_dict(benchmark)}")
 
-    def post(self,
-             metric: str,
-             value: Union[float, int],
-             snapshots: List[str]):
+    def post(self, metric: str, value: float, snapshots: List[str]):
         benchmark = {
             'build': self.build,
             'buildURL': os.environ.get('BUILD_URL', ''),

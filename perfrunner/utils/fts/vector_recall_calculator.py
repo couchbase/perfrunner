@@ -47,8 +47,7 @@ class VectorRecallCalculator:
         indexName = list(self.settings.fts_index_map.keys())[0]
         test_file = open(test_data_file, 'r')
         if self.settings.ground_truth_file_name:
-            ground_truth = [x.split() for x in
-                            open(self.settings.ground_truth_file_name, 'r').readlines()]
+            ground_truth = [x.split() for x in open(self.settings.ground_truth_file_name, "r")]
         else:
             logger.interrupt("GroundTruth file not found. Necessary for recall")
         recall = []

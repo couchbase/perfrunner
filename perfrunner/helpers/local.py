@@ -1,7 +1,6 @@
 import os
 import shlex
 import shutil
-import socket
 import time
 import urllib.parse
 from datetime import date
@@ -661,9 +660,7 @@ def run_cbc_pillowfight(
     if collections:
         for scope, collections in collections[bucket].items():
             for collection, options in collections.items():
-                if populate and options["load"] == 1:
-                    cmd_args += ["--collection", f"{scope}.{collection}"]
-                elif not populate and options["access"] == 1:
+                if populate and options["load"] == 1 or not populate and options["access"] == 1:
                     cmd_args += ["--collection", f"{scope}.{collection}"]
 
     if doc_gen == "json":
@@ -1211,8 +1208,8 @@ def restart_memcached(mem_host: str = 'localhost', mem_limit: int = 10000, port:
             mc.stats()
             mc.close()
             break
-        except (EOFError, socket.error, MemcachedError):
-            logger.info('Can not connect to memcached')
+        except (OSError, EOFError, MemcachedError):
+            logger.info("Can not connect to memcached")
     else:
         raise Exception('memcached did not start properly')
 
@@ -1461,7 +1458,7 @@ def run_java_dcp_client(connection_string: str, messages: int,
             cmd += collection+","
         cmd = cmd[:-1]
     if instance:
-        cmd += f" > java_dcp_{str(instance)}.log"
+        cmd += f" > java_dcp_{instance!s}.log"
     else:
         cmd += ' > java_dcp.log'
     with lcd('java-dcp-client'):

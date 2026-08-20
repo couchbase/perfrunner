@@ -104,7 +104,7 @@ class YCSBTest(PerfTest):
                     if str(percentile) in key \
                             and "CLEANUP" not in key \
                             and "FAILED" not in key:
-                        self.reporter.post(*metric_fn(key, latency_dic[key]))
+                        self.reporter.post(*metric_fn(key, value))
 
             if self.test_config.ycsb_settings.average_latency == 1:
                 latency_dic = self.metrics.ycsb_get_latency(
@@ -114,7 +114,7 @@ class YCSBTest(PerfTest):
                     if "Average" in key \
                             and "CLEANUP" not in key \
                             and "FAILED" not in key:
-                        self.reporter.post(*metric_fn(key, latency_dic[key]))
+                        self.reporter.post(*metric_fn(key, value))
 
     def log_latency_percentiles(self, operation: str, percentiles):
         if self.test_config.access_settings.verbose_histogram and \
@@ -134,7 +134,7 @@ class YCSBTest(PerfTest):
                             and type in key \
                             and "CLEANUP" not in key \
                             and "FAILED" not in key:
-                        logger.info(f"{key}: {latency_dic[key]}")
+                        logger.info(f"{key}: {value}")
 
     def log_percentiles(self):
         logger.info("------------------")

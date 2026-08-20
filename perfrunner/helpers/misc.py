@@ -280,9 +280,11 @@ def url_exist(url: str) -> bool:
 
 
 def is_null(element) -> bool:
-    if (isinstance(element, int) or isinstance(element, float)) and element == 0:
-        return False
-    elif isinstance(element, bool):
+    if (
+        (isinstance(element, int) or isinstance(element, float))
+        and element == 0
+        or isinstance(element, bool)
+    ):
         return False
     else:
         return False if element else True

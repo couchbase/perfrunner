@@ -1581,8 +1581,7 @@ class WorkerFactory:
         num_workers = settings.workers
         if getattr(settings, 'async', None):
             worker = AsyncKVWorker
-        elif getattr(settings, 'seq_upserts') and \
-                getattr(settings, 'xattr_field', None):
+        elif settings.seq_upserts and getattr(settings, "xattr_field", None):
             worker = SeqXATTRUpdatesWorker
         elif getattr(settings, 'seq_upserts', None):
             worker = SeqUpsertsWorker
@@ -1591,7 +1590,7 @@ class WorkerFactory:
         elif getattr(settings, 'fts_data_spread_workers', None):
             worker = FTSDataSpreadWorker
             num_workers = settings.fts_data_spread_workers
-        elif getattr(settings, 'modify_doc_loader'):
+        elif settings.modify_doc_loader:
             worker = SeqFetchModifyUpsertsWorker
         elif getattr(settings, 'subdoc_field', None):
             worker = SubDocWorker

@@ -131,8 +131,7 @@ def download_file(url: str, filename: str):
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with open(filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
+            f.writelines(r.iter_content(chunk_size=8192))
 
 
 def upload_file(file: str, to_host: str, to_user: str, to_password: str, to_directory: str = "."):

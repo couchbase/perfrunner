@@ -107,7 +107,7 @@ class AWSDeployer(Deployer):
     def create_vpc(self):
         logger.info("Creating VPC...")
         vpc_available = False
-        for i in range(0, 5):
+        for i in range(5):
             response = self.ec2client.describe_vpcs(
                 Filters=[
                     {"Name": "cidr-block-association.cidr-block", "Values": [f"10.{i}.0.0/16"]}
@@ -866,7 +866,7 @@ class AWSDeployer(Deployer):
                         del k8_nodes[node_name]
                         break
 
-                logger.info(f"cluster: {cluster}, hosts: {str(address_replace_list)}")
+                logger.info(f"cluster: {cluster}, hosts: {address_replace_list!s}")
 
                 with open(self.cluster_path) as f:
                     s = f.read()
@@ -893,7 +893,7 @@ class AWSDeployer(Deployer):
                         del k8_nodes[node_name]
                         break
 
-                logger.info(f"sgws: {cluster}, hosts: {str(address_replace_list)}")
+                logger.info(f"sgws: {cluster}, hosts: {address_replace_list!s}")
 
                 sgw_list = ""
                 for sgw_tuple in address_replace_list:
@@ -935,7 +935,7 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((address, next_ip))
 
-                logger.info(f"cluster: {cluster}, hosts: {str(address_replace_list)}")
+                logger.info(f"cluster: {cluster}, hosts: {address_replace_list!s}")
 
                 server_list = ""
                 for server_tuple in address_replace_list:
@@ -964,7 +964,7 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((host, next_ip))
 
-                logger.info(f"clients: {cluster}, hosts: {str(address_replace_list)}")
+                logger.info(f"clients: {cluster}, hosts: {address_replace_list!s}")
 
                 worker_list = ""
                 for worker_tuple in address_replace_list:
@@ -993,7 +993,7 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((host, next_ip))
 
-                logger.info(f"sgws: {cluster}, hosts: {str(address_replace_list)}")
+                logger.info(f"sgws: {cluster}, hosts: {address_replace_list!s}")
 
                 sgw_list = ""
                 for sgw_tuple in address_replace_list:
@@ -1704,7 +1704,7 @@ class GCPDeployer(Deployer):
                 server_list += f"{public_ip}\n"
                 internal_ip_section += f"        {private_ip}\n"
 
-            logger.info(f"cluster: {cluster}, hosts: {str(public_address_replace_list)}")
+            logger.info(f"cluster: {cluster}, hosts: {public_address_replace_list!s}")
 
             # Perform the IP replacement in the infra spec
             with open(self.cluster_path) as f:
@@ -1736,7 +1736,7 @@ class GCPDeployer(Deployer):
                 worker_list += f"{public_ip}\n"
             worker_list = worker_list.rstrip()
 
-            logger.info(f"clients: {cluster}, hosts: {str(address_replace_list)}")
+            logger.info(f"clients: {cluster}, hosts: {address_replace_list!s}")
 
             with open(self.cluster_path) as f:
                 s = f.read()
@@ -1763,7 +1763,7 @@ class GCPDeployer(Deployer):
                 sgw_list += f"{public_ip}\n"
             sgw_list = sgw_list.rstrip()
 
-            logger.info(f"sgw: {cluster}, hosts: {str(address_replace_list)}")
+            logger.info(f"sgw: {cluster}, hosts: {address_replace_list!s}")
 
             with open(self.cluster_path) as f:
                 s = f.read()
@@ -1788,7 +1788,7 @@ class GCPDeployer(Deployer):
                     (host, node_group_ips[node_group][node_num]['public'])
                 )
 
-            logger.info(f"utilities: {cluster}, hosts: {str(address_replace_list)}")
+            logger.info(f"utilities: {cluster}, hosts: {address_replace_list!s}")
 
             with open(self.cluster_path) as f:
                 s = f.read()

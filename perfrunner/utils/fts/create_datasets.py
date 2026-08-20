@@ -140,7 +140,7 @@ class TestDataset:
                                     result_phrase = f"{term} {term_next}"
                                     results.add(result_phrase)
             except Exception as e:
-                print((f"{key}: {len(results)}: {str(e)}"))
+                print(f"{key}: {len(results)}: {e!s}")
 
             if len(results) > self.limit:
                 break

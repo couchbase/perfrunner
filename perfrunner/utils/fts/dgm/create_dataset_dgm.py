@@ -72,8 +72,7 @@ class TermProcessor:
         results = results[:self.limit]
 
         result_file = open(output_name, "w")
-        for line in results:
-            result_file.write(f"{line}\n")
+        result_file.writelines(f"{line}\n" for line in results)
         result_file.close()
 
     def combine_3(self, output_name, file1, file2, file3):
@@ -96,8 +95,7 @@ class TermProcessor:
         random.shuffle(results)
         results = results[:self.limit]
         result_file = open(output_name, "w")
-        for line in results:
-            result_file.write(f"{line}\n")
+        result_file.writelines(f"{line}\n" for line in results)
         result_file.close()
 
     def get_fuzzies(self, output1_file, output2_file, input_file, size=5):
@@ -168,14 +166,13 @@ class TermProcessor:
                                     result_phrase = f"{term} {term_next}"
                                     results.add(result_phrase)
             except Exception as e:
-                print((f"{key}: {len(results)}: {str(e)}"))
+                print(f"{key}: {len(results)}: {e!s}")
 
             if len(results) > self.limit:
                 break
 
         output_file = open(output_file, "w")
-        for phrase in results:
-            output_file.write(f"{phrase}\n")
+        output_file.writelines(f"{phrase}\n" for phrase in results)
 
     def get_dates(self, output_file, input_file):
         lines = self._shuffle_and_cut(input_file, self.limit)

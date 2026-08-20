@@ -77,7 +77,6 @@ class GroundTruthAdapter(ABC):
         Returns:
             List of answer strings
         """
-        pass
 
     @abstractmethod
     def extract_evidence_from_entry(self, entry: dict) -> list[str]:
@@ -89,7 +88,6 @@ class GroundTruthAdapter(ABC):
         Returns:
             List of evidence text strings
         """
-        pass
 
     def get_system_prompt(self) -> str:
         """Return system prompt for LLM generation."""

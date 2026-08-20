@@ -34,7 +34,7 @@ class SecondaryLatencyStats(CouchbaseCollector):
                     latency_key = duration.split(':')[0]
                     latency_key = latency_key.strip()
                     stats[latency_key] = int(latency)
-                except (StopIteration, IOError):
+                except (OSError, StopIteration):
                     pass
         return stats
 

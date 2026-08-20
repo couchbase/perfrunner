@@ -11,6 +11,22 @@ extend-select = [
     "E",  # pycodestyle errors
     # Rules from the ruff >=0.16.0 default ruleset, enabled as they get addressed.
     "UP032",  # f-string
+    "UP034",  # extraneous-parentheses
+    "UP030",  # format-literals
+    "UP024",  # os-error-alias
+    "UP008",  # super-call-with-parameters
+    "UP004",  # useless-object-inheritance
+    "PIE808",  # unnecessary-range-start
+    "PIE790",  # unnecessary-placeholder
+    "PLR0402",  # manual-from-import
+    "PLR1733",  # unnecessary-dict-index-lookup
+    "PYI041",  # redundant-numeric-union
+    "RUF010",  # explicit-f-string-type-conversion
+    "RUF019",  # unnecessary-key-check
+    "SIM114",  # if-with-same-arms
+    "B009",  # get-attr-with-constant
+    "FURB122",  # for-loop-writes
+    "FURB129",  # readlines-in-for
 ]
 ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "D211", "D213"]
 

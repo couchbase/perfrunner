@@ -310,7 +310,7 @@ class CouchbaseCollector(Collector):
         try:
             s = socket.socket()
             s.connect((node, 8091))
-        except socket.error:
+        except OSError:
             return False
         else:
             if not self.get_http(path="/pools", server=node).get("pools"):

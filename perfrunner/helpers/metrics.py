@@ -1577,7 +1577,7 @@ class MetricHelper:
 
         for filename in ycsb_log_files:
             with open(filename) as fh:
-                for line in fh.readlines():
+                for line in fh:
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
                         throughput += int(float(line.split()[-1]))
                         break
@@ -1591,7 +1591,7 @@ class MetricHelper:
 
         for filename in pytpcc_log_file:
             with open(filename) as fh:
-                for line in fh.readlines():
+                for line in fh:
                     if 'NEW_ORDER' in line:
                         if line.split()[4] == 'txn/s':
                             executed = line.split()[1]
@@ -1672,7 +1672,7 @@ class MetricHelper:
             num_lines = len(lines)
 
             fh2 = open(filename)
-            for x in range(0, num_lines):
+            for x in range(num_lines):
                 line = fh2.readline()
                 if line.find("], MaxLatency(us),") >= 1:
                     parts = line.split(",")
@@ -1696,7 +1696,7 @@ class MetricHelper:
             num_lines = len(lines)
 
             fh2 = open(filename)
-            for x in range(0, num_lines):
+            for x in range(num_lines):
                 line = fh2.readline()
                 if line.find("-FAILED], Operations,") >= 1:
                     parts = line.split(",")
@@ -1716,7 +1716,7 @@ class MetricHelper:
             lines = fh.readlines()
             num_lines = len(lines)
             fh2 = open(filename)
-            for x in range(0, num_lines):
+            for x in range(num_lines):
                 line = fh2.readline()
                 if line.find("[TOTAL_GCs], Count,") >= 0:
                     gcs += int(line.split(",")[2].strip())
@@ -2507,7 +2507,7 @@ class MetricHelper:
     def _chX_metrics(self, metrics: CHXMetrics, logfile: str, tclients: int) -> CHXMetrics:
         filename = logfile + ".log"
         with open(filename) as fh:
-            for line in fh.readlines():
+            for line in fh:
                 self._chX_process_line(line, metrics, tclients)
         return metrics
 
@@ -2643,7 +2643,7 @@ class MetricHelper:
             pattern = "YCSB/*_runtest_*.result"
         for filename in glob.glob(pattern):
             with open(filename) as fh:
-                for line in fh.readlines():
+                for line in fh:
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
                         throughput += float(line.split()[-1])
         if throughput < 100:
@@ -2733,7 +2733,7 @@ class MetricHelper:
         count = 0
         for filename in glob.glob("YCSB/*_runtest_*.result"):
             with open(filename) as fh:
-                for line in fh.readlines():
+                for line in fh:
                     if line.startswith(metric_name):
                         lat += float(line.split()[-1])
                         count += 1
@@ -2745,7 +2745,7 @@ class MetricHelper:
         failed_ops = 0
         for filename in glob.glob("YCSB/*_runtest_*.result"):
             with open(filename) as fh:
-                for line in fh.readlines():
+                for line in fh:
                     if 'FAILED' in line:
                         failed_ops = 1
                         break

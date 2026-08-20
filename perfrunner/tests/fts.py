@@ -325,7 +325,7 @@ class FTSTest(JTSTest):
 
                     for coll_group_id, collection_type_mapping in \
                             enumerate(index_type_mapping_per_group):
-                        for index_count in range(0, self.jts_access.indexes_per_group):
+                        for index_count in range(self.jts_access.indexes_per_group):
                             index_name = f"{self.jts_access.couchbase_index_name}-{index_id}"
                             collection_index_def = copy.deepcopy(bucket_index_def)
                             collection_index_def.update({
@@ -360,7 +360,7 @@ class FTSTest(JTSTest):
                         bucket_index_def["params"]["mapping"]["default_mapping"]["enabled"] = False
 
                 # default, multiple indexes with the same index def
-                for num_indexes in range(0, self.jts_access.indexes_per_group):
+                for num_indexes in range(self.jts_access.indexes_per_group):
                     index_name = f"{self.jts_access.couchbase_index_name}-{num_indexes}"
                     collection_index_def = copy.deepcopy(bucket_index_def)
                     collection_index_def.update({
@@ -476,7 +476,7 @@ class FTSTest(JTSTest):
         nodes_before_rebalance = self.test_config.cluster.initial_nodes[0]
         servers_and_roles = self.cluster_spec.servers_and_roles
         fts_nodes_before = []
-        for i in range(0, nodes_before_rebalance):
+        for i in range(nodes_before_rebalance):
             host = servers_and_roles[i][0]
             roles = servers_and_roles[i][1]
             if "fts" in roles:

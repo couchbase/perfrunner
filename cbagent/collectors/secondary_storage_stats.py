@@ -75,7 +75,7 @@ class SecondaryStorageStats(CouchbaseCollector):
                 index_name = index
                 if scope and collection and scope != "_default" and collection != "_default":
                     index = f"{scope}:{collection}:{index}"
-                if index in index_stats and index_stats[index]:
+                if index_stats.get(index):
                     stats = index_stats[index]
                     index1 = f"{bucket}.{index_name}"
                     self.update_metric_metadata(stats.keys(), index=index1)

@@ -4,16 +4,13 @@ import glob
 import os
 import re
 import statistics
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Iterable,
-    List,
     Optional,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -42,16 +39,16 @@ if TYPE_CHECKING:
 
 Number = Union[float, int]
 
-Metric = Tuple[
-    Number,          # Value
-    List[str],       # Snapshots
-    Dict[str, str],  # Metric info
+Metric = tuple[
+    Number,  # Value
+    list[str],  # Snapshots
+    dict[str, str],  # Metric info
 ]
 
-DailyMetric = Tuple[
-    str,        # Metric
-    Number,     # Value
-    List[str],  # Snapshots
+DailyMetric = tuple[
+    str,  # Metric
+    Number,  # Value
+    list[str],  # Snapshots
 ]
 
 
@@ -186,7 +183,7 @@ class MetricHelper:
         return 0
 
     @property
-    def _snapshots(self) -> List[str]:
+    def _snapshots(self) -> list[str]:
         return self.test.cbmonitor_snapshots
 
     @property
@@ -197,13 +194,15 @@ class MetricHelper:
     def _mem_quota(self):
         return self.test_config.cluster.mem_quota
 
-    def _metric_info(self,
-                     metric_id: Optional[str] = None,
-                     title: Optional[str] = None,
-                     order_by: Optional[str] = None,
-                     chirality: Optional[int] = None,
-                     mem_quota: Optional[int] = None,
-                     stat_group: str = '') -> Dict[str, str]:
+    def _metric_info(
+        self,
+        metric_id: Optional[str] = None,
+        title: Optional[str] = None,
+        order_by: Optional[str] = None,
+        chirality: Optional[int] = None,
+        mem_quota: Optional[int] = None,
+        stat_group: str = "",
+    ) -> dict[str, str]:
         return {
             'id': metric_id or self.test_config.name,
             'title': title or self._title,
@@ -223,7 +222,7 @@ class MetricHelper:
         chirality: Optional[int] = None,
         mem_quota: Optional[int] = None,
         stat_group: str = "",
-        extra: Optional[Dict[str, str]] = None,
+        extra: Optional[dict[str, str]] = None,
     ) -> Metric:
         """Assemble a ``Metric`` triple (value, snapshots, metric_info) in one place.
 
@@ -460,12 +459,14 @@ class MetricHelper:
             )
         return timings
 
-    def _ops_data(self,
-                  buckets: List[str] = [],
-                  cluster_idx: int = 0,
-                  collector: str = 'ns_server',
-                  stat_group: str = '',
-                  metric: str = 'ops') -> List[int]:
+    def _ops_data(
+        self,
+        buckets: list[str] = [],
+        cluster_idx: int = 0,
+        collector: str = "ns_server",
+        stat_group: str = "",
+        metric: str = "ops",
+    ) -> list[int]:
         """Calculate total ops/sec over a given set of buckets on a given cluster.
 
          At each time point, sum ops/sec for buckets (to get time series of total ops/sec):
@@ -495,12 +496,14 @@ class MetricHelper:
                 values = return_ops
         return values
 
-    def _avg_ops(self,
-                 buckets: List[str] = [],
-                 cluster_idx: int = 0,
-                 collector: str = 'ns_server',
-                 stat_group: str = '',
-                 metric: str = 'ops') -> int:
+    def _avg_ops(
+        self,
+        buckets: list[str] = [],
+        cluster_idx: int = 0,
+        collector: str = "ns_server",
+        stat_group: str = "",
+        metric: str = "ops",
+    ) -> int:
         """Calculate average total ops/sec for a given set of buckets on a given cluster.
 
         Calculation:
@@ -521,13 +524,15 @@ class MetricHelper:
             return int(self._mean(values))
         return -1
 
-    def _max_ops(self,
-                 buckets: List[str] = [],
-                 cluster_idx: int = 0,
-                 collector: str = 'ns_server',
-                 stat_group: str = '',
-                 metric: str = 'ops',
-                 percentile: Number = 90) -> int:
+    def _max_ops(
+        self,
+        buckets: list[str] = [],
+        cluster_idx: int = 0,
+        collector: str = "ns_server",
+        stat_group: str = "",
+        metric: str = "ops",
+        percentile: Number = 90,
+    ) -> int:
         """Calculate P90 total ops/sec over a given set of buckets on a given cluster.
 
         Calculation:
@@ -548,11 +553,13 @@ class MetricHelper:
             return int(self._percentile(values, percentile))
         return -1
 
-    def _construct_ops_metrics(self,
-                               metric_name: str,
-                               overall_throughput: Number,
-                               stat_group_throughputs: dict[str, Number] = {},
-                               cluster_idx: int = 0) -> List[Metric]:
+    def _construct_ops_metrics(
+        self,
+        metric_name: str,
+        overall_throughput: Number,
+        stat_group_throughputs: dict[str, Number] = {},
+        cluster_idx: int = 0,
+    ) -> list[Metric]:
         if stat_group_throughputs:
             # Overall throughput first
             # We do this here to ensure the title is correct when we are using stat groups
@@ -581,7 +588,7 @@ class MetricHelper:
         metric_info = self._metric_info(chirality=0)
         return [(overall_throughput, self._snapshots, metric_info)]
 
-    def avg_ops(self, buckets: List[str] = [], cluster_idx: int = 0) -> List[Metric]:
+    def avg_ops(self, buckets: list[str] = [], cluster_idx: int = 0) -> list[Metric]:
         """Generate average total ops/sec metrics for a given set of buckets on a given cluster.
 
         Generates overall average ops/sec and per-stat-group average ops/sec metrics (if stat
@@ -608,9 +615,9 @@ class MetricHelper:
                                            stat_group_throughputs,
                                            cluster_idx)
 
-    def max_ops(self, buckets: List[str] = [],
-                cluster_idx: int = 0,
-                percentiles: Iterable[Number] = [90]) -> List[Metric]:
+    def max_ops(
+        self, buckets: list[str] = [], cluster_idx: int = 0, percentiles: Iterable[Number] = [90]
+    ) -> list[Metric]:
         """Generate P90 total ops/sec metrics over a given set of buckets on a given cluster.
 
         Generates overall P90 ops/sec and per-stat-group P90 ops/sec metrics (if stat groups are
@@ -764,7 +771,7 @@ class MetricHelper:
                     values.append(sample.latency_ms)
         return values
 
-    def _local_jts_values(self, metric: str, bucket: str) -> List[float]:
+    def _local_jts_values(self, metric: str, bucket: str) -> list[float]:
         """Consolidate JTS metric values for ``bucket`` from the local JTS logs."""
         settings = self.test_config.jts_access_settings
         filename = (
@@ -1597,8 +1604,14 @@ class MetricHelper:
                             executed = line.split()[1]
         return int(executed)
 
-    def _ycsb_perc_calc(self, _temp: List[Number], io_type: str, percentile: Number,
-                        lat_dic: Dict[str, Number], _fc: int) -> Dict[str, Number]:
+    def _ycsb_perc_calc(
+        self,
+        _temp: list[Number],
+        io_type: str,
+        percentile: Number,
+        lat_dic: dict[str, Number],
+        _fc: int,
+    ) -> dict[str, Number]:
         pio_type = f"{percentile}th Percentile {io_type}"
         p_lat = round(self._percentile(_temp, percentile) / 1000, 3)
         if _fc > 1:
@@ -1606,8 +1619,9 @@ class MetricHelper:
         lat_dic.update({pio_type: p_lat})
         return lat_dic
 
-    def _ycsb_avg_calc(self, _temp: List[Number], io_type: str, lat_dic: Dict[str, Number],
-                       _fc: int) -> Dict[str, Number]:
+    def _ycsb_avg_calc(
+        self, _temp: list[Number], io_type: str, lat_dic: dict[str, Number], _fc: int
+    ) -> dict[str, Number]:
         aio_type = f"Average {io_type}"
         a_lat = round((sum(_temp) / len(_temp)) / 1000, 3)
         if _fc > 1:

@@ -3,12 +3,13 @@ import itertools
 import json
 import os
 import re
+from collections.abc import Iterable, Iterator
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from itertools import chain, combinations, permutations
-from typing import Any, Iterable, Iterator, Optional, Tuple
+from typing import Any, Optional
 from uuid import uuid4
 
 from decorator import decorator
@@ -631,7 +632,7 @@ class ClusterSpec(Config):
         return server_roles
 
     @property
-    def servers_and_roles(self) -> list[Tuple[str, str]]:
+    def servers_and_roles(self) -> list[tuple[str, str]]:
         server_and_roles = []
         for servers in self.infrastructure_clusters.values():
             for server in servers.split():
@@ -2082,7 +2083,7 @@ class PhaseSettings:
         raise NotImplementedError()
 
     @staticmethod
-    def compare_phase_settings(settings_list) -> Tuple[dict, list[dict]]:
+    def compare_phase_settings(settings_list) -> tuple[dict, list[dict]]:
         options = [set(s.__dict__) for s in settings_list]
         all_options = set.union(*options)
         diff_options = all_options - set.intersection(*options)

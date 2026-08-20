@@ -1,7 +1,8 @@
 import json
 import re
 from collections import defaultdict
-from typing import Callable, Iterable, Optional
+from collections.abc import Iterable
+from typing import Callable, Optional
 
 from cbagent.collectors.collector import CouchbaseCollector
 from cbagent.histogram import (

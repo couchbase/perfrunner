@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
@@ -14,7 +14,7 @@ class IOStat(RemoteStats):
         ("util", "%util", 1),
     )
 
-    def get_device_name(self, path: str) -> Tuple[Optional[str], bool]:
+    def get_device_name(self, path: str) -> tuple[Optional[str], bool]:
         stdout = self.run(f"df '{path}' | head -2 | tail -1", quiet=True)
         if not stdout.return_code:
             name = stdout.split()[0]
@@ -26,7 +26,7 @@ class IOStat(RemoteStats):
                 return name, False
         return None, None
 
-    def get_iostat(self, device: str) -> Dict[str, str]:
+    def get_iostat(self, device: str) -> dict[str, str]:
         stdout = self.run(f"iostat -dkxyN 1 1 {device} | grep -v '^$' | tail -n 2")
         stdout = stdout.split()
         header = stdout[:len(stdout) // 2]
@@ -43,8 +43,9 @@ class IOStat(RemoteStats):
     def get_client_samples(self, partitions: dict) -> dict:
         return self.get_samples(partitions['client'], self.METRICS)
 
-    def get_samples(self, partitions: Dict[str, str],
-                    metrics: Tuple[Tuple[str, str, int]]) -> Dict[str, float]:
+    def get_samples(
+        self, partitions: dict[str, str], metrics: tuple[tuple[str, str, int]]
+    ) -> dict[str, float]:
         samples = {}
 
         for purpose, path in partitions.items():

@@ -1,5 +1,4 @@
 from itertools import cycle
-from typing import List, Tuple
 
 from numpy import random
 
@@ -89,7 +88,7 @@ class ViewQueryGen:
             },
         }
 
-    def next(self, doc: dict) -> Tuple[str, str, ViewQuery]:
+    def next(self, doc: dict) -> tuple[str, str, ViewQuery]:
         ddoc_name, view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
@@ -149,18 +148,20 @@ class ViewQueryGenByType:
         self.view_sequence = cycle(self.VIEWS_PER_TYPE[index_type])
 
     @staticmethod
-    def generate_params(city: dict,
-                        county: dict,
-                        country: dict,
-                        realm: dict,
-                        state: dict,
-                        full_state: dict,
-                        coins: dict,
-                        category: str,
-                        year: int,
-                        achievements: List[int],
-                        gmtime: Tuple[int],
-                        **kwargs) -> dict:
+    def generate_params(
+        city: dict,
+        county: dict,
+        country: dict,
+        realm: dict,
+        state: dict,
+        full_state: dict,
+        coins: dict,
+        category: str,
+        year: int,
+        achievements: list[int],
+        gmtime: tuple[int],
+        **kwargs,
+    ) -> dict:
         return {
             'name_and_street_by_city': {
                 'key': city['f']['f'],
@@ -224,7 +225,7 @@ class ViewQueryGenByType:
             },
         }
 
-    def next(self, doc: dict) -> Tuple[str, str, ViewQuery]:
+    def next(self, doc: dict) -> tuple[str, str, ViewQuery]:
         view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
@@ -232,8 +233,7 @@ class ViewQueryGenByType:
 
 
 class N1QLQueryGen:
-
-    def __init__(self, queries: List[dict]):
+    def __init__(self, queries: list[dict]):
         queries = [
             (query['statement'], query['args'], query.get('scan_consistency'), query.get('ad_hoc'))
             for query in queries

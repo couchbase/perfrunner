@@ -1,6 +1,6 @@
 import random
+from collections.abc import Iterator
 from datetime import datetime
-from typing import Iterator, List
 
 import yaml
 from dateutil import parser
@@ -127,71 +127,71 @@ def new_offset(seconds: int) -> int:
     return random.randint(min_timestamp(), max_timestamp() - seconds)
 
 
-def new_dates(dataset: str, num_matches: float, num_set: int) -> List[str]:
+def new_dates(dataset: str, num_matches: float, num_set: int) -> list[str]:
     seconds = int(num_matches / items_per_second(dataset, num_set))
     offset = new_offset(seconds)
     return [seconds2iso(offset), seconds2iso(offset + seconds)]
 
 
-def bf03params(num_matches: float, num_set: int) -> List[str]:
+def bf03params(num_matches: float, num_set: int) -> list[str]:
     set_index = random.randrange(1, num_set+1)
     return list(str(set_index).split()) + new_dates('GleambookUsers', num_matches, num_set)
 
 
-def bf04params(num_matches: float, num_set: int) -> List[str]:
+def bf04params(num_matches: float, num_set: int) -> list[str]:
     return bf03params(num_matches, num_set)
 
 
-def bf08params(num_matches: float, num_set: int) -> List[str]:
+def bf08params(num_matches: float, num_set: int) -> list[str]:
     set_index = random.randrange(1, num_set + 1)
     return list(str(set_index).split()) + new_dates('ChirpMessages', num_matches, num_set)
 
 
-def bf10params(num_set: int) -> List[str]:
+def bf10params(num_set: int) -> list[str]:
     set_index = random.randrange(1, num_set + 1)
     return list(str(set_index).split())
 
 
-def bf11params(num_set: int) -> List[str]:
+def bf11params(num_set: int) -> list[str]:
     return bf10params(num_set)
 
 
-def bf14params(num_matches: float, num_set: int) -> List[str]:
+def bf14params(num_matches: float, num_set: int) -> list[str]:
     set_index = str(random.randrange(1, num_set + 1))
     return [set_index, set_index] + \
         new_dates('GleambookUsers', num_matches, num_set) + \
         new_dates('GleambookMessages', num_matches, num_set)
 
 
-def bf15params(num_matches: float, num_set: int) -> List[str]:
+def bf15params(num_matches: float, num_set: int) -> list[str]:
     return bf14params(num_matches, num_set)
 
 
-def bf16params(num_matches: float, num_set: int) -> List[str]:
+def bf16params(num_matches: float, num_set: int) -> list[str]:
     return bf14params(num_matches, num_set)
 
 
-def wf01params(num_set: int) -> List[str]:
+def wf01params(num_set: int) -> list[str]:
     return bf10params(num_set)
 
 
-def wf02params(num_set: int) -> List[str]:
+def wf02params(num_set: int) -> list[str]:
     return bf10params(num_set)
 
 
-def wf03params(num_set: int) -> List[str]:
+def wf03params(num_set: int) -> list[str]:
     return bf10params(num_set)
 
 
-def wf04params(num_set: int) -> List[str]:
+def wf04params(num_set: int) -> list[str]:
     return bf10params(num_set)
 
 
-def wf05params(num_set: int) -> List[str]:
+def wf05params(num_set: int) -> list[str]:
     return bf10params(num_set)
 
 
-def new_params(qid: str, num_matches: float, num_set: int) -> List[str]:
+def new_params(qid: str, num_matches: float, num_set: int) -> list[str]:
     return {
         'BF03': bf03params(num_matches, num_set),
         'BF04': bf04params(num_matches, num_set),

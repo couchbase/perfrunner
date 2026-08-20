@@ -5,8 +5,8 @@ import random
 import time
 import uuid
 from collections import deque
+from collections.abc import Iterator
 from datetime import date, datetime, timedelta
-from typing import Iterator, List, Tuple
 
 import numpy as np
 from faker import Faker
@@ -409,7 +409,7 @@ class Document(String):
         return max(0.1, int(alphabet[36:40], 16) / 100)
 
     @staticmethod
-    def build_gmtime(alphabet: str) -> Tuple[int]:
+    def build_gmtime(alphabet: str) -> tuple[int]:
         seconds = 396 * 24 * 3600 * (int(alphabet[63], 16) % 12)
         return tuple(time.gmtime(seconds))
 
@@ -432,7 +432,7 @@ class Document(String):
         return int(alphabet[41], 16) % 3
 
     @staticmethod
-    def build_achievements(alphabet: str) -> List[int]:
+    def build_achievements(alphabet: str) -> list[int]:
         return build_achievements(alphabet) or [0]
 
     def _size(self) -> float:
@@ -818,7 +818,7 @@ class ReverseLookupDocument(NestedDocument):
         index = seq_id // num_unique
         return '%s_%d_%d' % (self.prefix, num_unique, index)
 
-    def build_topics(self, seq_id: int) -> List[str]:
+    def build_topics(self, seq_id: int) -> list[str]:
         return []
 
     def next(self, key: Key) -> dict:
@@ -965,7 +965,7 @@ class ExtReverseLookupDocument(ReverseLookupDocument):
         super().__init__(avg_size, prefix)
         self.num_docs = num_docs
 
-    def build_topics(self, seq_id: int) -> List[str]:
+    def build_topics(self, seq_id: int) -> list[str]:
         """1:4 reference to JoinedDocument keys."""
         return [
             decimal_fmtr((seq_id + 11) % self.num_docs, self.prefix),
@@ -997,7 +997,7 @@ class JoinedDocument(ReverseLookupDocument):
     def build_title(self, alphabet: str) -> str:
         return alphabet[:32]
 
-    def build_categories(self, seq_id: int) -> List[str]:
+    def build_categories(self, seq_id: int) -> list[str]:
         """1:4 reference to RefDocument keys."""
         return [
             decimal_fmtr((seq_id + 11) % self.num_categories, self.prefix),
@@ -1009,7 +1009,7 @@ class JoinedDocument(ReverseLookupDocument):
     def build_user(self, seq_id: int, idx: int) -> str:
         return decimal_fmtr((seq_id + idx + 537) % self.num_docs, self.prefix)
 
-    def build_replies(self, seq_id: int) -> List[dict]:
+    def build_replies(self, seq_id: int) -> list[dict]:
         """1:N references to ReverseLookupDocument keys."""
         return [
             {'user': self.build_user(seq_id, idx)}
@@ -1067,7 +1067,7 @@ class ArrayIndexingDocument(ReverseLookupDocument):
         self.array_size = array_size
         self.num_docs = num_docs
 
-    def build_achievements1(self, seq_id: int) -> List[int]:
+    def build_achievements1(self, seq_id: int) -> list[int]:
         """Build an array of integers.
 
         Every document reserves a range of numbers that can be used for a
@@ -1105,7 +1105,7 @@ class ArrayIndexingDocument(ReverseLookupDocument):
 
         return [int(offset + i) for i in range(self.array_size)]
 
-    def build_achievements2(self, seq_id: int) -> List[int]:
+    def build_achievements2(self, seq_id: int) -> list[int]:
         """Build an array of integers.
 
         achievements2 is very similar to achievements1. However, in case of
@@ -1155,7 +1155,7 @@ class ArrayIndexingUniqueDocument(ReverseLookupDocument):
         self.array_size = array_size
         self.num_docs = num_docs
 
-    def build_achievements1(self, seq_id: int) -> List[int]:
+    def build_achievements1(self, seq_id: int) -> list[int]:
 
         offset = seq_id * self.array_size
         if self.is_random:
@@ -1204,7 +1204,7 @@ class ArrayIndexingRangeScanDocument(ReverseLookupDocument):
         self.array_size = array_size
         self.num_docs = num_docs
 
-    def build_achievements2(self, seq_id: int) -> List[int]:
+    def build_achievements2(self, seq_id: int) -> list[int]:
         offset = seq_id // self.ARRAY_CAP * self.array_size
         if self.is_random:
             offset = self.num_docs * self.array_size
@@ -1950,11 +1950,11 @@ class EventingSmallDocument(Document):
 class TpcDsDocument:
 
     @property
-    def categories(self) -> List[str]:
+    def categories(self) -> list[str]:
         return random.sample(CATEGORIES, 2)
 
     @property
-    def counties(self) -> List[str]:
+    def counties(self) -> list[str]:
         return random.sample(COUNTIES, 10)
 
     @property
@@ -2003,7 +2003,7 @@ class TpcDsDocument:
         return YEARS[idx]
 
     @property
-    def zip_codes(self) -> List[str]:
+    def zip_codes(self) -> list[str]:
         return random.sample(ZIP_CODES, 50)
 
     def next(self, *args) -> dict:

@@ -1,7 +1,7 @@
 import time
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import cycle
-from typing import Iterator, List
 
 import numpy
 
@@ -27,11 +27,9 @@ def run_query(rest: RestHelper, node: str, query: Query) -> float:
     return latency
 
 
-def run_concurrent_queries(rest: RestHelper,
-                           nodes: List[str],
-                           query: Query,
-                           concurrency: int,
-                           num_requests: int) -> List[float]:
+def run_concurrent_queries(
+    rest: RestHelper, nodes: list[str], query: Query, concurrency: int, num_requests: int
+) -> list[float]:
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
         nodes = cycle(nodes)
         futures = [
@@ -44,11 +42,9 @@ def run_concurrent_queries(rest: RestHelper,
         return timings
 
 
-def tpcds(rest: RestHelper,
-          nodes: List[str],
-          concurrency: int,
-          num_requests: int,
-          query_set: str) -> Iterator:
+def tpcds(
+    rest: RestHelper, nodes: list[str], concurrency: int, num_requests: int, query_set: str
+) -> Iterator:
     for query in new_queries(query_set):
         logger.info(f"Running: {query.statement}")
         timings = run_concurrent_queries(rest,

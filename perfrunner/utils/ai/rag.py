@@ -1,7 +1,8 @@
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable, Iterator, Optional
+from typing import Callable, Optional
 
 from logger import logger
 from perfrunner.helpers.local import download_raw_github_file

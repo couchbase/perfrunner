@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable
 
 from decorator import decorator
 
@@ -65,7 +65,7 @@ def syncgateway_servers(task, *args, **kwargs):
     return execute(parallel(task), *args, hosts=hosts, **kwargs)
 
 
-def servers_by_role(roles: List[str]):
+def servers_by_role(roles: list[str]):
     """Execute the decorated function on remote server nodes filtered by role."""
     @decorator
     def wrapper(task, *args, **kwargs):

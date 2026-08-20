@@ -1,5 +1,4 @@
 import json
-from typing import Dict, List
 
 from aiohttp import ClientError
 from requests import Session
@@ -73,7 +72,7 @@ class PerfStore:
             key=lambda x: x[0],
         )
 
-    def get_summary(self, db: str, metric: str) -> Dict[str, float]:
+    def get_summary(self, db: str, metric: str) -> dict[str, float]:
         url = f"{self.base_url}/{db}/{metric}/summary"
         return self.session.get(url).json()
 
@@ -82,7 +81,7 @@ class PerfStore:
         response = self.session.get(url)
         return response.status_code == 200
 
-    def find_dbs(self, db: str) -> List[str]:
+    def find_dbs(self, db: str) -> list[str]:
         urls = []
         for name in self.session.get(self.base_url).json():
             if db in name:

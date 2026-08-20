@@ -1,7 +1,8 @@
 import time
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import cycle
-from typing import Iterator, Optional
+from typing import Optional
 
 import numpy
 

@@ -7,7 +7,7 @@ from datetime import date
 from glob import glob
 from pathlib import Path
 from sys import platform
-from typing import List, Optional, Tuple
+from typing import Optional
 from uuid import uuid4
 
 import paramiko
@@ -171,10 +171,7 @@ def backup(
         )
 
 
-def compact(cluster_spec: ClusterSpec,
-            snapshots: List[str],
-            threads,
-            wrapper: bool = False):
+def compact(cluster_spec: ClusterSpec, snapshots: list[str], threads, wrapper: bool = False):
     if wrapper:
         return
     cbbackupmgr_compact(cluster_spec, snapshots, threads)
@@ -314,7 +311,7 @@ def cbbackupmgr_collectlogs(cluster_spec: ClusterSpec, obj_region: str = None,
     local(cmd)
 
 
-def get_backup_snapshots(cluster_spec: ClusterSpec) -> List[str]:
+def get_backup_snapshots(cluster_spec: ClusterSpec) -> list[str]:
 
     logger.info('running cbbackupmgr info command ')
 
@@ -954,7 +951,7 @@ def run_ycsb(
 
 
 def run_mongo_ycsb(
-    hosts: List[str],
+    hosts: list[str],
     database: str,
     action: str,
     workload: str,
@@ -1470,8 +1467,9 @@ def detect_ubuntu_release():
     return local('lsb_release -sr', capture=True).strip()
 
 
-def run_cbstats(command: str, server: str, port: int, username: str, password: str,
-                bucket: Optional[str] = None) -> Tuple[str, int]:
+def run_cbstats(
+    command: str, server: str, port: int, username: str, password: str, bucket: Optional[str] = None
+) -> tuple[str, int]:
     """Run cbstats on the given server, returning (stdout, returncode).
 
     If `bucket` not provided, then run cbstats with the -a flag (iterating over all buckets).

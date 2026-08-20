@@ -1,8 +1,8 @@
 import argparse
 import copy
 import time
+from collections.abc import Iterator
 from multiprocessing import set_start_method
-from typing import Dict, Iterator, List
 
 import boto3
 import yaml
@@ -68,7 +68,7 @@ class CloudRunner:
         self.ec2 = boto3.resource('ec2', region_name=self.AWS_REGION)
         self.s3 = boto3.resource('s3', region_name=self.AWS_REGION)
 
-    def launch(self, count: int, group: str, instance_type: str, ebs_type: str) -> List[str]:
+    def launch(self, count: int, group: str, instance_type: str, ebs_type: str) -> list[str]:
         instance_settings = copy.deepcopy(self.EC2_SETTINGS)
         if group == 'servers':
             if ebs_type == "io":
@@ -106,20 +106,20 @@ class CloudRunner:
                     break
                 time.sleep(self.MONITORING_INTERVAL)
 
-    def get_ips(self, instance_ids: List[str]) -> Dict[str, str]:
+    def get_ips(self, instance_ids: list[str]) -> dict[str, str]:
         ips = {}
         for instance_id in instance_ids:
             instance = self.ec2.Instance(instance_id)
             ips[instance_id] = instance.private_ip_address
         return ips
 
-    def store_ips(self, ips: Dict[str, str], group: str):
+    def store_ips(self, ips: dict[str, str], group: str):
         logger.info(f"Storing information in {self.EC2_META}")
         with open(self.EC2_META, 'a') as fp:
             meta = {group: ips}
             yaml.dump(meta, fp)
 
-    def read_ids(self) -> List[str]:
+    def read_ids(self) -> list[str]:
         logger.info(f"Reading information from {self.EC2_META}")
         ids = []
         with open(self.EC2_META) as fp:

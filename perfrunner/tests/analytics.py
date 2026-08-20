@@ -6,12 +6,12 @@ import random
 import re
 import time
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import (
     Any,
     Callable,
-    Iterable,
     Literal,
     Optional,
     Protocol,

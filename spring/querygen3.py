@@ -2,7 +2,6 @@ import ast
 import importlib.metadata
 import re
 from itertools import cycle
-from typing import List, Tuple
 
 from numpy import random
 
@@ -94,7 +93,7 @@ class ViewQueryGen3:
             },
         }
 
-    def next(self, doc: dict) -> Tuple[str, str, ViewQuery]:
+    def next(self, doc: dict) -> tuple[str, str, ViewQuery]:
         ddoc_name, view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
@@ -154,18 +153,20 @@ class ViewQueryGenByType3:
         self.view_sequence = cycle(self.VIEWS_PER_TYPE[index_type])
 
     @staticmethod
-    def generate_params(city: dict,
-                        county: dict,
-                        country: dict,
-                        realm: dict,
-                        state: dict,
-                        full_state: dict,
-                        coins: dict,
-                        category: str,
-                        year: int,
-                        achievements: List[int],
-                        gmtime: Tuple[int],
-                        **kwargs) -> dict:
+    def generate_params(
+        city: dict,
+        county: dict,
+        country: dict,
+        realm: dict,
+        state: dict,
+        full_state: dict,
+        coins: dict,
+        category: str,
+        year: int,
+        achievements: list[int],
+        gmtime: tuple[int],
+        **kwargs,
+    ) -> dict:
         return {
             'name_and_street_by_city': {
                 'key': city['f']['f'],
@@ -229,7 +230,7 @@ class ViewQueryGenByType3:
             },
         }
 
-    def next(self, doc: dict) -> Tuple[str, str, ViewQuery]:
+    def next(self, doc: dict) -> tuple[str, str, ViewQuery]:
         view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
@@ -237,8 +238,7 @@ class ViewQueryGenByType3:
 
 
 class N1QLQueryGen3:
-
-    def __init__(self, queries: List[dict], query_weight: List[int]):
+    def __init__(self, queries: list[dict], query_weight: list[int]):
         n1ql_queries = []
         for (query, weight) in zip(queries, query_weight):
             for i in range(weight):
@@ -262,8 +262,9 @@ class N1QLQueryGen3:
         else:
             return QueryScanConsistency.NOT_BOUNDED
 
-    def next(self, key: str, doc: dict, replace_targets: dict = None,
-             use_query_context: bool = False) -> Tuple[str, QueryOptions]:
+    def next(
+        self, key: str, doc: dict, replace_targets: dict = None, use_query_context: bool = False
+    ) -> tuple[str, QueryOptions]:
         statement, args, scan_consistency, ad_hoc, total_batches, qualified_batches,\
             ts_config = next(self.queries)
         query_context = None

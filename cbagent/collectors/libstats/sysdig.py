@@ -1,4 +1,3 @@
-from typing import List
 
 from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 from perfrunner.remote.api import CommandTimeout
@@ -23,7 +22,7 @@ class SysdigStat(RemoteStats):
             return num_calls / self.SAMPLING_INTERVAL
 
     @parallel_task(server_side=True)
-    def get_samples(self, processes: List[str]) -> dict:
+    def get_samples(self, processes: list[str]) -> dict:
         samples = {}
         for process in processes:
             for syscall in self.SYSTEM_CALLS:

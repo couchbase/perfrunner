@@ -3,8 +3,9 @@ import glob
 import shutil
 import time
 import traceback
+from collections.abc import Iterable
 from multiprocessing import set_start_method
-from typing import Callable, Iterable, List, Optional
+from typing import Callable, Optional
 
 from logger import logger
 from perfrunner.helpers import local
@@ -161,27 +162,27 @@ class PerfTest:
             logger.interrupt(failure)
 
     @property
-    def data_nodes(self) -> List[str]:
+    def data_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.master_node, 'kv')
 
     @property
-    def query_nodes(self) -> List[str]:
+    def query_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.master_node, 'n1ql')
 
     @property
-    def index_nodes(self) -> List[str]:
+    def index_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.master_node, 'index')
 
     @property
-    def fts_nodes(self) -> List[str]:
+    def fts_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.master_node, 'fts')
 
     @property
-    def analytics_nodes(self) -> List[str]:
+    def analytics_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
 
     @property
-    def eventing_nodes(self) -> List[str]:
+    def eventing_nodes(self) -> list[str]:
         return self.rest.get_active_nodes_by_role(self.master_node, 'eventing')
 
     @property
@@ -416,7 +417,7 @@ class PerfTest:
             self.monitor.monitor_dcp_queues(target.node, target.bucket, bucket_replica)
             self.monitor.monitor_replica_count(target.node, target.bucket)
 
-    def wait_for_indexing(self, index_nodes: List[str] = [], statements: List[str] = []):
+    def wait_for_indexing(self, index_nodes: list[str] = [], statements: list[str] = []):
         index_nodes = index_nodes or self.index_nodes
         if statements or self.test_config.index_settings.statements:
             for server in index_nodes:
@@ -675,18 +676,20 @@ class PerfTest:
                 }"""
             )
 
-    def generic_phase(self,
-                      phase_name: str,
-                      default_settings: PhaseSettings,
-                      default_mixed_settings: Iterable[PhaseSettings],
-                      task: Callable = spring_task,
-                      settings: PhaseSettings = None,
-                      source_iterator: Iterable = None,
-                      target_iterator: Iterable = None,
-                      mixed_tasks: Iterable[Callable] = None,
-                      mixed_settings: Iterable[PhaseSettings] = None,
-                      mixed_target_iterators: Iterable[Iterable] = None,
-                      use_timers: bool = False) -> List[WorkloadPhase]:
+    def generic_phase(
+        self,
+        phase_name: str,
+        default_settings: PhaseSettings,
+        default_mixed_settings: Iterable[PhaseSettings],
+        task: Callable = spring_task,
+        settings: PhaseSettings = None,
+        source_iterator: Iterable = None,
+        target_iterator: Iterable = None,
+        mixed_tasks: Iterable[Callable] = None,
+        mixed_settings: Iterable[PhaseSettings] = None,
+        mixed_target_iterators: Iterable[Iterable] = None,
+        use_timers: bool = False,
+    ) -> list[WorkloadPhase]:
         if settings is None:
             settings = default_settings
 

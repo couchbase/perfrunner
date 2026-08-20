@@ -3,10 +3,11 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 from collections import namedtuple
+from collections.abc import Iterator
 from functools import cached_property
 from multiprocessing import Process, set_start_method
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 from urllib.parse import urlparse
 
 import paramiko

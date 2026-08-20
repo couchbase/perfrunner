@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 
@@ -12,7 +12,7 @@ from perfrunner.helpers.server import ServerInfoManager
 from perfrunner.helpers.tableau import TableauTerminalHelper
 from perfrunner.settings import SHOWFAST_HOST, ClusterSpec, TestConfig
 
-JSON = Dict[str, Any]
+JSON = dict[str, Any]
 
 
 class Reporter:
@@ -64,7 +64,7 @@ class ShowFastReporter(Reporter):
         logger.info(f"Adding a metric: {pretty_dict(metric)}")
         requests.post(f"http://{SHOWFAST_HOST}/api/v1/metrics", json.dumps(metric))
 
-    def _generate_benchmark(self, metric: str, value: float, snapshots: List[str]) -> JSON:
+    def _generate_benchmark(self, metric: str, value: float, snapshots: list[str]) -> JSON:
 
         build_str = self.build
 
@@ -115,7 +115,7 @@ class ShowFastReporter(Reporter):
         logger.info(f"Adding a benchmark: {pretty_dict(benchmark)}")
         requests.post(f"http://{SHOWFAST_HOST}/api/v1/benchmarks", json.dumps(benchmark))
 
-    def post(self, value: float, snapshots: List[str], metric: JSON):
+    def post(self, value: float, snapshots: list[str], metric: JSON):
         metric['id'] = '{}_{}'.format(metric['id'], self.cluster_spec.name)
         benchmark = self._generate_benchmark(metric['id'], value, snapshots)
 
@@ -139,7 +139,7 @@ class DailyReporter(Reporter):
     def _log_daily_benchmark(benchmark: JSON):
         logger.info(f"Dry run: {pretty_dict(benchmark)}")
 
-    def post(self, metric: str, value: float, snapshots: List[str]):
+    def post(self, metric: str, value: float, snapshots: list[str]):
         benchmark = {
             'build': self.build,
             'buildURL': os.environ.get('BUILD_URL', ''),

@@ -1,4 +1,3 @@
-from typing import Dict, List
 
 import requests
 from decorator import decorator
@@ -49,27 +48,28 @@ class MetadataClient(RestClient):
         self.settings = settings
         self.base_url = f"http://{settings.cbmonitor_host}/cbmonitor"
 
-    def get_clusters(self) -> List[str]:
+    def get_clusters(self) -> list[str]:
         url = self.base_url + "/get_clusters/"
         return self.get(url, {})
 
-    def get_servers(self) -> List[str]:
+    def get_servers(self) -> list[str]:
         url = self.base_url + "/get_servers/"
         params = {"cluster": self.settings.cluster}
         return self.get(url, params)
 
-    def get_buckets(self) -> List[str]:
+    def get_buckets(self) -> list[str]:
         url = self.base_url + "/get_buckets/"
         params = {"cluster": self.settings.cluster}
         return self.get(url, params)
 
-    def get_indexes(self) -> List[str]:
+    def get_indexes(self) -> list[str]:
         url = self.base_url + "/get_indexes/"
         params = {"cluster": self.settings.cluster}
         return self.get(url, params)
 
-    def get_metrics(self, bucket: str = None, index: str = None,
-                    server: str = None) -> List[Dict[str, str]]:
+    def get_metrics(
+        self, bucket: str = None, index: str = None, server: str = None
+    ) -> list[dict[str, str]]:
         url = self.base_url + "/get_metrics/"
         params = {"cluster": self.settings.cluster}
         for extra_param in "bucket", "index", "server":

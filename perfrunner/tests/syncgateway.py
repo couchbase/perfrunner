@@ -5,9 +5,10 @@ import multiprocessing
 import os
 import re
 import shutil
+from collections.abc import Iterable
 from multiprocessing import Pool
 from time import sleep, time
-from typing import Callable, Iterable
+from typing import Callable
 
 from logger import logger
 from perfrunner.helpers import local

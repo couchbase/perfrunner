@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
+from collections.abc import Iterator
 from multiprocessing import set_start_method
 from queue import LifoQueue
-from typing import Iterator, List
 
 import requests
 
@@ -20,7 +20,7 @@ def get_cloud_menu() -> dict:
     return requests.get(url=BASE_URL + '/static/cloud_menu.json').json()
 
 
-def get_benchmarks(component: str, category: str) -> List[dict]:
+def get_benchmarks(component: str, category: str) -> list[dict]:
     api = f"/api/v1/benchmarks/{component}/{category}"
     return requests.get(url=BASE_URL + api).json() or []
 
@@ -30,7 +30,7 @@ def hide_benchmark(benchmark_id: str):
     requests.patch(url=BASE_URL + api)
 
 
-def showfast_iterator(components: List[str]) -> Iterator:
+def showfast_iterator(components: list[str]) -> Iterator:
     all_components = (get_menu()['components'] | get_cloud_menu()['components']).items()
     for component, meta in all_components:
         if component in components:
@@ -42,7 +42,7 @@ def parse_release(build: str) -> str:
     return build.split('-')[0]
 
 
-def benchmark_iterator(components: List[str], max_builds: int) -> Iterator:
+def benchmark_iterator(components: list[str], max_builds: int) -> Iterator:
     for component, category in showfast_iterator(components=components):
         curr_metric, curr_release = None, None
         queue = LifoQueue(maxsize=max_builds)
@@ -65,7 +65,7 @@ def benchmark_iterator(components: List[str], max_builds: int) -> Iterator:
                     queue.put(benchmark)
 
 
-def hide(components: List[str], max_builds: int):
+def hide(components: list[str], max_builds: int):
     for b in benchmark_iterator(components=components, max_builds=max_builds):
         logger.info('Hiding: build={build}, metric={metric}'.format(**b))
         hide_benchmark(b['id'])

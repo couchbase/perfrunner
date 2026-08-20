@@ -1,4 +1,3 @@
-from typing import Dict
 
 from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
@@ -17,7 +16,7 @@ class NetStat(RemoteStats):
         stdout = self.run("ip route list | grep default")
         return stdout.strip().split()[4]
 
-    def get_dev_stats(self) -> Dict[str, int]:
+    def get_dev_stats(self) -> dict[str, int]:
         iface = self.detect_iface()
         cmd = f"grep {iface} /proc/net/dev"
         stdout = self.run(f"{cmd}; sleep 1; {cmd}")
@@ -31,7 +30,7 @@ class NetStat(RemoteStats):
             "out_packets_per_sec": s2[9] - s1[9],
         }
 
-    def get_tcp_stats(self) -> Dict[str, int]:
+    def get_tcp_stats(self) -> dict[str, int]:
         stats = {}
         for state in 'established', 'time-wait':
             cmd = f"ss --tcp -o state {state} | wc -l"
@@ -42,7 +41,7 @@ class NetStat(RemoteStats):
         return stats
 
     @parallel_task(server_side=True)
-    def get_samples(self) -> Dict[str, int]:
+    def get_samples(self) -> dict[str, int]:
         dev_stats = self.get_dev_stats()
         tcp_stats = self.get_tcp_stats()
         return dict(dev_stats, **tcp_stats)

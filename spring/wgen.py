@@ -4,7 +4,7 @@ import time
 from multiprocessing import Event, Lock, Process, Value
 from pathlib import Path
 from threading import Timer
-from typing import Callable, List, Tuple, Union
+from typing import Callable, Union
 
 import twisted
 from decorator import decorator
@@ -112,7 +112,7 @@ def set_cpu_afinity(sid):
 
 
 Client = Union[CBAsyncGen, CBGen, SubDocGen]
-Sequence = List[Tuple[str, Callable, Tuple]]
+Sequence = list[tuple[str, Callable, tuple]]
 
 
 class Worker:
@@ -391,7 +391,7 @@ class KVWorker(Worker):
         self.op_delay = 0.0
 
     @property
-    def random_ops(self) -> List[str]:
+    def random_ops(self) -> list[str]:
         ops = \
             ['c'] * self.ws.creates + \
             ['r'] * self.ws.reads + \

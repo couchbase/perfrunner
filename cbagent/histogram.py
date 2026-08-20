@@ -1,5 +1,6 @@
 from bisect import bisect_left
-from typing import Optional, Sequence
+from collections.abc import Sequence
+from typing import Optional
 
 
 class HistogramInvariantError(ValueError):

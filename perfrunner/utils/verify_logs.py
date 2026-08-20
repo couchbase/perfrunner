@@ -2,7 +2,6 @@ import glob
 import zipfile
 from collections import defaultdict
 from multiprocessing import set_start_method
-from typing import List
 
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
@@ -17,7 +16,7 @@ GOLANG_LOG_FILES = ("eventing.log",
                     "query.log")
 
 
-def check_for_golang_panic(file_name: str) -> List[str]:
+def check_for_golang_panic(file_name: str) -> list[str]:
     zf = zipfile.ZipFile(file_name)
     panic_files = []
     for name in zf.namelist():
@@ -28,7 +27,7 @@ def check_for_golang_panic(file_name: str) -> List[str]:
     return panic_files
 
 
-def check_for_crash_files(file_name: str) -> List[str]:
+def check_for_crash_files(file_name: str) -> list[str]:
     zf = zipfile.ZipFile(file_name)
     crash_files = []
     for name in zf.namelist():
@@ -37,7 +36,7 @@ def check_for_crash_files(file_name: str) -> List[str]:
     return crash_files
 
 
-def check_for_storage_corrupted(file_name: str) -> List[str]:
+def check_for_storage_corrupted(file_name: str) -> list[str]:
     zf = zipfile.ZipFile(file_name)
     storage_corrupted = False
     for name in zf.namelist():

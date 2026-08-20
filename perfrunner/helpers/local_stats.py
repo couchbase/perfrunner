@@ -6,8 +6,9 @@ Single source of truth for turning raw files into normalised samples. Both the c
 
 import csv
 import glob
+from collections.abc import Iterator
 from enum import Enum
-from typing import Iterator, NamedTuple, Optional
+from typing import NamedTuple, Optional
 
 # Where spring workers dump their latency data files, on both local and remote workers.
 SPRING_LATENCY_LIVE_DIR = "spring_latency"

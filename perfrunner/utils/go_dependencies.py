@@ -10,7 +10,6 @@ import collections
 import xml.etree.ElementTree
 from argparse import ArgumentParser
 from multiprocessing import set_start_method
-from typing import Dict
 
 from perfrunner.helpers.local import govendor_fetch
 from perfrunner.helpers.remote import RemoteHelper
@@ -27,7 +26,7 @@ REQUIRED_PACKAGES = ["gometa", "query", "cbauth", "go-couchbase",
 Project = collections.namedtuple('Project', 'name upstream revision path')
 
 
-def parse_manifest() -> Dict[str, Project]:
+def parse_manifest() -> dict[str, Project]:
     root = xml.etree.ElementTree.parse('manifest.xml').getroot()
     projects = {}
     for atype in root.findall('project'):
@@ -41,7 +40,7 @@ def parse_manifest() -> Dict[str, Project]:
     return projects
 
 
-def fetch(projects: Dict[str, Project]):
+def fetch(projects: dict[str, Project]):
     od = collections.OrderedDict(sorted(projects.items()))
     for name, project in od.items():
         if name in REQUIRED_PROJECTS:

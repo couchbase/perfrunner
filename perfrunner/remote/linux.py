@@ -4,7 +4,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from shlex import quote
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Literal, Optional
 from urllib.parse import urlparse
 
 import paramiko
@@ -87,7 +87,7 @@ class RemoteLinux(Remote):
             return 'rpm'
 
     @master_server
-    def detect_distro(self) -> Tuple[str, str]:
+    def detect_distro(self) -> tuple[str, str]:
         logger.info('Detecting Linux distribution on master node')
         cmd = 'grep ^{}= /etc/os-release | cut -d= -f2 | tr -d \'"\''
         distro_id = run(cmd.format('ID'))
@@ -710,7 +710,7 @@ class RemoteLinux(Remote):
             )
             return int(result.strip() or 0)
 
-    def get_gsi_throttle_durations_in_log(self, host: str) -> List[str]:
+    def get_gsi_throttle_durations_in_log(self, host: str) -> list[str]:
         """Extract gsi_throttle_duration values from query.log on this host.
 
         Returns a list of raw value strings (e.g. ['"100ms"', '"1.5s"',
@@ -868,7 +868,7 @@ class RemoteLinux(Remote):
     def num_vcpu(self):
         return int(run('lscpu --all --extended | wc -l')) - 1  # Minus header
 
-    def get_cpu_map(self) -> Dict[str, List]:
+    def get_cpu_map(self) -> dict[str, list]:
         cores = run('lscpu --all --parse=socket,core,cpu | grep -v "#"')
 
         cpu_map = defaultdict(list)
@@ -1907,13 +1907,13 @@ class RemoteLinux(Remote):
         run(command, pty=False)
 
     @all_servers
-    def set_kafka_links_env_vars(self, settings: Dict[str, Any]):
+    def set_kafka_links_env_vars(self, settings: dict[str, Any]):
         logger.info('Setting environment variables for Kafka Links to work')
         env_var_list_str = " ".join([f"{k}={v}" for k, v in settings.items()])
         run(f"systemctl set-environment {env_var_list_str}")
 
     @all_servers
-    def set_kafka_links_metakv_settings(self, settings: Dict[str, Any]):
+    def set_kafka_links_metakv_settings(self, settings: dict[str, Any]):
         logger.info('Adding Kafka Links settings to metakv')
         api = 'http://localhost:8091/_metakv/cbas/settings/kafkaClusterDetails/{}'
         for k, v in settings.items():

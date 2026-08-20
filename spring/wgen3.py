@@ -7,7 +7,7 @@ from collections import deque
 from multiprocessing import Event, Lock, Manager, Process, Value
 from pathlib import Path
 from threading import Timer
-from typing import Callable, List, Tuple, Union
+from typing import Callable, Union
 
 import twisted
 from decorator import decorator
@@ -141,7 +141,7 @@ def set_cpu_afinity(sid):
     os.system(f"taskset -p -c {sid % cpu_count()} {os.getpid()}")
 
 
-Sequence = List[Tuple[str, Callable, Tuple]]
+Sequence = list[tuple[str, Callable, tuple]]
 Client = Union[CBAsyncGen, CBGen, SubDocGen]
 
 
@@ -499,12 +499,12 @@ class KVWorker(Worker):
         self.op_delay = 0.0
 
     @property
-    def random_ops(self) -> List[str]:
+    def random_ops(self) -> list[str]:
         random.shuffle(self.ops_list)
         return self.ops_list
 
     @property
-    def random_targets(self) -> List[str]:
+    def random_targets(self) -> list[str]:
         targets = list(random.choice(self.access_targets, self.num_random_targets))
         return self.q * targets + targets[:self.r]
 

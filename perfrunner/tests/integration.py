@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict
+from typing import Any
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -80,7 +80,7 @@ class EndToEndLatencyTest(N1QLThroughputTest):
         for percentile in self.test_config.access_settings.latency_percentiles:
             self.reporter.post(*self.metrics.query_latency(percentile=percentile))
 
-    def report_index_kpi(self, index: Dict[str, Any]):
+    def report_index_kpi(self, index: dict[str, Any]):
         self.reporter.post(
             *self.metrics.get_indexing_meta(value=index["time"],
                                             index_type=index["type"],

@@ -2,7 +2,6 @@ import json
 from argparse import ArgumentParser
 from collections import defaultdict
 from multiprocessing import set_start_method
-from typing import Dict, List
 
 import requests
 
@@ -23,7 +22,7 @@ class Weekly:
         requests.post(url, json.dumps(status))
 
 
-def count_jobs(pipelines: List[str]) -> Dict[str, int]:
+def count_jobs(pipelines: list[str]) -> dict[str, int]:
     counter = defaultdict(int)
     for pipeline in pipelines:
         with open(pipeline) as fh:
@@ -34,7 +33,7 @@ def count_jobs(pipelines: List[str]) -> Dict[str, int]:
     return counter
 
 
-def init_build(build: str, jobs: Dict[str, int]):
+def init_build(build: str, jobs: dict[str, int]):
     weekly = Weekly()
 
     for component, num_jobs in jobs.items():

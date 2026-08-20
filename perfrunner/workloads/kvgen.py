@@ -1,5 +1,5 @@
+from collections.abc import Iterator
 from threading import Thread
-from typing import Iterator, List
 
 from perfrunner.helpers.local import run_kvgen
 
@@ -24,6 +24,6 @@ def create_kvgen_instances(master_node: str, num_docs: int) -> Iterator[Thread]:
         yield Thread(target=run_kvgen, args=(master_node, num_docs, key_prefix))
 
 
-def wait_for_kvgen_threads(threads: List[Thread]):
+def wait_for_kvgen_threads(threads: list[Thread]):
     for t in threads:
         t.join()

@@ -27,6 +27,8 @@ extend-select = [
     "B009",  # get-attr-with-constant
     "FURB122",  # for-loop-writes
     "FURB129",  # readlines-in-for
+    "UP006",  # non-pep585-annotation
+    "UP035",  # deprecated-import
 ]
 ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "D211", "D213"]
 

@@ -1,7 +1,8 @@
 import random
 import time
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
-from typing import Iterable, List, Optional
+from typing import Optional
 from uuid import uuid4
 
 from logger import logger
@@ -242,7 +243,7 @@ class ClusterManagerBase:
                     analytics_node, polling_interval_secs, max_retries
                 )
 
-    def _gen_disabled_audit_events(self, master: str) -> List[str]:
+    def _gen_disabled_audit_events(self, master: str) -> list[str]:
         curr_settings = self.rest.get_audit_settings(master)
         curr_disabled = {str(event) for event in curr_settings["disabled"]}
         disabled = curr_disabled - self.test_config.audit_settings.extra_events
@@ -728,10 +729,10 @@ class DefaultClusterManager(ClusterManagerBase):
                 break
         self.rest.delete_server_group(self.master_node, uri)
 
-    def generate_ce_roles(self) -> List[str]:
+    def generate_ce_roles(self) -> list[str]:
         return ['admin']
 
-    def generate_ee_roles(self) -> List[str]:
+    def generate_ee_roles(self) -> list[str]:
         existing_roles = {r['role']
                           for r in self.rest.get_rbac_roles(self.master_node)}
 
@@ -1051,7 +1052,7 @@ class DefaultClusterManager(ClusterManagerBase):
 
         return arn
 
-    def get_msk_connect_connector_arns(self) -> List[str]:
+    def get_msk_connect_connector_arns(self) -> list[str]:
         command_template = (
             "kafkaconnect list-connectors --region $AWS_REGION "
             "--query "

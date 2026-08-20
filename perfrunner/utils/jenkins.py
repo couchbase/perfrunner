@@ -2,7 +2,8 @@ import glob
 import json
 import os
 from collections import defaultdict
-from typing import Any, Dict, Iterator, List, Tuple, Union
+from collections.abc import Iterator
+from typing import Any, Union
 
 import jenkins
 from couchbase.auth import PasswordAuthenticator
@@ -13,7 +14,7 @@ from couchbase.options import ClusterOptions, QueryOptions
 from logger import logger
 from perfrunner.utils.weekly import Weekly
 
-JobMapping = Dict[str, List[Dict[str, str]]]
+JobMapping = dict[str, list[dict[str, str]]]
 
 
 class BaseScanner:
@@ -113,7 +114,7 @@ class JenkinsScanner(BaseScanner):
 
         return job_mapping
 
-    def map_test_configs(self, job_mapping: JobMapping) -> Dict[str, str]:
+    def map_test_configs(self, job_mapping: JobMapping) -> dict[str, str]:
         test_configs = {}
 
         for component, jobs in job_mapping.items():
@@ -124,7 +125,7 @@ class JenkinsScanner(BaseScanner):
         return test_configs
 
     @staticmethod
-    def extract_parameters(actions: List[Dict]) -> dict:
+    def extract_parameters(actions: list[dict]) -> dict:
         for action in actions:
             if action.get('_class') == 'hudson.model.ParametersAction':
                 parameters = {}
@@ -151,7 +152,7 @@ class JenkinsScanner(BaseScanner):
         })
         return build_parameters
 
-    def build_info(self) -> Iterator[Tuple[str, dict]]:
+    def build_info(self) -> Iterator[tuple[str, dict]]:
         for job_name in self.jobs:
             checkpoint: int = self.get_checkpoint(job_name, 0)
             new_checkpoint = checkpoint
@@ -170,7 +171,7 @@ class JenkinsScanner(BaseScanner):
             self.upsert_to_bucket(key=job_name, value=new_checkpoint)
             logger.info(f"Added checkpoint for {job_name}")
 
-    def build_ext_info(self) -> Iterator[Tuple[str, dict, dict]]:
+    def build_ext_info(self) -> Iterator[tuple[str, dict, dict]]:
         for job_name, build_info in self.build_info():
             build_actions = build_info['actions']
             build_parameters = self.extract_parameters(build_actions)

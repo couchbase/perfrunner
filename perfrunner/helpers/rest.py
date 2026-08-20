@@ -3,8 +3,9 @@ import json
 import os
 import time
 from collections import namedtuple
+from collections.abc import Iterator
 from json import JSONDecodeError
-from typing import Callable, Iterator, Literal, Optional, Union
+from typing import Callable, Literal, Optional, Union
 from urllib.parse import urlparse
 
 import requests

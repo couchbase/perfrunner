@@ -1,6 +1,7 @@
 from collections import namedtuple
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, Iterator, Optional
+from typing import Optional
 
 from couchbase.options import QueryOptions
 
@@ -55,7 +56,7 @@ class StatsScanner(BaseScanner):
         key = self.generate_key(attributes)
         self.upsert_to_bucket(key, attributes)
 
-    def get_summary(self, db: str, metric: str) -> Optional[Dict[str, float]]:
+    def get_summary(self, db: str, metric: str) -> Optional[dict[str, float]]:
         if self.ps.exists(db=db, metric=metric):
             return self.ps.get_summary(db=db, metric=metric)
         return {}

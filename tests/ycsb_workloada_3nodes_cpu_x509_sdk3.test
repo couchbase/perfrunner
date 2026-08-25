@@ -34,7 +34,7 @@ kv_endpoints = 16
 ssl_mode = auth
 
 [ycsb]
-branch = couchbase3
+branch = couchbase3-range-scan
 
 [stats]
 client_processes = java

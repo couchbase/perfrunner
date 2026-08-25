@@ -16,7 +16,7 @@ from perfrunner.helpers.config_files import (
     CAOHorizontalAutoscalerFile,
     IngressFile,
 )
-from perfrunner.helpers.misc import SSLCertificate
+from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.remote import YCSB_MAVEN_OPTS, Remote
 from perfrunner.settings import ClusterSpec, SyncgatewaySettings
 
@@ -944,8 +944,12 @@ class RemoteKubernetes(Remote):
         for worker in self.get_worker_pods():
             self.k8s_client(f"cp {cert} default/{worker}:{worker_home}/")
 
-    def generate_ssl_keystore(self, root_certificate, keystore_file, storepass, worker_home):
-        pass
+    def generate_ssl_keystore(self, root_certificate: str, keystore_file: str,
+                              storepass: str, worker_home: str,
+                              client_bundle: Optional[str] = None):
+        logger.warning("Keystore generation is not implemented on dynamic infrastructure, so "
+                       f"{keystore_file} will be missing on the worker pods. Any SSL workload "
+                       "pointed at it is expected to fail the handshake.")
 
     # Networking and load balancing
     def setup_lb_controller(self, cert_manager_version: str, lbc_file: str, lbc_ingclass_file: str):

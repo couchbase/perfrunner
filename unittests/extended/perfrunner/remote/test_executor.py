@@ -36,6 +36,32 @@ class ConnectionPoolTest(TestCase):
         self.assertTrue(session.closed)
         self.assertEqual(session.probes, 1)
 
+    def test_closing_a_dead_connection_does_not_raise(self):
+        # Fabric 3's Connection.close() closes the SFTP channel first, which raises EOFError
+        # once the peer is gone. The pool closes sessions it is discarding, so a throw here
+        # aborted the run (seen as a failed build_ycsb after an idle gap).
+        class DeadClient:
+            closed = False
+
+            def close(self):
+                self.closed = True
+
+        class DeadConnection:
+            is_connected = True  # transport still looks up; only the SFTP round-trip fails
+
+            def __init__(self):
+                self.client = DeadClient()
+
+            def close(self):
+                raise EOFError()
+
+        session = object.__new__(executor.SSHSession)
+        session.host = "dead-host"
+        session._conn = DeadConnection()
+        session.close()  # must not raise
+        # Fabric never got as far as closing the client, so the fallback has to
+        self.assertTrue(session._conn.client.closed)
+
     def test_slow_probe_does_not_block_other_hosts(self):
         # The pool lock only guards its dicts; a dead host's probe (up to the channel
         # open timeout) must not stall parallel checkouts of healthy hosts.

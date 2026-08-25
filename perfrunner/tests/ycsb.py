@@ -56,9 +56,6 @@ class YCSBTest(PerfTest):
         self.worker_manager.wait_for_bg_tasks()
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.load()
@@ -238,9 +235,6 @@ class YCSBLatencyWithWarmupTest(YCSBLatencyTest):
         self.reset_kv_stats()
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.load()
@@ -282,9 +276,6 @@ class YCSBThroughputWithWarmupTest(YCSBThroughputTest):
         self.reset_kv_stats()
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.load()
@@ -345,9 +336,6 @@ class YCSBSOETest(YCSBThroughputTest, N1QLTest):
 class YCSBN1QLTest(YCSBTest, N1QLTest):
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.create_indexes()
@@ -373,9 +361,6 @@ class YCSBN1QLWarmupTest(YCSBN1QLTest):
         pass
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.create_indexes()
@@ -452,9 +437,6 @@ class YCSBN1QLWarmupThroughputTest(YCSBN1QLWarmupTest, YCSBThroughputTest):
 
 class YCSBN1QLSequentialScanTest(YCSBTest, N1QLTest):
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.load()
@@ -482,9 +464,6 @@ class YCSBN1QLSequentialScanThroughputTest(YCSBN1QLSequentialScanTest, YCSBThrou
 
 class CapellaRebalanceYCSBTest(YCSBTest, CapellaRebalanceTest):
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.load()
@@ -506,9 +485,6 @@ class CapellaRebalanceYCSBBackup(CapellaBackupRebalance, CapellaRebalanceYCSBTes
         )
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
         self.load()
         self.wait_for_persistence()

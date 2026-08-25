@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from perfrunner.helpers.misc import SSLCertificate
+from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.remote import api, executor
 from perfrunner.settings import ClusterSpec
 

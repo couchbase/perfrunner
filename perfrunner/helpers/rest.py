@@ -15,8 +15,9 @@ from decorator import decorator
 from requests.exceptions import ConnectionError
 
 from logger import logger
-from perfrunner.helpers.misc import SSLCertificate, my_public_ip, pretty_dict
+from perfrunner.helpers.misc import my_public_ip, pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.settings import BucketSettings, ClusterSpec
 from perfrunner.utils.terraform import SERVICES_CAPELLA_TO_PERFRUNNER, ControlPlaneManager
 

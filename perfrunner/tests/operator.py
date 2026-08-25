@@ -218,9 +218,6 @@ class OperatorUpgradeTest(YCSBTest):
         logger.info(f"Pods after: \n{self.remote.get_pods(output='wide')}")
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == "data":
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.create_indexes()

@@ -2,7 +2,7 @@ import os
 from argparse import ArgumentParser
 
 from logger import logger
-from perfrunner.helpers.misc import SSLCertificate
+from perfrunner.helpers.x509 import SSLCertificate
 
 
 def main():

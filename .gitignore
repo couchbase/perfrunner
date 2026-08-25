@@ -27,6 +27,8 @@ opt/
 *.db
 *.pem
 *.key
+*.p12
+*.keystore
 *.pid
 *.result
 *.out

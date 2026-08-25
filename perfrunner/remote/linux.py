@@ -11,10 +11,10 @@ import paramiko
 
 from logger import logger
 from perfrunner.helpers.misc import (
-    SSLCertificate,
     pretty_dict,
     uhex,
 )
+from perfrunner.helpers.x509 import SSLCertificate, summarise_keystore
 from perfrunner.remote import Remote
 from perfrunner.remote.api import (
     CommandTimeout,
@@ -1033,19 +1033,35 @@ class RemoteLinux(Remote):
         run(command)
 
     @all_clients
-    def generate_ssl_keystore(self, root_certificate, keystore_file, storepass, worker_home):
+    def generate_ssl_keystore(self, root_certificate: str, keystore_file: str,
+                              storepass: str, worker_home: str,
+                              client_bundle: Optional[str] = None):
         logger.info('Generating SSL keystore')
-        remote_keystore = f"{worker_home}/perfrunner/{keystore_file}"
-        remote_root_cert = f"{worker_home}/perfrunner/{root_certificate}"
+        perfrunner_home = f"{worker_home}/perfrunner"
+        remote_keystore = f"{perfrunner_home}/{keystore_file}"
 
-        with quiet():
-            run(
-                f"keytool -delete -keystore {remote_keystore} -alias couchbase -storepass storepass"
-            )
-        run(
-            f"keytool -importcert -file {remote_root_cert} -storepass {storepass} -trustcacerts "
-            f"-noprompt -keystore {remote_keystore} -alias couchbase"
-        )
+        # Rebuild from scratch. Merging into a store left over from an earlier run keeps its
+        # stale CA, which fails the handshake with "No trusted certificate found".
+        run(f"rm -f {remote_keystore}")
+        # Passed by environment rather than on the command line: run() logs the command it
+        # runs to perfrunner.log, and the store password is test configuration.
+        with shell_env(KEYSTORE_PASS=storepass):
+            if client_bundle:
+                run(f"keytool -importkeystore -srckeystore "
+                    f"{perfrunner_home}/{os.path.basename(client_bundle)} -srcstoretype PKCS12 "
+                    f"-srcstorepass:env KEYSTORE_PASS -destkeystore {remote_keystore} "
+                    f"-deststoretype JKS -deststorepass:env KEYSTORE_PASS -noprompt")
+            run(f"keytool -importcert "
+                f"-file {perfrunner_home}/{os.path.basename(root_certificate)} "
+                f"-storepass:env KEYSTORE_PASS -trustcacerts -noprompt "
+                f"-keystore {remote_keystore} -alias couchbase")
+            with quiet():
+                listing = run(f"keytool -list -v -keystore {remote_keystore} "
+                              "-storepass:env KEYSTORE_PASS", warn_only=True)
+        if listing.failed:
+            logger.warning(f"Could not list {remote_keystore}: {listing.stderr or listing}")
+        else:
+            logger.info(f"{remote_keystore} contents:\n{summarise_keystore(listing)}")
 
     @all_clients
     def cloud_put_certificate(self, cert, worker_home):

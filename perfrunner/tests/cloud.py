@@ -77,9 +77,6 @@ class CloudIdleKVN1QLTest(YCSBN1QLTest, CloudIdleTest):
         time.sleep(self.test_config.access_settings.time)
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == "data":
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.create_indexes()

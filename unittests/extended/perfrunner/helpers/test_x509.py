@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from perfrunner.helpers.misc import SSLCertificate
+from perfrunner.helpers.x509 import SSLCertificate
 
 
 class SSLCertificateTest(TestCase):

@@ -17,13 +17,13 @@ from decorator import decorator
 from logger import logger
 from perfrunner.helpers.misc import (
     SafeEnum,
-    SSLCertificate,
     creds_tuple,
     maybe_atoi,
     run_aws_cli_command,
     target_hash,
     try_json_decode,
 )
+from perfrunner.helpers.x509 import SSLCertificate
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 CBMONITOR2_HOST = "cbmonitor2.sc.couchbase.com"
@@ -1666,7 +1666,8 @@ class PhaseSettings:
     YCSB_INSERTSTART = 0
 
     SSL_MODE = 'none'
-    SSL_AUTH_KEYSTORE = "certificates/auth.keystore"
+    # Both are generated per run: the CA they trust is regenerated with the cluster
+    SSL_AUTH_KEYSTORE = "certificates/x509.keystore"
     SSL_DATA_KEYSTORE = "certificates/data.keystore"
     CERTIFICATE_FILE = "root.pem"
     SHOW_TLS_VERSION = False

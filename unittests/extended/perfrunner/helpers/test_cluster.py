@@ -46,17 +46,26 @@ class X509ClusterSetupTest(TestCase):
         self.addCleanup(os.unlink, spec_file.name)
         self.cluster_spec = ClusterSpec()
         self.cluster_spec.parse(spec_file.name, override=None)
+        # `rest_credentials` is a cached_property backed by `.secrets.json`, which a unit test
+        # has no business reading; seeding the cache stands in for it.
+        self.cluster_spec.__dict__["rest_credentials"] = ("rest-user", "rest-password")
 
         self.calls = []
         self.generated = []
+        self.client_certs = []
 
         # `local` writes real certificates to disk; stand in for it so the test only observes
-        # which hosts end up in the SAN list.
+        # which hosts end up in the SAN list, and which CN the client certificate is issued to.
         self.cluster_module = cluster_module
         self.addCleanup(setattr, cluster_module, "local", cluster_module.local)
-        cluster_module.local = SimpleNamespace(generate_server_x509_cert=self.generated.append)
+        cluster_module.local = SimpleNamespace(
+            generate_server_x509_cert=self.generated.append,
+            generate_client_x509_cert=lambda cn, storepass: self.client_certs.append(
+                (cn, storepass)
+            ),
+        )
 
-    def _manager(self, initial_nodes):
+    def _manager(self, initial_nodes, buckets=("bucket-1", "bucket-2")):
         def record(name):
             return lambda node, *args, **kwargs: self.calls.append((name, node))
 
@@ -66,8 +75,9 @@ class X509ClusterSetupTest(TestCase):
         cm.cluster_spec = self.cluster_spec
         cm.initial_nodes = initial_nodes
         cm.test_config = SimpleNamespace(
-            access_settings=SimpleNamespace(ssl_mode="auth"),
+            access_settings=SimpleNamespace(ssl_mode="auth", ssl_keystore_password="storepass"),
             xdcr_settings=SimpleNamespace(cng_haproxy=False),
+            buckets=buckets,
         )
         cm.rest = SimpleNamespace(
             upload_cluster_certificate=record("upload"),
@@ -115,3 +125,17 @@ class X509ClusterSetupTest(TestCase):
 
         self.assertEqual(self._hosts("upload"), ["10.0.0.1", "10.0.1.1"])
         self.assertEqual(self._hosts("enable"), self._hosts("reload"))
+
+    def test_client_certificate_is_issued_to_the_specs_rest_user(self):
+        # `enable_certificate_auth` maps the whole CN to an RBAC user. `add_rbac_users` creates
+        # the spec's REST user with the admin role, so that name is the identity to issue to --
+        # not a bucket-named user, which only exists when the test has that bucket.
+        self._manager([2, 1]).set_x509_certificates()
+
+        self.assertEqual(self.client_certs, [("rest-user", "storepass")])
+
+    def test_client_certificate_does_not_depend_on_the_test_having_buckets(self):
+        # A gateway-only setup reaches this code with no buckets at all.
+        self._manager([2, 1], buckets=()).set_x509_certificates()
+
+        self.assertEqual(self.client_certs, [("rest-user", "storepass")])

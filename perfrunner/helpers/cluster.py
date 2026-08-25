@@ -892,6 +892,11 @@ class DefaultClusterManager(ClusterManagerBase):
                 server_list += [host for host in extra_hosts if host not in server_list]
             logger.info(f"X509 certificate setup for: {server_list}")
             local.generate_server_x509_cert(server_list)
+
+            client_cn = self.cluster_spec.rest_credentials[0]
+            local.generate_client_x509_cert(
+                client_cn, self.test_config.access_settings.ssl_keystore_password
+            )
             self.remote.allow_non_local_ca_upload()
             self.remote.setup_x509()
 

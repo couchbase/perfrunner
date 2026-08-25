@@ -1028,9 +1028,6 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         KVTest.print_kvstore_stats(self)
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         if self.test_config.load_settings.use_backup:
@@ -1092,9 +1089,6 @@ class YCSBLoadThroughputHIDDTest(YCSBThroughputHIDDTest):
         )
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.custom_load()
@@ -1441,9 +1435,6 @@ class LoadBackupDGMTest(StabilityBootstrap):
 class YCSBLoadBackupHIDDTest(YCSBThroughputHIDDTest):
 
     def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
 
         self.custom_load()

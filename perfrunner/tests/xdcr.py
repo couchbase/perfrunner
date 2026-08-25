@@ -6,10 +6,11 @@ from multiprocessing import Pool
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import SSLCertificate, target_hash
+from perfrunner.helpers.misc import target_hash
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.rest import CNG_DATA_PORT
 from perfrunner.helpers.worker import run_conflictsim_task, ycsb_data_load_task, ycsb_task
+from perfrunner.helpers.x509 import SSLCertificate
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.tools import RestoreTest
@@ -601,9 +602,6 @@ class BiDirXdcrUpdateTest(BiDirXdcrInitTest):
     def run(self):
         if self.xdcr_settings.eccv:
             self.enable_cross_clustering_versioning()
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
         self.download_ycsb()
         logger.info("Loading the source bucket")
         self.load()

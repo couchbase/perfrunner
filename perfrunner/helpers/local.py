@@ -15,13 +15,12 @@ from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
 from perfrunner.helpers.misc import (
-    SSLCertificate,
-    X509CertPathPair,
     get_max_arg_strlen,
     pretty_dict,
     run_local_shell_command,
 )
 from perfrunner.helpers.shell import hide, lcd, local, quiet, settings, shell_env, warn_only
+from perfrunner.helpers.x509 import SSLCertificate, X509CertPathPair, summarise_keystore
 from perfrunner.settings import CH2, CH2ConnectionSettings, ClusterSpec
 
 YCSB_ENV = {
@@ -1482,15 +1481,27 @@ def govendor_fetch(path: str, revision: str, package: str):
     local(f"govendor fetch {path}/{package}@{revision}")
 
 
-def generate_ssl_keystore(root_certificate: str, keystore_file: str,
-                          storepass: str):
+def generate_ssl_keystore(root_certificate: str, keystore_file: str, storepass: str,
+                          client_bundle: Optional[str] = None):
+    """Build the keystore the clients use: the cluster CA, plus a client key entry if given."""
     logger.info('Generating SSL keystore')
-    with quiet():
-        local(f"keytool -delete -keystore {keystore_file} -alias couchbase -storepass storepass")
-    local(
-        f"keytool -importcert -file {root_certificate} -storepass {storepass} -trustcacerts "
-        f"-noprompt -keystore {keystore_file} -alias couchbase"
-    )
+    local(f"rm -f {keystore_file}")
+    # Passed by environment rather than on the command line: local() logs the command it runs
+    # to perfrunner.log, and the store password is test configuration.
+    with shell_env(KEYSTORE_PASS=storepass):
+        if client_bundle:
+            local(f"keytool -importkeystore -srckeystore {client_bundle} -srcstoretype PKCS12 "
+                  f"-srcstorepass:env KEYSTORE_PASS -destkeystore {keystore_file} "
+                  f"-deststoretype JKS -deststorepass:env KEYSTORE_PASS -noprompt")
+        local(f"keytool -importcert -file {root_certificate} -storepass:env KEYSTORE_PASS "
+              f"-trustcacerts -noprompt -keystore {keystore_file} -alias couchbase")
+        with quiet():
+            listing = local(f"keytool -list -v -keystore {keystore_file} "
+                            "-storepass:env KEYSTORE_PASS", capture=True)
+    if listing.failed:
+        logger.warning(f"Could not list {keystore_file}: {listing.stderr or listing}")
+    else:
+        logger.info(f"{keystore_file} contents:\n{summarise_keystore(listing)}")
 
 
 def build_java_dcp_client():

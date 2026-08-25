@@ -1597,12 +1597,35 @@ class MetricHelper:
                               for filename in glob.glob("YCSB/ycsb_run_*.log")
                               if "stderr" not in filename]
 
+        if not ycsb_log_files:
+            raise Exception(
+                f"No YCSB {operation} log files found under YCSB/. Check that the {operation} "
+                f"phase ran and that its logs were collected from the workers."
+            )
+
+        reported = 0
         for filename in ycsb_log_files:
             with open(filename) as fh:
                 for line in fh:
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
-                        throughput += int(float(line.split()[-1]))
+                        current_throughput = float(line.split()[-1])
+                        if current_throughput > 0:
+                            throughput += int(current_throughput)
+                            reported += 1
                         break
+
+        if not reported:
+            raise Exception(
+                f"No YCSB {operation} throughput reported: none of the "
+                f"{len(ycsb_log_files)} log file(s) contain a nonzero "
+                f"'[OVERALL], Throughput(ops/sec)' line. "
+                f"Check YCSB/*stderr* on the workers for client-side failures."
+            )
+        if reported < len(ycsb_log_files):
+            logger.warning(
+                f"Only {reported} of {len(ycsb_log_files)} YCSB {operation} instances reported "
+                f"throughput, so {throughput} ops/sec is under-counted"
+            )
         return throughput
 
     def _parse_pytpcc_throughput(self) -> int:

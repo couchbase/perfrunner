@@ -234,14 +234,20 @@ class SSHSession(Session):
             raise NetworkError(f"Pooled connection to {self.host} is dead: {e}") from e
 
     def close(self):
+        """Tear the connection down, best effort.
+
+        Since Fabric 3, ``Connection.close()`` closes the SFTP channel first, and that
+        round-trips to a peer that may already be gone -- so closing a connection that has
+        transferred files can raise once the transport dies. Callers only ever close a session
+        they are discarding, so failing here would abort a run over nothing.
+        """
         if not self._conn.is_connected:
             return
         try:
             self._conn.close()
         except Exception as e:
-            # Closing a dead socket raises: fabric writes to the cached SFTP channel first and
-            # then gives up before tearing the transport down, so finish the job here.
-            logger.warning(f"Ignoring error while closing connection to {self.host}: {e}")
+            logger.warning(f"Ignoring error while closing connection to {self.host}: {e!r}")
+            # Fabric gives up before closing the client if the SFTP channel raises
             try:
                 self._conn.client.close()
             except Exception:

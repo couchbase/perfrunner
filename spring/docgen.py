@@ -1045,6 +1045,65 @@ class RefDocument(ReverseLookupDocument):
         }
 
 
+class NestedArrayWindowDocument(ReverseLookupDocument):
+    """Documents with a two-level nested array, for UNNEST + window function workloads.
+
+    Each document has a ``groups`` array; each group has a ``loggerId`` and a
+    ``readings`` array of timestamped objects. A two-level UNNEST over
+    ``groups`` then ``readings`` yields num_categories * num_replies rows per
+    document, each carrying its full reading object. Every group has its own
+    loggerId and every reading its own timeStamp across the whole dataset, so
+    window partitions and sort keys stay distinct rather than collapsing onto
+    a handful of repeated values.
+
+    num_categories sets the number of groups per document and num_replies the
+    number of readings per group, reusing the existing generic array-size
+    settings rather than adding new ones. Document size follows from those
+    two alone; avg_size is accepted to match the other generators but not
+    used. Set both keys explicitly in the test config: the generic defaults
+    are sized for JoinedDocument and would produce 10**8 readings per
+    document.
+    """
+
+    def __init__(self, avg_size: int, prefix: str, num_categories: int, num_replies: int):
+        super().__init__(avg_size, prefix)
+        self.num_groups = num_categories
+        self.num_readings = num_replies
+
+    def build_reading(self, alphabet: str, seq_id: int, group_idx: int, reading_idx: int) -> dict:
+        minute_offset = (seq_id * self.num_groups + group_idx) * self.num_readings + reading_idx
+        timestamp = datetime(2026, 1, 1) + timedelta(minutes=minute_offset)
+        return {
+            'timeStamp': timestamp.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'value': (seq_id + minute_offset) % 1000,
+            'unit': 'C',
+            'sensorId': self.build_capped(alphabet, seq_id + minute_offset, 50),
+            'note': alphabet,
+        }
+
+    def build_readings(self, alphabet: str, seq_id: int, group_idx: int) -> list[dict]:
+        return [
+            self.build_reading(alphabet, seq_id, group_idx, reading_idx)
+            for reading_idx in range(self.num_readings)
+        ]
+
+    def build_groups(self, alphabet: str, seq_id: int) -> list[dict]:
+        return [
+            {
+                'loggerId': decimal_fmtr(seq_id * self.num_groups + group_idx, self.prefix),
+                'readings': self.build_readings(alphabet, seq_id, group_idx),
+            }
+            for group_idx in range(self.num_groups)
+        ]
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        return {
+            'email': self.build_email(alphabet),
+            'groups': self.build_groups(alphabet, key.number),
+        }
+
+
 class ArrayIndexingDocument(ReverseLookupDocument):
 
     """Extend ReverseLookupDocument by adding two new fields.

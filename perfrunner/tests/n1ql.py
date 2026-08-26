@@ -258,6 +258,10 @@ class N1QLTest(PerfTest):
 
         self.report_kpi()
 
+    def _query_vital_total(self, name: str) -> int:
+        """Sum an integer /admin/vitals counter across all query nodes."""
+        return sum(int(self.rest.get_query_vitals(host).get(name, 0)) for host in self.query_nodes)
+
 
 class N1QLLatencyTest(N1QLTest):
 
@@ -594,13 +598,6 @@ class N1QLScanBackfillTest(N1QLThroughputTest):
     def _count_backfill_log_entries(self) -> int:
         return self.remote.count_backfill_files_in_log(self.query_nodes[0])
 
-    def _get_failed_count_total(self) -> int:
-        total = 0
-        for host in self.query_nodes:
-            vitals = self.rest.get_query_vitals(host)
-            total += int(vitals.get('request.failed.count', 0))
-        return total
-
     def _run_probe_query_for_backfill(self):
         """Run one access-shape query to verify backfill still triggers.
 
@@ -766,7 +763,7 @@ class N1QLScanBackfillTest(N1QLThroughputTest):
             self.rest.set_query_tmp_space_size(host, self.TMP_SPACE_SIZE_MIB)
         self._run_probe_query_for_backfill()
 
-        failed_before = self._get_failed_count_total()
+        failed_before = self._query_vital_total('request.failed.count')
         logger.info(
             f'request.failed.count before access phase: {failed_before}'
         )
@@ -779,7 +776,7 @@ class N1QLScanBackfillTest(N1QLThroughputTest):
         # values), so the reported metric is unaffected. Logging here
         # just makes the count visible in the log instead of
         # being silently dropped.
-        failed_after = self._get_failed_count_total()
+        failed_after = self._query_vital_total('request.failed.count')
         failed_delta = failed_after - failed_before
         logger.info(
             f'Failed queries during access phase: {failed_delta} '
@@ -829,26 +826,12 @@ class N1QLLatencySpillFileTest(_SpillKPIMixin, N1QLLatencyTest):
 
     SPILLS_ORDER_DELTA_MIN = 2
 
-    def _get_spills_order_total(self) -> int:
-        total = 0
-        for host in self.query_nodes:
-            vitals = self.rest.get_query_vitals(host)
-            total += int(vitals.get('spills.order', 0))
-        return total
-
-    def _get_failed_count_total(self) -> int:
-        total = 0
-        for host in self.query_nodes:
-            vitals = self.rest.get_query_vitals(host)
-            total += int(vitals.get('request.failed.count', 0))
-        return total
-
     def access_bg(self, *args, **kwargs):
-        self._spills_order_before = self._get_spills_order_total()
+        self._spills_order_before = self._query_vital_total('spills.order')
         logger.info(
             f'spills.order before access phase: {self._spills_order_before}'
         )
-        self._failed_count_before = self._get_failed_count_total()
+        self._failed_count_before = self._query_vital_total('request.failed.count')
         logger.info(
             f'request.failed.count before access phase: '
             f'{self._failed_count_before}'
@@ -856,7 +839,7 @@ class N1QLLatencySpillFileTest(_SpillKPIMixin, N1QLLatencyTest):
         super().access_bg(*args, **kwargs)
 
     def _report_kpi(self):
-        spills_after = self._get_spills_order_total()
+        spills_after = self._query_vital_total('spills.order')
         delta = spills_after - self._spills_order_before
         if delta < self.SPILLS_ORDER_DELTA_MIN:
             raise Exception(
@@ -873,7 +856,7 @@ class N1QLLatencySpillFileTest(_SpillKPIMixin, N1QLLatencyTest):
             f'Sort spill confirmed: spills.order delta = {delta} '
             f'(>= {self.SPILLS_ORDER_DELTA_MIN})'
         )
-        failed_after = self._get_failed_count_total()
+        failed_after = self._query_vital_total('request.failed.count')
         failed_delta = failed_after - self._failed_count_before
         logger.info(
             f'Failed queries during access phase: {failed_delta} '
@@ -911,6 +894,58 @@ class N1QLLatencySpillFileTest(_SpillKPIMixin, N1QLLatencyTest):
         self.reporter.post(*self.metrics.avg_query_latency())
 
 
+class N1QLLatencyWindowAggMemoryPressureTest(N1QLLatencyTest):
+    """Measures window (OLAP) aggregate sort latency and fails on query errors.
+
+    Drives a large sort through a window function's OVER (ORDER BY ...)
+    clause rather than a top-level ORDER BY. When the server keeps window
+    aggregate sorts in memory instead of spilling them to disk, a sort that
+    exceeds the in-memory budget fails rather than slowing down, so the test
+    fails if request.failed.count increases during the access window.
+    spills.order is logged for comparison across builds.
+    """
+
+    # The default queryTmpSpaceSize (5120 MiB) is too small for this workload
+    # on builds that spill window sorts to disk. Once it fills, queries error
+    # out and are excluded from the latency samples, so the KPI cannot post.
+    TMP_SPACE_SIZE_MIB = 30720
+
+    def store_plans(self):
+        super().store_plans()
+        for host in self.query_nodes:
+            self.rest.set_query_tmp_space_size(host, self.TMP_SPACE_SIZE_MIB)
+
+    def access_bg(self, *args, **kwargs):
+        self._failed_count_before = self._query_vital_total('request.failed.count')
+        logger.info(
+            f'request.failed.count before access phase: {self._failed_count_before}'
+        )
+        self._spills_order_before = self._query_vital_total('spills.order')
+        super().access_bg(*args, **kwargs)
+
+    def _report_kpi(self):
+        failed_after = self._query_vital_total('request.failed.count')
+        failed_delta = failed_after - self._failed_count_before
+        if failed_delta > 0:
+            raise Exception(
+                'Window aggregate sort FAILED under memory pressure: '
+                f'request.failed.count delta = {failed_delta} '
+                f'(before={self._failed_count_before}, after={failed_after}). '
+                'When window aggregate sorts are kept in memory instead of '
+                'spilling to disk, a sort that exceeds the in-memory budget '
+                'errors out instead of completing.'
+            )
+        spills_after = self._query_vital_total('spills.order')
+        spills_delta = spills_after - self._spills_order_before
+        logger.info(
+            f'spills.order delta during access window: {spills_delta} '
+            '(informational only — builds that keep window aggregate sorts '
+            'in memory should report 0; a nonzero value may also come from a '
+            'different Order operator on the same query node)'
+        )
+        super()._report_kpi()
+
+
 class N1QLLatencyUpdateStatsSpillTest(_SpillKPIMixin, N1QLLatencyTest):
     """Measures query latency for UPDATE STATISTICS workloads that spill to disk.
 
@@ -928,27 +963,13 @@ class N1QLLatencyUpdateStatsSpillTest(_SpillKPIMixin, N1QLLatencyTest):
 
     SPILLS_UPDATE_STATISTICS_DELTA_MIN = 2
 
-    def _get_spills_update_statistics_total(self) -> int:
-        total = 0
-        for host in self.query_nodes:
-            vitals = self.rest.get_query_vitals(host)
-            total += int(vitals.get('spills.update_statistics', 0))
-        return total
-
-    def _get_failed_count_total(self) -> int:
-        total = 0
-        for host in self.query_nodes:
-            vitals = self.rest.get_query_vitals(host)
-            total += int(vitals.get('request.failed.count', 0))
-        return total
-
     def access_bg(self, *args, **kwargs):
-        self._spills_us_before = self._get_spills_update_statistics_total()
+        self._spills_us_before = self._query_vital_total('spills.update_statistics')
         logger.info(
             f'spills.update_statistics before access phase: '
             f'{self._spills_us_before}'
         )
-        self._failed_count_before = self._get_failed_count_total()
+        self._failed_count_before = self._query_vital_total('request.failed.count')
         logger.info(
             f'request.failed.count before access phase: '
             f'{self._failed_count_before}'
@@ -956,7 +977,7 @@ class N1QLLatencyUpdateStatsSpillTest(_SpillKPIMixin, N1QLLatencyTest):
         super().access_bg(*args, **kwargs)
 
     def _report_kpi(self):
-        spills_after = self._get_spills_update_statistics_total()
+        spills_after = self._query_vital_total('spills.update_statistics')
         delta = spills_after - self._spills_us_before
         if delta < self.SPILLS_UPDATE_STATISTICS_DELTA_MIN:
             raise Exception(
@@ -980,7 +1001,7 @@ class N1QLLatencyUpdateStatsSpillTest(_SpillKPIMixin, N1QLLatencyTest):
         # informational — failed queries are already excluded from the
         # latency reservoir (spring.reservoir.update drops falsy
         # values), so the reported metric is unaffected.
-        failed_after = self._get_failed_count_total()
+        failed_after = self._query_vital_total('request.failed.count')
         failed_delta = failed_after - self._failed_count_before
         logger.info(
             f'Failed queries during access phase: {failed_delta} '

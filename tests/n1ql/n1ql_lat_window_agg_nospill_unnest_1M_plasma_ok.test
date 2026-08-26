@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLLatencyWindowAggMemoryPressureTest
+
+[showfast]
+title = Window Agg No-Spill, 2-level UNNEST + double window sort, Primary Index, Plasma, not_bounded, N1QL
+component = n1ql
+category = spill_file
+sub_category = Plasma
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 150000
+size = 1024
+workers = 40
+doc_gen = nested_array_window
+num_categories = 2
+num_replies = 3
+
+[index]
+statements =
+    CREATE PRIMARY INDEX primary_idx ON `bucket-1`;
+
+[access]
+creates = 0
+reads = 1
+updates = 0
+deletes = 0
+items = 150000
+spring_batch_size = 1
+workers = 1
+throughput = 1
+time = 3600
+n1ql_queries = window-agg-nospill-unnest
+n1ql_workers = 1
+n1ql_batch_size = 1
+n1ql_throughput = 1
+n1ql_timeout = 3600
+
+[n1ql-window-agg-nospill-unnest]
+statement = SELECT r.*, g.loggerId AS loggerId, (CASE WHEN r.`value` < 500 THEN "Low" ELSE MISSING END) AS excursion, ROW_NUMBER() OVER (PARTITION BY g.loggerId ORDER BY r.timeStamp) - ROW_NUMBER() OVER (PARTITION BY g.loggerId, (CASE WHEN r.`value` < 500 THEN "Low" ELSE MISSING END) ORDER BY r.timeStamp) AS grp FROM `bucket-1` AS doc USE INDEX (primary_idx) UNNEST doc.`groups` AS g UNNEST g.readings AS r OFFSET 899999;
+scan_consistency = not_bounded
+args = []

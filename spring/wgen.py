@@ -58,6 +58,7 @@ from spring.docgen import (
     LargeItemPlasmaDocument,
     MovingWorkingSetKey,
     MultiBucketDocument,
+    NestedArrayWindowDocument,
     NestedDocument,
     NewOrderedKey,
     PackageDocument,
@@ -228,6 +229,12 @@ class Worker:
                                        self.ws.items,
                                        self.ws.num_categories,
                                        self.ws.num_replies)
+        elif self.ws.doc_gen == 'nested_array_window':
+            # num_categories = groups per document, num_replies = readings per group.
+            self.docs = NestedArrayWindowDocument(self.ws.size,
+                                                  self.ts.prefix,
+                                                  self.ws.num_categories,
+                                                  self.ws.num_replies)
         elif self.ws.doc_gen == 'ref':
             self.docs = RefDocument(self.ws.size,
                                     self.ts.prefix)

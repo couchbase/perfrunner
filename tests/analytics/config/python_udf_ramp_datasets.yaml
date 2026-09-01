@@ -1,0 +1,11 @@
+- name: customer_100m
+  query: SELECT VALUE d FROM customer_ext d LIMIT 100000000
+  expected_items: 100000000
+
+- name: customer_10m
+  query: SELECT VALUE d FROM customer_100m d LIMIT 10000000
+  expected_items: 10000000
+
+- name: customer_1m
+  query: SELECT VALUE d FROM customer_100m d LIMIT 1000000
+  expected_items: 1000000

@@ -1,0 +1,28 @@
+library:
+  name: pylib
+  module_dir: perfrunner/workloads/analytics/udf/python
+
+functions:
+  - name: net_pay_sqlpp
+    args: [bal, ytd, disc]
+    body: '{ "netPay": (bal + ytd) - disc }'
+
+  - name: net_pay_py
+    args: [bal, ytd, disc]
+    external: [udf_mod, Metrics.net_pay]
+
+  - name: net_pay_scalar_sqlpp
+    args: [bal, ytd, disc]
+    body: '(bal + ytd) - disc'
+
+  - name: net_pay_scalar_py
+    args: [bal, ytd, disc]
+    external: [udf_mod, Metrics.net_pay_scalar]
+
+  - name: eq_py
+    args: [a, b]
+    external: [udf_mod, Metrics.eq]
+
+  - name: score_py
+    args: [x, n]
+    external: [udf_mod, Metrics.score]

@@ -1,4 +1,5 @@
 import os
+import posixpath
 import threading
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -2179,3 +2180,101 @@ class RemoteLinux(Remote):
         pattern = f"({'|'.join(product.value for product in self.CB_DIRS)})-dbg(sym)?"
         return_code = run(f"dpkg -l | grep -E '{pattern}'", quiet=True).return_code
         return return_code == 0
+
+    # Node-local sockets of the library servlet, named after the node id
+    UDF_LIBRARY_SOCKETS = {
+        CBProduct.ENTERPRISE_ANALYTICS: "/opt/enterprise-analytics/var/*_ea_lib.sock",
+        CBProduct.OPERATIONAL_INSIGHTS: "/opt/couchbase/var/*_oi_lib.sock",
+    }
+
+    UDF_SOCKET_DIR = "/var/run/udf-sockets"
+
+    def upload_analytics_python_library(
+        self,
+        host: str,
+        local_path: str,
+        dataverse: str,
+        library_name: str,
+        credentials: tuple[str, str],
+    ):
+        pattern = self.UDF_LIBRARY_SOCKETS[self.get_product(host=host)]
+        remote_path = posixpath.join("/tmp", os.path.basename(local_path))
+        path = f"/api/v1/library/{dataverse}/{library_name}"
+        user, password = credentials
+
+        # Credentials go by environment, not on the command line: run() logs its command
+        with settings(host_string=host), shell_env(UDF_USER=user, UDF_PASSWORD=password):
+            sockets = run(f"ls -1 {pattern}", quiet=True, warn_only=True).split()
+            if len(sockets) != 1:
+                raise RuntimeError(f"Expected one socket matching {pattern} on {host}: {sockets}")
+
+            put(local_path, remote_path)
+            logger.info(f"Uploading Python UDF library {library_name} via {sockets[0]}{path}")
+            result = run(
+                f"curl -sS -u \"$UDF_USER:$UDF_PASSWORD\" -w '\nHTTP %{{http_code}}' "
+                f"-F 'type=python' -F 'data=@{remote_path}' "
+                f"--unix-socket {quote(sockets[0])} localhost{path}",
+                warn_only=True,
+            )
+            run(f"rm -f {remote_path}", quiet=True)
+
+        if result.return_code or not result.splitlines()[-1].startswith("HTTP 20"):
+            raise RuntimeError(f"Python UDF library upload failed on {host}: {result}")
+
+    @all_servers
+    def ensure_docker(self):
+        if run("command -v docker", quiet=True, warn_only=True).return_code:
+            logger.info("Installing docker")
+            run("DEBIAN_FRONTEND=noninteractive apt-get update -qq", warn_only=True)
+            run("DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io")
+        run("systemctl enable --now docker", pty=False)
+
+    @all_servers
+    def docker_registry_login(self, registry: str, username: str, password: str):
+        logger.info(f"Logging in to {registry}")
+        with shell_env(UDF_PASSWORD=password):
+            run(
+                f'echo "$UDF_PASSWORD" | docker login {quote(registry)} -u {quote(username)} '
+                "--password-stdin",
+                pty=False,
+            )
+
+    @all_servers
+    def upload_udf_executor(self, local_path: str):
+        put(local_path, posixpath.join("/tmp", os.path.basename(local_path)))
+
+    @all_servers
+    def install_udf_executor(self, filename: str, executor_image: Optional[str] = None):
+        env_prefix = f"UDF_EXECUTOR_IMAGE={quote(executor_image)} " if executor_image else ""
+        logger.info(f"Installing UDF executor package {filename} (image: {executor_image})")
+        result = run(
+            f"{env_prefix}DEBIAN_FRONTEND=noninteractive apt install -y /tmp/{filename} 2>&1",
+            warn_only=True,
+        )
+        if result.return_code:
+            raise RuntimeError(f"UDF executor install failed on {env.host_string}:\n{result}")
+
+    def udf_executor_unit(self, host: Optional[str] = None) -> str:
+        return f"{self.get_product(host=host).value}-udf-appdir"
+
+    @all_servers
+    def set_udf_executor_autostart(self, enabled: bool):
+        unit = self.udf_executor_unit()
+        logger.info(f"{'Enabling' if enabled else 'Disabling'} {unit}.path on {env.host_string}")
+        if enabled:
+            run(f"systemctl reset-failed {unit}.service {unit}.path", warn_only=True, quiet=True)
+            run(f"systemctl enable {unit}.path && systemctl restart {unit}.path", pty=False)
+        else:
+            run(f"systemctl disable --now {unit}.path", pty=False)
+
+    def wait_for_udf_socket(self, host: str, timeout_secs: int = 180) -> bool:
+        logger.info(f"Waiting for a socket in {self.UDF_SOCKET_DIR} on {host}")
+        found = f"find {self.UDF_SOCKET_DIR} -maxdepth 1 -type s | grep -q ."
+        with settings(host_string=host):
+            result = run(
+                f"end=$(( $(date +%s) + {timeout_secs} )); until {found}; do "
+                f"[ $(date +%s) -ge $end ] && exit 1; sleep 2; done",
+                warn_only=True,
+                timeout=timeout_secs + 30,
+            )
+        return result.return_code == 0

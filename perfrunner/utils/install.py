@@ -91,6 +91,7 @@ SERVER_RELEASE_LOCATIONS = (
     f"{LATESTBUILDS_BASE_URL}/releases/{{release}}/ce/",
 )
 
+
 STELLAR_GATEWAY_LOCATION = (
     f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-cloud-native-gateway/{{release}}/{{build}}/"
 )
@@ -599,13 +600,17 @@ class CouchbaseInstaller:
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         arch: Optional[str] = None,
+        packages: Optional[list[str]] = None,
+        subdirs: tuple[str, ...] = ("",),
     ) -> Optional[str]:
         package_type = package_type or self.remote.package_type  # package type based on server OS
         os_name = os_name or self.remote.distro
         os_version = os_version or self.remote.distro_version
         arch = arch or self.cluster_spec.infrastructure_settings.get("os_arch", "x86_64")
 
-        for url in self.url_iterator(edition, package_type, os_name, os_version, arch):
+        for url in self.url_iterator(
+            edition, package_type, os_name, os_version, arch, packages, subdirs
+        ):
             if url_exist(url):
                 return url
 
@@ -620,6 +625,7 @@ class CouchbaseInstaller:
                     "os_version": os_version,
                     "arch": arch,
                     "package_type": package_type,
+                    "packages": packages,
                 },
                 sort_keys=False,
             )
@@ -632,6 +638,8 @@ class CouchbaseInstaller:
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         arch: Optional[str] = None,
+        packages: Optional[list[str]] = None,
+        subdirs: tuple[str, ...] = ("",),
     ) -> Iterator[str]:
         arch_strings = ["x86_64", "amd64"]
         if arch == "arm":
@@ -658,20 +666,22 @@ class CouchbaseInstaller:
                     f"of {', '.join(products)}"
                 )
 
-        for (loc_pattern, product, codename), pkg_pattern, arch_str in itertools.product(
-            locations, PKG_PATTERNS[package_type], arch_strings
+        for (loc_pattern, product, codename), subdir, pkg_pattern, arch_str in itertools.product(
+            locations, subdirs, PKG_PATTERNS[package_type], arch_strings
         ):
-            url = loc_pattern + pkg_pattern
-            yield url.format(
-                product=product,
-                codename=codename,
-                edition=edition,
-                release=self.release,
-                build=self.build,
-                os_name=os_name,
-                os_version=os_version,
-                arch=arch_str,
+            build_dir = loc_pattern.format(
+                product=product, codename=codename, release=self.release, build=self.build
             )
+            for package in packages or (product,):
+                yield build_dir + subdir + pkg_pattern.format(
+                    product=package,
+                    edition=edition,
+                    release=self.release,
+                    build=self.build,
+                    os_name=os_name,
+                    os_version=os_version,
+                    arch=arch_str,
+                )
 
     def download_local(self, local_copy_url: Optional[str] = None):
         """Download a copy of the package and extract the Couchbase tools from it."""
@@ -722,6 +732,46 @@ class CouchbaseInstaller:
         self.remote.upload_iss_files(self.release)
         self.remote.download_and_install_couchbase(self.url)
 
+    @cached_property
+    def udf_executor_url(self) -> str:
+        return self.find_package(
+            edition=self.options.edition,
+            packages=[f"{self.cb_product.value}-udf"],
+            subdirs=("", "voltron/"),
+        )
+
+    @property
+    def udf_executor_image(self) -> Optional[str]:
+        if not (registry := self.options.udf_executor):
+            return None
+        if self.build is None:
+            logger.interrupt("--udf-executor REGISTRY needs a build number in --couchbase-version")
+        return f"{registry.rstrip('/')}/{self.cb_product.value}-udf:{self.release}-{self.build}"
+
+    def authenticate_udf_registry(self, image: str):
+        if not (token := os.getenv("GITHUB_ACCESS_TOKEN")):
+            logger.interrupt(f"GITHUB_ACCESS_TOKEN must be set to pull {image}")
+        self.remote.docker_registry_login(image.split("/")[0], "x-access-token", token)
+
+    def install_udf_executor(self):
+        if self.options.udf_executor is None:
+            return
+
+        url, image = self.udf_executor_url, self.udf_executor_image
+        logger.info(f"Installing Python UDF executor from {url}")
+        self.remote.ensure_docker()
+        if image:
+            self.authenticate_udf_registry(image)
+
+        filename = Path(urlparse(url).path).name
+        download_file(url, filename)
+        self.remote.upload_udf_executor(filename)
+        self.remote.install_udf_executor(filename, image)
+
+        # EA's executor creates its bind-mounted app dir as root, blocking the analytics start
+        if self.cb_product == CBProduct.ENTERPRISE_ANALYTICS:
+            self.remote.set_udf_executor_autostart(False)
+
     def set_cb_profile(self):
         profile = CBProfile.DEFAULT
         if set_profile := self.test_config.cluster.profile:
@@ -751,6 +801,7 @@ class CouchbaseInstaller:
         self.set_ns_server_managed_cgroup()
         self.set_cb_profile()
         self.install_package()
+        self.install_udf_executor()
 
 
 class CloudInstaller(CouchbaseInstaller):
@@ -967,6 +1018,16 @@ def get_args():
         required=False,
         dest="couchbase_version",
         help="the build version or the HTTP URL to a package",
+    )
+    parser.add_argument(
+        "--udf-executor",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="REGISTRY",
+        help="also install the Python UDF executor package of the same build, after the server "
+        "package; with REGISTRY, run <REGISTRY>/<product>-udf:<version> instead of the image "
+        "the package defaults to",
     )
     parser.add_argument(
         "-t",

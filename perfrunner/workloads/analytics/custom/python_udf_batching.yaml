@@ -1,0 +1,33 @@
+queries:
+  - statement: &q0 |-
+      SELECT VALUE SUM(TO_BIGINT(r)) FROM ( SELECT VALUE eq_py(c.c_discount, 0.05) FROM customer_batched_4m c) r
+    once: true
+
+  - statement: *q0
+    name: eq_py_batched_4m
+
+  - statement: &q1 |-
+      SELECT VALUE COUNT(*) FROM customer_nl_2k c JOIN orders_nl_2k o ON eq_py(c.c_id, o.o_c_id)
+    once: true
+
+  - statement: *q1
+    name: eq_py_unbatched_2kx2k
+
+  - statement: &q2 |-
+      SELECT VALUE COUNT(*) FROM customer_nl_2k c JOIN orders_nl_2k o ON (c.c_id - o.o_c_id) = 0
+    once: true
+
+  - statement: *q2
+    name: eq_sqlpp_unbatched_2kx2k
+    repeat: 3
+
+ratios:
+  - name: unbatched_over_batched
+    title: Unbatched / batched latency ratio at 4M UDF evaluations
+    numerator: eq_py_unbatched_2kx2k
+    denominator: eq_py_batched_4m
+
+  - name: unbatched_py_over_sqlpp
+    title: Unbatched Python UDF / SQL++ join-condition latency ratio, 2k x 2k
+    numerator: eq_py_unbatched_2kx2k
+    denominator: eq_sqlpp_unbatched_2kx2k

@@ -1,0 +1,127 @@
+queries:
+  - statement: &q0 |-
+      SELECT VALUE SUM(r.netPay) FROM ( SELECT VALUE net_pay_sqlpp(c.c_balance, c.c_ytd_payment, c.c_discount) FROM customer_1m c) r
+    once: true
+
+  - statement: *q0
+    name: net_pay_sqlpp_1m
+
+  - statement: &q1 |-
+      SELECT VALUE SUM(r.netPay) FROM ( SELECT VALUE net_pay_py(c.c_balance, c.c_ytd_payment, c.c_discount) FROM customer_1m c) r
+    once: true
+
+  - statement: *q1
+    name: net_pay_py_1m
+
+  - statement: &q2 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE net_pay_scalar_sqlpp(c.c_balance, c.c_ytd_payment, c.c_discount) FROM customer_1m c) r
+    once: true
+
+  - statement: *q2
+    name: net_pay_scalar_sqlpp_1m
+
+  - statement: &q3 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE net_pay_scalar_py(c.c_balance, c.c_ytd_payment, c.c_discount) FROM customer_1m c) r
+    once: true
+
+  - statement: *q3
+    name: net_pay_scalar_py_1m
+
+  - statement: &q4 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE net_pay_scalar_sqlpp(c.c_balance, c.c_ytd_payment, c.c_discount) FROM customer_10m c) r
+    once: true
+
+  - statement: *q4
+    name: net_pay_scalar_sqlpp_10m
+
+  - statement: &q5 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE net_pay_scalar_py(c.c_balance, c.c_ytd_payment, c.c_discount) FROM customer_10m c) r
+    once: true
+
+  - statement: *q5
+    name: net_pay_scalar_py_10m
+
+  - statement: &q6 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE net_pay_scalar_sqlpp(c.c_balance, c.c_ytd_payment, c.c_discount) FROM customer_100m c) r
+    once: true
+
+  - statement: *q6
+    name: net_pay_scalar_sqlpp_100m
+
+  - statement: &q7 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE net_pay_scalar_py(c.c_balance, c.c_ytd_payment, c.c_discount) FROM customer_100m c) r
+    once: true
+
+  - statement: *q7
+    name: net_pay_scalar_py_100m
+
+  - statement: *q2
+    name: net_pay_scalar_sqlpp_1m_c10
+    concurrency: 10
+    once: true
+
+  - statement: *q3
+    name: net_pay_scalar_py_1m_c10
+    concurrency: 10
+    once: true
+
+  - statement: *q4
+    name: net_pay_scalar_sqlpp_10m_c10
+    concurrency: 10
+    once: true
+
+  - statement: *q5
+    name: net_pay_scalar_py_10m_c10
+    concurrency: 10
+    once: true
+
+  - statement: *q6
+    name: net_pay_scalar_sqlpp_100m_c10
+    concurrency: 10
+    once: true
+
+  - statement: *q7
+    name: net_pay_scalar_py_100m_c10
+    concurrency: 10
+    once: true
+
+ratios:
+  - name: py_over_sqlpp_obj_1m
+    title: Python UDF / SQL++ UDF latency ratio, 1M rows, object return
+    numerator: net_pay_py_1m
+    denominator: net_pay_sqlpp_1m
+
+  - name: py_over_sqlpp_1m
+    title: Python UDF / SQL++ UDF latency ratio, 1M rows, scalar return
+    numerator: net_pay_scalar_py_1m
+    denominator: net_pay_scalar_sqlpp_1m
+
+  - name: py_over_sqlpp_10m
+    title: Python UDF / SQL++ UDF latency ratio, 10M rows, scalar return
+    numerator: net_pay_scalar_py_10m
+    denominator: net_pay_scalar_sqlpp_10m
+
+  - name: py_over_sqlpp_100m
+    title: Python UDF / SQL++ UDF latency ratio, 100M rows, scalar return
+    numerator: net_pay_scalar_py_100m
+    denominator: net_pay_scalar_sqlpp_100m
+
+  - name: py_obj_over_scalar_1m
+    title: Python UDF object-return / scalar-return latency ratio, 1M rows
+    numerator: net_pay_py_1m
+    denominator: net_pay_scalar_py_1m
+
+  - name: py_over_sqlpp_1m_c10
+    title: Python UDF / SQL++ UDF latency ratio, 1M rows, 10 concurrent queries
+    numerator: net_pay_scalar_py_1m_c10
+    denominator: net_pay_scalar_sqlpp_1m_c10
+
+  - name: py_over_sqlpp_10m_c10
+    title: Python UDF / SQL++ UDF latency ratio, 10M rows, 10 concurrent queries
+    numerator: net_pay_scalar_py_10m_c10
+    denominator: net_pay_scalar_sqlpp_10m_c10
+
+  - name: py_over_sqlpp_100m_c10
+    title: Python UDF / SQL++ UDF latency ratio, 100M rows, 10 concurrent queries
+    numerator: net_pay_scalar_py_100m_c10
+    denominator: net_pay_scalar_sqlpp_100m_c10

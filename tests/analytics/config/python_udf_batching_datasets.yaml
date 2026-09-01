@@ -1,0 +1,11 @@
+- name: customer_batched_4m
+  query: SELECT VALUE d FROM customer_ext d LIMIT 4000000
+  expected_items: 4000000
+
+- name: customer_nl_2k
+  query: SELECT VALUE d FROM customer_batched_4m d LIMIT 2000
+  expected_items: 2000
+
+- name: orders_nl_2k
+  query: SELECT VALUE d FROM orders_ext d LIMIT 2000
+  expected_items: 2000

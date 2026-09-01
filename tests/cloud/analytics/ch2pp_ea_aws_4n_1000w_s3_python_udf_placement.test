@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.analytics.CustomQueryTest
+
+[showfast]
+title = Python UDF call placement vs selective join, CH2++ 1000W, 4A, 0.01%% and 10%%
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 100
+analytics_mem_quota = 102400
+initial_nodes = 4
+
+[analytics]
+use_cbo = true
+cbo_sample_size = high
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_specific_pk.yaml
+custom_query_conf_file = perfrunner/workloads/analytics/custom/python_udf_placement.yaml
+custom_request_params = {"timeout": "900s"}
+udf_conf_file = perfrunner/workloads/analytics/udf/python_udf_functions.yaml
+
+[analytics_external_data]
+link_type = s3
+region = us-east-1
+obj_store_name = analytics-ch2pp0-1000w-gz
+file_format = json
+file_include = *.gz
+
+[columnar]
+object_store_import_datasets = customer, orders

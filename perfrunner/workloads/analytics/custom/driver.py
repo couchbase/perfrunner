@@ -3,8 +3,10 @@ import json
 import re
 import statistics
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
+from threading import Lock
 from typing import NamedTuple, Optional, Union
 from urllib.parse import urlparse
 
@@ -40,6 +42,12 @@ from perfrunner.helpers.misc import parse_duration_to_secs, pretty_dict
 #   default, since an unnamed warmup or probe entry can return a very large result set.
 # - once: if true, the entry runs in the first pass only (see the [test_case] option `passes`
 #   in CustomQueryTest).
+# - concurrency: send this many copies of the entry at once (default 1). Every copy's elapsed
+#   time is a sample under the entry's name, and every copy is plan-checked; the set still
+#   advances one entry at a time.
+# - plan_order: substrings (a string or a list of them) that must appear in this order in the
+#   response plan, which is printed top-down, e.g. a function call before a join operator,
+#   meaning the call is evaluated on the join's output. Checked like plan_contains.
 KNOWN_QUERY_CONFIG_KEYS = {
     "statement",
     "prefix",
@@ -52,7 +60,13 @@ KNOWN_QUERY_CONFIG_KEYS = {
     "plan_excludes",
     "log_results",
     "once",
+    "concurrency",
+    "plan_order",
 }
+
+# Keys a top-level `ratios` entry understands. Each is reported as the median of the numerator
+# entry's samples over the denominator's.
+KNOWN_RATIO_KEYS = {"name", "title", "numerator", "denominator", "chirality"}
 
 # Default per-request timeout. requests.post() blocks forever without an explicit timeout, so a
 # query that never gets a response would hang the run. Analytics queries can legitimately run
@@ -78,6 +92,8 @@ class CustomAnalyticsQuery:
     plan_contains: list[str] = field(default_factory=list)
     plan_excludes: list[str] = field(default_factory=list)
     log_results: bool = False
+    plan_order: list[str] = field(default_factory=list)
+    concurrency: int = 1
 
 
 def _as_list(value) -> list:
@@ -116,6 +132,12 @@ def _expand_one_config(index: int, query_conf: dict) -> tuple[bool, list[CustomA
             dict(zip(arg_names, values)) for values in itertools.product(*arg_values)
         ]
 
+    if (concurrency := int(query_conf.get("concurrency", 1))) < 1:
+        raise ValueError(
+            f"concurrency must be at least 1 in query config entry {index} "
+            f"({query_conf.get('name', UNNAMED_QUERY)}), got {concurrency}"
+        )
+
     queries = [
         CustomAnalyticsQuery(
             statement,
@@ -124,6 +146,8 @@ def _expand_one_config(index: int, query_conf: dict) -> tuple[bool, list[CustomA
             _as_list(query_conf.get("plan_contains", [])),
             _as_list(query_conf.get("plan_excludes", [])),
             bool(query_conf.get("log_results", False)),
+            _as_list(query_conf.get("plan_order", [])),
+            concurrency,
         )
         for _ in range(int(query_conf.get("repeat", 1)))
         for named_args in named_arg_combinations
@@ -152,15 +176,64 @@ def expand_query_configs(configs: list[dict], passes: int = 1) -> list[CustomAna
     return expanded
 
 
+def split_query_conf(doc: Union[list, dict]) -> tuple[list[dict], list[dict]]:
+    """Split a loaded query yaml into (query entries, ratio definitions).
+
+    The top level is either a bare list of query entries, or a mapping with a `queries` list
+    and an optional `ratios` list.
+    """
+    if isinstance(doc, list):
+        return doc, []
+    if unknown := set(doc) - {"queries", "ratios"}:
+        raise ValueError(f"Unknown top-level key(s) {sorted(unknown)} in query config")
+    return doc.get("queries", []), doc.get("ratios", [])
+
+
+def validate_ratios(configs: list[dict], ratios: list[dict]):
+    """Fail on a ratio that cannot be computed from the queries the set runs.
+
+    Both sides must name an entry without named_args: a named-args entry is several different
+    queries under one name, and pooling them into one median would mix them.
+    """
+    timed = {c["name"]: c for c in configs if c.get("name")}
+    for ratio in ratios:
+        if unknown := set(ratio) - KNOWN_RATIO_KEYS:
+            raise ValueError(f"Unknown key(s) {sorted(unknown)} in ratio {ratio.get('name')}")
+        if missing := KNOWN_RATIO_KEYS - {"chirality"} - set(ratio):
+            raise ValueError(f"Missing key(s) {sorted(missing)} in ratio {ratio.get('name')}")
+        for side in ("numerator", "denominator"):
+            if (query_name := ratio[side]) not in timed:
+                raise ValueError(
+                    f"Ratio {ratio['name']} {side} {query_name} is not a named query entry"
+                )
+            if timed[query_name].get("named_args"):
+                raise ValueError(
+                    f"Ratio {ratio['name']} {side} {query_name} has named_args, which a ratio "
+                    "cannot reduce to one value"
+                )
+
+
+def compute_ratios(timings: dict, ratios: list[dict]) -> list[tuple[dict, float]]:
+    """Return (ratio definition, median(numerator) / median(denominator)) for each ratio."""
+
+    def median_of(name: str) -> float:
+        return statistics.median(timings[name][NO_NAMED_ARGS])
+
+    return [
+        (ratio, median_of(ratio["numerator"]) / median_of(ratio["denominator"]))
+        for ratio in ratios
+    ]
+
+
 def plan_check_failures(query: CustomAnalyticsQuery, body: dict) -> list[str]:
-    """Check one response's plan against the query's plan_contains/plan_excludes.
+    """Check one response's plan against the query's plan_contains/excludes/order.
 
     Returns a description per violated expectation (empty if the query has no plan checks
     configured, or every expectation holds). A check configured against a response that carries
     no plan at all (e.g. optimized-logical-plan was overridden to false) is itself a failure,
     since a silently-skipped check is worse than a loud one.
     """
-    if not (query.plan_contains or query.plan_excludes):
+    if not (query.plan_contains or query.plan_excludes or query.plan_order):
         return []
 
     display_name = query.name or UNNAMED_QUERY
@@ -179,6 +252,13 @@ def plan_check_failures(query: CustomAnalyticsQuery, body: dict) -> list[str]:
         for operator in query.plan_excludes
         if operator in plan_text
     ]
+
+    # Every occurrence of each entry must come before the first occurrence of the next one.
+    for earlier, later in zip(query.plan_order, query.plan_order[1:]):
+        if earlier not in plan_text or later not in plan_text:
+            failures.append(f"{display_name} (plan lacks {earlier} or {later})")
+        elif plan_text.rindex(earlier) > plan_text.index(later):
+            failures.append(f"{display_name} (plan has {earlier} below {later})")
     return failures
 
 
@@ -236,6 +316,67 @@ def log_query_to_file(
         f.write(pretty_dict(entry) + "\n")
 
 
+def _new_session(api_url: str, api_auth: tuple[str, str]) -> requests.Session:
+    session = requests.Session()
+    parsed_url = urlparse(api_url)
+    session.mount(
+        f"{parsed_url.scheme}://{parsed_url.netloc}",
+        socket_options.TCPKeepAliveAdapter(idle=120, count=20, interval=30),
+    )
+    session.auth = api_auth
+    session.verify = False
+    return session
+
+
+def _run_one(
+    session: requests.Session,
+    api_url: str,
+    query: CustomAnalyticsQuery,
+    log_file_path: Union[str, Path],
+    request_params: Optional[dict],
+    request_timeout: int,
+    log_lock: Lock,
+) -> tuple[Optional[float], list[str]]:
+    """Run one statement, returning (elapsed secs, failure descriptions).
+
+    Errors are returned rather than raised, so one bad statement does not cost the rest of the
+    set. The elapsed time is None when the request itself failed.
+    """
+    display_name = query.name or UNNAMED_QUERY
+
+    payload = {
+        "statement": query.statement,
+        **query.named_args,
+        "optimized-logical-plan": True,
+        "plan-format": "STRING",
+        "max-warnings": 10,
+    } | (request_params or {})
+
+    try:
+        resp = session.post(url=api_url, data=payload, timeout=request_timeout)
+    except requests.RequestException as e:
+        # Keep going so a blip doesn't cost us the whole run, but record it as a failure
+        logger.error(f"Query {display_name} could not be sent: {e}")
+        with log_lock:
+            log_query_to_file(log_file_path, query, None, {})
+        return None, [f"{display_name} ({e.__class__.__name__})"]
+
+    body = decode_response_body(resp)
+    with log_lock:
+        log_query_to_file(log_file_path, query, resp.status_code, body)
+    if not resp.ok:
+        logger.error(f"Query {display_name} failed (HTTP {resp.status_code}): {body}")
+        return None, [f"{display_name} (HTTP {resp.status_code})"]
+
+    failures = plan_check_failures(query, body)
+    for reason in failures:
+        logger.error(f"Plan check failed: {reason}")
+
+    elapsed_time = parse_duration_to_secs(body.get("metrics", {}).get("elapsedTime", ""))
+    logger.info(f"Query {display_name} elapsed time (s): {elapsed_time:.2f}")
+    return elapsed_time, failures
+
+
 def run_custom_analytics_query_task(
     api_url: str,
     api_auth: tuple[str, str],
@@ -248,63 +389,51 @@ def run_custom_analytics_query_task(
 
     Returns {"timings": {query name: {named args: [elapsed secs]}}, "failures": [description]}.
     Statements are run sequentially because a query set may interleave DDL that later queries
-    depend on, so any failure is collected and reported rather than aborting mid-set.
+    depend on, so any failure is collected and reported rather than aborting mid-set. A query
+    with concurrency > 1 sends that many copies at once and records each one's elapsed time;
+    the set still advances one entry at a time.
     """
     timings = {}
     failures = []
+    log_lock = Lock()
+    session = _new_session(api_url, api_auth)
 
-    session = requests.Session()
-    parsed_url = urlparse(api_url)
-    session.mount(
-        f"{parsed_url.scheme}://{parsed_url.netloc}",
-        socket_options.TCPKeepAliveAdapter(idle=120, count=20, interval=30),
-    )
-    session.auth = api_auth
-    session.verify = False
+    def run_on(s: requests.Session, query: CustomAnalyticsQuery):
+        return _run_one(
+            s, api_url, query, log_file_path, request_params, request_timeout, log_lock
+        )
 
     for query in queries:
         display_name = query.name or UNNAMED_QUERY
         logger.info(
-            f"Running query {display_name} with named args {query.named_args}:\n{query.statement}"
+            f"Running query {display_name} with named args {query.named_args} at "
+            f"concurrency {query.concurrency}:\n{query.statement}"
         )
 
-        payload = {
-            "statement": query.statement,
-            **query.named_args,
-            "optimized-logical-plan": True,
-            "plan-format": "STRING",
-            "max-warnings": 10,
-        } | (request_params or {})
+        if query.concurrency == 1:
+            results = [run_on(session, query)]
+        else:
+            # A session per thread: requests.Session is not documented as thread-safe, and
+            # sharing one would serialise the very contention this run is trying to measure.
+            sessions = [_new_session(api_url, api_auth) for _ in range(query.concurrency)]
+            with ThreadPoolExecutor(max_workers=query.concurrency) as pool:
+                results = list(pool.map(lambda s, q=query: run_on(s, q), sessions))
+            for s in sessions:
+                s.close()
 
-        try:
-            resp = session.post(url=api_url, data=payload, timeout=request_timeout)
-        except requests.RequestException as e:
-            # Keep going so a blip doesn't cost us the whole run, but record it as a failure
-            logger.error(f"Query {display_name} could not be sent: {e}")
-            log_query_to_file(log_file_path, query, None, {})
-            failures.append(f"{display_name} ({e.__class__.__name__})")
+        for _, run_failures in results:
+            failures.extend(run_failures)
+
+        if (name := query.name) is None:
             continue
 
-        body = decode_response_body(resp)
-        log_query_to_file(log_file_path, query, resp.status_code, body)
-        if not resp.ok:
-            logger.error(f"Query {display_name} failed (HTTP {resp.status_code}): {body}")
-            failures.append(f"{display_name} (HTTP {resp.status_code})")
-            continue
-
-        if plan_failures := plan_check_failures(query, body):
-            for reason in plan_failures:
-                logger.error(f"Plan check failed: {reason}")
-            failures.extend(plan_failures)
-
-        if (name := query.name) is not None:
-            elapsed_time = parse_duration_to_secs(body.get("metrics", {}).get("elapsedTime", ""))
-            logger.info(f"Query {name} elapsed time (s): {elapsed_time:.2f}")
-            named_args_str = (
-                ",".join(f"{k}={v}" for k, v in query.named_args.items()) or NO_NAMED_ARGS
-            )
-            if name not in timings:
-                timings[name] = defaultdict(list)
-            timings[name][named_args_str].append(elapsed_time)
+        named_args_str = (
+            ",".join(f"{k}={v}" for k, v in query.named_args.items()) or NO_NAMED_ARGS
+        )
+        if name not in timings:
+            timings[name] = defaultdict(list)
+        timings[name][named_args_str].extend(
+            elapsed for elapsed, _ in results if elapsed is not None
+        )
 
     return {"timings": timings, "failures": failures}

@@ -2209,6 +2209,13 @@ def kill_cblite():
         local(cmd)
 
 
+def build_python_udf_library(module_dir: str, library_name: str) -> str:
+    output_path = os.path.abspath(f"{library_name}.pyz")
+    logger.info(f"Building Python UDF library {output_path} from {module_dir}")
+    local(f"env/bin/shiv -o {shlex.quote(output_path)} --site-packages {shlex.quote(module_dir)}")
+    return output_path
+
+
 def create_javascript_udf(node, udflib, user, password, security):
     logger.info('Create Javascript UDF function')
     cmd = (

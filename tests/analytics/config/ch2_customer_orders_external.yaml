@@ -1,0 +1,9 @@
+family: ch2
+datasets:
+  - name: customer_ext
+    type: external
+    path: customer
+
+  - name: orders_ext
+    type: external
+    path: orders

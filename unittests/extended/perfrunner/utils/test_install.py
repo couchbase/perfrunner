@@ -1,11 +1,13 @@
 """`cb_product` package-name matching; extended because importing install.py drags in paramiko."""
 
+from argparse import Namespace
 from collections import namedtuple
 from types import SimpleNamespace
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from perfrunner.helpers.misc import create_build_tuple
 from perfrunner.settings import CBProduct
+from perfrunner.utils import install
 from perfrunner.utils.install import CouchbaseInstaller
 
 CB_ENTERPRISE_DEB = "couchbase-server-enterprise_8.0.0-1234-linux_amd64.deb"
@@ -98,4 +100,41 @@ class DebugPackageTest(TestCase):
         self.assertEqual(
             _debuginfo_url(OI_DEB, "3.0.0-1300", "enterprise"),
             "operational-insights-dbgsym_3.0.0-1300-linux_amd64.deb",
+        )
+
+
+class _OIInstaller(CouchbaseInstaller):
+    cb_product = CBProduct.OPERATIONAL_INSIGHTS
+
+    def __init__(self, udf_executor: str, os_arch: str = "arm"):
+        self.options = Namespace(
+            couchbase_version="3.0.0-1092", edition="enterprise", udf_executor=udf_executor
+        )
+        self.cluster_spec = SimpleNamespace(
+            columnar_infrastructure=True, infrastructure_settings={"os_arch": os_arch}
+        )
+        self.remote = SimpleNamespace(package_type="deb", distro="ubuntu", distro_version="20.04")
+
+
+class UDFExecutorPackageTest(TestCase):
+    BUILD_DIR = (
+        "http://latestbuilds.service.couchbase.com/builds/latestbuilds/operational-insights/helios/1092"
+    )
+
+    def test_package_in_build_dir_or_voltron(self):
+        name = "operational-insights-udf_3.0.0-1092-linux_arm64.deb"
+        for location in (f"{self.BUILD_DIR}/{name}", f"{self.BUILD_DIR}/voltron/{name}"):
+            with mock.patch.object(install, "url_exist", lambda u, loc=location: u == loc):
+                self.assertEqual(_OIInstaller("").udf_executor_url, location)
+
+    def test_package_arch_follows_spec(self):
+        with mock.patch.object(install, "url_exist", lambda u: "amd64" in u):
+            url = _OIInstaller("", os_arch="x86_64").udf_executor_url
+        self.assertTrue(url.endswith("_amd64.deb"))
+
+    def test_image_from_registry(self):
+        self.assertIsNone(_OIInstaller("").udf_executor_image)
+        self.assertEqual(
+            _OIInstaller("ghcr.io/cb-vanilla/").udf_executor_image,
+            "ghcr.io/cb-vanilla/operational-insights-udf:3.0.0-1092",
         )

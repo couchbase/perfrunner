@@ -3339,6 +3339,9 @@ class AnalyticsSettings:
 
         self.custom_query_conf_file = options.pop("custom_query_conf_file", "")
 
+        self.udf_conf_file = options.pop("udf_conf_file", None)
+        self.derived_dataset_conf_file = options.pop("derived_dataset_conf_file", None)
+
         # Remaining settings are for analytics config REST API
         self.config_settings = {k: maybe_atoi(v) for k, v in options.items()}
 

@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.analytics.CustomQueryTest
+passes = 3
+
+[showfast]
+title = Python UDF vs SQL++ UDF, CH2++64 4000W, 4A, 1M/10M/100M row ramp
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 100
+analytics_mem_quota = 102400
+initial_nodes = 4
+
+[analytics]
+dataset_conf_file = tests/analytics/config/ch2_customer_orders_external.yaml
+custom_query_conf_file = perfrunner/workloads/analytics/custom/python_udf_baseline.yaml
+custom_request_params = {"timeout": "3600s"}
+udf_conf_file = perfrunner/workloads/analytics/udf/python_udf_functions.yaml
+derived_dataset_conf_file = tests/analytics/config/python_udf_ramp_datasets.yaml
+
+[analytics_external_data]
+link_type = s3
+region = us-east-1
+obj_store_name = analytics-ch2pp64-4000w-gz
+file_format = json
+file_include = *.gz

@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.analytics.CustomQueryTest
+passes = 3
+
+[showfast]
+title = Python UDF batched vs unbatched, CH2++ 1000W, 4A, 4M UDF evaluations
+component = analyticscloud
+category = latency
+sub_category = {provider}
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 100
+analytics_mem_quota = 102400
+initial_nodes = 4
+
+[analytics]
+dataset_conf_file = tests/analytics/config/ch2_customer_orders_external.yaml
+custom_query_conf_file = perfrunner/workloads/analytics/custom/python_udf_batching.yaml
+custom_request_params = {"timeout": "3600s"}
+udf_conf_file = perfrunner/workloads/analytics/udf/python_udf_functions.yaml
+derived_dataset_conf_file = tests/analytics/config/python_udf_batching_datasets.yaml
+
+[analytics_external_data]
+link_type = s3
+region = us-east-1
+obj_store_name = analytics-ch2pp0-1000w-gz
+file_format = json
+file_include = *.gz

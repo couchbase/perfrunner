@@ -1,0 +1,32 @@
+queries:
+  - statement: &q0 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE score_py(o.o_ol_cnt, 20000) FROM customer c JOIN orders o ON c.c_w_id = o.o_w_id AND c.c_d_id = o.o_d_id AND c.c_id = o.o_c_id WHERE c.c_credit = 'GC' AND c.c_w_id = 1 AND c.c_d_id = 1) r
+
+  - statement: *q0
+    name: placement_0_01pct
+    repeat: 2
+    plan_order: ["score_py(", "_JOIN"]
+
+  - statement: &q1 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE score_py(o.o_ol_cnt, 20000) FROM customer c JOIN orders o ON c.c_w_id = o.o_w_id AND c.c_d_id = o.o_d_id AND c.c_id = o.o_c_id WHERE c.c_credit = 'GC' AND c.c_w_id = 1) r
+
+  - statement: *q1
+    name: placement_0_1pct
+    repeat: 2
+    plan_order: ["score_py(", "_JOIN"]
+
+  - statement: &q2 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE score_py(o.o_ol_cnt, 200) FROM customer c JOIN orders o ON c.c_w_id = o.o_w_id AND c.c_d_id = o.o_d_id AND c.c_id = o.o_c_id WHERE c.c_credit = 'GC' AND c.c_w_id <= 10) r
+
+  - statement: *q2
+    name: placement_1pct
+    repeat: 2
+    plan_order: ["score_py(", "_JOIN"]
+
+  - statement: &q3 |-
+      SELECT VALUE SUM(r) FROM ( SELECT VALUE score_py(o.o_ol_cnt, 200) FROM customer c JOIN orders o ON c.c_w_id = o.o_w_id AND c.c_d_id = o.o_d_id AND c.c_id = o.o_c_id WHERE c.c_credit = 'GC' AND c.c_w_id <= 100) r
+
+  - statement: *q3
+    name: placement_10pct
+    repeat: 2
+    plan_order: ["score_py(", "_JOIN"]

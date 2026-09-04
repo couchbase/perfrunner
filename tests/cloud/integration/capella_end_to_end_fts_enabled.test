@@ -34,7 +34,7 @@ item_size = 73
 ssl_mode = capella
 
 [jts]
-ndeix_creation_style = async
+index_creation_style = async
 jts_repo_branch = multi_query_support
 logging_method = bucket_wise
 jts_instances = 1

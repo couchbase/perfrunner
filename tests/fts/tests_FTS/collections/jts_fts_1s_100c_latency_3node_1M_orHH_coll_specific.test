@@ -1,4 +1,4 @@
-collection_specific[test_case]
+[test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
 
 [showfast]

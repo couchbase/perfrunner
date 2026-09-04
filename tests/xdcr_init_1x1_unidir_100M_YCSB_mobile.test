@@ -9,6 +9,7 @@ orderby = aa
 
 [stats]
 server_processes = goxdcr
+client_processes = java
 
 [cluster]
 mem_quota = 24000
@@ -34,6 +35,3 @@ workers = 40
 
 [ycsb]
 branch = couchbase3
-
-[stats]
-client_processes = java

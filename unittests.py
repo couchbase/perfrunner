@@ -94,6 +94,16 @@ class SettingsTest(TestCase):
                 self.assertEqual(test_config.access_settings.working_set_access,
                                  100)
 
+    def test_every_test_config_parses(self):
+        """No .test file may fail to parse; 13 did before this and could never run."""
+        failures = []
+        for file_name in sorted(glob.glob('tests/**/*.test', recursive=True)):
+            try:
+                TestConfig().parse(file_name)
+            except Exception as e:
+                failures.append('{}: {}: {}'.format(file_name, type(e).__name__, e))
+        self.assertEqual(failures, [], '{} config(s) failed to parse'.format(len(failures)))
+
     def test_fts_configs(self):
         for file in glob.glob("tests/fts/enduser/tests_dgm/*latency*.test"):
             test_config = TestConfig()

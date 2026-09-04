@@ -47,7 +47,6 @@ pushproportion = 1
 readproportion = 0
 updateproportion = 1
 insertproportion = 0
-insertproportion=0
 requestdistribution = sequential
 replication_type = E2E_PUSH
 writeallfields = false

@@ -1,4 +1,4 @@
-default[test_case]
+[test_case]
 test = perfrunner.tests.fts.FTSThroughputTest
 
 [showfast]

@@ -25,7 +25,6 @@ iterations = -1
 time = 900
 workers = 50
 updates = 50
-time = 1200
 cbcollect = 1
 
 [clients]

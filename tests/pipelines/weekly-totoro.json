@@ -21,13 +21,13 @@
     ],
 
     "XDCRCNG": [
-        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_1x1_cng.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng.test", "groups": "P0"},
-        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_1x1_cng.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng_1000w.test", "groups": "P0"},
-        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_1x1_cng_collocated.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng_collocated.test", "groups": "P0"},
-        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_1x1_cng_collocated.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng_collocated_1000w.test", "groups": "P0"},
-        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_3x3_cng.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng.test", "groups": "P0"},
-        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_3x3_cng.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_1000w.test", "groups": "P0"},
-        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_3x3_cng_collocated.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_collocated.test", "groups": "P0"},
-        {"job": "hebe-xdcr-dev", "cluster": "hebe_xdcr_3x3_cng_collocated.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_collocated_1000w.test", "groups": "P0"}
+        {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_1x1_cng.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng.test", "groups": "P0"},
+        {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_1x1_cng.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng_1000w.test", "groups": "P0"},
+        {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_1x1_cng_collocated.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng_collocated.test", "groups": "P0"},
+        {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_1x1_cng_collocated.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng_collocated_1000w.test", "groups": "P0"},
+        {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_3x3_cng.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng.test", "groups": "P0"},
+        {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_3x3_cng.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_1000w.test", "groups": "P0"},
+        {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_3x3_cng_collocated.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_collocated.test", "groups": "P0"},
+        {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_3x3_cng_collocated.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_collocated_1000w.test", "groups": "P0"}
     ]
 }

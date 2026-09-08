@@ -20,7 +20,6 @@ size = 1024
 workers = 80
 doc_gen = json
 iterations = 1
-worker_instances = 10
 
 [access]
 creates = 1
@@ -29,7 +28,6 @@ updates = 0
 deletes = 0
 items = 20000000
 workers = 10
-worker_instances = 10
 doc_gen = json
 throughput = 150
 time = 120

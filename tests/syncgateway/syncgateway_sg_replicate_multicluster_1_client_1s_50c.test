@@ -19,7 +19,6 @@ config = collections/1bucket_1scope_50collections_basic.json
 
 [access]
 time = 600
-workers = 0
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
@@ -41,7 +40,6 @@ channels_per_doc = 10
 documents = 200000
 roundtrip_write = true
 feed_mode = longpoll
-feed_reading_mode = idsonly
 insert_mode = byuser
 auth = true
 readproportion=0

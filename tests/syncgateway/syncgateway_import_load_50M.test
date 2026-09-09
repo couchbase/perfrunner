@@ -22,14 +22,7 @@ doc_gen = json
 iterations = 1
 
 [access]
-creates = 1
-reads = 0
-updates = 0
-deletes = 0
 items = 50000000
-workers = 10
-doc_gen = json
-throughput = 150
 time = 120
 
 [secondary]
@@ -50,7 +43,6 @@ channels_per_doc = 1
 documents = 100000
 roundtrip_write = true
 read_mode = documents
-feed_reading_mode = idsonly
 feed_mode = normal
 insert_mode = bykey
 auth = true

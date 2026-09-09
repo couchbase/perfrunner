@@ -17,18 +17,12 @@ num_buckets = 1
 workload_path = workloads/workloada
 ycsb_client = couchbase3
 items = 5000000
-workers = 160
-workload_instances = 1
 
 [access]
 workload_path = workloads/workloada
 ycsb_client = couchbase3
 items = 5000000
-ops = 90000000
-workers = 160
 time = 1200
-workload_instances = 1
-kv_endpoints = 16
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
@@ -59,7 +53,6 @@ channels_per_user = 1
 channels_per_doc = 1
 documents = 5000000
 roundtrip_write = false
-feed_reading_mode = idsonly
 insert_mode = bykey
 auth = false
 grant_access = false

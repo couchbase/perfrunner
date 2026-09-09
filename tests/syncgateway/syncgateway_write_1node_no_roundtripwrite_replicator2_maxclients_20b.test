@@ -16,7 +16,6 @@ num_buckets = 20
 
 [access]
 time = 600
-workers = 0
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
@@ -35,7 +34,6 @@ channels_per_user = 10
 channels_per_doc = 10
 documents = 1000000
 roundtrip_write = false
-feed_reading_mode = idsonly
 insert_mode = byuser
 auth = true
 readproportion=0

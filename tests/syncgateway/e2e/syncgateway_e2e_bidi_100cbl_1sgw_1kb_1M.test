@@ -1,7 +1,7 @@
 [test_case]
+test = perfrunner.tests.syncgateway.EndToEndMultiCBLBidiTest
 
 [showfast]
-test = perfrunner.tests.syncgateway.EndToEndMultiCBLBidiTest
 title = 1 node, 100 cbl, 1M docs, 10 fields, 1.5Kb docSize
 component = syncgateway
 category = e2e
@@ -49,7 +49,6 @@ channels_per_user = 1
 channels_per_doc = 1
 documents = 1000000
 roundtrip_write = false
-feed_reading_mode = idsonly
 insert_mode = bykey
 auth = false
 grant_access = false

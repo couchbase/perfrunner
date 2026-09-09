@@ -35,7 +35,6 @@ channels_per_user = 1
 channels_per_doc = 1
 documents = 10000
 roundtrip_write = false
-feed_reading_mode = idsonly
 insert_mode = bykey
 auth = false
 grant_access = false

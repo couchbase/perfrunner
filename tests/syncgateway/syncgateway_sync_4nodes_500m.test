@@ -15,7 +15,6 @@ initial_nodes = 10
 num_buckets = 1
 
 [access]
-workers = 0
 time = 600
 
 [secondary]
@@ -39,7 +38,6 @@ channels_per_doc = 1
 documents = 35000000
 roundtrip_write = true
 read_mode = changes
-feed_reading_mode = withdocs
 feed_mode = longpoll
 insert_mode = byuser
 auth = true

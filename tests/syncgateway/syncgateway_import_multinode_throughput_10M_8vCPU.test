@@ -48,7 +48,6 @@ channels_per_doc = 1
 documents = 10000000
 roundtrip_write = true
 read_mode = documents
-feed_reading_mode = idsonly
 feed_mode = normal
 insert_mode = bykey
 auth = true

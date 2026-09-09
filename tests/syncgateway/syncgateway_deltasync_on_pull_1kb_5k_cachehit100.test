@@ -17,13 +17,11 @@ num_buckets = 1
 
 [access]
 time = 600
-workers = 0
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
-host = 172.23.100.194
 nodes = 1
 threads = 50
 clients = 4
@@ -38,7 +36,6 @@ channels_per_doc = 1
 documents = 5000
 documents_workset = 5000
 roundtrip_write = false
-feed_reading_mode = idsonly
 insert_mode = bykey
 auth = false
 readproportion=0

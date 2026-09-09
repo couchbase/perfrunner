@@ -19,7 +19,6 @@ config = collections/1bucket_1scope_10collections_basic.json
 
 [access]
 time = 1200
-workers = 0
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
@@ -40,7 +39,6 @@ channels_per_user = 1
 channels_per_doc = 1
 documents = 8000000
 roundtrip_write = false
-feed_reading_mode = idsonly
 insert_mode = bykey
 auth = false
 instance = Standard_F16s_v2

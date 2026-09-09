@@ -3822,11 +3822,8 @@ class SyncgatewaySettings:
     NODES = 4
     CHANNELS_PER_DOC = 1
     DOCUMENTS = 1000000
-    DOCUMENTSPULL = 500000
-    DOCUMENTSPUSH = 500000
     ROUNDTRIP_WRITE = "false"
     READ_MODE = 'documents'          # |documents|changes
-    FEED_READING_MODE = 'withdocs'   # |withdocs|idsonly
     FEED_MODE = 'longpoll'           # |longpoll|normal
     INSERT_MODE = 'byuser'           # |byuser|bykey
     AUTH = "true"
@@ -3907,12 +3904,9 @@ class SyncgatewaySettings:
         self.channels_per_doc = options.get('channels_per_doc', self.CHANNELS_PER_DOC)
         self.documents = int(options.get("documents", self.DOCUMENTS))
         self.documents_workset = options.get("documents_workset", self.documents)
-        self.documentspull = options.get('documentspull', self.DOCUMENTSPULL)
-        self.documentspush = options.get('documentspush', self.DOCUMENTSPUSH)
         self.roundtrip_write = options.get('roundtrip_write', self.ROUNDTRIP_WRITE)
         self.read_mode = options.get('read_mode', self.READ_MODE)
         self.feed_mode = options.get('feed_mode', self.FEED_MODE)
-        self.feed_reading_mode = options.get('feed_reading_mode', self.FEED_READING_MODE)
         self.auth = options.get('auth', self.AUTH)
         self.pullproportion = options.get('pullproportion', self.PULLPROPORTION)
         self.pushproportion = options.get('pushproportion', self.PUSHPROPORTION)

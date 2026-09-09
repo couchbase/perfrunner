@@ -44,7 +44,6 @@ channels_per_doc = 2
 documents = 1000000
 roundtrip_write = true
 feed_mode = longpoll
-feed_reading_mode = idsonly
 insert_mode = byuser
 auth = true
 readproportion=0

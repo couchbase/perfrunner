@@ -16,7 +16,6 @@ enable_n2n_encryption = all
 
 [access]
 time = 240
-workers = 0
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
@@ -40,12 +39,10 @@ channels_per_doc = 1
 documents = 10000
 roundtrip_write = true
 read_mode = changes
-feed_reading_mode = withdocs
 feed_mode = longpoll
 insert_mode = byuser
 auth = false
 instance = Standard_F16s_v2
-initusers = false
 grant_access = true
 channels_per_grant = 50
 readproportion=0

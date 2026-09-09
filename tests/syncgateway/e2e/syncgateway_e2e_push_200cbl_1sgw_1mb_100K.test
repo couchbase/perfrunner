@@ -15,7 +15,6 @@ num_buckets = 1
 
 [access]
 time = 1200
-workers = 0
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
@@ -39,7 +38,6 @@ grant_access = false
 starchannel = false
 documents = 100000
 roundtrip_write = false
-feed_reading_mode = idsonly
 insert_mode = bykey
 pullproportion = 0
 pushproportion = 1

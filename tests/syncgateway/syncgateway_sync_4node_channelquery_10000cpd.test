@@ -18,7 +18,6 @@ num_buckets = 1
 
 [access]
 time = 600
-workers = 0
 
 [secondary]
 indexer.settings.storage_mode = plasma
@@ -39,7 +38,6 @@ channels_per_doc = 10000
 documents = 1000000
 roundtrip_write = true
 read_mode = allchanges
-feed_reading_mode = withdocs
 feed_mode = longpoll
 insert_mode = byuser
 auth = true

@@ -16,7 +16,6 @@ num_buckets = 1
 
 [access]
 time = 600
-workers = 0
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
@@ -37,7 +36,6 @@ channels_per_doc = 1
 documents = 1000000
 roundtrip_write = true
 read_mode = changesWithLimit
-feed_reading_mode = withdocs
 feed_mode = longpoll
 insert_mode = byuser
 auth = true

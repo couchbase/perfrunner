@@ -20,6 +20,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Callable, NamedTuple, Optional
 
+from logger import logger
+
 
 class CommandTimeout(Exception):
     """Raised when a remote command exceeds its timeout (fabric1-compatible name)."""
@@ -27,6 +29,10 @@ class CommandTimeout(Exception):
 
 class NetworkError(Exception):
     """Raised on SSH connection or transport failures (fabric1-compatible name)."""
+
+
+class ChannelError(NetworkError):
+    """Raised when the server refuses a channel. The transport itself is still alive."""
 
 
 class RunResult(NamedTuple):
@@ -59,7 +65,28 @@ class Session:
     def __init__(self, host: str):
         self.host = host
         self.last_used = 0.0
+        self.created_at = time.time()
+        self.reuse_count = 0
+        self.needs_probe = False
+        self.gateway: Optional["Session"] = None
         self.channels = threading.Semaphore(self.MAX_CONCURRENT_CHANNELS)
+
+    def mark_suspect(self):
+        """Ask the pool to probe this connection, and its gateway, before reusing them."""
+        # Plain bool, set without the pool lock: a lost update only costs one skipped probe.
+        self.needs_probe = True
+        if self.gateway is not None:
+            # A dead jump host kills everything tunnelled through it, so replacing only the
+            # inner session would rebuild it over the same broken hop.
+            self.gateway.mark_suspect()
+
+    def describe(self) -> str:
+        """Describe this connection's provenance, for diagnosing transport failures."""
+        now = time.time()
+        return (
+            f"connection age {now - self.created_at:.0f}s, "
+            f"{now - self.last_used:.0f}s since last checkout, reused {self.reuse_count}x"
+        )
 
     def probe(self):
         """Cheap liveness round trip; raise NetworkError if the connection is dead."""
@@ -86,7 +113,7 @@ class Session:
         return True
 
     def close(self):
-        pass
+        """Tear the connection down. Best effort: implementations must never raise."""
 
 
 class SSHSession(Session):
@@ -103,6 +130,7 @@ class SSHSession(Session):
         fabric_config = fabric.Config(
             overrides={"load_ssh_configs": config.use_ssh_config},
         )
+        self.gateway = gateway
         self._conn = fabric.Connection(
             host,
             user=config.user,
@@ -125,6 +153,10 @@ class SSHSession(Session):
             return
 
         try:
+            # Open the gateway through this class so that it gets a keepalive; fabric would
+            # otherwise open it itself, bypassing the set_keepalive below.
+            if self.gateway is not None:
+                self.gateway._open()
             self._conn.open()
             self._conn.transport.set_keepalive(self._keepalive)
         except Exception as e:
@@ -132,7 +164,7 @@ class SSHSession(Session):
 
     def run_raw(self, command: str, pty: bool = True, timeout: Optional[int] = None) -> RunResult:
         from invoke.exceptions import CommandTimedOut
-        from paramiko.ssh_exception import SSHException
+        from paramiko.ssh_exception import ChannelException, SSHException
 
         self._open()
         try:
@@ -141,6 +173,8 @@ class SSHSession(Session):
             )
         except CommandTimedOut as e:
             raise CommandTimeout(f"Command timed out after {timeout}s on {self.host}") from e
+        except ChannelException as e:
+            raise ChannelError(f"Channel refused by {self.host}: {e}") from e
         except (EOFError, OSError, SSHException) as e:
             raise NetworkError(f"Connection to {self.host} failed: {e}") from e
         return RunResult(result.stdout, result.stderr, result.exited)
@@ -184,17 +218,34 @@ class SSHSession(Session):
         A NAT/firewall can silently drop an idle flow without the local transport noticing,
         so ``is_active()`` alone is not trustworthy after idle gaps.
         """
+        from paramiko.ssh_exception import ChannelException
+
         transport = self._conn.transport if self._conn.is_connected else None
         if transport is None:
             return
         try:
-            transport.open_session(timeout=10).close()
+            with self.channels:
+                transport.open_session(timeout=10).close()
+        except ChannelException:
+            # The server answered, so the transport is alive; it just would not give us a
+            # channel right now (sshd MaxSessions). Not grounds for discarding the connection.
+            pass
         except Exception as e:
             raise NetworkError(f"Pooled connection to {self.host} is dead: {e}") from e
 
     def close(self):
-        if self._conn.is_connected:
+        if not self._conn.is_connected:
+            return
+        try:
             self._conn.close()
+        except Exception as e:
+            # Closing a dead socket raises: fabric writes to the cached SFTP channel first and
+            # then gives up before tearing the transport down, so finish the job here.
+            logger.warning(f"Ignoring error while closing connection to {self.host}: {e}")
+            try:
+                self._conn.client.close()
+            except Exception:
+                pass
 
 
 @dataclass
@@ -214,7 +265,12 @@ class FakeSession(Session):
     downloads: list[tuple[str, str]] = field(default_factory=list)
     uploads: list[tuple[str, str]] = field(default_factory=list)
     closed: bool = False
+    close_error: Optional[Exception] = None
     last_used: float = 0.0
+    created_at: float = 0.0
+    reuse_count: int = 0
+    needs_probe: bool = False
+    gateway: Optional["Session"] = None
     probes: int = 0
     probe_error: Optional[Exception] = None
     probe_delay: float = 0.0
@@ -222,6 +278,7 @@ class FakeSession(Session):
 
     def __post_init__(self):
         self.channels = threading.Semaphore(self.MAX_CONCURRENT_CHANNELS)
+        self.created_at = self.created_at or time.time()
 
     def is_active(self) -> bool:
         return self.active
@@ -264,15 +321,19 @@ class FakeSession(Session):
 
     def close(self):
         self.closed = True
+        if self.close_error is not None:
+            raise self.close_error
 
 
 class ConnectionPool:
     """Cache of one session per (host, user, gateway), shared across the process.
 
-    A session idle for longer than ``PROBE_AFTER_IDLE`` seconds is probed with a real
-    round trip before reuse and transparently replaced if dead. NATs can silently drop idle flows
-    without the local transport noticing. In-flight failures are NOT retried: re-running a
-    non-idempotent command is worse than surfacing the NetworkError, and matches fabric1 semantics.
+    A session is probed with a real round trip before reuse, and replaced if dead, once it has
+    been idle past ``PROBE_AFTER_IDLE`` (NATs drop idle flows without the transport noticing) or
+    a command on it has failed. One session is shared by several threads, so a failing thread
+    only marks it: the probe decides, under the key lock, whether the transport is really gone
+    or only that one channel failed. In-flight failures are NOT retried - re-running a
+    non-idempotent command is worse than surfacing the error.
     """
 
     PROBE_AFTER_IDLE = 120  # seconds
@@ -300,6 +361,17 @@ class ConnectionPool:
             self._key_locks = defaultdict(threading.Lock)
             self._pid = os.getpid()
 
+    @staticmethod
+    def _safe_close(session: Session):
+        """Discard a session without letting its teardown kill the caller.
+
+        A checkout must never fail because a connection it was replacing would not close.
+        """
+        try:
+            session.close()
+        except Exception as e:
+            logger.warning(f"Ignoring error while discarding session for {session.host}: {e}")
+
     def _key_lock(self, key: tuple) -> threading.Lock:
         with self._lock:
             self._discard_inherited_sessions()
@@ -313,17 +385,21 @@ class ConnectionPool:
             with self._lock:
                 session = self._sessions.get(key)
             if session is not None and session.is_active():
-                if probe_idle and time.time() - session.last_used > self.PROBE_AFTER_IDLE:
+                idle = time.time() - session.last_used
+                if session.needs_probe or (probe_idle and idle > self.PROBE_AFTER_IDLE):
                     try:
                         session.probe()
-                    except NetworkError:
-                        session.close()
+                        session.needs_probe = False
+                    except NetworkError as e:
+                        logger.warning(f"Replacing pooled session: {e} ({session.describe()})")
+                        self._safe_close(session)
                         session = None
                 if session is not None:
+                    session.reuse_count += 1
                     session.last_used = time.time()
                     return session
             if session is not None:
-                session.close()
+                self._safe_close(session)
             session = create()
             session.last_used = time.time()
             with self._lock:
@@ -351,6 +427,6 @@ class ConnectionPool:
     def close_all(self):
         with self._lock:
             for session in self._sessions.values():
-                session.close()
+                self._safe_close(session)
             self._sessions.clear()
             self._key_locks = defaultdict(threading.Lock)

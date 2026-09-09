@@ -129,6 +129,62 @@ class RemoteApiTest(TestCase):
         self.assertEqual(result.stderr, "Job for couchbase-server failed")
         self.assertTrue(any("Job for couchbase-server failed" in line for line in logs.output))
 
+    def test_failed_command_reports_output_even_when_hidden(self):
+        # Perfrunner runs non-verbose, so output is hidden. A command that aborts the run must
+        # still print what it said, or a Jenkins log has an exit code and nothing else.
+        wrapped = '/bin/bash -l -c "cbbackupmgr restore"'
+        self.scripted["n1"] = {
+            wrapped: executor.RunResult("Error restoring cluster: remapping a bucket", "", 1)
+        }
+        with self.assertLogs(level="ERROR") as logs:
+            with self.assertRaises(SystemExit):
+                with api.settings(api.hide("everything"), host_string="n1"):
+                    api.run("cbbackupmgr restore")
+        report = "\n".join(logs.output)
+        self.assertIn("Standard output", report)
+        self.assertIn("Error restoring cluster: remapping a bucket", report)
+
+    def test_network_error_follows_warn_only(self):
+        # A connection blip on a best-effort cleanup call must not fail the build, but an
+        # unguarded call still has to raise: linux.py::is_up depends on catching it.
+        wrapped = '/bin/bash -l -c "rm -rf results/latest"'
+        self.scripted["n1"] = {wrapped: executor.NetworkError("Connection reset by peer")}
+        with api.settings(api.hide("running", "output"), host_string="n1"):
+            result = api.run("rm -rf results/latest", warn_only=True)
+        self.assertTrue(result.failed)
+        self.assertIn("Connection reset by peer", result.stderr)
+
+        with self.assertRaises(executor.NetworkError):
+            with api.settings(api.hide("everything"), host_string="n1"):
+                api.run("rm -rf results/latest")
+
+    def test_handled_failure_reports_output_when_it_was_not_logged(self):
+        # A pty merges stderr into stdout, so a warn_only failure would otherwise warn with
+        # a return code and no reason on a non-verbose run.
+        wrapped = '/bin/bash -l -c "cbbackupmgr restore"'
+        self.scripted["n1"] = {wrapped: executor.RunResult("Error: archive not found", "", 1)}
+        with self.assertLogs(level="WARNING") as logs:
+            with api.settings(api.hide("running", "output"), host_string="n1"):
+                api.run("cbbackupmgr restore", warn_only=True)
+        self.assertTrue(any("Error: archive not found" in line for line in logs.output))
+
+    def test_network_error_marks_the_session_for_a_probe(self):
+        wrapped = '/bin/bash -l -c "true"'
+        self.scripted["n1"] = {wrapped: executor.NetworkError("Connection reset by peer")}
+        with api.settings(api.hide("everything"), host_string="n1"):
+            api.run("true", warn_only=True)
+        self.assertTrue(self.created["n1"].needs_probe)
+
+    def test_a_refused_channel_leaves_the_session_alone(self):
+        # sshd MaxSessions: the transport is fine, so the connection other threads are using
+        # must not be queued for a liveness probe.
+        wrapped = '/bin/bash -l -c "true"'
+        self.scripted["n1"] = {wrapped: executor.ChannelError("open failed")}
+        with api.settings(api.hide("everything"), host_string="n1"):
+            result = api.run("true", warn_only=True)
+        self.assertTrue(result.failed)
+        self.assertFalse(self.created["n1"].needs_probe)
+
     def test_command_timeout_propagates(self):
         self.scripted["node-1"] = {
             '/bin/bash -l -c "sleep 100"': executor.CommandTimeout("timed out")

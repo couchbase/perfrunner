@@ -67,6 +67,54 @@ class ConnectionPoolTest(TestCase):
         self.assertIsNot(old_gateway, new_gateway)
         self.assertTrue(old_gateway.closed)
 
+    def test_dead_session_that_fails_to_close_is_still_replaced(self):
+        session = self.pool.session("h1", self.config)
+        session.last_used -= executor.ConnectionPool.PROBE_AFTER_IDLE + 1
+        session.probe_error = executor.NetworkError("dropped by NAT")
+        session.close_error = EOFError()
+
+        replacement = self.pool.session("h1", self.config)
+
+        self.assertIsNot(session, replacement)
+        self.assertTrue(session.closed)
+
+    def test_session_that_failed_in_flight_is_probed_before_reuse(self):
+        # Nothing else evicts a session that dies mid-command: the checkout it just made
+        # refreshed last_used past the idle gate. It must not be closed from the failing
+        # thread either - other threads share the same connection - so the pool probes it.
+        session = self.pool.session("h1", self.config)
+        session.needs_probe = True
+        session.probe_error = executor.NetworkError("transport gone")
+
+        replacement = self.pool.session("h1", self.config)
+
+        self.assertIsNot(session, replacement)
+        self.assertEqual(session.probes, 1)
+
+    def test_a_channel_level_failure_keeps_the_shared_connection(self):
+        # sshd MaxSessions surfaces as a NetworkError too, but the transport is fine, so the
+        # probe passes and the session other threads are still using stays in the pool.
+        session = self.pool.session("h1", self.config)
+        session.needs_probe = True
+
+        again = self.pool.session("h1", self.config)
+
+        self.assertIs(session, again)
+        self.assertEqual(session.probes, 1)
+        self.assertFalse(session.needs_probe)
+        self.assertFalse(session.closed)
+
+    def test_a_suspect_session_also_flags_its_gateway(self):
+        # A dead jump host kills every session tunnelled through it, so replacing only the
+        # inner session would rebuild it over the same broken hop.
+        session = self.pool.session("kafka-1", self.config, gateway="jump-1")
+        session.gateway = self.pool._sessions[("jump-1", self.config.user, None)]
+
+        session.mark_suspect()
+
+        self.assertTrue(session.needs_probe)
+        self.assertTrue(session.gateway.needs_probe)
+
     def test_forked_child_discards_inherited_sessions_without_closing(self):
         # Forked children (e.g. cbagent collector processes) must neither reuse nor close the
         # parent's SSH sockets: sharing the encrypted stream corrupts it,

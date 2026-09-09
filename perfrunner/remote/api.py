@@ -24,6 +24,7 @@ from logger import logger
 from perfrunner.helpers.shell import AttributeString
 from perfrunner.helpers.shell import output as output  # Shared with local(); see shell.py
 from perfrunner.remote.executor import (
+    ChannelError,
     CommandTimeout,
     ConnectionPool,
     NetworkError,
@@ -32,6 +33,7 @@ from perfrunner.remote.executor import (
 )
 
 __all__ = [
+    "ChannelError",
     "CommandTimeout",
     "NetworkError",
     "append",
@@ -81,6 +83,11 @@ class _Env:
         self.timeout = 10
         self.disable_known_hosts = True
         self.use_ssh_config = False
+
+    @property
+    def host(self) -> str:
+        """Return ``host_string`` without its ``user@`` prefix, as the session connects to."""
+        return _host.get().rsplit("@", 1)[-1]
 
     @property
     def host_string(self) -> str:
@@ -216,6 +223,27 @@ def _shell_escape(command: str) -> str:
     return command
 
 
+# Per stream, when reporting a failure. The tail is kept: that is where the error is.
+MAX_LOGGED_OUTPUT = 8192
+
+
+def _truncate(text: str) -> str:
+    if len(text) <= MAX_LOGGED_OUTPUT:
+        return text
+    return (
+        f"... {len(text) - MAX_LOGGED_OUTPUT} characters truncated ...\n{text[-MAX_LOGGED_OUTPUT:]}"
+    )
+
+
+def _format_streams(result: AttributeString) -> str:
+    """Render a failed command's captured streams."""
+    sections = []
+    for label, stream in (("Standard output", result.stdout), ("Standard error", result.stderr)):
+        if stream:
+            sections.append(f"\n{f' {label} ':=^79}\n{_truncate(stream)}")
+    return "".join(sections)
+
+
 def run(
     command: str,
     quiet: bool = False,
@@ -228,7 +256,16 @@ def run(
 
     The command is wrapped in a login shell (``env.shell``) after applying the active
     ``cd()``/``shell_env()`` prefixes. Failures abort with ``SystemExit`` unless running
-    under ``warn_only``/``quiet``.
+    under ``warn_only``/``quiet``, and an aborting failure always reports the command's
+    captured output, whatever the ``hide``/``output`` settings say (Fabric 1's abort block
+    did the same, and without it a failing build shows an exit code and nothing else).
+
+    A ``NetworkError`` is treated like a non-zero exit: under ``warn_only``/``quiet`` it
+    yields a failed result instead of killing the run. This is a deliberate divergence, not
+    Fabric 1 parity. Fabric 1 propagated it out of ``run()`` and then aborted in
+    ``tasks.py::execute``, which keyed on ``skip_bad_hosts`` (default off), never on
+    ``warn_only``. A ``CommandTimeout`` is deliberately never swallowed. Callers catch it
+    explicitly, and they do so from inside ``warn_only``/``quiet`` blocks.
     """
     given_command = command
     if env_vars := _env_vars.get():
@@ -243,11 +280,30 @@ def run(
 
     session = _current_session()
     hide_all = quiet
+    lenient = warn_only or quiet or _warn_only.get()
     if not hide_all and not _is_hidden("running"):
         logger.info(f"[{session.host}] run: {given_command}")
 
-    with session.channels:  # Cap concurrent channels per connection (sshd MaxSessions)
-        raw = session.run_raw(real_command, pty=pty, timeout=timeout)
+    try:
+        with session.channels:  # Cap concurrent channels per connection (sshd MaxSessions)
+            raw = session.run_raw(real_command, pty=pty, timeout=timeout)
+    except NetworkError as e:
+        if not isinstance(e, ChannelError):
+            # The pool shares one connection between threads, so it re-checks the transport at
+            # the next checkout rather than this thread closing it underneath the others.
+            session.mark_suspect()
+        detail = f"{e} ({session.describe()})"
+        if not lenient:
+            raise NetworkError(detail) from e
+        # Always logged, even under quiet(): a dead connection is not ordinary command output,
+        # and silently returning a failed result would hide why the command never ran.
+        logger.warning(f"[{session.host}] run: '{given_command}' failed: {detail}")
+        result = AttributeString("")
+        result.command = given_command
+        result.real_command = real_command
+        result.stderr = detail
+        result.return_code = 1
+        return result
 
     result = AttributeString(raw.stdout.strip())
     result.command = given_command
@@ -266,13 +322,15 @@ def run(
             f"run() received nonzero return code {result.return_code} "
             f"while executing '{given_command}' on {session.host}"
         )
-        if result.stderr:
-            message += f". stderr: {result.stderr}"
-        if warn_only or quiet or _warn_only.get():
+        if lenient:
             if not hide_all and not _is_hidden("warnings"):
+                if _is_hidden("output"):
+                    # Nothing was logged above, and a pty leaves stderr empty by merging it
+                    # into stdout, so without this the warning carries no reason at all.
+                    message += _format_streams(result)
                 logger.warning(message)
         else:
-            logger.error(f"Fatal error: {message}")
+            logger.error(f"Fatal error: {message}{_format_streams(result)}")
             raise SystemExit(1)
 
     return result

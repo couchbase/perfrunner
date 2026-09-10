@@ -23,7 +23,7 @@
 
 | Framework | Entry Point | Command |
 |---|---|---|
-| pytest + coverage | `unittests.py` | `make test` |
+| pytest + coverage | `unittests/core/` | `make test` (all tiers: `make test-all`) |
 | ruff | `.ruff.toml` | `make pep8` |
 | misspell | Go-based | `make misspell` |
 | gofmt | Go stdlib | `make gofmt` |

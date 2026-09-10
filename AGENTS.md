@@ -10,8 +10,11 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 |---|---|
 | Create/update venv + install deps | `make` |
 | Lint (ruff) | `make pep8` |
-| Unit tests (pytest + coverage) | `make test` |
-| Full local checks (lint + misspell + gofmt + tests) | `make check` |
+| Unit tests — all tiers, use this while developing | `make test-all` |
+| Unit tests — core tier only (what every patchset runs) | `make test` |
+| Unit tests — extended tier only | `make test-extended` |
+| Per-patchset CI checks (lint + misspell + gofmt + core tests) | `make check` |
+| Review-time CI checks (`make check` + extended tests) | `make review` |
 | Clean artifacts/logs/dbs | `make clean` |
 | Show CLI help | `env/bin/perfrunner --help` |
 
@@ -43,7 +46,7 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 | `terraform/` | Terraform configs for cloud provisioning |
 | `docker/` | Dockerfile (Ubuntu 20.04, pyenv, multi-stage) |
 | `templates/` | Jinja2 templates for config generation |
-| `unittests.py` | Unit test file (run via `make test`) |
+| `unittests/` | Tiered unit tests — `core/` (gates every patchset), `extended/` (review-time), `local/` (gitignored scratch). See **Unit Test Tiers** |
 
 ## Development Constraints
 
@@ -51,19 +54,56 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 - Line length: **100** characters.
 - Linting: `ruff` with pydocstyle (D) + isort (I) + pycodestyle (W, E). See `.ruff.toml`.
 - Type checking: no static type checker is configured.
-- Unit tests use `pytest` against `unittests.py` with `coverage`.
+- Unit tests use `pytest` and are split into tiers by directory — see **Unit Test Tiers**
+  below before adding any test.
 - Go code under `go/` must be `gofmt`-clean (see `make gofmt`).
 - Keep CLI entry points in `perfrunner/utils/` thin; prefer logic in `perfrunner/`.
 - Test config files in `tests/` are INI-style; parsed by `perfrunner.settings.TestConfig`.
+
+## Unit Test Tiers
+
+perfrunner is an automation harness: the real evidence a change works is a green Jenkins perf
+run, not a unit test. Unit tests catch the breakages that would waste those runs. **A test's
+tier is its directory**, so the tier is visible in the Gerrit diff.
+
+### Where to put a new test
+
+**Default to `unittests/extended/`.** Feature tests, regression tests for a specific bug, and
+characterisation tests protecting a refactor. They run before a human reviews the change, but
+not on all 100+ patchsets it takes to get there.
+
+**`unittests/core/` requires all three**, plus a justification in the commit message:
+
+1. **Blast radius** — breaking it breaks many perf runs at once (settings parsing, docgen
+   determinism, worker dispatch), *or* it is a corpus validator over `tests/`, `clusters/` or
+   `tests/pipelines/`. A malformed `.test` file wastes an entire Jenkins run.
+2. **Purity** — no subprocess, socket, SSH, `openssl` or `sleep`; no filesystem access beyond
+   `tmp` and reading repo files. Enforced by `unittests/core/test_tier_guard.py`.
+3. **Determinism** — same verdict on macOS and Linux, and across dependency versions.
+
+**Layout differs by tier.** `core/` is flat: capped by the criteria above, small enough to
+scan. `extended/` mirrors the source tree, since it is uncapped. Repeating a basename across
+the two is fine; `pyproject.toml` sets `--import-mode=importlib`.
+
+**`unittests/local/` is scratch** — throwaway tests, never committed, never run in CI.
+
+### Tests have an expiry
+
+Extended tests may be deleted without discussion if they break and are not fixed promptly.
+**Characterisation tests protecting a migration should be deleted when the migration lands, in
+the same change** — say so when adding them.
 
 ## Validation and Evidence
 
 Before claiming a change is complete, run and report output from:
 
 1. `make pep8` — lint must pass with zero errors
-2. `make test` — unit tests must pass
+2. `make test-all` — core, extended and your own local tests must pass
 
-For Go changes, also run `make gofmt`. For full validation: `make check`.
+`make test-all` is the right command while developing: it covers every tier including your
+gitignored `unittests/local/` scratch. The narrower targets exist for CI —
+`make check` (what runs on every patchset) and `make review` (what runs when the change is sent
+for review). For Go changes, also run `make gofmt`.
 
 Include the exact commands run and any relevant output snippet as evidence.
 

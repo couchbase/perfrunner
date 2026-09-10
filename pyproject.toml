@@ -37,3 +37,4 @@ include-package-data = true
 
 [tool.pytest.ini_options]
 python_classes = "*Test"
+addopts = "--import-mode=importlib"

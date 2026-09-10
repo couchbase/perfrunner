@@ -16,11 +16,16 @@ make                    # Creates env/, installs deps, editable install
 
 | Check | Command | Scope | Speed |
 |---|---|---|---|
-| Lint | `make pep8` | `cbagent perfdaily perfrunner scripts spring` | Fast (~seconds) |
-| Unit tests | `make test` | `unittests.py` (coverage for cbagent, perfrunner, spring) | Fast (~seconds) |
+| Lint | `make pep8` | `cbagent perfdaily perfrunner scripts spring unittests` | Fast (~seconds) |
+| Unit tests — core | `make test` | `unittests/core/` (coverage for cbagent, perfrunner, spring) | Fast (~seconds) |
+| Unit tests — extended | `make test-extended` | `unittests/extended/` | Seconds |
+| **Unit tests — all tiers** | `make test-all` | core + extended + `unittests/local/` — **use this while developing** | Seconds |
 | Misspell | `make misspell` | Go + Python source files | Fast |
 | Go format | `make gofmt` | `go/` directory | Fast |
-| **Full check** | `make check` | All of the above | Fast |
+| **Per-patchset check** | `make check` | lint + misspell + gofmt + core tests | Fast |
+| **Review-time check** | `make review` | `make check` + extended tests | Fast |
+
+See **Unit Test Tiers** in `AGENTS.md` for which tier a new test belongs in.
 
 ## Go Build Targets
 

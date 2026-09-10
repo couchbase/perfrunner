@@ -83,3 +83,7 @@ loader
 
 # Personal Claude Code instructions
 CLAUDE.local.md
+
+# Local-only unit test tier (see unittests/local/README.md)
+unittests/local/*
+!unittests/local/README.md

@@ -5,7 +5,7 @@ ENV := env
 VERSION := 3.9.7
 PYTHON := python$(basename ${VERSION})
 PIP := ${ENV}/bin/pip
-PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring unittests.py
+PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring unittests
 .PHONY: docker
 RUFF := ${ENV}/bin/ruff check ${PYTHON_PROJECTS}
 
@@ -43,9 +43,21 @@ pep8:
 ruff-fix:
 	${RUFF} --fix
 
+# See unittests/conftest.py and the Unit Test Tiers section of AGENTS.md.
+CORE_TESTS := unittests/core
+EXTENDED_TESTS := unittests/extended
+LOCAL_TESTS := unittests/local
+COVERAGE := ${ENV}/bin/coverage
+
 test:
-	${ENV}/bin/coverage run --source=cbagent,perfrunner,spring -m pytest -v unittests.py
-	${ENV}/bin/coverage report
+	${COVERAGE} run --source=cbagent,perfrunner,spring -m pytest -v ${CORE_TESTS}
+	${COVERAGE} report
+
+test-extended:
+	${ENV}/bin/pytest -v ${EXTENDED_TESTS}
+
+test-all:
+	${ENV}/bin/pytest -v ${CORE_TESTS} ${EXTENDED_TESTS} ${LOCAL_TESTS}
 
 misspell:
 	go get -u github.com/client9/misspell/cmd/misspell
@@ -54,7 +66,10 @@ misspell:
 gofmt:
 	gofmt -e -d -s go && ! gofmt -l go | read
 
+# Deliberately excludes the extended tier since this runs on every patchset.
 check: pep8 misspell gofmt test
+
+review: check test-extended
 
 vendor-sync:
 	go version

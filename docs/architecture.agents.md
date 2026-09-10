@@ -142,11 +142,11 @@ __exit__  → cleanup collector agent, debug checks (core dumps, rebalance), tea
 | What to validate | How | Test location |
 |---|---|---|
 | End-to-end pipeline wiring | manual run | `terraform` → `install` → `cluster` → `perfrunner` → `debug` (→ `terraform_destroy`) |
-| Config parsing (.test/.spec) | `make test` | `unittests.py::SettingsTest` — parses ALL .test and .spec files |
-| Document generation | `make test` | `unittests.py::DocGenTest`, `SpringTest` |
-| Query generation | `make test` | `unittests.py` — N1QL query gen tests |
-| Workload iteration | `make test` | `unittests.py::WorkloadTest` — key/value size validation |
-| Code style | `make pep8` | ruff against cbagent, perfdaily, perfrunner, scripts, spring |
+| Config parsing (.test/.spec) | `make test` | `unittests/core/test_settings.py::SettingsTest` — parses ALL .test and .spec files |
+| Document generation | `make test` | `unittests/core/test_docgen.py::SpringTest` |
+| Query generation | `make test` | `unittests/core/test_querygen.py` — N1QL query gen tests |
+| Workload iteration | `make test` | `unittests/core/test_tcmalloc.py::WorkloadTest` — key/value size validation |
+| Code style | `make pep8` | ruff against cbagent, perfdaily, perfrunner, scripts, spring, unittests |
 | Go formatting | `make gofmt` | `go/` directory |
 
 ## Unsafe and Sensitive Areas
@@ -162,7 +162,7 @@ __exit__  → cleanup collector agent, debug checks (core dumps, rebalance), tea
 
 1. **settings.py is ~4500 lines** — do not read it entirely; search for specific classes/settings.
 2. **Test classes are NOT unit tests** — `perfrunner/tests/*.py` are perf test orchestrators, not pytest/unittest.
-3. **`unittests.py` parses ALL .test and .spec files** — adding a malformed config file will break unit tests.
+3. **`unittests/core/test_settings.py` parses ALL .test and .spec files** — adding a malformed config file will break unit tests.
 4. **Two metric systems coexist** — cbagent (legacy) and Prometheus (newer). Check `use_prometheus` flag.
 5. **Three cluster manager types** — `DefaultClusterManager`, `KubernetesClusterManager`, `CapellaClusterManager` — factory in `ClusterManager.__new__`.
 6. **SDK version branching** — spring has separate code paths for SDK 2, 3, and 4 (`cbgen.py`, `cbgen3.py`, `cbgen4.py`, `wgen.py`, `wgen3.py`).

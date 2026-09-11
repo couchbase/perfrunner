@@ -20,6 +20,22 @@
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/bq/jts_fts_throughput_vector_rabitq_cohere_10M_768dim.test", "groups": "P0"}
     ],
 
+    "GSI": [
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/secondary_vector_rabitq_memory_1M_1024d_sq8_baseline_bhive.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/secondary_vector_rabitq_memory_1M_1024d_sq8_baseline_composite.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/secondary_vector_rabitq_memory_1M_1024d_pq128x8_baseline_bhive.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/secondary_vector_rabitq_memory_1M_1024d_pq128x8_baseline_composite.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/secondary_vector_rabitq_memory_1M_1024d_rabitq_bhive.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/secondary_vector_rabitq_memory_1M_1024d_rabitq_composite.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_sq8_baseline_bhive.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_sq8_baseline_composite.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_pq128x8_baseline_bhive.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_pq128x8_baseline_composite.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_rabitq_bhive.test", "groups": "P0"},
+        {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_rabitq_composite.test", "groups": "P0"},
+        {"job": "composite-nvme", "cluster": "composite.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_100M_768d_rabitq_bhive.test", "groups": "P1"}
+    ],
+
     "XDCRCNG": [
         {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_1x1_cng.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng.test", "groups": "P0"},
         {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_1x1_cng.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng_1000w.test", "groups": "P0"},

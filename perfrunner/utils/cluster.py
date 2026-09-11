@@ -91,6 +91,7 @@ def main():
                 cm.create_eventing_buckets()
                 cm.create_eventing_metadata_bucket()
             cm.configure_bucket_internal_settings()
+            cm.set_index_settings()
             cm.capella_allow_client_ips()
         else:
             cm.set_analytics_settings()

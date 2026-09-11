@@ -2737,6 +2737,46 @@ class InitialVectorSecondaryIndexTest(InitialandIncrementalandRecoverySecondaryI
         return all_options
 
 
+class CloudInitialVectorSecondaryIndexTest(InitialVectorSecondaryIndexTest):
+
+    """CLOUD - Measures time it takes to build a vector index (initial and incremental)."""
+
+    def print_index_disk_usage(self, text="", heap_profile=True):
+        """Log index sizes and storage stats from every index node over REST."""
+        if text:
+            logger.info(text)
+
+        for index_node in self.index_nodes:
+            try:
+                gsi_stats = self.rest.get_gsi_stats(index_node)
+                sizes = {
+                    stat: value
+                    for stat, value in gsi_stats.items()
+                    if stat.endswith(("disk_size", "data_size", "raw_data_size"))
+                }
+                logger.info(f"[{index_node}] Index sizes:\n{pretty_dict(sizes)}")
+
+                storage_stats = self.rest.get_index_storage_stats(index_node)
+                logger.info(f"[{index_node}] Index storage stats:\n{storage_stats.text}")
+
+                if self.storage == "plasma":
+                    try:
+                        avg_rr = self.calc_avg_rr_compression(storage_stats.json())
+                        logger.info(
+                            f"[{index_node}] Average RR over all Indexes with compression: "
+                            f"{avg_rr}"
+                        )
+                    except ZeroDivisionError:
+                        logger.info(f"[{index_node}] No indexes on this node, skipping RR")
+
+                    stats_mm = self.rest.get_index_storage_stats_mm(index_node)
+                    logger.info(f"[{index_node}] Index storage stats mm:\n{stats_mm}")
+            except Exception as e:
+                # Never fail the run over a stats read: the KPI has already been
+                # reported by the time this is called.
+                logger.warning(f"Could not collect index stats from {index_node}: {e}")
+
+
 class VectorSecondaryIndexingScanTest(SecondaryIndexingScanTest, InitialVectorSecondaryIndexTest):
 
     def batch_create_index_collection_options(self, indexes, storage):

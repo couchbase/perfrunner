@@ -167,6 +167,19 @@ class ClusterManagerBase:
             for node in analytics_nodes:
                 self.rest.validate_analytics_settings(node, "node", new_node_settings)
 
+    def set_index_settings(self):
+        logger.info('Setting index settings')
+        index_nodes = self.cluster_spec.servers_by_role('index')
+        if index_nodes:
+            settings = self.test_config.gsi_settings.settings
+            if settings:
+                for cluster_index_servers in self.cluster_spec.servers_by_cluster_and_role("index"):
+                    index_node = cluster_index_servers[0]
+                    self.rest.set_index_settings(index_node,
+                                                    self.test_config.gsi_settings.settings)
+                    cluster_settings = pretty_dict(self.rest.get_index_settings(index_node))
+                    logger.info(f"Index settings: {cluster_settings}")
+
     def flush_buckets(self):
         for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.buckets:
@@ -357,20 +370,6 @@ class DefaultClusterManager(ClusterManagerBase):
             settings = self.rest.get_query_settings(query_nodes[0])
             settings = pretty_dict(settings)
             logger.info(f"Query settings: {settings}")
-
-    def set_index_settings(self):
-        logger.info('Setting index settings')
-        index_nodes = self.cluster_spec.servers_by_role('index')
-        if index_nodes:
-            settings = self.test_config.gsi_settings.settings
-            if settings:
-                for cluster_index_servers in self.cluster_spec.servers_by_cluster_and_role("index"):
-                    index_node = cluster_index_servers[0]
-                    self.rest.set_index_settings(index_node,
-                                                    self.test_config.gsi_settings.settings)
-                    cluster_settings = self.rest.get_index_settings(index_node)
-                    cluster_settings = pretty_dict(self.rest.get_index_settings(index_node))
-                    logger.info(f"Index settings: {cluster_settings}")
 
     def set_services(self):
         for master in self.cluster_spec.masters:

@@ -70,7 +70,11 @@ class CollectorRegistry:
 
         collectors = []
         for cls in self._registry.values():
-            if prometheus_only and not getattr(cls, "PROMETHEUS_CUSTOM", False):
+            if prometheus_only and not cls.PROMETHEUS_CUSTOM:
+                continue
+            # RECONSTRUCT_ONLY needs lifecycle only PrometheusAgent provides, so opting
+            # one in without Prometheus must no-op rather than crash in CbAgent.
+            if not prometheus_only and cls.RECONSTRUCT_ONLY:
                 continue
             if cls.should_collect(test, merged_flags):
                 collectors.extend(cls.create_instances(test, cluster_map))

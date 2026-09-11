@@ -70,6 +70,8 @@ class PrometheusAgent:
         # Custom collectors infrastructure (for metrics not available via Prometheus scraping)
         self.custom_collectors = []
         self.custom_processes = []
+        # One store per metric-name prefix, keyed by prefix.
+        self.prom_stores = {}
 
         # register_snapshot raises if all retries fail, the partially-built agent never escapes.
         self.register_snapshot()
@@ -82,6 +84,7 @@ class PrometheusAgent:
 
         # Initialise PromStore for push-based collectors
         self.prom_store = PromStore(snapshot_id=self.snapshot_id)
+        self.prom_stores[self.prom_store.metrics_prefix] = self.prom_store
 
         self.start_background_worker()
         logger.info(f"Registered Prometheus snapshot: {self.snapshot_url}")
@@ -114,6 +117,7 @@ class PrometheusAgent:
         "custom_processes",
         "custom_collectors",
         "prom_store",
+        "prom_stores",
     )
 
     def __getstate__(self):
@@ -127,6 +131,7 @@ class PrometheusAgent:
         self.custom_processes = []
         self.custom_collectors = []
         self.prom_store = None
+        self.prom_stores = {}
 
     def register_snapshot(self):
         """Register snapshot with config-manager. Retries on failure; raises on exhaustion."""
@@ -271,6 +276,9 @@ class PrometheusAgent:
         Every cbagent metric is pushed under its native name, so reads use that
         native name too; a future caller-level flag may opt specific (scraped)
         reads out of the prefix.
+
+        Resolves the default prefix only: metrics pushed under a collector's own
+        ``METRICS_PREFIX`` are not reachable through ``get_values``/``get_summary``.
         """
         return PromStore._sanitise_metric_name(metric)
 
@@ -400,7 +408,7 @@ class PrometheusAgent:
 
         self.custom_collectors = CollectorRegistry().get_active_prometheus_collectors(test)
         for collector in self.custom_collectors:
-            collector.store = self.prom_store
+            collector.store = self._store_for(collector.METRICS_PREFIX)
 
         if self.custom_collectors:
             logger.info(
@@ -409,13 +417,37 @@ class PrometheusAgent:
                 f"{[c.__class__.__name__ for c in self.custom_collectors]}"
             )
 
+    def _store_for(self, prefix: Optional[str]) -> PromStore:
+        """Return the store that writes under ``prefix``, creating it on first use."""
+        if not prefix:
+            return self.prom_store
+        if prefix not in self.prom_stores:
+            self.prom_stores[prefix] = PromStore(
+                snapshot_id=self.snapshot_id, metrics_prefix=prefix
+            )
+        return self.prom_stores[prefix]
+
     def start_custom_collectors(self):
-        """Start custom collectors as separate processes."""
+        """Start sampling collectors as separate processes.
+
+        ``RECONSTRUCT_ONLY`` collectors get no process, only a start-of-phase
+        notification marking the window they will later query.
+        """
         if not self.custom_collectors:
             return
 
-        logger.info(f"Starting {len(self.custom_collectors)} custom collector(s)")
-        self.custom_processes = [Process(target=c.collect) for c in self.custom_collectors]
+        sampling = []
+        for collector in self.custom_collectors:
+            if collector.RECONSTRUCT_ONLY:
+                collector.on_phase_start()
+            else:
+                sampling.append(collector)
+
+        logger.info(
+            f"Starting {len(sampling)} custom sampling collector(s); "
+            f"{len(self.custom_collectors) - len(sampling)} reconstruct-only"
+        )
+        self.custom_processes = [Process(target=c.collect) for c in sampling]
         for p in self.custom_processes:
             p.start()
 
@@ -437,24 +469,37 @@ class PrometheusAgent:
                 collector.reconstruct()
 
     def _pushed_metric_names(self) -> list[str]:
-        """Metric names declared by the active custom collectors (deduped)."""
+        """Store-resolved names of the pushed metrics a KPI could read back.
+
+        ``_resolve_metric_name`` reads only the default prefix, so a collector writing
+        under its own prefix is unreadable by KPI code and waiting on it buys nothing.
+        """
         names, seen = [], set()
         for collector in self.custom_collectors:
+            if collector.METRICS_PREFIX:
+                continue
             metrics = getattr(collector, "METRICS", ()) or ()
             if isinstance(metrics, str):
                 metrics = (metrics,)
             for metric in metrics:
-                if metric not in seen:
-                    seen.add(metric)
-                    names.append(metric)
+                name = collector.store.metric_name(metric)
+                if name not in seen:
+                    seen.add(name)
+                    names.append(name)
         return names
+
+    def _sample_count(self, stored_metric_name: str) -> int:
+        """Return the samples currently queryable in this phase for a resolved name."""
+        response = self.rest.get(url=self._get_phase_url(stored_metric_name))
+        response.raise_for_status()
+        return len(response.json().get("values") or [])
 
     def _count_ingested_samples(self, metrics: list[str]) -> int:
         """Total sample count currently queryable for the given metrics in this phase."""
         total = 0
         for metric in metrics:
             try:
-                total += len(self.get_values(db="", metric=metric))
+                total += self._sample_count(metric)
             except Exception as e:
                 logger.warning(f"Ingestion poll failed for {metric}: {e}")
         return total

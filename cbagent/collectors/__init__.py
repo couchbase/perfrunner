@@ -1,6 +1,7 @@
 from cbagent.collectors.active_tasks import ActiveTasks
 from cbagent.collectors.ai_services import WorkflowMetadataStats
 from cbagent.collectors.analytics import AnalyticsStats
+from cbagent.collectors.capella_metrics import CapellaControlPlaneMetrics
 from cbagent.collectors.cbstats import CBStatsAll, CBStatsMemory
 from cbagent.collectors.collector import Collector, CouchbaseCollector
 from cbagent.collectors.eventing_stats import (

@@ -42,9 +42,17 @@ class Collector(metaclass=RegistryMeta):
     # store. Selected by get_active_prometheus_collectors.
     PROMETHEUS_CUSTOM: bool = False
 
+    # Nothing to sample during the phase; all work happens in ``reconstruct()``. The
+    # Prometheus agent starts no process for these, calling ``on_phase_start`` instead.
+    RECONSTRUCT_ONLY: bool = False
+
+    # Metric-name namespace for this collector's samples. None means the store default.
+    METRICS_PREFIX: Optional[str] = None
+
     # Environment guards — set to True to restrict where the collector runs.
     SKIP_ON_DYNAMIC: bool = False  # Skip when the cluster is on K8S
     REQUIRES_ON_PREM: bool = False  # Skip when the cluster is on Capella
+    REQUIRES_CAPELLA: bool = False  # Skip unless the cluster is on Capella
     REQUIRES_NON_CYGWIN: bool = False  # Skip when the platform is cygwin
     REQUIRES_NON_CLOUD: bool = False  # Skip when the cluster is on any cloud (including Capella)
     REQUIRES_CYGWIN: bool = False  # Skip when platform is NOT cygwin
@@ -68,6 +76,8 @@ class Collector(metaclass=RegistryMeta):
         if cls.SKIP_ON_DYNAMIC and test.dynamic_infra:
             return False
         if cls.REQUIRES_ON_PREM and test.capella_infra:
+            return False
+        if cls.REQUIRES_CAPELLA and not test.capella_infra:
             return False
         remote = getattr(test, "remote", None)
         if cls.REQUIRES_NON_CYGWIN and remote and remote.PLATFORM == "cygwin":
@@ -152,6 +162,13 @@ class Collector(metaclass=RegistryMeta):
             self.updater.daemon = True
             self.updater.start()
             self.updater.join()
+
+    def on_phase_start(self):
+        """Note the start of a phase.
+
+        No-op unless ``RECONSTRUCT_ONLY``, which has no process and records here the
+        phase boundary it will query in ``reconstruct()``.
+        """
 
     def sample(self):
         raise NotImplementedError

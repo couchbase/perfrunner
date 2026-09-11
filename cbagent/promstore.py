@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Iterable, Optional
 
 import aiohttp
 import requests
@@ -9,6 +9,9 @@ from perfrunner.settings import CONFIG_MANAGER_HOST
 
 # Ensure our custom metrics do not conflict with server and sgw metrics
 PERF_METRICS_PREFIX = "perf_"
+
+# Namespace for metrics read from a provider's control plane rather than measured here.
+CAPELLA_METRICS_PREFIX = "capella_"
 
 # Any character outside the Prometheus metric-name charset gets replaced with `_`.
 # Prometheus metric names must match [a-zA-Z_:][a-zA-Z0-9_:]*.
@@ -23,7 +26,8 @@ class PromStore:
     POSTed as Prometheus text exposition to ``/api/v1/import/prometheus``; the
     receiver must support push-based ingestion in that format. A ``snapshot_id``
     is added as the ``job`` label on every sample so they correlate with the
-    current test snapshot.
+    current test snapshot. Metric names are namespaced by ``metrics_prefix``
+    (``perf_`` by default).
 
     Note: this class is *not* a drop-in PerfStore replacement. The legacy
     ``push(db, data, ts)`` shape encodes location info in an opaque ``db``
@@ -47,14 +51,15 @@ class PromStore:
         ```
     """
 
-    def __init__(self, snapshot_id: str):
+    def __init__(self, snapshot_id: str, metrics_prefix: str = PERF_METRICS_PREFIX):
         self.snapshot_id = snapshot_id
+        self.metrics_prefix = metrics_prefix
         self.import_url = f"http://{CONFIG_MANAGER_HOST}/vmagent/api/v1/import/prometheus"
         self.session = requests.Session()
         self.async_session: Optional[aiohttp.ClientSession] = None
 
     @staticmethod
-    def _sanitise_metric_name(name: str) -> str:
+    def _sanitise_metric_name(name: str, prefix: str = PERF_METRICS_PREFIX) -> str:
         """Sanitise metric name to be Prometheus-compatible.
 
         Prometheus metric names must match [a-zA-Z_:][a-zA-Z0-9_:]*.
@@ -65,7 +70,11 @@ class PromStore:
         # Prefix with underscore if starts with a digit
         if sanitised and sanitised[0].isdigit():
             sanitised = f"_{sanitised}"
-        return f"{PERF_METRICS_PREFIX}{sanitised}"
+        return f"{prefix}{sanitised}"
+
+    def metric_name(self, name: str) -> str:
+        """Return the name ``name`` is stored under by this store."""
+        return self._sanitise_metric_name(name, self.metrics_prefix)
 
     @staticmethod
     def _sanitise_label_value(value: str) -> str:
@@ -108,7 +117,7 @@ class PromStore:
         """
         lines = []
         for metric_name, value in data.items():
-            sanitised_name = self._sanitise_metric_name(metric_name)
+            sanitised_name = self.metric_name(metric_name)
             if timestamp_ms is not None:
                 lines.append(f"{sanitised_name}{labels_str} {value} {timestamp_ms}")
             else:
@@ -156,8 +165,20 @@ class PromStore:
             timestamp: Epoch milliseconds (the unit collectors record and the
                 import endpoint expects). If None, Prometheus uses current time.
         """
-        body = self._build_body(data, cluster, server, bucket, index, collector, timestamp)
+        self._post(self._build_body(data, cluster, server, bucket, index, collector, timestamp))
 
+    def append_batch(self, rows: Iterable[dict]):
+        """Push many samples in a single request.
+
+        Each row takes the same keyword arguments as ``append``; the exposition format
+        is line-based, so they share one body.
+        """
+        body = "".join(self._build_body(**row) for row in rows)
+        if body:
+            self._post(body)
+
+    def _post(self, body: str):
+        """POST an exposition-format body to the import endpoint."""
         try:
             resp = self.session.post(
                 self.import_url,

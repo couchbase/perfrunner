@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2Test
+
+[showfast]
+title = CH2++64 4000W, 8A, c=11 (standalone collections), analytics-only workload, CBO (high sample size), Unoptimized Queries, Analytics Indexes
+component = analyticscloud
+category = ch2
+sub_category = {provider}
+orderby = ch2pp64_04000_s_08n_a01_cbo_idx
+
+[stats]
+server_processes = java
+
+[cluster]
+enable_n2n_encryption = all
+
+[analytics]
+dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_uniform_pk.yaml
+use_cbo = true
+cbo_sample_size = high
+index_conf_file = tests/analytics/config/ch2_analytics_secondary_indexes.yaml
+aws_credential_path = /root/.ssh/
+
+[analytics_external_data]
+link_type = s3
+region = us-east-1
+obj_store_name = analytics-ch2pp64-4000w-gz
+file_format = json
+file_include = *.gz
+
+[ch2]
+schema = ch2pp
+warehouses = 4000
+aclients = 1
+tclients = 0
+iterations = 2
+warmup_iterations = 1
+duration = 0
+warmup_duration = 0
+workload = ch2_analytics
+use_backup = false
+create_gsi_index = false
+unoptimized_queries = true

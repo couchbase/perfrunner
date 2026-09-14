@@ -24,7 +24,7 @@ link_type = azureblob
 region = eastus
 obj_store_name = analytics-ch2-5000w-gz
 file_format = json
-file_include = gz
+file_include = *.gz
 azure_storage_account = cbperfstorage
 
 [ch2]

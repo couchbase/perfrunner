@@ -24,7 +24,7 @@ dataset_conf_file = tests/analytics/config/ch2_11_to_11_datasets_standalone_unif
 link_type = gcs
 obj_store_name = analytics-ch2-5000w-gz
 file_format = json
-file_include = gz
+file_include = *.gz
 
 [ch2]
 warehouses = 5000

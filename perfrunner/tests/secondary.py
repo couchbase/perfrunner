@@ -29,6 +29,7 @@ from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.n1ql import N1qlVectorSearchTest
 from perfrunner.tests.rebalance import (
     AutoFailoverAndFailureDetectionTest,
+    CapellaRebalanceTest,
     DynamicServiceRebalanceTest,
     RebalanceTest,
 )
@@ -1653,6 +1654,34 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
             if create_build_tuple(self.build) > (7, 6, 0, 2037):
                 self.monitor.wait_for_snapshot_persistence(self.index_nodes)
 
+    def exclude_nodes_from_planner(self):
+        """Keep the configured nodes out of the indexer's rebalance plan."""
+        if not self.test_config.gsi_settings.excludeNode:
+            return
+
+        planner_settings = {"excludeNode": self.test_config.gsi_settings.excludeNode}
+        for node in self.rest.get_active_nodes_by_role(self.master_node, "index"):
+            logger.info(f"setting planner settings {planner_settings}")
+            self.rest.set_planner_settings(node, planner_settings)
+            meta = self.rest.get_index_metadata(node)
+            logger.info(f"Index Metadata: {pretty_dict(meta['localSettings'])}")
+
+    def log_index_instances(self, tolerate_missing: bool = False):
+        """Log the index instance count per node.
+
+        After a rebalance the service may be gone from a node, so `tolerate_missing` skips
+        the retries and keeps the failure out of the test.
+        """
+        for server in self.index_nodes:
+            try:
+                instances = self.rest.indexes_instances_per_node(
+                    server, with_retry=not tolerate_missing
+                )
+                logger.info(f"{server} : {instances} Indexes")
+            except Exception:
+                if not tolerate_missing:
+                    raise
+
     def run(self):
         self.remove_statsfile()
         self.load()
@@ -1660,33 +1689,16 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
 
         build_time = self.build_secondaryindex()
         logger.info(f"indexer build completed in {build_time}")
-        for server in self.index_nodes:
-            logger.info(f"{server} : {self.rest.indexes_instances_per_node(server)} Indexes")
+        self.log_index_instances()
         self.print_index_disk_usage()
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
                                 run_in_background=True)
-        if self.test_config.gsi_settings.excludeNode:
-            planner_settings = {"excludeNode": self.test_config.gsi_settings.excludeNode}
-            nodes = self.rest.get_active_nodes_by_role(self.master_node, 'index')
-            for node in nodes:
-                logger.info(f"setting planner settings {planner_settings}")
-                self.rest.set_planner_settings(node, planner_settings)
-                meta = self.rest.get_index_metadata(node)
-                logger.info('Index Metadata: {}'.format(pretty_dict(meta['localSettings'])))
+        self.exclude_nodes_from_planner()
 
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
-        for server in self.index_nodes:
-            try:
-                logger.info(
-                    f"{server} : {self.rest.indexes_instances_per_node(server, with_retry=False)} "
-                    "Indexes"
-                )
-            except Exception:
-                # Since this is for logging, we can ignore the exception as the service could have
-                # been removed from this node
-                pass
+        self.log_index_instances(tolerate_missing=True)
 
         self.report_kpi(rebalance_time=True)
         kill_process("cbindexperf")
@@ -1738,6 +1750,80 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
                     update_category=self.update_category,
                 )
             )
+
+
+class CapellaSecondaryRebalanceTest(SecondaryRebalanceTest, CapellaRebalanceTest):
+
+    """Measure indexer rebalance time on Capella, with scan and access workload.
+
+    The rebalance goes through the Capella control plane rather than ns_server, so
+    `CapellaRebalanceTest` has to win the MRO for `_rebalance` and `post_rebalance`.
+    """
+
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.remote.extract_cb_any('couchbase', worker_home=self.worker_manager.WORKER_HOME)
+
+    @with_stats
+    def rebalance_indexer(self, services="index"):
+        # `self.rebalance` already carries @with_stats and @with_profiles.
+        self.rebalance(services)
+
+    def run(self):
+        self.download_certificate()
+        self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.log_index_instances()
+        self.print_average_rr()
+        self.access_bg()
+        self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
+                                      run_in_background=True, is_ssl=self.is_ssl)
+        self.exclude_nodes_from_planner()
+
+        self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        self.log_index_instances(tolerate_missing=True)
+
+        self.report_kpi(rebalance_time=True)
+        self.remote.kill_client_process("cbindexperf")
+        self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
+        scan_thr = self.get_throughput()
+        percentile_latencies = self.calculate_scan_latencies()
+        logger.info(f"Scan throughput: {scan_thr}")
+        self.print_average_rr()
+        self.report_kpi(percentile_latencies, scan_thr)
+
+
+class CapellaSecondaryRebalanceTestWithoutScan(CapellaSecondaryRebalanceTest):
+
+    """Measure indexer rebalance time on Capella, with access workload only."""
+
+    def run(self):
+        self.download_certificate()
+        self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.log_index_instances()
+        self.print_average_rr()
+        self.access_bg()
+        self.exclude_nodes_from_planner()
+
+        self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        self.log_index_instances(tolerate_missing=True)
+
+        self.print_average_rr()
+        self.report_kpi(rebalance_time=True)
 
 
 class DynamicServiceSecondaryRebalanceTest(SecondaryRebalanceTest, DynamicServiceRebalanceTest):
@@ -2490,6 +2576,76 @@ class SecondaryIndexRebalanceOnlyTest(SecondaryRebalanceTest):
         logger.info('Rebalance completed in {} secs'.format(self.rebalance_timings['total_time']))
         self.report_kpi(rebalance_time=True)
         self.print_index_disk_usage()
+
+
+class SecondaryStatementBuildTest(PerfTest):
+
+    """Build indexes from N1QL statements and report the build time."""
+
+    COLLECTORS = {'secondary_stats': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
+
+    def create_indexes(self):
+        """Issue the CREATE statements concurrently, then the BUILD statements."""
+        create_statements = []
+        build_statements = []
+        for statement in self.test_config.index_settings.statements:
+            check_stmt = statement.replace(" ", "").upper()
+            if 'CREATEINDEX' in check_stmt or 'CREATEPRIMARYINDEX' in check_stmt:
+                create_statements.append(statement)
+            elif 'BUILDINDEX' in check_stmt:
+                build_statements.append(statement)
+
+        for statements in (create_statements, build_statements):
+            queries = []
+            for statement in statements:
+                logger.info(f"Executing index statement: {statement}")
+                queries.append(threading.Thread(target=self.execute_index, args=(statement,)))
+
+            for query in queries:
+                query.start()
+
+            for query in queries:
+                query.join()
+
+        logger.info('Index Create and Build Complete')
+
+    def execute_index(self, statement):
+        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+        cont = False
+        while not cont:
+            building = 0
+            index_status = self.rest.get_index_status(self.index_nodes[0])
+            index_list = index_status['status']
+            for index in index_list:
+                if index['status'] != "Ready" and index['status'] != "Created":
+                    building += 1
+            if building < 10:
+                cont = True
+            else:
+                time.sleep(10)
+
+    @timeit
+    @with_stats
+    @with_profiles
+    def build_index(self):
+        self.create_indexes()
+        self.wait_for_indexing()
+
+    def _report_kpi(self, time_elapsed, index_type, unit="min"):
+        self.reporter.post(
+            *self.metrics.get_indexing_meta(value=time_elapsed,
+                                            index_type=index_type,
+                                            unit=unit,
+                                            update_category=False)
+        )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        build_time = self.build_index()
+        logger.info(f"index build time: {build_time}")
+        self.report_kpi(build_time, 'Initial')
 
 
 class IndexerFailureDetectionTest(AutoFailoverAndFailureDetectionTest, SecondaryIndexTest):

@@ -4,6 +4,7 @@ import shutil
 import time
 import traceback
 from collections.abc import Iterable
+from contextlib import contextmanager
 from multiprocessing import set_start_method
 from typing import Callable, Optional
 
@@ -868,6 +869,33 @@ class PerfTest:
 
     def _report_kpi(self, *args, **kwargs):
         pass
+
+    @contextmanager
+    def snapshots_of(self, snapshots: Optional[list]):
+        """Temporarily attach KPI posts to a specific, already-finished phase.
+
+        cbmonitor_snapshots reflects whichever @with_stats phase finished
+        most recently, so a test that runs more than one such phase (e.g.
+        backup then restore) and then reports KPIs for both at the end would
+        otherwise file every metric under the last phase's snapshot. Callers
+        capture ``list(self.cbmonitor_snapshots)`` right after the earlier
+        phase completes, then wrap that phase's reporter.post() calls with
+        this to restore the right attribution.
+
+        A snapshots value of None is a no-op (nothing was captured, e.g.
+        stats collection is disabled), so callers can pass it through
+        unconditionally.
+        """
+        if snapshots is None:
+            yield
+            return
+
+        previous = self.cbmonitor_snapshots
+        self.cbmonitor_snapshots = snapshots
+        try:
+            yield
+        finally:
+            self.cbmonitor_snapshots = previous
 
     def _measure_curr_ops_rest(self) -> int:
         ops = 0

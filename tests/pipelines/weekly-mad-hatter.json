@@ -256,9 +256,6 @@
         {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_failover_30bucket_100M_dgm_kv_hard.test", "groups": "P0"}
     ],
     "Tools": [
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_100M_rift.test", "groups": "P0"},
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_400M_sqlite.test", "groups": "P0"},
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_400M_rift.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_incremental_100M_rift.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_list_100M_rift.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_merge_100M_rift.test", "groups": "P0"},

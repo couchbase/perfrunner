@@ -1443,7 +1443,8 @@ class MetricHelper:
                        time_elapsed: float,
                        edition: str,
                        tool: str,
-                       storage: str = None) -> Metric:
+                       storage: str = None,
+                       category: str = None) -> Metric:
 
         tool_and_storage = tool + '-' + storage if storage else tool
         metric_id = f'{self.test_config.name}_{tool_and_storage}_thr_{edition}'
@@ -1462,7 +1463,16 @@ class MetricHelper:
 
         avg_throughput = round(data_size / time_elapsed)
 
-        return self._metric(avg_throughput, metric_id=metric_id, title=title, chirality=1)
+        # category defaults (via _metric_info) to this test's own showfast
+        # category, which is wrong when this metric is reporting on a
+        # different tool than the one the test is named/categorized for
+        # (e.g. the backup KPI posted from a restore test) -- pass it
+        # explicitly in that case.
+        extra = {'category': category} if category else None
+
+        return self._metric(
+            avg_throughput, metric_id=metric_id, title=title, chirality=1, extra=extra
+        )
 
     def contbk_restore_throughput(
         self, time_elapsed: float, edition: str, tool: str, storage: str = None
@@ -1493,13 +1503,18 @@ class MetricHelper:
     def backup_size(self, size: float,
                     edition: str,
                     tool: str,
-                    storage: str = None) -> Metric:
+                    storage: str = None,
+                    category: str = None) -> Metric:
 
         tool_and_storage = tool + '-' + storage if storage else tool
         metric_id = f"{self.test_config.name}_{tool_and_storage}_size_{edition}"
         title = f"{edition} {tool} size (GB), {self._title}"
 
-        return self._metric(size, metric_id=metric_id, title=title, chirality=-1)
+        extra = {'category': category} if category else None
+
+        return self._metric(
+            size, metric_id=metric_id, title=title, chirality=-1, extra=extra
+        )
 
     def disk_size(self, size: float) -> Metric:
 

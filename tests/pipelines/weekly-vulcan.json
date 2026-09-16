@@ -147,8 +147,6 @@
         {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test", "groups": "P0"}
     ],
     "Tools": [
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_100M_sqlite.test", "groups": "P1"},
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_100M_forestdb.test", "groups": "P1"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_incremental_100M_forestdb.test", "groups": "P1"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_incremental_100M_sqlite.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_backup_list_100M_forestdb.test", "groups": "P1"},

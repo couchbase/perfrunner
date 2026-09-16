@@ -408,34 +408,72 @@ class RestoreTest(BackupRestoreTest):
 
     @with_stats
     @timeit
+    def backup(self, master_node: Optional[str] = None, mode: Optional[str] = None):
+        super().backup(master_node, mode)
+
+    @with_stats
+    @timeit
     def restore(self, master_node: Optional[str] = None):
         super().restore(master_node)
 
-    def _report_kpi(self, time_elapsed):
+    def _report_kpi(
+        self,
+        time_elapsed,
+        backup_time: Optional[float] = None,
+        backup_snapshots: Optional[list] = None,
+    ):
         backing_store = self.test_config.backup_settings.storage_type
         sink_type = self.test_config.backup_settings.sink_type
 
-        tool = 'restore'
         storage = None
         if backing_store:
             storage = backing_store
         elif sink_type:
             storage = sink_type
 
-        self.reporter.post(*self.metrics.bnr_throughput(time_elapsed, self.edition, tool, storage))
+        self.reporter.post(
+            *self.metrics.bnr_throughput(time_elapsed, self.edition, 'restore', storage)
+        )
+
+        # backup_time is only present when this test also timed its own backup phase
+        # (see run()), which lets a single restore test report both backup and
+        # restore performance instead of relying on a separate, standalone backup test.
+        # backup_snapshots is that phase's own cbmonitor snapshot, captured before the
+        # restore phase overwrote self.cbmonitor_snapshots -- attach the backup KPIs to
+        # it (not the restore phase's snapshot), and file them under category "backup"
+        # instead of this test's own "restore" category.
+        if backup_time is not None:
+            with self.snapshots_of(backup_snapshots):
+                self.reporter.post(
+                    *self.metrics.bnr_throughput(
+                        backup_time, self.edition, 'backup', storage, category='backup'
+                    )
+                )
+
+                if sink_type != 'blackhole':
+                    backup_size = local.calc_backup_size(self.cluster_spec.backup)
+                    self.reporter.post(
+                        *self.metrics.backup_size(
+                            backup_size,
+                            self.edition,
+                            'backup' if backing_store or sink_type else None,
+                            storage,
+                            category='backup',
+                        )
+                    )
 
     def run(self):
         super().run()
 
-        self.backup()
-        self.flush_buckets()
-
         try:
+            backup_time = self.backup()
+            backup_snapshots = list(self.cbmonitor_snapshots)
+            self.flush_buckets()
             time_elapsed = self.restore()
         finally:
             self.collectlogs()
 
-        self.report_kpi(time_elapsed)
+        self.report_kpi(time_elapsed, backup_time, backup_snapshots)
 
 
 class RestoreXATTRTest(RestoreTest):
@@ -453,15 +491,15 @@ class RestoreXATTRTest(RestoreTest):
         self.wait_for_persistence()
         self.check_num_items()
 
-        self.backup()
-        self.flush_buckets()
-
         try:
+            backup_time = self.backup()
+            backup_snapshots = list(self.cbmonitor_snapshots)
+            self.flush_buckets()
             time_elapsed = self.restore()
         finally:
             self.collectlogs()
 
-        self.report_kpi(time_elapsed)
+        self.report_kpi(time_elapsed, backup_time, backup_snapshots)
 
 
 class ListTest(BackupRestoreTest):

@@ -49,6 +49,8 @@ class PrometheusAgent:
     def __init__(self, cluster_spec: ClusterSpec, stats_settings: StatsSettings, rest: RestBase):
         self.cluster_spec = cluster_spec
         self.stats_settings = stats_settings
+        self.is_capella = self.cluster_spec.capella_infrastructure
+        self.is_capella_gcp = self.cluster_spec.capella_backend == "gcp"
         # query_range step for phase reads. The server default (~15s) collapses
         # high-frequency pushed samples (e.g. spring per-op latency) to a handful of
         # points, making percentiles meaningless (p50 == p99.9). Read at the finest
@@ -133,6 +135,35 @@ class PrometheusAgent:
         self.prom_store = None
         self.prom_stores = {}
 
+    def _sgw_metrics_port(self) -> int:
+        """Return the port serving Sync Gateway metrics."""
+        if not self.is_capella:
+            return 4986
+
+        return 443 if self.is_capella_gcp  else 4988
+
+    def _app_services_metrics_host(self, host: str) -> str:
+        """Map a stored AppServices host to the one serving metrics.
+
+        The deploy stores the admin URL's host. On GCP that keeps the database path and
+        names the admin endpoint, whose metrics sibling is a separate hostname.
+        """
+        host = host.split("/")[0]
+        if self.is_capella_gcp:
+            host = host.replace("-admin.", "-metric.", 1)
+        return host
+
+    def _sgw_scrape_hostnames(self) -> list[str]:
+        """Return the Sync Gateway hosts to scrape, deduplicated.
+
+        App Services has one cluster-wide endpoint that the spec repeats per node,
+        so scraping the list as-is would duplicate every series.
+        """
+        hosts = self.cluster_spec.sgw_servers
+        if self.is_capella:
+            hosts = [self._app_services_metrics_host(h) for h in hosts]
+        return list(dict.fromkeys(hosts))
+
     def register_snapshot(self):
         """Register snapshot with config-manager. Retries on failure; raises on exhaustion."""
         scheme = "http" if not self.use_tls_ports else "https"
@@ -151,13 +182,13 @@ class PrometheusAgent:
             },
             "label": os.getenv("BUILD_URL", ""),
         }
-        if self.cluster_spec.sgw_servers:
+        if sgw_hostnames := self._sgw_scrape_hostnames():
             payload["configs"].append({
-                "hostnames": list(self.cluster_spec.sgw_servers),
-                "port": 4986,
+                "hostnames": sgw_hostnames,
+                "port": self._sgw_metrics_port(),
                 "scheme": scheme,
                 "type": "static",
-                "product": "syncgateway",
+                "product": "appservice" if self.is_capella else "syncgateway",
             })
 
         last_exc = None

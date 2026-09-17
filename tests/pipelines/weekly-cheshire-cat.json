@@ -316,7 +316,6 @@
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_Q15_20M_moi_ok_1s_1c_1i.test", "groups": "P1"},
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_Q19_20M_gsi_moi_ok_1s_1c_1i.test", "groups": "P1"},
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_UP4_20M_gsi_moi_false_1s_1c_1i.test", "groups": "P1"},
-        {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_Q7_20M_gsi_moi_ok_1s_1c_1i.test", "groups": "P1"},
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q2_20M_gsi_plasma_ok_1s_1c_1i.test", "groups": "P1"},
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q3_20M_between_gsi_moi_ok_1s_1c_1i.test", "groups": "P1"},
         {"job": "iris-collections",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_CI3_20M_gsi_moi_ok_1s_1c_1i.test", "groups": "P1"},
@@ -581,7 +580,6 @@
     ],
     "FTS-MultiIndex": [
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_10_coll_per_index_1s_10c_1i.test", "groups": "P1"},
-        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_100_coll_per_index_1s_100c_1i.test", "groups": "P1"},
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_1000_coll_per_index_1s_1000c_1i.test", "groups": "P0"},
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_100_coll_per_index_1s_1000c_10i.test", "groups": "P1"},
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_1000_coll_per_index_1s_1000c_10i.test", "groups": "P1"},

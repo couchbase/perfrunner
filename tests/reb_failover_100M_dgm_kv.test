@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.rebalance.FailureDetectionTest
+test = perfrunner.tests.rebalance.AutoFailoverAndFailureDetectionTest
 
 [showfast]
-title = Failure detection time (s), 4 -> 3, 1 bucket x 100M x 2KB, 10K ops/sec
+title = Node Shutdown, 4 -> 3, 1 bucket x 100M x 2KB, 10K ops/sec
 component = reb
 category = failover
 

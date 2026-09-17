@@ -531,10 +531,31 @@ class FailureDetectionTest(FailoverTest):
 
 
 class AutoFailoverAndFailureDetectionTest(FailoverTest):
+    """Shut a node down and report both auto-failover and failure-detection time.
+
+    Both metrics come from data the server already produces for a single
+    node-down event (the rebalance/failover report and the ns_server info
+    log), so one run reports both KPIs instead of needing a separate test
+    per metric. Subclasses only need to override _failover() to change how
+    the node is taken down (see MemcachedFailureDetectionTest).
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.t_failure = None
+
+    def _failover(self, *args):
+        clusters = self.cluster_spec.clusters
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
+            self.t_failure = time.time()
+            for node in failed:
+                self.remote.shutdown(node)
 
     def _report_kpi(self, *args):
         # Failover time

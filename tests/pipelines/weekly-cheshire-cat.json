@@ -1,6 +1,5 @@
 {
     "Tools": [
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "collections/tools/tools_export_60M_json_lines_1s_1c.test", "groups": "P1"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "collections/tools/tools_export_60M_json_lines_1s_1000c.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "collections/tools/tools_import_3M_20K_json_list_1s_1c.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "collections/tools/tools_import_60M_json_lines_1s_1c.test", "groups": "P0"},

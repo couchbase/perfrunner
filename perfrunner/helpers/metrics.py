@@ -1575,12 +1575,28 @@ class MetricHelper:
         title = f"{edition} {tool} size difference (GB), {self._title}"
         return size_diff, self._snapshots, self._metric_info(metric_id, title, chirality=-1)
 
-    def import_and_export_throughput(self, time_elapsed: float) -> Metric:
+    def import_and_export_throughput(
+        self, time_elapsed: float, tool: str = None, category: str = None
+    ) -> Metric:
         data_size = bytes_to_mib(
             self.test_config.load_settings.items * self.test_config.load_settings.size
         )  # MB
 
         avg_throughput = round(data_size / time_elapsed)
+
+        if tool == 'export':
+            # Posted only when an import test also timed its own export phase.
+            # Derive a distinct metric id/title from the (import) showfast
+            # title so it doesn't collide with the import throughput metric.
+            # category defaults to this test's own showfast category (import)
+            # via _metric_info, so it must be passed explicitly to file this
+            # KPI under "export" instead.
+            metric_id = f"{self.test_config.name}_export"
+            title = self._title.replace('Import', 'Export', 1)
+            extra = {'category': category} if category else None
+            return self._metric(
+                avg_throughput, metric_id=metric_id, title=title, chirality=1, extra=extra
+            )
 
         return self._metric(avg_throughput, chirality=1)
 

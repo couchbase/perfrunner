@@ -143,8 +143,6 @@
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_restore_100M_sqlite.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_restore_400M_forestdb.test", "groups": "P1"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_restore_400M_sqlite.test", "groups": "P1"},
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_export_60M_json_lines.test", "groups": "P0"},
-        {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_export_60M_json_list.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_import_3M_20K_json_list.test", "groups": "P0"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_import_60M_csv.test", "groups": "P1"},
         {"job": "artemis", "cluster": "artemis.spec", "test_config": "tools_import_60M_json_lines.test", "groups": "P0"},

@@ -602,17 +602,49 @@ class ImportTest(ExportImportTest):
 
     @with_stats
     @timeit
+    def export(self):
+        super().export()
+
+    @with_stats
+    @timeit
     def import_data(self):
         super().import_data()
+
+    def _report_kpi(
+        self,
+        time_elapsed: float,
+        export_time: Optional[float] = None,
+        export_snapshots: Optional[list] = None,
+    ):
+        self.reporter.post(
+            *self.metrics.import_and_export_throughput(time_elapsed)
+        )
+
+        # export_time is only present when this test also timed its own export
+        # phase (see run()), which lets a single import test report both export
+        # and import performance instead of relying on a separate, standalone
+        # export test to produce (and re-time) the same data. export_snapshots is
+        # that phase's own cbmonitor snapshot, captured before the import phase
+        # overwrote self.cbmonitor_snapshots -- attach the export KPI to it (not
+        # the import phase's snapshot), and file it under category "export"
+        # instead of this test's own "import" category.
+        if export_time is not None:
+            with self.snapshots_of(export_snapshots):
+                self.reporter.post(
+                    *self.metrics.import_and_export_throughput(
+                        export_time, tool='export', category='export'
+                    )
+                )
 
     def run(self):
         super().run()
 
-        self.export()
+        export_time = self.export()
+        export_snapshots = list(self.cbmonitor_snapshots)
         self.flush_buckets()
         time_elapsed = self.import_data()
 
-        self.report_kpi(time_elapsed)
+        self.report_kpi(time_elapsed, export_time, export_snapshots)
 
 
 class ImportSampleDataTest(ImportTest):

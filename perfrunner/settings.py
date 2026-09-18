@@ -35,6 +35,7 @@ CAPELLA_PUBLIC_API_URL_TEMPLATE = "https://cloudapi.{}.nonprod-project-avengers.
 class CBProduct(Enum):
     COUCHBASE_SERVER = "couchbase-server"
     ENTERPRISE_ANALYTICS = "enterprise-analytics"
+    OPERATIONAL_INSIGHTS = "operational-insights"
 
 
 class CBProfile(Enum):
@@ -311,28 +312,70 @@ class ClusterSpec(Config):
             infra_config[section] = {p: v for p, v in self.config.items(section)}
         return infra_config
 
+    @property
+    def columnar_product(self) -> CBProduct:
+        """Which columnar product is installed: Enterprise Analytics or Operational Insights.
+
+        The two are indistinguishable from the spec alone -- both are `service = columnar` -- so
+        the installer records what it installed (see `maybe_set_columnar_product`). Specs deployed
+        before Operational Insights existed have no key and are Enterprise Analytics, which is
+        also the fallback for an unrecognised value.
+        """
+        if not (value := self.infrastructure_settings.get("columnar_product", "")):
+            return CBProduct.ENTERPRISE_ANALYTICS
+        try:
+            return CBProduct(value)
+        except ValueError:
+            logger.warning(
+                f"Unknown [infrastructure] columnar_product '{value}'. "
+                f"Assuming {CBProduct.ENTERPRISE_ANALYTICS.value}."
+            )
+            return CBProduct.ENTERPRISE_ANALYTICS
+
+    def maybe_set_columnar_product(self, product: CBProduct) -> None:
+        """Record the installed columnar product in the spec file.
+
+        Ignored unless this is a columnar spec installing a columnar package:
+          - a non-columnar spec has no ambiguity to resolve, and creating an `[infrastructure]`
+            section in an on-prem spec would turn it into a cloud (and by default, Kubernetes) spec.
+          - a two-cluster columnar spec is installed one cluster at a time, and the
+            `couchbase-server` package that goes on the datasource cluster says nothing about the
+            columnar cluster.
+        """
+        if not self.columnar_infrastructure or product is CBProduct.COUCHBASE_SERVER:
+            return
+        if self.infrastructure_settings.get("columnar_product") == product.value:
+            return
+
+        logger.info(f"Recording columnar product in cluster spec: {product.value}")
+        self.config.set("infrastructure", "columnar_product", product.value)
+        self.update_spec_file()
+        # `products_by_server` is a cached_property and may already have been computed.
+        self.__dict__.pop("products_by_server", None)
+
     @cached_property
     def products_by_server(self) -> dict[str, CBProduct]:
         if not self.config.has_section("clusters"):
             return {}
 
-        properties = {}
+        # Deliberately every cluster, not just the active ones: callers index this dict by hostname
+        # and hosts belonging to an inactive cluster must still resolve.
         clusters = self.config.items("clusters")
 
         def cluster_product(i: int) -> CBProduct:
             if self.capella_infrastructure or not self.columnar_infrastructure:
                 return CBProduct.COUCHBASE_SERVER
+            # A multi-cluster columnar spec pairs a Couchbase Server datasource -- always the first
+            # cluster -- with the columnar cluster(s).
+            if len(clusters) > 1 and i == 0:
+                return CBProduct.COUCHBASE_SERVER
+            return self.columnar_product
 
-            if len(clusters) == 1:
-                return CBProduct.ENTERPRISE_ANALYTICS
-
-            return list(CBProduct)[min(i, 1)]
-
+        properties = {}
         for i, (_, nodes) in enumerate(clusters):
             product = cluster_product(i)
             for node in nodes.split():
                 properties[node.split(":")[0]] = product
-
         return properties
 
     @property

@@ -62,6 +62,7 @@ class RemoteLinux(Remote):
     CB_DIRS = {
         CBProduct.COUCHBASE_SERVER: "/opt/couchbase",
         CBProduct.ENTERPRISE_ANALYTICS: "/opt/enterprise-analytics",
+        CBProduct.OPERATIONAL_INSIGHTS: "/opt/couchbase",
     }
 
     def __init__(self, cluster_spec: ClusterSpec):
@@ -358,7 +359,7 @@ class RemoteLinux(Remote):
         for path in self.cluster_spec.paths:
             run(f"rm -fr {path}/*")
 
-        for cb_dir in self.CB_DIRS.values():
+        for cb_dir in set(self.CB_DIRS.values()):
             run(f"rm -fr {cb_dir}")
 
     @all_servers
@@ -406,6 +407,8 @@ class RemoteLinux(Remote):
             "couchbase-server-debuginfo",  # rpm only
             "enterprise-analytics",
             "enterprise-analytics-dbgsym",
+            "operational-insights",
+            "operational-insights-dbgsym",
         ]
         cli_tool = "apt-get" if self.package_type == "deb" else "yum"
         for package in packages:
@@ -1717,10 +1720,13 @@ class RemoteLinux(Remote):
             return
 
         cb_product = self.get_product(hosts[0])
-        if cb_product is CBProduct.ENTERPRISE_ANALYTICS and service not in ["kv", "cbas"]:
+        if cb_product in (
+            CBProduct.ENTERPRISE_ANALYTICS,
+            CBProduct.OPERATIONAL_INSIGHTS,
+        ) and service not in ["kv", "cbas"]:
             logger.warning(
                 f"Setting systemd resource limits for {service} "
-                "is not supported for Enterprise Analytics"
+                "is not supported for Enterprise Analytics/Operational Insights"
             )
             return
 

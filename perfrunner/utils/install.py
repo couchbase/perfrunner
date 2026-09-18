@@ -29,7 +29,7 @@ from perfrunner.helpers.misc import create_build_tuple, pretty_dict, url_exist
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.api import cd, run
 from perfrunner.remote.context import master_client
-from perfrunner.settings import CBProfile, ClusterSpec, TestConfig
+from perfrunner.settings import CBProduct, CBProfile, ClusterSpec, TestConfig
 
 try:
     set_start_method("fork")
@@ -69,6 +69,7 @@ SERVER_RELEASE_LOCATIONS = (
 )
 
 COLUMNAR_CODENAMES = {
+    "operational-insights": ("helios",),
     "enterprise-analytics": ("helios", "lumina", "phoenix"),
     "couchbase-columnar": ("doric", "ionic", "goldfish", "1.0.0"),
 }
@@ -542,19 +543,24 @@ class CouchbaseInstaller:
 
     @cached_property
     def debuginfo_url(self) -> str:
-        debuginfo_str = ''
-        if self.url.endswith('.rpm'):
-            debuginfo_str = '-debuginfo'
-        elif self.url.endswith('.deb'):
-            if self.build_tuple >= (8, 0, 0) or self.package_name.startswith(
-                "enterprise-analytics"
+        debuginfo_str = ""
+        if self.url.endswith(".rpm"):
+            debuginfo_str = "-debuginfo"
+        elif self.url.endswith(".deb"):
+            if self.build_tuple >= (8, 0, 0) or self.cb_product in (
+                CBProduct.ENTERPRISE_ANALYTICS,
+                CBProduct.OPERATIONAL_INSIGHTS,
             ):
                 debuginfo_str = "-dbgsym"
             else:
                 debuginfo_str = "-dbg"
 
-        product_name = "-".join(self.package_name.split("-")[:2])
-        return re.sub(rf"({product_name}-{self.options.edition})", rf"\1{debuginfo_str}", self.url)
+        package_name = self.package_name
+        package_prefix, *_ = re.split(r".\d+\.\d+\.\d+", package_name)
+        debug_package_name = package_name.replace(
+            package_prefix, f"{package_prefix}{debuginfo_str}", 1
+        )
+        return self.url.replace(package_name, debug_package_name, 1)
 
     @property
     def package_name(self) -> str:
@@ -563,6 +569,21 @@ class CouchbaseInstaller:
     @property
     def package_is_columnar(self) -> bool:
         return any(self.package_name.startswith(product) for product in COLUMNAR_CODENAMES)
+
+    @property
+    def cb_product(self) -> CBProduct:
+        """Derive the product from the package we are about to install.
+
+        Enterprise Analytics and Operational Insights are indistinguishable from the cluster spec,
+        and a raw package URL has no build number to key off, so the package name is the only
+        reliable source of truth. Legacy `couchbase-columnar-*` packages match no member and fall
+        back to Couchbase Server, which is correct: they install to /opt/couchbase under the
+        `couchbase-server` systemd unit.
+        """
+        for product in CBProduct:
+            if self.package_name.startswith(product.value):
+                return product
+        return CBProduct.COUCHBASE_SERVER
 
     @property
     def release(self) -> str:
@@ -721,6 +742,7 @@ class CouchbaseInstaller:
     def install(self):
         logger.info("Finding package to install...")
         logger.info(f'Package URL: {self.url}')
+        self.cluster_spec.maybe_set_columnar_product(self.cb_product)
         self.kill_processes()
         self.uninstall_package()
         self.clean_data()

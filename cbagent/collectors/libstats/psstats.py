@@ -48,6 +48,14 @@ class PSStats(RemoteStats):
         stdout = self.run(self.TOP_CMD.format(self.top_interval, pid),
                           quiet=True)
         if stdout:
-            title = f"{process}_cpu"
-            samples[title] = float(stdout.split()[8])
+            # `top`'s batch output can come back shorter than the usual 12-column
+            # process line - e.g. the target host's terminfo/ncurses install is broken,
+            # or `process` exited between the ps and top calls above. Either way this
+            # is a missed CPU sample, not a reason to lose the rss/vsize already
+            # collected, so treat it as absent rather than letting it raise.
+            fields = stdout.split()
+            try:
+                samples[f"{process}_cpu"] = float(fields[8])
+            except (IndexError, ValueError):
+                pass
         return samples

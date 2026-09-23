@@ -6,6 +6,7 @@ import re
 import statistics
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import datetime
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -147,13 +148,27 @@ CHXMetrics = TypeVar("CHXMetrics", CH2Metrics, CH3Metrics)
 
 @dataclass(frozen=True)
 class TimeseriesWindow:
-    start_ts: float = -1.0
-    end_ts: float = float("inf")
+    start_ts_ms: float = -1.0
+    end_ts_ms: float = float("inf")
     label: str = ""
 
     def apply(self, timeseries: np.ndarray) -> np.ndarray:
         timestamps = timeseries[:, 0]
-        return timeseries[(timestamps >= self.start_ts) & (timestamps < self.end_ts)]
+        return timeseries[(timestamps >= self.start_ts_ms) & (timestamps < self.end_ts_ms)]
+
+    @staticmethod
+    def _ts_to_human_readable(ts_ms: float) -> str:
+        if 0 < ts_ms < float("inf"):
+            return datetime.fromtimestamp(ts_ms / 1000).astimezone().isoformat(timespec="seconds")
+        return "n/a"
+
+    def __str__(self) -> str:
+        return (
+            f"label={self.label}, "
+            f"timestamps=[{self.start_ts_ms}, {self.end_ts_ms}), "
+            f"pretty=[{self._ts_to_human_readable(self.start_ts_ms)}, "
+            f"{self._ts_to_human_readable(self.end_ts_ms)})"
+        )
 
 
 class MetricHelper:
@@ -1221,8 +1236,8 @@ class MetricHelper:
             if w.label:
                 min_ts, max_ts = np.min(w_timings[:, 0]), np.max(w_timings[:, 0])
                 logger.info(
-                    f"Fetched data for timeseries window: label={w.label}, samples={len(w_timings)}"
-                    f", {min_ts=}, {max_ts=}, window_duration_secs={(max_ts - min_ts) / 1000:.2f}"
+                    f"Fetched data for timeseries window: {w}, "
+                    f"window_span_secs={(max_ts - min_ts) / 1000:.2f}, samples={len(w_timings)}"
                 )
 
             window_stats.append((w, stat_fn(w_timings)))

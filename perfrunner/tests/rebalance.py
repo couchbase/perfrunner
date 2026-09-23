@@ -182,21 +182,31 @@ class RebalanceKVTest(RebalanceTest):
     COLLECTORS = {'latency': True}
 
     def pre_rebalance(self):
+        self.pre_rebalance_start = int(time.time() * 1000)
         super().pre_rebalance()
         self.pre_rebalance_end = int(time.time() * 1000)
 
     def post_rebalance(self):
         self.post_rebalance_start = int(time.time() * 1000)
         super().post_rebalance()
+        self.post_rebalance_end = int(time.time() * 1000)
         self.worker_manager.abort_all_tasks()
 
     def _get_latency_windows(self) -> list[TimeseriesWindow]:
         return [
-            TimeseriesWindow(start_ts=-1, end_ts=self.pre_rebalance_end, label="pre"),
             TimeseriesWindow(
-                start_ts=self.pre_rebalance_end, end_ts=self.post_rebalance_start, label="during"
+                start_ts_ms=self.pre_rebalance_start, end_ts_ms=self.pre_rebalance_end, label="pre"
             ),
-            TimeseriesWindow(start_ts=self.post_rebalance_start, end_ts=float("inf"), label="post"),
+            TimeseriesWindow(
+                start_ts_ms=self.pre_rebalance_end,
+                end_ts_ms=self.post_rebalance_start,
+                label="during",
+            ),
+            TimeseriesWindow(
+                start_ts_ms=self.post_rebalance_start,
+                end_ts_ms=self.post_rebalance_end,
+                label="post",
+            ),
         ]
 
     def _report_kpi(self, *args, **kwargs):
@@ -206,8 +216,6 @@ class RebalanceKVTest(RebalanceTest):
             return
 
         latency_windows = self._get_latency_windows()
-        logger.info(f"Latency windows: {latency_windows}")
-
         percentiles = self.test_config.access_settings.latency_percentiles
         for operation in ("get", "set", "durable_set"):
             for value, snapshots, metric_info in self.metrics.percentile_kv_latency(

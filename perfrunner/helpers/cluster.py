@@ -1158,10 +1158,11 @@ class CapellaClusterManager(ClusterManagerBase):
     def create_buckets(self):
         mem_quota = self.test_config.cluster.mem_quota
 
-        logger.info("Getting free memory available for buckets on Capella cluster.")
-        mem_info = self.rest.get_bucket_mem_available(next(self.cluster_spec.masters))
-        mem_quota = mem_info["free"]
-        logger.info(f"Free memory for buckets (per node): {mem_quota}MB")
+        if not mem_quota:
+            logger.info("Getting free memory available for buckets on Capella cluster.")
+            mem_info = self.rest.get_bucket_mem_available(next(self.cluster_spec.masters))
+            mem_quota = mem_info["free"]
+            logger.info(f"Free memory for buckets (per node): {mem_quota}MB")
 
         mem_quota -= (
             self.test_config.cluster.eventing_metadata_bucket_mem_quota

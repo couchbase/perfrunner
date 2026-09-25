@@ -801,13 +801,11 @@ class SGEventingTest(SGPerfTest, FunctionsTimeTest):
             total_writes += writes
         logger.info(f"Total docs imported: {total_import_count}")
         logger.info(f"Total SGW docs written: {total_writes}")
-        bucket_replica = self.test_config.bucket.replica_number
         num_items = 0
         for bucket_name in self.test_config.buckets:
-            num_items += self.monitor.get_num_items(host=self.cluster_spec.servers[0],
-                                                    bucket=bucket_name,
-                                                    bucket_replica=bucket_replica)
-        num_items = num_items / (bucket_replica + 1)
+            num_items += self.monitor.get_num_items(
+                host=self.cluster_spec.servers[0], bucket=bucket_name, include_replicas=False
+            )
 
         logger.info(f"Total items in bucket: {num_items}")
 

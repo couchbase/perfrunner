@@ -403,22 +403,11 @@ class Monitor:
                                     stats_function=self.rest.get_xdcr_stats)
         return time.time()
 
-    def get_num_items(self, host: str, bucket: str, bucket_replica: int):
-        num_items = self._get_num_items(host, bucket, bucket_replica, total=True)
-        return num_items
-
-    def _get_num_items(
-        self, host: str, bucket: str, bucket_replica: int, total: bool = False
-    ) -> int:
-        stats = self.rest.get_bucket_stats(host=host, bucket=bucket)
-        if total:
-            curr_items = stats['op']['samples'].get('curr_items_tot')
-        else:
-            curr_items = stats['op']['samples'].get('curr_items')
+    def get_num_items(self, host: str, bucket: str, include_replicas: bool = True) -> int:
+        samples = self.rest.get_bucket_stats(host=host, bucket=bucket)["op"]["samples"]
+        curr_items = samples.get("curr_items_tot" if include_replicas else "curr_items")
         if curr_items:
-            return self._ignore_system_collection_items(
-                host=host, bucket=bucket, bucket_replica=bucket_replica, curr_items=curr_items[-1]
-            )
+            return curr_items[-1] - self._get_num_ignored_items(host, bucket, include_replicas)
         return 0
 
     def _get_num_items_scope_and_collection(self, host: str, bucket: str, scope: str,
@@ -428,55 +417,64 @@ class Monitor:
             return sum(int(d['values'][-1][1]) for d in stats['data'])
         return 0
 
-    def _ignore_system_collection_items(
-        self, host: str, bucket: str, bucket_replica: int, curr_items: int
-    ) -> int:
-        sys_coll_items = self._get_num_items_scope_and_collection(host, bucket, '_system')
-        replica_sys_coll_items = sys_coll_items * (1 + bucket_replica)
-        awr_coll_items = self._get_num_items_scope_and_collection(
-            host, self.awr_bucket, self.awr_scope
-        )
-        replica_awr_coll_items = awr_coll_items * (1 + bucket_replica)
-        logger.info(
-            f"Ignoring items in _system collection: {sys_coll_items} (active), "
-            f"{replica_sys_coll_items} (total)"
-        )
-        logger.info(
-            f"Ignoring items in scope-awr collection: {awr_coll_items} (active), "
-            f"{replica_awr_coll_items} (total)"
-        )
-        return curr_items - replica_sys_coll_items - replica_awr_coll_items
+    def _get_num_ignored_items(self, host: str, bucket: str, include_replicas: bool) -> int:
+        """Count the items in collections that tests don't load: `_system`, and query AWR's."""
+        sys_items = self._get_num_items_scope_and_collection(host, bucket, "_system")
+        awr_items = 0
+        if bucket == self.awr_bucket:
+            awr_items = self._get_num_items_scope_and_collection(host, bucket, self.awr_scope)
+
+        ignored_items = sys_items + awr_items
+        if ignored_items:
+            logger.info(
+                f"Ignoring active items in {bucket}: {sys_items} in _system, "
+                f"{awr_items} in {self.awr_scope}"
+            )
+            if include_replicas:
+                # Collection item counts only cover active vbuckets
+                replica_number = int(self.rest.get_bucket_info(host, bucket)["replicaNumber"])
+                ignored_items *= 1 + replica_number
+
+        return ignored_items
 
     def monitor_num_items(
-        self, host: str, bucket: str, bucket_replica: int, num_items: int, max_retry: int = None
+        self,
+        host: str,
+        bucket: str,
+        num_items: int,
+        tolerance_percent: float = 0.0,
+        max_retry: Optional[int] = None,
     ):
-        logger.info(f"Checking the number of items in {bucket}")
+        logger.info(
+            f"Checking the number of items in {bucket} (tolerance = {tolerance_percent:.1f}%)"
+        )
 
         if not max_retry:
             max_retry = self.MAX_RETRY
 
         retries = 0
         while retries < max_retry:
-            curr_items = self._get_num_items(host, bucket, bucket_replica, total=True)
-            if curr_items == num_items:
+            curr_items = self.get_num_items(host, bucket)
+            if abs(num_items - curr_items) <= (num_items * tolerance_percent / 100):
+                if curr_items != num_items:
+                    logger.warning(
+                        "Mismatch in the number of items, "
+                        f"but within {tolerance_percent:.1f}% tolerance: {curr_items}"
+                    )
                 break
-            else:
-                logger.info(f"{curr_items}(curr_items) != {num_items}(num_items)")
 
+            logger.info(f"{curr_items}(curr_items) != {num_items}(num_items)")
             time.sleep(self.POLLING_INTERVAL)
             retries += 1
         else:
-            actual_items = self._get_num_items(host, bucket, bucket_replica, total=True)
-            raise Exception(f"Mismatch in the number of items: {actual_items}")
+            raise Exception(f"Mismatch in the number of items: {curr_items}")
 
-    def monitor_num_backfill_items(
-        self, host: str, bucket: str, bucket_replica: int, num_items: int
-    ):
+    def monitor_num_backfill_items(self, host: str, bucket: str, num_items: int):
         logger.info(f"Checking the number of items in {bucket}")
 
         t0 = time.time()
         while True:
-            curr_items = self._get_num_items(host, bucket, bucket_replica, total=True)
+            curr_items = self.get_num_items(host, bucket)
 
             if curr_items == num_items:
                 t1 = time.time()
@@ -1242,7 +1240,6 @@ class Monitor:
         self,
         data_node: str,
         bucket: str,
-        bucket_replica: int,
         analytics_node: str,
         scope: Optional[str] = None,
         coll: Optional[str] = None,
@@ -1259,7 +1256,7 @@ class Monitor:
             source_items = self._get_num_items_scope_and_collection(data_node, bucket, scope, coll)
             source = f"{bucket}.{scope}" + (f".{coll}" if coll else "")
         else:
-            source_items = self._get_num_items(data_node, bucket, bucket_replica)
+            source_items = self.get_num_items(data_node, bucket, include_replicas=False)
             source = bucket
 
         if (analytics_node_version > (8, 0, 0, 0)) or (
@@ -1423,14 +1420,12 @@ class Monitor:
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info(f"Failed to get timer event for function: {function}")
 
-    def wait_for_all_mutations_processed(
-        self, host: str, bucket1: str, bucket2: str, bucket_replica: int
-    ):
+    def wait_for_all_mutations_processed(self, host: str, bucket1: str, bucket2: str):
         logger.info('Waiting for mutations to be processed of eventing function')
         retry = 1
         while retry < self.MAX_RETRY_BOOTSTRAP:
-            bucket1_items = self._get_num_items(host, bucket1, bucket_replica)
-            bucket2_items = self._get_num_items(host, bucket2, bucket_replica)
+            bucket1_items = self.get_num_items(host, bucket1, include_replicas=False)
+            bucket2_items = self.get_num_items(host, bucket2, include_replicas=False)
             if bucket1_items == bucket2_items:
                 break
             retry += 1
@@ -1464,22 +1459,6 @@ class Monitor:
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info(f"Function {function} failed to {status}...!!!")
-
-    def monitor_eventing(self, eventing_nodes: list[str], bucket_name: str, bucket_replica: int):
-        previous_docs = 0
-        while True:
-            events_remaining = 0
-            for node in eventing_nodes:
-                stats = self.rest.get_eventing_stats(node=node)
-                for fun_stat in stats:
-                    events_remaining += fun_stat.get("events_remaining", {}).get("dcp_backlog", 0)
-            docs = self.get_num_items(host=self.cluster_spec.servers[0], bucket=bucket_name,
-                                      bucket_replica=bucket_replica)
-            logger.info(f"Events remaining: {events_remaining}")
-            if events_remaining == 0 and docs == previous_docs:
-                return
-            previous_docs = docs
-            time.sleep(self.POLLING_INTERVAL_EVENTING)
 
     def wait_for_fragmentation_stable(self, host: str, bucket: str,
                                       target_fragmentation: int = 50):

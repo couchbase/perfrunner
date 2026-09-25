@@ -1015,10 +1015,9 @@ class AnalyticsTest(PerfTest):
             self.load_kv_data()
 
         num_items = 0
-        bucket_replica = self.test_config.bucket.replica_number
         for bucket in self.test_config.buckets:
             num_items += self.monitor.monitor_data_synced(
-                self.data_node, bucket, bucket_replica, self.analytics_node
+                self.data_node, bucket, self.analytics_node
             )
         return num_items, time.time() - t0
 
@@ -2656,7 +2655,6 @@ class TransformOnIngestTest(AnalyticsTest):
             self.monitor.monitor_data_synced(
                 data_node=self.data_node,
                 bucket=bucket,
-                bucket_replica=self.test_config.bucket.replica_number,
                 analytics_node=self.analytics_node,
                 scope=scope,
                 coll=coll,
@@ -2916,7 +2914,6 @@ class RemoteDatasetTruncateTest(StandaloneDatasetTruncateTest):
         self.monitor.monitor_data_synced(
             self.data_node,
             dataset.source_bucket,
-            self.test_config.bucket.replica_number,
             self.analytics_node,
             dataset.source_scope,
             dataset.source_collection,
@@ -3185,11 +3182,8 @@ class ScanTest(AnalyticsTest):
         self.create_and_analyze_datasets()
         self.link_manager.connect(self.couchbase_link_name)
 
-        bucket_replica = self.test_config.bucket.replica_number
         for bucket in self.test_config.buckets:
-            self.monitor.monitor_data_synced(
-                self.data_node, bucket, bucket_replica, self.analytics_node
-            )
+            self.monitor.monitor_data_synced(self.data_node, bucket, self.analytics_node)
 
     def run(self):
         self.restore_local()

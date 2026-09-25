@@ -349,7 +349,6 @@ class FunctionsTimeTest(EventingTest):
             host=self.master_node,
             bucket1=self.test_config.buckets[0],
             bucket2=self.test_config.eventing_buckets[0],
-            bucket_replica=self.test_config.bucket.replica_number,
         )
 
     @with_stats

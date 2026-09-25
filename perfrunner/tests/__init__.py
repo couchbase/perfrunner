@@ -477,42 +477,52 @@ class PerfTest:
             for server in index_nodes:
                 self.monitor.monitor_indexing(server)
 
-    def check_num_items(self, bucket_items: dict = None, max_retry: int = None,
-                        target_iterator: TargetIterator = None):
+    def check_num_items(
+        self,
+        bucket_items: Optional[dict] = None,
+        max_retry: Optional[int] = None,
+        target_iterator: Optional[TargetIterator] = None,
+        tolerance_percent: float = 0.0,
+    ):
         target_iterator = target_iterator or self.target_iterator
         bucket_replica = self.test_config.bucket.replica_number
+
+        target_items: list[tuple[str, str, int]] = []
+
         if bucket_items:
+            target_items = [
+                (target.node, target.bucket, bucket_items[target.bucket])
+                for target in target_iterator
+                if target.bucket in bucket_items
+            ]
+        elif getattr(self.test_config.load_settings, "collections", None):
             for target in target_iterator:
-                num_items = bucket_items.get(target.bucket, None)
-                if num_items:
-                    num_items = num_items * (1 + self.test_config.bucket.replica_number)
-                    self.monitor.monitor_num_items(
-                        target.node, target.bucket, bucket_replica, num_items, max_retry=max_retry
-                    )
-        elif getattr(self.test_config.load_settings, 'collections', None):
-            for target in target_iterator:
-                total_load_distribution_ratio = 0
-                target_scope_collections = self.test_config.load_settings.collections[target.bucket]
-                for scope in target_scope_collections.keys():
-                    for options in target_scope_collections[scope].values():
-                        if options['load'] == 1:
-                            total_load_distribution_ratio += options.get('ratio', 1)
-                            # assuming if ratio is not specified default ratio is 1:1
-                num_items = \
-                    (self.test_config.load_settings.items // total_load_distribution_ratio) * \
-                    total_load_distribution_ratio * \
-                    (1 + self.test_config.bucket.replica_number)
-                self.monitor.monitor_num_items(
-                    target.node, target.bucket, bucket_replica, num_items, max_retry=max_retry
+                target_scope_colls = self.test_config.load_settings.collections[target.bucket]
+                total_load_distribution_ratio = sum(
+                    options.get("ratio", 1)
+                    for coll in target_scope_colls.values()
+                    for options in coll.values()
+                    if options["load"] == 1
                 )
+                active_items = (
+                    self.test_config.load_settings.items // total_load_distribution_ratio
+                ) * total_load_distribution_ratio
+
+                target_items.append((target.node, target.bucket, active_items))
         else:
-            num_items = self.test_config.load_settings.items * (
-                1 + self.test_config.bucket.replica_number
+            active_items = self.test_config.load_settings.items
+            target_items = [
+                (target.node, target.bucket, active_items) for target in target_iterator
+            ]
+
+        for host, bucket, active_items in target_items:
+            self.monitor.monitor_num_items(
+                host,
+                bucket,
+                active_items * (1 + bucket_replica),
+                tolerance_percent,
+                max_retry,
             )
-            for target in target_iterator:
-                self.monitor.monitor_num_items(
-                    target.node, target.bucket, bucket_replica, num_items, max_retry=max_retry
-                )
 
     def reset_kv_stats(self):
         master_node = next(self.cluster_spec.masters)

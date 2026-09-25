@@ -513,25 +513,22 @@ class BiDirXdcrInitTest(XdcrInitTest):
     def _report_kpi(self, time_elapsed):
         logger.info(f"Time elapsed is: {time_elapsed}")
         m1, m2 = self.cluster_spec.masters
-        bucket_replica = self.test_config.bucket.replica_number
-        m1_bucket_docs = self.monitor.get_num_items(host=m1, bucket="bucket-1",
-                                                    bucket_replica=bucket_replica)
+        m1_bucket_docs = self.monitor.get_num_items(host=m1, bucket="bucket-1")
         logger.info(f"Number of docs in bucket-1 on {m1} is: {m1_bucket_docs}")
-        m2_bucket_docs = self.monitor.get_num_items(host=m2, bucket="bucket-1",
-                                                    bucket_replica=bucket_replica)
+        m2_bucket_docs = self.monitor.get_num_items(host=m2, bucket="bucket-1")
         logger.info(f"Number of docs in bucket-1 on {m2} is: {m2_bucket_docs}")
         total_docs = (
             m1_bucket_docs + m2_bucket_docs
         )
         if self.test_config.cluster.conflict_buckets != 0:
             m1_conflict_bucket_docs = self.monitor.get_num_items(
-                host=m1, bucket="conflict-bucket-1", bucket_replica=bucket_replica
+                host=m1, bucket="conflict-bucket-1"
             )
             logger.info(
                 f"Number of docs in conflict-bucket-1 on {m1} is: {m1_conflict_bucket_docs}"
             )
             m2_conflict_bucket_docs = self.monitor.get_num_items(
-                host=m2, bucket="conflict-bucket-1", bucket_replica=bucket_replica
+                host=m2, bucket="conflict-bucket-1"
             )
             logger.info(
                 f"Number of docs in conflict-bucket-1 on {m2} is: {m2_conflict_bucket_docs}"
@@ -1239,11 +1236,8 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
 
     def get_replicated_docs(self, host: str):
         num_items = 0
-        bucket_replica = self.test_config.bucket.replica_number
         for bucket in self.test_config.buckets:
-            num_items = self.monitor.get_num_items(
-                host=host, bucket=bucket, bucket_replica=bucket_replica
-            )
+            num_items = self.monitor.get_num_items(host=host, bucket=bucket)
         return num_items
 
     def create_backfill_replication(self, replication_id: str):
@@ -1260,10 +1254,9 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
 
     def monitor_backfill_replication(self, dest_host: str, num_items: int):
         backfill_time = 0
-        bucket_replica = self.test_config.bucket.replica_number
         for bucket in self.test_config.buckets:
             backfill_time = self.monitor.monitor_num_backfill_items(
-                host=dest_host, bucket=bucket, bucket_replica=bucket_replica, num_items=num_items
+                host=dest_host, bucket=bucket, num_items=num_items
             )
         return backfill_time
 

@@ -7,6 +7,7 @@ import shutil
 import socket
 import subprocess
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
 from hashlib import md5
@@ -390,20 +391,39 @@ def run_aws_cli_command(command_template: str, *args, profile: str = "") -> Opti
     return None
 
 
-def parse_prometheus_stat(stats, stat_name: str):
-    stat_count = 0
-    stat = stats.find(stat_name)
-    stat_list = []
-    while stat != -1:
-        stat_list.append(stat)
-        stat = stats.find(stat_name, stat + 1)
-    last = stats.find("# HELP", stat_list[-1] + 1)
-    stat_list.append(last)
-    for i in range(2, len(stat_list) - 1):
-        stat_str = stats[stat_list[i]:stat_list[i+1]]
-        a = stat_str.find("}")
-        stat_count += int(float(stat_str[a+2:]))
-    return stat_count
+_PROMETHEUS_SAMPLE = re.compile(
+    r"^(?P<name>[a-zA-Z_:][a-zA-Z0-9_:]*)(?:\{(?P<labels>.*)\})?\s+(?P<value>\S+)"
+)
+_PROMETHEUS_LABEL = re.compile(r'([a-zA-Z_][a-zA-Z0-9_]*)="((?:[^"\\]|\\.)*)"')
+
+
+def iter_prometheus_samples(stats: str) -> Iterator[tuple[str, dict[str, str], float]]:
+    """Yield ``(name, labels, value)`` for every sample in Prometheus text exposition format.
+
+    Lines that are not a sample (comments, blanks, anything without a numeric value) are skipped.
+    """
+    for line in stats.splitlines():
+        if line.startswith("#") or not (match := _PROMETHEUS_SAMPLE.match(line)):
+            continue
+        try:
+            value = float(match["value"])
+        except ValueError:
+            continue
+        labels = dict(_PROMETHEUS_LABEL.findall(match["labels"] or ""))
+        yield match["name"], labels, value
+
+
+def parse_prometheus_stat(stats: str, stat_name: str, **labels: str) -> float:
+    """Return the sum of every ``stat_name`` sample whose labels include ``labels``.
+
+    The name must match exactly, so ``sgw_database_num_doc_writes`` does not also count
+    ``sgw_database_num_doc_writes_rejected``. A stat that is not exposed sums to 0.
+    """
+    return sum(
+        value
+        for name, sample_labels, value in iter_prometheus_samples(stats)
+        if name == stat_name and labels.items() <= sample_labels.items()
+    )
 
 
 def create_build_tuple(build_str: str) -> tuple[int]:

@@ -371,7 +371,7 @@ class SGPerfTest(PerfTest):
         self, sg_master: str, expected_docs: int, replication_id: str, version: int
     ):
         time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(
-            sg_master, self.test_config.cluster.num_buckets, expected_docs, replication_id, version
+            sg_master, expected_docs, replication_id, version
         )
         return time_elapsed, items_in_range
 
@@ -417,16 +417,15 @@ class SGPerfTest(PerfTest):
                 logger.warning(ex)
 
     def check_num_warnings(self):
-        warn_count = 0
-        if not self.capella_infra:
-            for host in self.cluster_spec.sgw_servers:
-                stats = self.rest.get_sg_stats(host)
-                warn_count += int(stats['syncgateway']['global']
-                                       ['resource_utilization']['warn_count'])
-        else:
-            host = self.cluster_spec.sgw_servers[0]
-            stats = self.rest.get_sg_stats(host)
-            warn_count = parse_prometheus_stat(stats, "sgw_resource_utilization_warn_count")
+        hosts = self.cluster_spec.sgw_servers
+        if self.capella_infra:
+            hosts = hosts[:1]
+        warn_count = sum(
+            int(parse_prometheus_stat(
+                self.rest.get_sg_stats(host), "sgw_resource_utilization_warn_count"
+            ))
+            for host in hosts
+        )
 
         if warn_count > 1000:
             return warn_count
@@ -785,29 +784,20 @@ class SGEventingTest(SGPerfTest, FunctionsTimeTest):
         self.load_docs()
         self.run_test()
 
-    def get_sgw_writes(self, host: str, num_buckets: int):
+    def get_sgw_writes(self, host: str) -> int:
         stats = self.rest.get_sg_stats(host=host)
-        sg_writes = 0
-        if not self.cluster_spec.capella_infrastructure:
-            for count in range(1, num_buckets + 1):
-                db = f'db-{count}'
-                if 'database' in (db_stats := stats['syncgateway']['per_db'][db]):
-                    sg_writes += int(db_stats['database']['num_doc_writes'])
-        else:
-            sg_writes = parse_prometheus_stat(stats, "sgw_database_num_doc_writes")
-        return sg_writes
+        return int(parse_prometheus_stat(stats, "sgw_database_num_doc_writes"))
 
     def print_stats(self):
         total_import_count = 0
         total_writes = 0
-        num_buckets = self.test_config.cluster.num_buckets
         for i in range(self.test_config.syncgateway_settings.import_nodes):
             server = self.cluster_spec.sgw_servers[i]
-            import_count = self.monitor.get_import_count(host=server, num_buckets=num_buckets)
+            import_count = self.monitor.get_import_count(host=server)
             total_import_count += import_count
         for i in range(self.test_config.syncgateway_settings.nodes):
             server = self.cluster_spec.sgw_servers[i]
-            writes = self.get_sgw_writes(host=server, num_buckets=num_buckets)
+            writes = self.get_sgw_writes(host=server)
             total_writes += writes
         logger.info(f"Total docs imported: {total_import_count}")
         logger.info(f"Total SGW docs written: {total_writes}")
@@ -983,16 +973,15 @@ class SGImportThroughputTest(SGPerfTest):
         logger.info(f'remaining_docs :{remaining_docs}')
 
         time_elapsed, items_in_range = self.monitor.monitor_sgimport_queues(
-            host, num_buckets, expected_docs
+            host, expected_docs
         )
         return time_elapsed, items_in_range
 
     def initial_import_count(self):
         total_initial_docs = 0
-        num_buckets = self.test_config.cluster.num_buckets
         for i in range(self.test_config.syncgateway_settings.import_nodes):
             server = self.cluster_spec.sgw_servers[i]
-            import_count = self.monitor.get_import_count(host=server, num_buckets=num_buckets)
+            import_count = self.monitor.get_import_count(host=server)
             total_initial_docs += import_count
             if self.capella_infra:
                 break
@@ -1015,14 +1004,13 @@ class SGImportThroughputTest(SGPerfTest):
         importing = True
 
         start_time = time()
-        num_buckets = self.test_config.cluster.num_buckets
 
         while importing:
             sleep(sleep_delay)
             total_count = 0
             for i in range(self.test_config.syncgateway_settings.import_nodes):
                 server = self.cluster_spec.sgw_servers[i]
-                import_count = self.monitor.get_import_count(host=server, num_buckets=num_buckets)
+                import_count = self.monitor.get_import_count(host=server)
                 logger.info(f'import count : {import_count} , host : {server}')
                 total_count += import_count
             if total_count >= expected_docs:
@@ -1116,9 +1104,7 @@ class SGImportLatencyTest(SGPerfTest):
     def monitor_sg_import(self):
         host = self.cluster_spec.sgw_servers[0]
         expected_docs = self.test_config.load_settings.items
-        self.monitor.monitor_sgimport_queues(
-            host, self.test_config.cluster.num_buckets, expected_docs
-        )
+        self.monitor.monitor_sgimport_queues(host, expected_docs)
 
     @with_stats
     @with_profiles
@@ -1716,7 +1702,7 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
         # This overrides to avoid triggering profiles and stats twice since
         # `run_replicate` already does this
         time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(
-            sg_master, self.test_config.cluster.num_buckets, expected_docs, replication_id, version
+            sg_master, expected_docs, replication_id, version
         )
         return time_elapsed, items_in_range
 
@@ -2026,7 +2012,6 @@ class DeltaSync(SGPerfTest):
     def get_bytes_transfer(self):
         return self.monitor.deltasync_bytes_transfer(
             host=self.cluster_spec.sgw_servers[0],
-            num_buckets=self.test_config.cluster.num_buckets,
             replication_mode=self.test_config.syncgateway_settings.replication_type,
         )
 
@@ -2237,11 +2222,11 @@ class EndToEndTest(SGPerfTest):
         sgw_servers = self.settings.syncgateway_settings.nodes
         sg_servers = self.cluster_spec.sgw_servers[0:sgw_servers]
         sgw_t0, start_push_count = self.monitor.wait_sgw_push_start(
-            sg_servers, self.test_config.cluster.num_buckets, initial_docs
+            sg_servers, initial_docs
         )
         logger.info("waiting for push complete...")
         sgw_t1, end_push_count = self.monitor.wait_sgw_push_docs(
-            sg_servers, self.test_config.cluster.num_buckets, initial_docs + target_docs
+            sg_servers, initial_docs + target_docs
         )
         sgw_time = sgw_t1 - sgw_t0
         observed_pushed = end_push_count-start_push_count
@@ -2254,11 +2239,11 @@ class EndToEndTest(SGPerfTest):
         sg_servers = self.cluster_spec.sgw_servers[0:sgw_servers]
         logger.info(f'Initial docs: {initial_docs}, Target docs: {target_docs}')
         sgw_t0, start_pull_count = self.monitor.wait_sgw_pull_start(
-            sg_servers, self.test_config.cluster.num_buckets, initial_docs
+            sg_servers, initial_docs
         )
         logger.info("waiting for pull complete...")
         sgw_t1, end_pull_count = self.monitor.wait_sgw_pull_docs(
-            sg_servers, self.test_config.cluster.num_buckets, initial_docs + target_docs
+            sg_servers, initial_docs + target_docs
         )
         sgw_time = sgw_t1 - sgw_t0
         observed_pulled = end_pull_count - start_pull_count
@@ -2269,46 +2254,24 @@ class EndToEndTest(SGPerfTest):
     def post_delta_stats(self):
         sgw_servers = self.settings.syncgateway_settings.nodes
         sg_servers = self.cluster_spec.sgw_servers[0:sgw_servers]
+        if self.capella_infra:
+            sg_servers = sg_servers[:1]
         pull_count = 0
         push_count = 0
         for host in sg_servers:
             sgw_stats = self.rest.get_sg_stats(host)
-            if not self.capella_infra:
-                logger.info(f'Sync-gateway Stats for host {host}: \
-                            {pretty_dict(sgw_stats["syncgateway"]["per_db"])}')
-                for count in range(1, self.test_config.cluster.num_buckets + 1):
-                    db = f'db-{count}'
-                    pull_count += \
-                        int(sgw_stats['syncgateway']['per_db'][db]
-                                     ['cbl_replication_pull']['rev_send_count'])
-                    push_count += \
-                        int(sgw_stats['syncgateway']['per_db'][db]
-                                     ['cbl_replication_push']['doc_push_count'])
-            else:
-                stat = sgw_stats.find("sgw_replication_pull_rev_send_count")
-                stat_list = []
-                while stat != -1:
-                    stat_list.append(stat)
-                    stat = sgw_stats.find("sgw_replication_pull_rev_send_count", stat + 1)
-                last = sgw_stats.find("# HELP", stat_list[-1] + 1)
-                stat_list.append(last)
-                for i in range(2, len(stat_list) - 1):
-                    str = sgw_stats[stat_list[i]:stat_list[i+1]]
-                    a = str.find("}")
-                    pull_count += int(float(str[a+2:]))
-
-                stat = sgw_stats.find("sgw_replication_push_doc_push_count")
-                stat_list = []
-                while stat != -1:
-                    stat_list.append(stat)
-                    stat = sgw_stats.find("sgw_replication_push_doc_push_count", stat + 1)
-                last = sgw_stats.find("# HELP", stat_list[-1] + 1)
-                stat_list.append(last)
-                for i in range(2, len(stat_list) - 1):
-                    str = sgw_stats[stat_list[i]:stat_list[i+1]]
-                    a = str.find("}")
-                    push_count += int(float(str[a+2:]))
-                break
+            host_pull_count = int(
+                parse_prometheus_stat(sgw_stats, "sgw_replication_pull_rev_send_count")
+            )
+            host_push_count = int(
+                parse_prometheus_stat(sgw_stats, "sgw_replication_push_doc_push_count")
+            )
+            logger.info(
+                f"Sync-gateway stats for host {host}: rev_send_count={host_pull_count}, "
+                f"doc_push_count={host_push_count}"
+            )
+            pull_count += host_pull_count
+            push_count += host_push_count
         return {"pull_count": pull_count, "push_count": push_count}
 
     def print_ycsb_logs(self):

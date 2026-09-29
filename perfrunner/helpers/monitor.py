@@ -1491,52 +1491,32 @@ class Monitor:
                 break
             time.sleep(self.POLLING_INTERVAL)
 
-    def monitor_sgimport_queues(
-        self,
-        host: str,
-        num_buckets: int,
-        expected_docs: int,
-    ):
+    def monitor_sgimport_queues(self, host: str, expected_docs: int):
         logger.info('Monitoring SGImport items:')
-        initial_items, start_time = self._wait_for_sg_import_start(host, num_buckets)
+        initial_items, start_time = self._wait_for_sg_import_start(host)
         items_in_range = expected_docs - initial_items
-        time_taken = self._wait_for_sg_import_complete(host, num_buckets, expected_docs, start_time)
+        time_taken = self._wait_for_sg_import_complete(host, expected_docs, start_time)
         return time_taken, items_in_range
 
-    def get_import_count(self, host: str, num_buckets: int):
+    def get_import_count(self, host: str) -> int:
         stats = self.rest.get_sg_stats(host=host)
-        import_count = 0
-        if not self.cluster_spec.capella_infrastructure:
-            if 'syncGateway_import' in stats.keys():
-                import_count = int(stats['syncGateway_import']['import_count'])
-            else:
-                for count in range(1, num_buckets + 1):
-                    db = f'db-{count}'
-                    if 'shared_bucket_import' in (db_stats :=
-                                                  stats['syncgateway']['per_db'][db]):
-                        import_count += int(db_stats['shared_bucket_import']['import_count'])
-        else:
-            import_count = misc.parse_prometheus_stat(stats,
-                                                      "sgw_shared_bucket_import_import_count")
-        return import_count
+        return int(misc.parse_prometheus_stat(stats, "sgw_shared_bucket_import_import_count"))
 
-    def _wait_for_sg_import_start(self, host: str, num_buckets: int):
+    def _wait_for_sg_import_start(self, host: str):
         logger.info('Checking if import process started')
 
         start_time = time.time()
         import_docs = 0
         while True:
             time.sleep(self.POLLING_INTERVAL)
-            import_docs = self.get_import_count(host, num_buckets)
+            import_docs = self.get_import_count(host)
             if import_docs >= 1:
                 logger.info('importing docs has started')
                 return import_docs, time.time()
             if time.time() - start_time > 300:
                 raise Exception("timeout of 300 seconds exceeded")
 
-    def _wait_for_sg_import_complete(
-        self, host: str, num_buckets: int, expected_docs: int, start_time
-    ):
+    def _wait_for_sg_import_complete(self, host: str, expected_docs: int, start_time):
         expected_docs = expected_docs
         start_time = start_time
         logger.info('Monitoring syncgateway import status :')
@@ -1545,7 +1525,7 @@ class Monitor:
 
         while True:
             time.sleep(self.POLLING_INTERVAL * 4)
-            imports = self.get_import_count(host, num_buckets)
+            imports = self.get_import_count(host)
             logger.info(f"Docs imported: {imports}")
             if imports >= expected_docs:
                 end_time = time.time()
@@ -1555,7 +1535,7 @@ class Monitor:
                 raise Exception("timeout of 2400 seconds exceeded")
 
     def monitor_sgreplicate(
-        self, host: str, num_buckets: int, expected_docs: int, replicate_id: str, version: int
+        self, host: str, expected_docs: int, replicate_id: str, version: int
     ):
         logger.info('Monitoring SGReplicate items:')
         initial_items, start_time = self._wait_for_sg_replicate_start(host, replicate_id, version)
@@ -1563,7 +1543,7 @@ class Monitor:
         items_in_range = expected_docs - initial_items
         logger.info(f"items in range: {items_in_range}")
         time_taken, final_items = self._wait_for_sg_replicate_complete(
-            host, num_buckets, expected_docs, start_time, replicate_id, version
+            host, expected_docs, start_time, replicate_id, version
         )
 
         if replicate_id == 'sgr2_conflict_resolution':
@@ -1617,7 +1597,6 @@ class Monitor:
     def _wait_for_sg_replicate_complete(
         self,
         host: str,
-        num_buckets: int,
         expected_docs: int,
         start_time: float,
         replicate_id: str,
@@ -1661,17 +1640,16 @@ class Monitor:
             logger.info(f"Docs replicated: {replicate_docs}")
             if replicate_id == 'sgr2_conflict_resolution':
                 sg_stats = self.rest.get_sg_stats(host=host)
-                local_count = 0
-                remote_count = 0
-                merge_count = 0
-                num_docs_pushed = 0
-                for count in range(1, num_buckets + 1):
-                    db = f"db-{count}"
-                    sgr_stats = sg_stats['syncgateway']['per_db'][db]['replications'][replicate_id]
-                    local_count += int(sgr_stats['sgr_conflict_resolved_local_count'])
-                    remote_count += int(sgr_stats['sgr_conflict_resolved_remote_count'])
-                    merge_count += int(sgr_stats['sgr_conflict_resolved_merge_count'])
-                    num_docs_pushed += int(sgr_stats['sgr_num_docs_pushed'])
+
+                def sgr_stat(name: str) -> int:
+                    return int(misc.parse_prometheus_stat(
+                        sg_stats, f"sgw_replication_{name}", replication=replicate_id
+                    ))
+
+                local_count = sgr_stat("sgr_conflict_resolved_local_count")
+                remote_count = sgr_stat("sgr_conflict_resolved_remote_count")
+                merge_count = sgr_stat("sgr_conflict_resolved_merge_count")
+                num_docs_pushed = sgr_stat("sgr_num_docs_pushed")
                 if ((local_count + remote_count + merge_count) == int(expected_docs/2)) \
                         and (local_count == num_docs_pushed):
                     end_time = time.time()
@@ -1687,63 +1665,39 @@ class Monitor:
             if time.time() - start_time > 1800:
                 raise Exception("timeout of 1800 seconds exceeded")
 
-    def deltasync_stats(self, host: str, db: str):
-        stats = self.rest.get_expvar_stats(host)
-        if 'delta_sync' in stats['syncgateway']['per_db'][db].keys():
-            return stats['syncgateway']['per_db'][db]
-        else:
+    def deltasync_stats(self, host: str, db: str) -> dict[str, float]:
+        """Return every stat of database ``db``, summed over its collections."""
+        db_stats = {}
+        for name, labels, value in misc.iter_prometheus_samples(self.rest.get_sg_stats(host)):
+            if labels.get("database") == db:
+                db_stats[name] = db_stats.get(name, 0) + value
+        if not any(name.startswith("sgw_delta_sync_") for name in db_stats):
             logger.info('Delta Sync Disabled')
-            return stats['syncgateway']['per_db']
+        return db_stats
 
-    def deltasync_bytes_transfer(self, host: str, num_buckets: int, replication_mode: str):
-        stats = self.rest.get_expvar_stats(host)
-        bytes_transeferred = 0
+    def deltasync_bytes_transfer(self, host: str, replication_mode: str) -> float:
         if replication_mode == "PUSH":
-            replication_type = 'doc_writes_bytes_blip'
+            stat_name = "sgw_database_doc_writes_bytes_blip"
         else:
-            replication_type = 'doc_reads_bytes_blip'
-        for count in range(1, num_buckets + 1):
-            db = f"db-{count}"
-            bytes_transeferred += float(
-                    stats['syncgateway']['per_db'][db]['database'][replication_type])
-            return bytes_transeferred
+            stat_name = "sgw_database_doc_reads_bytes_blip"
+        return misc.parse_prometheus_stat(self.rest.get_sg_stats(host), stat_name)
 
-    def get_sgw_push_count(self, host: str, num_buckets: int):
+    def get_sgw_push_count(self, host: str) -> int:
         sgw_stats = self.rest.get_sg_stats(host)
-        push_count = 0
-        if not self.cluster_spec.capella_infrastructure:
-            for count in range(1, num_buckets + 1):
-                db = f"db-{count}"
-                push_count += \
-                    int(sgw_stats['syncgateway']['per_db'][db]
-                                 ['cbl_replication_push']['doc_push_count'])
-        else:
-            push_count = misc.parse_prometheus_stat(sgw_stats,
-                                                    "sgw_replication_push_doc_push_count")
-        return push_count
+        return int(misc.parse_prometheus_stat(sgw_stats, "sgw_replication_push_doc_push_count"))
 
-    def get_sgw_pull_count(self, host: str, num_buckets: int):
-        pull_count = 0
+    def get_sgw_pull_count(self, host: str) -> int:
         sgw_stats = self.rest.get_sg_stats(host)
-        if not self.cluster_spec.capella_infrastructure:
-            for count in range(1, num_buckets + 1):
-                db = f"db-{count}"
-                pull_count += \
-                    int(sgw_stats['syncgateway']['per_db'][db]
-                                 ['cbl_replication_pull']['rev_send_count'])
-        else:
-            pull_count = misc.parse_prometheus_stat(sgw_stats,
-                                                    "sgw_replication_pull_rev_send_count")
-        return pull_count
+        return int(misc.parse_prometheus_stat(sgw_stats, "sgw_replication_pull_rev_send_count"))
 
-    def wait_sgw_push_start(self, hosts: list[str], num_buckets: int, initial_docs: int):
+    def wait_sgw_push_start(self, hosts: list[str], initial_docs: int):
         retries = 0
         max_retries = 900
         while True:
             push_count = 0
             start_time = time.time()
             for host in hosts:
-                push_count += self.get_sgw_push_count(host, num_buckets)
+                push_count += self.get_sgw_push_count(host)
                 if self.cluster_spec.capella_infrastructure:
                     break
 
@@ -1756,14 +1710,14 @@ class Monitor:
                 )
             time.sleep(self.POLLING_INTERVAL_SGW)
 
-    def wait_sgw_pull_start(self, hosts: list[str], num_buckets: int, initial_docs: int):
+    def wait_sgw_pull_start(self, hosts: list[str], initial_docs: int):
         retries = 0
         max_retries = 900
         while True:
             pull_count = 0
             start_time = time.time()
             for host in hosts:
-                pull_count += self.get_sgw_pull_count(host, num_buckets)
+                pull_count += self.get_sgw_pull_count(host)
                 if self.cluster_spec.capella_infrastructure:
                     break
 
@@ -1776,7 +1730,7 @@ class Monitor:
                 )
             time.sleep(self.POLLING_INTERVAL_SGW)
 
-    def wait_sgw_push_docs(self, hosts: list[str], num_buckets: int, target_docs: int):
+    def wait_sgw_push_docs(self, hosts: list[str], target_docs: int):
         retries = 0
         max_retries = 360
         last_push_count = 0
@@ -1784,7 +1738,7 @@ class Monitor:
             push_count = 0
             finished_time = time.time()
             for host in hosts:
-                push_count += self.get_sgw_push_count(host, num_buckets)
+                push_count += self.get_sgw_push_count(host)
                 if self.cluster_spec.capella_infrastructure:
                     break
 
@@ -1800,7 +1754,7 @@ class Monitor:
             last_push_count = push_count
             time.sleep(self.POLLING_INTERVAL_SGW)
 
-    def wait_sgw_pull_docs(self, hosts: list[str], num_buckets: int, target_docs: int):
+    def wait_sgw_pull_docs(self, hosts: list[str], target_docs: int):
         retries = 0
         max_retries = 360
         last_pull_count = 0
@@ -1808,7 +1762,7 @@ class Monitor:
             pull_count = 0
             finished_time = time.time()
             for host in hosts:
-                pull_count += self.get_sgw_pull_count(host, num_buckets)
+                pull_count += self.get_sgw_pull_count(host)
                 if self.cluster_spec.capella_infrastructure:
                     break
 

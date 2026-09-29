@@ -42,6 +42,7 @@ QUERY_PORT = 8093
 QUERY_PORT_SSL = 18093
 SGW_ADMIN_PORT = 4985
 SGW_PUBLIC_PORT = 4984
+SGW_METRICS_PORT = 4986
 SGW_APPSERVICE_METRICS_PORT = 4988
 
 # Elasticsearch
@@ -1753,16 +1754,14 @@ class DefaultRestHelper(RestBase):
             .replace('Couchbase Sync Gateway/', '') \
             .replace(') EE', '').replace('(', '-').split(';')[0]
 
-    def get_sg_stats(self, host: str) -> dict:
+    def get_sg_stats(self, host: str) -> str:
+        """Return the Sync Gateway stats of ``host`` in Prometheus text exposition format."""
         if self.cluster_spec.capella_infrastructure:
             url = f"https://{host}:{SGW_APPSERVICE_METRICS_PORT}/metrics"
         else:
-            url = self._get_api_url(host=host, path='_expvar', plain_port=SGW_ADMIN_PORT,
-                                    ssl_port=SGW_ADMIN_PORT)
-        response = self.get(url=url)
-        if self.cluster_spec.capella_infrastructure:
-            return response.text
-        return response.json()
+            url = self._get_api_url(host=host, path='_metrics', plain_port=SGW_METRICS_PORT,
+                                    ssl_port=SGW_METRICS_PORT)
+        return self.get(url=url).text
 
     def start_sg_replication(self, host, payload):
         logger.info(f"Start sg replication. Payload: {payload}")
@@ -1786,21 +1785,6 @@ class DefaultRestHelper(RestBase):
             url = self._get_api_url(host=host, path='db-1/_replicationStatus',
                                     plain_port=SGW_ADMIN_PORT, ssl_port=SGW_ADMIN_PORT)
         response = self.get(url=url)
-        return response.json()
-
-    def get_expvar_stats(self, host: str) -> dict:
-        try:
-            if self.cluster_spec.capella_infrastructure:
-                url = f"https://{host}:{SGW_APPSERVICE_METRICS_PORT}/metrics"
-            else:
-                url = self._get_api_url(host=host, path='_expvar', plain_port=SGW_ADMIN_PORT,
-                                        ssl_port=SGW_ADMIN_PORT)
-            response = self.get(url=url)
-        except Exception as ex:
-            logger.info(f"Expvar request failed: {ex}")
-            raise ex
-        if self.cluster_spec.capella_infrastructure:
-            return response
         return response.json()
 
     def start_cblite_replication_push(

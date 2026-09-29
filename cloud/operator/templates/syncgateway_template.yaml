@@ -12,6 +12,7 @@ stringData:
       "admin_interface_authentication": false,
       "metrics_interface_authentication": false,
       "adminInterface": "0.0.0.0:4985",
+      "metricsInterface": "0.0.0.0:4986",
       "logging": {
         "console": {
           "enabled": true,

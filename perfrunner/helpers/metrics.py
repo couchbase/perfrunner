@@ -2830,23 +2830,21 @@ class MetricHelper:
     def avg_sg_cpu_usage(self, title) -> Metric:
         metric_id = f"{self.test_config.name}_Average_sg_cpu_usage"
         metric_title = f"{title}{self._title}"
-        if self.cluster_spec.capella_infrastructure:
-            metric = "sgw_resource_utilization_process_cpu_percent_utilization"
-        else:
-            metric = "syncgateway__global__resource_utilization__process_cpu_percent_utilization"
-        values = self._read_values(metric, "syncgateway_cluster_stats")
-        avg_cpu = round(self._mean(values) / 100, 2)
+        values = self._read_values("sgw_process_vcpus", "syncgateway_cluster_stats")
+        if not values:
+            raise ValueError(
+                "No sgw_process_vcpus samples to report SGW CPU usage from: it needs Sync Gateway "
+                "3.3+, which exposes go_sched_gomaxprocs_threads"
+            )
+        avg_cpu = round(self._mean(values), 2)
         return self._metric(avg_cpu, metric_id=metric_id, title=metric_title)
 
     def avg_sg_mem_usage(self, title) -> Metric:
         metric_id = f"{self.test_config.name}_Average_sg_memory_usage"
         metric_title = f"{title}{self._title}"
-
-        if self.cluster_spec.capella_infrastructure:
-            metric = "sgw_resource_utilization_process_memory_resident"
-        else:
-            metric = "syncgateway__global__resource_utilization__process_memory_resident"
-        values = self._read_values(metric, "syncgateway_cluster_stats")
+        values = self._read_values(
+            "sgw_resource_utilization_process_memory_resident", "syncgateway_cluster_stats"
+        )
         avg_mem = round(self._mean(values), 2)
         avg_mem = int(bytes_to_mib(avg_mem))
         return self._metric(avg_mem, metric_id=metric_id, title=metric_title)

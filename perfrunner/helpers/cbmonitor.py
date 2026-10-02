@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 from decorator import decorator
 
+from cbagent.registry import CollectorRegistry
 from logger import logger
 from perfrunner.metrics.cbagent import CbAgent
 from perfrunner.metrics.promagent import PrometheusAgent
@@ -44,9 +45,11 @@ def drain_spring_data_files(test: PerfTest):
     if not test.test_config.stats_settings.enabled:
         return
 
+    requested = CollectorRegistry().requested_collector_flags(test, test.COLLECTORS)
+
     # Only the spring latency collectors read these files, so nothing else has to pay for
     # the round trip to every worker.
-    if not (test.COLLECTORS.get("latency") or test.COLLECTORS.get("n1ql_latency")):
+    if not (requested.get("latency") or requested.get("n1ql_latency")):
         return
 
     try:

@@ -45,7 +45,7 @@ class CollectorRegistry:
         if not cls.__dict__.get("ABSTRACT", False):
             self._registry[cls.__name__] = cls
 
-    def _merge_flags(self, test: PerfTest, explicit_flags: dict) -> dict:
+    def requested_collector_flags(self, test: PerfTest, explicit_flags: dict) -> dict:
         """Combine default, test-specified and force-enabled collector flags.
 
         Precedence (low -> high): DEFAULT_COLLECTOR_FLAGS, the test's explicit
@@ -108,7 +108,9 @@ class CollectorRegistry:
 
     def get_active_collectors(self, test: PerfTest, cluster_map: dict, **collector_flags):
         """Return instances of all collectors that should be active for the test."""
-        return self._active_collectors(test, cluster_map, self._merge_flags(test, collector_flags))
+        return self._active_collectors(
+            test, cluster_map, self.requested_collector_flags(test, collector_flags)
+        )
 
     def get_active_prometheus_collectors(self, test: PerfTest):
         """Return active collectors that push custom metrics.
@@ -118,5 +120,8 @@ class CollectorRegistry:
         """
         cluster_map = OrderedDict(zip(test.cbmonitor_clusters, test.cluster_spec.masters))
         return self._active_collectors(
-            test, cluster_map, self._merge_flags(test, test.COLLECTORS), prometheus_only=True
+            test,
+            cluster_map,
+            self.requested_collector_flags(test, test.COLLECTORS),
+            prometheus_only=True,
         )

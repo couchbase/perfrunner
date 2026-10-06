@@ -733,8 +733,8 @@ class DefaultRestHelper(RestBase):
         api = 'pools/default/stats/range/xdcr_changes_left_total?' \
             f'sourceBucketName={bucket}&pipelineType=Main'
         resp = self.get(url=self._get_api_url(host=host, path=api)).json()
-        if resp["data"] != []:
-            return int(resp["data"][0]["values"][-1][1])
+        if data := resp["data"]:
+            return sum(int(series["values"][-1][1]) for series in data)
         return -1
 
     def get_xdcr_docs_written_total(self, host: str, bucket: str) -> int:

@@ -1,0 +1,47 @@
+[test_case]
+test = perfrunner.tests.secondary.CloudSecondaryIndexingScanReportTest
+
+[showfast]
+title = GSI Scan Report | Detailed report + query timings | Multi-node, inner join (Q3), 2 indexes | 10M x 1KB
+category = lat
+component = secondarycloud
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 8
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[bucket]
+replica_number = 1
+replica_index = 0
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 10000000
+size = 1024
+workers = 100
+ssl_mode = capella
+
+[secondary]
+indexes = myindex_email:alt_email#myindex_city:city
+indexer.settings.storage_mode = plasma
+indexer.settings.generateScanReport = true
+scan_report_join_query = SELECT h1.alt_email, h2.city FROM `bucket-1` h1 USE INDEX (`myindex_email`) INNER JOIN `bucket-1` h2 USE INDEX (`myindex_city`) ON h1.alt_email = h2.alt_email WHERE h1.alt_email BETWEEN "a" AND "a~" LIMIT 50
+scan_report_wait_ms = 100
+scan_report_use_profile_timings = true
+scan_report_workers = 4
+scan_report_iterations = 200
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+items = 10000000
+workers = 40
+throughput = 30000
+time = 300
+ssl_mode = capella

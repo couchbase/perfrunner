@@ -1,6 +1,7 @@
 import copy
 import csv
 import json
+import re
 import subprocess
 import threading
 import time
@@ -3417,3 +3418,106 @@ class VectorSecondaryIndexingScanReportTest(SecondaryIndexingScanReportTest,
         self.safe_print_index_disk_usage()
         self.report_kpi()
 
+
+class CloudSecondaryIndexingScanReportTest(SecondaryIndexingScanReportTest):
+    """Capella variant of the scan-report test.
+
+    Capella clusters are not initialised by perfrunner's cluster utility, so the
+    indexer settings from [secondary] (notably generateScanReport) have to be pushed
+    here before the feature preflight can read them back. The workload is N1QL-only,
+    so the cbindexperf ports are deliberately left closed.
+    """
+
+    def apply_capella_index_settings(self):
+        settings = self.test_config.gsi_settings.settings
+        for cluster_index_servers in self.cluster_spec.servers_by_cluster_and_role("index"):
+            self.rest.set_index_settings(cluster_index_servers[0], settings)
+
+    def _exec_ddl(self, statement: str, query_params: dict = None):
+        response = self.rest.exec_n1ql_statement(
+            self.query_nodes[0], statement, query_params=query_params
+        )
+        if response.get("status") != "success":
+            raise Exception(f"N1QL statement failed: {statement}\n{response.get('errors')}")
+
+    def _build_collection_indexes_n1ql(self, create_options: str) -> float:
+        # cbindex plans collection indexes on the client side, which fails against these
+        # clusters, so run the same DDL through the query service, which plans server side.
+        for ddl in re.findall(r'-index_ddl "([^"]*)"', create_options):
+            self._exec_ddl(ddl)
+
+        build_start = time.time()
+        for bucket, scope_map in self.indexes.items():
+            for scope, collection_map in scope_map.items():
+                for collection, index_map in collection_map.items():
+                    names = ", ".join(f"`{name}`" for name in index_map)
+                    self._exec_ddl(
+                        f"BUILD INDEX ON `{bucket}`.`{scope}`.`{collection}`({names}) USING GSI",
+                        query_params={"timeout": "7200s"},
+                    )
+        self.monitor.wait_for_secindex_init_build_collections(self.index_nodes[0], self.indexes)
+        return time.time() - build_start
+
+    def _build_secondaryindex(self):
+        # The cbindex based paths need SSH to a data node or a client side planner, neither of
+        # which works on Capella, so create and build the indexes through the query service.
+        if self.test_config.collection.collection_map:
+            create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
+            if "-index_ddl" in create_options:
+                logger.info("building secondary indexes through N1QL")
+                return self._build_collection_indexes_n1ql(create_options)
+            return super()._build_secondaryindex()
+
+        gsi = self.test_config.gsi_settings
+        num_replica = int(gsi.num_index_replica or 0)
+        num_partition = int(gsi.num_partition or 0)
+
+        logger.info("building secondary indexes through N1QL")
+        for name, fields in self.indexes.items():
+            keys = ", ".join(f"`{field}`" for field in fields.split(","))
+            partition = ""
+            if num_partition > 1:
+                partition = f" PARTITION BY HASH(`{fields.split(',')[0]}`)"
+            with_options = {"defer_build": True}
+            if num_replica:
+                with_options["num_replica"] = num_replica
+            if num_partition > 1:
+                with_options["num_partition"] = num_partition
+            self._exec_ddl(
+                f"CREATE INDEX `{name}` ON `{self.bucket}`({keys}){partition} "
+                f"WITH {json.dumps(with_options)}"
+            )
+
+        names = ", ".join(f"`{name}`" for name in self.indexes)
+        self._exec_ddl(f"BUILD INDEX ON `{self.bucket}`({names}) USING GSI")
+        return self.monitor.wait_for_secindex_init_build(
+            self.index_nodes[0], list(self.indexes.keys())
+        )
+
+    def safe_print_index_disk_usage(self):
+        # Disk usage is read over SSH from the index node, which Capella does not allow.
+        logger.info("Skipping index disk usage stats on Capella")
+
+    def check_buckets_exist(self):
+        for bucket in self.test_config.buckets:
+            if not self.rest.bucket_exists(self.master_node, bucket):
+                raise Exception(
+                    f"Bucket '{bucket}' does not exist on {self.master_node}; the cluster "
+                    f"setup step failed to create it"
+                )
+
+    def run(self):
+        self.check_buckets_exist()
+        self.apply_capella_index_settings()
+        super().run()
+
+
+class CloudVectorSecondaryIndexingScanReportTest(
+    CloudSecondaryIndexingScanReportTest, VectorSecondaryIndexingScanReportTest
+):
+    """Capella variant of the vector scan-report test."""
+
+    def run(self):
+        self.check_buckets_exist()
+        self.apply_capella_index_settings()
+        VectorSecondaryIndexingScanReportTest.run(self)

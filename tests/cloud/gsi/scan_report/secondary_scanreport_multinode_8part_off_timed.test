@@ -1,0 +1,49 @@
+[test_case]
+test = perfrunner.tests.secondary.CloudSecondaryIndexingScanReportTest
+
+[showfast]
+title = GSI Scan Report | Feature OFF + query timings (baseline) | Multi-node, 8-partition index | 10M x 1KB | plasma
+category = lat
+component = secondarycloud
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 8
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[bucket]
+replica_number = 1
+replica_index = 0
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 10000000
+size = 1024
+workers = 100
+ssl_mode = capella
+
+[secondary]
+indexes = myindex:alt_email
+indexer.settings.storage_mode = plasma
+indexer.settings.generateScanReport = false
+num_partition = 8
+partition_by_clause = PARTITION BY HASH(alt_email)
+scan_report_query = SELECT meta().id FROM `bucket-1` WHERE alt_email IS NOT NULL ORDER BY alt_email LIMIT 100
+scan_report_wait_ms = 0
+scan_report_use_profile_timings = true
+scan_report_workers = 16
+scan_report_iterations = 5000
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+items = 10000000
+workers = 40
+throughput = 30000
+time = 300
+ssl_mode = capella

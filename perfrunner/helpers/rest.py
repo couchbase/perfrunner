@@ -74,7 +74,7 @@ def redact(text) -> str:
 
 @decorator
 def retry(method: Callable, *args, **kwargs):
-    r = namedtuple('request', ['url'])('')
+    r = namedtuple('request', ['url', 'text'])('', '')
     url = kwargs.get('url')
     for _ in range(MAX_RETRY):
         try:
@@ -997,6 +997,10 @@ class DefaultRestHelper(RestBase):
     def get_bucket_info(self, host: str, bucket: str) -> dict:
         url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
         return self.get(url=url).json()
+
+    def bucket_exists(self, host: str, bucket: str) -> bool:
+        url = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
+        return self._get(url=url).status_code == 200
 
     def set_bucket_history(self, host: str, bucket: str, history_bytes: int = 0,
                            history_seconds: int = 0) -> requests.Response:
@@ -2446,6 +2450,8 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             "BucketNameExists",
             f"Bucket '{name}' already exists on cluster {cluster_id}",
         )
+        if not resp.ok:
+            logger.warning(f"Bucket creation rejected ({resp.status_code}): {resp.text}")
         resp.raise_for_status()
         return resp
 

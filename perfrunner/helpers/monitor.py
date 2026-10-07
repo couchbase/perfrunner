@@ -1669,6 +1669,29 @@ class Monitor:
         sgw_stats = self.rest.get_sg_stats(host)
         return int(misc.parse_prometheus_stat(sgw_stats, "sgw_replication_pull_rev_send_count"))
 
+    def wait_for_sgw_pulls_caught_up(self, hosts: list[str], expected: int, timeout: int = 300):
+        logger.info(f"Waiting for {expected} pull replications to catch up on {hosts}")
+        start_time = time.time()
+        while True:
+            caught_up = sum(
+                int(
+                    misc.parse_prometheus_stat(
+                        self.rest.get_sg_stats(host), "sgw_replication_pull_num_pull_repl_caught_up"
+                    )
+                )
+                for host in hosts
+            )
+            elapsed = time.time() - start_time
+            if caught_up >= expected:
+                logger.info(f"{caught_up} pull replications caught up after {elapsed:.1f}s")
+                return
+            if elapsed > timeout:
+                raise Exception(
+                    f"Only {caught_up} of {expected} pull replications caught up within "
+                    f"{timeout}s, see sg_stderr_blackholepuller_*.log on the workers"
+                )
+            time.sleep(self.POLLING_INTERVAL_SGW)
+
     def wait_sgw_push_start(self, hosts: list[str], initial_docs: int):
         retries = 0
         max_retries = 900

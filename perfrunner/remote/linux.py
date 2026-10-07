@@ -1758,6 +1758,12 @@ class RemoteLinux(Remote):
     @syncgateway_servers
     def compress_sg_logs_new(self):
         logger.info('Compressing Syncgateway log folders')
+        # The config as running, with logging and every database, so it is archived with the logs
+        run(
+            "curl -sS 'http://localhost:4985/_config?include_runtime=true'"
+            " -o /var/tmp/sglogs/sgw_config.json",
+            warn_only=True,
+        )
         run('rm -rf /tmp/sglogs_temp', warn_only=True)
         run('mkdir /tmp/sglogs_temp', warn_only=True)
         r = run('cp -R /var/tmp/sglogs/* /tmp/sglogs_temp', warn_only=True)

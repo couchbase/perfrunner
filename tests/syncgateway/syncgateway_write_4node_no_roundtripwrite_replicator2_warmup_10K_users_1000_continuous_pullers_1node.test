@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGWriteReplicatePull
+
+[showfast]
+title = , 4 nodes, 1M docs, 10K users, 10K channels, 1 channel per user, 1 channel per doc, roundTripWrite false, replicator2, basicAuth, warmup cache, 1000 continuous blackholepullers on 1 node
+component = syncgateway
+category = write
+sub_category = xattr
+orderby = 000004
+
+[cluster]
+mem_quota = 25000
+index_mem_quota = 35000
+initial_nodes = 4
+num_buckets = 1
+
+
+[access]
+time = 1800
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[stats]
+extra_collectors = syncgateway_node_stats
+
+[syncgateway]
+nodes = 4
+threads = 200
+clients = 4
+instances_per_client = 5
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+users = 10000
+channels = 10000
+channels_per_user = 1
+channels_per_doc = 1
+documents = 1000000
+roundtrip_write = false
+insert_mode = byuser
+auth = true
+readproportion=0
+updateproportion=0
+insertproportion=1
+requestdistribution = zipfian
+log_title = sync_gateway_4node_writes
+replicator2 = true
+basic_auth = true
+warmup_cache = true
+warmup_cache_threads = 50
+sg_blackholepuller_client = 250
+sg_blackholepuller_single_node = true
+sg_blackholepuller_continuous = true

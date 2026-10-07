@@ -46,7 +46,7 @@ from cbagent.collectors.secondary_storage_stats_mm import (
     SecondaryStorageStatsMM,
 )
 from cbagent.collectors.sgimport_latency import SGImportLatency
-from cbagent.collectors.syncgateway_stats import SyncGatewayStats
+from cbagent.collectors.syncgateway_stats import SyncGatewayNodeStats, SyncGatewayStats
 from cbagent.collectors.system import (
     IO,
     PS,

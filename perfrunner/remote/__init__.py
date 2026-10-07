@@ -387,6 +387,9 @@ class Remote:
     def download_blackholepuller(self, worker_home: str):
         logger.info("downloading blackholepuller")
         with cd('/root/sg_dev_tools/replicator/blackholePuller'):
+            # Record which build runs, so that runs meant to compare can be checked to match
+            build = run('git log -1 --format=%H; sha256sum blackholePuller', quiet=True)
+            logger.info(f"blackholePuller build on {env.host_string}: {build}")
             run('cp blackholePuller /tmp/perfrunner/perfrunner/')
             run('chmod +x /tmp/perfrunner/perfrunner/blackholePuller')
 

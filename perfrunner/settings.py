@@ -4185,6 +4185,8 @@ class SyncgatewaySettings:
     SG_BLACKHOLEPULLER_TIMEOUT = 600    # in seconds
     SG_BLACKHOLEPULLER_SUBPROTOCOL = 3
     SG_BLACKHOLEPULLER_USE_PROPOSE_CHANGES = False
+    SG_BLACKHOLEPULLER_SINGLE_NODE = "false"
+    SG_BLACKHOLEPULLER_CONTINUOUS = "false"
     SG_DOCSIZE = 10240
     SGTOOL_CHANGEBATCHSET = 200
 
@@ -4257,6 +4259,7 @@ class SyncgatewaySettings:
         self.starchannel = options.get('starchannel', self.STAR)
         self.grant_access = options.get('grant_access', self.GRANT_ACCESS)
         self.warmup_cache = maybe_atoi(options.get('warmup_cache', "false"))
+        self.warmup_cache_threads = int(options.get('warmup_cache_threads', 1))
         self.channels_per_grant = options.get('channels_per_grant', self.CHANNELS_PER_GRANT)
         self.grant_access_in_scan = options.get('grant_access_in_scan', self.GRANT_ACCESS_IN_SCAN)
         self.build_label = options.get('build_label', '')
@@ -4279,18 +4282,31 @@ class SyncgatewaySettings:
         self.sg_read_limit = int(options.get('sg_read_limit', self.SG_READ_LIMIT))
         self.sg_loader_threads = int(options.get("sg_loader_threads", self.SG_LOADER_THREADS))
         self.sg_docloader_thread = int(options.get("sg_docloader_thread", self.SG_DOCLOADER_THREAD))
-        self.sg_blackholepuller_client = int(options.get("sg_blackholepuller_client",
-                                                         self.SG_BLACKHOLEPULLER_CLIENTS))
-        self.sg_blackholepuller_users = int(options.get("sg_blackholepuller_users",
-                                                        self.SG_BLACKHOLEPULLER_USERS))
-        self.sg_blackholepuller_timeout = options.get("sg_blackholepuller_timeout",
-                                                      self.SG_BLACKHOLEPULLER_TIMEOUT)
-        self.sg_blackholepuller_subprotocol = options.get("sg_blackholepuller_subprotocol",
-                                                          self.SG_BLACKHOLEPULLER_SUBPROTOCOL)
-        self.sg_blackholepuller_use_propose_changes = bool(options.get(
-            "sg_blackholepuller_use_propose_changes",
-            self.SG_BLACKHOLEPULLER_USE_PROPOSE_CHANGES,
-        ))
+        self.sg_blackholepuller_client = int(
+            options.get("sg_blackholepuller_client", self.SG_BLACKHOLEPULLER_CLIENTS)
+        )
+        self.sg_blackholepuller_users = int(
+            options.get("sg_blackholepuller_users", self.SG_BLACKHOLEPULLER_USERS)
+        )
+        self.sg_blackholepuller_timeout = options.get(
+            "sg_blackholepuller_timeout", self.SG_BLACKHOLEPULLER_TIMEOUT
+        )
+        self.sg_blackholepuller_subprotocol = options.get(
+            "sg_blackholepuller_subprotocol", self.SG_BLACKHOLEPULLER_SUBPROTOCOL
+        )
+        self.sg_blackholepuller_use_propose_changes = bool(
+            options.get(
+                "sg_blackholepuller_use_propose_changes",
+                self.SG_BLACKHOLEPULLER_USE_PROPOSE_CHANGES,
+            )
+        )
+        self.sg_blackholepuller_single_node = maybe_atoi(
+            options.get("sg_blackholepuller_single_node", self.SG_BLACKHOLEPULLER_SINGLE_NODE)
+        )
+        self.sg_blackholepuller_continuous = maybe_atoi(
+            options.get("sg_blackholepuller_continuous", self.SG_BLACKHOLEPULLER_CONTINUOUS)
+        )
+        self.sg_blackholepuller_since = None
         self.sg_docsize = int(options.get("sg_docsize", self.SG_DOCSIZE))
         self.sgtool_changebatchset = int(options.get("sgtool_changebatchset",
                                                      self.SGTOOL_CHANGEBATCHSET))

@@ -32,7 +32,11 @@ class Timer(threading.Timer):
         self.daemon = True
 
     def run(self):
-        super().run()
+        try:
+            super().run()
+        except Exception as e:
+            # Escaping here would end this series of profiles for the rest of the run
+            logger.warning(f"Profile collection failed: {e!r} -- skipping this sample")
         self.repeat()
 
     def repeat(self):
@@ -132,38 +136,43 @@ class GoDebugProfiler (ProfilerBase):
         if 'syncgateway' in self.test_config.profiling_settings.services:
             if profile == 'sg_cpu':
                 url = f'http://{host}:4985/_profile'
-                filename = (f'{host}_{service}_{profile}_'
-                           f'{time.strftime("%y%m%d%H%M%S")}_{uhex()[:6]}.pprof')
-                requests.post(url=url, data=json.dumps({"file": filename}))
+                filename = (
+                    f'{host}_{service}_{profile}_{time.strftime("%y%m%d%H%M%S")}_{uhex()[:6]}.pprof'
+                )
+                requests.post(
+                    url=url, data=json.dumps({"file": filename}), timeout=self.PROFILE_TIMEOUT
+                )
                 time.sleep(self.test_config.profiling_settings.cpu_interval)
-                requests.post(url=url, data=json.dumps({}))
+                requests.post(url=url, data=json.dumps({}), timeout=self.PROFILE_TIMEOUT)
                 self.copy_profile(host, filename)
 
             if profile == 'sg_heap':
                 filename = (f'{host}_{service}_{profile}_'
                            f'{time.strftime("%y%m%d%H%M%S")}_{uhex()[:6]}.pprof')
                 url = f'http://{host}:4985/_heap'
-                requests.post(url=url, data=json.dumps({"file": filename}))
+                requests.post(
+                    url=url, data=json.dumps({"file": filename}), timeout=self.PROFILE_TIMEOUT
+                )
                 self.copy_profile(host, filename)
 
             if profile == 'goroutine':
                 url = f'http://{host}:4985/_debug/pprof/goroutine'
-                response = requests.get(url=url)
+                response = requests.get(url=url, timeout=self.PROFILE_TIMEOUT)
                 self.save(host, service, profile, response.content)
 
             if profile == 'sg_block':
                 url = f'http://{host}:4985/_debug/pprof/block'
-                response = requests.get(url=url)
+                response = requests.get(url=url, timeout=self.PROFILE_TIMEOUT)
                 self.save(host, service, profile, response.content)
 
             if profile == 'sg_mutex':
                 url = f'http://{host}:4985/_debug/pprof/mutex'
-                response = requests.get(url=url)
+                response = requests.get(url=url, timeout=self.PROFILE_TIMEOUT)
                 self.save(host, service, profile, response.content)
 
             if profile == 'sg_fgprof':
                 url = f'http://{host}:4985/_debug/fgprof'
-                response = requests.get(url=url)
+                response = requests.get(url=url, timeout=self.PROFILE_TIMEOUT)
                 self.save(host, service, profile, response.content)
 
         elif self.cluster_spec.capella_infrastructure:

@@ -174,26 +174,53 @@ class SyncGatewayStats(CouchbaseCollector):
         # whole list up front would list metrics that have no data.
         self.mc.add_cluster()
 
-    def measure(self) -> dict[str, float]:
-        """Sum each metric over every Sync Gateway node and every label set (e.g. database)."""
+    def measure_node(self, host: str) -> dict[str, float]:
+        """Sum each metric of one Sync Gateway node over every label set (e.g. database)."""
         metrics = set(self.METRICS)
         stats = {}
+        # Keyed by label set, to pair up each node's series should an endpoint serve several.
+        process_cpu, cores = {}, {}
+        for name, labels, value in iter_prometheus_samples(self.rest.get_sg_stats(host)):
+            if name in metrics:
+                stats[name] = stats.get(name, 0) + value
+            if name == self.PROCESS_CPU:
+                process_cpu[frozenset(labels.items())] = value
+            elif name == self.GOMAXPROCS:
+                cores[frozenset(labels.items())] = value
+        for node in process_cpu.keys() & cores.keys():
+            vcpus = process_cpu[node] * cores[node] / 1000
+            stats[self.VCPUS_METRIC] = stats.get(self.VCPUS_METRIC, 0) + vcpus
+        return stats
+
+    def measure(self) -> dict[str, float]:
+        stats = {}
         for host in self.hosts:
-            # Keyed by label set, to pair up each node's series should an endpoint serve several.
-            process_cpu, cores = {}, {}
-            for name, labels, value in iter_prometheus_samples(self.rest.get_sg_stats(host)):
-                if name in metrics:
-                    stats[name] = stats.get(name, 0) + value
-                if name == self.PROCESS_CPU:
-                    process_cpu[frozenset(labels.items())] = value
-                elif name == self.GOMAXPROCS:
-                    cores[frozenset(labels.items())] = value
-            for node in process_cpu.keys() & cores.keys():
-                vcpus = process_cpu[node] * cores[node] / 1000
-                stats[self.VCPUS_METRIC] = stats.get(self.VCPUS_METRIC, 0) + vcpus
+            for name, value in self.measure_node(host).items():
+                stats[name] = stats.get(name, 0) + value
         return stats
 
     def sample(self):
         samples = self.measure()
         self.update_metric_metadata(samples)
         self.store.append(samples, cluster=self.cluster, collector=self.COLLECTOR)
+
+
+class SyncGatewayNodeStats(SyncGatewayStats):
+    """The same metrics as `SyncGatewayStats`, as one series per Sync Gateway node.
+
+    Opt in per test with ``stats.extra_collectors = syncgateway_node_stats``.
+    """
+
+    COLLECTOR = "syncgateway_node_stats"
+    COLLECTOR_FLAG = "syncgateway_node_stats"
+
+    def update_metadata(self):
+        super().update_metadata()
+        for host in self.hosts:
+            self.mc.add_server(host)
+
+    def sample(self):
+        for host in self.hosts:
+            samples = self.measure_node(host)
+            self.update_metric_metadata(samples, server=host)
+            self.store.append(samples, cluster=self.cluster, server=host, collector=self.COLLECTOR)

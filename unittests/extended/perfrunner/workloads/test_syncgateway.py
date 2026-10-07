@@ -1,62 +1,10 @@
 """YCSB command lines for the Sync Gateway workloads."""
 
-from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-import pytest
-
-from perfrunner.settings import ClusterSpec
 from perfrunner.workloads import syncgateway
-
-
-def parse_spec(spec: str) -> ClusterSpec:
-    with NamedTemporaryFile("w", suffix=".spec") as spec_file:
-        spec_file.write(spec)
-        spec_file.flush()
-        cluster_spec = ClusterSpec()
-        cluster_spec.parse(spec_file.name, override=None)
-    return cluster_spec
-
-
-def sgw_spec(provider: str, backend: str, host: str) -> str:
-    return (
-        "[infrastructure]\n"
-        f"provider = {provider}\n"
-        f"backend = {backend}\n"
-        "\n"
-        "[syncgateways]\n"
-        "syncgateways1 =\n"
-        f"    {host}\n"
-        f"    {host}\n"
-        "\n"
-        "[client_private_ips]\n"
-        "workers1 = 10.1.0.3\n"
-    )
-
-
-@pytest.mark.parametrize(
-    "provider, backend, host, api, expected",
-    [
-        # GCP App Services serves each API from its own host, all on port 443
-        ("capella", "gcp", "abc123.apps.example.com", "admin", "abc123-admin.apps.example.com"),
-        ("capella", "gcp", "abc123.apps.example.com", "metric", "abc123-metric.apps.example.com"),
-        (
-            "capella", "gcp", "abc123-admin.apps.example.com", "admin",
-            "abc123-admin.apps.example.com",
-        ),
-        # Elsewhere the APIs share the host and differ by port
-        ("capella", "aws", "abc123.apps.example.com", "admin", "abc123.apps.example.com"),
-        ("capella", "azure", "abc123.apps.example.com", "admin", "abc123.apps.example.com"),
-        ("aws", "aws", "sgw1.example.com", "admin", "sgw1.example.com"),
-        ("", "", "172.23.96.1", "admin", "172.23.96.1"),
-    ],
-)
-def test_sgw_api_host(provider: str, backend: str, host: str, api: str, expected: str):
-    cluster_spec = parse_spec(sgw_spec(provider, backend, host))
-
-    assert cluster_spec.sgw_api_host(host, api) == expected
 
 
 class LoadUsersTest(TestCase):
@@ -66,8 +14,9 @@ class LoadUsersTest(TestCase):
     created, and every later phase fails with a NullPointerException in YCSB.
     """
 
-    def test_gcp_creates_users_on_the_admin_host(self):
-        cluster_spec = parse_spec(sgw_spec("capella", "gcp", "abc123.apps.example.com"))
+    def test_users_are_created_on_the_admin_host(self):
+        cluster = Mock(capella_infrastructure=False)
+        cluster.sgw_api_host.return_value = "abc123-admin.apps.example.com"
         workload_settings = SimpleNamespace(
             syncgateway_settings=SimpleNamespace(
                 log_title="sync_gateway_writes", ycsb_command="syncgateway",
@@ -80,11 +29,14 @@ class LoadUsersTest(TestCase):
             admin_port=443,
             memcached_port="8000",
         )
-        with patch.object(syncgateway, "run_cmd") as run_cmd:
+        with patch.object(syncgateway, "run_cmd") as run_cmd, \
+                patch.object(syncgateway, "get_hosts", lambda *args: "abc123.apps.example.com"), \
+                patch.object(syncgateway, "get_memcached_host", lambda *args: "10.1.0.3"):
             syncgateway.syncgateway_load_users(
-                workload_settings, SimpleNamespace(bucket="bucket-1"), 0, 0, cluster_spec
+                workload_settings, SimpleNamespace(bucket="bucket-1"), 0, 0, cluster
             )
 
+        cluster.sgw_api_host.assert_called_once_with("abc123.apps.example.com", "admin")
         self.assertIn(
             "-p syncgateway.host=abc123-admin.apps.example.com ", run_cmd.call_args.args[2]
         )

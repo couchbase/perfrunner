@@ -733,14 +733,21 @@ class RemoteWorkerManager:
                 if task is syncgateway_task_start_memcached:
                     break
 
-    def run_sg_bp_tasks(self,
-                        task: Callable,
-                        task_settings: PhaseSettings,
-                        target_iterator: Iterable[TargetSettings],
-                        timer: int = None,
-                        distribute: bool = False,
-                        phase: str = ""):
-        self.fg_async_results.clear()
+    def run_sg_bp_tasks(
+        self,
+        task: Callable,
+        task_settings: PhaseSettings,
+        target_iterator: Iterable[TargetSettings],
+        timer: int = None,
+        distribute: bool = False,
+        phase: str = "",
+        background: bool = False,
+    ):
+        if background:
+            async_results = self.bg_async_results
+        else:
+            self.fg_async_results.clear()
+            async_results = self.fg_async_results
         self.reset_workers()
         for target in target_iterator:
             if distribute:
@@ -752,7 +759,7 @@ class RemoteWorkerManager:
                     async_result = task.apply_async(
                         args=(task_settings, target, timer, worker_id, self.cluster_spec),
                         queue=client, expires=timer,)
-                    self.fg_async_results.append(async_result)
+                    async_results.append(async_result)
                 time.sleep(15)
             else:
                 client = self.cluster_spec.workers[0]
@@ -760,7 +767,7 @@ class RemoteWorkerManager:
                 async_result = task.apply_async(
                     args=(task_settings, target, timer, 0, self.cluster_spec),
                     queue=client, expires=timer)
-                self.fg_async_results.append(async_result)
+                async_results.append(async_result)
                 time.sleep(15)
 
 

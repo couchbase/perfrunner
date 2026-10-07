@@ -2080,6 +2080,20 @@ class DefaultRestHelper(RestBase):
         resp = self.post(url=api, json=config)
         resp.raise_for_status()
 
+    def sgw_get_update_seq(self, host: str, db: str) -> int:
+        if self.cluster_spec.sgw_split_endpoints:
+            api = f"https://{self.cluster_spec.sgw_api_host(host, 'admin')}/{db}/"
+        else:
+            api = self._get_api_url(
+                host=host,
+                path=f"{db}/",
+                plain_port=SGW_ADMIN_PORT,
+                ssl_port=SGW_ADMIN_PORT,
+            )
+        resp = self.get(url=api)
+        resp.raise_for_status()
+        return resp.json()["update_seq"]
+
     def sgw_get_metadata_migration_status(self, host: str, db: str) -> Optional[dict]:
         api = self._get_api_url(
             host=host,

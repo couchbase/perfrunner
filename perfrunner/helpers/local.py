@@ -2026,6 +2026,25 @@ def run_blackholepuller_users_adv(url_str: str, clients: int, timeout: int,
           f' 2>{stderr_file_name}.log 1>{log_file_name}.json')
 
 
+def run_blackholepuller_continuous(
+    url_str: str,
+    clients: int,
+    timeout: int,
+    subprotocolVersion: int,
+    since: Optional[int],
+    users_file_name: str,
+    stderr_file_name: str,
+    log_file_name: str,
+):
+    since_arg = f' -since {since}' if since is not None else ''
+    local(
+        f'./blackholePuller -url {url_str} -clients {clients}'
+        f' -timeout {timeout}s -subprotocolVersion {subprotocolVersion}'
+        f' -continuous{since_arg} -userPasswordFilepath {users_file_name}'
+        f' 2>{stderr_file_name}.log 1>{log_file_name}.json'
+    )
+
+
 def run_newdocpusher(host: str, changebatchset: int, clients: int, timeout: int,
                      subprotocolVersion: int, useProposeChanges: bool, stderr_file_name: str,
                      log_file_name: str, doc_id_prefix: str, doc_size: int):

@@ -5,12 +5,13 @@ from logger import logger
 from perfrunner.helpers.local import (
     run_blackholepuller,
     run_blackholepuller_adv,
+    run_blackholepuller_continuous,
     run_blackholepuller_users,
     run_blackholepuller_users_adv,
     run_newdocpusher,
     run_newdocpusher_adv,
 )
-from perfrunner.settings import ClusterSpec, PhaseSettings, TargetSettings
+from perfrunner.settings import ClusterSpec, PhaseSettings, SyncgatewaySettings, TargetSettings
 
 BINARY_NAME = "/BlackHolePuller"
 BINARY_PATH = "/SG_Tools_1"
@@ -32,12 +33,26 @@ def build_multihost_url(cluster, workload_settings):
     return url_string[:-1]
 
 
+def get_puller_hosts(cluster: ClusterSpec, sgs: SyncgatewaySettings) -> list[str]:
+    if int(sgs.nodes) > 1 and not sgs.sg_blackholepuller_single_node:
+        return cluster.sgw_servers[: int(sgs.nodes)]
+    return cluster.sgw_servers[:1]
+
+
 def generate_csv_file(clients: int, users: int, users_file_name: str):
     with open(users_file_name, 'w') as fh:
         writer = csv.writer(fh)
         for user in range(clients):
             current_user = f"sg-user-{random.randint(0, users)}"
             writer.writerow([current_user, "password"])
+
+
+def generate_worker_users_file(clients: int, worker_id: int, users_file_name: str):
+    first_user = (max(worker_id, 1) - 1) * clients
+    with open(users_file_name, 'w') as fh:
+        writer = csv.writer(fh)
+        for user in range(first_user, first_user + clients):
+            writer.writerow([f"sg-user-{user}", "password"])
 
 
 def blackholepuller_runtest(workload_settings: PhaseSettings, target: TargetSettings,
@@ -52,7 +67,22 @@ def blackholepuller_runtest(workload_settings: PhaseSettings, target: TargetSett
 
     users_file_name = 'sg_bhp_users.csv'
 
-    if int(workload_settings.syncgateway_settings.nodes) > 1:
+    hosts = get_puller_hosts(cluster, sgs)
+
+    if sgs.sg_blackholepuller_continuous:
+        generate_worker_users_file(sgs.sg_blackholepuller_client, worker_id, users_file_name)
+        run_blackholepuller_continuous(
+            url_str=','.join(f'http://{host}:4984/db-1' for host in hosts),
+            clients=sgs.sg_blackholepuller_client,
+            timeout=sgs.sg_blackholepuller_timeout,
+            subprotocolVersion=sgs.sg_blackholepuller_subprotocol,
+            since=sgs.sg_blackholepuller_since,
+            users_file_name=users_file_name,
+            stderr_file_name=stderr_log_file_name,
+            log_file_name=log_file_name,
+        )
+
+    elif len(hosts) > 1:
         if sgs.sg_blackholepuller_users == 0:
             run_blackholepuller_adv(url_str=build_multihost_url(cluster, workload_settings),
                                     clients=sgs.sg_blackholepuller_client,

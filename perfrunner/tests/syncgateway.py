@@ -59,6 +59,7 @@ from perfrunner.settings import (
 )
 from perfrunner.tests import PerfTest
 from perfrunner.tests.eventing import FunctionsTimeTest
+from perfrunner.workloads.blackholepuller import get_puller_hosts
 from perfrunner.workloads.syncgateway import e2e_load_docs_db, e2e_load_docs_export
 
 CBLITE_PACKAGE = "cblite.zip"
@@ -368,6 +369,27 @@ class SGPerfTest(PerfTest):
                 timer=self.settings.time,
                 distribute=self.use_distributed_load,
             )
+            self.check_channel_caches()
+
+    def check_channel_caches(self):
+        """Log each node's channel caches, as warmup should make one per channel on every node.
+
+        Only logs, so failing to read a node's stats must not fail the test.
+        """
+        for host in self.cluster_spec.sgw_servers[: int(self.sg_settings.nodes)]:
+            try:
+                num_channels = int(
+                    parse_prometheus_stat(
+                        self.rest.get_sg_stats(host), "sgw_cache_chan_cache_num_channels"
+                    )
+                )
+            except Exception as e:
+                logger.warning(f"Could not read the channel caches on {host}: {e!r}")
+                continue
+            logger.info(f"{host} holds {num_channels} channel caches after warmup")
+            channels = int(self.sg_settings.channels)
+            if num_channels < channels:
+                logger.warning(f"Warmup reached {num_channels} of {channels} channels on {host}")
 
     @with_stats
     def load_docs(self):
@@ -1795,17 +1817,28 @@ class SGReplicateMultiClusterPull(SGPerfTest):
             self.remote.get_sg_blackholepuller_logs(self.worker_manager.WORKER_HOME,
                                                     self.test_config.syncgateway_settings)
 
-    def run_sg_bp_phase(self,
-                        phase: str,
-                        task: Callable, settings: PhaseSettings,
-                        target_iterator: Iterable = None,
-                        timer: int = None,
-                        distribute: bool = False) -> None:
+    def run_sg_bp_phase(
+        self,
+        phase: str,
+        task: Callable,
+        settings: PhaseSettings,
+        target_iterator: Iterable = None,
+        timer: int = None,
+        distribute: bool = False,
+        wait: bool = True,
+    ) -> None:
+        """Run a blackholepuller phase.
+
+        With `wait=False` the tasks run in the background, and the caller must wait for them with
+        `worker_manager.wait_for_bg_tasks()`.
+        """
         if target_iterator is None:
             target_iterator = self.target_iterator
-        self.worker_manager.run_sg_bp_tasks(task, settings, target_iterator,
-                                            timer, distribute, phase)
-        self.worker_manager.wait_for_fg_tasks()
+        self.worker_manager.run_sg_bp_tasks(
+            task, settings, target_iterator, timer, distribute, phase, background=not wait
+        )
+        if wait:
+            self.worker_manager.wait_for_fg_tasks()
 
     @with_stats
     @with_profiles
@@ -1863,6 +1896,134 @@ class SGReplicateMultiClusterPull(SGPerfTest):
         self.grant_access()
         self.download_blockholepuller_tool()
         self.run_bp_test()
+        self.report_kpi()
+
+
+class SGWriteReplicatePull(SGWrite, SGReplicateMultiClusterPull):
+    BP_EXTRA_TIME = 60
+    # How long continuous pullers get to catch up before the writes start, which delays the writes
+    CAUGHT_UP_TIMEOUT = 120
+
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig, verbose: bool):
+        super().__init__(cluster_spec, test_config, verbose)
+        bp_timeout = int(self.settings.time) + self.BP_EXTRA_TIME
+        if self.sg_settings.sg_blackholepuller_continuous:
+            bp_timeout += self.CAUGHT_UP_TIMEOUT
+            self.check_enough_users()
+        logger.info(f"Blackholepuller will run for {bp_timeout}s")
+        self.settings.syncgateway_settings.sg_blackholepuller_timeout = bp_timeout
+
+    def check_enough_users(self):
+        """Each continuous puller pulls as its own user, so there must be a user for every one."""
+        sgs = self.sg_settings
+        pullers = int(sgs.clients) * int(sgs.sg_blackholepuller_client)
+        if pullers > int(sgs.users):
+            raise ValueError(
+                f"{pullers} continuous pullers need as many users, but only {sgs.users} are loaded"
+            )
+
+    def set_puller_start_seq(self):
+        """Start the continuous pullers from the current sequence, so they skip the loaded docs."""
+        sgs = self.settings.syncgateway_settings
+        host = get_puller_hosts(self.cluster_spec, sgs)[0]
+        sgs.sg_blackholepuller_since = self.rest.sgw_get_update_seq(host, "db-1")
+        logger.info(f"Continuous pullers start from sequence {sgs.sg_blackholepuller_since}")
+
+    def wait_for_pullers_caught_up(self):
+        sgs = self.settings.syncgateway_settings
+        workers = self.cluster_spec.workers[: int(sgs.clients)]
+        self.monitor.wait_for_sgw_pulls_caught_up(
+            hosts=get_puller_hosts(self.cluster_spec, sgs),
+            expected=sgs.sg_blackholepuller_client * len(workers),
+            timeout=self.CAUGHT_UP_TIMEOUT,
+        )
+
+    def log_puller_summary(self):
+        """Log what the checks after a continuous pull run look at.
+
+        Only logs, so puller output it cannot read must not stop the KPIs from being reported.
+        """
+        try:
+            results = []
+            for filename in sorted(glob.glob("sg_stats_blackholepuller_*.json")):
+                with open(filename) as fh:
+                    results += json.load(fh)
+            users = {result["user"] for result in results}
+            never_caught_up = sum(result["caught_up_ms"] < 0 for result in results)
+            no_live_changes = sum(result["docs_after_caught_up"] == 0 for result in results)
+            live_changes = sum(result["docs_after_caught_up"] for result in results)
+        except (OSError, ValueError, KeyError, TypeError) as e:
+            logger.warning(f"Could not summarise the continuous pullers: {e!r}")
+            return
+        logger.info(
+            f"Continuous pullers: {len(results)} clients, {len(users)} distinct users, "
+            f"{never_caught_up} never caught up, {no_live_changes} got no live changes, "
+            f"{live_changes} live changes in total"
+        )
+
+    def _report_kpi(self):
+        SGPerfTest.collect_execution_logs(self)
+        SGReplicateMultiClusterPull.collect_execution_logs(self)
+        self.log_latency_histogram("[WRITE]", "POST write")
+        if self.sg_settings.sg_blackholepuller_continuous:
+            self.log_puller_summary()
+
+        self.reporter.post(*self.metrics.sg_throughput("Throughput (req/sec), POST doc", "write_"))
+
+        self.reporter.post(*self.metrics.sg_bp_throughput("Average docs/sec per client"))
+
+        # The writes are what there is to pull, so the pullers' padded runtime would dilute the rate
+        duration = int(self.settings.time)
+
+        self.reporter.post(
+            *self.metrics.sg_bp_total_docs_pulled(
+                title="Total docs pulled per second", duration=duration
+            )
+        )
+
+        if self.sg_settings.mem_cpu_stats:
+            self.reporter.post(
+                *self.metrics.avg_sg_cpu_usage("Average SGW CPU usage (number vCPUs)")
+            )
+            self.reporter.post(*self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)"))
+
+    @with_stats
+    @with_profiles
+    def run_test(self):
+        self.run_sg_bp_phase(
+            phase="blackholepuller test",
+            task=syncgateway_bh_puller_task,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=True,
+            wait=False,
+        )
+        if self.sg_settings.sg_blackholepuller_continuous:
+            self.wait_for_pullers_caught_up()
+        self.run_sg_phase(
+            phase="run test",
+            task=syncgateway_task_run_test,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=True,
+        )
+
+    def run(self):
+        self.download_ycsb()
+        self.start_memcached()
+        self.load_users()
+        self.init_users()
+        self.warmup_cache()
+        self.load_docs()
+        self.grant_access()
+        self.get_index_status()
+        self.download_blockholepuller_tool()
+        if self.sg_settings.sg_blackholepuller_continuous:
+            self.set_puller_start_seq()
+        self.run_test()
+        self.worker_manager.wait_for_bg_tasks()
         self.report_kpi()
 
 

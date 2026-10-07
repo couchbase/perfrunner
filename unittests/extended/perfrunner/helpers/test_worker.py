@@ -1,4 +1,7 @@
-"""Celery task abort handling; spawns real child processes and sends real signals."""
+"""Celery task dispatch and abort handling.
+
+The abort tests spawn real child processes and send real signals.
+"""
 
 import contextlib
 import os
@@ -10,6 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase
+from unittest.mock import patch
 
 import psutil
 
@@ -345,3 +349,25 @@ class CeleryTaskAbortTest(TestCase):
         FailingWorkerManager().abort_all_tasks()
 
         self.assertEqual(aborted, ["task-1", "task-3"])
+
+
+class SGBlackholePullerDispatchTest(TestCase):
+    @patch("perfrunner.helpers.worker.time.sleep")
+    def test_background_tasks_are_tracked_as_background(self, _sleep):
+        # The foreground phase started next clears the foreground results, so background tasks
+        # tracked there are never waited for, and their logs get collected while they still run
+        manager = RemoteWorkerManager.__new__(RemoteWorkerManager)
+        manager.cluster_spec = SimpleNamespace(workers=["client-1", "client-2"])
+        manager.fg_async_results = []
+        manager.bg_async_results = []
+        task = SimpleNamespace(
+            apply_async=lambda args, queue, expires: fake_task_result(f"pull-{queue}")
+        )
+        settings = SimpleNamespace(syncgateway_settings=SimpleNamespace(clients="2"))
+
+        manager.run_sg_bp_tasks(task, settings, [None], distribute=True, background=True)
+
+        self.assertEqual(manager.fg_async_results, [])
+        self.assertEqual(
+            [result.id for result in manager.bg_async_results], ["pull-client-1", "pull-client-2"]
+        )

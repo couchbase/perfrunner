@@ -1,4 +1,5 @@
 import math
+import posixpath
 
 from logger import logger
 from perfrunner.helpers.local import restart_memcached, run_cmd
@@ -281,6 +282,7 @@ E2E_MULTI_LOAD_DOCS_CMD = " load {ycsb_command} -s -P {workload} " \
                          "-p syncgateway.channels={total_channels} " \
                          "-p syncgateway.channelsperuser={channels_per_user} " \
                          "-p syncgateway.channelsperdocument={channels_per_doc} " \
+                         "-p syncgateway.exportfile={json_export} " \
                          "-p insertstart={insertstart} " \
                          "-p insertcount={insertcount} " \
                          "-p core_workload_insertion_retry_limit={retry_count} " \
@@ -519,7 +521,9 @@ def syncgateway_load_users(workload_settings: PhaseSettings,
     params = LOAD_USERS_CMD.format(ycsb_command=sgs.ycsb_command,
                                    workload=sgs.workload,
                                    db=db,
-                                   hosts=get_hosts(cluster, workload_settings),
+                                   hosts=cluster.sgw_api_host(
+                                       get_hosts(cluster, workload_settings), "admin"
+                                   ),
                                    memcached_host=get_memcached_host(cluster, workload_settings),
                                    total_users=sgs.users,
                                    sg_loader_threads=sgs.sg_loader_threads,
@@ -1017,6 +1021,24 @@ def syncgateway_e2e_cbl_run_test(
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
 
+def e2e_load_docs_db(workload_settings: PhaseSettings, worker_id: int) -> str:
+    """Return the cblite db that E2E load-docs worker ``worker_id`` (from 1) loads docs for.
+
+    Workers are numbered client by client, one instance at a time, so instance i holds db_i.
+    """
+    q = (worker_id - 1) // int(workload_settings.syncgateway_settings.clients)
+    return f'db_{q}'
+
+
+def e2e_load_docs_export(workload_settings: PhaseSettings, worker_id: int) -> str:
+    """Return the JSON file E2E load-docs worker ``worker_id`` exports, relative to the repo."""
+    sgs = workload_settings.syncgateway_settings
+    return posixpath.join(
+        get_instance_home(workload_settings, worker_id),
+        f'{sgs.log_title}_loaddocs_{worker_id}.json',
+    )
+
+
 def syncgateway_e2e_multi_cbl_load_docs(
         workload_settings: PhaseSettings,
         target: TargetSettings,
@@ -1025,6 +1047,8 @@ def syncgateway_e2e_multi_cbl_load_docs(
     sgs = workload_settings.syncgateway_settings
     log_file_name = f'{sgs.log_title}_loaddocs_{worker_id}.log'
     res_file_name = f'{sgs.log_title}_loaddocs_{worker_id}.result'
+    # YCSB runs in the instance home, so it only needs the file name
+    json_export = posixpath.basename(e2e_load_docs_export(workload_settings, worker_id))
     instances = int(sgs.clients) * int(sgs.instances_per_client)
     docs = int(sgs.documents)
     docs_per_instance = math.ceil(docs / instances)
@@ -1037,7 +1061,7 @@ def syncgateway_e2e_multi_cbl_load_docs(
         ycsb_command=sgs.ycsb_command,
         workload=sgs.workload,
         hosts=sgs.cbl_target,
-        db=f'db_{q}',
+        db=e2e_load_docs_db(workload_settings, worker_id),
         user=f'sg-user-{worker_id-1}',
         channellist=f'channel-{worker_id-1}',
         port=target_port,
@@ -1060,7 +1084,8 @@ def syncgateway_e2e_multi_cbl_load_docs(
         retry_count=sgs.ycsb_retry_count,
         retry_interval=sgs.ycsb_retry_interval,
         data_integrity=sgs.data_integrity,
-        exportfile=res_file_name)
+        exportfile=res_file_name,
+        json_export=json_export)
 
     if cluster.capella_infrastructure:
         params = add_capella_password(params)
@@ -1099,7 +1124,7 @@ def syncgateway_e2e_multi_cbl_run_test(
         ycsb_command=sgs.ycsb_command,
         workload=sgs.workload,
         hosts=sgs.cbl_target,
-        db=f'db_{q}',
+        db=e2e_load_docs_db(workload_settings, worker_id),
         user=f'sg-user-{worker_id-1}',
         channellist=f'channel-{worker_id-1}',
         port=target_port,

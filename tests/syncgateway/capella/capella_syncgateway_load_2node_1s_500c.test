@@ -2,7 +2,7 @@
 test = perfrunner.tests.syncgateway.SGLoad
 
 [showfast]
-title = ,, 2 nodes, 10M docs, 10 fields, 1.5KB docSize, s=1 c=500
+title = ,, 2 nodes, 1M docs, 10 fields, 1.5KB docSize, s=1 c=500
 component = infracloud
 category = sgwdeployment
 sub_category = {provider}
@@ -29,6 +29,7 @@ nodes = 2
 threads = 200
 clients = 4
 instances_per_client = 5
+sg_loader_threads = 1
 workload_path = workloads/syncgateway_coll
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = tmp-sqw-weekly-updated-c3
@@ -37,7 +38,7 @@ users = 1000
 channels = 1
 channels_per_user = 1
 channels_per_doc = 1
-documents = 10000000
+documents = 1000000
 roundtrip_write = false
 read_mode = documents_with_revs
 feed_mode = normal

@@ -1,0 +1,59 @@
+[test_case]
+test = perfrunner.tests.syncgateway.EndToEndMultiCBLPushTest
+
+[showfast]
+title = 4 nodes, 100 cbl, 6M docs, 10 fields, 1.5Kb docSize
+component = syncgatewaycloud
+category = e2e
+sub_category = {provider}
+orderby = b21
+
+[cluster]
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+
+[access]
+time = 1200
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 4
+load_threads = 100
+threads = 100
+# GCP specs have 10 clients (quota), so 10 instances each keeps the 100 cblites
+clients = 10
+instances_per_client = 10
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated-c3
+ycsb_command = syncgateway3
+users = 100
+channels = 100
+channels_per_user = 1
+channels_per_doc = 1
+# 6M, not 8M as on AWS and Azure: GCP App Services cuts cblite's WebSocket connections about
+# 330 s after they open, and cblite doesn't reconnect, so the replication must finish by then
+documents = 6000000
+roundtrip_write = false
+insert_mode = bykey
+auth = false
+instance = Standard_F16s_v2
+grant_access = false
+starchannel = false
+pullproportion = 0.5
+pushproportion = 0.5
+readproportion = 0
+updateproportion = 1
+insertproportion = 0
+requestdistribution = sequential
+replication_type = E2E_PUSH
+writeallfields = false
+updatefieldcount = 1
+fieldlength = 100
+ramdisk_size = 8000
+cbl_throughput = 10000
+ssl_mode_sgw = capella

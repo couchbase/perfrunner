@@ -8,6 +8,9 @@ from unittest import TestCase
 
 from perfrunner.helpers.misc import pretty_dict
 
+# Where the pipeline jobs look up a test's `cluster`: on-prem, cloud and on-prem SGW specs
+SPEC_DIRS = ("clusters", "cloud/infrastructure", "perfrunner/utils/syncgateway/clusters")
+
 
 class PipelineTest(TestCase):
     def test_existence_of_test_configs(self):
@@ -61,6 +64,36 @@ class PipelineTest(TestCase):
             {},
             "\nTest configs from the following pipeline files are missing: \n"
             + pretty_dict(all_missing_test_configs),
+        )
+
+    def test_existence_of_cluster_specs(self):
+        """Check if all cluster specs in the Capella pipelines are present in a spec directory."""
+        all_missing_specs = {}
+
+        for fn in glob.glob("tests/pipelines/capella-*.json"):
+            with open(fn, "r") as f:
+                test_cases = json.load(f)
+
+            for stage, stage_tests in test_cases.items():
+                missing_stage_specs = sorted(
+                    {
+                        test["cluster"]
+                        for test in stage_tests
+                        if "cluster" in test
+                        and not any(
+                            os.path.isfile(os.path.join(spec_dir, test["cluster"]))
+                            for spec_dir in SPEC_DIRS
+                        )
+                    }
+                )
+                if missing_stage_specs:
+                    all_missing_specs.setdefault(fn, {})[stage] = missing_stage_specs
+
+        self.assertDictEqual(
+            all_missing_specs,
+            {},
+            "\nCluster specs from the following pipeline files are missing: \n"
+            + pretty_dict(all_missing_specs),
         )
 
     def test_stages(self):

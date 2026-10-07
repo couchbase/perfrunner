@@ -160,6 +160,24 @@ class ClusterSpec(Config):
         return self.config.get('infrastructure', 'app_services', fallback='')
 
     @property
+    def sgw_split_endpoints(self) -> bool:
+        """Whether each Sync Gateway API is served from its own hostname, all on port 443.
+
+        App Services on GCP serves <id>.apps... (public), <id>-admin.apps... (admin) and
+        <id>-metric.apps... (metrics). Elsewhere the three share a host and differ by port.
+        """
+        return self.capella_infrastructure and self.capella_backend == "gcp"
+
+    def sgw_api_host(self, host: str, api: str) -> str:
+        """Return the host serving ``api`` ("admin" or "metric") of the Sync Gateway at ``host``."""
+        if not self.sgw_split_endpoints:
+            return host
+        name, domain = host.split(".", 1)
+        if name.endswith(f"-{api}"):
+            return host
+        return f"{name}-{api}.{domain}"
+
+    @property
     def kubernetes_infrastructure(self) -> bool:
         if self.cloud_infrastructure and not self.capella_infrastructure:
             return self.infrastructure_settings.get("type", "kubernetes") == "kubernetes"
@@ -848,6 +866,17 @@ class ClusterSpec(Config):
         return [
             cid
             for i, cid in enumerate(self.controlplane_settings.get("cluster_ids", "").split())
+            if i not in self.inactive_cluster_idxs
+        ]
+
+    @property
+    def capella_sgw_cluster_ids(self) -> list[str]:
+        """Return the App Services backend IDs, one per Capella cluster in `capella_cluster_ids`."""
+        return [
+            cid
+            for i, cid in enumerate(
+                self.controlplane_settings.get("app_services_cluster", "").split()
+            )
             if i not in self.inactive_cluster_idxs
         ]
 
@@ -3184,7 +3213,7 @@ class EventingSettings:
     CONFIG_FILE = "tests/eventing/config/function_sample.json"
     REQUEST_URL = "http://172.23.99.247:8080/cgi-bin/text/1kb_text_200"
     EVENTING_DEST_BKT_DOC_GEN = "basic"
-    CURSOR_AWARE = False
+    CURSOR_AWARE = "false"
 
     def __init__(self, options: dict):
         self.functions = {}
@@ -3208,7 +3237,7 @@ class EventingSettings:
         self.request_url = options.get("request_url", self.REQUEST_URL)
         self.eventing_dest_bkt_doc_gen = options.get("eventing_dest_bkt_doc_gen",
                                                      self.EVENTING_DEST_BKT_DOC_GEN)
-        self.cursor_aware = options.get("cursor_aware", self.CURSOR_AWARE)
+        self.cursor_aware = maybe_atoi(options.get("cursor_aware", self.CURSOR_AWARE))
         self.functions_count = int(options.get("functions_count", 0))
         self.num_nodes_running = int(options.get("num_nodes_running", 1))
 
@@ -4168,6 +4197,7 @@ class SyncgatewaySettings:
     SG_LOAD_THROUGHPUT = 0
     COLLECT_CBL_LOGS = 0
     CBL_VERBOSE_LOGGING = 0
+    CBLITE_VERSION = '4.2.0-2'
     TROUBLEMAKER = None
     COLLECT_SGW_LOGS = 0
     COLLECT_SGW_CONSOLE = 0
@@ -4283,6 +4313,8 @@ class SyncgatewaySettings:
         self.sg_load_throughput = int(options.get('sg_load_throughput', self.SG_LOAD_THROUGHPUT))
         self.collect_cbl_logs = int(options.get('collect_cbl_logs', self.COLLECT_CBL_LOGS))
         self.cbl_verbose_logging = int(options.get('cbl_verbose_logging', self.CBL_VERBOSE_LOGGING))
+        # <release>-<build> of the latestbuilds cblite package the E2E workers run
+        self.cblite_version = options.get('cblite_version', self.CBLITE_VERSION)
         self.troublemaker = options.get('troublemaker', self.TROUBLEMAKER)
         self.collect_sgw_logs = int(options.get('collect_sgw_logs', self.COLLECT_SGW_LOGS))
         self.collect_sgw_console = int(options.get('collect_sgw_console', self.COLLECT_SGW_CONSOLE))

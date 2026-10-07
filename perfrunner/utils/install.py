@@ -11,7 +11,6 @@ from typing import Optional
 from urllib.parse import urlparse
 
 import paramiko
-import requests
 import validators
 
 from logger import logger
@@ -26,7 +25,13 @@ from perfrunner.helpers.local import (
     generate_server_x509_cert,
     run_custom_cmd,
 )
-from perfrunner.helpers.misc import create_build_tuple, pretty_dict, url_exist
+from perfrunner.helpers.misc import (
+    LATESTBUILDS_BASE_URL,
+    create_build_tuple,
+    download_file,
+    pretty_dict,
+    url_exist,
+)
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.api import cd, run
 from perfrunner.remote.context import master_client
@@ -36,8 +41,6 @@ try:
     set_start_method("fork")
 except RuntimeError:
     pass
-
-LATESTBUILDS_BASE_URL = "http://latestbuilds.service.couchbase.com/builds"
 
 # product -> major.minor -> latestbuilds/<product>/<codename> directories holding its builds
 BUILD_DIRS = {
@@ -130,14 +133,6 @@ OPERATOR_PACKAGES = {
 ARM_ARCHS = {"rpm": "aarch64", "deb": "arm64"}
 
 Build = namedtuple("Build", ["filename", "url"])
-
-
-def download_file(url: str, filename: str):
-    logger.info(f"Downloading {url} to {filename}")
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(filename, "wb") as f:
-            f.writelines(r.iter_content(chunk_size=8192))
 
 
 def upload_file(file: str, to_host: str, to_user: str, to_password: str, to_directory: str = "."):

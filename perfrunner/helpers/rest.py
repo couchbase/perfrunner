@@ -50,6 +50,7 @@ SGW_ADMIN_PORT = 4985
 SGW_PUBLIC_PORT = 4984
 SGW_METRICS_PORT = 4986
 SGW_APPSERVICE_METRICS_PORT = 4988
+SGW_APPSERVICE_SPLIT_ENDPOINTS_PORT = 443  # See ClusterSpec.sgw_split_endpoints
 
 # Elasticsearch
 ELASTICSEARCH_REST_PORT = 9200
@@ -180,14 +181,6 @@ class RestBase:
     @retry
     def patch(self, **kwargs) -> requests.Response:
         return self._patch(**kwargs)
-
-    @retry
-    def cblite_post(self, **kwargs) -> requests.Response:
-        return requests.post(**kwargs)
-
-    @retry
-    def cblite_get(self, **kwargs) -> requests.Response:
-        return requests.get(**kwargs)
 
     def _get_api_url(self, host: str, path: str,
                      plain_port: str = REST_PORT, ssl_port: str = REST_PORT_SSL) -> str:
@@ -937,7 +930,7 @@ class DefaultRestHelper(RestBase):
         self.post(url=api, data=data)
 
     def disable_cross_clustering_versioning(self, host: str, bucket: str):
-        logger.info(f"Enabling cross clustering versioning on node: {host}")
+        logger.info(f"Disabling cross clustering versioning on node: {host}")
         api = self._get_api_url(host=host, path=f"pools/default/buckets/{bucket}")
         data = {
             'enableCrossClusterVersioning': 'false'
@@ -1932,7 +1925,9 @@ class DefaultRestHelper(RestBase):
 
     def get_sg_stats(self, host: str) -> str:
         """Return the Sync Gateway stats of ``host`` in Prometheus text exposition format."""
-        if self.cluster_spec.capella_infrastructure:
+        if self.cluster_spec.sgw_split_endpoints:
+            url = f"https://{self.cluster_spec.sgw_api_host(host, 'metric')}/metrics"
+        elif self.cluster_spec.capella_infrastructure:
             url = f"https://{host}:{SGW_APPSERVICE_METRICS_PORT}/metrics"
         else:
             url = self._get_api_url(host=host, path='_metrics', plain_port=SGW_METRICS_PORT,
@@ -1962,130 +1957,6 @@ class DefaultRestHelper(RestBase):
                                     plain_port=SGW_ADMIN_PORT, ssl_port=SGW_ADMIN_PORT)
         response = self.get(url=url)
         return response.json()
-
-    def start_cblite_replication_push(
-            self,
-            cblite_host,
-            cblite_port,
-            cblite_db,
-            sgw_host,
-            sgw_port=4984,
-            user="guest",
-            password="guest",
-            collections=None):
-        api = f"http://{cblite_host}:{cblite_port}/_replicate"
-        if self.use_tls:
-            ws_prefix = "wss://"
-        else:
-            ws_prefix = "ws://"
-        if user and password:
-            data = {
-                "source": f"{cblite_db}",
-                "target": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
-                "continuous": 1,
-                "user": user,
-                "password": password,
-                "bidi": 0,
-            }
-        else:
-            data = {
-                "source": f"{cblite_db}",
-                "target": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
-                "continuous": 1,
-                "bidi": 0,
-            }
-        if collections:
-            data['collections'] = collections
-
-        logger.info(f"The sgw host is: {sgw_host}")
-        logger.info(f"The url is: {api}")
-        logger.info(f"The json data is: {data}")
-        self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
-        logger.info("Successfully posted")
-
-    def start_cblite_replication_pull(
-            self,
-            cblite_host,
-            cblite_port,
-            cblite_db,
-            sgw_host,
-            sgw_port=4984,
-            user="guest",
-            password="guest",
-            collections=None):
-        api = f"http://{cblite_host}:{cblite_port}/_replicate"
-        if self.use_tls:
-            ws_prefix = "wss://"
-        else:
-            ws_prefix = "ws://"
-        if user and password:
-            data = {
-                "source": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
-                "target": f"{cblite_db}",
-                "continuous": 1,
-                "user": user,
-                "password": password,
-                "bidi": 0,
-            }
-        else:
-            data = {
-                "source": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
-                "target": f"{cblite_db}",
-                "continuous": 1,
-                "bidi": 0,
-            }
-        if collections:
-            data['collections'] = collections
-
-        logger.info(f"The sgw host is: {sgw_host}")
-        logger.info(f"The url is: {api}")
-        logger.info(f"The json data is: {data}")
-        self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
-        logger.info("Successfully posted")
-
-    def start_cblite_replication_bidi(
-            self,
-            cblite_host,
-            cblite_port,
-            cblite_db,
-            sgw_host,
-            sgw_port=4984,
-            user="guest",
-            password="guest",
-            collections=None):
-        api = f"http://{cblite_host}:{cblite_port}/_replicate"
-        if self.use_tls:
-            ws_prefix = "wss://"
-        else:
-            ws_prefix = "ws://"
-        if user and password:
-            data = {
-                "source": f"{cblite_db}",
-                "target": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
-                "continuous": 1,
-                "user": user,
-                "password": password,
-                "bidi": 1,
-            }
-        else:
-            data = {
-                "source": f"{cblite_db}",
-                "target": f"{ws_prefix}{sgw_host}:{sgw_port}/db-1",
-                "continuous": 1,
-                "bidi": 1,
-            }
-        if collections:
-            data['collections'] = collections
-
-        logger.info(f"The sgw host is: {sgw_host}")
-        logger.info(f"The url is: {api}")
-        logger.info(f"The json data is: {data}")
-        self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
-        logger.info("Successfully posted the current sgw")
-
-    def get_cblite_info(self, cblite_host, cblite_port, cblite_db):
-        api = f"http://{cblite_host}:{cblite_port}/{cblite_db}"
-        return self.cblite_get(url=api).json()
 
     def sgw_create_db(self, db_name: str, db_config: dict, host: str):
         logger.info(f'Creating database: {db_name} using {host}')
@@ -2131,7 +2002,10 @@ class DefaultRestHelper(RestBase):
     ) -> dict:
         api = self._get_api_url(
             host=host,
-            path=f"{db_name}/_config/audit?filterable={str(filterable).lower()}&verbose={str(verbose).lower()}",
+            path=(
+                f"{db_name}/_config/audit?filterable={str(filterable).lower()}"
+                f"&verbose={str(verbose).lower()}"
+            ),
             plain_port=SGW_ADMIN_PORT,
             ssl_port=SGW_ADMIN_PORT,
         )
@@ -2720,7 +2594,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_get_app_service_info(self, sgw_cluster_id: Optional[str] = None) -> dict:
         """Get AppService information."""
         if not sgw_cluster_id:
-            sgw_cluster_id = self.cluster_spec.infrastructure_settings.get("app_services_cluster")
+            sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
 
         return (
             self.dedicated_client.get_sgw_info(
@@ -2733,7 +2607,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_get_app_service_dbs(self, sgw_cluster_id: Optional[str] = None) -> dict:
         """Get AppService associated databases information."""
         if not sgw_cluster_id:
-            sgw_cluster_id = self.cluster_spec.infrastructure_settings.get("app_services_cluster")
+            sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
 
         return (
             self.dedicated_client.get_sgw_databases(
@@ -2746,8 +2620,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def get_sgversion(self, host: str) -> str:
         logger.info(f"Getting SG Server version on server: {host}")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         build = \
             self.dedicated_client.get_sgw_info(self.tenant_id,
                                                self.project_id,
@@ -2759,11 +2632,24 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                                                               .get('sync_gateway_version')
         return build
 
+    def sgw_update_sync_function(self, host: str, keyspace: str, new_sync: str):
+        if "." not in keyspace:
+            keyspace = f"{keyspace}._default._default"
+        logger.info(f"Updating sync function for {keyspace}")
+        resp = self.dedicated_client.update_sync_function_sgw(
+            self.tenant_id,
+            self.project_id,
+            self.cluster_ids[0],
+            self.cluster_spec.capella_sgw_cluster_ids[0],
+            keyspace,
+            new_sync,
+        )
+        resp.raise_for_status()
+
     def create_or_override_log_streaming_config(self, config: dict):
         logger.info(f"Creating log streaming: {config}")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client \
             .create_or_override_log_streaming_config(self.tenant_id, self.project_id,
                                                      cluster_id, sgw_cluster_id, config)
@@ -2772,16 +2658,14 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def enable_log_streaming(self):
         logger.info("Enabling log streaming")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.enable_sgw_logstreaming(self.tenant_id, self.project_id,
                                                              cluster_id, sgw_cluster_id)
         resp.raise_for_status()
 
     def disable_log_streaming(self):
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.disable_sgw_logstreaming(self.tenant_id, self.project_id,
                                                               cluster_id, sgw_cluster_id)
         resp.raise_for_status()
@@ -2789,8 +2673,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def create_log_streaming_config(self, config: dict):
         logger.info("Creating log streaming config")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.create_sgw_logstreaming_config(self.tenant_id, self.project_id,
                                                                     cluster_id, sgw_cluster_id,
                                                                     config)
@@ -2798,8 +2681,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
 
     def get_log_streaming_config(self) -> dict:
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         return self.dedicated_client.get_sgw_logstreaming_config(self.tenant_id,
                                                                  self.project_id,
                                                                  cluster_id,
@@ -2807,8 +2689,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
 
     def get_log_streaming_options(self) -> dict:
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         return self.dedicated_client.get_sgw_logstreaming_collector_options(self.tenant_id,
                                                                             self.project_id,
                                                                             cluster_id,
@@ -2816,16 +2697,14 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
 
     def get_log_streaming_selected_options(self) -> dict:
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         return self.dedicated_client \
             .get_sgw_logstreaming_collector_option_selected(self.tenant_id, self.project_id,
                                                             cluster_id, sgw_cluster_id).json()
 
     def get_logging_options(self) -> dict:
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         return self.dedicated_client.get_logging_options(self.tenant_id,
                                                          self.project_id,
                                                          cluster_id,
@@ -2833,8 +2712,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
 
     def get_logging_config(self) -> dict:
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         return self.dedicated_client.get_logging_config(self.tenant_id,
                                                         self.project_id,
                                                         cluster_id,
@@ -2844,8 +2722,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def update_logging_config(self, config: dict):
         logger.info("Updating logging config")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.update_logging_config(self.tenant_id, self.project_id,
                                                            cluster_id, sgw_cluster_id,
                                                            "db-1", config)
@@ -2854,8 +2731,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_update_db(self, sgw_db_name: str, config: dict):
         logger.info(f'Updating db: {sgw_db_name}')
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.update_sgw_database(self.tenant_id, self.project_id,
                                                          cluster_id, sgw_cluster_id,
                                                          sgw_db_name, config)
@@ -2865,8 +2741,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_enable_audit_logging(self):
         logger.info("Enabling Audit Logging")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.sgw_enable_audit_logging(self.tenant_id, self.project_id,
                                                               cluster_id, sgw_cluster_id)
         logger.info(f'The resp is: {resp}')
@@ -2875,8 +2750,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_disable_audit_logging(self):
         logger.info("Disabling Audit Logging")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.sgw_disable_audit_logging(self.tenant_id, self.project_id,
                                                                cluster_id, sgw_cluster_id)
         logger.info(f'The resp is: {resp}')
@@ -2885,16 +2759,14 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_get_audit_logging_state(self) -> dict:
         logger.info("Get Audit Logging State")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         return self.dedicated_client.sgw_get_audit_logging_state(self.tenant_id, self.project_id,
                                                                  cluster_id, sgw_cluster_id).json()
 
     def sgw_set_audit_logging_config(self, db_name, config: dict):
         logger.info("Setting Audit Logging Config")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.sgw_set_audit_logging_config(self.tenant_id, self.project_id,
                                                                   cluster_id, sgw_cluster_id,
                                                                   db_name, config)
@@ -2904,8 +2776,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_get_audit_logging_config(self, db_name) -> dict:
         logger.info("Get Audit Logging Config")
         cluster_id = self.cluster_ids[0]
-        sgw_cluster_id = \
-            self.cluster_spec.infrastructure_settings['app_services_cluster']
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.sgw_get_audit_logging_config(self.tenant_id, self.project_id,
                                                                  cluster_id, sgw_cluster_id,
                                                                  db_name)
@@ -2915,14 +2786,14 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
     def sgw_delete_backend(self):
         logger.info("Deleting Capella App Services cluster...")
 
-        sgw_cluster_id = self.cluster_spec.infrastructure_settings["app_services_cluster"]
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         resp = self.dedicated_client.delete_sgw_backend(
             self.tenant_id, self.project_id, self.cluster_ids[0], sgw_cluster_id
         )
         resp.raise_for_status()
 
     def sgw_add_allowed_ip(self, ips: list[str], include_mine: bool = True):
-        sgw_cluster_id = self.cluster_spec.infrastructure_settings["app_services_cluster"]
+        sgw_cluster_id = self.cluster_spec.capella_sgw_cluster_ids[0]
         if include_mine:
             my_ip = my_public_ip()
             ips.append(my_ip)
@@ -3122,7 +2993,10 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             function_logs = self.get(
                 url=self._get_api_url(
                     host=host,
-                    path=f"getAppLog?name={function_name}&aggregate=true&bucket={bucket}&scope={scope}",
+                    path=(
+                        f"getAppLog?name={function_name}&aggregate=true"
+                        f"&bucket={bucket}&scope={scope}"
+                    ),
                     plain_port=EVENTING_PORT,
                     ssl_port=EVENTING_PORT_SSL,
                 )

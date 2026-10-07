@@ -250,6 +250,17 @@ def generate_bedrock_api_key(access_key: str, secret_key: str, region: str) -> s
     return f"bedrock-api-key-{base64.b64encode(presigned_url.encode()).decode()}"
 
 
+LATESTBUILDS_BASE_URL = "http://latestbuilds.service.couchbase.com/builds"
+
+
+def download_file(url: str, filename: str):
+    logger.info(f"Downloading {url} to {filename}")
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(filename, "wb") as f:
+            f.writelines(r.iter_content(chunk_size=8192))
+
+
 def url_exist(url: str, allow_redirects: bool = False) -> bool:
     try:
         status_code = requests.head(url, allow_redirects=allow_redirects).status_code

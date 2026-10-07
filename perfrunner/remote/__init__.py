@@ -1,5 +1,7 @@
 import os
+import re
 import shutil
+import time
 from pathlib import Path
 from typing import Optional
 from uuid import uuid4
@@ -13,10 +15,21 @@ from perfrunner.helpers.local import (
     cb_package_candidates,
 )
 from perfrunner.helpers.misc import get_python_sdk_installation
-from perfrunner.remote.api import cd, env, get, hide, run, settings, shell_env
+from perfrunner.remote.api import (
+    CommandTimeout,
+    cd,
+    env,
+    execute,
+    get,
+    hide,
+    parallel,
+    put,
+    run,
+    settings,
+    shell_env,
+)
 from perfrunner.remote.context import (
     all_clients,
-    all_clients_batch,
     master_client,
     syncgateway_servers,
 )
@@ -25,6 +38,20 @@ from perfrunner.settings import REPO, ClusterSpec
 # Skip checkstyle in case upstream branch doesn't enforce it.
 # Also configure stack size for clients that haven't set anything.
 YCSB_MAVEN_OPTS = "-Dcheckstyle.skip=true -Xss16m"
+
+# The cblite CLI the multi-client E2E tests run, and its dbs
+CBLITE_HOME = "/opt/cblite"
+CBLITE = f"{CBLITE_HOME}/bin/cblite"
+CBLITE_DB_DIR = "/tmp/couchbase-mobile-tools"
+
+
+def cblite_db_path(db_name: str) -> str:
+    return f"{CBLITE_DB_DIR}/{db_name}.cblite2"
+
+
+def cblite_collection_flag(collections: list[str]) -> str:
+    """Return the cblite flag naming ``collections`` ("scope.collection"), none for _default."""
+    return f" --collection {','.join(collections)}" if collections else ""
 
 
 class Remote:
@@ -333,15 +360,14 @@ class Remote:
         localpath = f"{local_dir}/"
         instances = int(sgs.instances_per_client)
         pattern = f"{sgs.log_title}*"
+        extensions = ("log", "result")
         logger.info('Collecting YCSB logs')
         with cd(worker_home), cd('perfrunner'):
-            r = run(f"stat YCSB/{pattern}", quiet=True)
-            if not r.return_code:
-                get(f"YCSB/{pattern}", local_path=localpath)
-            for i in range(instances):
-                r = run(f"stat YCSB_{i + 1}/{pattern}", quiet=True)
+            for ycsb_dir in ["YCSB"] + [f"YCSB_{i + 1}" for i in range(instances)]:
+                r = run(f"stat {ycsb_dir}/{pattern}", quiet=True)
                 if not r.return_code:
-                    get(f"YCSB_{i + 1}/{pattern}", local_path=local_dir)
+                    for extension in extensions:
+                        get(f"{ycsb_dir}/{pattern}.{extension}", local_path=localpath)
 
     def get_cblite_logs(self, worker, instance_id, local_dir):
         localpath = f"{local_dir}/"
@@ -427,131 +453,128 @@ class Remote:
         run('umount /tmp/couchbase-mobile-tools/', quiet=True, warn_only=True)
 
     @all_clients
-    def clone_cblite(self):
-        logger.info('Cloning cblite')
-        with cd('/tmp/couchbase-mobile-tools/'):
-            run('git clone https://github.com/couchbaselabs/couchbase-mobile-tools .')
-            run('git checkout 1755d395131073e173f9a4f984e84084c144c18f')
+    def install_cblite(self, package: str):
+        # Outside CBLITE_DB_DIR, which each E2E test wipes and may mount a ramdisk over
+        logger.info('Installing cblite')
+        put(package, '/tmp/cblite.zip')
+        run('apt-get install -y unzip', quiet=True)
+        run(f'rm -rf {CBLITE_HOME}')
+        run(f'unzip -q /tmp/cblite.zip -d {CBLITE_HOME}')
+        run(f'chmod +x {CBLITE}')
+        logger.info(f'Installed cblite {run(f"{CBLITE} --version", quiet=True)} on {env.host}')
 
-    def build_cblite(self):
-        logger.info('Building cblite: updating submodule...')
-        try:
-            self.cblite_update_submodule()
-        except Exception as ex:
-            logger.info(f"{ex}")
-        logger.info('Building cblite: checking out version...')
-        try:
-            self.cblite_checkout_version()
-        except Exception as ex:
-            logger.info(f"{ex}")
-        logger.info('Building cblite: creating build directory...')
-        try:
-            self.cblite_make_build_dir()
-        except Exception as ex:
-            logger.info(f"{ex}")
-        logger.info('Building cblite: running cmake...')
-        try:
-            self.cblite_build_cmake()
-        except Exception as ex:
-            logger.info(f"{ex}")
-        logger.info('Building cblite: running make...')
-        try:
-            self.cblite_build_make()
-        except Exception as ex:
-            logger.info(f"{ex}")
+    def create_cblite_dbs(self, clients: list[str], db_names: list[str], collections: list[str]):
+        """Create the cblite dbs, with their named collections, one client per thread."""
+        def create():
+            for db_name in db_names:
+                db_path = cblite_db_path(db_name)
+                if collections:
+                    for collection in collections:
+                        run(f'{CBLITE} --create mkcoll {db_path} {collection}', pty=False)
+                else:
+                    run(f'{CBLITE} --create info {db_path}', pty=False, quiet=True)
 
-    @all_clients_batch
-    def cblite_update_submodule(self):
-        with cd('/tmp/couchbase-mobile-tools/'):
-            run('git submodule update --init --recursive', quiet=True)
+        execute(parallel(create), hosts=clients)
 
-    @all_clients_batch
-    def cblite_checkout_version(self):
-        with cd('/tmp/couchbase-mobile-tools/vendor/couchbase-lite-core'):
-            run('git checkout 91a72069bcb942c9e1bfb39e4f38abd544e6b742', quiet=True)
-
-    @all_clients_batch
-    def cblite_make_build_dir(self):
-        with cd('/tmp/couchbase-mobile-tools/cblite/'):
-            run('mkdir build_cmake', quiet=True)
-
-    @all_clients_batch
-    def cblite_build_cmake(self):
-        with cd('/tmp/couchbase-mobile-tools/cblite/build_cmake'):
-            run('/usr/bin/cmake ..', quiet=True)
-
-    @all_clients_batch
-    def cblite_build_make(self):
-        with cd('/tmp/couchbase-mobile-tools/cblite/build_cmake'):
-            run('/usr/bin/make -j 5')
-
-    def start_cblitedb_continuous(self, worker: str, db_name: str, port: int, verbose: int = 1,
-                                  collection: dict = {}):
-        cblite = '/tmp/couchbase-mobile-tools/cblite/build_cmake/cblite'
-        db_path = f"/tmp/couchbase-mobile-tools/{db_name}.cblite2"
-        cmd = '{} --create serve {} --port {} {} &>serve_{}.log & '\
-            .format(cblite, '--verbose' if verbose else '', port, db_path, db_name)
-        logger.info(cmd)
-        with settings(host_string=worker):
-            run(cmd, pty=False)
-
-        # Create collections
-        for scope, coll in collection.items():
-            if scope == '_default':
-                continue
-            for col_name, _ in coll.items():
-                cmd = f"{cblite} mkcoll {db_path} {scope}/{col_name}"
-                with settings(host_string=worker):
-                    run(cmd, pty=False)
-
-    def start_cblite_replication_aws_pull(self,
-                                          worker,
-                                          sgw_host,
-                                          sgw_port,
-                                          cblite_db,
-                                          user,
-                                          password):
+    def start_cblite_replication(self,
+                                 worker: str,
+                                 replication_type: str,
+                                 sgw_url: str,
+                                 cblite_db: str,
+                                 user: Optional[str],
+                                 password: Optional[str],
+                                 collections: list[str]):
+        db_path = cblite_db_path(cblite_db)
+        if replication_type == 'E2E_PUSH':
+            subcommand, endpoints, log_name = 'push', f'{db_path} {sgw_url}', 'push'
+        elif replication_type == 'E2E_PULL':
+            # `cblite pull` reverses SOURCE and DESTINATION: this pulls from SGW into the local db
+            subcommand, endpoints, log_name = 'pull', f'{db_path} {sgw_url}', 'pull'
+        elif replication_type == 'E2E_BIDI':
+            subcommand, endpoints, log_name = 'cp --bidi', f'{sgw_url} {db_path}', 'bidi'
+        else:
+            raise Exception(f'Unknown replication type: {replication_type}')
+        # Without a user the replicator connects as GUEST, as when replication_auth is disabled
+        auth = f' --user {user}:{password}' if user else ''
+        # Named after the db, unique on the client, as several replicators can share a user
         cmd = (
-            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite pull --replicate"
-            f" --continuous --user {user}:{password} wss://{sgw_host}:{sgw_port}/db-1"
-            f" /tmp/couchbase-mobile-tools/{cblite_db}.cblite2 &>pull_{user}.log &"
+            f'nohup {CBLITE} {subcommand} --replicate --continuous{auth}'
+            f'{cblite_collection_flag(collections)} {endpoints}'
+            f' &>{log_name}_{cblite_db}.log &'
         )
         logger.info(cmd)
         with settings(host_string=worker):
             run(cmd, pty=False)
 
-    def start_cblite_replication_aws_push(self,
-                                          worker,
-                                          sgw_host,
-                                          sgw_port,
-                                          cblite_db,
-                                          user,
-                                          password):
-        cmd = (
-            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite push --replicate"
-            f" --continuous --user {user}:{password}"
-            f" /tmp/couchbase-mobile-tools/{cblite_db}.cblite2"
-            f"  wss://{sgw_host}:{sgw_port}/db-1 &>push_{user}.log &"
-        )
-        logger.info(cmd)
-        with settings(host_string=worker):
-            run(cmd, pty=False)
+    def load_cblite_docs(
+        self, imports: dict[str, list[tuple[str, str]]], collections: list[str]
+    ) -> dict[str, list[tuple[str, int, int]]]:
+        def load():
+            return [
+                (db_name, *self._load_cblite_docs(db_name, json_file, collections))
+                for db_name, json_file in imports[env.host_string]
+            ]
 
-    def start_cblite_replication_aws_bidi(self,
-                                          worker,
-                                          sgw_host,
-                                          sgw_port,
-                                          cblite_db,
-                                          user,
-                                          password):
-        cmd = (
-            "nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite cp --replicate --bidi"
-            f" --continuous --user {user}:{password} wss://{sgw_host}:{sgw_port}/db-1"
-            f" /tmp/couchbase-mobile-tools/{cblite_db}.cblite2 &>bidi_{user}.log &"
+        return execute(parallel(load), hosts=list(imports))
+
+    def _load_cblite_docs(
+        self, db_name: str, json_file: str, collections: list[str]
+    ) -> tuple[int, int]:
+        """Import ``json_file`` into ``db_name``; return (docs in the file, docs in the db).
+
+        cblite builds without the CBL-8778 fix segfault after committing an import, so the exit
+        code doesn't tell whether the docs landed. The counts do.
+        """
+        db_path = cblite_db_path(db_name)
+        start_time = time.time()
+        with settings(warn_only=True):
+            r = run(f'wc -l < {json_file}', quiet=True)
+            exported = int(r.strip()) if not r.return_code and r.strip().isdigit() else 0
+            if len(collections) > 1:
+                # cblite imports JSON into one collection at a time, and YCSB loads the same keys
+                # into every collection, so the export holds each _id once per collection. The
+                # k-th copy goes to the k-th collection: "_id" is the first field, and keys have
+                # no commas. The parts keep the .json extension, which tells cblite their format.
+                part = json_file.removesuffix('.json') + '.part'
+                run(f"awk -F, '{{ print > (\"{part}\" seen[$1]++ \".json\") }}' {json_file}")
+                parts = [([collection], f'{part}{k}.json') for k, collection in
+                         enumerate(collections)]
+            else:
+                parts = [(collections, json_file)]
+            for part_collections, part_file in parts:
+                cmd = (
+                    f'{CBLITE} import{cblite_collection_flag(part_collections)}'
+                    f' {db_path} {part_file}'
+                )
+                logger.info(cmd)
+                run(cmd, pty=False)
+            if len(collections) > 1:
+                run(f'rm -f {part}*.json', quiet=True)
+            # Not lscoll: it stops at the first named collection, as it counts the deleted docs
+            # with a query that quotes "scope.collection" as a single name
+            r = run(f'{CBLITE} info {db_path}', quiet=True)
+        total = re.search(r' -- (\d+) docs total', r)
+        loaded = int(total.group(1)) if total else 0
+        logger.info(
+            f'Loaded {loaded} of {exported} exported docs into {db_name} on {env.host} '
+            f'in {time.time() - start_time:.1f} seconds'
         )
-        logger.info(cmd)
+        return exported, loaded
+
+    def get_cblite_info(self, worker: str, db_names: list[str], timeout: int = 120):
+        cmd = "; ".join(f"{CBLITE} info {cblite_db_path(db_name)} 2>&1" for db_name in db_names)
+        with settings(host_string=worker, warn_only=True):
+            try:
+                info = run(cmd, pty=False, timeout=timeout, quiet=True)
+                logger.info(f"cblite info on {worker}:\n{info}")
+            except CommandTimeout:
+                logger.warning(f"cblite info timed out after {timeout}s on {worker}")
+
+    def get_cblite_replication_logs(self, worker: str, local_dir: str):
         with settings(host_string=worker):
-            run(cmd, pty=False)
+            names = run("ls -1 push_*.log pull_*.log bidi_*.log 2>/dev/null", quiet=True)
+            for name in names.split():
+                get(name, local_path=f"{local_dir}/{name}")
 
     @all_clients
     def kill_cblite(self):

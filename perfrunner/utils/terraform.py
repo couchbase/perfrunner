@@ -6,6 +6,7 @@ from collections import Counter
 from ipaddress import IPv4Network
 from time import sleep, time
 from typing import Optional
+from urllib.parse import urlparse
 from uuid import uuid4
 
 import requests
@@ -293,11 +294,12 @@ def raise_for_status(resp: requests.Response):
 
 
 def format_datadog_link(cluster_id: str = None, dataplane_id: str = None,
-                        database_id: str = None) -> str:
+                        database_id: str = None, app_service_id: str = None) -> str:
     filters = [
         f"clusterId%3A{cluster_id}" if cluster_id else None,
         f"dataplaneId%3A{dataplane_id}" if dataplane_id else None,
         f"databaseId%3A{database_id}" if database_id else None,
+        f"appServiceId%3A{app_service_id}" if app_service_id else None,
     ]
 
     filters = [f for f in filters if f]
@@ -1599,34 +1601,64 @@ class EKSDeployer(CloudVMDeployer):
 class AppServicesDeployer(CapellaProvisionedDeployer):
     def __init__(self, infra_spec: ClusterSpec, options: Namespace):
         super().__init__(infra_spec, options)
-        self.cluster_id = self.cluster_ids[0]
+        self.appsvc_ids = []
 
     def deploy(self):
-        # Configure terraform
-        logger.info('Started deploying the AS')
-        # Deploy capella cluster
-        # Create sgw backend(app services)
-        with record_time("app_services_cluster"):
-            sgw_cluster_id = self.deploy_cluster_internal_api()
+        # One App Services backend per Capella cluster
+        for cluster_id in self.cluster_ids:
+            logger.info(f'Started deploying the AS for cluster {cluster_id}')
+            # Create sgw backend(app services)
+            with record_time("app_services_cluster"):
+                sgw_cluster_id = self.deploy_cluster_internal_api(cluster_id)
 
-        with record_time("app_services_db"):
-            self.deploy_app_endpoints(sgw_cluster_id)
+            with record_time("app_services_db"):
+                self.deploy_app_endpoints(cluster_id, sgw_cluster_id)
 
-        # Add allowed IPs
-        logger.info("Whitelisting IPs")
-        for client_ip in self.infra_spec.client_ips:
-            self.provisioned_api.add_allowed_ip_sgw(
-                self.tenant_id, self.project_id, sgw_cluster_id, self.cluster_id, client_ip
-            )
+            # Add allowed IPs
+            logger.info("Whitelisting IPs")
+            for client_ip in self.infra_spec.client_ips:
+                self.allow_ip_sgw(cluster_id, sgw_cluster_id, client_ip)
 
-        # Allow my IP
-        logger.info("Whitelisting own IP on sgw backend")
-        my_ip = my_public_ip()
-        self.provisioned_api.add_allowed_ip_sgw(
-            self.tenant_id, self.project_id, sgw_cluster_id, self.cluster_id, my_ip
-        )
+            # Allow my IP
+            logger.info("Whitelisting own IP on sgw backend")
+            self.allow_ip_sgw(cluster_id, sgw_cluster_id, my_public_ip())
 
-    def deploy_app_endpoints(self, sgw_cluster_id: str):
+    def allow_ip_sgw(self, cluster_id: str, sgw_cluster_id: str, ip: str, attempts: int = 3):
+        """Allowlist ``ip`` on the App Services backend, retrying transient Capella API failures.
+
+        A missing entry only shows up later: App Services answers that IP with a 403 for the whole
+        run. A retry can find the entry added by an earlier attempt that timed out, which is fine.
+        """
+        for attempt in range(1, attempts + 1):
+            try:
+                # add_allowed_ip_sgw builds its URL with cluster_id and backend_id swapped
+                resp = self.provisioned_api.add_allowed_ip_sgw(
+                    self.tenant_id, self.project_id, sgw_cluster_id, cluster_id, ip
+                )
+            except Exception as e:
+                # The Capella client fails with an AttributeError when a request times out
+                logger.warning(f"Allowlisting {ip} failed (attempt {attempt}/{attempts}): {e}")
+            else:
+                if resp is None:
+                    # The Capella client returns None on timeouts and connection errors
+                    logger.warning(
+                        f"Allowlisting {ip} failed (attempt {attempt}/{attempts}): no response"
+                    )
+                elif resp.ok:
+                    return
+                elif resp.status_code == 422 and "duplicate" in resp.text.lower():
+                    logger.info(f"{ip} is already allowlisted on {sgw_cluster_id}")
+                    return
+                else:
+                    logger.warning(
+                        f"Allowlisting {ip} failed (attempt {attempt}/{attempts}): "
+                        f"{resp.status_code} {resp.text}"
+                    )
+            if attempt < attempts:
+                sleep(30)
+        raise Exception(f"Could not allowlist {ip} on App Services backend {sgw_cluster_id}")
+
+    def deploy_app_endpoints(self, cluster_id: str, sgw_cluster_id: str):
         user = {
             "email": "",
             "password": "Password123!",
@@ -1639,16 +1671,16 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
         for bucket_name in self.test_config.buckets:
             # Create sgw database(app endpoint)
             logger.info("Deploying sgw database")
-            sgw_db_name = self.deploy_sgw_db(sgw_cluster_id, bucket_name)
+            sgw_db_name = self.deploy_sgw_db(cluster_id, sgw_cluster_id, bucket_name)
 
             # Set sync function
             logger.info("Setting sync function")
             self.provisioned_api.update_sync_function_sgw(
                 self.tenant_id,
                 self.project_id,
-                self.cluster_id,
+                cluster_id,
                 sgw_cluster_id,
-                sgw_db_name,
+                sgw_db_name + "._default._default",
                 "function (doc) { channel(doc.channels); }",
             )
 
@@ -1657,7 +1689,7 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
             self.provisioned_api.add_app_role_sgw(
                 self.tenant_id,
                 self.project_id,
-                self.cluster_id,
+                cluster_id,
                 sgw_cluster_id,
                 sgw_db_name,
                 {"name": "moderator", "admin_channels": []},
@@ -1666,7 +1698,7 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
             self.provisioned_api.add_app_role_sgw(
                 self.tenant_id,
                 self.project_id,
-                self.cluster_id,
+                cluster_id,
                 sgw_cluster_id,
                 sgw_db_name,
                 {"name": "admin", "admin_channels": []},
@@ -1677,7 +1709,7 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
             self.provisioned_api.add_user_sgw(
                 self.tenant_id,
                 self.project_id,
-                self.cluster_id,
+                cluster_id,
                 sgw_cluster_id,
                 sgw_db_name,
                 user,
@@ -1694,35 +1726,44 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
                 "endpoints": [],
             }
             resp = self.provisioned_api.add_admin_user_sgw(
-                self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id, admin_user
+                self.tenant_id, self.project_id, cluster_id, sgw_cluster_id, admin_user
             )
             logger.info(f"The response is: {resp}")
             # Update cluster spec file
-            self.update_app_services_spec(sgw_cluster_id, sgw_db_name)
+            self.update_app_services_spec(cluster_id, sgw_cluster_id, sgw_db_name)
 
     def destroy(self):
         # Destroy capella cluster
-        sgw_cluster_id = self.infra_spec.infrastructure_settings['app_services_cluster']
-        self.destroy_cluster_internal_api(sgw_cluster_id)
+        sgw_cluster_ids = self.infra_spec.capella_sgw_cluster_ids
+        logger.info(f'The app services cluster ids are: {sgw_cluster_ids}')
+        for cluster_id, sgw_cluster_id in zip(self.cluster_ids, sgw_cluster_ids):
+            logger.info(f"Deleting App Services cluster {sgw_cluster_id}...")
+            self.destroy_cluster_internal_api(cluster_id, sgw_cluster_id)
 
-    def update_app_services_spec(self, sgw_cluster_id, sgw_db_name):
+    def update_app_services_spec(self, cluster_id, sgw_cluster_id, sgw_db_name):
         # Get sgw public and private ips
         resp = self.provisioned_api.get_sgw_links(
-            self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id, sgw_db_name
+            self.tenant_id, self.project_id, cluster_id, sgw_cluster_id, sgw_db_name
         )
 
         logger.info(f'The connect response is: {resp}')
-        adminurl = resp.json().get('data').get('adminURL').split(':')[1].split('//')[1]
+        links = resp.json().get('data')
+        adminurl = urlparse(links.get('adminURL')).hostname
         logger.info(f'The admin url is: {adminurl}')
+        publicurl = urlparse(links.get('publicURL')).hostname
+        logger.info(f'The public url is: {publicurl}')
         if "sgw_schemas" not in self.infra_spec.config:
             self.infra_spec.config.add_section('sgw_schemas')
         for option, value in self.infra_spec.infrastructure_syncgateways.items():
             self.infra_spec.config.set('sgw_schemas', option, value)
 
-        sgw_option = self.infra_spec.config.options('syncgateways')[0]
+        # Each cluster's backend replaces the [syncgateways] option in the same position as the
+        # cluster, so a 2-cluster spec keeps syncgateways1 and syncgateways2 apart
+        cluster_idx = self.cluster_ids.index(cluster_id)
+        sgw_option = self.infra_spec.config.options('syncgateways')[cluster_idx]
         sgw_list = []
         for _ in range(self.test_config.syncgateway_settings.nodes):
-            sgw_list.append(adminurl)
+            sgw_list.append(publicurl)
         logger.info(f'the sgw list is: {sgw_list}')
         self.infra_spec.config.set('syncgateways', sgw_option, '\n' + '\n'.join(sgw_list))
         self.infra_spec.update_spec_file()
@@ -1753,19 +1794,20 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
 
                 return node_group_config['instance_type']
 
-    def deploy_cluster_internal_api(self):
+    def deploy_cluster_internal_api(self, cluster_id: str):
         """Sample config.
 
         {
             "clusterId": "71eff4a9-bc4a-442f-8196-3339f9128c08",
             "name": "my-sync-gateway-backend",
             "description": "sgw backend that drives my amazing app",
-            "desired_capacity": 2
+            "version": 3.3,
+            "desired_capacity": 2,
             "compute": {"type":"c5.large"}
         }
         """
         config = {
-            "clusterId": self.cluster_id,
+            "clusterId": cluster_id,
             "name": f"perf-sgw-{self.uuid}",
             "description": "",
             "desired_capacity": self.test_config.syncgateway_settings.nodes,
@@ -1780,10 +1822,13 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
         resp = self.provisioned_api.create_sgw_backend(self.tenant_id, config)
         raise_for_status(resp)
         sgw_cluster_id = resp.json().get('id')
-        logger.info(f'Initialised app services deployment {sgw_cluster_id}')
+        self.appsvc_ids.append(sgw_cluster_id)
+        logger.info(f'Initialised App Svc deployment {sgw_cluster_id} for cluster {cluster_id}')
+        logger.info(f'App services IDs: {self.appsvc_ids}')
         logger.info('Saving app services ID to spec file.')
 
-        self.infra_spec.config.set('infrastructure', 'app_services_cluster', sgw_cluster_id)
+        self.infra_spec.config.set('controlplane', 'app_services_cluster',
+                                   "\n".join(self.appsvc_ids))
         self.infra_spec.update_spec_file()
 
         timeout_mins = self.capella_timeout
@@ -1795,7 +1840,7 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
 
             status = (
                 self.provisioned_api.get_sgw_info(
-                    self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id
+                    self.tenant_id, self.project_id, cluster_id, sgw_cluster_id
                 )
                 .json()
                 .get("data")
@@ -1805,18 +1850,26 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
             logger.info(f'Cluster state for {pending_sgw_cluster}: {status}')
             if status == "deploymentFailed":
                 logger.error(
-                    f"Deployment failed for cluster {pending_sgw_cluster}. "
-                    "DataDog link for debugging: "
-                    f"{format_datadog_link(cluster_id=pending_sgw_cluster)}"
+                    f"Deployment failed for Backend {pending_sgw_cluster}. "
+                    f"DataDog link: {format_datadog_link(app_service_id=pending_sgw_cluster)}"
                 )
                 exit(1)
 
             if status == "healthy":
-                break
+                pending_sgw_cluster = None
+
+        if pending_sgw_cluster:
+            # App Services rejects database creation until the backend is healthy, so there is no
+            # point carrying on
+            logger.error(
+                f"Backend {pending_sgw_cluster} not healthy after {timeout_mins} mins. "
+                f"DataDog link: {format_datadog_link(app_service_id=pending_sgw_cluster)}"
+            )
+            exit(1)
 
         return sgw_cluster_id
 
-    def deploy_sgw_db(self, sgw_cluster_id: str, bucket_name: str) -> str:
+    def deploy_sgw_db(self, cluster_id: str, sgw_cluster_id: str, bucket_name: str) -> str:
         """Sample config.
 
         {
@@ -1884,28 +1937,37 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
         logger.info(f'The configuration is: {config}')
 
         with record_time("app_services_per_db", sgw_db_name):
-            self._deploy_app_services_db(sgw_cluster_id, sgw_db_name, bucket_count, config)
+            self._deploy_app_services_db(
+                cluster_id, sgw_cluster_id, sgw_db_name, bucket_count, config
+            )
 
         return sgw_db_name
 
     def _deploy_app_services_db(
-        self, sgw_cluster_id: str, sgw_db_name: str, bucket_count: int, config: dict
+        self,
+        cluster_id: str,
+        sgw_cluster_id: str,
+        sgw_db_name: str,
+        bucket_count: int,
+        config: dict,
     ):
         resp = self.provisioned_api.create_sgw_database(
-            self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id, config
+            self.tenant_id, self.project_id, cluster_id, sgw_cluster_id, config
         )
-        logger.info(f'The response for creating the sgw db is: {resp}')
+        raise_for_status(resp)
+        logger.info(f'The response for creating the sgw db is: {resp.json()}')
         sgw_db_id = resp.json().get('id')
         logger.info(f"Initialised sgw database deployment {sgw_db_id}")
 
         num_sgw = 0
-        count = 0
+        timeout_mins = self.capella_timeout
+        t0 = time()
         # We need to have the same number of sgw databases as the number of buckets
         logger.info(f"Waiting for {sgw_db_name} sgw databases to be online")
         while num_sgw < bucket_count:
             sleep(10)
             resp = self.provisioned_api.get_sgw_databases(
-                self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id
+                self.tenant_id, self.project_id, cluster_id, sgw_cluster_id
             ).json()
             new_resp = resp.get('data')
             if new_resp is not None:
@@ -1921,25 +1983,26 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
                         self.provisioned_api.resume_sgw_database(
                             self.tenant_id,
                             self.project_id,
-                            self.cluster_id,
+                            cluster_id,
                             sgw_cluster_id,
                             sgw_db_name,
                         )
 
                     if state == 'Online':
                         num_sgw += 1
-            count += 1
             logger.info(f'The number of sgw databases is: {num_sgw}')
-            if count > 1000:
-                logger.error("SGW database deployment timed out")
+            if num_sgw < bucket_count and (time() - t0) > timeout_mins * 60:
+                logger.error(f"SGW database deployment timed out after {timeout_mins} mins")
                 exit(1)
 
         logger.info("SGW databases successfully created")
 
-    def destroy_cluster_internal_api(self, sgw_cluster_id):
+    def destroy_cluster_internal_api(self, cluster_id: str, sgw_cluster_id: str):
         logger.info('Deleting Capella App Services cluster...')
+        logger.info(f'The cluster id is: {cluster_id}')
+        logger.info(f'The sgw cluster id is: {sgw_cluster_id}')
         resp = self.provisioned_api.delete_sgw_backend(
-            self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id
+            self.tenant_id, self.project_id, cluster_id, sgw_cluster_id
         )
 
         timeout_mins = self.capella_timeout
@@ -1950,7 +2013,7 @@ class AppServicesDeployer(CapellaProvisionedDeployer):
             sleep(interval_secs)
             try:
                 status = self.provisioned_api.get_sgw_info(
-                    self.tenant_id, self.project_id, self.cluster_id, sgw_cluster_id
+                    self.tenant_id, self.project_id, cluster_id, sgw_cluster_id
                 )
                 status = status.json().get('data').get('status').get('state')
                 logger.info(f'Cluster state for {pending_sgw_cluster}: {status}')

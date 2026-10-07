@@ -1334,7 +1334,7 @@ class CapellaSnapshotBackupWithSGWTest(SGRead, CapellaSnapshotBackupRestoreTest)
         while not sgw_cluster_id:
             sgw_cluster_id = self.rest.get_cluster_info().get("appService", {}).get("id")
             time.sleep(30)
-        self.cluster_spec.config.set("infrastructure", "app_services_cluster", sgw_cluster_id)
+        self.cluster_spec.config.set("controlplane", "app_services_cluster", sgw_cluster_id)
 
         # Wait for AppService redeployment
         self._wait_for_app_service_status(sgw_cluster_id, "healthy")

@@ -3,6 +3,7 @@ import glob
 import json
 import multiprocessing
 import os
+import posixpath
 import re
 import shutil
 from collections.abc import Iterable
@@ -14,10 +15,20 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.config_files import TimeTrackingFile
-from perfrunner.helpers.misc import parse_prometheus_stat, pretty_dict, target_hash
+from perfrunner.helpers.misc import (
+    LATESTBUILDS_BASE_URL,
+    download_file,
+    parse_prometheus_stat,
+    pretty_dict,
+    target_hash,
+)
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.reporter import ShowFastReporter
-from perfrunner.helpers.rest import SGW_ADMIN_PORT, SGW_PUBLIC_PORT
+from perfrunner.helpers.rest import (
+    SGW_ADMIN_PORT,
+    SGW_APPSERVICE_SPLIT_ENDPOINTS_PORT,
+    SGW_PUBLIC_PORT,
+)
 from perfrunner.helpers.worker import (
     WorkloadPhase,
     pillowfight_data_load_task,
@@ -48,6 +59,20 @@ from perfrunner.settings import (
 )
 from perfrunner.tests import PerfTest
 from perfrunner.tests.eventing import FunctionsTimeTest
+from perfrunner.workloads.syncgateway import e2e_load_docs_db, e2e_load_docs_export
+
+CBLITE_PACKAGE = "cblite.zip"
+
+
+def cblite_package_url(version: str) -> str:
+    """Return the latestbuilds URL of the cblite package ``version`` (<release>-<build>)."""
+    release, _, build = version.partition("-")
+    if not build:
+        raise ValueError(f"Expected a cblite version like 4.1.2-1, got: {version}")
+    return (
+        f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-lite-cblite/{release}/{build}/"
+        f"couchbase-lite-cblite-{release}-{build}-centos.zip"
+    )
 
 
 class SGPerfTest(PerfTest):
@@ -94,6 +119,8 @@ class SGPerfTest(PerfTest):
                 self.sgw_master_node, SGW_PUBLIC_PORT
             )
             self.memcached_port = "11211"
+        elif self.cluster_spec.sgw_split_endpoints:
+            self.admin_port = self.public_port = SGW_APPSERVICE_SPLIT_ENDPOINTS_PORT
 
         self.use_distributed_load = int(self.sg_settings.load_clients) > 1
 
@@ -134,7 +161,7 @@ class SGPerfTest(PerfTest):
 
     def update_sync_function(self):
         sync_function = (
-            'function (doc) { channel("channel-".concat((Date.now()) % '
+            "function (doc) { channel('channel-'.concat((Date.now()) % "
             f"{self.sg_settings.channels}));}}"
         )
         collections_map = self.test_config.collection.collection_map
@@ -475,7 +502,9 @@ class SGPerfTest(PerfTest):
         # Handle Syncgateway specific cleanup
         too_many_warnings = self.check_num_warnings()
 
-        if self.dynamic_infra:
+        # SGW logs and console output are collected over SSH, which neither Kubernetes nor
+        # Capella App Services offers
+        if self.dynamic_infra or self.capella_infra:
             if too_many_warnings:
                 raise Exception(f"Too many warnings: {too_many_warnings}")
             return
@@ -498,7 +527,7 @@ class SGLoad(SGPerfTest):
         collections_map = self.test_config.collection.collection_map
         if collections_map:
             logger.info("Unlinking collections")
-            t0 = time.time()
+            t0 = time()
             for bucket_name in self.test_config.buckets:
                 sgw_db_name = f'db-{bucket_name.split("-")[1]}'
                 config = {
@@ -514,7 +543,7 @@ class SGLoad(SGPerfTest):
                     }
                 }
                 self.rest.sgw_update_db(sgw_db_name, config)
-            coll_unlink_time = time.time() - t0
+            coll_unlink_time = time() - t0
             logger.info(f'Coll unlink time is: {coll_unlink_time}')
 
     def _report_kpi(self):
@@ -2536,14 +2565,32 @@ class EndToEndSingleCBLBidiTest(EndToEndSingleCBLTest):
 
 class EndToEndMultiCBLTest(EndToEndTest):
 
+    CBLITE_REPLICATION_LOGS = "cblite_replication_logs"
+
     def get_cblite_info(self):
-        for client in self.cluster_spec.workers[:int(self.settings.syncgateway_settings.clients)]:
-            for instance_id in range(int(self.settings.syncgateway_settings.instances_per_client)):
-                db_name = f'db_{instance_id}'
-                port = 4985+instance_id
-                info = self.rest.get_cblite_info(
-                    client, port, db_name)
-                logger.info(f'client: {client}, port: {port}, db: {db_name}, \n info: {info}')
+        # cblite no longer serves its databases over REST, so ask the CLI on each client instead
+        for client in self.cblite_clients:
+            self.remote.get_cblite_info(client, self.cblite_db_names)
+
+    def collect_failure_logs(self):
+        self.get_cblite_info()
+        self.collect_execution_logs()
+        if self.worker_manager.is_remote:
+            self.collect_cblite_replication_logs()
+
+    def collect_cblite_replication_logs(self):
+        log_dir = self.CBLITE_REPLICATION_LOGS
+        shutil.rmtree(log_dir, ignore_errors=True)
+        for client in self.cblite_clients:
+            try:
+                self.remote.get_cblite_replication_logs(client, f"{log_dir}/{client}")
+            except Exception as ex:
+                # Not to replace the failure being diagnosed
+                logger.warning(f"Could not collect cblite replication logs from {client}: {ex}")
+        if os.path.isdir(log_dir):
+            archive = shutil.make_archive(log_dir, "gztar", base_dir=log_dir)
+            shutil.rmtree(log_dir)
+            logger.info(f"Archived the cblite replication logs in {archive}")
 
     def push_monitor(self, queue, pre_load_writes, load_docs):
         try:
@@ -2573,28 +2620,30 @@ class EndToEndMultiCBLTest(EndToEndTest):
     @with_profiles
     def push_load(self, pre_load_writes, load_docs):
         # settings = copy.deepcopy(self.settings)
+        # The cblite import reads the exported files, so they must be complete first
+        self.run_sg_phase(
+            phase="load phase",
+            task=syncgateway_e2e_multi_cbl_task_load_docs,
+            settings=self.settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=True,
+            wait=True
+        )
+        self.load_cblite_docs(load_docs)
         queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self.push_monitor, args=(queue, pre_load_writes,
                                                                     load_docs))
         p.daemon = True
         p.start()
         try:
-            self.run_sg_phase(
-                phase="load phase",
-                task=syncgateway_e2e_multi_cbl_task_load_docs,
-                settings=self.settings,
-                target_iterator=None,
-                timer=self.settings.time,
-                distribute=True,
-                wait=False
-            )
-            ret = queue.get(timeout=900)
+            self.start_multi_continuous_replication()
+            ret = queue.get(timeout=2700)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
             p.join()
-            self.get_cblite_info()
-            self.collect_execution_logs()
+            self.collect_failure_logs()
             raise ex
         else:
             p.join()
@@ -2603,8 +2652,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             if sgw_load_time and observed_pushed:
                 return sgw_load_time, observed_pushed
             else:
-                self.get_cblite_info()
-                self.collect_execution_logs()
+                self.collect_failure_logs()
                 raise Exception("failed to load docs")
 
     @with_stats
@@ -2627,13 +2675,12 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 distribute=True,
                 wait=False
             )
-            ret = queue.get(timeout=900)
+            ret = queue.get(timeout=2700)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
             p.join()
-            self.get_cblite_info()
-            self.collect_execution_logs()
+            self.collect_failure_logs()
             raise ex
         else:
             p.join()
@@ -2642,28 +2689,29 @@ class EndToEndMultiCBLTest(EndToEndTest):
             if sgw_load_time and observed_pushed:
                 return sgw_load_time, observed_pushed
             else:
-                self.get_cblite_info()
-                self.collect_execution_logs()
+                self.collect_failure_logs()
                 raise Exception("failed to update docs")
 
     @with_stats
     @with_profiles
     def pull_load(self, pre_load_writes, load_docs):
         # settings = copy.deepcopy(self.settings)
+        # The pull can't start before the replications do, so the monitor only starts after the
+        # load: its 900 s wait for the pull to start would otherwise include the load
+        PerfTest.load(self, task=ycsb_data_load_task)
         queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self.pull_monitor, args=(queue, pre_load_writes,
                                     load_docs))
         p.daemon = True
         p.start()
         try:
-            PerfTest.load(self, task=ycsb_data_load_task)
-            ret = queue.get(timeout=900)
+            self.start_multi_continuous_replication()
+            ret = queue.get(timeout=2700)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
             p.join()
-            self.get_cblite_info()
-            self.collect_execution_logs()
+            self.collect_failure_logs()
             raise ex
         else:
             p.join()
@@ -2672,8 +2720,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             if sgw_load_time and observed_pushed:
                 return sgw_load_time, observed_pushed
             else:
-                self.get_cblite_info()
-                self.collect_execution_logs()
+                self.collect_failure_logs()
                 raise Exception("failed to load docs")
 
     def cloud_restore(self):
@@ -2721,20 +2768,21 @@ class EndToEndMultiCBLTest(EndToEndTest):
     @with_stats
     @with_profiles
     def pull_restore(self, pre_load_writes, load_docs):
+        # As in pull_load, the monitor only starts after the restore
+        self.cloud_restore()
         queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self.pull_monitor, args=(queue, pre_load_writes,
                                     load_docs))
         p.daemon = True
         p.start()
         try:
-            self.cloud_restore()
-            ret = queue.get(timeout=900)
+            self.start_multi_continuous_replication()
+            ret = queue.get(timeout=2700)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
             p.join()
-            self.get_cblite_info()
-            self.collect_execution_logs()
+            self.collect_failure_logs()
             raise ex
         else:
             p.join()
@@ -2743,8 +2791,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             if sgw_load_time and observed_pushed:
                 return sgw_load_time, observed_pushed
             else:
-                self.get_cblite_info()
-                self.collect_execution_logs()
+                self.collect_failure_logs()
                 raise Exception("failed to load docs")
 
     @with_stats
@@ -2757,13 +2804,12 @@ class EndToEndMultiCBLTest(EndToEndTest):
         p.start()
         try:
             PerfTest.access_bg(self, task=ycsb_task)
-            ret = queue.get(timeout=900)
+            ret = queue.get(timeout=2700)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
             p.join()
-            self.get_cblite_info()
-            self.collect_execution_logs()
+            self.collect_failure_logs()
             raise ex
         else:
             p.join()
@@ -2772,15 +2818,28 @@ class EndToEndMultiCBLTest(EndToEndTest):
             if sgw_load_time and observed_pushed:
                 return sgw_load_time, observed_pushed
             else:
-                self.get_cblite_info()
-                self.collect_execution_logs()
+                self.collect_failure_logs()
                 raise Exception("failed to update docs")
 
     @with_stats
     @with_profiles
     def bidi_load(self, pre_load_writes, pre_load_reads, load_docs):
         settings = copy.deepcopy(self.settings)
-        settings.syncgateway_settings.documents = load_docs // 2
+        settings.syncgateway_settings.documents = \
+            int(load_docs *
+                float(settings.syncgateway_settings.pushproportion))
+        # The cblite import reads the exported files, so they must be complete first
+        self.run_sg_phase(
+            phase="load phase",
+            task=syncgateway_e2e_multi_cbl_task_load_docs,
+            settings=settings,
+            target_iterator=None,
+            timer=self.settings.time,
+            distribute=True,
+            wait=True
+        )
+
+        self.load_cblite_docs(settings.syncgateway_settings.documents)
         queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=self.push_monitor, args=(queue,
                                     pre_load_writes,
@@ -2797,31 +2856,18 @@ class EndToEndMultiCBLTest(EndToEndTest):
         try:
             settings.syncgateway_settings.documents = \
                 int(load_docs *
-                    float(settings.syncgateway_settings.pushproportion))
-            self.run_sg_phase(
-                phase="load phase",
-                task=syncgateway_e2e_multi_cbl_task_load_docs,
-                settings=settings,
-                timer=self.settings.time,
-                target_iterator=None,
-                distribute=True,
-                wait=False
-            )
-
-            settings.syncgateway_settings.documents = \
-                int(load_docs *
                     float(settings.syncgateway_settings.pullproportion))
             PerfTest.load(self, task=ycsb_data_load_task)
-            ret1 = queue.get(timeout=900)
-            ret2 = queue.get(timeout=900)
+            self.start_multi_continuous_replication()
+            ret1 = queue.get(timeout=2700)
+            ret2 = queue.get(timeout=2700)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
             p.join()
             q.terminate()
             q.join()
-            self.get_cblite_info()
-            self.collect_execution_logs()
+            self.collect_failure_logs()
             raise ex
         else:
             p.join()
@@ -2843,8 +2889,7 @@ class EndToEndMultiCBLTest(EndToEndTest):
             else:
                 logger.info(f'PUSH time: {sgw_push_load_time}, PUSH docs: {sgw_push_load_docs}, \
                              PULL time: {sgw_pull_load_time}, PULL docs: {sgw_pull_load_docs}')
-                self.get_cblite_info()
-                self.collect_execution_logs()
+                self.collect_failure_logs()
                 raise Exception("failed to load docs")
 
     @with_stats
@@ -2883,16 +2928,15 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 int(load_docs *
                     float(settings.syncgateway_settings.pullproportion))
             PerfTest.access_bg(self, task=ycsb_task)
-            ret1 = queue.get(timeout=900)
-            ret2 = queue.get(timeout=900)
+            ret1 = queue.get(timeout=2700)
+            ret2 = queue.get(timeout=2700)
         except Exception as ex:
             logger.info(str(ex))
             p.terminate()
             p.join()
             q.terminate()
             q.join()
-            self.get_cblite_info()
-            self.collect_execution_logs()
+            self.collect_failure_logs()
             raise ex
         else:
             p.join()
@@ -2914,20 +2958,31 @@ class EndToEndMultiCBLTest(EndToEndTest):
             else:
                 logger.info(f'PUSH time: {sgw_push_load_time}, PUSH docs: {sgw_push_load_docs}, \
                              PULL time: {sgw_pull_load_time}, PULL docs: {sgw_pull_load_docs}')
-                self.get_cblite_info()
-                self.collect_execution_logs()
+                self.collect_failure_logs()
                 raise Exception("failed to update docs")
 
-    def start_multi_cblitedb_continuous(self):
-        verbose = self.settings.syncgateway_settings.cbl_verbose_logging
-        for instance_id in range(int(self.settings.syncgateway_settings.instances_per_client)):
-            for client in self.cluster_spec.workers[:int(
-                                                    self.settings.syncgateway_settings.clients)]:
-                port = 4985 + instance_id
-                db_name = f'db_{instance_id}'
-                self.remote.start_cblitedb_continuous(client, db_name, port, verbose,
-                                                      self.collection_map
-                                                      .get('bucket-1', {}))
+    @property
+    def cblite_clients(self) -> list[str]:
+        return self.cluster_spec.workers[:int(self.settings.syncgateway_settings.clients)]
+
+    @property
+    def cblite_db_names(self) -> list[str]:
+        instances = int(self.settings.syncgateway_settings.instances_per_client)
+        return [f'db_{instance_id}' for instance_id in range(instances)]
+
+    @property
+    def cblite_collections(self) -> list[str]:
+        return [
+            f'{scope}.{collection}'
+            for scope, collections in self.collection_map.get('bucket-1', {}).items()
+            if scope != '_default'
+            for collection in collections
+        ]
+
+    def create_cblite_dbs(self):
+        self.remote.create_cblite_dbs(
+            self.cblite_clients, self.cblite_db_names, self.cblite_collections
+        )
 
     def start_multi_continuous_replication(self):
         replication_type = self.test_config.syncgateway_settings.replication_type
@@ -2944,10 +2999,10 @@ class EndToEndMultiCBLTest(EndToEndTest):
         if self.capella_infra:
             instances_per_sgw = int(self.settings.syncgateway_settings.threads)
         logger.info(f'Instances per sgw: {instances_per_sgw}')
-        for instance_id in range(int(self.settings.syncgateway_settings.instances_per_client)):
-            for client in self.cluster_spec.workers[:int(
-                                                    self.settings.syncgateway_settings.clients)]:
-                db_name = f'db_{instance_id}'
+        scheme = 'wss' if self.cluster_spec.capella_infrastructure else 'ws'
+        sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else self.public_port
+        for db_name in self.cblite_db_names:
+            for client in self.cblite_clients:
                 user_num = user_id % total_users
                 user_id += 1
                 if self.settings.syncgateway_settings.replication_auth:
@@ -2962,7 +3017,6 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 else:
                     username = None
                     password = None
-                port = 4985 + instance_id
                 cblites_on_current_sgw += 1
                 logger.info(f'Cblites on current sgw: {cblites_on_current_sgw}')
                 if cblites_on_current_sgw > instances_per_sgw and \
@@ -2971,38 +3025,16 @@ class EndToEndMultiCBLTest(EndToEndTest):
                     current_sgw += 1
                     sgw_ip = self.cluster_spec.sgw_servers[current_sgw]
 
-                scopes = self.collection_map.get('bucket-1', None)
-                # Use _default collection to start replication for non collection runs
-                collections = ['_default._default']
-                if scopes:
-                    collections = []
-                    for scope, coll in scopes.items():
-                        if scope == '_default':
-                            continue
-                        for col_name, _ in coll.items():
-                            collections.append(f'{scope}.{col_name}')
-
-                if replication_type == 'E2E_PUSH':
-                    sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
-                    self.rest.start_cblite_replication_push(
-                        client, port, db_name, sgw_ip, sgw_port, username, password,
-                        collections=collections)
-                elif replication_type == 'E2E_PULL':
-                    sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
-                    self.rest.start_cblite_replication_pull(
-                        client, port, db_name, sgw_ip, sgw_port, username, password,
-                        collections=collections)
-                elif replication_type == 'E2E_BIDI':
-                    sgw_port = 4900 if self.test_config.syncgateway_settings.troublemaker else 4984
-                    self.rest.start_cblite_replication_bidi(
-                        client, port, db_name, sgw_ip, sgw_port, username, password,
-                        collections=collections)
-                else:
-                    raise Exception(
-                        f'replication type must be either E2E_PUSH or E2E_PULL: {replication_type}'
-                    )
+                self.remote.start_cblite_replication(
+                    client, replication_type, f'{scheme}://{sgw_ip}:{sgw_port}/db-1', db_name,
+                    username, password, self.cblite_collections
+                )
 
     def setup_cblite(self):
+        # Downloaded here and uploaded, as Capella clients can't reach latestbuilds
+        download_file(cblite_package_url(self.settings.syncgateway_settings.cblite_version),
+                      CBLITE_PACKAGE)
+        self.remote.install_cblite(CBLITE_PACKAGE)
         try:
             self.remote.create_cblite_directory()
         except Exception as ex:
@@ -3012,11 +3044,44 @@ class EndToEndMultiCBLTest(EndToEndTest):
                 self.remote.create_cblite_ramdisk(self.settings.syncgateway_settings.ramdisk_size)
             except Exception as ex:
                 logger.info(ex)
-        try:
-            self.remote.clone_cblite()
-        except Exception as ex:
-            logger.info(ex)
-        self.remote.build_cblite()
+
+    def load_cblite_docs(self, expected_docs: int):
+        """Import each instance's exported docs into its cblite db, and fail if any are missing.
+
+        Otherwise a missing export or failed import only surfaces as a replication that never
+        completes, after the monitors time out.
+        """
+        clients = self.cblite_clients
+        instances = int(self.settings.syncgateway_settings.instances_per_client)
+        # Load-docs workers are numbered client by client, as run_sg_tasks hands them out, and
+        # each exports on the client it ran on
+        imports = {client: [] for client in clients}
+        for worker_id in range(1, len(clients) * instances + 1):
+            json_file = posixpath.join(
+                self.worker_manager.WORKER_HOME, 'perfrunner',
+                e2e_load_docs_export(self.settings, worker_id),
+            )
+            imports[clients[(worker_id - 1) % len(clients)]].append(
+                (e2e_load_docs_db(self.settings, worker_id), json_file)
+            )
+
+        t0 = time()
+        results = self.remote.load_cblite_docs(imports, self.cblite_collections)
+        logger.info(f'Total time to load cblite docs: {time() - t0:.1f} seconds')
+
+        total_loaded = 0
+        short_imports = []
+        for client, client_results in results.items():
+            for db_name, exported, loaded in client_results:
+                total_loaded += loaded
+                if loaded < exported:
+                    short_imports.append(f'{client}/{db_name}: {loaded} of {exported}')
+        if short_imports or total_loaded < expected_docs:
+            self.collect_failure_logs()
+            raise Exception(
+                f'cblite databases hold {total_loaded} of {expected_docs} docs. '
+                f'Short imports: {", ".join(short_imports) or "none"}'
+            )
 
     def run_push(self):
         pass
@@ -3045,14 +3110,11 @@ class EndToEndMultiCBLTest(EndToEndTest):
         self.init_users()
         self.warmup_cache()
         self.grant_access()
-        self.start_multi_cblitedb_continuous()
-        logger.info("CBLites are started")
+        self.create_cblite_dbs()
         if self.test_config.syncgateway_settings.troublemaker:
             logger.info("Troublemaker is building")
             self.remote.build_troublemaker()
             logger.info("Troublemaker is successfully built")
-        self.start_multi_continuous_replication()
-        logger.info("Replication started")
         replication_type = self.test_config.syncgateway_settings.replication_type
         if replication_type == 'E2E_PUSH':
             self.run_push()
@@ -3084,20 +3146,11 @@ class EndToEndMultiCBLPushTest(EndToEndMultiCBLTest):
         post_load_writes = post_load_stats['push_count']
         logger.info(f'post load pushed: {post_load_writes}')
 
-        try:
-            sgw_access_time, observed_pushed_access = self.push_update(post_load_writes, load_docs)
-
-            post_access_stats = self.post_delta_stats()
-            post_access_writes = post_access_stats['push_count']
-            logger.info(f'post access pushed: {post_access_writes}')
-
-            sgw_access_tp = observed_pushed_access / sgw_access_time
-        except Exception as ex:
-            logger.warning(f"PUSH access phase failed: {ex}")
-            sgw_access_tp = 0
-
+        # The update phase (push_update) is off: YCSB updates the docs through cblite's REST API,
+        # which current cblite builds no longer serve. It is due back in a later 4.2.0 build;
+        # until then only the INSERT metrics are posted, as report_kpi skips a throughput of 0.
         self.collect_execution_logs()
-        self.report_kpi(sgw_load_tp, sgw_access_tp)
+        self.report_kpi(sgw_load_tp, 0)
 
 
 class EndToEndMultiCBLPullTest(EndToEndMultiCBLTest):
@@ -3206,23 +3259,9 @@ class EndToEndMultiCBLBidiTest(EndToEndMultiCBLTest):
         post_load_reads = post_load_stats['pull_count']
         logger.info(f'post load pulled: {post_load_reads}')
 
-        try:
-            sgw_push_access_time, sgw_push_access_docs, \
-                sgw_pull_access_time, sgw_pull_access_docs = \
-                self.bidi_update(post_load_writes, post_load_reads, load_docs)
-            sgw_push_access_tp = sgw_push_access_docs / sgw_push_access_time
-            sgw_pull_access_tp = sgw_pull_access_docs / sgw_pull_access_time
-
-            post_access_stats = self.post_delta_stats()
-            post_access_writes = post_access_stats['push_count']
-            logger.info(f'post access pushed: {post_access_writes}')
-            post_access_reads = post_access_stats['pull_count']
-            logger.info(f'post access pulled: {post_access_reads}')
-            self.report_kpi(sgw_push_access_tp, "PUSH_UPDATE")
-            self.report_kpi(sgw_pull_access_tp, "PULL_UPDATE")
-        except Exception as ex:
-            logger.warning(f"BIDI access phase failed: {ex}")
-
+        # The update phase (bidi_update) is off: YCSB updates the docs through cblite's REST API,
+        # which current cblite builds no longer serve. It is due back in a later 4.2.0 build;
+        # until then only the PUSH_INSERT and PULL_INSERT metrics are posted.
         self.collect_execution_logs()
 
 

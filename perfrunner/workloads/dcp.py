@@ -1,9 +1,12 @@
 import json
 import shlex
+import shutil
+import subprocess
+from pathlib import Path
 from typing import Any, Optional
 
 from logger import logger
-from perfrunner.helpers.local import run_java_dcp_client
+from perfrunner.helpers.local import CB_LIB_DIR, CB_TOOLS_DIR, run_java_dcp_client
 from perfrunner.helpers.misc import run_local_shell_command
 from perfrunner.settings import DCPDrainSettings, PhaseSettings, TargetSettings
 
@@ -49,6 +52,36 @@ def java_dcp_client(workload_settings: PhaseSettings,
                         collections=collections)
 
 
+CB_DCPDRAIN = f"{CB_TOOLS_DIR}/priv/dcpdrain"
+
+
+def dcpdrain_binary(binary_path: Optional[str]) -> str:
+    """Return the configured dcpdrain, else the server package's (8.1+), else the one on PATH."""
+    if binary_path:
+        return binary_path
+    if Path(CB_DCPDRAIN).is_file():
+        return CB_DCPDRAIN
+    return shutil.which("dcpdrain") or "dcpdrain"
+
+
+def dcpdrain_env(binary: str) -> dict[str, str]:
+    """Point a dcpdrain extracted from the server package at the libraries shipped with it."""
+    if Path(binary).resolve().is_relative_to(Path(CB_TOOLS_DIR).resolve()):
+        return {"LD_LIBRARY_PATH": str(Path(CB_LIB_DIR).resolve())}
+    return {}
+
+
+def check_dcpdrain(binary_path: Optional[str]):
+    """Abort unless dcpdrain can run on this host, and log which one will be used."""
+    binary = dcpdrain_binary(binary_path)
+    stdout, stderr, rc = run_local_shell_command(
+        f"{shlex.quote(binary)} --version", quiet=True, env=dcpdrain_env(binary)
+    )
+    if rc:
+        logger.interrupt(f"Cannot run dcpdrain at {binary} ({rc=}): {stderr.strip()}.")
+    logger.info(f"Using dcpdrain at {binary}: {stdout.strip()}")
+
+
 def run_dcpdrain(workload_settings: DCPDrainSettings,
                  target: TargetSettings,
                  timer: Optional[int],
@@ -57,11 +90,12 @@ def run_dcpdrain(workload_settings: DCPDrainSettings,
     Run dcpdrain on the remote server for the given target.
 
     workload_settings is expected to have dcpdrain-related attrs:
-      - binary_path (path to dcpdrain on server)
+      - binary_path (optional, see dcpdrain_binary)
       - num_connections (optional)
       - buffer_size (optional)
       - acknowledge_ratio (optional)
       - extra_args (optional)
+      - timeout (seconds)
       - name (optional)
 
     target is a TargetSettings instance (should have node and bucket)
@@ -74,9 +108,7 @@ def run_dcpdrain(workload_settings: DCPDrainSettings,
         raise RuntimeError("run_dcpdrain: target missing host or bucket")
 
     # read settings
-    binary = getattr(workload_settings, "binary_path", None)
-    if not binary:
-        raise RuntimeError("run_dcpdrain: dcpdrain binary_path not set in workload_settings")
+    binary = dcpdrain_binary(workload_settings.binary_path)
 
     num_connections = workload_settings.num_connections
     buffer_size = workload_settings.buffer_size
@@ -92,17 +124,21 @@ def run_dcpdrain(workload_settings: DCPDrainSettings,
     # 1) explicit triple: workload_settings.tls_opts if present
     if workload_settings.tls_opts is not None:
         tls_arg = f"--tls={workload_settings.tls_opts}"
-    # 2) boolean use_tls (no cert/key)
+    # 2) boolean use_tls: no client cert, verify the server against the cluster CA
     elif workload_settings.use_tls:
-        tls_arg = "--tls"
+        tls_arg = f"--tls=,,{workload_settings.certificate_file}"
 
     # Build the dcpdrain command
-    cmd = [binary,
-           "--host", f"{host}:" + ("11210" if not tls_arg else "11207"),
-           "--ipv4",
-           "--user", rest_username,
-           "--password", rest_password,
-           "--bucket", str(bucket)]
+    cmd = [
+        binary,
+        "--host",
+        f"{host}:" + ("11210" if not tls_arg else "11207"),
+        "--ipv4",
+        "--user",
+        rest_username,
+        "--bucket",
+        str(bucket),
+    ]
 
     # Add tls arg if present
     if tls_arg:
@@ -121,9 +157,17 @@ def run_dcpdrain(workload_settings: DCPDrainSettings,
         cmd += shlex.split(extra_args)
 
     cmd_str = " ".join(shlex.quote(p) for p in cmd)
-
-    logger.info("run_dcpdrain: running on %s: %s", host, cmd_str)
-    stdout, stderr, rc = run_local_shell_command(cmd_str)
+    logger.info(f"run_dcpdrain: running on {host}: {cmd_str}")
+    env = dcpdrain_env(binary) | {"CB_PASSWORD": rest_password}
+    # Run without a shell so the timeout kills dcpdrain itself
+    try:
+        stdout, stderr, rc = run_local_shell_command(
+            cmd, env=env, timeout=workload_settings.timeout
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(
+            f"dcpdrain did not finish on {host} within {workload_settings.timeout}s"
+        ) from None
 
     # try parsing last JSON line from stdout
     summary = None
@@ -146,21 +190,13 @@ def run_dcpdrain(workload_settings: DCPDrainSettings,
         "stderr_tail": "\n".join(stderr.splitlines()[-20:])
     }
 
+    # The KPI is derived from elapsed time alone, so a run that streamed nothing must fail
     if rc != 0:
-        logger.warning(
-                "run_dcpdrain: failed on %s rc=%s stderr=%s",
-                host,
-                rc,
-                result["stderr_tail"],
-        )
-    else:
-        logger.info(
-                "run_dcpdrain: completed on %s rc=%s summary=%s",
-                host,
-                rc,
-                summary,
-        )
+        raise RuntimeError(f"dcpdrain failed on {host} rc={rc}: {result['stderr_tail']}")
+    if not isinstance(summary, dict) or not summary.get("mutations"):
+        raise RuntimeError(f"dcpdrain streamed no mutations on {host}: {result['stdout_tail']}")
+
+    logger.info(f"run_dcpdrain: completed on {host} {rc=} {summary=}")
 
     # Return result so Celery can store / return it (if invoked via a task)
     return result
-

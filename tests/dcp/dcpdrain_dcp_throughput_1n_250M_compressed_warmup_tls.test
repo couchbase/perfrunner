@@ -27,7 +27,6 @@ key_fmtr = hex
 doc_gen = large
 
 [dcpdrain]
-binary_path = /root/bin/dcpdrain/bin/dcpdrain
 workers = 1
 num_connections = 128
 buffer_size = 0

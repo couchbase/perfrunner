@@ -3,6 +3,7 @@ from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import dcpdrain_task, java_dcp_client_task
 from perfrunner.tests import PerfTest
+from perfrunner.workloads.dcp import check_dcpdrain
 
 
 class DCPThroughputTest(PerfTest):
@@ -123,6 +124,9 @@ class JavaDCPCollectionThroughputTest(DCPThroughputTest):
 class DCPDrainThroughputTest(DCPThroughputTest):
     """Run dcpdrain on server nodes using perfrunner phase machinery."""
 
+    def _needs_cluster_ca(self) -> bool:
+        return super()._needs_cluster_ca() or self.test_config.dcpdrain_settings.use_tls
+
     @with_stats
     @timeit
     @with_profiles
@@ -142,8 +146,9 @@ class DCPDrainThroughputTest(DCPThroughputTest):
 
     def run(self):
         dcpdrain_settings = self.test_config.dcpdrain_settings
-        if not dcpdrain_settings.binary_path:
-            raise RuntimeError('Missing binary_path in dcpdrain')
+        # Fail before loading anything if dcpdrain binary is not available
+        if not self.worker_manager.is_remote:
+            check_dcpdrain(dcpdrain_settings.binary_path)
         self.load()
         self.wait_for_persistence()
         self.check_num_items()

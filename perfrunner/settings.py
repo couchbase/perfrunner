@@ -3589,20 +3589,14 @@ class JavaDCPSettings:
 
 
 class DCPDrainSettings(PhaseSettings):
-    """
-    Phase-style settings holder for [dcpdrain].
-
-    Inherits PhaseSettings so it integrates with PerfTest.generic_phase.
-    Recognized keys (INI): binary_path, clients, num_connections,
-    buffer_size, acknowledge_ratio, extra_args, name, stream.
-    """
+    """Phase-style settings holder for [dcpdrain]."""
 
     def __init__(self, options: dict):
         # PhaseSettings often expects strings from config - call super to initialize common fields
         super().__init__(options)  # let PhaseSettings pick up standard fields (time, workers, etc.)
 
-        # binary path
-        self.binary_path = options.get('binary_path')
+        # Unset picks the server package's dcpdrain or the one on PATH, see dcpdrain_binary
+        self.binary_path = options.get("binary_path")
 
         # underlying dcpdrain flags
         self.num_connections = int(options.get('num_connections', 128))
@@ -3623,6 +3617,8 @@ class DCPDrainSettings(PhaseSettings):
         self.tls_opts = options.get("tls_opts", None)
 
         self.extra_args = options.get('extra_args', '')
+        # Seconds before an unfinished drain is killed and the test fails
+        self.timeout = int(options.get("timeout", 3600))
         self.name = options.get('name', None)
         self.stream = options.get('stream', 'all')  # default to 'all' so metrics pick it up
         # TODO: consider using an Enum for stream names

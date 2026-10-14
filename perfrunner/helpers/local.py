@@ -31,6 +31,7 @@ YCSB_ENV = {
 
 
 CB_TOOLS_DIR = "./opt/couchbase/bin"
+CB_LIB_DIR = "./opt/couchbase/lib"
 CB_EXTRACT_CMDS = {
     ".deb": "ar p ./{package} data.tar.xz | unxz | tar x",
     ".rpm": "rpm2cpio ./{package} | cpio -idm",

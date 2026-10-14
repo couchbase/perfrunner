@@ -1539,10 +1539,6 @@ def run_java_dcp_client(connection_string: str, messages: int,
         local(cmd)
 
 
-def detect_ubuntu_release():
-    return local('lsb_release -sr', capture=True).strip()
-
-
 def run_cbstats(
     command: str, server: str, port: int, username: str, password: str, bucket: Optional[str] = None
 ) -> tuple[str, int]:

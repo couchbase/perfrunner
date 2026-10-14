@@ -44,7 +44,7 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 | `go/` | Go utilities: cachestat, dcptest, cbindexperf, kvgen, rachell, loader |
 | `cloud/` | Cloud infrastructure specs |
 | `terraform/` | Terraform configs for cloud provisioning |
-| `docker/` | Dockerfile (Ubuntu 20.04, pyenv, multi-stage) |
+| `docker/` | Dockerfile (Ubuntu 24.04, pyenv, multi-stage) |
 | `templates/` | Jinja2 templates for config generation |
 | `unittests/` | Tiered unit tests — `core/` (gates every patchset), `extended/` (review-time), `local/` (gitignored scratch). See **Unit Test Tiers** |
 

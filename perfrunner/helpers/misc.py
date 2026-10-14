@@ -240,10 +240,10 @@ def generate_bedrock_api_key(access_key: str, secret_key: str, region: str) -> s
     return f"bedrock-api-key-{base64.b64encode(presigned_url.encode()).decode()}"
 
 
-def url_exist(url: str) -> bool:
+def url_exist(url: str, allow_redirects: bool = False) -> bool:
     try:
-        status_code = requests.head(url).status_code
-    except ConnectionError:
+        status_code = requests.head(url, allow_redirects=allow_redirects).status_code
+    except requests.exceptions.ConnectionError:
         return False
 
     return status_code == 200

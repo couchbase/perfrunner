@@ -1,7 +1,7 @@
 # This first phase builds the base OS and any necessary dependencies that will be used
 # for the remainder of targets.
 # This ensure we maintain the same core dependencies for local and k8s deployments.
-FROM ubuntu:20.04 AS worker_image
+FROM ubuntu:24.04 AS worker_image
 
 LABEL org.opencontainers.image.authors="Performance Team (Couchbase)"
 
@@ -20,11 +20,12 @@ ENV LANG="C.UTF-8" \
 # Update the base image with any required dependencies
 RUN apt update && apt upgrade -y
 RUN apt update
-RUN apt install -y bash apt-utils make git libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev \
-    curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev \
-    liblzma-dev python-openssl software-properties-common libcurl4-gnutls-dev \
-    libffi-dev libsnappy-dev libssl-dev lsb-core maven openjdk-8-jdk python3 \
-    python3-pip python3-virtualenv && rm -rf /var/lib/apt/lists/*
+RUN apt install -y bash apt-utils make build-essential git libssl-dev zlib1g-dev libbz2-dev \
+    libreadline-dev libsqlite3-dev curl llvm libncurses-dev xz-utils tk-dev libffi-dev \
+    liblzma-dev software-properties-common libcurl4-gnutls-dev libsnappy-dev lsb-release \
+    maven openjdk-8-jdk openjdk-11-jdk python3 python3-pip python3-virtualenv \
+    && rm -rf /var/lib/apt/lists/*
+RUN update-java-alternatives --set java-1.11.0-openjdk-$(dpkg --print-architecture)
 
 # Install Pyenv and any specified Python versions
 RUN git clone -b $PYENV_INSTALL_VERSION --single-branch --depth 1 https://github.com/pyenv/pyenv.git $PYENV_ROOT \

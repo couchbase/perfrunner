@@ -27,11 +27,13 @@
       - libbz2-dev
       - libreadline-dev
       - libsqlite3-dev
-      - libncursesw5-dev
+      - libncurses-dev
       - linux-tools-generic
       - maven
       - nvi
       - openjdk-8-jdk
+      - openjdk-11-jdk
+      - openjdk-21-jdk
       - python3-pip
       - python3-virtualenv
       - python3-dev
@@ -40,9 +42,19 @@
       - memcached
       - cmake
       - libicu-dev
+      - unzip
 
   - name: disabling scheduled fstrim jobs
-    file: path=/etc/cron.weekly/fstrim state=absent
+    systemd:
+      name: fstrim.timer
+      enabled: false
+      state: stopped
+
+  - name: restart services without prompting after package upgrades
+    copy:
+      dest: /etc/needrestart/conf.d/50-perf.conf
+      content: "$nrconf{restart} = 'a';\n"
+    when: "'needrestart' in ansible_facts.packages"
 
   - name: disable auto upgrades if unattended-upgrades is installed
     block:

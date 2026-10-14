@@ -2,10 +2,7 @@ from argparse import ArgumentParser
 from multiprocessing import set_start_method
 
 from logger import logger
-from perfrunner.helpers.misc import (
-    get_python_sdk_installation,
-    run_local_shell_command,
-)
+from perfrunner.helpers.misc import get_python_sdk_installation, run_local_shell_command, url_exist
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.shell import local
 from perfrunner.helpers.tableau import TableauTerminalHelper
@@ -31,7 +28,7 @@ LIBCOUCHBASE_PACKAGES = {
             "'deb http://us.archive.ubuntu.com/ubuntu/ {os_label} main restricted' "
             ">> /etc/apt/sources.list",
             "sudo apt-get update -y",
-            "sudo apt-get install libevent-core-2.1 libev4 -y ",
+            "sudo apt-get install libevent-core-2.1-7 libev4 -y ",
             "sudo dpkg -i libcouchbase{major}_{lcb_version}-1_amd64.deb "
             "libcouchbase{major}-libevent_{lcb_version}-1_amd64.deb "
             "libcouchbase-dbg_{lcb_version}-1_amd64.deb "
@@ -72,6 +69,11 @@ LCB_CUSTOM_DEPS = {
         "sudo apt-get update -y",
         "sudo apt-get install " "libevent-core-2.1 libev4 -y ",
     ]
+}
+
+# Releases without a package for this OS fall back to the previous LTS package, which is compatible
+LCB_FALLBACK_OS = {
+    "ubuntu2404": ("ubuntu2204", "jammy"),
 }
 
 
@@ -131,14 +133,18 @@ class ClientInstaller:
         os_version_id = os_version_id.replace(".", "").replace('"', "")
         os_version = f"{os_id}{os_version_id}"
 
-        package = client_package_info["package"].format(
-            lcb_version=version, os_version=os_version, os_label=os_label
-        )
-        package_path = client_package_info["package_path"].format(
-            lcb_version=version, os_version=os_version, os_label=os_label
-        )
         package_format = client_package_info["format"]
         install_cmds = client_package_info["install_cmds"]
+        package_args = {"lcb_version": version, "os_version": os_version, "os_label": os_label}
+
+        package = client_package_info["package"].format(**package_args)
+        url = f"{LIBCOUCHBASE_BASE_URL}/{version}/{package}.{package_format}"
+        if os_version in LCB_FALLBACK_OS and not url_exist(url, allow_redirects=True):
+            package_args["os_version"], package_args["os_label"] = LCB_FALLBACK_OS[os_version]
+            package = client_package_info["package"].format(**package_args)
+            logger.info(f"LCB {version} has no {os_version} package, using {package}")
+
+        package_path = client_package_info["package_path"].format(**package_args)
 
         with cd("/tmp"):
             run(f"rm -rf {package}*")

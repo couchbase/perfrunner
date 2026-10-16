@@ -70,7 +70,11 @@ from perfrunner.tests.rebalance import (
 from perfrunner.tests.xdcr import SrcTargetIterator
 from perfrunner.workloads.analytics.bigfun.driver import bigfun
 from perfrunner.workloads.analytics.bigfun.query_gen import Query
-from perfrunner.workloads.analytics.custom.driver import CustomAnalyticsQuery
+from perfrunner.workloads.analytics.custom.driver import (
+    DEFAULT_REQUEST_TIMEOUT_SECS,
+    expand_query_configs,
+    reduce_timings_to_kpis,
+)
 from perfrunner.workloads.analytics.tpcdsfun.driver import tpcds
 
 QueryLatencyPair = tuple[Query, int]
@@ -1497,6 +1501,26 @@ class AnalyticsTest(PerfTest):
 
 
 class CustomQueryTest(AnalyticsTest):
+    """Runs a yaml-defined list of analytics queries, in order, on one worker.
+
+    The yaml at [analytics] custom_query_conf_file is a list of entries, expanded by
+    perfrunner.workloads.analytics.custom.driver.expand_query_configs into the queries actually
+    sent. See `KNOWN_QUERY_CONFIG_KEYS` in that module for the keys an entry supports.
+
+    `[test_case]` options:
+        passes (default 1): repeats the whole expanded query list that many times, so that
+            entries representing different variants of the same thing can interleave (first
+            pass: A, B, C; second pass: A, B, C; ...) instead of each variant running
+            back-to-back. Entries with `once: true` (typically warmups and probes) are
+            exempt and run in the first pass only. This does not work for a query set that
+            interleaves DDL with queries that depend on it (e.g. creating and dropping an
+            index partway through): passes would repeat the DDL too, so such a set should
+            leave passes at 1 and use `repeat` on individual entries instead.
+        request_timeout (default: see `DEFAULT_REQUEST_TIMEOUT_SECS`): seconds to wait for
+            the response to each query before giving up on it. A query that times out is
+            recorded as a failure and the run moves on to the next one.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.log_file_path = "custom_queries.log"
@@ -1504,41 +1528,15 @@ class CustomQueryTest(AnalyticsTest):
             raise ValueError("custom_query_conf_file must be set in the [analytics] test section")
 
         with open(custom_query_conf_file, "r") as f:
-            self.custom_query_configs = yaml.safe_load(f)
+            custom_query_configs = yaml.safe_load(f)
 
-    def get_query_list_from_configs(self) -> list[CustomAnalyticsQuery]:
-        queries = []
-
-        for query_conf in self.custom_query_configs:
-            statement = " ".join(
-                (
-                    query_conf.get("prefix", ""),
-                    query_conf["statement"],
-                    query_conf.get("suffix", ""),
-                )
-            ).strip()
-
-            if set_clause := query_conf.get("set"):
-                statement = f"SET {set_clause}; {statement}"
-
-            named_arg_combinations = [{}]
-            if named_args_conf := query_conf.get("named_args"):
-                arg_names = [arg["name"] for arg in named_args_conf]
-                arg_values = [arg["values"] for arg in named_args_conf]
-                named_arg_combinations = [
-                    dict(zip(arg_names, values)) for values in itertools.product(*arg_values)
-                ]
-
-            for named_args in named_arg_combinations:
-                queries.append(
-                    CustomAnalyticsQuery(
-                        statement,
-                        named_args,
-                        query_conf.get("name"),
-                    )
-                )
-
-        return queries
+        # Expanded at construction time, not lazily in access(), so a yaml mistake (an unknown
+        # key, a malformed named_args list) fails before the data load rather than after it.
+        options = self.test_config.test_case.options
+        self.queries = expand_query_configs(
+            custom_query_configs, passes=int(options.get("passes", 1))
+        )
+        self.request_timeout = int(options.get("request_timeout", DEFAULT_REQUEST_TIMEOUT_SECS))
 
     def _download_query_log(self, host: str):
         if not self.worker_manager.is_remote:
@@ -1556,8 +1554,7 @@ class CustomQueryTest(AnalyticsTest):
 
     @with_stats
     def access(self) -> dict:
-        queries = self.get_query_list_from_configs()
-        worker = self.cluster_spec.workers[0]
+        worker = self.worker_manager.next_worker()
         api_url = self.rest._get_api_url(
             host=self.analytics_node,
             path="analytics/service",
@@ -1567,15 +1564,17 @@ class CustomQueryTest(AnalyticsTest):
         api_auth = self.rest._set_auth(url=api_url)
 
         logger.info(
-            f"Running {len(queries)} queries against {self.analytics_node} from worker {worker}..."
+            f"Running {len(self.queries)} queries against {self.analytics_node} "
+            f"from worker {worker}..."
         )
         async_result = custom_analytics_query_task.apply_async(
             args=(
                 api_url,
                 api_auth,
-                queries,
+                self.queries,
                 self.log_file_path,
                 self.analytics_settings.custom_request_params,
+                self.request_timeout,
             ),
             queue=worker,
         )
@@ -1586,6 +1585,17 @@ class CustomQueryTest(AnalyticsTest):
             self._download_query_log(worker)
 
         return results
+
+    def _report_kpi(self, results: dict):
+        for kpi in reduce_timings_to_kpis(results["timings"]):
+            self.reporter.post(
+                *self.metrics.custom_metric(
+                    round(kpi.median, 2),
+                    f"Median query latency (sec), {kpi.name}{kpi.args_label}, {{}}",
+                    kpi.metric_id_suffix,
+                    chirality=-1,
+                )
+            )
 
     def run(self):
         self.initial_load_and_sync()
@@ -1606,6 +1616,8 @@ class CustomQueryTest(AnalyticsTest):
                 f"{len(failures)} custom queries failed, so the timings above are not "
                 f"trustworthy. See {self.log_file_path} for details. Failed: {failures}"
             )
+
+        self.report_kpi(results)
 
 
 class DropDatasetTest(AnalyticsTest):
@@ -2271,7 +2283,14 @@ class CH2Test(AnalyticsTest):
 
 
 class AnalyzeTiming(Enum):
-    """When CH2LSMSamplingStabilityTest runs ANALYZE relative to each mutation pass."""
+    """When CH2LSMSamplingStabilityTest runs ANALYZE relative to each mutation pass.
+
+    AFTER_SETTLE: after the mutation DML returns and the analytics flush/merge/replicate
+        queues have drained.
+    AFTER_DML: as soon as the mutation DML returns.
+    DURING_MUTATION: on each dataset while that dataset is being mutated, one dataset at a
+        time.
+    """
 
     AFTER_SETTLE = "after_settle"
     AFTER_DML = "after_dml"
@@ -2337,16 +2356,12 @@ class CH2LSMSamplingStabilityTest(CH2Test):
     true. Every dataset must be standalone with a single-field primary key.
 
     `[test_case]` options:
-        mutation_percentages: comma-separated, strictly increasing cumulative percentages
-            of each dataset's original rows to touch (default "15,55"). Half of each
-            level's new rows are deleted and half re-upserted; see
+        mutation_percentages (default: see `DEFAULT_MUTATION_PERCENTAGES`): comma-separated,
+            strictly increasing cumulative percentages of each dataset's original rows to
+            touch. Half of each level's new rows are deleted and half re-upserted; see
             `parse_mutation_percentages` for the upper bound this puts on each level.
-        analyze_timing: when ANALYZE runs at each level (default "after_settle"):
-            after_settle: after the mutation DML returns and the analytics
-                flush/merge/replicate queues have drained.
-            after_dml: as soon as the mutation DML returns.
-            during_mutation: on each dataset while that dataset is being mutated, one
-                dataset at a time.
+        analyze_timing (default: see `AnalyzeTiming.AFTER_SETTLE`): when ANALYZE runs at each
+            level. See the `AnalyzeTiming` enum values for valid options.
     """
 
     DEFAULT_MUTATION_PERCENTAGES = "15,55"

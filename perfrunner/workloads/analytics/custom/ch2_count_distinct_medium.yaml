@@ -1,0 +1,51 @@
+# Probes: first pass only, results logged, not timed. Each measures one factor behind CD02's
+# distinct-value cardinality (items surviving the filter, warehouse-region group keys, and
+# their exact combination).
+- statement: >
+    SELECT VALUE COUNT(*)
+    FROM (SELECT DISTINCT i.i_id FROM item i WHERE i.i_data LIKE '%b') t;
+  once: true
+  log_results: true
+- statement: >
+    SELECT VALUE COUNT(*)
+    FROM (SELECT DISTINCT SUBSTR1(w.w_state, 1, 1) FROM warehouse w) t;
+  once: true
+  log_results: true
+- statement: >
+    SELECT VALUE COUNT(*)
+    FROM (
+      SELECT DISTINCT SUBSTR1(w.w_state, 1, 1) AS warehouse_region, s.s_i_id
+      FROM stock s
+      JOIN item i ON s.s_i_id = i.i_id
+      JOIN warehouse w ON s.s_w_id = w.w_id
+      WHERE i.i_data LIKE '%b'
+    ) t;
+  once: true
+  log_results: true
+
+# One warmup per variant, first pass only.
+- statement: &CD02 >
+    SELECT SUBSTR1(w.w_state, 1, 1) AS warehouse_region,
+           COUNT(DISTINCT s.s_i_id) AS unique_products_stocked,
+           COUNT(DISTINCT s.s_w_id) AS unique_warehouses_stocking,
+           SUM(s.s_quantity) AS total_items_in_stock
+    FROM stock s
+    JOIN item i ON s.s_i_id = i.i_id
+    JOIN warehouse w ON s.s_w_id = w.w_id
+    WHERE i.i_data LIKE '%b'
+    GROUP BY SUBSTR1(w.w_state, 1, 1)
+    ORDER BY total_items_in_stock DESC;
+  set: &BASELINE '`compiler.aggregate.distinct.hash` "false"'
+  once: true
+- statement: *CD02
+  set: &HASH '`compiler.aggregate.distinct.hash` "true"'
+  once: true
+
+- name: CD02_baseline
+  statement: *CD02
+  set: *BASELINE
+  plan_contains: [PRE_SORTED_DISTINCT_BY]
+- name: CD02_hash
+  statement: *CD02
+  set: *HASH
+  plan_excludes: [PRE_SORTED_DISTINCT_BY]

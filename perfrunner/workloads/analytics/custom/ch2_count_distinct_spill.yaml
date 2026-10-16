@@ -1,0 +1,48 @@
+# Probe: first pass only, result logged, not timed. Distinct-value cardinality behind CD03,
+# which the three memory budgets below (listed largest first) are sized against.
+- statement: >
+    SELECT VALUE COUNT(*) FROM (
+      SELECT DISTINCT o.o_d_id, ol.ol_i_id FROM orders o UNNEST o.o_orderline AS ol
+    ) t;
+  once: true
+  log_results: true
+
+# One warmup per variant, first pass only.
+- statement: &CD03 >
+    SELECT o.o_d_id, COUNT(DISTINCT ol.ol_i_id) AS distinct_items_ordered
+    FROM orders o UNNEST o.o_orderline AS ol
+    GROUP BY o.o_d_id;
+  set: &BASELINE '`compiler.aggregate.distinct.hash` "false"'
+  once: true
+- statement: *CD03
+  set: &HASH_256MB
+    - '`compiler.aggregate.distinct.hash` "true"'
+    - '`compiler.aggregate.distinct.hash.memory` "256MB"'
+  once: true
+- statement: *CD03
+  set: &HASH_32MB
+    - '`compiler.aggregate.distinct.hash` "true"'
+    - '`compiler.aggregate.distinct.hash.memory` "32MB"'
+  once: true
+- statement: *CD03
+  set: &HASH_512KB
+    - '`compiler.aggregate.distinct.hash` "true"'
+    - '`compiler.aggregate.distinct.hash.memory` "512KB"'
+  once: true
+
+- name: CD03_baseline
+  statement: *CD03
+  set: *BASELINE
+  plan_contains: [PRE_SORTED_DISTINCT_BY]
+- name: CD03_hash_256mb
+  statement: *CD03
+  set: *HASH_256MB
+  plan_excludes: [PRE_SORTED_DISTINCT_BY]
+- name: CD03_hash_32mb
+  statement: *CD03
+  set: *HASH_32MB
+  plan_excludes: [PRE_SORTED_DISTINCT_BY]
+- name: CD03_hash_512kb
+  statement: *CD03
+  set: *HASH_512KB
+  plan_excludes: [PRE_SORTED_DISTINCT_BY]

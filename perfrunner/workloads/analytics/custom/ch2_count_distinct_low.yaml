@@ -1,0 +1,26 @@
+# Probe: first pass only, result logged, not timed. Distinct-value cardinality behind CD01.
+- statement: >
+    SELECT VALUE COUNT(*)
+    FROM (SELECT DISTINCT o.o_d_id, o.o_ol_cnt, o.o_c_id FROM orders o) t;
+  once: true
+  log_results: true
+
+# One warmup per variant, first pass only.
+- statement: &CD01 >
+    SELECT o.o_d_id, o.o_ol_cnt, COUNT(DISTINCT o.o_c_id) AS distinct_customers
+    FROM orders o
+    GROUP BY o.o_d_id, o.o_ol_cnt;
+  set: &BASELINE '`compiler.aggregate.distinct.hash` "false"'
+  once: true
+- statement: *CD01
+  set: &HASH '`compiler.aggregate.distinct.hash` "true"'
+  once: true
+
+- name: CD01_baseline
+  statement: *CD01
+  set: *BASELINE
+  plan_contains: [PRE_SORTED_DISTINCT_BY]
+- name: CD01_hash
+  statement: *CD01
+  set: *HASH
+  plan_excludes: [PRE_SORTED_DISTINCT_BY]

@@ -32,6 +32,7 @@ from perfrunner.settings import (
 from perfrunner.workloads import spring_workload
 from perfrunner.workloads.ai_bench import run_aibench_task
 from perfrunner.workloads.analytics.custom.driver import (
+    DEFAULT_REQUEST_TIMEOUT_SECS,
     CustomAnalyticsQuery,
     run_custom_analytics_query_task,
 )
@@ -402,9 +403,10 @@ def custom_analytics_query_task(
     queries: list[CustomAnalyticsQuery],
     log_file_path: str,
     request_params: Optional[dict] = None,
+    request_timeout: int = DEFAULT_REQUEST_TIMEOUT_SECS,
 ):
     return run_custom_analytics_query_task(
-        api_url, api_auth, queries, log_file_path, request_params
+        api_url, api_auth, queries, log_file_path, request_params, request_timeout
     )
 
 

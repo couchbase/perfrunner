@@ -70,7 +70,7 @@ SERVER_RELEASE_LOCATIONS = (
 )
 
 COLUMNAR_CODENAMES = {
-    "operational-insights": ("helios",),
+    "operational-insights": ("selene", "helios"),
     "enterprise-analytics": ("helios", "lumina", "phoenix"),
     "couchbase-columnar": ("doric", "ionic", "goldfish", "1.0.0"),
 }

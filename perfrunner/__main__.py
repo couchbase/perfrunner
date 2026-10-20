@@ -35,7 +35,7 @@ def main():
     test_config = TestConfig()
     test_config.parse(args.test_config_fname, args.override)
 
-    # If cluster doesnot contain clients, dont allow --remote and --remote-copy
+    # If cluster does not contain clients, dont allow --remote and --remote-copy
     clients = cluster_spec.clients
     if not clients and args.remote:
         logger.warning("Cluster spec does not contain clients. --remote flag will be ignored.")

@@ -376,12 +376,12 @@ class RemoteLinux(Remote):
             self._killall(self.PROCESSES)
 
     def kill_memcached(self, host: str):
-        # Kill memcached with SIGSTOP to ensure it doesnt get restarted before the failover
+        # Kill memcached with SIGSTOP to ensure it does not get restarted before the failover
         with settings(host_string=host):
             self._killall(('memcached',), signal='SIGSTOP')
 
     def kill_indexer(self, host: str):
-        # Kill indexer with SIGSTOP to ensure it doesnt get restarted before the failover
+        # Kill indexer with SIGSTOP to ensure it does not get restarted before the failover
         with settings(host_string=host):
             self._killall(('indexer',), signal='SIGSTOP')
 
@@ -2114,7 +2114,7 @@ class RemoteLinux(Remote):
         install_dir = self.get_install_dir()
         response = run(f"ls {install_dir}/var/lib/couchbase/crash/*.dmp", quiet=True)
         if response.return_code:
-            return  # This node doesnot contain any crash minidumps
+            return  # This node does not contain any crash minidumps
 
         crash_files = response.stdout.split()
         if not self._is_debug_package_installed():

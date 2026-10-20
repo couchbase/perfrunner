@@ -2287,7 +2287,7 @@ class CapellaModelServicesDeployer(CapellaProvisionedDeployer):
         if deployed_models:
             self.create_model_api_key()
         else:
-            # We didnt deploy any models, so we log the model catalog data for debugging purposes
+            # We did not deploy any models, so we log the model catalog data for debugging purposes
             logger.info(f"Model catalog data: {pretty_dict(catalog_data)}")
             raise Exception("No models deployed")
 

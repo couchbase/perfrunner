@@ -2,7 +2,7 @@
   service: name=couchbase-server state=stopped
   ignore_errors: yes
 
-# Try to stop via init scipt if running CBS 4.1.0 on CentOS 7.2 due to https://issues.couchbase.com/browse/MB-17193
+# Try to stop via init script if running CBS 4.1.0 on CentOS 7.2 due to https://issues.couchbase.com/browse/MB-17193
 - name: COUCHBASE SERVER | Try to stop Couchbase Service (Hack around 7.2 and CBS 4.1.0 issue)
   shell: /opt/couchbase/etc/couchbase_init.d stop
   when: ansible_distribution == 'CentOS' and ansible_distribution_version == '7.2.1511'

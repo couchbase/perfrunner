@@ -30,7 +30,7 @@ class ServerInfoManager:
     and others across different parts of perfrunner. It stores the information in a dictionary
     to avoid redundant REST API calls and provides thread-safe access to server information.
 
-    The server information for all clusters in the spec is intialised once on creation of the
+    The server information for all clusters in the spec is initialised once on creation of the
     first instance of the class. To refresh the server information, the `refresh_server_info` method
     can be used.
 

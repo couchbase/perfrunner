@@ -22,7 +22,7 @@ from perfrunner.remote.context import (
 )
 from perfrunner.settings import REPO, ClusterSpec
 
-# Skip checkstyle incase upstream branch doesn't enforce it.
+# Skip checkstyle in case upstream branch doesn't enforce it.
 # Also configure stack size for clients that haven't set anything.
 YCSB_MAVEN_OPTS = "-Dcheckstyle.skip=true -Xss16m"
 

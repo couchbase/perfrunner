@@ -2878,7 +2878,7 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
             return is_running, None  # No job will be there, no need to check for progress
 
         # The deployer will create task per each node that need to be rebalanced plus other pre
-        # and post tasks. The cummulative progress of these tasks is tracked through a list of jobs.
+        # and post tasks. The cumulative progress of these tasks is tracked through a list of jobs.
         # For example, to swap rebalance two nodes, CP will create a rebalance task for each node,
         # plus auxiliary tasks to prepare rebalance and waiting for nodes to be ready afterwards.
         # Individual tasks will only monitor the progress of each task from 0% to 100%.

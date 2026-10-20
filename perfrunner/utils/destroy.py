@@ -206,7 +206,7 @@ class AWSDestroyer(Destroyer):
         deleted_volumes = []
         for volume in volumes:
             volume_id = volume['VolumeId']
-            attachements = volume['Attachments']
+            attachments = volume['Attachments']
             state = volume['State']
             created_date = volume['CreateTime']
             created_date = datetime.datetime(year=created_date.year,
@@ -217,7 +217,7 @@ class AWSDestroyer(Destroyer):
                                              month=two_days_ago.month,
                                              day=two_days_ago.day)
 
-            if state == 'available' and attachements == [] and two_days_ago < created_date:
+            if state == 'available' and attachments == [] and two_days_ago < created_date:
                 self.ec2client.delete_volume(VolumeId=volume_id, DryRun=False)
                 deleted_volumes.append(volume_id)
         if deleted_volumes:

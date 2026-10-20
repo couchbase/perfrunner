@@ -1,4 +1,4 @@
-# this is migration script for partial export of musicbrainz Postgress DB to couchbase
+# this is migration script for partial export of musicbrainz Postgres DB to couchbase
 # the database dump and setup instructions:
 #       https://musicbrainz.org/doc/MusicBrainz_Database
 #       https://github.com/metabrainz/musicbrainz-server/blob/master/INSTALL.md

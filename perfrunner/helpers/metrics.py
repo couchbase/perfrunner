@@ -2585,8 +2585,7 @@ class MetricHelper:
             metrics.geo_mean_cbas_query_time_secs = float(line.split()[-1])
         elif "AVERAGE TIME PER QUERY SET" in line or "AVERAGE TIME PER ANALYTICS QUERY SET" in line:
             metrics.average_cbas_query_set_time_secs = float(line.split()[-1])
-        elif "QUERIES PER HOUR" in line or "ANAYTICS QUERIES PER HOUR" in line:
-            # typo 'ANAYTICS' is deliberate, inherited from CH3 repo...
+        elif "QUERIES PER HOUR" in line:
             metrics.cbas_qph = float(line.split()[-1])
 
         if isinstance(metrics, CH3Metrics):
@@ -3012,7 +3011,7 @@ class MetricHelper:
                     return round(log_time - failure_time[0], 2)
 
         raise Exception('Benchmark didnot recover from failure' if failure_start_found else
-                    'No failures found, either no failover happened or timout is too large')
+                    'No failures found, either no failover happened or timeout is too large')
 
     def vectordb_bench_metrics(self, metrics: dict, base_title: str, case_id: str) -> list[Metric]:
         """Take vectorDBBench json metrics results and returns a list of showfast metrics."""

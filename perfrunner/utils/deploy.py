@@ -632,12 +632,12 @@ class AWSDeployer(Deployer):
                         raise Exception("ec2 group must include one of: client, server, broker")
                     volume_type = node_group_spec.get('volume_type', 'gp2')
                     iops = node_group_spec.get('iops', 0)
-                    thoughput = node_group_spec.get('volume_throughput', 0)
+                    throughput = node_group_spec.get('volume_throughput', 0)
                     data_volume = node_group_spec.get('data_volume_size', 0)
                     data_volume_type = node_group_spec.get('data_volume_type', 'gp2')
                     data_iops = node_group_spec.get('data_volume_iops', 3000)
                     data_throughput = node_group_spec.get('data_volume_throughput', 125)
-                    if int(thoughput) and int(iops):
+                    if int(throughput) and int(iops):
                         if int(iops):
                             block_device_mappings = [
                                 {'DeviceName': block_device,
@@ -646,7 +646,7 @@ class AWSDeployer(Deployer):
                                       'VolumeSize': int(node_group_spec['volume_size']),
                                       'VolumeType': volume_type,
                                       'Encrypted': False,
-                                      'Throughput': int(thoughput),
+                                      'Throughput': int(throughput),
                                       'Iops': int(iops)}}]
                     elif int(iops):
                         block_device_mappings = [

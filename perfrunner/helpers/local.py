@@ -24,7 +24,7 @@ from perfrunner.helpers.x509 import SSLCertificate, X509CertPathPair, summarise_
 from perfrunner.settings import CH2, CH2ConnectionSettings, ClusterSpec
 
 YCSB_ENV = {
-    # Skip checkstyle incase upstream branch does not enforce it.
+    # Skip checkstyle in case upstream branch does not enforce it.
     # Also configure stack size for clients that haven't set anything
     "MAVEN_OPTS": "-Dcheckstyle.skip=true -Xss16m",
 }
@@ -1674,7 +1674,7 @@ def download_all_s3_logs(path_name: str, file_name: str):
 def pytpcc_create_collections(collection_config: str, master_node:  str):
 
     cmd = 'cp py-tpcc/pytpcc/constants.py.collections py-tpcc/pytpcc/constants.py'
-    logger.info(f"Copyied constants.py.collections {cmd}")
+    logger.info(f"Copied constants.py.collections {cmd}")
 
     local(cmd)
     cmd = f"./py-tpcc/pytpcc/util/{collection_config} {master_node}"

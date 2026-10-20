@@ -439,7 +439,7 @@ class MetricsRestApiContinuousBackup(MetricsRestApiBase):
     METRICS = {
         "contbk_backed_up_parts",
         "contbk_backed_up_bytes",
-        "contbk_backed_up_part_size_bucket",   # These doesnt translate to cbmonitor historgrams
+        "contbk_backed_up_part_size_bucket",   # These do not translate to cbmonitor histograms
         "contbk_backed_up_part_time_bucket",   # Same with this one
         "contbk_worker_queue_length",
         "contbk_gaps",

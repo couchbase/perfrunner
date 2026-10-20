@@ -225,7 +225,7 @@ class OperatorInstaller:
             extract_any(package_name, "couchbase-operator")
             source_dir = "couchbase-operator"
         else:
-            # Cases where the specified build doesnt exist, generate the CRD from source
+            # Cases where the specified build does not exist, generate the CRD from source
             self.make_operator(self.operator_release)
             source_dir = "couchbase-operator/example"
         # Copy generated CRD file to the operator directory
@@ -278,7 +278,7 @@ class OperatorInstaller:
         cluster_names = self.cluster_spec.clusters_modified_names
 
         # In the future we may need to only add available addresses to the certificate.
-        # For now add all of our possible adresses
+        # For now add all of our possible addresses
         addresses = {
             "localhost",
             "cbperfoc.com",
@@ -371,7 +371,7 @@ class OperatorInstaller:
         repo = _resolve_repo_url("@https://github.com/couchbase/couchbase-operator.git")
         # Operator branches are in the form of <major>.<minor>.x ex 2.6.x
         branch = f"{release.rsplit('.', 1)[0]}.x"
-        # If a version branch doesnt exist, use master
+        # If a version branch does not exist, use master
         branch = branch if check_if_remote_branch_exists(repo, branch) else "master"
         clone_git_repo(repo, branch)
         run_custom_cmd("couchbase-operator", "make", "crd")

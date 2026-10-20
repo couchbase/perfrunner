@@ -110,7 +110,7 @@ class ConfigFile:
         """Read the content of the source file based on the file type.
 
         Returns a list of python dict objects as read from the file. For most file types, this will
-        be just one object. Some YAML files may, however, contain more than one objetcs.
+        be just one object. Some YAML files may, however, contain more than one object.
         """
         # If the source file does not exist, return an empty dict.
         # File will be created when calling write()
@@ -141,7 +141,7 @@ class ConfigFile:
                     json.dump(self.config, file, indent=4)
         else:
             if not self.ini_config:
-                # The file didnt exist and we are working with an empty config
+                # The file did not exist and we are working with an empty config
                 self.ini_config = Config()
                 self.ini_config.config.read_dict(self.config)
             self.ini_config.update_spec_file(self.dest_file)

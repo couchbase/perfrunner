@@ -4318,7 +4318,7 @@ class AIBenchSettings(PhaseSettings):
         # Tool configuration
         self.handler = options.get("handler", "openai")
 
-        self.endpoint = ""  # Individal endpoint to run the workload on
+        self.endpoint = ""  # Individual endpoint to run the workload on
         self.tag = ""
         self.ops = int(self.ops)
 

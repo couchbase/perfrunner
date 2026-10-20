@@ -820,7 +820,7 @@ class FailoverSDKConfigPushTest(FailoverTest):
         for node in self.nodes_to_fail:
             logger.info(f"Failing node: {node}")
             self.remote.shutdown(node)
-        # Fof this usecase start the failure time after the shutdown command is sent.
+        # For this usecase start the failure time after the shutdown command is sent.
         # Works for single-node failure tests, need improvements for multi-node failure tests.
         # Also keep a record of epoch and ns times, the later used by Python SDK runs
         self.t_failure = (time.time(), time.perf_counter_ns())

@@ -339,7 +339,7 @@ class ClusterMigrationTest(OperatorTest):
         )
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # The self-managed cluster doesnt exist anymore after migration.
+        # The self-managed cluster does not exist anymore after migration.
         # So running anything against it will fail.
         pass
 

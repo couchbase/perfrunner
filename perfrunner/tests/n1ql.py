@@ -1604,6 +1604,7 @@ class PytpccBenchmarkTest(N1QLTest):
                                       cbrfunction_sql=cbrfunction_sql,
                                       port=port, index_replica=index_replica)
 
+    @with_stats
     def load_tpcc(self):
         master_node = self.cluster.master_node
         warehouses = self.test_config.pytpcc_settings.warehouse

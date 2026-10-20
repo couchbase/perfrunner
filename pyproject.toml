@@ -38,3 +38,7 @@ include-package-data = true
 [tool.pytest.ini_options]
 python_classes = "*Test"
 addopts = "--import-mode=importlib"
+
+[tool.codespell]
+skip = "*.txt,spring/dictionary.py"
+ignore-words-list = "ans,indx,nam,unparseable"

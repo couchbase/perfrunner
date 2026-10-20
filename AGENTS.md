@@ -13,7 +13,7 @@ test orchestration, and result reporting. Owned by the Couchbase Performance Tea
 | Unit tests — all tiers, use this while developing | `make test-all` |
 | Unit tests — core tier only (what every patchset runs) | `make test` |
 | Unit tests — extended tier only | `make test-extended` |
-| Per-patchset CI checks (lint + misspell + gofmt + core tests) | `make check` |
+| Per-patchset CI checks (lint + codespell + gofmt + core tests) | `make check` |
 | Review-time CI checks (`make check` + extended tests) | `make review` |
 | Clean artifacts/logs/dbs | `make clean` |
 | Show CLI help | `env/bin/perfrunner --help` |

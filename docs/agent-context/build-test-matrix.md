@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Python 3.9.7 via pyenv
-- Go (for Go utilities and misspell/gofmt checks)
+- Go (for Go utilities and the gofmt check)
 - System libs for C extension: `libsnappy-dev`, `libssl-dev`, `libffi-dev`
 
 ## Setup
@@ -20,9 +20,9 @@ make                    # Creates env/, installs deps, editable install
 | Unit tests — core | `make test` | `unittests/core/` (coverage for cbagent, perfrunner, spring) | Fast (~seconds) |
 | Unit tests — extended | `make test-extended` | `unittests/extended/` | Seconds |
 | **Unit tests — all tiers** | `make test-all` | core + extended + `unittests/local/` — **use this while developing** | Seconds |
-| Misspell | `make misspell` | Go + Python source files | Fast |
+| Spelling | `make spelling` | codespell over the Python projects | Fast |
 | Go format | `make gofmt` | `go/` directory | Fast |
-| **Per-patchset check** | `make check` | lint + misspell + gofmt + core tests | Fast |
+| **Per-patchset check** | `make check` | lint + codespell + gofmt + core tests | Fast |
 | **Review-time check** | `make review` | `make check` + extended tests | Fast |
 
 See **Unit Test Tiers** in `AGENTS.md` for which tier a new test belongs in.
@@ -56,7 +56,7 @@ make gofmt              # Go format check
 
 ## Notes
 
-- `make check` is the comprehensive gate but requires Go toolchain for misspell/gofmt.
+- `make check` is the comprehensive gate but requires Go toolchain for gofmt.
 - For Python-only changes, `make pep8 && make test` is sufficient.
 - There are no integration tests runnable without a live Couchbase cluster.
 - Coverage is reported for `cbagent`, `perfrunner`, and `spring` packages.

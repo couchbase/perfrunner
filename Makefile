@@ -67,15 +67,14 @@ test-extended:
 test-all:
 	${ENV}/bin/pytest -v ${CORE_TESTS} ${EXTENDED_TESTS} ${LOCAL_TESTS}
 
-misspell:
-	go get -u github.com/client9/misspell/cmd/misspell
-	find go ${PYTHON_PROJECTS} -type f -not -name "*.txt" | xargs misspell -error
+spelling:
+	${ENV}/bin/codespell ${PYTHON_PROJECTS}
 
 gofmt:
 	gofmt -e -d -s go && ! gofmt -l go | read
 
 # Deliberately excludes the extended tier since this runs on every patchset.
-check: pep8 misspell gofmt test
+check: pep8 spelling gofmt test
 
 review: check test-extended
 

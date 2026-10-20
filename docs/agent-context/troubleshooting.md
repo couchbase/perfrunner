@@ -68,12 +68,6 @@ This file is explicitly excluded in `.ruff.toml`. Do not add it to lint scope.
 
 **Fix:** Run `gofmt -w go/` to auto-fix, then commit.
 
-### `make misspell` — tool not found
-
-**Symptom:** `misspell: command not found`.
-
-**Fix:** The Makefile attempts `go get` for misspell. Ensure Go is installed and `GOPATH/bin` is in PATH.
-
 ## Runtime / Infra Notes
 
 - Real test runs require live Couchbase clusters and worker machines — these cannot be run locally without infrastructure.

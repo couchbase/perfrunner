@@ -25,7 +25,7 @@
 |---|---|---|
 | pytest + coverage | `unittests/core/` | `make test` (all tiers: `make test-all`) |
 | ruff | `.ruff.toml` | `make pep8` |
-| misspell | Go-based | `make misspell` |
+| codespell | Python (`pyproject.toml`) | `make spelling` |
 | gofmt | Go stdlib | `make gofmt` |
 
 Unit tests cover: settings parsing, config validation, workload generators (docgen, key generators, query generators), spring iteration logic, and metric snapshot parsing.

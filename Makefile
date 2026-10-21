@@ -27,6 +27,14 @@ define build_env
 	${PIP} install --quiet --no-warn-script-location -r requirements.txt
 	${PIP} install --quiet -e .
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
+	$(patch_pip_certifi)
+endef
+
+# pip vendors its own certifi, give an older vendored copy the venv's certifi bundle.
+define patch_pip_certifi
+	${ENV}/bin/python -I -c 'import certifi, shutil; from pip._vendor import certifi as vendored; \
+		version = lambda m: tuple(map(int, m.__version__.split("."))); \
+		version(vendored) < version(certifi) and shutil.copyfile(certifi.where(), vendored.where())'
 endef
 
 all:

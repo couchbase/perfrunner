@@ -18,9 +18,7 @@ ENV LANG="C.UTF-8" \
     PYENV_SHELL="bash"
 
 # Update the base image with any required dependencies
-RUN apt update && apt upgrade -y
-RUN apt update
-RUN apt install -y bash apt-utils make build-essential git libssl-dev zlib1g-dev libbz2-dev \
+RUN apt update && apt upgrade -y && apt install -y bash apt-utils make build-essential git libssl-dev zlib1g-dev libbz2-dev \
     libreadline-dev libsqlite3-dev curl llvm libncurses-dev xz-utils tk-dev libffi-dev \
     liblzma-dev software-properties-common libcurl4-gnutls-dev libsnappy-dev lsb-release \
     maven openjdk-8-jdk openjdk-11-jdk python3 python3-pip python3-virtualenv \
@@ -38,6 +36,10 @@ RUN git clone -b $PYENV_INSTALL_VERSION --single-branch --depth 1 https://github
 # Fix No module named 'pip._vendor.six' issue until we update Python
 RUN pip uninstall --yes virtualenv && pip3 uninstall --yes virtualenv && apt purge -y python3-virtualenv \
     && pip install virtualenv
+
+# pip vendors its own certifi, replace the vendored bundles with the system CA store
+RUN find $PYENV_ROOT/versions /usr/lib/python3/dist-packages -path '*/pip/_vendor/certifi/cacert.pem' \
+    -exec cp /etc/ssl/certs/ca-certificates.crt {} \;
 # ---------------- END OF BASE WORKER IMAGE GENERATION --------------------
 
 

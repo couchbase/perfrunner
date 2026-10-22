@@ -3210,26 +3210,21 @@ class N1QLExternalIcebergJoinTest(N1QLExternalIcebergTest):
                 "in the [query_external_data] section to the Binance instrument JSON."
             )
 
-        local.require_cb_tools()
-        # cbimport resolves relative --dataset paths against its own cwd
-        if not import_file.startswith("file://"):
-            import_file = os.path.abspath(import_file)
-
         scope, collection = self._local_join_keyspace()
-        logger.info(f"Importing instrument collection from {import_file}")
-        local.cbimport(
-            master_node=self.master_node,
-            cluster_spec=self.cluster_spec,
-            bucket=self.test_config.buckets[0],
-            data_type="json",
-            data_format="list",
-            import_file=import_file,
-            scope_collection_exp=f"{scope}.{collection}",
-            generate_key="%symbol%",
-            threads=16,
-            # Capella only exposes TLS ports; root.pem is downloaded during PerfTest init
-            use_tls=self.cluster_spec.capella_infrastructure,
+        keyspace = f"`{self.test_config.buckets[0]}`.`{scope}`.`{collection}`"
+        with open(import_file.removeprefix("file://")) as f:
+            instruments = json.load(f)
+
+        logger.info(f"Loading {len(instruments)} instrument docs into {keyspace}")
+        statement = (
+            f"INSERT INTO {keyspace} (KEY k, VALUE v) "
+            f"SELECT i.symbol AS k, i AS v FROM {json.dumps(instruments)} AS i;"
         )
+        result = self.rest.exec_n1ql_statement(
+            self.query_nodes[0], statement, timeout=self.external_query_timeout
+        )
+        if errors := result.get("errors"):
+            raise Exception(f"Failed to load the instrument collection: {errors}")
 
     def _local_join_keyspace(self) -> tuple[str, str]:
         """Return the (scope, collection) to import the instrument docs into.

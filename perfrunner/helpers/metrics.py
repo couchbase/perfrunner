@@ -440,12 +440,17 @@ class MetricHelper:
         title_prefix = f"Average {metric}@{k_nearest_neighbour} across 1000 queries"
         metric_id = metric_id.replace('.', '')
         title = f"{title_prefix}, {self._title}"
+        extra = (
+            {"category": metric}
+            if self.cluster_spec.cloud_infrastructure
+            else {"subCategory": metric}
+        )
         return self._metric(
             round(value, 3),
             metric_id=metric_id,
             title=title,
             chirality=-1,
-            extra={"subCategory": metric},
+            extra=extra,
         )
 
     def _jts_metric(self, collector, metric, percentile=None):

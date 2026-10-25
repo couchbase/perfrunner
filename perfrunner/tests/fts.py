@@ -905,7 +905,9 @@ class FTSVectorSearchRecallTest(FTSLatencyTest):
         ground_truth_file_name = self.jts_access.ground_truth_file_name
         logger.info(f"Downloading {ground_truth_file_name}")
         run_aws_cli_command(
-            f"s3 cp {s3_bucket_path+ground_truth_file_name} {ground_truth_file_name}")
+            f"s3 cp {s3_bucket_path+ground_truth_file_name} {ground_truth_file_name}",
+            profile="default" if self.cluster_spec.capella_infrastructure else "",
+        )
 
     def run(self):
         self.cleanup_and_restore()
@@ -915,6 +917,11 @@ class FTSVectorSearchRecallTest(FTSLatencyTest):
         self.downloads_ground_truth_file()
         avg_recall, avg_accuracy = self.calculate_recall()
         self.report_kpi(avg_recall, avg_accuracy)
+
+
+class FTSVectorSearchRecallCloudBackupTest(FTSVectorSearchRecallTest):
+    def cleanup_and_restore(self):
+        self.cloud_restore()
 
 
 class FTSVectorSearchModifiedDataTest(FTSLatencyTest):

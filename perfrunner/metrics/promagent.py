@@ -164,18 +164,43 @@ class PrometheusAgent:
             hosts = [self._app_services_metrics_host(h) for h in hosts]
         return list(dict.fromkeys(hosts))
 
+    def _couchbase_scrape_configs(self, scheme: str) -> list[dict]:
+        """Return the scrape configs for the Couchbase Server nodes."""
+        port = 8091 if not self.use_tls_ports else 18091
+        if not self.cluster_spec.dynamic_infrastructure:
+            return [
+                {
+                    "hostnames": list(self.cluster_spec.masters),
+                    "port": port,
+                    "scheme": scheme,
+                    "use_alt_addresses": self.cluster_spec.using_private_cluster_ips,
+                }
+            ]
+
+        # On Kubernetes each pod is reachable only through its own NodePort, and service
+        # discovery advertises in-cluster addresses, so every node is added as a static target.
+        configs = []
+        for server in self.cluster_spec.servers:
+            # The NodePort mapping only covers the first cluster's pods.
+            try:
+                host, node_port = self.rest.translate_host_and_port(server, port)
+                node_port = int(node_port)
+            except (AttributeError, TypeError):
+                logger.warning(f"No NodePort mapping for {server}, it will not be scraped")
+                continue
+            configs.append({
+                "hostnames": [host],
+                "port": node_port,
+                "scheme": scheme,
+                "type": "static",
+            })
+        return configs
+
     def register_snapshot(self):
         """Register snapshot with config-manager. Retries on failure; raises on exhaustion."""
         scheme = "http" if not self.use_tls_ports else "https"
         payload = {
-            "configs": [
-                {
-                    "hostnames": list(self.cluster_spec.masters),
-                    "port": 8091 if not self.use_tls_ports else 18091,
-                    "scheme": scheme,
-                    "use_alt_addresses": self.cluster_spec.using_private_cluster_ips,
-                }
-            ],
+            "configs": self._couchbase_scrape_configs(scheme),
             "credentials": {
                 "username": self.cluster_spec.rest_credentials[0],
                 "password": self.cluster_spec.rest_credentials[1],

@@ -1159,9 +1159,12 @@ class CapellaClusterManager(ClusterManagerBase):
         mem_quota = self.test_config.cluster.mem_quota
 
         if not mem_quota:
-            logger.info("Getting free memory available for buckets on Capella cluster.")
-            mem_info = self.rest.get_bucket_mem_available(next(self.cluster_spec.masters))
-            mem_quota = mem_info["free"]
+            logger.info("Getting free memory available for buckets on Capella clusters.")
+            # Use the smallest value so the same bucket size fits on every cluster
+            mem_quota = min(
+                self.rest.get_bucket_mem_available(master)["free"]
+                for master in self.cluster_spec.masters
+            )
             logger.info(f"Free memory for buckets (per node): {mem_quota}MB")
 
         mem_quota -= (

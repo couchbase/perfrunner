@@ -482,10 +482,12 @@ class PerfTest:
         bucket_items: Optional[dict] = None,
         max_retry: Optional[int] = None,
         target_iterator: Optional[TargetIterator] = None,
-        tolerance_percent: float = 0.0,
+        tolerance_percent: Optional[float] = None,
     ):
         target_iterator = target_iterator or self.target_iterator
         bucket_replica = self.test_config.bucket.replica_number
+        if tolerance_percent is None:
+            tolerance_percent = self.test_config.load_settings.items_tolerance_percent
 
         target_items: list[tuple[str, str, int]] = []
 

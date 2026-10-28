@@ -2277,13 +2277,18 @@ class LoadSettings(PhaseSettings):
     UNIFORM_COLLECTION_LOAD_TIME = 0
     CONCURRENT_COLLECTION_LOAD = 0
 
+    ITEMS_TOLERANCE_PERCENT = 0
+
     def __init__(self, options: dict):
         super().__init__(options)
-        self.uniform_collection_load_time = int(options.get('uniform_collection_load_time',
-                                                            self.UNIFORM_COLLECTION_LOAD_TIME))
-        self.concurrent_collection_load = (
-            self.uniform_collection_load_time or
-            int(options.get('concurrent_collection_load', self.CONCURRENT_COLLECTION_LOAD))
+        self.uniform_collection_load_time = int(
+            options.get("uniform_collection_load_time", self.UNIFORM_COLLECTION_LOAD_TIME)
+        )
+        self.concurrent_collection_load = self.uniform_collection_load_time or int(
+            options.get("concurrent_collection_load", self.CONCURRENT_COLLECTION_LOAD)
+        )
+        self.items_tolerance_percent = float(
+            options.get("items_tolerance_percent", self.ITEMS_TOLERANCE_PERCENT)
         )
 
     def configure(self, test_config):

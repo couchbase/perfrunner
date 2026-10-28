@@ -39,47 +39,53 @@ except RuntimeError:
 
 LATESTBUILDS_BASE_URL = "http://latestbuilds.service.couchbase.com/builds"
 
-SERVER_CODENAMES = {
-    "couchbase-server": (
-        "totoro",
-        "totoro-8.1.0",
-        "morpheus",
-        "cypher",
-        "trinity",
-        "neo",
-        "elixir",
-        "magma-preview",
-        "cheshire-cat",
-        "mad-hatter",
-        "alice",
-        "vulcan",
-        "spock",
-        "watson",
-        "master",
-    )
+# product -> major.minor -> latestbuilds/<product>/<codename> directories holding its builds
+BUILD_DIRS = {
+    "couchbase-server": {
+        "8.6": ("ponyo",),
+        "8.5": ("totoro",),
+        "8.1": ("totoro-8.1.0",),
+        "8.0": ("morpheus",),
+        "7.7": ("cypher",),
+        "7.6": ("trinity",),
+        "7.5": ("elixir",),
+        "7.2": ("neo",),
+        "7.1": ("neo",),
+        "7.0": ("cheshire-cat",),
+        "6.6": ("mad-hatter", "magma-preview"),
+        "6.5": ("mad-hatter",),
+        "6.0": ("alice",),
+        "5.5": ("vulcan",),
+        "5.1": ("spock", "vulcan"),
+        "5.0": ("spock",),
+        "4.7": ("spock",),
+        "4.6": ("watson",),
+        "4.5": ("watson",),
+        "0.0": ("master",),
+    },
+    "operational-insights": {
+        "3.1": ("selene",),
+        "3.0": ("helios",),
+    },
+    "enterprise-analytics": {
+        "2.3": ("helios",),
+        "2.2": ("lumina",),
+        "2.1": ("lumina", "phoenix"),
+        "2.0": ("phoenix",),
+    },
+    "couchbase-columnar": {
+        "1.2": ("doric",),
+        "1.1": ("ionic",),
+        "1.0": ("goldfish", "1.0.0"),
+    },
 }
-SERVER_INTERNAL_LOCATIONS = tuple(
-    f"{LATESTBUILDS_BASE_URL}/latestbuilds/{product}/{codename}/{{build}}/"
-    for product, codenames in SERVER_CODENAMES.items()
-    for codename in codenames
-)
+COLUMNAR_PRODUCTS = ("operational-insights", "enterprise-analytics", "couchbase-columnar")
+
+INTERNAL_LOCATION = f"{LATESTBUILDS_BASE_URL}/latestbuilds/{{product}}/{{codename}}/{{build}}/"
 
 SERVER_RELEASE_LOCATIONS = (
     f"{LATESTBUILDS_BASE_URL}/releases/{{release}}/",
     f"{LATESTBUILDS_BASE_URL}/releases/{{release}}/ce/",
-)
-
-COLUMNAR_CODENAMES = {
-    "operational-insights": ("selene", "helios"),
-    "enterprise-analytics": ("helios", "lumina", "phoenix"),
-    "couchbase-columnar": ("doric", "ionic", "goldfish", "1.0.0"),
-}
-COLUMNAR_LOCATIONS = (
-    *(
-        f"{LATESTBUILDS_BASE_URL}/latestbuilds/{product}/{codename}/{{build}}/"
-        for product, codenames in COLUMNAR_CODENAMES.items()
-        for codename in codenames
-    ),
 )
 
 STELLAR_GATEWAY_LOCATION = (
@@ -121,19 +127,16 @@ OPERATOR_PACKAGES = {
     "release": "couchbase-autonomous-operator_{release}-kubernetes-linux-amd64.tar.gz",
 }
 
-ARM_ARCHS = {
-    'rpm': 'aarch64',
-    'deb': 'arm64'
-}
+ARM_ARCHS = {"rpm": "aarch64", "deb": "arm64"}
 
-Build = namedtuple('Build', ['filename', 'url'])
+Build = namedtuple("Build", ["filename", "url"])
 
 
 def download_file(url: str, filename: str):
     logger.info(f"Downloading {url} to {filename}")
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
-        with open(filename, 'wb') as f:
+        with open(filename, "wb") as f:
             f.writelines(r.iter_content(chunk_size=8192))
 
 
@@ -142,7 +145,7 @@ def upload_file(file: str, to_host: str, to_user: str, to_password: str, to_dire
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(to_host, username=to_user, password=to_password)
     sftp = client.open_sftp()
-    sftp.put(file, f'{to_directory}/{file}')
+    sftp.put(file, f"{to_directory}/{file}")
     sftp.close()
 
 
@@ -291,24 +294,22 @@ class OperatorInstaller:
 
         # Add cluster-specific addresses for each cluster. Use shared certificates for all clusters.
         for cluster_name in cluster_names:
-            addresses.update(
-                {
-                    f"{cluster_name}.cbperfoc.com",
-                    f"*.{cluster_name}.cbperfoc.com",
-                    f"*.{cluster_name}",
-                    f"*.{cluster_name}.default",
-                    f"*.{cluster_name}.default.svc",
-                    f"*.{cluster_name}.default.svc.cluster.local",
-                    f"{cluster_name}-srv",
-                    f"{cluster_name}-srv.default",
-                    f"{cluster_name}-srv.default.svc",
-                    f"*.{cluster_name}-srv.default.svc.cluster.local",
-                    f"{cluster_name}-cloud-native-gateway-service",
-                    f"{cluster_name}-cloud-native-gateway-service.default",
-                    f"{cluster_name}-cloud-native-gateway-service.default.svc",
-                    f"*.{cluster_name}-cloud-native-gateway-service.default.svc.cluster.local",
-                }
-            )
+            addresses.update({
+                f"{cluster_name}.cbperfoc.com",
+                f"*.{cluster_name}.cbperfoc.com",
+                f"*.{cluster_name}",
+                f"*.{cluster_name}.default",
+                f"*.{cluster_name}.default.svc",
+                f"*.{cluster_name}.default.svc.cluster.local",
+                f"{cluster_name}-srv",
+                f"{cluster_name}-srv.default",
+                f"{cluster_name}-srv.default.svc",
+                f"*.{cluster_name}-srv.default.svc.cluster.local",
+                f"{cluster_name}-cloud-native-gateway-service",
+                f"{cluster_name}-cloud-native-gateway-service.default",
+                f"{cluster_name}-cloud-native-gateway-service.default.svc",
+                f"*.{cluster_name}-cloud-native-gateway-service.default.svc.cluster.local",
+            })
         generate_server_x509_cert(addresses)
         self.remote.create_certificate_secrets()
         self.remote.create_docker_secret(self.docker_config_path)
@@ -403,9 +404,7 @@ class OperatorInstaller:
 
     def delete_rabbitmq_files(self):
         logger.info("deleting rabbit mq files")
-        self.remote.delete_from_files(
-            [self.rmq_cluster_path,
-             self.rmq_operator_path])
+        self.remote.delete_from_files([self.rmq_cluster_path, self.rmq_operator_path])
 
     def wait_for_rabbitmq_deletion(self):
         logger.info("waiting for rabbitmq deletion")
@@ -435,7 +434,6 @@ class OperatorInstaller:
 
 
 class KubernetesInstaller:
-
     def __init__(self, cluster_spec, options):
         self.options = options
         self.cluster_spec = cluster_spec
@@ -465,18 +463,15 @@ class KubernetesInstaller:
 
 
 class EKSInstaller(KubernetesInstaller):
-    STORAGE_CLASSES = {
-        'default': None,
-        'gp2': 'cloud/infrastructure/aws/eks/ebs-gp2-sc.yaml'
-    }
+    STORAGE_CLASSES = {"default": None, "gp2": "cloud/infrastructure/aws/eks/ebs-gp2-sc.yaml"}
 
     def __init__(self, cluster_spec, options):
         super().__init__(cluster_spec, options)
 
     def install_storage_class(self):
         scs = self.operator_installer.remote.get_storage_classes()
-        for sc in scs['items']:
-            sc_name = sc['metadata']['name']
+        for sc in scs["items"]:
+            sc_name = sc["metadata"]["name"]
             self.operator_installer.delete_or_edit_storage_class(sc_name)
         for cluster in self.cluster_spec.kubernetes_clusters():
             sc = self.cluster_spec.kubernetes_storage_class(cluster)
@@ -490,17 +485,19 @@ class EKSInstaller(KubernetesInstaller):
                 self.operator_installer.remote.delete_from_file(self.STORAGE_CLASSES[sc])
 
     def install_istio(self):
-        if not self.cluster_spec.istio_enabled('k8s_cluster_1'):
+        if not self.cluster_spec.istio_enabled("k8s_cluster_1"):
             return
-        istio_install_cmd = "install " \
-                            "--set profile=default " \
-                            "--set values.global.defaultNodeSelector.'NodeRoles'=utilities -y"
+        istio_install_cmd = (
+            "install "
+            "--set profile=default "
+            "--set values.global.defaultNodeSelector.'NodeRoles'=utilities -y"
+        )
         istio_label_cmd = "label namespace default istio-injection=enabled --overwrite"
         self.operator_installer.remote.istioctl(istio_install_cmd)
         self.operator_installer.remote.k8s_client(istio_label_cmd)
 
     def uninstall_istio(self):
-        if not self.cluster_spec.istio_enabled('k8s_cluster_1'):
+        if not self.cluster_spec.istio_enabled("k8s_cluster_1"):
             return
         self.operator_installer.remote.istioctl("x uninstall --purge -y")
         self.operator_installer.remote.delete_namespace("istio-system")
@@ -514,13 +511,11 @@ class EKSInstaller(KubernetesInstaller):
 
 
 class AKSInstaller(KubernetesInstaller):
-
     def __init__(self, cluster_spec, options):
         super().__init__(cluster_spec, options)
 
 
 class GKEInstaller(KubernetesInstaller):
-
     def __init__(self, cluster_spec, options):
         super().__init__(cluster_spec, options)
 
@@ -535,10 +530,10 @@ class CouchbaseInstaller:
     @cached_property
     def url(self) -> str:
         if validators.url(url := self.options.couchbase_version):
-            logger.info('Checking if provided package URL is valid.')
+            logger.info("Checking if provided package URL is valid.")
             if url_exist(url):
                 return url
-            logger.interrupt(f'Invalid URL: {url}')
+            logger.interrupt(f"Invalid URL: {url}")
 
         return self.find_package(edition=self.options.edition)
 
@@ -569,7 +564,7 @@ class CouchbaseInstaller:
 
     @property
     def package_is_columnar(self) -> bool:
-        return any(self.package_name.startswith(product) for product in COLUMNAR_CODENAMES)
+        return self.package_name.startswith(COLUMNAR_PRODUCTS)
 
     @property
     def cb_product(self) -> CBProduct:
@@ -588,11 +583,11 @@ class CouchbaseInstaller:
 
     @property
     def release(self) -> str:
-        return self.options.couchbase_version.split('-')[0]
+        return self.options.couchbase_version.split("-")[0]
 
     @property
     def build(self) -> Optional[str]:
-        _, *build = self.options.couchbase_version.split('-')
+        _, *build = self.options.couchbase_version.split("-")
         return build[0] if build else None
 
     @property
@@ -613,7 +608,7 @@ class CouchbaseInstaller:
         package_type = package_type or self.remote.package_type  # package type based on server OS
         os_name = os_name or self.remote.distro
         os_version = os_version or self.remote.distro_version
-        arch = arch or self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
+        arch = arch or self.cluster_spec.infrastructure_settings.get("os_arch", "x86_64")
 
         for url in self.url_iterator(edition, package_type, os_name, os_version, arch):
             if url_exist(url):
@@ -643,36 +638,44 @@ class CouchbaseInstaller:
         os_version: Optional[str] = None,
         arch: Optional[str] = None,
     ) -> Iterator[str]:
-        arch_strings = ['x86_64', 'amd64']
-        if arch == 'arm':
+        arch_strings = ["x86_64", "amd64"]
+        if arch == "arm":
             arch_strings = [ARM_ARCHS[package_type]]
 
-        products = list(SERVER_CODENAMES)
         if self.build is None:
-            locations = SERVER_RELEASE_LOCATIONS
             logger.info("No build specified; searching only release packages...")
-        elif self.cluster_spec.columnar_infrastructure:
-            products = list(COLUMNAR_CODENAMES) + products
-            locations = COLUMNAR_LOCATIONS + SERVER_INTERNAL_LOCATIONS
-            logger.info(
-                "Cluster spec specifies Columnar infrastructure; including columnar "
-                "packages in search..."
-            )
+            locations = [(loc, "couchbase-server", None) for loc in SERVER_RELEASE_LOCATIONS]
         else:
-            locations = SERVER_INTERNAL_LOCATIONS
+            products = ("couchbase-server",)
+            if self.cluster_spec.columnar_infrastructure:
+                products = (*COLUMNAR_PRODUCTS, *products)
+                logger.info("Columnar infrastructure; searching columnar packages first...")
 
-        for loc_pattern, product, pkg_pattern, arch_str in itertools.product(
-            locations, products, PKG_PATTERNS[package_type], arch_strings
+            major_minor = ".".join(self.release.split(".")[:2])
+            locations = [
+                (INTERNAL_LOCATION, product, codename)
+                for product in products
+                for codename in BUILD_DIRS[product].get(major_minor, ())
+            ]
+            if not locations:
+                logger.interrupt(
+                    f"No latestbuilds directory known for release {self.release} "
+                    f"of {', '.join(products)}"
+                )
+
+        for (loc_pattern, product, codename), pkg_pattern, arch_str in itertools.product(
+            locations, PKG_PATTERNS[package_type], arch_strings
         ):
             url = loc_pattern + pkg_pattern
             yield url.format(
                 product=product,
+                codename=codename,
                 edition=edition,
                 release=self.release,
                 build=self.build,
                 os_name=os_name,
                 os_version=os_version,
-                arch=arch_str
+                arch=arch_str,
             )
 
     def download_local(self, local_copy_url: Optional[str] = None):

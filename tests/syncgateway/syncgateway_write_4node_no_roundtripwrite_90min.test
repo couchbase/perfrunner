@@ -2,7 +2,7 @@
 test = perfrunner.tests.syncgateway.SGWrite
 
 [showfast]
-title = , 4 nodes, 1M docs, 1K users, 100 channels, 10 channels per doc, roundTripWrite false, 3 hour
+title = , 4 nodes, 1M docs, 1K users, 100 channels, 10 channels per doc, roundTripWrite false, 90 min
 component = syncgateway
 category = write
 sub_category = xattr
@@ -16,7 +16,7 @@ num_buckets = 1
 
 
 [access]
-time = 7200
+time = 5400
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized

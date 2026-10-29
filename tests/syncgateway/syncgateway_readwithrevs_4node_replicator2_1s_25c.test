@@ -29,6 +29,7 @@ branch = tmp-sqw-weekly-updated-c3
 [syncgateway]
 nodes = 4
 threads = 800
+sg_loader_threads = 20
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_coll

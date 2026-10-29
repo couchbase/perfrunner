@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import glob
+import json
 import os
 import re
 import statistics
@@ -2777,24 +2778,15 @@ class MetricHelper:
             total_docs += total_docs_pulled_per_file
         return total_docs
 
-    def _parse_sg_bp_throughput(self) -> int:
-        throughput = 0
-        fc = 0
-        sum_doc_per_sec = 0
+    def _parse_sg_bp_throughput(self) -> float:
+        clients = []
         for filename in glob.glob("sg_stats_blackholepuller_*.json"):
-            total_docs_per_sec = 0
             with open(filename) as fh:
-                content_lines = fh.readlines()
-                c = 0
-                for i in content_lines:
-                    if "docs_per_sec" in i:
-                        c += 1
-                        total_docs_per_sec += float(i.split(':')[1])
-                average_doc_per_sec = total_docs_per_sec / c
-            fc += 1
-            sum_doc_per_sec += average_doc_per_sec
-        throughput = sum_doc_per_sec / fc
-        return throughput
+                clients += json.load(fh)
+        # Every client's own duration is summed, so this is the average throughput per client
+        docs_pulled = sum(client["docs_pulled"] for client in clients)
+        duration = sum(client["duration_ms"] for client in clients) / 1000
+        return docs_pulled / duration
 
     def _get_num_replications(self, documents: int) -> int:
         num_replications = 0

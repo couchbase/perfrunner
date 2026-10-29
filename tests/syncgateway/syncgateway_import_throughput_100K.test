@@ -22,6 +22,7 @@ workers = 10
 items = 100000
 workers = 10
 time = 120
+requestdistribution = uniform
 
 [syncgateway]
 nodes = 3

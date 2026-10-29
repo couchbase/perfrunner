@@ -1,5 +1,6 @@
 import copy
 import json
+import socket
 import threading
 import time
 from typing import Callable
@@ -136,12 +137,14 @@ class GoDebugProfiler (ProfilerBase):
                 requests.post(url=url, data=json.dumps({"file": filename}))
                 time.sleep(self.test_config.profiling_settings.cpu_interval)
                 requests.post(url=url, data=json.dumps({}))
+                self.copy_profile(host, filename)
 
             if profile == 'sg_heap':
                 filename = (f'{host}_{service}_{profile}_'
                            f'{time.strftime("%y%m%d%H%M%S")}_{uhex()[:6]}.pprof')
                 url = f'http://{host}:4985/_heap'
                 requests.post(url=url, data=json.dumps({"file": filename}))
+                self.copy_profile(host, filename)
 
             if profile == 'goroutine':
                 url = f'http://{host}:4985/_debug/pprof/goroutine'
@@ -162,8 +165,6 @@ class GoDebugProfiler (ProfilerBase):
                 url = f'http://{host}:4985/_debug/fgprof'
                 response = requests.get(url=url)
                 self.save(host, service, profile, response.content)
-
-            self.copy_profiles(host=host)
 
         elif self.cluster_spec.capella_infrastructure:
             endpoint = self.ENDPOINTS[profile]
@@ -212,18 +213,26 @@ class GoDebugProfiler (ProfilerBase):
             remote_bind_address=('127.0.0.1', port),
         )
 
-    def copy_profiles(self, host: str):
-        logger.info("Copying profile files from SG servers")
-        transport = paramiko.Transport((host, 22))
-        transport.connect(username=self.ssh_username, password=self.ssh_password)
-        sftp = paramiko.SFTPClient.from_transport(transport)
+    def copy_profile(self, host: str, fname: str):
+        logger.info(f"Copying {fname} from {host}")
+        connect_timeout, read_timeout = self.PROFILE_TIMEOUT
+        transport = None
         try:
-            for fname in sftp.listdir('/home/sync_gateway/'):
-                if fname.endswith('.pprof'):
-                    sftp.get(f'/home/sync_gateway/{fname}', f'./{fname}')
+            # This runs on profiler timer threads. Fabric shares one SFTPClient per host
+            # connection, and paramiko's SFTPClient is not thread-safe (paramiko#1836), so each
+            # copy opens its own transport. paramiko has no connect timeout, so open the socket.
+            sock = socket.create_connection((host, 22), timeout=connect_timeout)
+            transport = paramiko.Transport(sock)
+            transport.connect(username=self.ssh_username, password=self.ssh_password)
+            with paramiko.SFTPClient.from_transport(transport) as sftp:
+                sftp.get_channel().settimeout(read_timeout)
+                sftp.get(f'/home/sync_gateway/{fname}', f'./{fname}')
+        except Exception as e:
+            # An exception would end this profile's timer and lose its remaining samples
+            logger.warning(f'Failed to copy {fname} from {host}: {e} -- skipping this sample')
         finally:
-            sftp.close()
-            transport.close()
+            if transport:
+                transport.close()
 
     def save(self, host: str, service: str, profile: str, content: bytes):
         fname = '{}_{}_{}_{}_{}.pprof'.format(

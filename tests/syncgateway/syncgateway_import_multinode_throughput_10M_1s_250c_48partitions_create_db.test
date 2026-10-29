@@ -33,6 +33,7 @@ workers = 160
 time = 1500
 workload_instances = 1
 kv_endpoints = 16
+requestdistribution = uniform
 
 [ycsb]
 branch = tmp-sqw-weekly-updated-c3

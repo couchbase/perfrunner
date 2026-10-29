@@ -4163,6 +4163,8 @@ class SyncgatewaySettings:
     COLLECT_SGW_CONSOLE = 0
     DATA_INTEGRITY = 'false'
     REPLICATION_AUTH = 1
+    MAX_WARNINGS = 1000
+    IMPORT_ACCESS_TOLERANCE_PERCENT = 5
     DEFAULT_RESYNC_NEW_FUNCTION = (
         "function (doc) { channel(doc.channels); access(doc.accessTo, doc.access); }"
     )
@@ -4276,6 +4278,10 @@ class SyncgatewaySettings:
         self.collect_sgw_console = int(options.get('collect_sgw_console', self.COLLECT_SGW_CONSOLE))
         self.data_integrity = options.get('data_integrity', self.DATA_INTEGRITY)
         self.replication_auth = int(options.get('replication_auth', self.REPLICATION_AUTH))
+        # Fail the test if SGW logs more than this many warnings
+        self.max_warnings = int(options.get('max_warnings', self.MAX_WARNINGS))
+        self.import_access_tolerance_percent = float(options.get(
+            'import_access_tolerance_percent', self.IMPORT_ACCESS_TOLERANCE_PERCENT))
 
     def __str__(self) -> str:
         return str(self.__dict_)

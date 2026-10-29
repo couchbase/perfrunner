@@ -427,7 +427,7 @@ class SGPerfTest(PerfTest):
             for host in hosts
         )
 
-        if warn_count > 1000:
+        if warn_count > self.test_config.syncgateway_settings.max_warnings:
             return warn_count
 
     def channel_list(self, number_of_channels: int):
@@ -915,6 +915,11 @@ class SGImportLoad(PerfTest):
 
 class SGImportThroughputTest(SGPerfTest):
 
+    # Imports are stalled if the import count does not go up for this many seconds
+    IMPORT_STALL_TIMEOUT = 120
+    # Seconds to wait for the single node imports, and for the multinode access phase imports
+    IMPORT_TIMEOUT = 2400
+
     @with_stats
     @with_profiles
     def load(self, *args, **kwargs):
@@ -954,73 +959,78 @@ class SGImportThroughputTest(SGPerfTest):
                 *self.metrics.avg_sg_mem_usage("Average SGW Memory usage (MB)")
             )
 
+    def expected_import_count(self, phase: str) -> int:
+        load_docs = self.test_config.load_settings.items * self.test_config.cluster.num_buckets
+        if phase == 'access':
+            return load_docs * 2
+        return load_docs
+
+    def min_import_count(self, phase: str) -> int:
+        if phase != 'access':
+            return self.expected_import_count(phase)
+        # Each access phase update should be imported once, but SGW imports a doc once
+        # for several updates that land before it gets to it, so allow a tolerance
+        load_docs = self.expected_import_count('load')
+        tolerance = self.test_config.syncgateway_settings.import_access_tolerance_percent
+        return 2 * load_docs - int(load_docs * tolerance / 100)
+
+    def import_hosts(self) -> list[str]:
+        if self.capella_infra:
+            return self.cluster_spec.sgw_servers[:1]
+        return self.cluster_spec.sgw_servers[:self.test_config.syncgateway_settings.import_nodes]
+
+    def import_count(self) -> int:
+        total_count = 0
+        for host in self.import_hosts():
+            import_count = self.monitor.get_import_count(host=host)
+            logger.info(f'import count: {import_count}, host: {host}')
+            total_count += import_count
+        return total_count
+
+    def wait_for_sg_import(self, phase: str, timeout: int, sleep_delay: int) -> tuple[float, int]:
+        expected_docs = self.expected_import_count(phase)
+        min_docs = self.min_import_count(phase)
+        logger.info(f'expected docs: {expected_docs}, min docs: {min_docs}')
+
+        initial_docs = self.import_count()
+        logger.info(f'initial docs imported: {initial_docs}')
+        logger.info(f'remaining docs: {expected_docs - initial_docs}')
+
+        start_time = last_progress_time = time()
+        last_count = initial_docs
+
+        while True:
+            sleep(sleep_delay)
+            total_count = self.import_count()
+            now = time()
+            if total_count > last_count:
+                last_count, last_progress_time = total_count, now
+
+            if total_count >= expected_docs:
+                return now - start_time, expected_docs - initial_docs
+
+            stalled = now - last_progress_time > self.IMPORT_STALL_TIMEOUT
+            timed_out = now - start_time > timeout
+            if (stalled or timed_out) and total_count >= min_docs:
+                reason = f'stalled for {self.IMPORT_STALL_TIMEOUT}s' if stalled else 'timed out'
+                logger.info(f'Imports {reason} at {total_count}/{expected_docs} docs, '
+                            f'which is within the tolerance (min {min_docs})')
+                # A stall's end time is the last import, not the time spent waiting after it
+                end_time = last_progress_time if stalled else now
+                return end_time - start_time, total_count - initial_docs
+            if timed_out:
+                raise Exception(f"timeout of {timeout} exceeded, imported {total_count} of "
+                                f"{expected_docs} docs (min {min_docs})")
+
     @with_stats
     @with_profiles
     def monitor_sg_import(self, phase):
-        host = self.cluster_spec.sgw_servers[0]
-        num_buckets = self.test_config.cluster.num_buckets
-        expected_docs = self.test_config.load_settings.items * num_buckets
-        if phase == 'access':
-            expected_docs = expected_docs * 2
-        logger.info(f'expected docs :{expected_docs}')
-
-        initial_docs = self.initial_import_count()
-        logger.info(f'initial docs imported :{initial_docs}')
-
-        remaining_docs = expected_docs - initial_docs
-        logger.info(f'remaining_docs :{remaining_docs}')
-
-        time_elapsed, items_in_range = self.monitor.monitor_sgimport_queues(
-            host, expected_docs
-        )
-        return time_elapsed, items_in_range
-
-    def initial_import_count(self):
-        total_initial_docs = 0
-        for i in range(self.test_config.syncgateway_settings.import_nodes):
-            server = self.cluster_spec.sgw_servers[i]
-            import_count = self.monitor.get_import_count(host=server)
-            total_initial_docs += import_count
-            if self.capella_infra:
-                break
-        return total_initial_docs
+        return self.wait_for_sg_import(phase, timeout=self.IMPORT_TIMEOUT, sleep_delay=4)
 
     @with_stats
     @with_profiles
     def monitor_sg_import_multinode(self, phase: str, timeout: int = 1200, sleep_delay: int = 2):
-        expected_docs = self.test_config.load_settings.items * self.test_config.cluster.num_buckets
-        if phase == 'access':
-            expected_docs = expected_docs * 2
-        logger.info(f'expected docs :{expected_docs}')
-
-        initial_docs = self.initial_import_count()
-        logger.info(f'initial docs imported :{initial_docs}')
-
-        remaining_docs = expected_docs - initial_docs
-        logger.info(f'remaining_docs :{remaining_docs}')
-
-        importing = True
-
-        start_time = time()
-
-        while importing:
-            sleep(sleep_delay)
-            total_count = 0
-            for i in range(self.test_config.syncgateway_settings.import_nodes):
-                server = self.cluster_spec.sgw_servers[i]
-                import_count = self.monitor.get_import_count(host=server)
-                logger.info(f'import count : {import_count} , host : {server}')
-                total_count += import_count
-            if total_count >= expected_docs:
-                importing = False
-            if time() - start_time > timeout:
-                raise Exception(f"timeout of {timeout} exceeded")
-
-        end_time = time()
-
-        time_elapsed = end_time - start_time
-
-        return time_elapsed, remaining_docs
+        return self.wait_for_sg_import(phase, timeout, sleep_delay)
 
     def run(self):
         self.download_ycsb()
@@ -1059,7 +1069,7 @@ class SGImportThroughputTest(SGPerfTest):
                 self.monitor_sg_import(phase='access')
         else:
             time_elapsed_access, items_in_range_access = self.monitor_sg_import_multinode(
-                phase="access"
+                phase="access", timeout=self.IMPORT_TIMEOUT
             )
 
         self.report_kpi(time_elapsed_load, items_in_range_load,

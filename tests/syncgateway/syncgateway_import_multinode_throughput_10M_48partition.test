@@ -28,6 +28,7 @@ workers = 160
 time = 1500
 workload_instances = 1
 kv_endpoints = 16
+requestdistribution = uniform
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized

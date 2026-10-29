@@ -22,6 +22,7 @@ workers = 80
 items = 20000000
 workers = 10
 time = 120
+requestdistribution = uniform
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized

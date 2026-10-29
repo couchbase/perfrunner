@@ -28,6 +28,7 @@ workers = 160
 time = 250
 workload_instances = 4
 kv_endpoints = 16
+requestdistribution = uniform
 
 [syncgateway]
 nodes = 3

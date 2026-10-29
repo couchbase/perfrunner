@@ -33,6 +33,7 @@ time = 1500
 workload_instances = 2
 kv_endpoints = 16
 ycsb_client = couchbase3
+requestdistribution = uniform
 
 [ycsb]
 branch = tmp-sqw-weekly-updated-c3

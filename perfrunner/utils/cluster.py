@@ -85,11 +85,11 @@ def main():
             or cm.cluster_spec.prov_cluster_in_columnar_test
         ):
             cm.set_fusion_state()
+            cm.set_memcached_global_settings()
             with record_time("bucket"):
                 cm.create_buckets()
                 cm.create_eventing_buckets()
                 cm.create_eventing_metadata_bucket()
-            cm.set_memcached_global_settings()
             cm.configure_bucket_internal_settings()
             cm.capella_allow_client_ips()
         else:

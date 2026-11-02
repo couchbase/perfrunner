@@ -50,5 +50,15 @@
         {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_3x3_cng.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_1000w.test", "groups": "P0"},
         {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_3x3_cng_collocated.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_collocated.test", "groups": "P0"},
         {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_3x3_cng_collocated.spec", "test_config": "tests/xdcr_init_3x3_unidir_10M_cng_collocated_1000w.test", "groups": "P0"}
+    ],
+
+    "KV-SSL": [
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M_crl_strict.test", "groups": "P0"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_mixed_20M_crl_disabled.test", "groups": "P1"}
+    ],
+
+    "Rebalance-Demeter": [
+        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_swap_100M_dgm_n2n_kv_crl_strict.test", "groups": "P0"},
+        {"job": "demeter_rebalance", "cluster": "demeter.spec", "test_config": "reb_swap_100M_dgm_n2n_kv_crl_disabled.test", "groups": "P1"}
     ]
 }

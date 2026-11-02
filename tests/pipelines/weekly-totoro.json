@@ -36,6 +36,11 @@
         {"job": "composite-nvme", "cluster": "composite.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_100M_768d_rabitq_bhive.test", "groups": "P1"}
     ],
 
+    "Tools": [
+        {"job": "artemis-pitr", "cluster": "artemis.spec", "test_config": "tools_continuous_backup_pitr_10_90.test", "groups": "P0"},
+        {"job": "artemis-pitr", "cluster": "artemis.spec", "test_config": "tools_continuous_backup_pitr_10_90_encrypted.test", "groups": "P0"}
+    ],
+
     "XDCRCNG": [
         {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_1x1_cng.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng.test", "groups": "P0"},
         {"job": "hebe-xdcr-cng-dev", "cluster": "hebe_xdcr_1x1_cng.spec", "test_config": "tests/xdcr_init_1x1_unidir_10M_cng_1000w.test", "groups": "P0"},

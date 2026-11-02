@@ -1,8 +1,77 @@
 {
+    "Magma1": [
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/java_dcp_throughput_4n_1B_compressed_magma_P1_encrypted.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_read_heavy_uniform_encrypted.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_throughput_250M_read_only_uniform_encrypted.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_throughput_250M_update_only_uniform_encrypted.test", "groups": "P0"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_rebalance_out_250M_magma_encrypted.test", "groups": "P0"}
+    ],
+
+    "Magma2": [
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_mixed_uniform_encrypted.test", "groups": "P0"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_throughput_250M_insert_only_uniform_encrypted.test", "groups": "P0"}
+    ],
+
     "MagmaNVME": [
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_1rr_magma_encrypted.test", "groups": "P0"},
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloadc_3nodes_1rr_magma_encrypted.test", "groups": "P0"},
-        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloada_3nodes_1rr_30k_magma_encrypted.test", "groups": "P0"}
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloada_3nodes_1rr_30k_magma_encrypted.test", "groups": "P0"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloadb_3nodes_1rr_magma_encrypted.test", "groups": "P1"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_latency_workloadb_3nodes_1rr_30k_magma_encrypted.test", "groups": "P1"}
+    ],
+
+    "KV": [
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_none_1s_1000c_encrypted.test", "groups": "P0"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/latency/kv_latency_mixed_20M_1s_1000c_encrypted.test", "groups": "P0"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_balanced_512_1s_1000c_encrypted.test", "groups": "P1"}
+    ],
+
+    "KV-Hercules": [
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_encrypted.test", "groups": "P1"}
+    ],
+
+    "Rebalance-C1": [
+        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "collections/rebalance/reb_in_1B_4nodes_kv_1s_1000c_encrypted.test", "groups": "P0"}
+    ],
+
+    "Rebalance-C2": [
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "collections/rebalance/reb_out_1B_4nodes_kv_1s_1000c_encrypted.test", "groups": "P0"}
+    ],
+
+    "XDCR": [
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_5x5_unidir_250M_encrypted.test", "groups": "P0"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm_encrypted.test", "groups": "P0"}
+    ],
+
+    "XDCR-C1": [
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_ssl_encrypted.test", "groups": "P0"}
+    ],
+
+    "Eventing": [
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_64byte_fun_bktop_magma_encrypted.test", "groups": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_incr_ctrop_0cont_src_bkt_mut_1s_1c_encrypted.test", "groups": "P0"},
+        {"job": "themis", "cluster": "themis_eventing_rebalance.spec", "test_config": "throughput_24fun_bktop_eventing_rebalance_12s_24c_encrypted.test", "groups": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_fun_2x128_log_encrypted.test", "groups": "P0"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_fun_2x128_log_encrypted.test", "groups": "P1"}
+    ],
+
+    "N1QL": [
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_false_encrypted.test", "groups": "P0"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_150M_gsi_plasma_dgm_false_encrypted.test", "groups": "P1"}
+    ],
+
+    "YCSB": [
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_latency_encrypted.test", "groups": "P0"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_encrypted.test", "groups": "P1"}
+    ],
+
+    "GSI-Hemera": [
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_50M_10k_indexes_moi_1s_1000c_encrypted.test", "groups": "P0"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_10k_indexes_70_20_10_iud_20res_plasma_1s_1000c_encrypted.test", "groups": "P0"}
+    ],
+
+    "GSI-DDl": [
+        {"job": "hemera", "cluster": "hemera_5indexers.spec", "test_config": "gsi/plasma/secondary_create_plasma_1000index_instances_replicamix_1part_encrypted.test", "groups": "P1"}
     ],
 
     "FTS": [
@@ -33,7 +102,9 @@
         {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_pq128x8_baseline_composite.test", "groups": "P0"},
         {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_rabitq_bhive.test", "groups": "P0"},
         {"job": "magma-nvme-remote", "cluster": "magma_nvme_kv_index_n1ql_custom.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_1M_1024d_rabitq_composite.test", "groups": "P0"},
-        {"job": "composite-nvme", "cluster": "composite.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_100M_768d_rabitq_bhive.test", "groups": "P1"}
+        {"job": "composite-nvme", "cluster": "composite.spec", "test_config": "gsi/vector/rabitq/n1ql_vector_rabitq_latency_recall_100M_768d_rabitq_bhive.test", "groups": "P1"},
+        {"job": "composite-nvme", "cluster": "composite.spec", "test_config": "n1ql/n1ql_Vector_Latency_throughput_Prepared_statements_100M_128dim_Bhive_encrypted.test", "groups": "P0"},
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_plasma_encrypted.test", "groups": "P1"}
     ],
 
     "Tools": [

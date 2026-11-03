@@ -41,11 +41,8 @@ time = 1200
 n1ql_queries = empty-function
 workload_instances = 3
 n1ql_workers = 240
+n1ql_workers_per_process = 8
 
 [n1ql-empty-function]
 statement = execute function func();
 args = []
-
-[clients]
-python_client = 2.5.0
-libcouchbase = 2.9.3

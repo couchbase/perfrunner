@@ -40,7 +40,3 @@ indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_80_20_plasma.json
 scan_time = 1500
-
-[clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0

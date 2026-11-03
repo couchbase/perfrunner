@@ -4,9 +4,10 @@ import os
 import signal
 import time
 from collections import deque
+from math import ceil
 from multiprocessing import Event, Lock, Manager, Process, Value
 from pathlib import Path
-from threading import Timer
+from threading import Thread, Timer
 from typing import Callable, Union
 
 import twisted
@@ -693,7 +694,7 @@ class KVWorker(Worker):
             self.target_time = None
         self.seed()
         try:
-            if self.target_time:
+            if self.target_time and self.ws.stagger_kv_workers:
                 start_delay = random.random_sample() * self.target_time
                 time.sleep(start_delay * self.CORRECTION_FACTOR)
             while self.run_condition(curr_ops):
@@ -1248,7 +1249,15 @@ class N1QLWorker(Worker):
 
     NAME = 'query-worker'
 
-    def __init__(self, workload_settings, target_settings, shutdown_event=None, workload_id=0):
+    def __init__(
+        self,
+        workload_settings,
+        target_settings,
+        shutdown_event=None,
+        workload_id=0,
+        shared_client=None,
+    ):
+        self.shared_client = shared_client
         super().__init__(workload_settings, target_settings, shutdown_event, workload_id)
         self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries,
                                         workload_settings.n1ql_query_weight)
@@ -1259,6 +1268,13 @@ class N1QLWorker(Worker):
         self.op_delay = 0.0
         self.first = True
         self.use_query_context = False
+        self.log_failure_summary = True
+
+    def init_db(self):
+        if self.shared_client is None:
+            super().init_db()
+        else:
+            self.cb = self.shared_client
 
     def do_batch_create(self, *args, **kwargs):
         if self.target_time:
@@ -1524,8 +1540,50 @@ class N1QLWorker(Worker):
         else:
             logger.info(f"Finished: {self.NAME}-{self.sid}-{self.ts.bucket}")
         finally:
-            query_failure_tracker.log_summary(self.sid)
+            if self.log_failure_summary:
+                query_failure_tracker.log_summary(self.sid)
             self.dump_stats()
+
+
+def n1ql_group_sids(group_id: int, per_process: int, total_workers: int) -> range:
+    """Return the N1QL worker ids run by one worker group."""
+    return range(group_id * per_process, min((group_id + 1) * per_process, total_workers))
+
+
+class N1QLWorkerGroup:
+    """Run n1ql_workers_per_process N1QL workers as threads sharing one SDK client.
+
+    The SDK hands every request to its own IO thread, so one query in flight per process
+    spends most of the client CPU on that handoff. Sharing the client amortises it.
+    """
+
+    def __init__(self, workload_settings, target_settings, shutdown_event=None, workload_id=0):
+        self.ws = workload_settings
+        self.ts = target_settings
+        self.shutdown_event = shutdown_event
+        self.workload_id = workload_id
+
+    def run(self, sid, *args):
+        sids = n1ql_group_sids(sid, self.ws.n1ql_workers_per_process, self.ws.n1ql_workers)
+        workers = []
+        for _ in sids:
+            shared_client = workers[0].cb if workers else None
+            worker = N1QLWorker(
+                self.ws, self.ts, self.shutdown_event, self.workload_id, shared_client
+            )
+            # The failure tracker is per process, so the group logs it once
+            worker.log_failure_summary = False
+            workers.append(worker)
+
+        threads = [
+            Thread(target=worker.run, args=(worker_sid, *args), daemon=True)
+            for worker, worker_sid in zip(workers, sids)
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        query_failure_tracker.log_summary(f"{sids.start}-{sids.stop - 1}")
 
 
 class ViewWorker(Worker):
@@ -1641,6 +1699,8 @@ class AuxillaryWorkerFactory:
 class N1QLWorkerFactory:
 
     def __new__(cls, workload_settings):
+        if (per_process := workload_settings.n1ql_workers_per_process) > 1:
+            return N1QLWorkerGroup, ceil(workload_settings.n1ql_workers / per_process)
         return N1QLWorker, workload_settings.n1ql_workers
 
 

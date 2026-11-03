@@ -1672,8 +1672,10 @@ class PhaseSettings:
     VIEW_QUERY_PARAMS = '{}'
 
     WORKERS = 0
+    STAGGER_KV_WORKERS = "true"
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
+    N1QL_WORKERS_PER_PROCESS = 1
     FTS_DATA_SPREAD_WORKERS = None
     FTS_DATA_SPREAD_WORKER_TYPE = "default"
     WORKLOAD_INSTANCES = 1
@@ -1850,6 +1852,10 @@ class PhaseSettings:
         self.working_set_moving_docs = int(options.get('working_set_moving_docs',
                                                        self.WORKING_SET_MOVE_DOCS))
         self.workers = int(options.get('workers', self.WORKERS))
+        # wgen3: spread KV worker start times over one batch interval to smooth arrivals
+        self.stagger_kv_workers = maybe_atoi(
+            options.get("stagger_kv_workers", self.STAGGER_KV_WORKERS)
+        )
         self.run_async = bool(int(options.get('async', self.ASYNC)))
         self.key_fmtr = options.get('key_fmtr', self.KEY_FMTR)
 
@@ -1908,6 +1914,10 @@ class PhaseSettings:
         self.n1ql_gen = options.get('n1ql_gen')
 
         self.n1ql_workers = int(options.get('n1ql_workers', self.N1QL_WORKERS))
+        # SDK3+: workers in the same process run as threads sharing one SDK client
+        self.n1ql_workers_per_process = int(
+            options.get("n1ql_workers_per_process", self.N1QL_WORKERS_PER_PROCESS)
+        )
         self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         self.n1ql_throughput = float(options.get('n1ql_throughput',
                                                  self.N1QL_THROUGHPUT))

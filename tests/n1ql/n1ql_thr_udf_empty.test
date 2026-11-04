@@ -40,8 +40,8 @@ workers = 20
 time = 1200
 n1ql_queries = empty-function
 workload_instances = 3
-n1ql_workers = 240
-n1ql_workers_per_process = 8
+n1ql_workers = 360
+n1ql_workers_per_process = 4
 
 [n1ql-empty-function]
 statement = execute function func();

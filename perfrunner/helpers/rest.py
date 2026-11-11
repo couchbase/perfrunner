@@ -2556,6 +2556,44 @@ class CapellaProvisionedRestHelper(CapellaRestBase):
                     return data['status'], 0
         return None, None
 
+    def create_backup_schedule(
+        self, host: str, bucket: str, day_of_week: str, start_at: int, incremental_every: int
+    ):
+        if not (api_keys := ControlPlaneManager.get_api_keys()):
+            logger.interrupt("No control plane API keys found to create a bucket backup schedule")
+        token = base64.b64encode(":".join(api_keys).encode()).decode()
+
+        cluster_id = self.hostname_to_cluster_id(host)
+        bucket_id = base64.urlsafe_b64encode(bucket.encode()).decode()
+        endpoint = (
+            f"/v4/organizations/{self.tenant_id}/projects/{self.project_id}"
+            f"/clusters/{cluster_id}/buckets/{bucket_id}/backup/schedules"
+        )
+        schedule = {
+            "type": "weekly",
+            "weeklySchedule": {
+                "dayOfWeek": day_of_week,
+                "startAt": start_at,
+                "incrementalEvery": incremental_every,
+                "retentionTime": "30days",
+                "costOptimizedRetention": False,
+            },
+        }
+        logger.info(f"Creating backup schedule for bucket {bucket}: {pretty_dict(schedule)}")
+        resp = self.dedicated_client.api_post(
+            endpoint,
+            schedule,
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        )
+        resp.raise_for_status()
+
+    def get_latest_backup(self, host: str) -> Optional[dict]:
+        cluster_id = self.hostname_to_cluster_id(host)
+        resp = self.dedicated_client.get_backups(self.tenant_id, self.project_id, cluster_id)
+        if resp is not None and resp.json()['data']:
+            return resp.json()['data'][0]['data']
+        return None
+
     def restore(self, host: str, bucket: str):
         cluster_id = self.hostname_to_cluster_id(host)
         logger.info('Triggering restore.')

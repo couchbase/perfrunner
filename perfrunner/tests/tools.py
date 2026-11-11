@@ -1,7 +1,8 @@
+import copy
 import math
 import os
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from logger import logger
@@ -1100,6 +1101,115 @@ class ProvisionedCapellaRestore(ProvisionedCapellaBackup):
         self.trigger_restore(self.master_node)
         time_elapsed = self.restore(self.master_node)
         logger.info(f"Restore took: {time_elapsed}s ")
+        self.report_kpi(time_elapsed)
+
+
+class ProvisionedCapellaBackupRestore(ProvisionedCapellaRestore):
+    """Back up and restore in the same run, and report both (like RestoreTest)."""
+
+    @with_stats
+    def backup(self, master_node: Optional[str] = None):
+        return super().backup(master_node)
+
+    def _report_kpi(
+        self,
+        time_elapsed: float,
+        backup_time: Optional[float] = None,
+        backup_snapshots: Optional[list] = None,
+    ):
+        super()._report_kpi(time_elapsed)
+
+        if backup_time is not None:
+            with self.snapshots_of(backup_snapshots):
+                self.reporter.post(
+                    *self.metrics.bnr_throughput(
+                        backup_time, 'Capella', 'backup', 'Rift', category='backup'
+                    )
+                )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        backup_time, backup_id = self.backup(self.master_node)
+        backup_snapshots = list(self.cbmonitor_snapshots)
+        logger.info(f"Backup took: {backup_time}s, Backup ID: {backup_id}")
+        self.flush_buckets()
+        self.trigger_restore(self.master_node)
+        time_elapsed = self.restore(self.master_node)
+        logger.info(f"Restore took: {time_elapsed}s ")
+        self.report_kpi(time_elapsed, backup_time, backup_snapshots)
+
+
+class ProvisionedCapellaIncrementalBackup(ProvisionedCapellaBackup):
+    """Time a scheduled incremental backup after a percentage of docs are updated."""
+
+    INCREMENTAL_EVERY_HOURS = 1
+    POLL_INTERVAL = 60
+    BACKUP_TIMEOUT = 3 * 3600
+
+    def create_backup_schedule(self):
+        now = datetime.now(timezone.utc)
+        full_backup_day = (now + timedelta(days=3)).strftime('%A').lower()
+        self.rest.create_backup_schedule(
+            self.master_node,
+            self.test_config.buckets[0],
+            day_of_week=full_backup_day,
+            start_at=now.hour,
+            incremental_every=self.INCREMENTAL_EVERY_HOURS,
+        )
+
+    def wait_for_next_backup(self, previous_id: Optional[str] = None) -> dict:
+        t0 = time.time()
+        while time.time() - t0 < self.BACKUP_TIMEOUT:
+            backup = self.rest.get_latest_backup(self.master_node)
+            if backup and backup['id'] != previous_id and backup['status'] != 'pending':
+                logger.info(f"Backup complete: {pretty_dict(backup)}")
+                if backup['status'] != 'ready':
+                    logger.interrupt(f"Backup {backup['id']} ended with status {backup['status']}")
+                return backup
+            time.sleep(self.POLL_INTERVAL)
+        logger.interrupt('Timed out waiting for a scheduled backup')
+
+    def update_docs(self):
+        load_settings = copy.deepcopy(self.test_config.load_settings)
+        load_settings.items = load_settings.additional_items
+        logger.info(f"Updating {load_settings.items} docs")
+        self.load(settings=load_settings)
+        self.wait_for_persistence()
+
+    @with_stats
+    def incremental_backup(self, previous_id: str) -> dict:
+        return self.wait_for_next_backup(previous_id)
+
+    def _report_kpi(self, time_elapsed: float):
+        self.reporter.post(
+            *self.metrics.tool_time(time_elapsed, 'Capella', 'backup-incremental', 'Rift')
+        )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.create_backup_schedule()
+        full = self.wait_for_next_backup()
+        first_incremental = self.wait_for_next_backup(full['id'])
+
+        self.update_docs()
+
+        if self.rest.get_latest_backup(self.master_node)['id'] != first_incremental['id']:
+            logger.interrupt('A scheduled backup started during the doc update, rerun the test')
+
+        incremental = self.incremental_backup(first_incremental['id'])
+        if incremental['method'] == 'full':
+            logger.interrupt(f"Backup {incremental['id']} is a full backup, not an incremental")
+
+        time_elapsed = incremental['elapsedTimeInSeconds']
+        logger.info(
+            f"Full backup took: {full['elapsedTimeInSeconds']}s, "
+            f"incremental backup took: {time_elapsed}s ({time_elapsed / 60:.1f} min)"
+        )
         self.report_kpi(time_elapsed)
 
 

@@ -1063,6 +1063,8 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
         if self.options.disable_autoscaling:
             self.disable_autoscaling()
 
+        self.set_backup_node_families()
+
         # Update cluster spec file
         self.update_capella_spec()
 
@@ -1387,6 +1389,42 @@ class CapellaProvisionedDeployer(CloudVMDeployer):
             raise_for_status(resp)
 
             logger.info(f"Circuit breaker created: {pretty_dict(resp.json())}")
+
+    def set_backup_node_families(self):
+        if not (families := self.infra_spec.infrastructure_settings.get("backup_node_families")):
+            return
+
+        if self.csp != "gcp":
+            logger.interrupt("backup_node_families is only supported for Capella GCP clusters.")
+
+        if self.provisioned_api.TOKEN_FOR_INTERNAL_SUPPORT is None:
+            logger.interrupt(
+                "Cannot set backup node families. No value found for "
+                "CBC_TOKEN_FOR_INTERNAL_SUPPORT, so cannot authenticate with CP API."
+            )
+
+        config = {"gcp": {"families": [family.strip() for family in families.split(",")]}}
+        for cluster_id in self.cluster_ids:
+            logger.info(
+                f"Setting backup node families for cluster {cluster_id}: {pretty_dict(config)}"
+            )
+            url = (
+                f"{self.provisioned_api.internal_url}/internal/support/configs/"
+                f"{cluster_id}/bucketBackup"
+            )
+            resp = self.provisioned_api._urllib_request(
+                url,
+                "PUT",
+                params=json.dumps({"value": config}),
+                headers=self.provisioned_api.cbc_api_request_headers,
+            )
+            raise_for_status(resp)
+
+            resp = self.provisioned_api._urllib_request(
+                url, method="GET", headers=self.provisioned_api.cbc_api_request_headers
+            )
+            raise_for_status(resp)
+            logger.info(f"Backup node families stored: {pretty_dict(resp.json())}")
 
     def peer_vpc(self, network_info, cluster_id):
         logger.info('Setting up VPC peering...')

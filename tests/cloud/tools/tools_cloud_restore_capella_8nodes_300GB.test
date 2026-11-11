@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.tools.ProvisionedCapellaBackupRestore
+
+[showfast]
+title = 8 nodes, 1 bucket x 19M x 16KB, Incompressible, Idle
+component = toolscloud
+category = restore
+sub_category = {provider}
+
+[cluster]
+initial_nodes = 8
+num_buckets = 1
+enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+backend_storage = magma
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 19000000
+size = 16384
+doc_gen = incompressible
+workers = 80
+ssl_mode = capella

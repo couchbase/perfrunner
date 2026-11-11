@@ -1,20 +1,74 @@
 ---
+# Formats and mounts one data disk at /data on Nitro instances.
+#
+# NVMe enumeration order is not guaranteed on Nitro, so /dev/nvme1n1 can be the
+# EBS volume on one launch and the local instance store on the next. The disk is
+# therefore picked by its NVMe model string, never by device name, and mounted
+# by UUID so that the fstab entry survives a device rename on reboot.
+#
+# data_volume selects which disk backs /data:
+#   ebs            (default) the EBS volume from the spec's volume_size. Use it
+#                  when the dataset outgrows the instance store.
+#   instance_store the local NVMe instance store. Pass -e data_volume=instance_store
 - hosts: couchbase_servers
   vars:
     data_dir: /data
-    disk: /dev/nvme2n1
+    data_volume: ebs
+    nvme_models:
+      ebs: Amazon Elastic Block Store
+      instance_store: Amazon EC2 NVMe Instance Storage
   tasks:
+    - name: ensure required packages are installed
+      apt:
+        name:
+          - nvme-cli
+          - xfsprogs
+        state: present
+        update_cache: yes
+
+    # The root disk is EBS too, so it is excluded before matching on the model.
+    - name: find the {{ data_volume }} disk
+      shell: |
+        root_disk=/dev/$(lsblk -no PKNAME "$(findmnt -no SOURCE /)")
+        for dev in /dev/nvme*n1; do
+          [ "$dev" = "$root_disk" ] && continue
+          if nvme id-ctrl "$dev" 2>/dev/null | grep -q "{{ nvme_models[data_volume] }}"; then
+            echo "$dev"
+            exit 0
+          fi
+        done
+        exit 1
+      args:
+        executable: /bin/bash
+      register: data_disk
+      changed_when: false
+      failed_when: false
+
+    - name: fail if no {{ data_volume }} disk was found
+      fail:
+        msg: "No '{{ nvme_models[data_volume] }}' disk found besides the root disk"
+      when: data_disk.rc != 0
+
+    - name: show detected data disk
+      debug:
+        msg: "Mounting {{ data_volume }} disk {{ data_disk.stdout }} at {{ data_dir }}"
+
     - name: re-creating filesystem
       filesystem:
         fstype: "xfs"
-        dev: "{{ disk }}"
+        dev: "{{ data_disk.stdout }}"
         force: yes
 
-    - name: mounting data parition
+    - name: get UUID of data disk
+      command: blkid -s UUID -o value {{ data_disk.stdout }}
+      register: data_disk_uuid
+      changed_when: false
+
+    - name: mounting data partition by UUID
       mount:
         name: "{{ data_dir }}"
         state: mounted
-        src: "{{ disk }}"
+        src: "UUID={{ data_disk_uuid.stdout }}"
         fstype: "xfs"
 
     - name: creating new "couchbase" group

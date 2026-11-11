@@ -29,11 +29,35 @@ class PrometheusMetricsHelper(MetricHelper):
         bucket: Optional[str] = None,
         server: Optional[str] = None,
     ) -> list[float]:
-        """Read a scoped metric from the Prometheus store using label filters.
+        """Read a scoped metric from the Prometheus store using label filters."""
+        filters = self._filters(collector, cluster, cluster_idx, bucket, server)
+        return self.store.get_values("", metric=metric, filters=filters)
 
-        This override translates the same scope into the label filters the snapshot API
-        expects (``server`` maps to the ``instance`` label, matching how PromStore
-        pushes).
+    def _read_timeseries(
+        self,
+        metric: str,
+        collector: str,
+        *,
+        cluster: Optional[str] = None,
+        cluster_idx: int = 0,
+        bucket: Optional[str] = None,
+        server: Optional[str] = None,
+    ) -> list[list[int, float]]:
+        """Read a scoped metric's ``[[ts_ms, value], ...]`` series using label filters."""
+        filters = self._filters(collector, cluster, cluster_idx, bucket, server)
+        return self.store.get_timeseries("", metric=metric, filters=filters)
+
+    def _filters(
+        self,
+        collector: str,
+        cluster: Optional[str],
+        cluster_idx: int,
+        bucket: Optional[str],
+        server: Optional[str],
+    ) -> dict[str, str]:
+        """Translate a read scope into the snapshot API's label filters.
+
+        ``server`` maps to the ``instance`` label, matching how PromStore pushes.
         """
         if cluster is None:
             cluster = self.test.cbmonitor_clusters[cluster_idx]
@@ -42,4 +66,4 @@ class PrometheusMetricsHelper(MetricHelper):
             filters["bucket"] = bucket
         if server:
             filters["instance"] = server
-        return self.store.get_values("", metric=metric, filters=filters)
+        return filters

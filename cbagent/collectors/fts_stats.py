@@ -21,6 +21,11 @@ class FTSCollector(CouchbaseCollector):
         "num_files_on_disk",
         "num_root_memorysegments",
         "num_root_filesegments",
+        # Monotonic merge counters. Only stored, never used for a KPI yet: they are
+        # what a later change needs to split the build into its prologue and merge
+        # phases after the fact, so collect them from the start.
+        "num_file_merge_ops",
+        "num_mem_merge_ops",
         "pct_cpu_gc",
         "timer_batch_store_count",
         "timer_data_delete_count",

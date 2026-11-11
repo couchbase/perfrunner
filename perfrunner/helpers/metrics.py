@@ -8,6 +8,7 @@ import statistics
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
+from functools import cached_property
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -85,6 +86,33 @@ def adaptive_round(value: float, *, threshold: float = 100, small_digits: int = 
     Folds the recurring ``round(x, 1) if x < 100 else int(x)`` latency idiom.
     """
     return round(value, small_digits) if value < threshold else int(value)
+
+
+def integrate_timeseries(timeseries: list[list[int, float]]) -> tuple[float, float]:
+    """Trapezoidal integral of a ``[[ts_ms, value], ...]`` cbmonitor series.
+
+    Returns (integral in value-seconds, covered duration in seconds). A series
+    with fewer than two samples cannot be integrated and yields (0, 0).
+    """
+    if len(timeseries) < 2:
+        return 0.0, 0.0
+
+    samples = np.array(sorted(timeseries), dtype=float)
+    seconds = samples[:, 0] / 1000  # cbmonitor timestamps are epoch milliseconds
+    values = samples[:, 1]
+    integral = np.sum(np.diff(seconds) * (values[1:] + values[:-1]) / 2)
+
+    return float(integral), float(seconds[-1] - seconds[0])
+
+
+# (collector, metric) pairs naming the cbft RSS series, in preference order. The
+# OS-level `ps` sample is the most direct measure of process memory, but the
+# collector behind it is on-prem only, so fall back to the Prometheus-backed
+# series, which is also collected on Capella.
+FTS_RSS_SERIES = (
+    ('atop', 'cbft_rss'),
+    ('metrics_rest_api_processes', 'cbft_sysproc_mem_resident'),
+)
 
 
 def strip(s: str) -> str:
@@ -369,6 +397,75 @@ class MetricHelper:
         index_size_mb = int(bytes_to_mib(index_size_raw))
 
         return self._metric(index_size_mb, metric_id=metric_id, title=title, chirality=-1)
+
+    @cached_property
+    def fts_rss_timeseries(self) -> list[list[list[int, float]]]:
+        """Return one cbft RSS series (bytes over epoch ms) per FTS node.
+
+        Nodes that never ran a cbft process have no such series and are skipped,
+        so this works on mixed clusters without knowing the service layout.
+        """
+        timeseries = []
+        for cluster_idx, ((_, servers), initial_nodes) in enumerate(zip(
+                self.cluster_spec.clusters,
+                self.test_config.cluster.initial_nodes,
+        )):
+            cluster = self.test.cbmonitor_clusters[cluster_idx]
+            for server in servers[:initial_nodes]:
+                for collector, metric in FTS_RSS_SERIES:
+                    if series := self._read_timeseries(metric, collector,
+                                                       cluster=cluster, server=server):
+                        timeseries.append(series)
+                        break
+
+        return timeseries
+
+    def fts_peak_rss(self) -> Metric:
+        """Highest cbft RSS reached by any single FTS node during the build."""
+        metric_id = f'{self.test_config.name}_peak_cbft_rss'
+        title = 'Peak cbft RSS (GB), {}'.format(self._title.split("(sec), ")[1])
+
+        peak_rss = max((max(value for _, value in series)
+                        for series in self.fts_rss_timeseries if series),
+                       default=0)
+
+        return self._metric(round(bytes_to_gib(peak_rss), 2),
+                            metric_id=metric_id, title=title, chirality=-1)
+
+    def fts_avg_rss(self) -> Metric:
+        """Time-weighted mean cbft RSS of an FTS node over the whole build.
+
+        Time-weighted rather than a plain sample mean so that an uneven sampling
+        cadence (a collector that falls behind under load) cannot skew the result.
+        """
+        metric_id = f'{self.test_config.name}_avg_cbft_rss'
+        title = 'Avg. cbft RSS (GB), {}'.format(self._title.split("(sec), ")[1])
+
+        per_node_averages = [
+            integral / duration
+            for integral, duration in map(integrate_timeseries, self.fts_rss_timeseries)
+            if duration
+        ]
+        avg_rss = np.average(per_node_averages) if per_node_averages else 0
+
+        return self._metric(round(bytes_to_gib(avg_rss), 2),
+                            metric_id=metric_id, title=title, chirality=-1)
+
+    def fts_rss_gb_hours(self) -> Metric:
+        """Cluster-wide integral of cbft RSS over the build, in GB-hours.
+
+        Summed across FTS nodes, so this is the memory-time the whole cluster
+        spent on the build rather than a per-node figure.
+        """
+        metric_id = f'{self.test_config.name}_cbft_gb_hours'
+        title = 'cbft memory, cluster total (GB-hours), {}'.format(
+            self._title.split("(sec), ")[1])
+
+        byte_seconds = sum(integral for integral, _ in
+                           map(integrate_timeseries, self.fts_rss_timeseries))
+
+        return self._metric(round(bytes_to_gib(byte_seconds) / 3600, 2),
+                            metric_id=metric_id, title=title, chirality=-1)
 
     def fts_index_with_latency(self, elapsed_time: float) -> Metric:
         metric_id = self.test_config.name.replace("latency", "index_time")
@@ -707,6 +804,24 @@ class MetricHelper:
             cluster=cluster, collector=collector, bucket=bucket, server=server
         )
         return self.store.get_values(db, metric=metric)
+
+    def _read_timeseries(
+        self,
+        metric: str,
+        collector: str,
+        *,
+        cluster: Optional[str] = None,
+        cluster_idx: int = 0,
+        bucket: Optional[str] = None,
+        server: Optional[str] = None,
+    ) -> list[list[int, float]]:
+        """Read a metric's ``[[ts_ms, value], ...]`` series for a single scope."""
+        if cluster is None:
+            cluster = self.test.cbmonitor_clusters[cluster_idx]
+        db = self.store.build_dbname(
+            cluster=cluster, collector=collector, bucket=bucket, server=server
+        )
+        return self.store.get_timeseries(db, metric=metric)
 
     def _percentile(self, values, percentile: Number) -> float:
         """Compute the Nth percentile of ``values`` in-process."""

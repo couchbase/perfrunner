@@ -723,6 +723,27 @@ class FTSIndexBuildCloudBackupTest(FTSIndexTest):
         self.cloud_restore()
 
 
+class FTSIndexBuildTCOCloudBackupTest(FTSIndexBuildCloudBackupTest):
+    """Index build from a cloud backup that also reports cbft memory TCO KPIs.
+
+    Same build as FTSIndexBuildCloudBackupTest; the extra KPIs are derived from
+    the cbft RSS series that cbmonitor already samples during build_index, so
+    pairing a fast-merge run against a baseline run yields the memory deltas
+    without changing how the build itself is driven.
+    """
+
+    def report_kpi(self, time_elapsed: int, size: int):
+        super().report_kpi(time_elapsed, size)
+        if not self.metrics.fts_rss_timeseries:
+            logger.error('No cbft RSS series found, not reporting the memory KPIs')
+            return
+
+        for metric in (self.metrics.fts_peak_rss(),
+                       self.metrics.fts_avg_rss(),
+                       self.metrics.fts_rss_gb_hours()):
+            self.reporter.post(*metric)
+
+
 class FTSIndexLoadTest(FTSIndexTest):
 
     def run(self):

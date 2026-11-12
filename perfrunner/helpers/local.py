@@ -17,7 +17,9 @@ from logger import logger
 from perfrunner.helpers.misc import (
     get_max_arg_strlen,
     pretty_dict,
+    run_aws_cli_command,
     run_local_shell_command,
+    s3_repo_logs_url,
 )
 from perfrunner.helpers.shell import hide, lcd, local, quiet, settings, shell_env, warn_only
 from perfrunner.helpers.x509 import SSLCertificate, X509CertPathPair, summarise_keystore
@@ -522,7 +524,18 @@ def restore(
 
 def purge_restore_progress(cluster_spec: ClusterSpec, archive: str = '',
                            repo: str = 'default'):
+    # Remove restore progress and the repo's `logs/` folder before a restore.
     archive_path = archive or cluster_spec.backup
+
+    if logs_url := s3_repo_logs_url(archive_path, repo):
+        if not run_aws_cli_command("s3 ls {}", logs_url):
+            logger.info(f"No logs folder found at {logs_url}")
+            return
+        logger.info(f"Deleting logs folder {logs_url}")
+        if run_aws_cli_command("s3 rm {} --recursive --quiet", logs_url) is None:
+            logger.warning(f"Failed to delete logs folder {logs_url}")
+        return
+
     repo_dir = '{}/{}'.format(archive_path.rstrip('/'), repo)
     logger.info(f"Purging restore progress from {repo_dir}")
     cmd = f"rm -rf {repo_dir}/.restore"

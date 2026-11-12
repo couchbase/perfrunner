@@ -13,6 +13,7 @@ import paramiko
 from logger import logger
 from perfrunner.helpers.misc import (
     pretty_dict,
+    s3_repo_logs_url,
     uhex,
 )
 from perfrunner.helpers.x509 import SSLCertificate, summarise_keystore
@@ -1491,6 +1492,10 @@ class RemoteLinux(Remote):
         )
 
         with cd(worker_home), cd('perfrunner'):
+            self._delete_s3_repo_logs(
+                archive or cluster_spec.backup, repo, obj_region, obj_staging_dir, env_vars
+            )
+
             flags = filter(
                 None,
                 [
@@ -1520,6 +1525,36 @@ class RemoteLinux(Remote):
             logger.info(f"Running: {cmd}\nEnv: {pretty_dict(env_vars)}")
             with shell_env(**env_vars):
                 run(cmd)
+
+    def _delete_s3_repo_logs(
+        self,
+        archive: str,
+        repo: str,
+        obj_region: Optional[str] = None,
+        obj_staging_dir: Optional[str] = None,
+        env_vars: dict[str, str] = {},
+    ):
+        # Delete the repo's `logs/` folder from an S3 archive (and staging dir) if it exists.
+        if not (logs_url := s3_repo_logs_url(archive, repo)):
+            return
+
+        # Prefer the awscli installed in the perfrunner venv, fall back to the system one
+        has_venv_awscli = run(
+            "env/bin/python3 -c 'import awscli'", quiet=True, warn_only=True
+        ).succeeded
+        aws = "env/bin/python3 -m awscli" if has_venv_awscli else "aws"
+        region = f" --region {obj_region}" if obj_region else ""
+
+        with shell_env(**env_vars):
+            listing = run(f"{aws} s3 ls {logs_url}{region}", quiet=True, warn_only=True)
+            if listing.succeeded and listing.strip():
+                logger.info(f"Deleting logs folder {logs_url}")
+                run(f"{aws} s3 rm {logs_url} --recursive --quiet{region}", warn_only=True)
+            else:
+                logger.info(f"No logs folder found at {logs_url}")
+
+        if obj_staging_dir:
+            run(f"rm -rf {obj_staging_dir.rstrip('/')}/{repo}/logs", warn_only=True)
 
     def _install_cb_debug_package(self, url: str, quiet: bool = False):
         logger.info("Installing Couchbase Debug package")

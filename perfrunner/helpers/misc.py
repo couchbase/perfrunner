@@ -70,6 +70,13 @@ def uhex() -> str:
     return uuid4().hex
 
 
+def s3_repo_logs_url(archive: str, repo: str) -> Optional[str]:
+    # Return the S3 URL of a backup repo's `logs/` folder, or None for a non-S3 archive.
+    if not archive or not archive.startswith("s3://"):
+        return None
+    return f"{archive.rstrip('/')}/{repo.strip('/')}/logs/"
+
+
 def pretty_dict(d: Any, sort_keys: bool = True, encoder=lambda o: o.__dict__) -> str:
     return json.dumps(d, indent=4, sort_keys=sort_keys, default=encoder)
 

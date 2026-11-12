@@ -334,7 +334,11 @@ class DefaultClusterManager(ClusterManagerBase):
             self.rest.set_cluster_name(servers[0], renamed_cluster)
 
     def set_auth(self):
+        legacy_password_policy = self.test_config.cluster.legacy_password_policy
         for server in self.cluster_spec.servers:
+            # Must precede settings/web, which validates the password against the active policy
+            if legacy_password_policy:
+                self.rest.set_legacy_password_policy(server)
             self.rest.set_auth(server)
 
     def set_mem_quotas(self):

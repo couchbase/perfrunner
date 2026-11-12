@@ -213,6 +213,19 @@ class DefaultRestHelper(RestBase):
     def set_analytics_paths(self, host: str, paths: list[str]):
         self._set_service_path(host, "cbas", paths)
 
+    def set_legacy_password_policy(self, host: str):
+        logger.info(f"Setting legacy password policy: {host}")
+
+        api = self._get_api_url(host=host, path="settings/passwordPolicy")
+        data = {
+            "minLength": 6,
+            "enforceUppercase": "false",
+            "enforceLowercase": "false",
+            "enforceDigits": "false",
+            "enforceSpecialChars": "false",
+        }
+        self.post(url=api, data=data)
+
     def set_auth(self, host: str):
         logger.info(f"Configuring cluster authentication: {host}")
 

@@ -1118,6 +1118,7 @@ class ClusterSettings:
     DISABLE_UI_HTTP = None
     SHOW_CP_VERSION = None
     CNG_ENABLED = "false"
+    LEGACY_PASSWORD_POLICY = "true"
 
     IPv6 = 0
 
@@ -1194,6 +1195,10 @@ class ClusterSettings:
                                             self.ENABLE_QUERY_AWR)
         self.enable_fusion = maybe_atoi(options.get('enable_fusion', self.ENABLE_FUSION))
         self.enable_kv_fbr = maybe_atoi(options.get('enable_kv_fbr', self.ENABLE_KV_FBR))
+        # Apply the legacy password policy (min length 6, no character rules) on new clusters
+        self.legacy_password_policy = maybe_atoi(
+            options.get("legacy_password_policy", self.LEGACY_PASSWORD_POLICY)
+        )
         self.query_awr_bucket = options.get('query_awr_bucket',
                                             self.QUERY_AWR_BUCKET)
         self.query_awr_scope = options.get('query_awr_scope',

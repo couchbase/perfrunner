@@ -3368,6 +3368,9 @@ class AnalyticsExternalDataSettings:
 
         self.azure_storage_account = options.get("azure_storage_account", "cbperfstorage")
 
+        self.catalog_name = options.get("catalog_name")
+        self.catalog_source = options.get("catalog_source", "AWS_GLUE")
+
     @property
     def external_link_name(self) -> str:
         return f"{self.link_type}_link"

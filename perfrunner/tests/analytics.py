@@ -87,6 +87,7 @@ class DatasetType(Enum):
     REMOTE = "remote"
     STANDALONE = "standalone"
     EXTERNAL = "external"
+    ICEBERG = "iceberg"
     KAFKA = "kafka"
 
     def is_streaming(self) -> bool:
@@ -188,7 +189,7 @@ class KafkaLink(Link):
 
 @dataclass(frozen=True)
 class ExternalLink(Link):
-    # EXTERNAL and STANDALONE datasets both use an external link.
+    # EXTERNAL, STANDALONE and ICEBERG datasets all use an external link.
     link_type: str
     # Optional: only the s3 link type requires a region (enforced in __post_init__).
     region: Optional[str] = None
@@ -485,6 +486,35 @@ class ExternalDatasetDef(BaseDatasetDef):
 
 
 @dataclass(frozen=True)
+class IcebergCollectionDef(BaseDatasetDef):
+    catalog: str
+    link: ExternalLink
+    namespace: str
+    table_name: str
+    options: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def link_name(self) -> str:
+        return self.link.name
+
+    def get_type(self) -> DatasetType:
+        return DatasetType.ICEBERG
+
+    def create_statement(self) -> str:
+        name, catalog, link_name = sqlpp_escape([self.name, self.catalog, self.link_name])
+        with_options = {
+            "table-format": "iceberg",
+            "namespace": self.namespace,
+            "tableName": self.table_name,
+            **self.options,
+        }
+        return (
+            f"CREATE EXTERNAL COLLECTION {name} ON {catalog} AT {link_name} "
+            f"WITH {json.dumps(with_options)}"
+        )
+
+
+@dataclass(frozen=True)
 class UDFDef:
     name: str
     args: tuple[str, ...]
@@ -705,6 +735,8 @@ class DatasetConfigParser:
                     ds_def = self._create_standalone_dataset_from_config(name, dataset_conf)
                 elif ds_type is DatasetType.EXTERNAL:
                     ds_def = self._create_external_dataset_from_config(name, dataset_conf)
+                elif ds_type is DatasetType.ICEBERG:
+                    ds_def = self._create_iceberg_dataset_from_config(name, dataset_conf)
 
                 datasets.append(ds_def)
 
@@ -818,6 +850,16 @@ class DatasetConfigParser:
             obj_store_name=self.ext_data_settings.obj_store_name,
             link=self._external_link(),
             object_store_path=config.get("object_store_path"),
+        )
+
+    def _create_iceberg_dataset_from_config(self, name: str, config: dict) -> IcebergCollectionDef:
+        return IcebergCollectionDef(
+            name=name,
+            catalog=self.ext_data_settings.catalog_name,
+            link=self._external_link(),
+            namespace=config["namespace"],
+            table_name=config["table_name"],
+            options=config.get("options", {}),
         )
 
     def _create_external_dataset_from_config(self, name: str, config: dict) -> ExternalDatasetDef:
@@ -1699,6 +1741,9 @@ class CustomQueryTest(AnalyticsTest):
         request_timeout (default: see `DEFAULT_REQUEST_TIMEOUT_SECS`): seconds to wait for
             the response to each query before giving up on it. A query that times out is
             recorded as a failure and the run moves on to the next one.
+        query_retries (default 0): how many times to send a query again after the server
+            answers with an HTTP 5xx. Each retry is logged and reported in a warning, and only
+            the attempt that is kept is timed. Errors below 500 are never retried.
 
     A top-level `ratios` list (name, title, numerator, denominator, optional chirality,
     default -1) is reported as the median of the numerator entry's samples over the
@@ -1723,6 +1768,9 @@ class CustomQueryTest(AnalyticsTest):
         )
         self.request_timeout = int(options.get("request_timeout", DEFAULT_REQUEST_TIMEOUT_SECS))
         validate_ratios(custom_query_configs, self.ratios)
+        self.query_retries = int(options.get("query_retries", 0))
+        if self.query_retries < 0:
+            raise ValueError(f"query_retries must be 0 or more, got {self.query_retries}")
 
     def _download_query_log(self, host: str):
         if not self.worker_manager.is_remote:
@@ -1761,6 +1809,7 @@ class CustomQueryTest(AnalyticsTest):
                 self.log_file_path,
                 self.analytics_settings.custom_request_params,
                 self.request_timeout,
+                self.query_retries,
             ),
             queue=worker,
         )
@@ -1805,6 +1854,8 @@ class CustomQueryTest(AnalyticsTest):
             )
         results = self.access()
         logger.info(f"Query timings: {pretty_dict(results['timings'])}")
+        if retries := results["retries"]:
+            logger.warning(f"{len(retries)} queries were retried after a server error: {retries}")
 
         # A query set interleaves DDL with the queries it sets up, so a single failure invalidates
         # every timing measured after it. Fail loudly rather than reporting unusable numbers.
@@ -1815,6 +1866,24 @@ class CustomQueryTest(AnalyticsTest):
             )
 
         self.report_kpi(results)
+
+
+class IcebergVariantTest(CustomQueryTest):
+    """CustomQueryTest over Iceberg collections registered on one catalog."""
+
+    def create_catalog_statement(self) -> str:
+        settings = self.ext_data_settings
+        catalog, link_name = sqlpp_escape([settings.catalog_name, settings.external_link_name])
+        return (
+            f"CREATE CATALOG {catalog} TYPE Iceberg SOURCE {settings.catalog_source} "
+            f"AT {link_name} WITH {{}}"
+        )
+
+    def create_datasets(self, *, verbose: bool = False):
+        self.exec_analytics_statement(
+            self.analytics_node, self.create_catalog_statement(), verbose=verbose
+        )
+        super().create_datasets(verbose=verbose)
 
 
 class DropDatasetTest(AnalyticsTest):

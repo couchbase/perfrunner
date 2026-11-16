@@ -1,0 +1,46 @@
+family: iceberg_variant
+datasets:
+  - &base
+    name: variant_serialized
+    type: iceberg
+    namespace: binance
+    table_name: variant_ab_serialized
+
+  - <<: *base
+    name: variant_shredded
+    table_name: variant_ab_shredded
+
+  - <<: *base
+    name: variant_partial
+    table_name: variant_ab_partial
+
+  - <<: *base
+    name: variant_mixed
+    table_name: variant_ab_mixed
+
+  - <<: *base
+    name: variant_prunable
+    table_name: variant_ab_prunable_shredded
+
+  - <<: *base
+    name: variant_serialized_projection_off
+    options:
+      variantProjectionPushdown: "false"
+
+  - <<: *base
+    name: variant_shredded_projection_off
+    table_name: variant_ab_shredded
+    options:
+      variantProjectionPushdown: "false"
+
+  - <<: *base
+    name: variant_shredded_stats_off
+    table_name: variant_ab_shredded
+    options:
+      variantStatsPushdown: "false"
+
+  - <<: *base
+    name: variant_prunable_stats_off
+    table_name: variant_ab_prunable_shredded
+    options:
+      variantStatsPushdown: "false"

@@ -1,0 +1,27 @@
+# Native columns and the Variant object v hold the same values; entries that differ only
+# in where the values are read from are compared. Entry names are the KPI names.
+
+- name: variant_shredded
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_shredded t WHERE t.v.year = 2025 GROUP BY t.v.product;
+- name: variant_partial
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_partial t WHERE t.v.year = 2025 GROUP BY t.v.product;
+- name: residual_field_partial
+  statement: >
+    SELECT t.v.region AS region, SUM(t.v.sales) AS total_sales
+    FROM variant_partial t WHERE t.v.year = 2025 GROUP BY t.v.region;
+- name: residual_field_serialized
+  statement: >
+    SELECT t.v.region AS region, SUM(t.v.sales) AS total_sales
+    FROM variant_serialized t WHERE t.v.year = 2025 GROUP BY t.v.region;
+- name: both_fields_partial
+  statement: >
+    SELECT t.v.product AS product, t.v.region AS region, SUM(t.v.sales) AS total_sales
+    FROM variant_partial t WHERE t.v.year = 2025 GROUP BY t.v.product, t.v.region;
+- name: both_fields_serialized
+  statement: >
+    SELECT t.v.product AS product, t.v.region AS region, SUM(t.v.sales) AS total_sales
+    FROM variant_serialized t WHERE t.v.year = 2025 GROUP BY t.v.product, t.v.region;

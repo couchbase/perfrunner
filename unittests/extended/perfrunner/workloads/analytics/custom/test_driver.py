@@ -4,6 +4,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, mock
 
+import requests
+
 from perfrunner.workloads.analytics.custom import driver
 from perfrunner.workloads.analytics.custom.driver import (
     CustomAnalyticsQuery,
@@ -12,6 +14,7 @@ from perfrunner.workloads.analytics.custom.driver import (
     log_query_to_file,
     plan_check_failures,
     reduce_timings_to_kpis,
+    run_custom_analytics_query_task,
     split_query_conf,
     validate_ratios,
 )
@@ -268,3 +271,54 @@ class PlanOrderTest(TestCase):
     def test_plan_order_is_read_from_the_config(self):
         (query,) = expand_query_configs([{"statement": "q", "plan_order": ["a", "b"]}])
         self.assertEqual(query.plan_order, ["a", "b"])
+
+
+def canned_response(status_code, elapsed="1.5s", errors=None):
+    body = {"metrics": {"elapsedTime": elapsed, "processedObjects": 10}}
+    if errors:
+        body["errors"] = errors
+    resp = requests.Response()
+    resp.status_code = status_code
+    resp._content = json.dumps(body).encode()
+    return resp
+
+
+class RunCustomAnalyticsQueryTaskTest(TestCase):
+    def _run(self, responses, retries):
+        queries = [CustomAnalyticsQuery("SELECT 1;", name="Q")]
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            mock.patch("perfrunner.workloads.analytics.custom.driver.requests.Session") as session,
+            mock.patch("perfrunner.workloads.analytics.custom.driver.time.sleep") as sleep,
+        ):
+            self.sleep = sleep
+            session.return_value.post.side_effect = responses
+            result = run_custom_analytics_query_task(
+                "http://node:8095/analytics/service",
+                ("user", "pass"),
+                queries,
+                Path(tmp) / "log.jsonl",
+                retries=retries,
+            )
+            return result, session.return_value.post.call_count
+
+    def test_server_error_is_retried_and_only_the_kept_attempt_is_timed(self):
+        result, sent = self._run([canned_response(500, "8.9s"), canned_response(200, "15.4s")], 2)
+        self.assertEqual(sent, 2)
+        self.assertEqual(self.sleep.call_args_list, [mock.call(15)])
+        self.assertEqual(result["failures"], [])
+        self.assertEqual(result["retries"], ["Q (HTTP 500)"])
+        self.assertEqual(dict(result["timings"]["Q"]), {"no_named_args": [15.4]})
+
+    def test_failure_is_reported_when_a_retry_cannot_help(self):
+        for statuses, retries, backoff in (
+            ([500] * 3, 2, [15, 30]),
+            ([400], 2, []),
+            ([500], 0, []),
+        ):
+            with self.subTest(statuses=statuses, retries=retries):
+                result, sent = self._run([canned_response(s) for s in statuses], retries)
+                slept = [c.args[0] for c in self.sleep.call_args_list]
+                self.assertEqual((sent, slept), (len(statuses), backoff))
+                self.assertEqual(result["failures"], [f"Q (HTTP {statuses[-1]})"])
+                self.assertEqual(result["retries"], ["Q (HTTP 500)"] * len(backoff))

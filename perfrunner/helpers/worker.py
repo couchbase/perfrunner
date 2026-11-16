@@ -404,9 +404,10 @@ def custom_analytics_query_task(
     log_file_path: str,
     request_params: Optional[dict] = None,
     request_timeout: int = DEFAULT_REQUEST_TIMEOUT_SECS,
+    retries: int = 0,
 ):
     return run_custom_analytics_query_task(
-        api_url, api_auth, queries, log_file_path, request_params, request_timeout
+        api_url, api_auth, queries, log_file_path, request_params, request_timeout, retries
     )
 
 

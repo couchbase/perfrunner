@@ -1,0 +1,49 @@
+# Native columns and the Variant object v hold the same values; entries that differ only
+# in where the values are read from are compared. Entry names are the KPI names.
+
+- name: native_prunable
+  statement: >
+    SELECT t.product AS product, SUM(t.sales) AS total_sales
+    FROM variant_prunable t WHERE t.year = 2025 GROUP BY t.product;
+- name: variant_prunable
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_prunable t WHERE t.v.year = 2025 GROUP BY t.v.product;
+- name: variant_prunable_stats_off
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_prunable_stats_off t WHERE t.v.year = 2025 GROUP BY t.v.product;
+- name: predicate_in_native
+  statement: >
+    SELECT t.product AS product, SUM(t.sales) AS total_sales
+    FROM variant_prunable t WHERE t.year IN [2024, 2025] GROUP BY t.product;
+- name: predicate_in_variant
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_prunable t WHERE t.v.year IN [2024, 2025] GROUP BY t.v.product;
+- name: predicate_like_native
+  statement: >
+    SELECT t.product AS product, SUM(t.sales) AS total_sales
+    FROM variant_prunable t WHERE t.name LIKE 'abc%' GROUP BY t.product;
+- name: predicate_like_variant
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_prunable t WHERE t.v.name LIKE 'abc%' GROUP BY t.v.product;
+- name: predicate_timestamp_native
+  statement: >
+    SELECT t.product AS product, SUM(t.sales) AS total_sales
+    FROM variant_prunable t WHERE t.ts > datetime('2029-06-01T00:00:00')
+    GROUP BY t.product;
+- name: predicate_timestamp_variant
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_prunable t WHERE t.v.ts > datetime('2029-06-01T00:00:00')
+    GROUP BY t.v.product;
+- name: predicate_is_null_native
+  statement: >
+    SELECT t.product AS product, SUM(t.sales) AS total_sales
+    FROM variant_prunable t WHERE t.note IS NULL GROUP BY t.product;
+- name: predicate_is_null_variant
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_prunable t WHERE t.v.note IS NULL GROUP BY t.v.product;

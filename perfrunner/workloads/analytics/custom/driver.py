@@ -2,6 +2,7 @@ import itertools
 import json
 import re
 import statistics
+import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -72,6 +73,10 @@ KNOWN_RATIO_KEYS = {"name", "title", "numerator", "denominator", "chirality"}
 # query that never gets a response would hang the run. Analytics queries can legitimately run
 # for a long time, so this is generous and can be raised per test.
 DEFAULT_REQUEST_TIMEOUT_SECS = 3600
+
+# Server errors arrive in bursts a second or two long, so an immediate resend lands in the same
+# burst. Retry n waits n times this long.
+RETRY_BACKOFF_SECS = 15
 
 UNNAMED_QUERY = "(unnamed)"
 NO_NAMED_ARGS = "no_named_args"
@@ -336,11 +341,14 @@ def _run_one(
     request_params: Optional[dict],
     request_timeout: int,
     log_lock: Lock,
-) -> tuple[Optional[float], list[str]]:
-    """Run one statement, returning (elapsed secs, failure descriptions).
+    retries: int,
+) -> tuple[Optional[float], list[str], list[str]]:
+    """Run one statement, returning (elapsed secs, failure descriptions, retry descriptions).
 
     Errors are returned rather than raised, so one bad statement does not cost the rest of the
-    set. The elapsed time is None when the request itself failed.
+    set. The elapsed time is None when the request itself failed. A response with HTTP status
+    >= 500 is sent again up to `retries` times, waiting RETRY_BACKOFF_SECS times the retry
+    number before each; only the attempt that is kept is timed.
     """
     display_name = query.name or UNNAMED_QUERY
 
@@ -352,21 +360,32 @@ def _run_one(
         "max-warnings": 10,
     } | (request_params or {})
 
-    try:
-        resp = session.post(url=api_url, data=payload, timeout=request_timeout)
-    except requests.RequestException as e:
-        # Keep going so a blip doesn't cost us the whole run, but record it as a failure
-        logger.error(f"Query {display_name} could not be sent: {e}")
-        with log_lock:
-            log_query_to_file(log_file_path, query, None, {})
-        return None, [f"{display_name} ({e.__class__.__name__})"]
+    retried = []
+    for attempt in range(retries + 1):
+        try:
+            resp = session.post(url=api_url, data=payload, timeout=request_timeout)
+        except requests.RequestException as e:
+            # Keep going so a blip doesn't cost us the whole run, but record it as a failure
+            logger.error(f"Query {display_name} could not be sent: {e}")
+            with log_lock:
+                log_query_to_file(log_file_path, query, None, {})
+            return None, [f"{display_name} ({e.__class__.__name__})"], retried
 
-    body = decode_response_body(resp)
-    with log_lock:
-        log_query_to_file(log_file_path, query, resp.status_code, body)
+        body = decode_response_body(resp)
+        with log_lock:
+            log_query_to_file(log_file_path, query, resp.status_code, body)
+        if resp.status_code < 500 or attempt == retries:
+            break
+        logger.warning(
+            f"Query {display_name} failed (HTTP {resp.status_code}), "
+            f"retrying ({attempt + 1}/{retries}): {body}"
+        )
+        retried.append(f"{display_name} (HTTP {resp.status_code})")
+        time.sleep(RETRY_BACKOFF_SECS * (attempt + 1))
+
     if not resp.ok:
         logger.error(f"Query {display_name} failed (HTTP {resp.status_code}): {body}")
-        return None, [f"{display_name} (HTTP {resp.status_code})"]
+        return None, [f"{display_name} (HTTP {resp.status_code})"], retried
 
     failures = plan_check_failures(query, body)
     for reason in failures:
@@ -374,7 +393,7 @@ def _run_one(
 
     elapsed_time = parse_duration_to_secs(body.get("metrics", {}).get("elapsedTime", ""))
     logger.info(f"Query {display_name} elapsed time (s): {elapsed_time:.2f}")
-    return elapsed_time, failures
+    return elapsed_time, failures, retried
 
 
 def run_custom_analytics_query_task(
@@ -384,23 +403,30 @@ def run_custom_analytics_query_task(
     log_file_path: Union[str, Path],
     request_params: Optional[dict] = None,
     request_timeout: int = DEFAULT_REQUEST_TIMEOUT_SECS,
+    retries: int = 0,
 ) -> dict:
     """Run the given statements in order, logging metrics and plans for each one.
 
-    Returns {"timings": {query name: {named args: [elapsed secs]}}, "failures": [description]}.
+    Returns {"timings": {query name: {named args: [elapsed secs]}}, "failures": [description],
+    "retries": [description]}.
     Statements are run sequentially because a query set may interleave DDL that later queries
     depend on, so any failure is collected and reported rather than aborting mid-set. A query
     with concurrency > 1 sends that many copies at once and records each one's elapsed time;
     the set still advances one entry at a time.
+
+    A response with HTTP status >= 500 is sent again up to `retries` times; every retry is
+    logged and listed under "retries", each after a wait of RETRY_BACKOFF_SECS times the retry
+    number, and only the attempt that is kept is timed. Other errors are never retried.
     """
     timings = {}
     failures = []
+    retried = []
     log_lock = Lock()
     session = _new_session(api_url, api_auth)
 
     def run_on(s: requests.Session, query: CustomAnalyticsQuery):
         return _run_one(
-            s, api_url, query, log_file_path, request_params, request_timeout, log_lock
+            s, api_url, query, log_file_path, request_params, request_timeout, log_lock, retries
         )
 
     for query in queries:
@@ -421,8 +447,9 @@ def run_custom_analytics_query_task(
             for s in sessions:
                 s.close()
 
-        for _, run_failures in results:
+        for _, run_failures, run_retries in results:
             failures.extend(run_failures)
+            retried.extend(run_retries)
 
         if (name := query.name) is None:
             continue
@@ -433,7 +460,7 @@ def run_custom_analytics_query_task(
         if name not in timings:
             timings[name] = defaultdict(list)
         timings[name][named_args_str].extend(
-            elapsed for elapsed, _ in results if elapsed is not None
+            elapsed for elapsed, _, _ in results if elapsed is not None
         )
 
-    return {"timings": timings, "failures": failures}
+    return {"timings": timings, "failures": failures, "retries": retried}

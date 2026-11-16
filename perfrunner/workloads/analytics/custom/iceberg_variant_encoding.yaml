@@ -1,0 +1,42 @@
+# Native columns and the Variant object v hold the same values; entries that differ only
+# in where the values are read from are compared. Entry names are the KPI names.
+
+- name: native_baseline
+  statement: >
+    SELECT t.product AS product, SUM(t.sales) AS total_sales
+    FROM variant_serialized t WHERE t.year = 2025 GROUP BY t.product;
+- name: variant_serialized
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_serialized t WHERE t.v.year = 2025 GROUP BY t.v.product;
+- name: variant_shredded
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_shredded t WHERE t.v.year = 2025 GROUP BY t.v.product;
+- name: variant_partial
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_partial t WHERE t.v.year = 2025 GROUP BY t.v.product;
+- name: variant_mixed
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_mixed t WHERE t.v.year = 2025 GROUP BY t.v.product;
+- name: variant_shredded_stats_off
+  statement: >
+    SELECT t.v.product AS product, SUM(t.v.sales) AS total_sales
+    FROM variant_shredded_stats_off t WHERE t.v.year = 2025 GROUP BY t.v.product;
+
+# Bare scalar INT in a Variant column, summed in place of native sales; filter and grouping
+# stay on native columns. Compared with native_baseline.
+- name: scalar_serialized
+  statement: >
+    SELECT t.product AS product, SUM(t.sales_scalar) AS total_sales
+    FROM variant_serialized t WHERE t.year = 2025 GROUP BY t.product;
+- name: scalar_shredded
+  statement: >
+    SELECT t.product AS product, SUM(t.sales_scalar) AS total_sales
+    FROM variant_shredded t WHERE t.year = 2025 GROUP BY t.product;
+- name: scalar_mixed
+  statement: >
+    SELECT t.product AS product, SUM(t.sales_scalar) AS total_sales
+    FROM variant_mixed t WHERE t.year = 2025 GROUP BY t.product;

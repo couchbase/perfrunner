@@ -42,15 +42,8 @@ start_after = 180
 [secondary]
 indexes = tests/gsi/index_defs/1bucket_1scope_10collections_100_indexes_partitioned.json
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_sessionconsistent_100_indexes_1s_10c_partitioned.json
-indexer.settings.rebalance.redistribute_indexes = True
 indexer.settings.storage_mode = plasma
-indexer.settings.max_cpu_percent = 4800
-indexer.settings.gc_percent = 200
-queryport.client.usePlanner = false
-queryport.client.log_level = Warn
-projector.backChanSize = 500000
 disable_perindex_stats = True
-indexer.settings.build.batch_size = 100
 cbindexperf_repeat = 299999
 cbindexperf_concurrency = 128
 

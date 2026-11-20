@@ -86,6 +86,9 @@ COLUMNAR_PRODUCTS = ("operational-insights", "enterprise-analytics", "couchbase-
 
 INTERNAL_LOCATION = f"{LATESTBUILDS_BASE_URL}/latestbuilds/{{product}}/{{codename}}/{{build}}/"
 
+# Toy builds are keyed by build number only; the release in the version can be anything
+TOYBUILD_LOCATION = f"{LATESTBUILDS_BASE_URL}/latestbuilds/couchbase-server/toybuilds/{{build}}/"
+
 SERVER_RELEASE_LOCATIONS = (
     f"{LATESTBUILDS_BASE_URL}/releases/{{release}}/",
     f"{LATESTBUILDS_BASE_URL}/releases/{{release}}/ce/",
@@ -134,6 +137,10 @@ OPERATOR_PACKAGES = {
 ARM_ARCHS = {"rpm": "aarch64", "deb": "arm64"}
 
 Build = namedtuple("Build", ["filename", "url"])
+
+
+class PackageNotFoundError(Exception):
+    """Raised when no package URL matches the requested build."""
 
 
 def upload_file(file: str, to_host: str, to_user: str, to_password: str, to_directory: str = "."):
@@ -602,7 +609,7 @@ class CouchbaseInstaller:
         arch: Optional[str] = None,
         packages: Optional[list[str]] = None,
         subdirs: tuple[str, ...] = ("",),
-    ) -> Optional[str]:
+    ) -> str:
         package_type = package_type or self.remote.package_type  # package type based on server OS
         os_name = os_name or self.remote.distro
         os_version = os_version or self.remote.distro_version
@@ -614,22 +621,21 @@ class CouchbaseInstaller:
             if url_exist(url):
                 return url
 
-        logger.interrupt(
-            "Package URL not found for following criteria:\n"
-            + pretty_dict(
-                {
-                    "edition": edition,
-                    "release": self.release,
-                    "build": self.build,
-                    "os_name": os_name,
-                    "os_version": os_version,
-                    "arch": arch,
-                    "package_type": package_type,
-                    "packages": packages,
-                },
-                sort_keys=False,
-            )
+        message = "Package URL not found for following criteria:\n" + pretty_dict(
+            {
+                "edition": edition,
+                "release": self.release,
+                "build": self.build,
+                "os_name": os_name,
+                "os_version": os_version,
+                "arch": arch,
+                "package_type": package_type,
+                "packages": packages,
+            },
+            sort_keys=False,
         )
+        logger.error(message)
+        raise PackageNotFoundError(message)
 
     def url_iterator(
         self,
@@ -661,10 +667,12 @@ class CouchbaseInstaller:
                 for codename in BUILD_DIRS[product].get(major_minor, ())
             ]
             if not locations:
-                logger.interrupt(
+                logger.info(
                     f"No latestbuilds directory known for release {self.release} "
-                    f"of {', '.join(products)}"
+                    f"of {', '.join(products)}; searching only toy builds..."
                 )
+            # Toy builds can use any release version, so always check them last
+            locations.append((TOYBUILD_LOCATION, "couchbase-server", None))
 
         for (loc_pattern, product, codename), subdir, pkg_pattern, arch_str in itertools.product(
             locations, subdirs, PKG_PATTERNS[package_type], arch_strings

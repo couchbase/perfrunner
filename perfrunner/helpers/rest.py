@@ -17,6 +17,7 @@ from requests.exceptions import ConnectionError
 
 from logger import logger
 from perfrunner.helpers.misc import (
+    iter_prometheus_samples,
     my_public_ip,
     parse_duration_to_secs,
     pretty_dict,
@@ -1920,12 +1921,11 @@ class DefaultRestHelper(RestBase):
             ssl_port=ANALYTICS_PORT_SSL,
         )
         resp = self.get(url=url)
-        stats = {
-            s[0]: float(s[1])
-            for line in resp.text.splitlines()
-            if not line.startswith("#") and (s := line.split())
+        return {
+            name: value
+            for name, labels, value in iter_prometheus_samples(resp.text)
+            if not labels
         }
-        return stats
 
     def get_sgversion(self, host: str) -> str:
         logger.info(f"Getting SG Server version on server: {host}")

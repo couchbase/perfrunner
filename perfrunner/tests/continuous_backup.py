@@ -194,9 +194,7 @@ class ContinuousBackupPITRTest(ContinuousBackupTest):
         if self.test_config.bucket.encryption_at_rest:
             time.sleep(30)  # Let the disk queues settle
             self.rest.flush_bucket(self.master_node, self.bucket, retry=False)
-            self.monitor.monitor_num_items(
-                self.master_node, self.bucket, self.test_config.bucket.replica_number, 0
-            )
+            self.monitor.monitor_num_items(self.master_node, self.bucket, num_items=0)
         else:
             self.cluster.delete_buckets()
             self.cluster.create_buckets()

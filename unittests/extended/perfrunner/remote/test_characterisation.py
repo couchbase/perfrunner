@@ -95,11 +95,30 @@ class RemoteCharacterisationTest(TestCase):
 
     def test_master_server_decorator_targets_first_server(self):
         remote = self._remote()
-        remote.enable_nonlocal_diag_eval()
+        remote.enable_developer_preview()
         command, kwargs = self.created["10.0.0.1"].commands[-1]
-        self.assertIn("diag/eval", command)
+        self.assertIn("developerPreview", command)
         self.assertFalse(kwargs["pty"])
         self.assertNotIn("10.0.0.2", self.created)
+
+    def test_nonlocal_diag_eval_runs_on_every_cluster_master(self):
+        spec_file = tempfile.NamedTemporaryFile(mode="w", suffix=".spec", delete=False)
+        spec_file.write(self.SPEC.replace(
+            "    10.0.0.3:index\n",
+            "    10.0.0.3:index\ntest2 =\n    10.0.0.4:kv\n    10.0.0.5:kv\n",
+        ))
+        spec_file.close()
+        self.addCleanup(os.unlink, spec_file.name)
+        self.cluster_spec = ClusterSpec()
+        self.cluster_spec.parse(spec_file.name, override=None)
+
+        self._remote().enable_nonlocal_diag_eval()
+        for master in ("10.0.0.1", "10.0.0.4"):
+            command, kwargs = self.created[master].commands[-1]
+            self.assertIn("allow_nonlocal_eval", command)
+            self.assertFalse(kwargs["pty"])
+        for server in ("10.0.0.2", "10.0.0.3", "10.0.0.5"):
+            self.assertNotIn(server, self.created)
 
     def test_detect_core_dumps_returns_dict_per_host(self):
         wrapped = '/bin/bash -l -c "ls /data/core*"'

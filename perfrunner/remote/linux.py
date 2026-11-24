@@ -458,11 +458,12 @@ class RemoteLinux(Remote):
         env_var_strings = [f"{k}={v}" for k, v in env_vars.items()]
         run(f"systemctl set-environment {' '.join(env_var_strings)}")
 
-    @master_server
     def enable_nonlocal_diag_eval(self):
-        logger.info('Enabling non-local diag/eval')
-        run("curl localhost:8091/diag/eval -u Administrator:password "
-            "-d 'ns_config:set(allow_nonlocal_eval, true).'", pty=False)
+        for master in self.cluster_spec.masters:
+            with settings(host_string=master):
+                logger.info(f'Enabling non-local diag/eval on {master}')
+                run("curl localhost:8091/diag/eval -u Administrator:password "
+                    "-d 'ns_config:set(allow_nonlocal_eval, true).'", pty=False)
 
     @all_servers
     def stop_server(self):

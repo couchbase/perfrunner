@@ -1,8 +1,6 @@
 perfrunner
 ------------
 
-[![codebeat badge](https://codebeat.co/badges/7870f2d2-4a41-477e-af30-d9a8cf097626)](https://codebeat.co/projects/github-com-couchbase-perfrunner)
-
 Installation
 ------------
 ### Using Docker

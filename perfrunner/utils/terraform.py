@@ -142,7 +142,7 @@ GCP_ZONES = {
 }
 
 AZURE_DEFAULT_ZONE = "eastus-az1"
-AZURE_REGIONS_TO_ZONES = {"eastus": ["1", "2", "3"]}
+AZURE_REGIONS_TO_ZONES = {"eastus": ["1", "2", "3"], "eastus2": ["1", "2", "3"]}
 AZURE_PHYSICAL_ZONES = {
     f"{region}-az{num}" for region, nums in AZURE_REGIONS_TO_ZONES.items() for num in nums
 }
